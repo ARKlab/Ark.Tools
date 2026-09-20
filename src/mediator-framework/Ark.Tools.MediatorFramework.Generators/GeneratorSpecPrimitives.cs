@@ -153,9 +153,10 @@ internal readonly struct LocationSpec : IEquatable<LocationSpec>
         if (location is null || location.SourceTree is null)
             return null;
 
-        var lineSpan = location.GetLineSpan().Span;
+        var mappedLineSpan = location.GetMappedLineSpan();
+        var lineSpan = mappedLineSpan.Span;
         return new LocationSpec(
-            location.SourceTree.FilePath,
+            string.IsNullOrEmpty(mappedLineSpan.Path) ? location.SourceTree.FilePath : mappedLineSpan.Path,
             location.SourceSpan.Start,
             location.SourceSpan.Length,
             lineSpan.Start.Line,

@@ -449,6 +449,32 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorReportsNonPartialContainingContext()
+    {
+        var (driver, compilation) = _runGeneratorDriver<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            [McpTool]
+            public sealed class RunCommand : ICommand { }
+            public class Container
+            {
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public partial class Context { }
+            }
+            """,
+            []);
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+        var result = driver.GetRunResult().Results.Single();
+
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF056");
+        generatedCompilation.GetDiagnostics().Should().NotContain(
+            static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+    }
+
+    [TestMethod]
     public void McpGeneratorUsesDistinctHintNamesForCollidingContextIdentities()
     {
         var (driver, _) = _runTrackedGenerator<McpToolGenerator>(
@@ -2972,9 +2998,10 @@ public sealed class GeneratorSnapshotTests
         string source,
         string xmlDocumentation)
     {
-        var directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var directory = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
-        var assemblyPath = Path.Combine(directory, assemblyName + ".dll");
+        var safeAssemblyName = Path.GetFileName(assemblyName);
+        var assemblyPath = Path.Combine(directory, safeAssemblyName + ".dll");
         await File.WriteAllBytesAsync(assemblyPath, _createMetadataImage(assemblyName, source)).ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.ChangeExtension(assemblyPath, ".xml"), xmlDocumentation).ConfigureAwait(false);
         return MetadataReference.CreateFromFile(assemblyPath);
@@ -3263,6 +3290,29 @@ public sealed class GeneratorSnapshotTests
             && d.GetMessage().Contains("GetItem")
             && d.GetMessage().Contains("EmitCompilerGeneratedFiles=true"));
         result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI001");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorUsesMappedDiagnosticLocations()
+    {
+        var result = _runApiSurfaceGeneratorResult(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            #line 42 "MappedContract.cs"
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
+            #line default
+            """,
+            baseline: "/*\nCONTRACT GetItem -> string [group=Ark] [http=GET /other] [version=1+]\n*/\n",
+            enabled: true);
+
+        var locations = result.Diagnostics
+            .Where(static diagnostic => diagnostic.Id == "ARKAPI002")
+            .Select(static diagnostic => diagnostic.Location.GetLineSpan())
+            .ToImmutableArray();
+        var location = locations.Single(static location => location.Path == "MappedContract.cs");
+        location.StartLinePosition.Line.Should().Be(42);
     }
 
     [TestMethod]

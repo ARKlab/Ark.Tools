@@ -14,6 +14,7 @@ using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Ark.Tools.MediatorFramework.Mcp.Generators;
 
@@ -85,13 +86,13 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         if (context.TargetSymbol is not INamedTypeSymbol type)
             return [];
 
-        var declaration = type.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as TypeDeclarationSyntax;
-        var invalidLocation = declaration is null || !declaration.Modifiers.Any(SyntaxKind.PartialKeyword)
-            ? context.Attributes[0].ApplicationSyntaxReference?.GetSyntax().GetLocation()
-            : null;
+        var invalidLocation = IsPartial(type) && AllContainingTypesArePartial(type)
+            ? null
+            : CreateLocation(context.Attributes[0].ApplicationSyntaxReference?.GetSyntax().GetLocation());
+        var contextMetadataName = GetMetadataName(type);
         return context.Attributes
             .Select(marker => new MarkerModel(
-                type,
+                contextMetadataName,
                 marker.ConstructorArguments.FirstOrDefault().Value is INamedTypeSymbol markerType
                     ? markerType.ContainingAssembly.Name
                     : null,
@@ -99,6 +100,62 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .OrderBy(static marker => marker.AssemblyName, StringComparer.Ordinal)
             .ToImmutableArray();
     }
+
+    private static bool AllContainingTypesArePartial(INamedTypeSymbol type)
+    {
+        for (var containingType = type.ContainingType;
+            containingType is not null;
+            containingType = containingType.ContainingType)
+        {
+            if (!IsPartial(containingType))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsPartial(INamedTypeSymbol type)
+        => type.DeclaringSyntaxReferences.Length > 0
+            && type.DeclaringSyntaxReferences.All(static reference =>
+                reference.GetSyntax() is TypeDeclarationSyntax declaration
+                && declaration.Modifiers.Any(SyntaxKind.PartialKeyword));
+
+    private static string GetMetadataName(INamedTypeSymbol type)
+    {
+        var names = new Stack<string>();
+        for (var current = type; current is not null; current = current.ContainingType)
+            names.Push(current.MetadataName);
+
+        var namespaceName = type.ContainingNamespace;
+        return namespaceName.IsGlobalNamespace
+            ? string.Join("+", names)
+            : namespaceName.ToDisplayString() + "." + string.Join("+", names);
+    }
+
+    private static MarkerLocation? CreateLocation(Location? location)
+    {
+        if (location is null || location.SourceTree is null)
+            return null;
+
+        var mappedLineSpan = location.GetMappedLineSpan();
+        var filePath = string.IsNullOrEmpty(mappedLineSpan.Path) ? location.SourceTree.FilePath : mappedLineSpan.Path;
+        return new MarkerLocation(
+            filePath,
+            location.SourceSpan.Start,
+            location.SourceSpan.Length,
+            mappedLineSpan.StartLinePosition.Line,
+            mappedLineSpan.StartLinePosition.Character,
+            mappedLineSpan.EndLinePosition.Line,
+            mappedLineSpan.EndLinePosition.Character);
+    }
+
+    private static Location ToLocation(MarkerLocation location)
+        => Location.Create(
+            location.FilePath,
+            new TextSpan(location.Start, location.Length),
+            new LinePositionSpan(
+                new LinePosition(location.StartLine, location.StartCharacter),
+                new LinePosition(location.EndLine, location.EndCharacter)));
 
     private static DocumentationFileModel GetDocumentationFile(AdditionalText text, CancellationToken cancellationToken)
     {
@@ -117,26 +174,19 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         if (markers.IsDefaultOrEmpty)
             return;
 
-        var grouped = new Dictionary<INamedTypeSymbol, List<MarkerModel>>(SymbolEqualityComparer.Default);
-        foreach (var marker in markers)
-        {
-            if (!grouped.TryGetValue(marker.Context, out var values))
-            {
-                values = [];
-                grouped.Add(marker.Context, values);
-            }
-            values.Add(marker);
-        }
+        var grouped = markers
+            .GroupBy(static marker => marker.ContextMetadataName, StringComparer.Ordinal)
+            .OrderBy(static group => group.Key, StringComparer.Ordinal)
+            .ToImmutableArray();
 
         var contractCache = new Dictionary<string, ImmutableArray<INamedTypeSymbol>>(StringComparer.Ordinal);
-        var contractTypesByContext = new Dictionary<INamedTypeSymbol, ImmutableArray<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
+        var contractTypesByContext = new Dictionary<string, ImmutableArray<INamedTypeSymbol>>(StringComparer.Ordinal);
         var documentationAssemblyNames = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var group in grouped.OrderBy(
-            static group => group.Key.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-            StringComparer.Ordinal))
+        foreach (var group in grouped)
         {
+            context.CancellationToken.ThrowIfCancellationRequested();
             var contractTypes = new List<INamedTypeSymbol>();
-            foreach (var assemblyName in group.Value
+            foreach (var assemblyName in group
                 .Where(static value => value.AssemblyName is not null)
                 .Select(static value => value.AssemblyName!)
                 .OrderBy(static assemblyName => assemblyName, StringComparer.Ordinal))
@@ -164,20 +214,23 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             compilation,
             additionalDocumentationFiles,
             documentationAssemblyNames);
-        foreach (var group in grouped.OrderBy(
-            static group => group.Key.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-            StringComparer.Ordinal))
+        foreach (var group in grouped)
         {
-            var marker = group.Value[0];
+            context.CancellationToken.ThrowIfCancellationRequested();
+            var marker = group.First();
             if (marker.InvalidLocation is not null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    new DiagnosticDescriptor("ARKMF056", "Declare the MCP context as partial", "MCP context must be declared partial",
+                    new DiagnosticDescriptor("ARKMF056", "Declare the MCP context as partial", "MCP context and containing types must be declared partial",
                         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
                         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF056.md"),
-                    marker.InvalidLocation));
+                    ToLocation(marker.InvalidLocation.Value)));
                 continue;
             }
+
+            var contextType = compilation.GetTypeByMetadataName(group.Key);
+            if (contextType is null)
+                continue;
 
             var contracts = contractTypesByContext[group.Key]
                 .Select(contract => CreateModel(contract, compilation, documentationFiles, context))
@@ -193,8 +246,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     context.ReportDiagnostic(Diagnostic.Create(DuplicateName, contract.Location, contract.Name));
             }
 
-            var source = Render(marker.Context, contracts);
-            context.AddSource(GetHintName(marker.Context) + ".Mcp.g.cs", source);
+            var source = Render(contextType, contracts);
+            context.AddSource(GetHintName(contextType) + ".Mcp.g.cs", source);
         }
     }
 
@@ -755,7 +808,15 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
     private readonly record struct DocumentationFileModel(string Path, string Content);
-    private sealed record MarkerModel(INamedTypeSymbol Context, string? AssemblyName, Location? InvalidLocation);
+    private sealed record MarkerModel(string ContextMetadataName, string? AssemblyName, MarkerLocation? InvalidLocation);
+    private readonly record struct MarkerLocation(
+        string FilePath,
+        int Start,
+        int Length,
+        int StartLine,
+        int StartCharacter,
+        int EndLine,
+        int EndCharacter);
     private sealed record ContractModel(
         INamedTypeSymbol Type,
         string Name,

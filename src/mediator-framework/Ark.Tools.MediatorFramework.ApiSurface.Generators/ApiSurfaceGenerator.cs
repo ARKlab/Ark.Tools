@@ -582,6 +582,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
         lines.Add($"CONTRACT {request} -> {TypeName(result)} [group={group}]"
             + (metadata.Count == 0 ? string.Empty : " [" + string.Join("] [", metadata) + "]"));
+        locBuilder[request] = type.Locations.FirstOrDefault() ?? Location.None;
 
         var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
         foreach (var member in AllProperties(type))
