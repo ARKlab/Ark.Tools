@@ -2668,6 +2668,7 @@ public sealed class GeneratorSnapshotTests
     private static void _assertRunReasons(GeneratorDriver driver, string trackingName, bool isUnrelatedEdit)
     {
         var outputs = _getTrackedOutputs(driver, trackingName);
+        outputs.Should().NotBeEmpty();
         if (isUnrelatedEdit)
         {
             outputs.All(static output =>
