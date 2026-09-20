@@ -32,6 +32,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private const string ServerSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
     private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const string HttpEndpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
+    private const string MarkerParserTrackingName = "McpMarkerParser";
 
     private static readonly DiagnosticDescriptor InvalidName = new(
         "ARKMF050", "Use a valid MCP tool name", "MCP tool name '{0}' is invalid; rename the tool to a valid MCP identifier",
@@ -62,8 +63,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     {
         var markers = context.SyntaxProvider.ForAttributeWithMetadataName(
                 MarkerAttribute,
-                static (_, _) => true,
+                static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => GetMarker(attributeContext))
+            .WithTrackingName(MarkerParserTrackingName)
             .Where(static marker => marker is not null)
             .Select(static (marker, _) => marker!);
 

@@ -1328,6 +1328,23 @@ public sealed class GeneratorSnapshotTests
                 public void Method() { }
             }
             """);
+        var mcp = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Valid tool.</summary>
+            [McpTool]
+            public sealed class ValidMcpTool : ICommand { }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class ValidMcpContext { }
+            public sealed class InvalidMcpTarget
+            {
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public void Method() { }
+            }
+            """);
         var messaging = _runGeneratorResult<MessagingNetworkGenerator>(
             """
             using Ark.Tools.MediatorFramework;
@@ -1347,10 +1364,38 @@ public sealed class GeneratorSnapshotTests
         rebus.Generated.Should().Contain("ValidRebusEndpoint");
         apiSurface.Generated.Should().Contain("ValidApiSurfaceEndpoint");
         azureFunctions.Generated.Should().Contain("ValidAzureFunctionsEndpoint");
+        mcp.Generated.Should().Contain("ValidMcpContext");
         messaging.Generated.Should().Contain("ValidNetwork");
-        new[] { minimalApi, grpc, rebus, apiSurface, azureFunctions, messaging }
+        new[] { minimalApi, grpc, rebus, apiSurface, azureFunctions, mcp, messaging }
             .SelectMany(static result => result.Diagnostics)
             .Should().NotContain(static diagnostic => diagnostic.Id == "CS8785");
+    }
+
+    [TestMethod]
+    public void McpGeneratorParsesOnlyTypeAttributeTargets()
+    {
+        var (driver, _) = _runTrackedGenerator<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Valid tool.</summary>
+            [McpTool]
+            public sealed class ValidMcpTool : ICommand { }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class ValidMcpContext { }
+            public sealed class InvalidMcpTarget
+            {
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public void Method() { }
+            }
+            """);
+        var result = driver.GetRunResult().Results.Single();
+
+        _getGeneratedSource(driver).Should().Contain("ValidMcpContext");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "CS8785");
+        _getTrackedOutputs(driver, "McpMarkerParser").Should().ContainSingle();
     }
 
     [TestMethod]
@@ -2538,12 +2583,7 @@ public sealed class GeneratorSnapshotTests
                 Environment.NewLine,
                 result.GeneratedSources.Select(static generated => generated.SourceText.ToString()))
             .Should().Be(original);
-        result.TrackedSteps.ContainsKey(trackingName).Should().BeTrue(
-            "tracked steps were {0}",
-            string.Join(", ", result.TrackedSteps.Keys));
-        result.TrackedSteps[trackingName]
-            .SelectMany(static step => step.Outputs)
-            .Should().ContainSingle();
+        _getTrackedOutputs(driver, trackingName).Should().ContainSingle();
     }
 
     private static void _assertGeneratorCaches<TGenerator>(
@@ -2627,11 +2667,7 @@ public sealed class GeneratorSnapshotTests
 
     private static void _assertRunReasons(GeneratorDriver driver, string trackingName, bool isUnrelatedEdit)
     {
-        var outputs = driver.GetRunResult().Results
-            .SelectMany(result => result.TrackedSteps[trackingName])
-            .SelectMany(static step => step.Outputs)
-            .ToArray();
-        outputs.Should().NotBeEmpty();
+        var outputs = _getTrackedOutputs(driver, trackingName);
         if (isUnrelatedEdit)
         {
             outputs.All(static output =>
@@ -2644,6 +2680,20 @@ public sealed class GeneratorSnapshotTests
         }
 
         outputs.Select(static output => output.Reason).Should().Contain(IncrementalStepRunReason.Modified);
+    }
+
+    private static (object Value, IncrementalStepRunReason Reason)[] _getTrackedOutputs(
+        GeneratorDriver driver,
+        string trackingName)
+    {
+        var results = driver.GetRunResult().Results;
+        results.Should().ContainSingle();
+        results[0].TrackedSteps.ContainsKey(trackingName).Should().BeTrue(
+            "tracked steps were {0}",
+            string.Join(", ", results[0].TrackedSteps.Keys));
+        return results[0].TrackedSteps.TryGetValue(trackingName, out var steps)
+            ? steps.SelectMany(static step => step.Outputs).ToArray()
+            : [];
     }
 
     private static void _assertOutputRunReasons(GeneratorDriver driver, bool isUnrelatedEdit)
