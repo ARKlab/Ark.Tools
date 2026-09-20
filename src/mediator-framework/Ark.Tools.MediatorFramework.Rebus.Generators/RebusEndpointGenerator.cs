@@ -30,6 +30,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string MessagingNetworkAttribute = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
         private const string MessagingParticipantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
         private const string MappingParserTrackingName = "RebusMappingParser";
+        private const string HostParserTrackingName = "RebusHostParser";
         private static readonly DiagnosticDescriptor InvalidOwnerQueue = new(
             "ARKMF004", "Invalid Rebus owner queue",
             "The Rebus owner queue for '{0}' must not be blank", "Rebus",
@@ -58,8 +59,16 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .SelectMany(static (pair, cancellationToken) =>
                     GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
 
-            var hosts = context.CompilationProvider.Select(
-                static (compilation, cancellationToken) => ReadHosts(compilation, cancellationToken));
+            var hostTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                    ArkRebusHostAttribute,
+                    static (node, _) => node is TypeDeclarationSyntax,
+                    static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+                .WithTrackingName(HostParserTrackingName)
+                .Where(static hostType => hostType is not null)
+                .Select(static (hostType, _) => hostType!);
+            var hosts = context.CompilationProvider.Combine(hostTypes.Collect())
+                .Select(static (input, cancellationToken) =>
+                    ReadHosts(input.Left, input.Right, cancellationToken));
             var collected = sourceEndpoints.Collect()
                 .Combine(referencedEndpoints.Collect())
                 .Combine(hosts);
@@ -339,12 +348,14 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static ImmutableArray<HostModel> ReadHosts(
             Compilation compilation,
+            ImmutableArray<INamedTypeSymbol> hostTypes,
             CancellationToken cancellationToken)
         {
-            return _allTypes(compilation.Assembly.GlobalNamespace)
-                .Where(type => type.GetAttributes().Any(attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == ArkRebusHostAttribute))
-                .Select(type => ReadHost(compilation, type, cancellationToken))
+            return hostTypes
+                .OrderBy(
+                    static hostType => hostType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    StringComparer.Ordinal)
+                .Select(hostType => ReadHost(compilation, hostType, cancellationToken))
                 .ToImmutableArray();
         }
 
@@ -449,6 +460,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .ToImmutableArray();
 
             return new HostModel(
+                hostType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 hostType.ContainingNamespace.IsGlobalNamespace
                     ? string.Empty
                     : hostType.ContainingNamespace.ToDisplayString(),
@@ -566,7 +578,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (items.IsDefaultOrEmpty && hosts.IsDefaultOrEmpty)
                 return;
 
-            foreach (var invalidHost in hosts.Where(static host => host.Error is not null))
+            foreach (var invalidHost in hosts
+                .Where(static host => host.Error is not null)
+                .OrderBy(static host => host.HostIdentity, StringComparer.Ordinal))
             {
                 spc.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor(
@@ -580,9 +594,14 @@ namespace Ark.Tools.MediatorFramework.Generators
                     invalidHost.Location,
                     invalidHost.Error));
             }
-            hosts = hosts.Where(static host => host.Error is null).ToImmutableArray();
+            hosts = hosts
+                .Where(static host => host.Error is null)
+                .OrderBy(static host => host.HostIdentity, StringComparer.Ordinal)
+                .ToImmutableArray();
 
-            var legacyRegistrationItems = items;
+            var legacyRegistrationItems = items
+                .OrderBy(static item => item.TypeFullName, StringComparer.Ordinal)
+                .ToImmutableArray();
             var validationItems = items.AddRange(hosts.SelectMany(static host =>
                 host.Routes.AddRange(host.Adapters).AddRange(host.LegacyEndpoints)));
             validationItems = validationItems.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
@@ -620,6 +639,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static item => item.IsValid)
                 .GroupBy(static item => item.TypeFullName)
                 .Select(static group => group.First())
+                .OrderBy(static item => item.TypeFullName, StringComparer.Ordinal)
                 .ToImmutableArray();
 
             var sb = new StringBuilder();
@@ -814,15 +834,23 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (!string.IsNullOrEmpty(host.Namespace))
                 sb.AppendLine("}");
             spc.AddSource(
-                (string.IsNullOrEmpty(host.Namespace)
-                    ? host.Name
-                    : host.Namespace.Replace('.', '_') + "_" + host.Name) + ".Rebus.g.cs",
+                GetHostHintName(host.HostIdentity) + ".Rebus.g.cs",
                 SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private static string GetHostHintName(string identity)
+        {
+            return "RebusHost_"
+                + Convert.ToBase64String(Encoding.UTF8.GetBytes(identity))
+                    .TrimEnd('=')
+                    .Replace('+', '-')
+                    .Replace('/', '_');
         }
 
         private readonly record struct AssemblyMapping(ImmutableArray<string> AssemblyNames);
 
         private sealed record HostModel(
+            string HostIdentity,
             string Namespace,
             string Name,
             string Accessibility,
@@ -843,6 +871,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public static HostModel Invalid(string error, Location location)
             {
                 return new HostModel(
+                    string.Empty,
                     string.Empty,
                     string.Empty,
                     "internal",

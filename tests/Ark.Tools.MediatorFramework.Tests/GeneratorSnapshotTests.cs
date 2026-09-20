@@ -287,6 +287,198 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorIncludesContractsFromEveryAssemblyMarker()
+    {
+        var firstContracts = _createMetadataReference(
+            "FirstContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            namespace FirstContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class FirstCommand : ICommand { }
+            """);
+        var secondContracts = _createMetadataReference(
+            "SecondContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            namespace SecondContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class SecondCommand : ICommand { }
+            """);
+
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            [ArkGenerateMcpToolsForAssembly(typeof(FirstContracts.Marker))]
+            [ArkGenerateMcpToolsForAssembly(typeof(SecondContracts.Marker))]
+            public partial class McpContext { }
+            """,
+            [],
+            firstContracts,
+            secondContracts);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("FirstCommand");
+        result.Generated.Should().Contain("SecondCommand");
+    }
+
+    [TestMethod]
+    public void McpGeneratorUpdatesXmlDocumentationWhenTheAdditionalTextChanges()
+    {
+        var contracts = _createMetadataReference(
+            "McpContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            namespace McpContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class ListOrders : ICommand { }
+            """);
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            [ArkGenerateMcpToolsForAssembly(typeof(McpContracts.Marker))]
+            public partial class McpContext { }
+            """;
+        var firstDocumentation = new TestAdditionalText(
+            "/documentation/McpContracts.xml",
+            """
+            <doc><members><member name="T:McpContracts.ListOrders"><summary>Lists orders.</summary></member></members></doc>
+            """);
+        var secondDocumentation = new TestAdditionalText(
+            "/documentation/McpContracts.xml",
+            """
+            <doc><members><member name="T:McpContracts.ListOrders"><summary>Lists current orders.</summary></member></members></doc>
+            """);
+        var (driver, compilation) = _runGeneratorDriver<McpToolGenerator>(
+            source,
+            [firstDocumentation],
+            contracts);
+
+        _getGeneratedSource(driver).Should().Contain("Description(\"Lists orders.\")");
+
+        driver = driver.ReplaceAdditionalText(firstDocumentation, secondDocumentation).RunGenerators(compilation);
+
+        _getGeneratedSource(driver).Should().Contain("Description(\"Lists current orders.\")");
+    }
+
+    [TestMethod]
+    public async Task McpGeneratorPreservesReferencedAssemblyXmlDocumentationFallback()
+    {
+        var contracts = await _createMetadataReferenceWithXmlAsync(
+            "LegacyMcpContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            namespace LegacyMcpContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class ListOrders : ICommand { }
+            """,
+            """
+            <doc><members><member name="T:LegacyMcpContracts.ListOrders"><summary>Lists legacy orders.</summary></member></members></doc>
+            """).ConfigureAwait(false);
+
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            [ArkGenerateMcpToolsForAssembly(typeof(LegacyMcpContracts.Marker))]
+            public partial class McpContext { }
+            """,
+            [],
+            contracts);
+
+        result.Generated.Should().Contain("Description(\"Lists legacy orders.\")");
+    }
+
+    [TestMethod]
+    public void McpGeneratorEmitsValidGlobalNestedAndGenericContexts()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Runs the command.</summary>
+            [McpTool]
+            public sealed class RunCommand : ICommand { }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class GlobalContext { }
+            namespace Nested
+            {
+                public partial class Container
+                {
+                    [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                    public partial class Context { }
+                }
+            }
+            namespace Generic
+            {
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public partial class Context<T> where T : class { }
+            }
+            """;
+        var (driver, compilation) = _runGeneratorDriver<McpToolGenerator>(source, []);
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+        var result = driver.GetRunResult().Results.Single();
+        var generated = string.Join(
+            Environment.NewLine,
+            result.GeneratedSources.Select(static source => source.SourceText.ToString()));
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        generatedCompilation.GetDiagnostics().Should().NotContain(
+            static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        generated.Should().NotContain("namespace ;");
+        generated.Should().Contain("partial class GlobalContext");
+        generated.Should().Contain("partial class Container");
+        generated.Should().Contain(
+            "partial class Context<T> : global::Ark.Tools.MediatorFramework.Mcp.IMcpToolContext where T : class");
+    }
+
+    [TestMethod]
+    public void McpGeneratorUsesDistinctHintNamesForCollidingContextIdentities()
+    {
+        var (driver, _) = _runTrackedGenerator<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Runs the command.</summary>
+            [McpTool]
+            public sealed class RunCommand : ICommand { }
+            namespace One_Two
+            {
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public partial class Context { }
+            }
+            namespace One
+            {
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public partial class Two_Context { }
+            }
+            """);
+        var result = driver.GetRunResult().Results.Single();
+        var generated = result.GeneratedSources;
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "CS8785");
+        generated.Should().HaveCount(2);
+        generated.Select(static source => source.HintName).Should().OnlyHaveUniqueItems();
+    }
+
+    [TestMethod]
     public void McpToolErrorsExposeSafeValidationProblemDetails()
     {
         var exception = new ValidationException(
@@ -1883,6 +2075,72 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void RebusGeneratorOutputIsIndependentOfEndpointDeclarationOrder()
+    {
+        const string first =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = "alpha")]
+            public sealed class AlphaCommand : ICommand { }
+            [RebusMessage(OwnerQueue = "zeta")]
+            public sealed class ZetaCommand : ICommand { }
+            """;
+        const string reversed =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = "zeta")]
+            public sealed class ZetaCommand : ICommand { }
+            [RebusMessage(OwnerQueue = "alpha")]
+            public sealed class AlphaCommand : ICommand { }
+            """;
+
+        var initial = _getGeneratedArtifacts(new ArkRebusEndpointGenerator(), first);
+        var reordered = _getGeneratedArtifacts(new ArkRebusEndpointGenerator(), reversed);
+
+        reordered.Should().Be(initial);
+    }
+
+    [TestMethod]
+    public void RebusGeneratorUsesDistinctHintNamesForCollidingHostIdentities()
+    {
+        var (driver, _) = _runTrackedGenerator<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+            namespace One_Two
+            {
+                [MessagingParticipant(
+                    Serializers = new[] { SerializationProtocol.Json },
+                    DefaultSerializer = SerializationProtocol.Json)]
+                public sealed class FirstParticipant;
+                [MessagingNetwork(Members = new[] { typeof(FirstParticipant) })]
+                public sealed class FirstNetwork;
+                [ArkRebusHost(typeof(FirstParticipant))]
+                public sealed partial class Host;
+            }
+            namespace One
+            {
+                [MessagingParticipant(
+                    Serializers = new[] { SerializationProtocol.Json },
+                    DefaultSerializer = SerializationProtocol.Json)]
+                public sealed class SecondParticipant;
+                [MessagingNetwork(Members = new[] { typeof(SecondParticipant) })]
+                public sealed class SecondNetwork;
+                [ArkRebusHost(typeof(SecondParticipant))]
+                public sealed partial class Two_Host;
+            }
+            """);
+        var result = driver.GetRunResult().Results.Single();
+        var generated = result.GeneratedSources;
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "CS8785");
+        generated.Should().HaveCount(3);
+        generated.Select(static source => source.HintName).Should().OnlyHaveUniqueItems();
+    }
+
+    [TestMethod]
     public void RebusGeneratorEmitsParticipantHostAssistance()
     {
         var generated = _runGenerator<ArkRebusEndpointGenerator>(
@@ -2663,36 +2921,97 @@ public sealed class GeneratorSnapshotTests
         string? hostJson = null)
         where TGenerator : IIncrementalGenerator, new()
     {
-        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(static path => MetadataReference.CreateFromFile(path))
-            .Concat(
-            [
-                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Core.EvolvableEnum<>).Assembly.Location),
-            ]);
-        var compilation = CSharpCompilation.Create(
-            "GeneratorSnapshot",
-            [CSharpSyntaxTree.ParseText(source)],
-            references,
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         AdditionalText[] additionalTexts = hostJson is null
             ? []
             : [new TestAdditionalText("host.json", hostJson)];
-        GeneratorDriver driver = CSharpGeneratorDriver.Create(
-            generators: [new TGenerator().AsSourceGenerator()],
-            additionalTexts: additionalTexts);
 
-        driver = driver.RunGenerators(compilation);
+        return _runGeneratorResult<TGenerator>(source, additionalTexts);
+    }
+
+    private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runGeneratorResult<TGenerator>(
+        string source,
+        AdditionalText[] additionalTexts,
+        params MetadataReference[] additionalReferences)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var (driver, _) = _runGeneratorDriver<TGenerator>(source, additionalTexts, additionalReferences);
         var result = driver.GetRunResult();
         return (
             string.Join(
             Environment.NewLine,
             result.Results.SelectMany(static generator => generator.GeneratedSources).Select(static generator => generator.SourceText.ToString())),
             result.Diagnostics);
+    }
+
+    private static (GeneratorDriver Driver, CSharpCompilation Compilation) _runGeneratorDriver<TGenerator>(
+        string source,
+        AdditionalText[] additionalTexts,
+        params MetadataReference[] additionalReferences)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var references = _getGeneratorReferences().Concat(additionalReferences);
+        var compilation = CSharpCompilation.Create(
+            "GeneratorSnapshot",
+            [CSharpSyntaxTree.ParseText(source)],
+            references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new TGenerator().AsSourceGenerator()],
+            additionalTexts: additionalTexts);
+
+        return (driver.RunGenerators(compilation), compilation);
+    }
+
+    private static MetadataReference _createMetadataReference(string assemblyName, string source)
+        => MetadataReference.CreateFromImage(_createMetadataImage(assemblyName, source));
+
+    private static async Task<MetadataReference> _createMetadataReferenceWithXmlAsync(
+        string assemblyName,
+        string source,
+        string xmlDocumentation)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var assemblyPath = Path.Combine(directory, assemblyName + ".dll");
+        await File.WriteAllBytesAsync(assemblyPath, _createMetadataImage(assemblyName, source)).ConfigureAwait(false);
+        await File.WriteAllTextAsync(Path.ChangeExtension(assemblyPath, ".xml"), xmlDocumentation).ConfigureAwait(false);
+        return MetadataReference.CreateFromFile(assemblyPath);
+    }
+
+    private static byte[] _createMetadataImage(string assemblyName, string source)
+    {
+        var compilation = CSharpCompilation.Create(
+            assemblyName,
+            [CSharpSyntaxTree.ParseText(source)],
+            _getGeneratorReferences(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        using var stream = new MemoryStream();
+        var emit = compilation.Emit(stream);
+        if (!emit.Success)
+        {
+            throw new InvalidOperationException(string.Join(
+                Environment.NewLine,
+                emit.Diagnostics.Select(static diagnostic => diagnostic.ToString())));
+        }
+
+        return stream.ToArray();
+    }
+
+    private static IEnumerable<MetadataReference> _getGeneratorReferences()
+    {
+        return ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(static path => MetadataReference.CreateFromFile(path))
+            .Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(McpToolAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IMcpToolContext).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Core.EvolvableEnum<>).Assembly.Location),
+            ]);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> _runAnalyzerResult<TAnalyzer>(string source)
