@@ -279,9 +279,3 @@ switch is slower for `GetBook` and `PostPingMessage`; these results do not
 justify enabling either switch for this workload. More requests per operation
 or more repetitions would be needed to resolve changes smaller than the
 observed benchmark variance.
-
-## Demystifier configuration
-
-`DemystifiedExceptionLayoutRenderer` remains available for explicit NLog
-registration, but the default `NLogConfigurer` does not register it. These
-benchmarks profile NLog's built-in exception renderer.
