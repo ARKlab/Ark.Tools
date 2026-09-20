@@ -31,7 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ben.Demystifier" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="NLog" />
     <PackageReference Include="NLog.Database" />

@@ -698,7 +698,6 @@
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.1.0, )",
           "NLog": "[6.2.1, )",
           "NLog.Database": "[6.0.3, )",
@@ -830,12 +829,6 @@
           "HttpMessageFormatter": "2.0.3",
           "Microsoft.AspNetCore.WebUtilities": "2.3.0"
         }
-      },
-      "Ben.Demystifier": {
-        "type": "CentralTransitive",
-        "requested": "[0.4.1, )",
-        "resolved": "0.4.1",
-        "contentHash": "axFeEMfmEORy3ipAzOXG/lE+KcNptRbei3F0C4kQCdeiQtW+qJW90K5iIovITGrdLt8AjhNCwk5qLSX9/rFpoA=="
       },
       "CacheCow.Client": {
         "type": "CentralTransitive",
@@ -2027,7 +2020,6 @@
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Ben.Demystifier": "[0.4.1, )",
           "Microsoft.Data.SqlClient": "[7.1.0, )",
           "NLog": "[6.2.1, )",
           "NLog.Database": "[6.0.3, )",
@@ -2160,12 +2152,6 @@
           "HttpMessageFormatter": "2.0.3",
           "Microsoft.AspNetCore.WebUtilities": "2.3.0"
         }
-      },
-      "Ben.Demystifier": {
-        "type": "CentralTransitive",
-        "requested": "[0.4.1, )",
-        "resolved": "0.4.1",
-        "contentHash": "axFeEMfmEORy3ipAzOXG/lE+KcNptRbei3F0C4kQCdeiQtW+qJW90K5iIovITGrdLt8AjhNCwk5qLSX9/rFpoA=="
       },
       "CacheCow.Client": {
         "type": "CentralTransitive",
