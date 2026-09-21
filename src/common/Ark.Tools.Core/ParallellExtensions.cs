@@ -4,8 +4,6 @@ using System.Runtime.CompilerServices;
 
 namespace Ark.Tools.Core;
 
-#pragma warning disable MA0137 // Preserve established Parallel extension method names
-#pragma warning disable MA0214 // Forward work to the overload that accepts an indexed callback
 
 public static class ParallellExtensions
 {
@@ -71,6 +69,3 @@ public static class ParallellExtensions
         return results;
     }
 }
-
-#pragma warning restore MA0214
-#pragma warning restore MA0137

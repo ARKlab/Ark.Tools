@@ -8,7 +8,6 @@ using System.Net.Http.Headers;
 
 namespace Ark.Tools.Http;
 
-#pragma warning disable MA0214 // Preserve formatter task forwarding semantics
 
 public class LZ4MessagePackMediaTypeFormatter : MediaTypeFormatter
 {

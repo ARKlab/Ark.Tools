@@ -6,7 +6,6 @@ using System.Collections.Concurrent;
 
 namespace Ark.Tools.FtpClient.Core;
 
-#pragma warning disable MA0214 // Preserve pooled FTP operation task semantics
 
 public sealed class FtpClientPool : FtpClientWithConnectionBase, IFtpClientPool
 {

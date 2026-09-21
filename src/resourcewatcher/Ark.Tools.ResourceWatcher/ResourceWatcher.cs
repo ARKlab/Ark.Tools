@@ -10,8 +10,6 @@ using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher;
 
-#pragma warning disable MA0137 // Preserve hosted resource watcher lifecycle API names
-#pragma warning disable MA0214 // Preserve hosted resource watcher task semantics
 
 /// <summary>
 /// Abstract base class for resource watchers with type-safe extension data.

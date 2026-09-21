@@ -3,7 +3,6 @@
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost;
 
-#pragma warning disable MA0137 // Preserve resource watcher provider contract names
 
 /// <summary>
 /// Provides listing and retrieval of resources from a data provider with type-safe extension data.

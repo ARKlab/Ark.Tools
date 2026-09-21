@@ -12,8 +12,6 @@ using System.Net;
 
 namespace Ark.Tools.FtpClient.FtpProxy;
 
-#pragma warning disable MA0137 // Preserve FTP proxy contract names
-#pragma warning disable MA0214 // Preserve FTP proxy task forwarding semantics
 
 
 public sealed class FtpClientProxy : IFtpClientPool

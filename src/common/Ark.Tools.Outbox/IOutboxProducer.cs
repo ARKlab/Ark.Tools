@@ -1,8 +1,6 @@
 
 namespace Ark.Tools.Outbox;
 
-#pragma warning disable MA0137 // Preserve the outbox contract's established method names
-#pragma warning disable MA0214 // Preserve task identity and synchronous startup semantics
 
 /// <summary>
 /// Interface for a message Producer used by Application to submit messages to the Outbox

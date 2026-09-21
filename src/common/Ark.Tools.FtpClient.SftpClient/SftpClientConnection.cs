@@ -10,7 +10,6 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Ark.Tools.FtpClient.SftpClient;
 
-#pragma warning disable MA0137 // Preserve SFTP connection contract names
 
 public class SftpClientConnection : FtpClientConnectionBase
 {

@@ -8,7 +8,6 @@ using System.Reflection;
 
 namespace Ark.Tools.EventSourcing.Aggregates;
 
-#pragma warning disable MA0137 // Preserve the event-sourcing contract's established method name
 
 public abstract class AggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
     : IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>

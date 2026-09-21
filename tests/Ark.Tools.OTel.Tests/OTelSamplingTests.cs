@@ -12,7 +12,6 @@ using System.Diagnostics;
 
 namespace Ark.Tools.OTel.Tests;
 
-#pragma warning disable MA0214 // Preserve test helper task forwarding semantics
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 

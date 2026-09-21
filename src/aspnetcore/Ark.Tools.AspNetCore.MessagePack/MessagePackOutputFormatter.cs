@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
-#pragma warning disable MA0214 // Framework formatter override must support synchronous fast paths
 
 public class MessagePackOutputFormatter : OutputFormatter
 {
@@ -70,5 +69,4 @@ public class MessagePackOutputFormatter : OutputFormatter
         }
     }
 
-    #pragma warning restore MA0214
 }

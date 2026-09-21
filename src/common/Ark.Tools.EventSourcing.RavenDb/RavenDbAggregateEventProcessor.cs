@@ -15,8 +15,6 @@ using System.Reflection;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 
-#pragma warning disable MA0137 // Preserve RavenDB event processor contract names
-#pragma warning disable MA0214 // Preserve RavenDB task forwarding semantics
 
 public abstract class RavenDbAggregateEventProcessor<TAggregate>
     : IDisposable

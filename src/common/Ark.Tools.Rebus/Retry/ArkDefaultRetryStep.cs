@@ -10,7 +10,6 @@ using System.Collections.Concurrent;
 
 namespace Ark.Tools.Rebus.Retry;
 
-#pragma warning disable MA0137 // Preserve Rebus retry contract method names
 
 
 /// <summary>

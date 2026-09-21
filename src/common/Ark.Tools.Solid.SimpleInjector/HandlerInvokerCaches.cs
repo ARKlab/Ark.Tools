@@ -9,8 +9,6 @@ using SimpleInjector;
 
 namespace Ark.Tools.Solid.SimpleInjector;
 
-#pragma warning disable MA0137 // Preserve SimpleInjector handler API names
-#pragma warning disable MA0214 // Preserve SimpleInjector task forwarding semantics
 
 internal static class QueryHandlerInvokerCache<TResult>
 {
