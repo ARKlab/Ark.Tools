@@ -77,6 +77,14 @@ jobs:
           setup-only: true
           apm-version: 0.31.0
 
+      - name: Install dotnet
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: 'Install Azure Functions Core Tools'
+        run: npm install --global azure-functions-core-tools@4.14.0
+
       - name: 'Wait for Service Bus emulator'
         run: |
           timeout 300s bash -c '
@@ -86,11 +94,3 @@ jobs:
             done
             sleep 5
           '
-
-      - name: Install dotnet
-        uses: actions/setup-dotnet@v6
-        with:
-          global-json-file: global.json
-
-      - name: 'Install Azure Functions Core Tools'
-        run: npm install --global azure-functions-core-tools@4.14.0
