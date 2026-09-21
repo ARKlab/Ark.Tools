@@ -67,7 +67,8 @@ internal static class MessagingFunctionsNaming
     /// <summary>Escapes a value for a generated C# string literal.</summary>
     /// <param name="value">The value to escape.</param>
     /// <returns>The escaped value.</returns>
-return value.Replace("\\", "\\\\")
+    public static string _escape(string value)
+        => value.Replace("\\", "\\\\")
             .Replace("\"", "\\\"")
             .Replace("\r", "\\r")
             .Replace("\n", "\\n")
