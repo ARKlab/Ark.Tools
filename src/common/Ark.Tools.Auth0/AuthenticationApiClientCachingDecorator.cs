@@ -150,13 +150,13 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
         var task = _pendingTasks.GetOrAdd(
             key,
-            static (k, state) => state.Policy.ExecuteAsync(
+            static async (k, state) => await state.Policy.ExecuteAsync(
                 static async context => await _executeTokenAsync<TRequest>(context).ConfigureAwait(false),
                 new Context(k, new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     ["state"] = (state.Request, state.GetTokenAsync, state.CancellationToken)
                 })
-            ),
+            ).ConfigureAwait(false),
             (
                 Policy: _accessTokenResponseCachePolicy,
                 Request: request,
