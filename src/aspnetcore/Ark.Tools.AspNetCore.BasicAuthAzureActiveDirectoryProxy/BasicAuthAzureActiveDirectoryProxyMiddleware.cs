@@ -39,6 +39,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
 
     [ComplianceReviewed("ARKPII005", "The access token is composed into the outgoing Authorization header, never logged or persisted.")]
     [RequiresUnreferencedCode("Invoke uses System.Text.Json reflection-based serialization for OAuthResult type.")]
+#pragma warning disable MA0137 // ASP.NET Core middleware discovery requires the Invoke method name
     public async Task Invoke(HttpContext context)
     {
         System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;
@@ -113,6 +114,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
 
         await _next(context).ConfigureAwait(false);
     }
+#pragma warning restore MA0137
 
     [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
     sealed record OAuthResult

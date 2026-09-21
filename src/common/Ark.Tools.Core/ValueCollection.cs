@@ -27,7 +27,7 @@ public sealed class ValueCollection<T> : Collection<T?>, IEquatable<ValueCollect
         return this.SequenceEqual(other, _equalityComparer);
     }
 
-    public override bool Equals(object? obj) => obj is { } && (ReferenceEquals(this, obj) || obj is ValueCollection<T> coll && Equals(coll));
+    public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj) => obj is { } && (ReferenceEquals(this, obj) || obj is ValueCollection<T> coll && Equals(coll));
 
     public override int GetHashCode() =>
         unchecked(this.Aggregate(0,

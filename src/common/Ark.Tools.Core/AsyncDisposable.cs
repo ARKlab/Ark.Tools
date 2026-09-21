@@ -20,9 +20,9 @@ public static class AsyncDisposable
         /// </summary>
         public bool IsDisposed => _cleanup == null;
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            return Interlocked.Exchange(ref _cleanup, null)?.Invoke() ?? default;
+            await (Interlocked.Exchange(ref _cleanup, null)?.Invoke() ?? default).ConfigureAwait(false);
         }
     }
 
