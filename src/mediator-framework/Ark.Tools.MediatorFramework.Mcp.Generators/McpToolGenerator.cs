@@ -374,10 +374,15 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? GetBool(toolAttribute, "AllowAnonymous", false)
             : GetBool(httpEndpoint, "AllowAnonymous", false);
-        var summary = XmlDocumentation(type, "summary", documentationFiles)
-            ?? XmlDocumentation(type.ContainingType, "summary", documentationFiles);
-        var remarks = XmlDocumentation(type, "remarks", documentationFiles)
-            ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
+        var hasDescription = TryGetDescription(type, out var attributeDescription);
+        var summary = hasDescription
+            ? attributeDescription
+            : XmlDocumentation(type, "summary", documentationFiles)
+                ?? XmlDocumentation(type.ContainingType, "summary", documentationFiles);
+        var remarks = hasDescription
+            ? null
+            : XmlDocumentation(type, "remarks", documentationFiles)
+                ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
         var description = summary is null
             ? remarks ?? string.Empty
             : remarks is null
@@ -387,7 +392,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             context.ReportDiagnostic(Diagnostic.Create(MissingDescription, location, name));
 
         var propertyDescriptions = properties
-            .Select(property => (property.Name, Description: XmlDocumentation(property, "summary", documentationFiles)))
+            .Select(property => (property.Name, Description: TryGetDescription(property, out var description)
+                ? description
+                : XmlDocumentation(property, "summary", documentationFiles)))
             .Where(item => item.Description is not null)
             .ToImmutableDictionary(item => item.Name, item => item.Description!, StringComparer.Ordinal);
 
@@ -567,6 +574,14 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             return null;
         var value = xml.Substring(startIndex + start.Length, endIndex - startIndex - start.Length);
         return string.Join(" ", value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static bool TryGetDescription(ISymbol symbol, out string? description)
+    {
+        var attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
+            candidate.AttributeClass?.ToDisplayString() == "System.ComponentModel.DescriptionAttribute");
+        description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
+        return attribute is not null;
     }
 
     private static string? GetString(AttributeData attribute, string name)

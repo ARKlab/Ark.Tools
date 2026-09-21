@@ -1371,6 +1371,89 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsPreferDescriptionAttributesOverXmlDocumentation()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>XML endpoint summary.</summary>
+            /// <remarks>XML endpoint remarks.</remarks>
+            [Description("Attribute endpoint description.")]
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>XML property summary.</summary>
+                [Description("Attribute property description.")]
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"Attribute endpoint description.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"Attribute property description.\"");
+        minimalApi.Should().NotContain("XML endpoint");
+        minimalApi.Should().NotContain("XML property");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>XML endpoint summary.</summary>
+            [Description("Attribute endpoint description.")]
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse>
+            {
+                /// <summary>XML property summary.</summary>
+                [Description("Attribute property description.")]
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class DocumentedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        grpc.Should().Contain("// Attribute endpoint description.");
+        grpc.Should().Contain("// Attribute property description.");
+        grpc.Should().NotContain("XML endpoint");
+        grpc.Should().NotContain("XML property");
+
+        var mcp = _runGenerator<McpToolGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>XML endpoint summary.</summary>
+            /// <remarks>XML endpoint remarks.</remarks>
+            [Description("Attribute endpoint description.")]
+            [McpTool]
+            public sealed record GetDocumented : IQuery<GetDocumented, string>
+            {
+                /// <summary>XML property summary.</summary>
+                [Description("Attribute property description.")]
+                public string Id { get; init; } = string.Empty;
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        mcp.Should().Contain("Description(\"Attribute endpoint description.\")");
+        mcp.Should().Contain("Description(\"Attribute property description.\")");
+        mcp.Should().NotContain("XML endpoint");
+        mcp.Should().NotContain("XML property");
+    }
+
+    [TestMethod]
     public void GeneratorsNormalizeMultilineAndEntityEncodedXmlDocumentation()
     {
         var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
