@@ -10,6 +10,8 @@ using Raven.Client.ServerWide.Operations;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 
+#pragma warning disable MA0137 // Preserve RavenDB configuration API names
+
 public static class RavenDbStoreConfigurationExtensions
 {
     [RequiresUnreferencedCode("RavenDB document conventions use reflection. Document types must be preserved.")]

@@ -15,6 +15,9 @@ using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost;
 
+#pragma warning disable MA0137 // Preserve hosted resource watcher lifecycle names
+#pragma warning disable MA0214 // Preserve hosted resource watcher task semantics
+
 
 [SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
 public delegate void VoidEventHandler();

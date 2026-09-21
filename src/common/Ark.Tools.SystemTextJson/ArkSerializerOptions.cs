@@ -13,5 +13,11 @@ public static class ArkSerializerOptions
 
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
         Justification = "The singleton instance is created here but warnings are propagated through the JsonOptions property getter.")]
-    private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+    private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+    {
+#if NET9_0_OR_GREATER
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true
+#endif
+    }.ConfigureArkDefaults();
 }

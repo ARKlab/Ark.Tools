@@ -5,6 +5,8 @@ using Client = Renci.SshNet.SftpClient;
 
 namespace Ark.Tools.FtpClient.SftpClient;
 
+#pragma warning disable MA0214 // Preserve SFTP operation task forwarding semantics
+
 public static class SftpClientAsyncExtensions
 {
     /// <summary>

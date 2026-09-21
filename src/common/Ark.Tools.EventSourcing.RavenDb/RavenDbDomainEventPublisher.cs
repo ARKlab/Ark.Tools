@@ -7,6 +7,9 @@ using Raven.Client.Documents.Subscriptions;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 
+#pragma warning disable MA0137 // Preserve RavenDB publisher contract names
+#pragma warning disable MA0214 // Preserve RavenDB task forwarding semantics
+
 public sealed class RavenDbDomainEventPublisher : IDisposable
 {
     private readonly IDocumentStore _store;

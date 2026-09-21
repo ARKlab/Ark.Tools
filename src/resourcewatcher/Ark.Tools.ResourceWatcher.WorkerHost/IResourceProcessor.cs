@@ -3,6 +3,8 @@
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost;
 
+#pragma warning disable MA0137 // Preserve resource watcher processor contract names
+
 /// <summary>
 /// Processes a resource with type-safe extension data.
 /// </summary>

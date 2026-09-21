@@ -13,6 +13,9 @@ using System.Security.Authentication;
 
 namespace Ark.Tools.FtpClient.FtpProxy;
 
+#pragma warning disable MA0137 // Preserve FTP token provider contract names
+#pragma warning disable MA0214 // Preserve FTP token provider task forwarding semantics
+
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable
 internal sealed class TokenProvider
