@@ -16,7 +16,7 @@ public sealed class ValueCollection<T> : Collection<T?>, IEquatable<ValueCollect
     public ValueCollection(IList<T?> list, IEqualityComparer<T?>? equalityComparer = null) : base(list) =>
         _equalityComparer = equalityComparer ?? EqualityComparer<T?>.Default;
 
-    public bool Equals(ValueCollection<T>? other)
+    public bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] ValueCollection<T>? other)
     {
         if (other is null) return false;
 

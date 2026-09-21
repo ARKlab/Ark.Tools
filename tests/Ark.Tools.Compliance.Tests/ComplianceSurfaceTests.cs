@@ -502,7 +502,7 @@ public sealed class ComplianceSurfaceTests
                 """;
             await File.WriteAllTextAsync(declaration, source).ConfigureAwait(false);
 
-            var missing = await _buildFixture(project).ConfigureAwait(false);
+            var missing = await _buildFixtureAsync(project).ConfigureAwait(false);
             missing.ExitCode.Should().NotBe(0);
             missing.Output.Should().Contain("ARKPII020");
 
@@ -514,11 +514,11 @@ public sealed class ComplianceSurfaceTests
                 "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
             net8.Should().Equal(net10);
             await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net8).ConfigureAwait(false);
-            var accepted = await _buildFixture(project).ConfigureAwait(false);
+            var accepted = await _buildFixtureAsync(project).ConfigureAwait(false);
             accepted.ExitCode.Should().Be(0, accepted.Output);
 
             await File.WriteAllTextAsync(declaration, source.Replace("public string Email", "public string Contact", StringComparison.Ordinal)).ConfigureAwait(false);
-            var drift = await _buildFixture(project).ConfigureAwait(false);
+            var drift = await _buildFixtureAsync(project).ConfigureAwait(false);
             drift.ExitCode.Should().NotBe(0);
             drift.Output.Should().Contain("ARKPII020");
         }
@@ -528,7 +528,7 @@ public sealed class ComplianceSurfaceTests
         }
     }
 
-    private static async Task<(int ExitCode, string Output)> _buildFixture(
+    private static async Task<(int ExitCode, string Output)> _buildFixtureAsync(
         string project,
         string? target = null,
         string[]? properties = null)

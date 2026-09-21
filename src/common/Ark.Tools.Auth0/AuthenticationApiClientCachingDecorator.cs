@@ -151,7 +151,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         var task = _pendingTasks.GetOrAdd(
             key,
             static (k, state) => state.Policy.ExecuteAsync(
-                static context => _executeTokenAsync<TRequest>(context),
+                static async context => await _executeTokenAsync<TRequest>(context).ConfigureAwait(false),
                 new Context(k, new Dictionary<string, object>(StringComparer.Ordinal)
                 {
                     ["state"] = (state.Request, state.GetTokenAsync, state.CancellationToken)
@@ -268,7 +268,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     public async Task<UserInfo> GetUserInfoAsync(
         [Secret] string accessToken, CancellationToken cancellationToken = default)
     {
-        return await _userInfoCachePolicy.ExecuteAsync((_, ctk) => _inner.GetUserInfoAsync(accessToken, ctk), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>(StringComparer.Ordinal)
+        return await _userInfoCachePolicy.ExecuteAsync(async (_, ctk) => await _inner.GetUserInfoAsync(accessToken, ctk).ConfigureAwait(false), new Context(AuthenticationApiClientCachingDecorator._getKey(accessToken), new Dictionary<string, object>(StringComparer.Ordinal)
         {
             { ContextualTtl.TimeSpanKey, _expiresIn(accessToken) }
         }), cancellationToken).ConfigureAwait(false);

@@ -15,9 +15,6 @@ public static class ParallellExtensions
         return list.Parallel(degree, (i, x, ct) => action.Invoke(x), ctk);
     }
 
-    #pragma warning restore MA0214
-    #pragma warning restore MA0137
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Task<IList<TResult>> Parallel<T, TResult>(this IList<T> list, int degree, Func<T, Task<TResult>> action, CancellationToken ctk = default)
     {
@@ -74,3 +71,6 @@ public static class ParallellExtensions
         return results;
     }
 }
+
+#pragma warning restore MA0214
+#pragma warning restore MA0137

@@ -19,7 +19,7 @@ public sealed class SqlBuildTargetTests
     [TestMethod]
     public async Task TokensAreEscapedForEachSqlContext()
     {
-        var result = await _run("""
+        var result = await _runAsync("""
             ADD SENSITIVITY CLASSIFICATION TO [$(Shared)].[Customers].[email_address]
                 WITH (LABEL = '$(Shared)', INFORMATION_TYPE = 'Contact', RANK = HIGH);
             """, [("Shared", "tenant]'; DROP TABLE Customers;--")]).ConfigureAwait(false);
@@ -33,7 +33,7 @@ public sealed class SqlBuildTargetTests
     [TestMethod]
     public async Task MissingItemsPreserveSqlcmdVariables()
     {
-        var result = await _run("ALTER TABLE [$(Schema)].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');",
+        var result = await _runAsync("ALTER TABLE [$(Schema)].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');",
             []).ConfigureAwait(false);
         result.ExitCode.Should().Be(0, result.Log);
         result.Sql.Should().Contain("[$(Schema)]");
@@ -45,7 +45,7 @@ public sealed class SqlBuildTargetTests
     [DataRow("tenant\n:!! destructive-command")]
     public async Task UnsafeTokenValuesFailTheBuild(string value)
     {
-        var result = await _run("ALTER TABLE [$(Schema)].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');",
+        var result = await _runAsync("ALTER TABLE [$(Schema)].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');",
             [("Schema", value)]).ConfigureAwait(false);
         result.ExitCode.Should().NotBe(0);
         result.Log.Should().Contain("Invalid or duplicate ArkComplianceSqlToken");
@@ -56,13 +56,13 @@ public sealed class SqlBuildTargetTests
     [TestMethod]
     public async Task DuplicateTokenItemsFailTheBuild()
     {
-        var result = await _run("ALTER TABLE [$(Schema)].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');",
+        var result = await _runAsync("ALTER TABLE [$(Schema)].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');",
             [("Schema", "one"), ("Schema", "two")]).ConfigureAwait(false);
         result.ExitCode.Should().NotBe(0);
         result.Log.Should().Contain("Invalid or duplicate ArkComplianceSqlToken");
     }
 
-    private static async Task<(int ExitCode, string Log, string Sql)> _run(string template, (string Name, string Value)[] tokens)
+    private static async Task<(int ExitCode, string Log, string Sql)> _runAsync(string template, (string Name, string Value)[] tokens)
     {
         var directory = Path.Join(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
