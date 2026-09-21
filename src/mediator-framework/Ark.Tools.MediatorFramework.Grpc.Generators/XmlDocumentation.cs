@@ -31,6 +31,8 @@ internal static class XmlDocumentation
         var attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
             candidate.AttributeClass?.ToDisplayString() == "System.ComponentModel.DescriptionAttribute");
         description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
+        if (description is not null)
+            description = string.Join(' ', description.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
         return attribute is not null;
     }
 

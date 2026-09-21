@@ -2,11 +2,11 @@
 
 - **Severity:** Warning
 - **Component:** Mediator Framework
-- **Diagnostic message:** `MCP tool '{0}' must have an XML description`
+- **Diagnostic message:** `MCP tool '{0}' must have an XML description or DescriptionAttribute`
 
 ## What it checks
 
-This Ark.Tools diagnostic identifies the condition described above and reports it at the relevant declaration, contract, or generated-code input. The diagnostic message includes the contextual symbol and the required correction where applicable.
+This Ark.Tools diagnostic identifies MCP tools that have neither XML documentation nor a `DescriptionAttribute` and reports the issue at the relevant declaration, contract, or generated-code input. The diagnostic message includes the contextual symbol and the required correction where applicable.
 
 ## How to fix it
 

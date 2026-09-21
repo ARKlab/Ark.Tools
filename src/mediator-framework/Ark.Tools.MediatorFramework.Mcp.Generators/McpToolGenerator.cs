@@ -57,7 +57,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF054.md");
     private static readonly DiagnosticDescriptor MissingDescription = new(
-        "ARKMF055", "Document the MCP tool", "MCP tool '{0}' must have an XML description",
+        "ARKMF055", "Document the MCP tool", "MCP tool '{0}' must have an XML description or DescriptionAttribute",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Warning, true,
         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF055.md");
     /// <inheritdoc />
@@ -732,10 +732,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 ? "global::System.Threading.Tasks.Task"
                 : "global::System.Threading.Tasks.Task<" + response + ">";
         var parameters = model.Properties.Select(property =>
-            "[global::System.ComponentModel.Description(\""
-            + Escape(model.PropertyDescriptions.TryGetValue(property.Name, out var propertyDescription)
+            "[global::System.ComponentModel.Description("
+            + Literal(model.PropertyDescriptions.TryGetValue(property.Name, out var propertyDescription)
                 ? propertyDescription
-                : string.Empty) + "\")] "
+                : string.Empty) + ")] "
             + ToInputType(property.Type) + " " + ToParameterName(property.Name));
 
         builder.AppendLine();
@@ -751,7 +751,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.AppendLine("            UseStructuredContent = true");
         builder.AppendLine("        )]");
         if (model.Description is not null)
-            builder.Append("        [global::System.ComponentModel.Description(\"").Append(Escape(model.Description)).AppendLine("\")]");
+            builder.Append("        [global::System.ComponentModel.Description(").Append(Literal(model.Description)).AppendLine(")]");
         builder.Append("        [global::Microsoft.AspNetCore.Authorization.")
             .Append(model.AllowAnonymous ? "AllowAnonymousAttribute" : "AuthorizeAttribute")
             .AppendLine("]");
@@ -826,6 +826,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
     private static string Escape(string value)
         => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+    private static string Literal(string value)
+        => SyntaxFactory.Literal(value).ToFullString();
 
     private readonly record struct DocumentationFileModel(string Path, string Content);
     private sealed record MarkerModel(string ContextMetadataName, string? AssemblyName, MarkerLocation? InvalidLocation);

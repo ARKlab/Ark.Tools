@@ -1454,6 +1454,45 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsCompileMultilineDescriptionAttributes()
+    {
+        var (grpcDriver, grpcCompilation) = _runGeneratorDriver<ArkGrpcEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [Description("line 1\nline 2")]
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<GetDocumented, string> { }
+            """,
+            []);
+        grpcDriver.RunGeneratorsAndUpdateCompilation(grpcCompilation, out var generatedGrpcCompilation, out _);
+        generatedGrpcCompilation.GetDiagnostics().Should().NotContain(
+            static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+        var (mcpDriver, mcpCompilation) = _runGeneratorDriver<McpToolGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            [Description("line 1\nline 2")]
+            [McpTool]
+            public sealed class RunCommand : ICommand { }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """,
+            []);
+        mcpDriver.RunGeneratorsAndUpdateCompilation(mcpCompilation, out var generatedMcpCompilation, out _);
+        generatedMcpCompilation.GetDiagnostics().Should().NotContain(
+            static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+    }
+
+    [TestMethod]
     public void GeneratorsNormalizeMultilineAndEntityEncodedXmlDocumentation()
     {
         var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
