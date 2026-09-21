@@ -17,12 +17,12 @@ permissions:
 jobs:
   build:
     name: 'Build'
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ubuntu-22.04'
     env:
       ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING: 'Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;'
     services:
       sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
+        image: mcr.microsoft.com/mssql/server:2025-latest
         ports:
           - 1433:1433
         env:
