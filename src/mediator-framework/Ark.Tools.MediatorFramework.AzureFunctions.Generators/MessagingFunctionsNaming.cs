@@ -61,7 +61,11 @@ internal static class MessagingFunctionsNaming
     {
         var name = string.Concat(_words(identity).Select(static word =>
             char.ToUpperInvariant(word[0]) + word.Substring(1)));
-        return string.IsNullOrEmpty(name) ? "Messaging" : name;
+        return string.IsNullOrEmpty(name)
+            ? "Messaging"
+            : char.IsDigit(name[0])
+                ? "Messaging" + name
+                : name;
     }
 
     /// <summary>Escapes a value for a generated C# string literal.</summary>

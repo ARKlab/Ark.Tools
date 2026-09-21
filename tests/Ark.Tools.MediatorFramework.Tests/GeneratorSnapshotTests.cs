@@ -475,6 +475,38 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorPreservesStaticAndRecordStructContainingContexts()
+    {
+        var (driver, compilation) = _runGeneratorDriver<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Runs the command.</summary>
+            [McpTool]
+            public sealed class RunCommand : ICommand { }
+            public static partial class StaticContainer
+            {
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public partial class Context { }
+            }
+            public partial record struct RecordStructContainer
+            {
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public partial class Context { }
+            }
+            """,
+            []);
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+        var result = driver.GetRunResult().Results.Single();
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        generatedCompilation.GetDiagnostics().Should().NotContain(
+            static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+    }
+
+    [TestMethod]
     public void McpGeneratorUsesDistinctHintNamesForCollidingContextIdentities()
     {
         var (driver, _) = _runTrackedGenerator<McpToolGenerator>(
@@ -4026,6 +4058,39 @@ public sealed class GeneratorSnapshotTests
                 StringComparison.Ordinal));
         first.Generated.Should().Contain("new global::TestRetryPolicy().MaximumDeliveryCount");
         first.Generated.Split("ServiceBusTrigger(", StringSplitOptions.None).Should().HaveCount(2);
+    }
+
+    [TestMethod]
+    public void MessagingFunctionsGeneratorPrefixesDigitStartingFunctionNames()
+    {
+        var result = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            using Ark.Tools.Solid;
+            [assembly: MessagingFunctionsHost(
+                typeof(Participant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [Event]
+            public sealed class Message : ICommand { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(Message) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class Publisher { }
+            [MessagingParticipant(
+                Identity = "123",
+                Subscribes = new[] { typeof(Message) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class Participant { }
+            [MessagingNetwork(Members = new[] { typeof(Publisher), typeof(Participant) })]
+            public sealed partial class Network { }
+            """,
+            []);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("Task Messaging123(");
     }
 
     [TestMethod]

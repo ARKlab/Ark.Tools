@@ -651,10 +651,15 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static string GetPartialTypeDeclaration(INamedTypeSymbol type)
     {
         var declaration = type.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as TypeDeclarationSyntax;
-        var keyword = declaration?.Keyword.ValueText ?? "class";
+        var modifiers = declaration is null
+            ? "partial"
+            : string.Join(" ", declaration.Modifiers.Select(static modifier => modifier.ValueText));
+        var keyword = declaration is RecordDeclarationSyntax { ClassOrStructKeyword.ValueText: { Length: > 0 } recordKind }
+            ? declaration.Keyword.ValueText + " " + recordKind
+            : declaration?.Keyword.ValueText ?? "class";
         var name = declaration?.Identifier.ValueText ?? type.Name;
         var typeParameters = declaration?.TypeParameterList?.ToString() ?? string.Empty;
-        return "partial " + keyword + " " + name + typeParameters;
+        return modifiers + " " + keyword + " " + name + typeParameters;
     }
 
     private static string GetTypeConstraints(INamedTypeSymbol type)
