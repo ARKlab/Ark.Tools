@@ -39,6 +39,7 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
         _auth0.Dispose();
     }
 
+#pragma warning disable MA0137 // ASP.NET Core middleware discovery requires the Invoke method name
     public async Task Invoke(HttpContext context)
     {
         System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;
@@ -104,4 +105,5 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
 
         await _next(context).ConfigureAwait(false);
     }
+#pragma warning restore MA0137
 }
