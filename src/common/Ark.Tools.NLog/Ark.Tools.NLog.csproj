@@ -31,21 +31,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ben.Demystifier" />
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="NLog" />
     <PackageReference Include="NLog.Database" />
     <PackageReference Include="NLog.DiagnosticSource" />
     <PackageReference Include="NLog.MailKit" />
     <PackageReference Include="Slack.Webhooks" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" ExcludeAssets="compile;runtime" PrivateAssets="all" />
 
 	  <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <NoWarn>$(NoWarn);MSB3277</NoWarn>
-  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core\Ark.Tools.Core.csproj" />

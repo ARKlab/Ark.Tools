@@ -7,9 +7,11 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
+
+using Ark.Tools.MediatorFramework.Generators;
 
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 
@@ -17,21 +19,13 @@ namespace Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 [Generator(LanguageNames.CSharp)]
 public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 {
-    // ponytail: [GeneratedRegex] is not available for netstandard2.0 targets; static field compiles and caches once.
-    private static readonly Regex _routeParamRegex = new Regex(@"\{(?<param>[^}:]+)(?::[^}]+)?\}", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
     private const string _hostAttribute = "Ark.Tools.MediatorFramework.HttpHostAttribute";
-    private const string _endpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
-    private const string _versioningAttribute = "Ark.Tools.MediatorFramework.VersioningAttribute";
-    private const string _httpRouteAttribute = "Ark.Tools.MediatorFramework.HttpRouteAttribute";
-    private const string _httpQueryAttribute = "Ark.Tools.MediatorFramework.HttpQueryAttribute";
-    private const string _httpBodyAttribute = "Ark.Tools.MediatorFramework.HttpBodyAttribute";
-    private const string _serverSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
-    private const string _eTagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";
-    private const string _arkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
-    private const string _asyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
-    private const string _solidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
-    private const string _solidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
-    private const string _solidCommand = "global::Ark.Tools.Solid.ICommand";
+    private const string _hostAttributeStage = "AzureFunctionsHostAttributes";
+    private const string _hostSpecStage = "AzureFunctionsHostSpecs";
+    private const string _endpointAttributeStage = "AzureFunctionsEndpointAttributes";
+    private const string _endpointSpecStage = "AzureFunctionsEndpointSpecs";
+    private const string _specStage = "AzureFunctionsSpecs";
+    private const string _outputStage = "AzureFunctionsOutput";
 
     private static readonly DiagnosticDescriptor _messagePackNotSupported = new(
         "ARKMF030",
@@ -87,107 +81,93 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var hosts = context.SyntaxProvider.ForAttributeWithMetadataName(
                 _hostAttribute,
                 static (_, _) => true,
-                static (attributeContext, _) => _extractHosts(attributeContext))
+                static (attributeContext, cancellationToken) => AzureFunctionsEndpointParser._readHosts(attributeContext, cancellationToken))
+            .WithTrackingName(_hostAttributeStage)
             .SelectMany(static (extracted, _) => extracted)
+            .WithTrackingName(_hostSpecStage)
             .Collect();
         var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
-                _endpointAttribute,
-                static (_, _) => true,
-                static (attributeContext, _) => new EndpointCandidate(
-                    (INamedTypeSymbol)attributeContext.TargetSymbol,
-                    attributeContext.Attributes[0]))
+                AzureFunctionsEndpointParser._endpointAttribute,
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol type
+                    ? AzureFunctionsEndpointParser._readEndpoint(type, attributeContext.Attributes[0])
+                    : null)
+            .WithTrackingName(_endpointAttributeStage)
+            .Where(static endpoint => endpoint is not null)
+            .Select(static (endpoint, _) => endpoint!.Value)
+            .WithTrackingName(_endpointSpecStage)
             .Collect();
+        var specs = hosts.Combine(sourceEndpoints)
+            .Select(static (pair, _) => new AzureFunctionsAggregateSpec(
+                pair.Left
+                    .OrderBy(static host => host.MarkerFullyQualifiedType, StringComparer.Ordinal)
+                    .ThenBy(static host => host.Prefix, StringComparer.Ordinal)
+                    .ToImmutableArray(),
+                pair.Right
+                    .OrderBy(static endpoint => endpoint.FullyQualifiedType, StringComparer.Ordinal)
+                    .ToImmutableArray()))
+            .WithTrackingName(_specStage);
+        var output = specs
+            .Select(static (spec, _) => spec)
+            .WithTrackingName(_outputStage);
 
         context.RegisterSourceOutput(
-            hosts.Combine(sourceEndpoints),
-            static (productionContext, pair) => _emit(productionContext, pair.Left, pair.Right));
-    }
-
-    private static ImmutableArray<HostInfo> _extractHosts(GeneratorAttributeSyntaxContext context)
-    {
-        var builder = ImmutableArray.CreateBuilder<HostInfo>(context.Attributes.Length);
-        foreach (var host in context.Attributes)
-        {
-            if (host.ConstructorArguments.Length < 2
-                || host.ConstructorArguments[0].Value is not INamedTypeSymbol marker
-                || host.ConstructorArguments[1].Value is not string prefix)
-                continue;
-
-            builder.Add(new HostInfo(
-                marker,
-                prefix,
-                _getTypes(host, "IncludedContracts"),
-                _getTypes(host, "ExcludedContracts"),
-                marker.Locations.Any(static location => location.IsInSource),
-                host.ApplicationSyntaxReference is { } syntax ? Location.Create(syntax.SyntaxTree, syntax.Span) : null));
-        }
-
-        return builder.ToImmutable();
+            output,
+            static (productionContext, spec) =>
+                _emit(productionContext, spec.Hosts.Values, spec.Endpoints.Values));
     }
 
     private static void _emit(
         SourceProductionContext context,
-        ImmutableArray<HostInfo> hosts,
-        ImmutableArray<EndpointCandidate> sourceEndpoints)
+        ImmutableArray<HostSpec> hosts,
+        ImmutableArray<EndpointSpec> sourceEndpoints)
     {
         if (hosts.IsDefaultOrEmpty)
             return;
 
-        var endpoints = new List<Endpoint>();
-        var prefixByAssembly = new Dictionary<IAssemblySymbol, string>(SymbolEqualityComparer.Default);
-        foreach (var host in hosts)
+        var endpoints = new List<EndpointSpec>();
+        var prefixByAssembly = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var host in hosts
+            .OrderBy(static item => item.MarkerFullyQualifiedType, StringComparer.Ordinal)
+            .ThenBy(static item => item.Prefix, StringComparer.Ordinal))
         {
+            context.CancellationToken.ThrowIfCancellationRequested();
+            var hostLocation = LocationSpec._toLocation(host.Location);
             if (host.Prefix.IndexOf("{version}", StringComparison.Ordinal) < 0)
             {
-                context.ReportDiagnostic(Diagnostic.Create(_invalidHostPrefix, host.Location, host.Prefix));
+                context.ReportDiagnostic(Diagnostic.Create(_invalidHostPrefix, hostLocation, host.Prefix));
                 continue;
             }
 
-            var markerAssembly = host.Marker.ContainingAssembly;
-            if (prefixByAssembly.TryGetValue(markerAssembly, out var existingPrefix))
+            if (prefixByAssembly.TryGetValue(host.MarkerAssemblyName, out var existingPrefix))
             {
                 if (!string.Equals(existingPrefix, host.Prefix, StringComparison.Ordinal))
                 {
                     context.ReportDiagnostic(Diagnostic.Create(
-                        _conflictingHostPrefixes, host.Location, markerAssembly.Name, existingPrefix, host.Prefix));
+                        _conflictingHostPrefixes, hostLocation, host.MarkerAssemblyName, existingPrefix, host.Prefix));
                     continue;
                 }
             }
             else
             {
-                prefixByAssembly.Add(markerAssembly, host.Prefix);
+                prefixByAssembly.Add(host.MarkerAssemblyName, host.Prefix);
             }
 
-            foreach (var (list, name) in new[] { (host.Included, "IncludedContracts"), (host.Excluded, "ExcludedContracts") })
+            foreach (var selection in host.InvalidSelections)
             {
-                foreach (var selection in list)
-                {
-                    if (!SymbolEqualityComparer.Default.Equals(selection.ContainingAssembly, markerAssembly)
-                        || !selection.GetAttributes().Any(static attribute => attribute.AttributeClass?.ToDisplayString() == _endpointAttribute))
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(
-                            _invalidHostSelection, host.Location, selection.Name, name, markerAssembly.Name));
-                    }
-                }
+                context.ReportDiagnostic(Diagnostic.Create(
+                    _invalidHostSelection, hostLocation, selection.TypeName, selection.ListName, host.MarkerAssemblyName));
             }
 
             var candidates = host.MarkerIsInSource
-                ? sourceEndpoints.Where(candidate =>
-                    SymbolEqualityComparer.Default.Equals(candidate.Type.ContainingAssembly, host.Marker.ContainingAssembly))
-                : _allTypes(host.Marker.ContainingAssembly.GlobalNamespace)
-                    .Select(static type => new EndpointCandidate(
-                        type,
-                        type.GetAttributes().FirstOrDefault(static attribute =>
-                            attribute.AttributeClass?.ToDisplayString() == _endpointAttribute)))
-                    .Where(static candidate => candidate.Attribute is not null);
+                ? sourceEndpoints.AsEnumerable()
+                : host.MetadataEndpoints;
             foreach (var candidate in candidates)
             {
-                if (!_isSelected(candidate.Type, host.Marker.ContainingAssembly, host.Included, host.Excluded))
+                if (!_isSelected(candidate, host))
                     continue;
 
-                var endpoint = _createEndpoint(candidate.Type, candidate.Attribute!, host.Prefix);
-                if (endpoint is not null)
-                    endpoints.Add(endpoint.Value);
+                endpoints.Add(candidate with { Prefix = host.Prefix });
             }
         }
 
@@ -203,34 +183,38 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                     FunctionName = _sanitize(endpoint.TypeName + "_v" + version.ToString(CultureInfo.InvariantCulture)),
                 }));
 
-        var valid = new List<Endpoint>();
-        foreach (var endpoint in expanded.OrderBy(static item => item.FunctionName, StringComparer.Ordinal))
+        var valid = new List<EndpointSpec>();
+        var routeOwners = new Dictionary<string, string>(StringComparer.Ordinal);
+        var functionOwners = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var endpoint in expanded
+            .OrderBy(static item => item.FunctionName, StringComparer.Ordinal)
+            .ThenBy(static item => item.FullyQualifiedType, StringComparer.Ordinal))
         {
+            context.CancellationToken.ThrowIfCancellationRequested();
+            var endpointLocation = LocationSpec._toLocation(endpoint.Location);
             if (endpoint.MessagePack)
             {
-                context.ReportDiagnostic(Diagnostic.Create(_messagePackNotSupported, endpoint.Location, endpoint.TypeName));
+                context.ReportDiagnostic(Diagnostic.Create(_messagePackNotSupported, endpointLocation, endpoint.TypeName));
                 continue;
             }
 
-            var duplicateRoute = valid.FirstOrDefault(item =>
-                string.Equals(item.Verb, endpoint.Verb, StringComparison.Ordinal)
-                && string.Equals(item.Route, endpoint.Route, StringComparison.Ordinal));
-            if (duplicateRoute.TypeName is not null)
+            var routeKey = endpoint.Verb + "\u0000" + endpoint.Route;
+            if (routeOwners.TryGetValue(routeKey, out var routeOwner))
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    _duplicateRoute, endpoint.Location, duplicateRoute.TypeName, endpoint.TypeName, endpoint.Route));
+                    _duplicateRoute, endpointLocation, routeOwner, endpoint.TypeName, endpoint.Route));
                 continue;
             }
 
-            var duplicateFunction = valid.FirstOrDefault(item =>
-                string.Equals(item.FunctionName, endpoint.FunctionName, StringComparison.Ordinal));
-            if (duplicateFunction.TypeName is not null)
+            if (functionOwners.TryGetValue(endpoint.FunctionName, out var functionOwner))
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    _duplicateFunction, endpoint.Location, duplicateFunction.TypeName, endpoint.TypeName, endpoint.FunctionName));
+                    _duplicateFunction, endpointLocation, functionOwner, endpoint.TypeName, endpoint.FunctionName));
                 continue;
             }
 
+            routeOwners.Add(routeKey, endpoint.TypeName);
+            functionOwners.Add(endpoint.FunctionName, endpoint.TypeName);
             valid.Add(endpoint);
         }
 
@@ -247,10 +231,19 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         _emitHealthCheckFunction(source);
         source.AppendLine("}");
-        context.AddSource("ArkGeneratedFunctions.g.cs", source.ToString());
+        context.AddSource("ArkGeneratedFunctions.g.cs", source._toGeneratedSource());
     }
 
-    private static void _emitFunction(StringBuilder source, Endpoint endpoint)
+    private static bool _isSelected(in EndpointSpec endpoint, in HostSpec host)
+    {
+        if (!string.Equals(endpoint.AssemblyName, host.MarkerAssemblyName, StringComparison.Ordinal))
+            return false;
+        if (host.Excluded.Values.Contains(endpoint.FullyQualifiedType, StringComparer.Ordinal))
+            return false;
+        return host.Included.IsEmpty || host.Included.Values.Contains(endpoint.FullyQualifiedType, StringComparer.Ordinal);
+    }
+
+    private static void _emitFunction(StringBuilder source, EndpointSpec endpoint)
     {
         var hasBody = endpoint.Verb is "POST" or "PUT" or "PATCH";
         var routeProperties = endpoint.Properties.Where(static p => p.IsRoute && !p.IsServerSet).ToArray();
@@ -294,7 +287,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.Append("            _attachments = await global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.ReadAttachmentsAsync(request, ")
                 .Append(endpoint.MaxFileCount.ToString(CultureInfo.InvariantCulture))
                 .Append(", ")
-                .Append(endpoint.AllowedContentTypes.IsDefaultOrEmpty
+                .Append(endpoint.AllowedContentTypes.IsEmpty
                     ? "global::System.Array.Empty<string>()"
                     : "new string[] { " + string.Join(", ", endpoint.AllowedContentTypes.Select(_literal)) + " }")
                 .AppendLine(", cancellationToken).ConfigureAwait(false);");
@@ -452,7 +445,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("    }");
     }
 
-    private static void _emitPropertyAssignment(StringBuilder source, Endpoint endpoint, string indent, string propertyName, string value)
+    private static void _emitPropertyAssignment(StringBuilder source, EndpointSpec endpoint, string indent, string propertyName, string value)
     {
         if (endpoint.IsRecord)
             source.Append(indent).Append("body = body with { ").Append(propertyName).Append(" = ").Append(value).AppendLine(" };");
@@ -460,9 +453,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.Append(indent).Append("body.").Append(propertyName).Append(" = ").Append(value).AppendLine(";");
     }
 
-    private static string _constructEnvelope(Endpoint endpoint, string? assignedProperty, string? assignedValue)
+    private static string _constructEnvelope(EndpointSpec endpoint, string? assignedProperty, string? assignedValue)
     {
-        if (endpoint.ConstructorParameters.IsDefaultOrEmpty)
+        if (endpoint.ConstructorParameters.IsEmpty)
         {
             return assignedProperty is null
                 ? "new " + endpoint.FullyQualifiedType + "()"
@@ -489,7 +482,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("    }");
     }
 
-    private static void _emitResponse(StringBuilder source, Endpoint endpoint)
+    private static void _emitResponse(StringBuilder source, EndpointSpec endpoint)
     {
         if (endpoint.ResponseType == "global::Ark.Tools.MediatorFramework.IArkAttachment")
         {
@@ -508,7 +501,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
     }
 
-    private static void _emitResponseETag(StringBuilder source, Endpoint endpoint, string resultName)
+    private static void _emitResponseETag(StringBuilder source, EndpointSpec endpoint, string resultName)
     {
         if (endpoint.ResponseETagProperty is null)
             return;
@@ -519,263 +512,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("        if (_etagResult is not null) return _etagResult;");
     }
 
-    private readonly record struct HostInfo(
-        INamedTypeSymbol Marker,
-        string Prefix,
-        ImmutableArray<INamedTypeSymbol> Included,
-        ImmutableArray<INamedTypeSymbol> Excluded,
-        bool MarkerIsInSource,
-        Location? Location);
-
-    private readonly record struct EndpointCandidate(INamedTypeSymbol Type, AttributeData? Attribute);
-
-    private static Endpoint? _createEndpoint(
-        INamedTypeSymbol type,
-        AttributeData attribute,
-        string prefix)
-    {
-        if (attribute.ConstructorArguments.ElementAtOrDefault(0).Value is not string verb
-            || attribute.ConstructorArguments.ElementAtOrDefault(1).Value is not string template
-            || string.IsNullOrWhiteSpace(verb)
-            || string.IsNullOrWhiteSpace(template))
-            return null;
-
-        var versioning = type.GetAttributes()
-            .FirstOrDefault(static item => item.AttributeClass?.ToDisplayString() == _versioningAttribute);
-        var introduced = _getNamedInt(versioning, "Introduced", 1);
-        var retired = _getNamedInt(versioning, "Retired", 0);
-        var messagePack = _getNamedBool(attribute, "AcceptsMessagePack");
-        var successStatusCode = _getNamedInt(attribute, "SuccessStatusCode", 200);
-        var nullResultStatusCode = _getNamedInt(attribute, "NullResultStatusCode", 0);
-        var maxFileCount = _getNamedInt(attribute, "MaxFileCount", 0);
-        var maxRequestBodySizeBytes = _getNamedLong(attribute, "MaxRequestBodySizeBytes", 0);
-        var allowedContentTypes = _getNamedStrings(attribute, "AllowedContentTypes");
-        var kind = HandlerKind.None;
-        string? responseType = null;
-        INamedTypeSymbol? responseSymbol = null;
-        foreach (var iface in type.AllInterfaces)
-        {
-            var definition = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            if (definition == _solidRequest)
-            {
-                kind = HandlerKind.Request;
-                responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
-                break;
-            }
-            if (definition == _solidQuery)
-            {
-                kind = HandlerKind.Query;
-                responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
-                break;
-            }
-            if (definition == _solidCommand)
-            {
-                kind = HandlerKind.Command;
-                break;
-            }
-        }
-        if (kind == HandlerKind.None)
-            return null;
-
-        // Extract route parameter names from the template
-        var routeNames = new HashSet<string>(
-            _routeParamRegex.Matches(template!)
-                .Cast<Match>()
-                .Select(static m => m.Groups["param"].Value)
-                .Where(static n => !string.Equals(n, "version", StringComparison.OrdinalIgnoreCase)),
-            StringComparer.OrdinalIgnoreCase);
-
-        // Extract per-property binding info at generation time (no runtime reflection per request)
-        var properties = _allProperties(type)
-            .Where(static p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic
-                && p.SetMethod is { DeclaredAccessibility: Accessibility.Public })
-            .Select(p =>
-            {
-                var routeAttr = p.GetAttributes()
-                    .FirstOrDefault(static a => a.AttributeClass?.ToDisplayString() == _httpRouteAttribute);
-                var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
-                var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
-                var isQuery = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _httpQueryAttribute);
-                var isBody = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _httpBodyAttribute);
-                var isServerSet = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _serverSetAttribute);
-                var isETag = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _eTagAttribute);
-                var isString = p.Type.SpecialType == SpecialType.System_String;
-                var isAttachment = p.Type.ToDisplayString() == _arkAttachment;
-                var isAttachmentCollection = p.Type is INamedTypeSymbol collection
-                    && collection.AllInterfaces.Any(static item => item.ToDisplayString().StartsWith("System.Collections.Generic.IEnumerable<", StringComparison.Ordinal))
-                    && collection.TypeArguments.Length == 1
-                    && collection.TypeArguments[0].ToDisplayString() == _arkAttachment;
-                return new PropertyInfo(
-                    p.Name,
-                    p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                    isRoute,
-                    bindingName,
-                    isQuery,
-                    isBody,
-                    isServerSet,
-                    isString,
-                    isETag,
-                    isAttachment,
-                    isAttachmentCollection);
-            })
-            .ToImmutableArray();
-        var responseETagProperty = responseSymbol is null
-            ? null
-            : _allProperties(responseSymbol)
-                .FirstOrDefault(static property => property.GetAttributes().Any(static attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == _eTagAttribute))
-                ?.Name;
-        var bodyProperty = properties.FirstOrDefault(static property => property.IsBody);
-
-        return new Endpoint(
-            _typeName(type),
-            type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-            verb.ToUpperInvariant(),
-            string.Empty,
-            string.Empty,
-            messagePack,
-            type.Locations.FirstOrDefault(),
-            prefix,
-            template,
-            Math.Max(1, introduced),
-            retired,
-            kind,
-            responseType ?? "global::System.Void",
-            properties,
-            _getNamedBool(attribute, "AllowAnonymous"),
-            successStatusCode,
-            nullResultStatusCode,
-            responseETagProperty,
-            bodyProperty.Name,
-            bodyProperty.Name is null ? type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : bodyProperty.TypeFullName,
-            maxFileCount,
-            maxRequestBodySizeBytes,
-            allowedContentTypes,
-            responseSymbol is INamedTypeSymbol responseNamed
-                && responseNamed.OriginalDefinition.ToDisplayString() == _asyncEnumerable,
-            type.IsRecord,
-            _constructorParameters(type, properties));
-    }
-
-    private static ImmutableArray<string> _constructorParameters(
-        INamedTypeSymbol type,
-        ImmutableArray<PropertyInfo> properties)
-    {
-        var propertyNames = properties.Select(static property => property.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var constructor = type.InstanceConstructors
-            .Where(candidate => candidate.DeclaredAccessibility == Accessibility.Public
-                && candidate.Parameters.Length > 0
-                && candidate.Parameters.All(parameter => propertyNames.Contains(parameter.Name)))
-            .OrderByDescending(static candidate => candidate.Parameters.Length)
-            .FirstOrDefault();
-        return constructor is null
-            ? ImmutableArray<string>.Empty
-            : constructor.Parameters.Select(static parameter => parameter.Name).ToImmutableArray();
-    }
-
-    private static bool _isSelected(
-        INamedTypeSymbol type,
-        IAssemblySymbol assembly,
-        ImmutableArray<INamedTypeSymbol> included,
-        ImmutableArray<INamedTypeSymbol> excluded)
-    {
-        if (!SymbolEqualityComparer.Default.Equals(type.ContainingAssembly, assembly))
-            return false;
-        if (excluded.Any(item => SymbolEqualityComparer.Default.Equals(item, type)))
-            return false;
-        return included.IsDefaultOrEmpty || included.Any(item => SymbolEqualityComparer.Default.Equals(item, type));
-    }
-
-    private static ImmutableArray<INamedTypeSymbol> _getTypes(AttributeData attribute, string name)
-    {
-        var argument = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        if (argument.Kind != TypedConstantKind.Array)
-            return ImmutableArray<INamedTypeSymbol>.Empty;
-        return argument.Values
-            .Where(static value => value.Value is INamedTypeSymbol)
-            .Select(static value => (INamedTypeSymbol)value.Value!)
-            .ToImmutableArray();
-    }
-
-    private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol space)
-    {
-        foreach (var member in space.GetMembers())
-        {
-            if (member is INamespaceSymbol child)
-            {
-                foreach (var type in _allTypes(child))
-                    yield return type;
-            }
-            else if (member is INamedTypeSymbol type)
-            {
-                yield return type;
-                foreach (var nested in _allNestedTypes(type))
-                    yield return nested;
-            }
-        }
-    }
-
-    private static IEnumerable<INamedTypeSymbol> _allNestedTypes(INamedTypeSymbol type)
-    {
-        foreach (var nested in type.GetTypeMembers())
-        {
-            yield return nested;
-            foreach (var child in _allNestedTypes(nested))
-                yield return child;
-        }
-    }
-
-    private static IEnumerable<IPropertySymbol> _allProperties(INamedTypeSymbol type)
-    {
-        for (var current = type; current is not null; current = current.BaseType)
-            foreach (var member in current.GetMembers().OfType<IPropertySymbol>())
-                yield return member;
-    }
-
-    private static int _getNamedInt(AttributeData? attribute, string name, int fallback)
-    {
-        if (attribute is null)
-            return fallback;
-
-        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        return value.Value is int number ? number : fallback;
-    }
-
-    private static long _getNamedLong(AttributeData? attribute, string name, long fallback)
-    {
-        if (attribute is null)
-            return fallback;
-
-        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        return value.Value is long number ? number : fallback;
-    }
-
-    private static bool _getNamedBool(AttributeData attribute, string name)
-    {
-        return attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value.Value is true;
-    }
-
-    private static ImmutableArray<string> _getNamedStrings(AttributeData attribute, string name)
-    {
-        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        return value.Kind == TypedConstantKind.Array
-            ? value.Values.Where(static item => item.Value is string).Select(static item => (string)item.Value!).ToImmutableArray()
-            : ImmutableArray<string>.Empty;
-    }
-
     private static string _combine(string prefix, string template)
     {
         return prefix.TrimEnd('/') + "/" + template.TrimStart('/');
-    }
-
-    private static string _typeName(INamedTypeSymbol type)
-    {
-        var names = new Stack<string>();
-        for (var current = type; current is not null; current = current.ContainingType)
-            names.Push(current.Name);
-        return string.Join("_", names);
     }
 
     private static string _sanitize(string value)
@@ -799,52 +538,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         return route.Trim('/');
     }
 
-    private readonly record struct PropertyInfo(
-        string Name,
-        string TypeFullName,
-        bool IsRoute,
-        string BindingName,
-        bool IsQuery,
-        bool IsBody,
-        bool IsServerSet,
-        bool IsString,
-        bool IsETag,
-        bool IsAttachment,
-        bool IsAttachmentCollection);
-
-    private readonly record struct Endpoint(
-        string TypeName,
-        string FullyQualifiedType,
-        string Verb,
-        string Route,
-        string FunctionName,
-        bool MessagePack,
-        Location? Location,
-        string Prefix,
-        string Template,
-        int Introduced,
-        int Retired,
-        HandlerKind Kind,
-        string ResponseType,
-        ImmutableArray<PropertyInfo> Properties,
-        bool AllowAnonymous,
-        int SuccessStatusCode,
-        int NullResultStatusCode,
-        string? ResponseETagProperty,
-        string? BodyProperty,
-        string? BodyType,
-        int MaxFileCount,
-        long MaxRequestBodySizeBytes,
-        ImmutableArray<string> AllowedContentTypes,
-        bool IsStreaming,
-        bool IsRecord,
-        ImmutableArray<string> ConstructorParameters);
-
-    private enum HandlerKind
-    {
-        None,
-        Request,
-        Query,
-        Command
-    }
+    private sealed record AzureFunctionsAggregateSpec(
+        EquatableArray<HostSpec> Hosts,
+        EquatableArray<EndpointSpec> Endpoints);
 }

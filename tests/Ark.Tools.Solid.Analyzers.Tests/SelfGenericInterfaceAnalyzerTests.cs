@@ -188,6 +188,30 @@ public class SelfGenericInterfaceAnalyzerTests
             ]);
     }
 
+    /// <summary>Verifies a self-referencing interface suppresses only its corresponding legacy warning.</summary>
+    [TestMethod]
+    public async Task MultiInterfaceType_ShouldReportOnlyLegacyInterfaces()
+    {
+        var diagnostics = await _analyzeAsync(
+            _solidStubs +
+            """
+
+            namespace Tests
+            {
+                using Ark.Tools.Solid;
+                sealed class MyHandler : IQuery<int>, IRequest<MyHandler, string>, ICommand { }
+            }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().HaveCount(2);
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage(null))
+            .Should().BeEquivalentTo(
+            [
+                "Type 'MyHandler' must implement 'IQuery<MyHandler, int>' to enable reflection-free processor dispatch",
+                "Type 'MyHandler' must implement 'ICommand<MyHandler>' to enable reflection-free processor dispatch",
+            ]);
+    }
+
     /// <summary>Verifies the code fix rewrites the base list to the self-referencing interfaces.</summary>
     [TestMethod]
     public async Task CodeFix_ShouldRewriteBaseTypes()

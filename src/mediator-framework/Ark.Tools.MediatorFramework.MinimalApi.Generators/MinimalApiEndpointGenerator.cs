@@ -36,6 +36,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
         private const string VersioningAttribute = "Ark.Tools.MediatorFramework.VersioningAttribute";
         private const string ArkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
+        private const string MappingParserTrackingName = "MinimalApiMappingParser";
         private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private const string List = "System.Collections.Generic.List`1";
         private const string ReadOnlyList = "System.Collections.Generic.IReadOnlyList`1";
@@ -88,9 +89,10 @@ namespace Ark.Tools.MediatorFramework.Generators
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             var endpointMappings = context.SyntaxProvider.CreateSyntaxProvider(
-                    static (node, _) => node is InvocationExpressionSyntax,
+                    static (node, _) => IsAssemblyMappingCandidate(node),
                     static (syntaxContext, cancellationToken) =>
                         GetAssemblyMapping(syntaxContext, cancellationToken))
+                .WithTrackingName(MappingParserTrackingName)
                 .Where(static mapping => mapping is not null)
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
@@ -98,7 +100,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     HttpEndpointAttribute,
-                    static (_, _) => true,
+                    static (node, _) => node is TypeDeclarationSyntax,
                     static (attributeContext, _) => ExtractSourceEndpoint(attributeContext))
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value);
@@ -139,7 +141,9 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
         {
-            var type = (INamedTypeSymbol)context.TargetSymbol;
+            if (context.TargetSymbol is not INamedTypeSymbol type)
+                return null;
+
             var http = context.Attributes[0];
             var compilation = context.SemanticModel.Compilation;
             return Extract(
@@ -165,14 +169,11 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             cancellationToken.ThrowIfCancellationRequested();
             var invocation = (InvocationExpressionSyntax)context.Node;
-            var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
-            var genericName = invocation.Expression.DescendantNodesAndSelf()
-                .OfType<GenericNameSyntax>()
-                .FirstOrDefault(name =>
-                    name.Identifier.ValueText is "MapArkEndpointsFromAssembly" or "MapArkEndpoints");
-            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
+            var genericName = GetInvokedGenericName(invocation);
+            if (genericName is null)
                 return null;
 
+            var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
             var methodName = genericName.Identifier.ValueText;
             if ((method is null || !string.Equals(method.MetadataName, methodName, StringComparison.Ordinal))
                 && !IsGeneratedEndpointInvocation(invocation, methodName, context.SemanticModel, cancellationToken))
@@ -193,6 +194,28 @@ namespace Ark.Tools.MediatorFramework.Generators
                     ? versionPrefix.Expression.GetLocation()
                     : null;
             return new EndpointAssemblyMapping(assemblyNames, invalidVersionPrefixLocation);
+        }
+
+        private static bool IsAssemblyMappingCandidate(SyntaxNode node)
+        {
+            return node is InvocationExpressionSyntax invocation
+                && GetInvokedGenericName(invocation) is not null;
+        }
+
+        private static GenericNameSyntax? GetInvokedGenericName(InvocationExpressionSyntax invocation)
+        {
+            var genericName = invocation.Expression switch
+            {
+                GenericNameSyntax directName => directName,
+                MemberAccessExpressionSyntax { Name: GenericNameSyntax memberName } => memberName,
+                MemberBindingExpressionSyntax { Name: GenericNameSyntax bindingName } => bindingName,
+                _ => null,
+            };
+            return genericName is not null
+                && genericName.TypeArgumentList.Arguments.Count == 1
+                && genericName.Identifier.ValueText is "MapArkEndpointsFromAssembly" or "MapArkEndpoints"
+                    ? genericName
+                    : null;
         }
 
         private static ImmutableArray<string> GetAssemblyMarkerName(

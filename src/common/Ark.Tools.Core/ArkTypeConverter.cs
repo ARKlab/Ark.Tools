@@ -141,25 +141,13 @@ public static class ArkTypeConverter
             if (underlying == typeof(string))
                 return static input => (T)(object)input;
 
-#if NET9_0_OR_GREATER
             var converter = TypeDescriptor.GetConverterFromRegisteredType(underlying);
-#else
-            var converter = _getConverterNet8(underlying);
-#endif
             return input =>
             {
                 var obj = converter.ConvertFromString(null, CultureInfo.InvariantCulture, input);
                 return (T)obj!;
             };
         }
-
-#if !NET9_0_OR_GREATER
-        [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-            Justification = "Callers of TryConvertSafe ensure TypeConverter registrations are in place at startup. On .NET 9+ use GetConverterFromRegisteredType instead.")]
-        [UnconditionalSuppressMessage("Trimming", "IL2067:DynamicallyAccessedMembers",
-            Justification = "Callers of TryConvertSafe ensure TypeConverter registrations are in place at startup. On .NET 9+ use GetConverterFromRegisteredType instead.")]
-        private static TypeConverter _getConverterNet8(Type underlying) => TypeDescriptor.GetConverter(underlying);
-#endif
 
         public static T Convert(string input) => _convert(input);
     }

@@ -137,6 +137,16 @@ public sealed class SinkTaintAnalyzerTests
         diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII002");
     }
 
+    /// <summary>Array traversal continues past a safe first child to a later classified child.</summary>
+    [TestMethod]
+    public async Task ArrayWithLaterClassifiedChild_ReportsError()
+    {
+        var diagnostics = await _analyzeAsync(
+            _method("logger.Info(\"{Values}\", new[] { \"safe\", c.Email });")).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKPII002");
+    }
+
     /// <summary>Safe identifiers, masks, constants and overwritten locals do not taint logs.</summary>
     [TestMethod]
     [DataRow("logger.Info(\"{Key}\", c.Key);")]
@@ -391,6 +401,35 @@ public sealed class SinkTaintAnalyzerTests
             }
             """).ConfigureAwait(false);
         diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>All review checks in one compilation use the date captured when analysis starts.</summary>
+    [TestMethod]
+    public async Task ReviewsUseCompilationStartDate()
+    {
+        var dateReads = 0;
+        DateTime utcNow()
+        {
+            dateReads++;
+            return dateReads == 1
+                ? new DateTime(2026, 9, 19, 23, 59, 59, DateTimeKind.Utc)
+                : new DateTime(2026, 9, 20, 0, 0, 0, DateTimeKind.Utc);
+        }
+
+        var diagnostics = await _analyzeAsync("""
+            using Ark.Tools.Compliance;
+            class Case
+            {
+                [ComplianceReviewed("ARKPII002", "Support runbook permits this field", Expires = "2026-09-19")]
+                void First(Customer c) { new NLog.Logger().Info(c.Email); }
+
+                [ComplianceReviewed("ARKPII002", "Support runbook permits this field", Expires = "2026-09-19")]
+                void Second(Customer c) { new NLog.Logger().Info(c.Email); }
+            }
+            """, analyzer: new SinkTaintAnalyzer(utcNow)).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+        dateReads.Should().Be(1);
     }
 
     /// <summary>A review declared on a property covers the diagnostics raised in its accessor bodies.</summary>
@@ -690,7 +729,8 @@ public sealed class SinkTaintAnalyzerTests
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(
         string source,
         ImmutableArray<AdditionalText> files = default,
-        Dictionary<string, string>? options = null)
+        Dictionary<string, string>? options = null,
+        DiagnosticAnalyzer? analyzer = null)
     {
         var compilation = CSharpCompilation.Create("SinkTests",
             [CSharpSyntaxTree.ParseText(_support, path: "Support.cs"), CSharpSyntaxTree.ParseText(source, path: "Case.cs")],
@@ -698,7 +738,8 @@ public sealed class SinkTaintAnalyzerTests
         compilation.GetDiagnostics().Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
 
         var analyzerOptions = new AnalyzerOptions(files.IsDefault ? [] : files, new SinkOptionsProvider(options));
-        return await compilation.WithAnalyzers([new SinkTaintAnalyzer()], analyzerOptions)
+        analyzer ??= new SinkTaintAnalyzer();
+        return await compilation.WithAnalyzers([analyzer], analyzerOptions)
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 

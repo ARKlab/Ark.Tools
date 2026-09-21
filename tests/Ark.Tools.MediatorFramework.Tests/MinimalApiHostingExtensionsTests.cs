@@ -14,12 +14,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.DependencyInjection;
-#if NET10_0_OR_GREATER
 using Microsoft.AspNetCore.TestHost;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-#endif
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -92,7 +90,6 @@ public sealed class MinimalApiHostingExtensionsTests
         results.Should().OnlyContain(static value => value);
     }
 
-#if NET10_0_OR_GREATER
     [TestMethod]
     public async Task TypeConverterWrapperBindsNodaTimeRouteAndNullableQueryValues()
     {
@@ -329,7 +326,6 @@ public sealed class MinimalApiHostingExtensionsTests
                 .EnumerateArray().Select(static item => item.GetString()).Should().Contain("null");
         }
     }
-#endif
 
     private static void _assertSchema(
         JsonElement parent,

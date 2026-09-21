@@ -73,6 +73,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                     "Microsoft.Extensions.DependencyInjection.IServiceCollection");
                 start.RegisterOperationAction(operationContext =>
                 {
+                    operationContext.CancellationToken.ThrowIfCancellationRequested();
                     var invocation = (Microsoft.CodeAnalysis.Operations.IInvocationOperation)operationContext.Operation;
                     var method = invocation.TargetMethod;
                     if (method.Name == "AddArkRedaction"
@@ -85,24 +86,27 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 {
                     start.RegisterOperationAction(operationContext =>
                     {
+                        operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var creation = (Microsoft.CodeAnalysis.Operations.IObjectCreationOperation)operationContext.Operation;
-                        if (_isServiceCollection(creation.Type, serviceCollectionType))
+                        if (_isServiceCollection(creation.Type, serviceCollectionType, operationContext.CancellationToken))
                         {
                             Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
                         }
                     }, Microsoft.CodeAnalysis.OperationKind.ObjectCreation);
                     start.RegisterOperationAction(operationContext =>
                     {
+                        operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var property = (Microsoft.CodeAnalysis.Operations.IPropertyReferenceOperation)operationContext.Operation;
-                        if (_isServiceCollection(property.Type, serviceCollectionType))
+                        if (_isServiceCollection(property.Type, serviceCollectionType, operationContext.CancellationToken))
                         {
                             Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
                         }
                     }, Microsoft.CodeAnalysis.OperationKind.PropertyReference);
                     start.RegisterOperationAction(operationContext =>
                     {
+                        operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var parameter = (Microsoft.CodeAnalysis.Operations.IParameterReferenceOperation)operationContext.Operation;
-                        if (_isServiceCollection(parameter.Type, serviceCollectionType))
+                        if (_isServiceCollection(parameter.Type, serviceCollectionType, operationContext.CancellationToken))
                         {
                             Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
                         }
@@ -125,6 +129,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 {
                     foreach (var parameter in method.Parameters)
                     {
+                        symbolContext.CancellationToken.ThrowIfCancellationRequested();
                         _analyze(symbolContext, parameter, lexicon, today, facts);
                     }
                 }
@@ -132,6 +137,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 {
                     foreach (var parameter in property.Parameters)
                     {
+                        symbolContext.CancellationToken.ThrowIfCancellationRequested();
                         _analyze(symbolContext, parameter, lexicon, today, facts);
                     }
                 }
@@ -139,11 +145,31 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         });
     }
 
-    private static bool _isServiceCollection(ITypeSymbol? type, INamedTypeSymbol serviceCollectionType)
+    private static bool _isServiceCollection(
+        ITypeSymbol? type,
+        INamedTypeSymbol serviceCollectionType,
+        CancellationToken cancellationToken)
     {
-        return type is INamedTypeSymbol named
-            && (SymbolEqualityComparer.Default.Equals(named, serviceCollectionType)
-                || named.AllInterfaces.Any(candidate => SymbolEqualityComparer.Default.Equals(candidate, serviceCollectionType)));
+        if (type is not INamedTypeSymbol named)
+        {
+            return false;
+        }
+
+        if (SymbolEqualityComparer.Default.Equals(named, serviceCollectionType))
+        {
+            return true;
+        }
+
+        foreach (var candidate in named.AllInterfaces)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (SymbolEqualityComparer.Default.Equals(candidate, serviceCollectionType))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void _analyze(
@@ -153,12 +179,23 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         DateTime today,
         ComplianceCompilationFacts facts)
     {
+        context.CancellationToken.ThrowIfCancellationRequested();
         if (symbol.IsImplicitlyDeclared)
         {
             return;
         }
 
-        var location = symbol.Locations.FirstOrDefault(static candidate => candidate.IsInSource);
+        Location? location = null;
+        foreach (var candidate in symbol.Locations)
+        {
+            context.CancellationToken.ThrowIfCancellationRequested();
+            if (candidate.IsInSource)
+            {
+                location = candidate;
+                break;
+            }
+        }
+
         if (location is null)
         {
             return;
@@ -175,7 +212,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             classifiedCache ??= new Dictionary<ISymbol, bool>(SymbolEqualityComparer.Default);
             if (!classifiedCache.TryGetValue(candidate, out var result))
             {
-                result = ComplianceSymbolFacts._isClassified(candidate, facts);
+                result = ComplianceSymbolFacts._isClassified(candidate, facts, context.CancellationToken);
                 classifiedCache[candidate] = result;
             }
 
@@ -191,7 +228,9 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             }
             else if (ComplianceSymbolFacts._matchesAttribute(attribute, facts._notPersonalDataAttribute)
                 && !ComplianceSymbolFacts._isJustificationMeaningful(
-                    attribute.ConstructorArguments.FirstOrDefault().Value as string))
+                    attribute.ConstructorArguments.Length == 0
+                        ? null
+                        : attribute.ConstructorArguments[0].Value as string))
             {
                 context.ReportDiagnostic(Diagnostic.Create(_justification, location, symbol.Name));
             }
@@ -201,21 +240,46 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         if (type is not null)
         {
             type = ComplianceSymbolFacts._unwrapNullable(type);
-            var positionalCounterpart = _positionalCounterpart(symbol);
+            var positionalCounterpart = _positionalCounterpart(symbol, context.CancellationToken);
             var isPositionalProperty = symbol is IPropertySymbol && positionalCounterpart is not null;
             var knownSafeDotNetType = ComplianceSymbolFacts._isKnownSafeDotNetType(type, facts);
-            var inherited = _inheritedMembers(symbol);
+            var inherited = _inheritedMembers(symbol, context.CancellationToken);
             var classified = isClassified(symbol)
                 || isClassified(type)
                 || isClassified(symbol.ContainingType)
-                || isClassified(positionalCounterpart)
-                || inherited.Any(isClassified);
-            if (!isPositionalProperty && !knownSafeDotNetType && !classified && lexicon._matches(symbol.Name)
-                && !ComplianceSymbolFacts._hasAttribute(symbol, facts._notPersonalDataAttribute)
-                && !inherited.Any(candidate => ComplianceSymbolFacts._hasAttribute(candidate, facts._notPersonalDataAttribute))
-                && !_hasPositionalExclusion(positionalCounterpart, facts))
+                || isClassified(positionalCounterpart);
+            if (!classified)
             {
-                context.ReportDiagnostic(Diagnostic.Create(_unclassified, location, symbol.Name));
+                foreach (var candidate in inherited)
+                {
+                    context.CancellationToken.ThrowIfCancellationRequested();
+                    if (isClassified(candidate))
+                    {
+                        classified = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!isPositionalProperty && !knownSafeDotNetType && !classified
+                && lexicon._matches(symbol.Name, context.CancellationToken)
+                && !ComplianceSymbolFacts._hasAttribute(symbol, facts._notPersonalDataAttribute))
+            {
+                var inheritedExclusion = false;
+                foreach (var candidate in inherited)
+                {
+                    context.CancellationToken.ThrowIfCancellationRequested();
+                    if (ComplianceSymbolFacts._hasAttribute(candidate, facts._notPersonalDataAttribute))
+                    {
+                        inheritedExclusion = true;
+                        break;
+                    }
+                }
+
+                if (!inheritedExclusion && !_hasPositionalExclusion(positionalCounterpart, facts))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(_unclassified, location, symbol.Name));
+                }
             }
 
             if (classified && !isPositionalProperty)
@@ -230,7 +294,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
     }
 
     /// <summary>Implemented interface members and the whole overridden base chain carry their classification to the declaration.</summary>
-    private static IReadOnlyList<ISymbol> _inheritedMembers(ISymbol symbol)
+    private static IReadOnlyList<ISymbol> _inheritedMembers(ISymbol symbol, CancellationToken cancellationToken)
     {
         if (symbol is not (IPropertySymbol or IMethodSymbol or IEventSymbol) || symbol.ContainingType is null)
         {
@@ -244,6 +308,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 members.AddRange(property.ExplicitInterfaceImplementations);
                 for (var overridden = property.OverriddenProperty; overridden is not null; overridden = overridden.OverriddenProperty)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     members.Add(overridden);
                     members.AddRange(overridden.ExplicitInterfaceImplementations);
                 }
@@ -253,6 +318,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 members.AddRange(method.ExplicitInterfaceImplementations);
                 for (var overridden = method.OverriddenMethod; overridden is not null; overridden = overridden.OverriddenMethod)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     members.Add(overridden);
                     members.AddRange(overridden.ExplicitInterfaceImplementations);
                 }
@@ -262,6 +328,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 members.AddRange(@event.ExplicitInterfaceImplementations);
                 for (var overridden = @event.OverriddenEvent; overridden is not null; overridden = overridden.OverriddenEvent)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     members.Add(overridden);
                     members.AddRange(overridden.ExplicitInterfaceImplementations);
                 }
@@ -269,19 +336,26 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 break;
         }
 
-        foreach (var candidate in symbol.ContainingType.AllInterfaces.SelectMany(static @interface => @interface.GetMembers()))
+        foreach (var @interface in symbol.ContainingType.AllInterfaces)
         {
-            if (candidate.Name == symbol.Name
-                && SymbolEqualityComparer.Default.Equals(symbol.ContainingType.FindImplementationForInterfaceMember(candidate), symbol))
+            cancellationToken.ThrowIfCancellationRequested();
+            foreach (var candidate in @interface.GetMembers())
             {
-                members.Add(candidate);
+                cancellationToken.ThrowIfCancellationRequested();
+                if (candidate.Name == symbol.Name
+                    && SymbolEqualityComparer.Default.Equals(
+                        symbol.ContainingType.FindImplementationForInterfaceMember(candidate),
+                        symbol))
+                {
+                    members.Add(candidate);
+                }
             }
         }
 
         return members;
     }
 
-    private static ISymbol? _positionalCounterpart(ISymbol symbol)
+    private static ISymbol? _positionalCounterpart(ISymbol symbol, CancellationToken cancellationToken)
     {
         if (symbol.ContainingType?.IsRecord != true)
         {
@@ -290,18 +364,50 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
 
         if (symbol is IParameterSymbol { ContainingSymbol: IMethodSymbol { MethodKind: MethodKind.Constructor } })
         {
-            return symbol.ContainingType.GetMembers(symbol.Name).OfType<IPropertySymbol>()
-                .FirstOrDefault(property => property.Locations.Any(location => symbol.Locations.Contains(location)));
+            foreach (var member in symbol.ContainingType.GetMembers(symbol.Name))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (member is IPropertySymbol property && _sharesLocation(property, symbol))
+                {
+                    return property;
+                }
+            }
+
+            return null;
         }
 
         if (symbol is IPropertySymbol propertySymbol)
         {
-            return symbol.ContainingType.InstanceConstructors.SelectMany(static constructor => constructor.Parameters)
-                .FirstOrDefault(parameter => parameter.Name == symbol.Name
-                    && parameter.Locations.Any(location => propertySymbol.Locations.Contains(location)));
+            foreach (var constructor in symbol.ContainingType.InstanceConstructors)
+            {
+                foreach (var parameter in constructor.Parameters)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (parameter.Name == symbol.Name && _sharesLocation(parameter, propertySymbol))
+                    {
+                        return parameter;
+                    }
+                }
+            }
         }
 
         return null;
+    }
+
+    private static bool _sharesLocation(ISymbol first, ISymbol second)
+    {
+        foreach (var firstLocation in first.Locations)
+        {
+            foreach (var secondLocation in second.Locations)
+            {
+                if (firstLocation.Equals(secondLocation))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static bool _hasPositionalExclusion(ISymbol? counterpart, ComplianceCompilationFacts facts)

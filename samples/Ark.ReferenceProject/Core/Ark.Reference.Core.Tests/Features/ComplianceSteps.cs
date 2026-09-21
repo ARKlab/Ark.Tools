@@ -70,9 +70,7 @@ public sealed class ComplianceSteps
     }
 
     private static async Task<string?> _readAuthorAs(
-#if NET10_0_OR_GREATER
         [PersonalData]
-#endif
         string userName, int bookId)
     {
         await using var connection = new SqlConnection(TestHost.DBConfig.ConnectionString);

@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -39,6 +40,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
     private const string _failedMessage = "Ark.Tools.MediatorFramework.MessagingFailed`1";
     private const string _exceptionInfo = "Ark.Tools.MediatorFramework.MessagingExceptionInfo";
+    private const string _specStage = "MessagingNetworkSpecs";
+    private const string _outputStage = "MessagingNetworkOutput";
     private const int _sendReceive = 1;
     private const int _pubSub = 2;
 
@@ -121,35 +124,58 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var networks = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 _networkAttribute,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
         var participants = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 _participantAttribute,
-                static (_, _) => true,
-                static (attributeContext, _) => (INamedTypeSymbol)attributeContext.TargetSymbol)
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+            .Where(static type => type is not null)
+            .Select(static (type, _) => type!)
             .Collect();
 
-        context.RegisterSourceOutput(
-            networks.Combine(participants).Combine(context.CompilationProvider),
-            static (productionContext, input) =>
+        var specs = networks.Combine(participants).Combine(context.CompilationProvider)
+            .Select(static (input, cancellationToken) =>
             {
                 var ((networkSymbols, participantSymbols), compilation) = input;
+                var sink = new GenerationSink(cancellationToken);
                 _emit(
-                    productionContext,
+                    sink,
                     networkSymbols.Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>(),
                     participantSymbols.Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>(),
                     compilation);
-            });
+                return sink._toSpec();
+            })
+            .WithTrackingName(_specStage);
+        var output = specs
+            .Select(static (spec, _) => spec)
+            .WithTrackingName(_outputStage);
+
+        context.RegisterSourceOutput(output, static (productionContext, spec) =>
+        {
+            foreach (var diagnostic in spec.Diagnostics)
+            {
+                productionContext.ReportDiagnostic(Diagnostic.Create(
+                    _descriptor(diagnostic.DescriptorId),
+                    LocationSpec._toLocation(diagnostic.Location),
+                    diagnostic.Arguments.Values.Cast<object?>().ToArray()));
+            }
+            foreach (var source in spec.Sources)
+                productionContext.AddSource(source.HintName, source.Source);
+        });
     }
 
     private static void _emit(
-        SourceProductionContext context,
+        GenerationSink context,
         IEnumerable<INamedTypeSymbol> symbols,
         IEnumerable<INamedTypeSymbol> participantSymbols,
         Compilation compilation)
     {
+        context.CancellationToken.ThrowIfCancellationRequested();
         var networks = symbols
             .Select(_readNetwork)
             .OrderBy(static network => network.Symbol.ToDisplayString(), StringComparer.Ordinal)
@@ -211,7 +237,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static void _validateNetwork(
-        SourceProductionContext context,
+        GenerationSink context,
         Network network,
         IReadOnlyList<Participant> participants)
     {
@@ -247,14 +273,14 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         foreach (var processor in processors)
             MessagingContractTopologyValidator._validate(
                 (descriptor, location, arguments) =>
-                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                    context._report(descriptor, location, arguments),
                 processor.Key,
                 processor.Value[0].Symbol,
                 processor.Value[0].DefaultSerializer);
         foreach (var publisher in publishers)
             MessagingContractTopologyValidator._validate(
                 (descriptor, location, arguments) =>
-                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
+                    context._report(descriptor, location, arguments),
                 publisher.Key,
                 publisher.Value[0].Symbol,
                 publisher.Value[0].DefaultSerializer);
@@ -310,7 +336,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static void _requireCapability(
-        SourceProductionContext context,
+        GenerationSink context,
         Network network,
         Participant participant,
         string name,
@@ -321,7 +347,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static void _validateContractNames(
-        SourceProductionContext context,
+        GenerationSink context,
         IEnumerable<INamedTypeSymbol> contracts)
     {
         var currentNames = new Dictionary<string, INamedTypeSymbol>(StringComparer.Ordinal);
@@ -574,7 +600,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static void _emitNetwork(
-        SourceProductionContext context,
+        GenerationSink context,
         Network network,
         Compilation compilation)
     {
@@ -856,7 +882,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static void _emitParticipant(
-        SourceProductionContext context,
+        GenerationSink context,
         Participant participant,
         Compilation compilation)
     {
@@ -1098,7 +1124,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static bool _validateDeclaringType(
-        SourceProductionContext context,
+        GenerationSink context,
         INamedTypeSymbol symbol,
         string attributeName)
     {
@@ -1162,7 +1188,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         return member?.Name ?? "None";
     }
 
-    private static void _emitMetadata(SourceProductionContext context, IReadOnlyList<Network> networks)
+    private static void _emitMetadata(GenerationSink context, IReadOnlyList<Network> networks)
     {
         var source = new StringBuilder()
             .AppendLine("// <auto-generated />")
@@ -1217,13 +1243,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static void _report(
-        SourceProductionContext context,
+        GenerationSink context,
         DiagnosticDescriptor descriptor,
         ISymbol symbol,
         params object[] arguments)
     {
-        context.ReportDiagnostic(Diagnostic.Create(
-            descriptor, symbol.Locations.FirstOrDefault() ?? Location.None, arguments));
+        context._report(descriptor, symbol.Locations.FirstOrDefault() ?? Location.None, arguments);
     }
 
     private static ImmutableArray<INamedTypeSymbol> _types(AttributeData attribute, string name)
@@ -1293,6 +1318,81 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
         return default;
     }
+
+    private static DiagnosticDescriptor _descriptor(string id)
+    {
+        return id switch
+        {
+            "ARKMSG001" => _duplicateMember,
+            "ARKMSG002" => _missingParticipant,
+            "ARKMSG003" => _dualContract,
+            "ARKMSG004" => _multipleNetworks,
+            "ARKMSG005" => _multipleProcessor,
+            "ARKMSG006" => _multiplePublisher,
+            "ARKMSG007" => _unwiredContract,
+            "ARKMSG008" => _unsatisfiableSubscription,
+            "ARKMSG009" => _serializerMismatch,
+            "ARKMSG010" => _defaultSerializer,
+            "ARKMSG011" => _missingCapability,
+            "ARKMSG012" => _crossNetworkContract,
+            "ARKMSG013" => _invalidIdentity,
+            "ARKMSG014" => _duplicateIdentity,
+            "ARKMSG015" => _reservedIdentity,
+            "ARKMSG017" => _invalidRetry,
+            "ARKMSG018" => _invalidEventShape,
+            "ARKMSG019" => _nonNormalizedName,
+            "ARKMSG020" => _duplicateName,
+            "ARKMSG021" => _duplicateAlias,
+            "ARKMSG022" => _aliasCollision,
+            "ARKMSG023" => _nonPartialDeclaringType,
+            "ARKMSG025" => MessagingContractTopologyValidator._missingMessagePackShape,
+            "ARKMSG026" => MessagingContractTopologyValidator._missingProtobufShape,
+            _ => throw new InvalidOperationException("Unknown messaging diagnostic: " + id),
+        };
+    }
+
+    private sealed class GenerationSink
+    {
+        private readonly List<GeneratedSourceSpec> _sources = new();
+        private readonly List<DiagnosticSpec> _diagnostics = new();
+
+        public GenerationSink(CancellationToken cancellationToken)
+        {
+            CancellationToken = cancellationToken;
+        }
+
+        public CancellationToken CancellationToken { get; }
+
+        public void AddSource(string hintName, string source)
+        {
+            _sources.Add(new GeneratedSourceSpec(
+                hintName,
+                source.Replace("\r\n", "\n").Replace('\r', '\n')));
+        }
+
+        public void _report(DiagnosticDescriptor descriptor, Location location, params object[] arguments)
+        {
+            _diagnostics.Add(new DiagnosticSpec(
+                descriptor.Id,
+                LocationSpec._from(location),
+                arguments.Select(static argument =>
+                        Convert.ToString(argument, CultureInfo.InvariantCulture) ?? string.Empty)
+                    .ToImmutableArray()));
+        }
+
+        public MessagingNetworkAggregateSpec _toSpec()
+        {
+            return new MessagingNetworkAggregateSpec(
+                _sources.OrderBy(static source => source.HintName, StringComparer.Ordinal).ToImmutableArray(),
+                _diagnostics.ToImmutableArray());
+        }
+    }
+
+    private sealed record MessagingNetworkAggregateSpec(
+        EquatableArray<GeneratedSourceSpec> Sources,
+        EquatableArray<DiagnosticSpec> Diagnostics);
+
+    private readonly record struct GeneratedSourceSpec(string HintName, string Source);
 
     private readonly struct Network
     {

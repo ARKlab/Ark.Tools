@@ -99,7 +99,7 @@ Workflow:
 2. Review, then accept by copying the current snapshot over the baseline:
 
    ```bash
-   cp obj/Debug/net8.0/ArkComplianceSurface.current.txt ArkComplianceSurface.txt
+   cp obj/Debug/net10.0/ArkComplianceSurface.current.txt ArkComplianceSurface.txt
    ```
 
 3. Commit — the privacy change is now a visible line in the PR diff.

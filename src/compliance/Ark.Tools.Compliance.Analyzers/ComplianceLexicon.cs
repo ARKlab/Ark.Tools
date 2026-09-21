@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -35,24 +34,46 @@ internal sealed class ComplianceLexicon
             var text = file.GetText(cancellationToken);
             if (text is not null)
             {
-                _add(_snapshots.GetValue(text, static source => new ParsedEntries(source.ToString())));
+                _add(
+                    _snapshots.GetValue(
+                        text,
+                        source => new ParsedEntries(source.ToString(), cancellationToken)),
+                    cancellationToken);
             }
         }
     }
 
-    internal bool _matches(string name)
+    internal bool _matches(string name, CancellationToken cancellationToken)
     {
         name = name.TrimStart('_');
-        if (_excluded.Any(excluded => _matches(name, excluded)))
-            return false;
-        return _terms.Any(term => _matches(name, term));
+        foreach (var excluded in _excluded)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_matches(name, excluded))
+            {
+                return false;
+            }
+        }
+
+        foreach (var term in _terms)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_matches(name, term))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool _matches(string name, string term)
     {
         if (term.EndsWith("*", StringComparison.Ordinal))
         {
-            return name.StartsWith(term.Substring(0, term.Length - 1), StringComparison.OrdinalIgnoreCase);
+            var prefixLength = term.Length - 1;
+            return prefixLength <= name.Length
+                && string.Compare(name, 0, term, 0, prefixLength, StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         for (var index = 0; index + term.Length <= name.Length; index++)
@@ -77,10 +98,11 @@ internal sealed class ComplianceLexicon
             || index + 1 < name.Length && char.IsLower(name[index + 1]));
     }
 
-    private void _add(ParsedEntries entries)
+    private void _add(ParsedEntries entries, CancellationToken cancellationToken)
     {
         foreach (var entry in entries._entries)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (entry[0] == '-')
             {
                 _excluded.Add(entry.Substring(1));
@@ -94,11 +116,12 @@ internal sealed class ComplianceLexicon
 
     private sealed class ParsedEntries
     {
-        internal ParsedEntries(string text)
+        internal ParsedEntries(string text, CancellationToken cancellationToken)
         {
             var entries = ImmutableArray.CreateBuilder<string>();
             foreach (var line in text.Split(_newLines, StringSplitOptions.RemoveEmptyEntries))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var comment = line.IndexOf('#');
                 var entry = (comment >= 0 ? line.Substring(0, comment) : line).Trim();
                 if (entry.Length > 0 && entry is not "-" and not "+" and not "*")

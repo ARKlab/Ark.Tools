@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
@@ -10,8 +9,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Microsoft.CodeAnalysis;
 using Ark.Tools.MediatorFramework.Generators;
+
+using Microsoft.CodeAnalysis;
+
+using static Ark.Tools.MediatorFramework.AzureFunctions.Generators.MessagingFunctionsNaming;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Generators;
 
@@ -21,89 +23,13 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
 {
     private const string _hostAttribute =
         "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHostAttribute";
-    private const string _participantAttribute =
-        "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
-    private const string _networkAttribute =
-        "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
-    private const string _messageAttribute =
-        "Ark.Tools.MediatorFramework.MessageAttribute";
-    private const string _eventAttribute =
-        "Ark.Tools.MediatorFramework.EventAttribute";
-    private const string _apiGroupAttribute =
-        "Ark.Tools.MediatorFramework.ApiGroupAttribute";
+    private const string _hostAttributeStage = "MessagingFunctionsHostAttributes";
+    private const string _hostSpecStage = "MessagingFunctionsHostSpecs";
+    private const string _hostJsonStage = "MessagingFunctionsHostJson";
+    private const string _specStage = "MessagingFunctionsSpecs";
+    private const string _outputStage = "MessagingFunctionsOutput";
     private const int _serviceBusBinding = 0;
     private const int _storageQueueBinding = 1;
-
-    private static readonly DiagnosticDescriptor _multipleHosts = _rule(
-        "ARKMF033",
-        "Multiple Functions messaging hosts",
-        "An Azure Functions app can bind exactly one messaging participant",
-        DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _invalidParticipant = _rule(
-        "ARKMF034",
-        "Invalid Functions messaging participant",
-        "Type '{0}' is not marked with MessagingParticipant",
-        DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _missingNetwork = _rule(
-        "ARKMF035",
-        "Functions messaging participant has no network",
-        "Participant '{0}' is not listed by a messaging network",
-        DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _multipleNetworks = _rule(
-        "ARKMF036",
-        "Functions messaging participant has multiple networks",
-        "Participant '{0}' is listed by more than one messaging network",
-        DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _senderOnly = _rule(
-        "ARKMF037",
-        "Functions messaging participant is sender-only",
-        "Participant '{0}' consumes no contracts, so no receive trigger is generated",
-        DiagnosticSeverity.Info);
-    private static readonly DiagnosticDescriptor _unsupportedBinding = _rule(
-        "ARKMF038",
-        "Functions messaging trigger binding is not implemented",
-        "Trigger binding value '{0}' is not supported by this generator version",
-        DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _invalidSubscription = _rule(
-        "ARKMF039",
-        "Functions messaging subscription has no publisher",
-        "Subscribed event '{0}' does not have exactly one publisher in network '{1}'",
-        DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _serializerMismatch = _rule(
-        "ARKMF045",
-        "Functions messaging subscriber cannot deserialize publisher protocol",
-        "Participant '{0}' does not support effective protocol '{1}' published by '{2}' for event '{3}'",
-        DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _hostJsonNotInspectable = _rule(
-        "ARKMF040",
-        "Storage Queue host settings are not inspectable",
-        "Add host.json to AdditionalFiles so Storage Queue messaging settings can be validated",
-        DiagnosticSeverity.Info);
-    private static readonly DiagnosticDescriptor _invalidMessageEncoding = _rule(
-        "ARKMF041",
-        "Invalid Storage Queue message encoding",
-        "host.json extensions.queues.messageEncoding must be the literal 'none'",
-        DiagnosticSeverity.Warning);
-    private static readonly DiagnosticDescriptor _invalidMaximumDequeueCount = _rule(
-        "ARKMF042",
-        "Invalid Storage Queue maximum dequeue count",
-        "host.json extensions.queues.maxDequeueCount must be a positive integer",
-        DiagnosticSeverity.Warning);
-    private static readonly DiagnosticDescriptor _invalidVisibilityTimeout = _rule(
-        "ARKMF043",
-        "Invalid Storage Queue visibility timeout",
-        "host.json extensions.queues.visibilityTimeout must be a positive TimeSpan",
-        DiagnosticSeverity.Warning);
-    private static readonly DiagnosticDescriptor _missingStorageQueueRetry = _rule(
-        "ARKMF044",
-        "Storage Queue consumer has no retry policy",
-        "Storage Queue participant '{0}' must declare a retry policy with a positive RetryDelay",
-        DiagnosticSeverity.Error);
-    private static readonly DiagnosticDescriptor _nativeNameCollision = _rule(
-        "ARKMF046",
-        "Messaging native entity name collision",
-        "Logical messaging names '{0}' and '{1}' map to the same {2} entity name '{3}'",
-        DiagnosticSeverity.Error);
 
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -111,7 +37,11 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         var hosts = context.SyntaxProvider.ForAttributeWithMetadataName(
                 _hostAttribute,
                 static (_, _) => true,
-                static (attributeContext, _) => _readHosts(attributeContext))
+                static (attributeContext, cancellationToken) =>
+                    MessagingFunctionsParser._readHosts(attributeContext, cancellationToken))
+            .WithTrackingName(_hostAttributeStage)
+            .SelectMany(static (extracted, _) => extracted)
+            .WithTrackingName(_hostSpecStage)
             .Collect();
         var hostJson = context.AdditionalTextsProvider
             .Where(static text => string.Equals(
@@ -120,163 +50,61 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 StringComparison.OrdinalIgnoreCase))
             .Select(static (text, cancellationToken) =>
                 text.GetText(cancellationToken)?.ToString())
+            .WithTrackingName(_hostJsonStage)
             .Collect();
+        var specs = hosts.Combine(hostJson)
+            .Select(static (pair, _) => new MessagingFunctionsAggregateSpec(
+                pair.Left
+                    .OrderBy(static host => host.ParticipantTypeName, StringComparer.Ordinal)
+                    .ThenBy(static host => host.Binding)
+                    .ToImmutableArray(),
+                pair.Right
+                    .OrderBy(static content => content ?? string.Empty, StringComparer.Ordinal)
+                    .ToImmutableArray()))
+            .WithTrackingName(_specStage);
+        var output = specs
+            .Select(static (spec, _) => spec)
+            .WithTrackingName(_outputStage);
 
         context.RegisterSourceOutput(
-            hosts.Combine(hostJson),
-            static (productionContext, input) =>
-                _emit(
-                    productionContext,
-                    input.Left.SelectMany(static group => group).ToImmutableArray(),
-                    input.Right));
-    }
-
-    private static ImmutableArray<Host> _readHosts(GeneratorAttributeSyntaxContext context)
-    {
-        var hosts = ImmutableArray.CreateBuilder<Host>();
-        foreach (var attribute in context.Attributes)
-        {
-            if (attribute.ConstructorArguments.Length < 2
-                || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol participant
-                || attribute.ConstructorArguments[1].Value is not int binding)
-                continue;
-
-            hosts.Add(new Host(
-                participant,
-                binding,
-                _string(attribute, "ConnectionConfigurationKey"),
-                _string(attribute, "ManagedIdentityConfigurationKey"),
-                _types(attribute, "IncomingSteps"),
-                _types(attribute, "OutgoingSteps"),
-                _bool(attribute, "StrictStorageQueueHostSettings"),
-                attribute.ApplicationSyntaxReference is { } syntax
-                    ? Location.Create(syntax.SyntaxTree, syntax.Span)
-                    : Location.None));
-        }
-
-        return hosts.ToImmutable();
+            output,
+            static (productionContext, spec) =>
+                _emit(productionContext, spec.Hosts.Values, spec.HostJson.Values));
     }
 
     private static void _emit(
         SourceProductionContext context,
-        ImmutableArray<Host> hosts,
+        ImmutableArray<MessagingHostSpec> hosts,
         ImmutableArray<string?> hostJson)
     {
         if (hosts.IsDefaultOrEmpty)
             return;
-        if (hosts.Length != 1)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(_multipleHosts, hosts[0].Location));
-            return;
-        }
 
-        var host = hosts[0];
-        var participantAttribute = host.Participant.GetAttributes().FirstOrDefault(static attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
-        if (participantAttribute is null)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                _invalidParticipant,
-                host.Location,
-                host.Participant.ToDisplayString()));
-            return;
-        }
-
-        var networks = _allTypes(host.Participant.ContainingAssembly.GlobalNamespace)
-            .Select(static type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(static attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _networkAttribute)))
-            .Where(item => item.Attribute is not null
-                && _types(item.Attribute, "Members").Any(member =>
-                    SymbolEqualityComparer.Default.Equals(member, host.Participant)))
-            .ToArray();
-        if (networks.Length == 0)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                _missingNetwork,
-                host.Location,
-                host.Participant.ToDisplayString()));
-            return;
-        }
-        if (networks.Length != 1)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                _multipleNetworks,
-                host.Location,
-                host.Participant.ToDisplayString()));
-            return;
-        }
-        if (host.Binding is not (_serviceBusBinding or _storageQueueBinding))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                _unsupportedBinding,
-                host.Location,
-                host.Binding.ToString(CultureInfo.InvariantCulture)));
-            return;
-        }
-
-        var network = networks[0];
-        var identity = _string(participantAttribute, "Identity")
-            ?? _normalizeIdentity(host.Participant.Name.EndsWith("Participant", StringComparison.Ordinal)
-                ? host.Participant.Name.Substring(0, host.Participant.Name.Length - "Participant".Length)
-                : host.Participant.Name);
-        var processes = _types(participantAttribute, "Processes");
-        var subscribes = _types(participantAttribute, "Subscribes");
-        foreach (var contract in processes)
-            MessagingContractTopologyValidator._validate(
-                (descriptor, location, arguments) =>
-                    context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
-                contract,
-                host.Participant,
-                _int(participantAttribute, "DefaultSerializer"));
-        foreach (var member in _types(network.Attribute!, "Members"))
-        {
-            var memberAttribute = member.GetAttributes().FirstOrDefault(static attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
-            if (memberAttribute is null)
-                continue;
-            foreach (var contract in _types(memberAttribute, "Publishes"))
-                MessagingContractTopologyValidator._validate(
-                    (descriptor, location, arguments) =>
-                        context.ReportDiagnostic(Diagnostic.Create(descriptor, location, arguments)),
-                    contract,
-                    member,
-                    _int(memberAttribute, "DefaultSerializer"));
-        }
-        var retryType = _type(participantAttribute, "Retry");
-        if (host.Binding == _storageQueueBinding
-            && (!processes.IsDefaultOrEmpty || !subscribes.IsDefaultOrEmpty))
-        {
-            if (retryType is null)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    _missingStorageQueueRetry,
-                    host.Location,
-                    host.Participant.ToDisplayString()));
-                return;
-            }
-
-            _validateHostJson(context, host, hostJson);
-        }
-        var subscriptions = _createSubscriptions(
-            context,
-            network.Type,
-            network.Attribute!,
-            host.Participant,
-            identity,
-            subscribes);
-        if (subscriptions is null)
-            return;
-        var topics = _createTopics(network.Attribute!);
-        var desiredTopics = topics.Where(topic =>
-                string.Equals(topic.OwnerIdentity, identity, StringComparison.Ordinal)
-                || subscribes.Any(contract =>
-                    SymbolEqualityComparer.Default.Equals(contract, topic.Contract)))
+        var ordered = hosts
+            .OrderBy(static host => host.ParticipantTypeName, StringComparer.Ordinal)
+            .ThenBy(static host => host.Binding)
             .ToImmutableArray();
-        if (!_validateNativeNames(context, host, identity, subscriptions.Value, topics))
+        if (ordered.Length != 1)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                MessagingFunctionsDiagnostics._multipleHosts,
+                LocationSpec._toLocation(ordered[0].Location)));
+            return;
+        }
+
+        var host = ordered[0];
+        foreach (var diagnostic in host.ParseDiagnostics)
+            context.ReportDiagnostic(diagnostic._toDiagnostic(MessagingFunctionsDiagnostics._descriptor));
+
+        if (host.ValidateHostJson)
+            _validateHostJson(context, host, hostJson);
+
+        foreach (var diagnostic in host.TopologyDiagnostics)
+            context.ReportDiagnostic(diagnostic._toDiagnostic(MessagingFunctionsDiagnostics._descriptor));
+
+        if (!host.IsEmittable)
             return;
 
-        var connection = host.ConnectionConfigurationKey
-            ?? network.Type.Name;
         var source = new StringBuilder()
             .AppendLine("// <auto-generated />")
             .AppendLine("#nullable enable")
@@ -285,163 +113,41 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .AppendLine("public sealed class ArkGeneratedMessagingFunctions : global::Ark.Tools.MediatorFramework.AzureFunctions.IMessagingFunctionsHost<ArkGeneratedMessagingFunctions>")
             .AppendLine("{");
 
-        _emitManifest(
-            source,
-            host,
-            network.Type,
-            identity,
-            connection,
-            host.ManagedIdentityConfigurationKey,
-            retryType,
-            subscriptions.Value,
-            desiredTopics,
-            topics,
-            !processes.IsDefaultOrEmpty || !subscribes.IsDefaultOrEmpty,
-            _int(network.Attribute!, "ResourceLifecycle"));
+        _emitManifest(source, host);
 
-        if (processes.IsDefaultOrEmpty && subscribes.IsDefaultOrEmpty)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                _senderOnly,
-                host.Location,
-                host.Participant.ToDisplayString()));
-        }
-        else
-        {
-            _emitTrigger(source, host.Binding, identity, connection);
-        }
+        if (!host.SenderOnly)
+            _emitTrigger(source, host.Binding, host.Identity, host.Connection);
 
         source.AppendLine("}");
-        context.AddSource("ArkGeneratedMessagingFunctions.g.cs", source.ToString());
+        context.AddSource("ArkGeneratedMessagingFunctions.g.cs", source._toGeneratedSource());
     }
 
-    private static ImmutableArray<Subscription>? _createSubscriptions(
-        SourceProductionContext context,
-        INamedTypeSymbol network,
-        AttributeData networkAttribute,
-        INamedTypeSymbol participant,
-        string participantIdentity,
-        ImmutableArray<INamedTypeSymbol> subscribedEvents)
+    private static void _emitManifest(StringBuilder source, in MessagingHostSpec host)
     {
-        var members = _types(networkAttribute, "Members")
-            .Select(static member => (Type: member, Attribute: member.GetAttributes().FirstOrDefault(static attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _participantAttribute)))
-            .Where(static item => item.Attribute is not null)
-            .ToArray();
-        var subscriptions = ImmutableArray.CreateBuilder<Subscription>();
-        var participantAttribute = participant.GetAttributes().First(static attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
-        foreach (var subscribedEvent in subscribedEvents
-            .OrderBy(static type => type.ToDisplayString(), StringComparer.Ordinal))
-        {
-            var publishers = members.Where(item =>
-                    _types(item.Attribute, "Publishes").Any(contract =>
-                        SymbolEqualityComparer.Default.Equals(contract, subscribedEvent)))
-                .ToArray();
-            if (publishers.Length != 1)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    _invalidSubscription,
-                    participant.Locations.FirstOrDefault() ?? Location.None,
-                    subscribedEvent.ToDisplayString(),
-                    network.ToDisplayString()));
-                return null;
-            }
-
-            var supportedProtocols = _ints(participantAttribute, "Serializers");
-            var publisherProtocol = _int(publishers[0].Attribute!, "DefaultSerializer");
-            if (!supportedProtocols.Contains(publisherProtocol))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    _serializerMismatch,
-                    participant.Locations.FirstOrDefault() ?? Location.None,
-                    participantIdentity,
-                    publisherProtocol switch
-                    {
-                        1 => "MessagePack",
-                        2 => "Protobuf",
-                        _ => "Json",
-                    },
-                    _string(publishers[0].Attribute, "Identity") ?? publishers[0].Type.ToDisplayString(),
-                    subscribedEvent.ToDisplayString()));
-                return null;
-            }
-
-            var publisherIdentity = _string(publishers[0].Attribute, "Identity")
-                ?? _normalizeIdentity(publishers[0].Type.Name.EndsWith("Participant", StringComparison.Ordinal)
-                    ? publishers[0].Type.Name.Substring(
-                        0,
-                        publishers[0].Type.Name.Length - "Participant".Length)
-                    : publishers[0].Type.Name);
-            var topic = publisherIdentity + "-" + _contractName(subscribedEvent);
-            subscriptions.Add(new Subscription(topic, participantIdentity, participantIdentity));
-        }
-
-        return subscriptions.ToImmutable();
-    }
-
-    private static ImmutableArray<Topic> _createTopics(AttributeData networkAttribute)
-    {
-        var topics = ImmutableArray.CreateBuilder<Topic>();
-        foreach (var member in _types(networkAttribute, "Members"))
-        {
-            var participant = member.GetAttributes().FirstOrDefault(static attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
-            if (participant is null)
-                continue;
-            var ownerIdentity = _string(participant, "Identity")
-                ?? _normalizeIdentity(member.Name.EndsWith("Participant", StringComparison.Ordinal)
-                    ? member.Name.Substring(0, member.Name.Length - "Participant".Length)
-                    : member.Name);
-            foreach (var contract in _types(participant, "Publishes"))
-            {
-                topics.Add(new Topic(
-                    contract,
-                    ownerIdentity + "-" + _contractName(contract),
-                    ownerIdentity));
-            }
-        }
-
-        return topics.ToImmutable();
-    }
-
-    private static void _emitManifest(
-        StringBuilder source,
-        Host host,
-        INamedTypeSymbol network,
-        string identity,
-        string connection,
-        string? managedIdentityConfigurationKey,
-        INamedTypeSymbol? retryType,
-        ImmutableArray<Subscription> subscriptions,
-        ImmutableArray<Topic> desiredTopics,
-        ImmutableArray<Topic> knownTopics,
-        bool hasIdentityQueue,
-        int resourceLifecycle)
-    {
+        var retryType = host.RetryTypeName;
         source.AppendLine("    /// <summary>Gets the deterministic desired-resource manifest for this messaging host.</summary>")
             .AppendLine("    public static global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest Manifest { get; } =")
             .AppendLine("        new global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsManifest(")
-            .Append("            typeof(").Append(_typeName(host.Participant)).AppendLine("),")
-            .Append("            typeof(").Append(_typeName(network)).AppendLine("),")
-            .Append("            ").Append(_typeName(host.Participant)).Append(".CreateDescriptor(")
-            .Append(_typeName(network)).Append(".CreateOptions(), ")
-            .Append(_typeName(network)).AppendLine(".Registry),")
+            .Append("            typeof(").Append(host.ParticipantTypeName).AppendLine("),")
+            .Append("            typeof(").Append(host.NetworkTypeName).AppendLine("),")
+            .Append("            ").Append(host.ParticipantTypeName).Append(".CreateDescriptor(")
+            .Append(host.NetworkTypeName).Append(".CreateOptions(), ")
+            .Append(host.NetworkTypeName).AppendLine(".Registry),")
             .Append("            global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsTriggerBinding.")
             .AppendLine(host.Binding == _serviceBusBinding ? "ServiceBus," : "StorageQueue,")
-            .Append("            \"").Append(_escape(_nativeName(identity, host.Binding))).AppendLine("\",")
-            .Append("            \"").Append(_escape(connection)).AppendLine("\",");
+            .Append("            \"").Append(_escape(_nativeName(host.Identity, host.Binding))).AppendLine("\",")
+            .Append("            \"").Append(_escape(host.Connection)).AppendLine("\",");
 
         _emitMaximumDeliveryCount(source, retryType, "            ", appendComma: true);
         source.AppendLine();
         source.Append(retryType is null
                 ? "            global::System.TimeSpan.FromMinutes(5),"
-                : "            new " + _typeName(retryType) + "().MaximumHandlerDuration,")
+                : "            new " + retryType + "().MaximumHandlerDuration,")
             .AppendLine();
 
         source.AppendLine("            new global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription[]")
             .AppendLine("            {");
-        foreach (var subscription in subscriptions)
+        foreach (var subscription in host.Subscriptions)
         {
             source.AppendLine("                new global::Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsSubscription(")
                 .Append("                    \"").Append(_escape(_nativeName(subscription.Topic, host.Binding))).AppendLine("\",")
@@ -457,18 +163,18 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         if (retryType is null)
             source.AppendLine("            global::System.TimeSpan.Zero,");
         else
-            source.Append("            new ").Append(_typeName(retryType)).AppendLine("().RetryDelay,");
+            source.Append("            new ").Append(retryType).AppendLine("().RetryDelay,");
         source.Append("            ").Append(host.StrictStorageQueueHostSettings ? "true" : "false")
             .AppendLine(",")
             .AppendLine("            new global::Ark.Tools.MediatorFramework.Messaging.MessagingResourceManifest(")
-            .Append("                \"").Append(_escape(identity)).AppendLine("\",")
-            .Append("                ").Append(hasIdentityQueue ? "\"" + _escape(identity) + "\"" : "null")
+            .Append("                \"").Append(_escape(host.Identity)).AppendLine("\",")
+            .Append("                ").Append(host.HasIdentityQueue ? "\"" + _escape(host.Identity) + "\"" : "null")
             .AppendLine(",");
         _emitMaximumDeliveryCount(source, retryType, "                ", appendComma: true);
         source.AppendLine()
             .AppendLine("                new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource[]")
             .AppendLine("                {");
-        foreach (var topic in desiredTopics.OrderBy(static topic => topic.Name, StringComparer.Ordinal))
+        foreach (var topic in host.DesiredTopics.Values.OrderBy(static topic => topic.Name, StringComparer.Ordinal))
         {
             source.AppendLine("                    new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource(")
                 .Append("                        \"").Append(_escape(topic.Name)).AppendLine("\",")
@@ -477,7 +183,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         source.AppendLine("                },")
             .AppendLine("                new global::Ark.Tools.MediatorFramework.Messaging.MessagingSubscriptionResource[]")
             .AppendLine("                {");
-        foreach (var subscription in subscriptions)
+        foreach (var subscription in host.Subscriptions)
         {
             source.AppendLine("                    new global::Ark.Tools.MediatorFramework.Messaging.MessagingSubscriptionResource(")
                 .Append("                        \"").Append(_escape(subscription.Topic)).AppendLine("\",")
@@ -485,97 +191,51 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 .Append("                        \"").Append(_escape(subscription.ForwardToQueue)).AppendLine("\",");
             _emitMaximumDeliveryCount(source, retryType, "                        ", appendComma: true);
             source.AppendLine()
-                .Append("                        \"").Append(_escape(identity)).AppendLine("\"),");
+                .Append("                        \"").Append(_escape(host.Identity)).AppendLine("\"),");
         }
         source.AppendLine("                },")
             .AppendLine("                new string[]")
             .AppendLine("                {");
-        foreach (var topic in knownTopics.OrderBy(static topic => topic.Name, StringComparer.Ordinal))
+        foreach (var topic in host.KnownTopics.Values.OrderBy(static topic => topic.Name, StringComparer.Ordinal))
             source.Append("                    \"").Append(_escape(topic.Name)).AppendLine("\",");
         source.AppendLine("                },")
             .Append("                (global::Ark.Tools.MediatorFramework.MessagingResourceLifecycle)")
-            .Append(resourceLifecycle.ToString(CultureInfo.InvariantCulture)).AppendLine("),")
+            .Append(host.ResourceLifecycleText).AppendLine("),")
             .Append("            ")
-            .Append(managedIdentityConfigurationKey is null
+            .Append(host.ManagedIdentityConfigurationKey is null
                 ? "null"
-                : "\"" + _escape(managedIdentityConfigurationKey) + "\"")
+                : "\"" + _escape(host.ManagedIdentityConfigurationKey) + "\"")
             .AppendLine(");")
             .AppendLine();
     }
 
-    private static bool _validateNativeNames(
-        SourceProductionContext context,
-        Host host,
-        string identity,
-        ImmutableArray<Subscription> subscriptions,
-        ImmutableArray<Topic> topics)
-    {
-        var nativeNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var transportName = host.Binding == _storageQueueBinding ? "Storage Queue" : "Service Bus";
-        var hasCollision = false;
-        var values = new List<string>
-        {
-            identity,
-        };
-        values.AddRange(topics.Select(static topic => topic.Name));
-        foreach (var subscription in subscriptions)
-        {
-            values.Add(subscription.Topic);
-            values.Add(subscription.Name);
-            values.Add(subscription.ForwardToQueue);
-        }
-
-        foreach (var logical in values.Distinct(StringComparer.Ordinal))
-        {
-            var native = _nativeName(logical, host.Binding);
-            if (nativeNames.TryGetValue(native, out var existing)
-                && !string.Equals(existing, logical, StringComparison.Ordinal))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(
-                    _nativeNameCollision,
-                    host.Location,
-                    existing,
-                    logical,
-                    transportName,
-                    native));
-                hasCollision = true;
-            }
-            else
-            {
-                nativeNames[native] = logical;
-            }
-        }
-
-        return !hasCollision;
-    }
-
     private static void _emitMaximumDeliveryCount(
         StringBuilder source,
-        INamedTypeSymbol? retryType,
+        string? retryTypeName,
         string indentation,
         bool appendComma)
     {
         source.Append(indentation);
-        if (retryType is null)
+        if (retryTypeName is null)
         {
             source.Append('1');
         }
         else
         {
-            source.Append("checked(new ").Append(_typeName(retryType))
-                .Append("().MaximumDeliveryCount * (new ").Append(_typeName(retryType))
+            source.Append("checked(new ").Append(retryTypeName)
+                .Append("().MaximumDeliveryCount * (new ").Append(retryTypeName)
                 .Append("().SecondLevelRetriesEnabled ? 2 : 1))");
         }
         if (appendComma)
             source.Append(',');
     }
 
-    private static void _emitTypes(StringBuilder source, ImmutableArray<INamedTypeSymbol> types)
+    private static void _emitTypes(StringBuilder source, EquatableArray<string> typeNames)
     {
         source.AppendLine("            new global::System.Type[]")
             .AppendLine("            {");
-        foreach (var type in types)
-            source.Append("                typeof(").Append(_typeName(type)).AppendLine("),");
+        foreach (var typeName in typeNames)
+            source.Append("                typeof(").Append(typeName).AppendLine("),");
         source.Append("            }");
     }
 
@@ -626,46 +286,16 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .AppendLine("    }");
     }
 
-    private static string _nativeName(string value, int maximumLength, bool storage)
-    {
-        return global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._map(
-            value,
-            maximumLength,
-            storage
-                ? global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isStorageQueueCharacter
-                : global::Ark.Tools.MediatorFramework.Messaging.MessagingNativeEntityNameMapper._isServiceBusCharacter);
-    }
-
-    private static string _nativeName(string value, int binding)
-    {
-        return _nativeName(value, binding == _storageQueueBinding ? 63 : 260, binding == _storageQueueBinding);
-    }
-
-    private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol @namespace)
-    {
-        foreach (var type in @namespace.GetTypeMembers())
-        {
-            yield return type;
-            foreach (var nested in _nestedTypes(type))
-                yield return nested;
-        }
-
-        foreach (var child in @namespace.GetNamespaceMembers())
-        {
-            foreach (var type in _allTypes(child))
-                yield return type;
-        }
-    }
-
     private static void _validateHostJson(
         SourceProductionContext context,
-        Host host,
+        in MessagingHostSpec host,
         ImmutableArray<string?> hostJson)
     {
+        var location = LocationSpec._toLocation(host.Location);
         var content = hostJson.FirstOrDefault(static value => value is not null);
         if (content is null)
         {
-            context.ReportDiagnostic(Diagnostic.Create(_hostJsonNotInspectable, host.Location));
+            context.ReportDiagnostic(Diagnostic.Create(MessagingFunctionsDiagnostics._hostJsonNotInspectable, location));
             return;
         }
 
@@ -675,15 +305,15 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 content,
                 "\"messageEncoding\"\\s*:\\s*\"none\""))
         {
-            context.ReportDiagnostic(Diagnostic.Create(_invalidMessageEncoding, host.Location));
+            context.ReportDiagnostic(Diagnostic.Create(MessagingFunctionsDiagnostics._invalidMessageEncoding, location));
         }
         if (!_regexIsMatch(
                 content,
                 "\"maxDequeueCount\"\\s*:\\s*[1-9][0-9]*"))
         {
             context.ReportDiagnostic(Diagnostic.Create(
-                _invalidMaximumDequeueCount,
-                host.Location));
+                MessagingFunctionsDiagnostics._invalidMaximumDequeueCount,
+                location));
         }
 
         var visibility = Regex.Match(
@@ -699,8 +329,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             || delay <= TimeSpan.Zero)
         {
             context.ReportDiagnostic(Diagnostic.Create(
-                _invalidVisibilityTimeout,
-                host.Location));
+                MessagingFunctionsDiagnostics._invalidVisibilityTimeout,
+                location));
         }
     }
 
@@ -713,226 +343,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             TimeSpan.FromSeconds(1));
     }
 
-    private static IEnumerable<INamedTypeSymbol> _nestedTypes(INamedTypeSymbol type)
-    {
-        foreach (var nested in type.GetTypeMembers())
-        {
-            yield return nested;
-            foreach (var descendant in _nestedTypes(nested))
-                yield return descendant;
-        }
-    }
-
-    private static ImmutableArray<INamedTypeSymbol> _types(AttributeData? attribute, string name)
-    {
-        if (attribute is null)
-            return ImmutableArray<INamedTypeSymbol>.Empty;
-        var value = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value;
-        return value.Kind == TypedConstantKind.Array
-            ? value.Values
-                .Where(static item => item.Value is INamedTypeSymbol)
-                .Select(static item => (INamedTypeSymbol)item.Value!)
-                .ToImmutableArray()
-            : ImmutableArray<INamedTypeSymbol>.Empty;
-    }
-
-    private static INamedTypeSymbol? _type(AttributeData attribute, string name)
-    {
-        return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
-            as INamedTypeSymbol;
-    }
-
-    private static bool _bool(AttributeData attribute, string name)
-    {
-        return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
-            is true;
-    }
-
-    private static int _int(AttributeData attribute, string name)
-    {
-        return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
-            is int value
-            ? value
-            : 0;
-    }
-
-    private static ImmutableArray<int> _ints(AttributeData? attribute, string name)
-    {
-        if (attribute is null)
-            return ImmutableArray<int>.Empty;
-        var value = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value;
-        return value.Kind == TypedConstantKind.Array
-            ? value.Values
-                .Where(static item => item.Value is int)
-                .Select(static item => (int)item.Value!)
-                .ToImmutableArray()
-            : ImmutableArray<int>.Empty;
-    }
-
-    private static string? _string(AttributeData? attribute, string name)
-    {
-        return attribute?.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
-            as string;
-    }
-
-    private static string _contractName(INamedTypeSymbol contract)
-    {
-        var attribute = contract.GetAttributes().FirstOrDefault(static candidate =>
-            candidate.AttributeClass?.ToDisplayString() is _messageAttribute or _eventAttribute);
-        if (_string(attribute, "Name") is { } explicitName)
-            return explicitName;
-        var group = contract.GetAttributes()
-            .FirstOrDefault(static candidate => candidate.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
-            ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
-        return _normalizeLogical(group) + "." + _normalizeLogical(contract.Name);
-    }
-
-    private static string _normalizeIdentity(string value)
-    {
-        return string.Join("-", _words(value).Select(static word => word.ToLowerInvariant()));
-    }
-
-    private static string _normalizeSnake(string value)
-    {
-        return string.Join("_", value.Split('.')
-            .SelectMany(_words)
-            .Select(static word => word.ToLowerInvariant()));
-    }
-
-    private static string _normalizeLogical(string value)
-    {
-        return string.Join(".", value.Split('.', StringSplitOptions.RemoveEmptyEntries)
-            .Select(static segment => string.Join("-", _words(segment).Select(static word => word.ToLowerInvariant()))));
-    }
-
-    private static IEnumerable<string> _words(string value)
-    {
-        var word = new StringBuilder();
-        for (var index = 0; index < value.Length; index++)
-        {
-            var character = value[index];
-            var startsWord = index > 0
-                && char.IsUpper(character)
-                && (char.IsLower(value[index - 1])
-                    || (index + 1 < value.Length && char.IsLower(value[index + 1])));
-            if (startsWord && word.Length > 0)
-            {
-                yield return word.ToString();
-                word.Clear();
-            }
-            if (char.IsLetterOrDigit(character))
-                word.Append(character);
-            else if (word.Length > 0)
-            {
-                yield return word.ToString();
-                word.Clear();
-            }
-        }
-        if (word.Length > 0)
-            yield return word.ToString();
-    }
-
-    private static string _functionName(string identity)
-    {
-        var name = string.Concat(_words(identity).Select(static word =>
-            char.ToUpperInvariant(word[0]) + word.Substring(1)));
-        return string.IsNullOrEmpty(name) ? "Messaging" : name;
-    }
-
-    private static string _typeName(ITypeSymbol type)
-    {
-        return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-    }
-
-    private static string _escape(string value)
-    {
-        return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
-    }
-
-    private static DiagnosticDescriptor _rule(
-        string id,
-        string title,
-        string message,
-        DiagnosticSeverity severity)
-    {
-        return new DiagnosticDescriptor(
-            id,
-            title,
-            message,
-            "Ark.Tools.MediatorFramework",
-            severity,
-            isEnabledByDefault: true,
-            helpLinkUri: $"https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/{id}.md");
-    }
-
-    private readonly struct Host
-    {
-        public Host(
-            INamedTypeSymbol participant,
-            int binding,
-            string? connectionConfigurationKey,
-            string? managedIdentityConfigurationKey,
-            ImmutableArray<INamedTypeSymbol> incomingSteps,
-            ImmutableArray<INamedTypeSymbol> outgoingSteps,
-            bool strictStorageQueueHostSettings,
-            Location location)
-        {
-            Participant = participant;
-            Binding = binding;
-            ConnectionConfigurationKey = connectionConfigurationKey;
-            ManagedIdentityConfigurationKey = managedIdentityConfigurationKey;
-            IncomingSteps = incomingSteps;
-            OutgoingSteps = outgoingSteps;
-            StrictStorageQueueHostSettings = strictStorageQueueHostSettings;
-            Location = location;
-        }
-
-        public INamedTypeSymbol Participant { get; }
-
-        public int Binding { get; }
-
-        public string? ConnectionConfigurationKey { get; }
-
-        public string? ManagedIdentityConfigurationKey { get; }
-
-        public ImmutableArray<INamedTypeSymbol> IncomingSteps { get; }
-
-        public ImmutableArray<INamedTypeSymbol> OutgoingSteps { get; }
-
-        public bool StrictStorageQueueHostSettings { get; }
-
-        public Location Location { get; }
-    }
-
-    private readonly struct Subscription
-    {
-        public Subscription(string topic, string name, string forwardToQueue)
-        {
-            Topic = topic;
-            Name = name;
-            ForwardToQueue = forwardToQueue;
-        }
-
-        public string Topic { get; }
-
-        public string Name { get; }
-
-        public string ForwardToQueue { get; }
-    }
-
-    private readonly struct Topic
-    {
-        public Topic(INamedTypeSymbol contract, string name, string ownerIdentity)
-        {
-            Contract = contract;
-            Name = name;
-            OwnerIdentity = ownerIdentity;
-        }
-
-        public INamedTypeSymbol Contract { get; }
-
-        public string Name { get; }
-
-        public string OwnerIdentity { get; }
-    }
+    private sealed record MessagingFunctionsAggregateSpec(
+        EquatableArray<MessagingHostSpec> Hosts,
+        EquatableArray<string?> HostJson);
 }

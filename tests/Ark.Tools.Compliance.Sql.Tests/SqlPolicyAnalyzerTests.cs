@@ -37,6 +37,34 @@ public sealed class SqlPolicyAnalyzerTests
         diagnostics.Should().ContainSingle(static d => d.Id == "ARKPII007" && d.Severity == DiagnosticSeverity.Error);
     }
 
+    /// <summary>A classified field on an opted-in type requires an explicit column policy.</summary>
+    [TestMethod]
+    public async Task OptedInClassifiedFieldRequiresColumnPolicy()
+    {
+        var diagnostics = await _diagnostics("""
+            [SqlDataPolicy(Table = "Customers")]
+            public class Customer { [PersonalData] public string Email = ""; }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle(static d => d.Id == "ARKPII007" && d.Severity == DiagnosticSeverity.Error);
+    }
+
+    /// <summary>A complete field mapping satisfies the SQL policy requirement.</summary>
+    [TestMethod]
+    public async Task CompleteClassifiedFieldPolicyHasNoDiagnostic()
+    {
+        var diagnostics = await _diagnostics("""
+            [SqlDataPolicy(Table = "Customers")]
+            public class Customer
+            {
+                [PersonalData, SqlColumnPolicy("email_address", StoragePolicy.Masked)]
+                public string Email = "";
+            }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+    }
+
     /// <summary>A nullable sensitive value object is classified without duplicating attributes.</summary>
     [TestMethod]
     public async Task SensitiveValueTypeRequiresColumnPolicy()

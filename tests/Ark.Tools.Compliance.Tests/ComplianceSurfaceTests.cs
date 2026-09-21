@@ -64,6 +64,103 @@ public sealed class ComplianceSurfaceTests
         first.Text.Should().NotContain("\r");
     }
 
+    /// <summary>Unrelated invocation edits keep every semantic surface stage cached and free of Roslyn state.</summary>
+    [TestMethod]
+    public void Surface_UnrelatedInvocationEditKeepsSemanticStagesCached()
+    {
+        const string surfaceSource = """
+            using Ark.Tools.Compliance;
+            using Ark.Tools.Compliance.Dapper;
+            namespace Example;
+            public class Customer
+            {
+                public EmailAddress Email { get; set; }
+                public string Reveal() => Email.Reveal(CompliancePurpose.SendTransactionalEmail);
+                public static void Configure() => SensitiveValueDapper.Register<EmailAddress>();
+            }
+            """;
+        var surfaceTree = CSharpSyntaxTree.ParseText(surfaceSource, path: "Customer.cs");
+        var unrelatedTree = CSharpSyntaxTree.ParseText(
+            "namespace Example; public static class Unrelated { public static int Value() => System.Math.Abs(1); }",
+            path: "Unrelated.cs");
+        var compilation = _createCompilation(surfaceTree, unrelatedTree);
+        var options = new GeneratorDriverOptions(
+            IncrementalGeneratorOutputKind.None,
+            trackIncrementalGeneratorSteps: true);
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ComplianceSurfaceGenerator().AsSourceGenerator()],
+            driverOptions: options);
+
+        driver = driver.RunGenerators(compilation);
+        var original = driver.GetRunResult().Results.Single().GeneratedSources.Single().SourceText.ToString();
+        compilation = compilation.ReplaceSyntaxTree(
+            unrelatedTree,
+            CSharpSyntaxTree.ParseText(
+                "namespace Example; public static class Unrelated { public static int Value() => System.Math.Abs(2); }",
+                path: "Unrelated.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        var result = driver.GetRunResult().Results.Single();
+        result.GeneratedSources.Single().SourceText.ToString().Should().Be(original);
+        foreach (var trackingName in new[]
+        {
+            "ComplianceSurfaceMemberSpecs",
+            "ComplianceSurfaceRevealSpecs",
+            "ComplianceSurfaceRegistrationSpecs",
+            "ComplianceSurfaceModel",
+        })
+        {
+            var outputs = result.TrackedSteps[trackingName].SelectMany(static step => step.Outputs).ToArray();
+            outputs.Should().NotBeEmpty();
+            outputs.All(static output =>
+                    output.Reason is IncrementalStepRunReason.Cached or IncrementalStepRunReason.Unchanged)
+                .Should().BeTrue();
+            outputs.Any(static output => _containsRoslynState(output.Value)).Should().BeFalse();
+        }
+    }
+
+    /// <summary>A classification edit invalidates member parsing and the final surface model.</summary>
+    [TestMethod]
+    public void Surface_ClassificationEditInvalidatesAffectedStages()
+    {
+        const string source = """
+            using Ark.Tools.Compliance;
+            namespace Example;
+            public class Customer
+            {
+                [PersonalData] public string Email { get; set; } = "";
+            }
+            """;
+        var tree = CSharpSyntaxTree.ParseText(source, path: "Customer.cs");
+        var compilation = _createCompilation(tree);
+        var options = new GeneratorDriverOptions(
+            IncrementalGeneratorOutputKind.None,
+            trackIncrementalGeneratorSteps: true);
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ComplianceSurfaceGenerator().AsSourceGenerator()],
+            driverOptions: options);
+
+        driver = driver.RunGenerators(compilation);
+        compilation = compilation.ReplaceSyntaxTree(
+            tree,
+            CSharpSyntaxTree.ParseText(
+                source.Replace("[PersonalData]", "[SensitivePersonalData]", StringComparison.Ordinal),
+                path: "Customer.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        var result = driver.GetRunResult().Results.Single();
+        result.TrackedSteps["ComplianceSurfaceMemberSpecs"]
+            .SelectMany(static step => step.Outputs)
+            .Select(static output => output.Reason)
+            .Should().Contain(IncrementalStepRunReason.Modified);
+        result.TrackedSteps["ComplianceSurfaceModel"]
+            .SelectMany(static step => step.Outputs)
+            .Select(static output => output.Reason)
+            .Should().Contain(IncrementalStepRunReason.Modified);
+        result.GeneratedSources.Single().SourceText.ToString()
+            .Should().Contain("CLASSIFIED\tExample.Customer\tEmail\tArk:SensitivePersonalData");
+    }
+
     /// <summary>A missing baseline fails only when the gate is enabled and classified members exist.</summary>
     [TestMethod]
     public void Surface_MissingBaselineIsGatedAndEmptyCompilationIsAllowed()
@@ -102,6 +199,26 @@ public sealed class ComplianceSurfaceTests
 
         result.Diagnostics.Select(static diagnostic => diagnostic.Id).Should().Equal("ARKPII020", "ARKPII021");
         _run(_personalMember, result.Text, enabled: true).Diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>Surface diagnostics preserve paths and positions mapped by line directives.</summary>
+    [TestMethod]
+    public void Surface_DiagnosticUsesMappedSourceLocation()
+    {
+        var result = _run("""
+            using Ark.Tools.Compliance;
+            namespace Example;
+            public class Customer
+            {
+            #line 42 "MappedCustomer.cs"
+                [PersonalData] public string Email { get; set; } = "";
+            #line default
+            }
+            """, "COMPLIANCE-SURFACE 1\n", enabled: true);
+
+        var location = result.Diagnostics.Single(static diagnostic => diagnostic.Id == "ARKPII020").Location.GetLineSpan();
+        location.Path.Should().Be("MappedCustomer.cs");
+        location.StartLinePosition.Line.Should().Be(41);
     }
 
     /// <summary>Weakening personal information to a pseudonymous classification is a distinct privacy error.</summary>
@@ -331,9 +448,9 @@ public sealed class ComplianceSurfaceTests
         result.Text.Should().Contain("CLASSIFIED\tExample.Customer\tVisible\tArk:PersonalData\t\tNewtonsoft.Json,System.Text.Json");
     }
 
-    /// <summary>Real MSBuild acceptance produces identical net8/net10 baselines for manual review.</summary>
+    /// <summary>Real MSBuild acceptance produces a baseline for manual review.</summary>
     [TestMethod]
-    public async Task Surface_TargetsRejectDriftAndAcceptReviewedMultiTargetBaseline()
+    public async Task Surface_TargetsRejectDriftAndAcceptReviewedBaseline()
     {
         var repository = new DirectoryInfo(AppContext.BaseDirectory);
         while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "Ark.Tools.slnx")))
@@ -360,7 +477,7 @@ public sealed class ComplianceSurfaceTests
                     <ImportDirectoryBuildProps>false</ImportDirectoryBuildProps>
                     <ImportDirectoryBuildTargets>false</ImportDirectoryBuildTargets>
                     <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
-                    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+                    <TargetFramework>net10.0</TargetFramework>
                   </PropertyGroup>
                   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
                   <ItemGroup>
@@ -389,14 +506,10 @@ public sealed class ComplianceSurfaceTests
             missing.ExitCode.Should().NotBe(0);
             missing.Output.Should().Contain("ARKPII020");
 
-            var net8 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net8.0", "generated",
-                "Ark.Tools.Compliance.Generators", "Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator",
-                "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
             var net10 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net10.0", "generated",
                 "Ark.Tools.Compliance.Generators", "Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator",
                 "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
-            net8.Should().Equal(net10);
-            await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net8).ConfigureAwait(false);
+            await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net10).ConfigureAwait(false);
             var accepted = await _buildFixture(project).ConfigureAwait(false);
             accepted.ExitCode.Should().Be(0, accepted.Output);
 
@@ -459,12 +572,8 @@ public sealed class ComplianceSurfaceTests
         string? baseline = null, bool enabled = false, bool duplicateBaseline = false,
         bool complianceEnabled = true)
     {
-        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(static path => MetadataReference.CreateFromFile(path));
-        var compilation = CSharpCompilation.Create("SurfaceTests",
-            [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(documentationMode: DocumentationMode.Parse))],
-            references, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var compilation = _createCompilation(
+            CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(documentationMode: DocumentationMode.Parse)));
         var files = baseline is null ? ImmutableArray<AdditionalText>.Empty
             : ImmutableArray.Create<AdditionalText>(new BaselineText("ArkComplianceSurface.txt", baseline));
         if (duplicateBaseline)
@@ -479,6 +588,40 @@ public sealed class ComplianceSurfaceTests
         var generated = result.Results.Single().GeneratedSources.Single().SourceText.ToString();
         generated.Should().StartWith("/*\n").And.EndWith("*/\n");
         return (generated[3..^3], result.Diagnostics);
+    }
+
+    private static CSharpCompilation _createCompilation(params SyntaxTree[] syntaxTrees)
+    {
+        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(static path => MetadataReference.CreateFromFile(path));
+        return CSharpCompilation.Create(
+            "SurfaceTests",
+            syntaxTrees,
+            references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+    }
+
+    private static bool _containsRoslynState(object? value)
+    {
+        if (value is null || value is string)
+        {
+            return false;
+        }
+
+        var type = value.GetType();
+        if (type.Namespace?.StartsWith("Microsoft.CodeAnalysis", StringComparison.Ordinal) == true)
+        {
+            return true;
+        }
+
+        if (value is System.Collections.IEnumerable values)
+        {
+            return values.Cast<object?>().Any(_containsRoslynState);
+        }
+
+        return type.Assembly == typeof(ComplianceSurfaceGenerator).Assembly
+            && type.GetProperties().Any(property => _containsRoslynState(property.GetValue(value)));
     }
 
     private sealed class BaselineText(string path, string text) : AdditionalText

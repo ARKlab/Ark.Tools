@@ -5,9 +5,7 @@ using Microsoft.SqlServer.Dac;
 
 using Reqnroll;
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using System.Data;
 
@@ -22,9 +20,7 @@ public sealed class DatabaseUtils
     /// <summary>
     /// Gets the connection string used by the reference project test database.
     /// </summary>
-#if NET10_0_OR_GREATER
     [InfrastructureSecret]
-#endif
     public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=IntegrationTestsDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
 
     /// <summary>

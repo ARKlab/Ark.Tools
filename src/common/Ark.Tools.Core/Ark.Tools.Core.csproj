@@ -27,10 +27,6 @@
 		<PackageReference Include="NodaTime" />
 	</ItemGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
-		<PackageReference Include="System.Linq.Async" />
-	</ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.Core.Analyzers\Ark.Tools.Core.Analyzers.csproj"
                       OutputItemType="Analyzer"

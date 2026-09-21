@@ -59,8 +59,7 @@
     <PackageVersion Include="System.Reactive" Version="7.0.0" />
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />
     <PackageVersion Include="SimpleInjector" Version="5.6.0" />
-    <PackageVersion Include="ArxOne.Ftp" Version="1.41.4" />
-    <PackageVersion Include="FluentFTP" Version="54.2.1" />
+    <PackageVersion Include="FluentFTP" Version="55.0.0" />
     <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
     <PackageVersion Include="Flurl.Http" Version="4.0.2" />
     <PackageVersion Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
@@ -95,7 +94,6 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.19.0" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.Profiler" Version="1.0.1-beta.7" />
-    <PackageVersion Include="Ben.Demystifier" Version="0.4.1" />
     <PackageVersion Include="NLog" Version="6.2.1" />
     <PackageVersion Include="NLog.Database" Version="6.0.3" />
     <PackageVersion Include="NLog.DiagnosticSource" Version="6.1.4" />

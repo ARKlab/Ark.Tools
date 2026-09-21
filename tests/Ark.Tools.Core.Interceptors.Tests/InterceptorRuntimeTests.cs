@@ -194,6 +194,10 @@ public class InterceptorRuntimeTests
         // Both InterceptedEntity call sites above must share one method with two location attributes.
         var entityMethodIndex = generated.IndexOf("global::Ark.Tools.Core.Interceptors.Tests.InterceptedEntity> source", StringComparison.Ordinal);
         entityMethodIndex.Should().BeGreaterThan(0);
+        var bufferIndex = generated.IndexOf("var values = new object?[10];", entityMethodIndex, StringComparison.Ordinal);
+        var loopIndex = generated.IndexOf("while (e.MoveNext())", entityMethodIndex, StringComparison.Ordinal);
+        bufferIndex.Should().BeGreaterThan(entityMethodIndex);
+        loopIndex.Should().BeGreaterThan(bufferIndex);
         var precedingBlock = generated[..entityMethodIndex];
         var signatureStart = precedingBlock.AsSpan().LastIndexOf('\n') + 1;
         var attributeCount = precedingBlock[..signatureStart].TrimEnd().Split('\n')

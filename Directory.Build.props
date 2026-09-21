@@ -1,7 +1,7 @@
 <Project>
   
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
 
 	<!-- Default version for local development - allows samples to use locally built packages -->
 	<!-- Override with -p:Version=x.y.z during release builds -->
