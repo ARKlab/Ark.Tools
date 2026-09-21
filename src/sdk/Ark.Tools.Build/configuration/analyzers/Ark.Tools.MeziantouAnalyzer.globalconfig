@@ -119,7 +119,7 @@ dotnet_diagnostic.MA0106.severity = warning
 dotnet_diagnostic.MA0107.severity = none
 
 # MA0137: Use 'Async' suffix when a method returns an awaitable type
-dotnet_diagnostic.MA0137.severity = warning
+dotnet_diagnostic.MA0137.severity = none
 
 # MA0138: Do not use 'Async' suffix when a method does not return an awaitable type
 dotnet_diagnostic.MA0138.severity = warning
@@ -203,7 +203,7 @@ dotnet_diagnostic.MA0192.severity = none
 dotnet_diagnostic.MA0200.severity = warning
 
 # MA0214: Use 'await' instead of returning the task
-dotnet_diagnostic.MA0214.severity = warning
+dotnet_diagnostic.MA0214.severity = none
 
 # MA0215: Return the task instead of awaiting it
 dotnet_diagnostic.MA0215.severity = none
