@@ -3,9 +3,7 @@
 
 using AwesomeAssertions;
 
-#if NET10_0_OR_GREATER
 using Ark.Tools.Compliance;
-#endif
 
 using System.Diagnostics;
 using System.Net;
@@ -386,25 +384,12 @@ public sealed partial class AzureFunctionsBoundaryTests
     private sealed partial class FunctionHost : IAsyncDisposable
     {
         private static readonly TimeSpan _startupTimeout = TimeSpan.FromSeconds(60);
-#if NET10_0_OR_GREATER
         [GeneratedRegex(
             "(?i)(authorization\\s*:\\s*|connectionstring\\s*[=:]\\s*)[^\\s,;]+",
             RegexOptions.CultureInvariant
                 | RegexOptions.ExplicitCapture
                 | RegexOptions.NonBacktracking)]
         private static partial Regex _secretPattern { get; }
-#else
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Meziantou.Analyzer",
-            "MA0190",
-            Justification = "GeneratedRegex partial properties are unavailable on net8.0.")]
-        [GeneratedRegex(
-            "(?i)(authorization\\s*:\\s*|connectionstring\\s*[=:]\\s*)[^\\s,;]+",
-            RegexOptions.CultureInvariant
-                | RegexOptions.ExplicitCapture
-                | RegexOptions.NonBacktracking)]
-        private static partial Regex _secretPattern();
-#endif
         private readonly Process _process;
         private readonly StreamWriter _log;
         private readonly string _logPath;
@@ -417,9 +402,7 @@ public sealed partial class AzureFunctionsBoundaryTests
             string logPath,
             Channel<string> logLines,
             Task logPumpTask,
-#if NET10_0_OR_GREATER
             [NotPersonalData("Test host base address is infrastructure metadata, not personal data.")]
-#endif
             Uri baseAddress)
         {
             _process = process;
@@ -430,9 +413,7 @@ public sealed partial class AzureFunctionsBoundaryTests
             BaseAddress = baseAddress;
         }
 
-#if NET10_0_OR_GREATER
         [NotPersonalData("Test host base address is infrastructure metadata, not personal data.")]
-#endif
         public Uri BaseAddress { get; }
 
         public static async Task<FunctionHost> StartAsync(CancellationToken cancellationToken)
@@ -535,11 +516,7 @@ public sealed partial class AzureFunctionsBoundaryTests
             CancellationToken cancellationToken)
         {
             await foreach (var line in logLines.ReadAllAsync(cancellationToken).ConfigureAwait(false))
-#if NET10_0_OR_GREATER
                 await log.WriteLineAsync(_secretPattern.Replace(line, "$1[REDACTED]"), cancellationToken).ConfigureAwait(false);
-#else
-                await log.WriteLineAsync(_secretPattern().Replace(line, "$1[REDACTED]"), cancellationToken).ConfigureAwait(false);
-#endif
         }
 
         private async Task _waitForReadinessAsync(CancellationToken cancellationToken)

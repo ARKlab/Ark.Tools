@@ -1021,25 +1021,6 @@ public sealed class SdkPackageTests
             $"msbuild \"{Path.Join(lockedRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(lockedRoot, "NuGet.Config")}\"",
             lockedEnvironment);
 
-        await File.WriteAllTextAsync(
-            Path.Join(lockedRoot, "Consumer.csproj"),
-            _createSdkCSharpProject(targetFramework: "net8.0")).ConfigureAwait(false);
-        Directory.Delete(Path.Join(lockedRoot, "obj"), true);
-        var lockedFailure = await _runForExitCode(
-            "dotnet",
-            $"msbuild \"{Path.Join(lockedRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(lockedRoot, "NuGet.Config")}\"",
-            lockedEnvironment);
-        Assert.AreNotEqual(0, lockedFailure.ExitCode);
-        StringAssert.Contains(lockedFailure.Output, "NU1004", StringComparison.Ordinal);
-
-        await File.WriteAllTextAsync(
-            Path.Join(lockedRoot, "Consumer.csproj"),
-            _createSdkCSharpProject("<RestoreLockedMode>false</RestoreLockedMode>", targetFramework: "net8.0")).ConfigureAwait(false);
-        await _run(
-            "dotnet",
-            $"msbuild \"{Path.Join(lockedRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(lockedRoot, "NuGet.Config")}\"",
-            lockedEnvironment);
-
         var cpmRoot = await _createSdkScenarioAsync(
             fixtureRoot,
             feed,

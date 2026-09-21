@@ -448,9 +448,9 @@ public sealed class ComplianceSurfaceTests
         result.Text.Should().Contain("CLASSIFIED\tExample.Customer\tVisible\tArk:PersonalData\t\tNewtonsoft.Json,System.Text.Json");
     }
 
-    /// <summary>Real MSBuild acceptance produces identical net8/net10 baselines for manual review.</summary>
+    /// <summary>Real MSBuild acceptance produces a baseline for manual review.</summary>
     [TestMethod]
-    public async Task Surface_TargetsRejectDriftAndAcceptReviewedMultiTargetBaseline()
+    public async Task Surface_TargetsRejectDriftAndAcceptReviewedBaseline()
     {
         var repository = new DirectoryInfo(AppContext.BaseDirectory);
         while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "Ark.Tools.slnx")))
@@ -477,7 +477,7 @@ public sealed class ComplianceSurfaceTests
                     <ImportDirectoryBuildProps>false</ImportDirectoryBuildProps>
                     <ImportDirectoryBuildTargets>false</ImportDirectoryBuildTargets>
                     <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
-                    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+                    <TargetFramework>net10.0</TargetFramework>
                   </PropertyGroup>
                   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
                   <ItemGroup>
@@ -506,14 +506,10 @@ public sealed class ComplianceSurfaceTests
             missing.ExitCode.Should().NotBe(0);
             missing.Output.Should().Contain("ARKPII020");
 
-            var net8 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net8.0", "generated",
-                "Ark.Tools.Compliance.Generators", "Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator",
-                "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
             var net10 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net10.0", "generated",
                 "Ark.Tools.Compliance.Generators", "Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator",
                 "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
-            net8.Should().Equal(net10);
-            await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net8).ConfigureAwait(false);
+            await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net10).ConfigureAwait(false);
             var accepted = await _buildFixture(project).ConfigureAwait(false);
             accepted.ExitCode.Should().Be(0, accepted.Output);
 
