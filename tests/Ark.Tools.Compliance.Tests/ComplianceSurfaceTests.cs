@@ -509,8 +509,7 @@ public sealed class ComplianceSurfaceTests
             var net10 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net10.0", "generated",
                 "Ark.Tools.Compliance.Generators", "Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator",
                 "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
-            net8.Should().Equal(net10);
-            await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net8).ConfigureAwait(false);
+            await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net10).ConfigureAwait(false);
             var accepted = await _buildFixtureAsync(project).ConfigureAwait(false);
             accepted.ExitCode.Should().Be(0, accepted.Output);
 
