@@ -31,12 +31,12 @@
       },
       "Grpc.StatusProto": {
         "type": "Direct",
-        "requested": "[2.83.0, )",
-        "resolved": "2.83.0",
-        "contentHash": "nqdA+tBE5Sly9DJ/S9M90vdShhu9dPOZYQnTzzfy+WgJgo6fgtWBnNym0FNYhT21SK/dDoqeExLf3MZAxGIQXQ==",
+        "requested": "[2.84.0, )",
+        "resolved": "2.84.0",
+        "contentHash": "Jj8mIcV4KGLmAK0WIiiSOuPZAZkRgi/J+hnM9qJ+BdjxReB9vfzfponLP1mhDpzAuHwGfCO4dKsiiWafEY5PvQ==",
         "dependencies": {
-          "Google.Api.CommonProtos": "2.16.0",
-          "Grpc.Core.Api": "2.83.0"
+          "Google.Api.CommonProtos": "2.17.0",
+          "Grpc.Core.Api": "2.84.0"
         }
       },
       "Grpc.Tools": {
@@ -47,9 +47,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.263, )",
-        "resolved": "3.0.263",
-        "contentHash": "FqZ1OqrTlq2AAPd7Vu6xGu+rqWzqbLgSmSGWIPntLsbqvwks8xjBZ9sc/ggTnSvF/jDYxqa1jxWR8mGp1DU8QA=="
+        "requested": "[3.0.267, )",
+        "resolved": "3.0.267",
+        "contentHash": "NU8VcRSsJ4n0PF9lSvHGUvvBxgLZ+/4Lz81VXwwWv7S55r+aU1FDHio+8CXKiBjKpzfpHdpNiUny2zwZyLDCjw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -112,8 +112,8 @@
       },
       "Grpc.Core.Api": {
         "type": "Transitive",
-        "resolved": "2.83.0",
-        "contentHash": "xU8BT2bCw4Ct+/qIFJhhjkDEilKUbBOfp4US7l3Xa3hnlkN9l2LgISCbOw4PFYpW5jJFcK7FUAyWOFIQ94Hiqg=="
+        "resolved": "2.84.0",
+        "contentHash": "p2SOMl6q/GZ4/5MLkgboC/z55g4zKUEruRn/g46QgppjQBVnsLZVBU/9VO7n60ll38G3Eo8Zu9b7x+W01GKFVg=="
       },
       "Grpc.Net.Common": {
         "type": "Transitive",
