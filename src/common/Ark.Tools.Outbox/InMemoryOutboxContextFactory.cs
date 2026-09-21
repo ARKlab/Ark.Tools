@@ -179,9 +179,7 @@ public sealed class InMemoryOutboxContextFactory : IOutboxContextFactory, IOutbo
 /// </summary>
 public sealed class InMemoryOutbox
 {
-#pragma warning disable MA0158 // object lock protects shared in-memory state
-    private readonly object _sync = new();
-#pragma warning restore MA0158
+    private readonly Lock _sync = new();
     private readonly List<Entry> _entries = [];
     private long _nextId;
 

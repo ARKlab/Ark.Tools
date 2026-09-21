@@ -17,9 +17,7 @@ public sealed class ArkTelemetryFileCollector : IDisposable
     /// </summary>
     public const string DirectoryEnvironmentVariable = "ARK_OTEL_FILE_DIRECTORY";
 
-#pragma warning disable MA0158 // object lock protects shared file collector state
-    private readonly object _gate = new();
-#pragma warning restore MA0158
+    private readonly Lock _gate = new();
     private readonly StreamWriter _spans;
     private readonly StreamWriter _metrics;
     private readonly ActivityListener _activityListener;
