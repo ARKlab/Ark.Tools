@@ -37,7 +37,7 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="ExcelDataReader" Version="3.9.0" />
     <PackageVersion Include="ExcelDataReader.DataSet" Version="3.9.0" />
-    <PackageVersion Include="Microsoft.Identity.Web" Version="4.14.2" />
+    <PackageVersion Include="Microsoft.Identity.Web" Version="4.15.0" />
     <PackageVersion Include="Microsoft.IdentityModel.LoggingExtensions" Version="8.23.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols" Version="8.23.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />

@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.263, )",
-        "resolved": "3.0.263",
-        "contentHash": "FqZ1OqrTlq2AAPd7Vu6xGu+rqWzqbLgSmSGWIPntLsbqvwks8xjBZ9sc/ggTnSvF/jDYxqa1jxWR8mGp1DU8QA=="
+        "requested": "[3.0.267, )",
+        "resolved": "3.0.267",
+        "contentHash": "NU8VcRSsJ4n0PF9lSvHGUvvBxgLZ+/4Lz81VXwwWv7S55r+aU1FDHio+8CXKiBjKpzfpHdpNiUny2zwZyLDCjw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -760,8 +760,8 @@
       },
       "OpenTelemetry.Api": {
         "type": "Transitive",
-        "resolved": "1.19.0",
-        "contentHash": "ZupI0cvo9Jyk2IwLLMrXQm3PvX67tCBIiFws5fslm2Xw7gYctq5wZiGPS+mKmMususAAE9+jyv5Jp7ADxdZDJw=="
+        "resolved": "1.19.1",
+        "contentHash": "9JKIH+xrV0HNTFjQC8zrx9gZpDOMEljN5Htg/U0VE2IvO3N+7bKALCCsGy5tp09marX5dd8UkrgQFoLaulIBRw=="
       },
       "Polly.Core": {
         "type": "Transitive",
@@ -1025,7 +1025,7 @@
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Messaging.ServiceBus": "[7.20.2, )",
-          "OpenTelemetry.Api": "[1.19.0, )",
+          "OpenTelemetry.Api": "[1.19.1, )",
           "Rebus": "[8.9.4, )",
           "Rebus.AzureBlobs": "[1.1.0, )",
           "Rebus.AzureServiceBus": "[10.7.1, )",
