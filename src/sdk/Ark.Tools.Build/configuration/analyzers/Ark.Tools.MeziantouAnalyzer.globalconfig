@@ -118,6 +118,12 @@ dotnet_diagnostic.MA0106.severity = warning
 # MA0107: Do not use object.ToString
 dotnet_diagnostic.MA0107.severity = none
 
+# MA0137: Use 'Async' suffix when a method returns an awaitable type
+dotnet_diagnostic.MA0137.severity = warning
+
+# MA0138: Do not use 'Async' suffix when a method does not return an awaitable type
+dotnet_diagnostic.MA0138.severity = warning
+
 # MA0113: Use DateTime.UnixEpoch
 dotnet_diagnostic.MA0113.severity = warning
 
@@ -148,11 +154,20 @@ dotnet_diagnostic.MA0152.severity = warning
 # MA0155: Do not use async void methods
 dotnet_diagnostic.MA0155.severity = warning
 
+# MA0156: Use 'Async' suffix when a method returns IAsyncEnumerable<T>
+dotnet_diagnostic.MA0156.severity = warning
+
 # MA0157: Do not use 'Async' suffix when a method returns IAsyncEnumerable<T>
 dotnet_diagnostic.MA0157.severity = none
 
 # MA0160: Use ContainsKey instead of TryGetValue
 dotnet_diagnostic.MA0160.severity = warning
+
+# MA0161: UseShellExecute must be explicitly set
+dotnet_diagnostic.MA0161.severity = warning
+
+# MA0162: Use Process.Start overload with ProcessStartInfo
+dotnet_diagnostic.MA0162.severity = warning
 
 # MA0166: Forward the TimeProvider to methods that take one
 dotnet_diagnostic.MA0166.severity = suggestion
@@ -165,6 +180,12 @@ dotnet_diagnostic.MA0182.severity = none
 
 # MA0184: Do not use interpolated string without parameters
 dotnet_diagnostic.MA0184.severity = warning
+
+# MA0172: Both sides of the logical operation are identical
+dotnet_diagnostic.MA0172.severity = warning
+
+# MA0186: Equals method should use [NotNullWhen(true)] on the parameter
+dotnet_diagnostic.MA0186.severity = warning
 
 # MA0193: Use an overload with a MidpointRounding argument
 dotnet_diagnostic.MA0193.severity = warning
@@ -182,7 +203,7 @@ dotnet_diagnostic.MA0192.severity = none
 dotnet_diagnostic.MA0200.severity = warning
 
 # MA0214: Use 'await' instead of returning the task
-dotnet_diagnostic.MA0214.severity = none
+dotnet_diagnostic.MA0214.severity = warning
 
 # MA0215: Return the task instead of awaiting it
 dotnet_diagnostic.MA0215.severity = none
@@ -198,6 +219,57 @@ dotnet_diagnostic.MA0217.severity = warning
 
 # MA0221: TryGetValue method should use [MaybeNullWhen(false)] on the value parameter
 dotnet_diagnostic.MA0221.severity = warning
+
+# MA0222: JsonSourceGenerationOptions should set RespectNullableAnnotations
+dotnet_diagnostic.MA0222.severity = warning
+
+# MA0223: JsonSourceGenerationOptions should set RespectRequiredConstructorParameters
+dotnet_diagnostic.MA0223.severity = warning
+
+# MA0224: JsonSerializerOptions should set RespectNullableAnnotations
+dotnet_diagnostic.MA0224.severity = warning
+
+# MA0225: JsonSerializerOptions should set RespectRequiredConstructorParameters
+dotnet_diagnostic.MA0225.severity = warning
+
+# MA0226: EventSource class should be sealed
+dotnet_diagnostic.MA0226.severity = warning
+
+# MA0227: Avoid using 'Enumerable.Contains' on a set
+dotnet_diagnostic.MA0227.severity = warning
+
+# MA0228: The event id of an EventSource must be greater than zero
+dotnet_diagnostic.MA0228.severity = warning
+
+# MA0229: The event id of an EventSource is already used by another event
+dotnet_diagnostic.MA0229.severity = warning
+
+# MA0230: The event name of an EventSource is already used by another event
+dotnet_diagnostic.MA0230.severity = warning
+
+# MA0231: An EventSource event method must not be static
+dotnet_diagnostic.MA0231.severity = warning
+
+# MA0232: An EventSource event method must not be an explicit interface implementation
+dotnet_diagnostic.MA0232.severity = warning
+
+# MA0233: An abstract EventSource must not declare event methods
+dotnet_diagnostic.MA0233.severity = warning
+
+# MA0234: The event id written by an EventSource event method must match its [Event] attribute
+dotnet_diagnostic.MA0234.severity = warning
+
+# MA0235: The payload written by an EventSource event method must match its parameters
+dotnet_diagnostic.MA0235.severity = warning
+
+# MA0236: The payload written by an EventSource event method must use the order of its parameters
+dotnet_diagnostic.MA0236.severity = warning
+
+# MA0237: An EventSource event method writing a related activity id must declare it as its first parameter
+dotnet_diagnostic.MA0237.severity = warning
+
+# MA0238: The parameter type of an EventSource event method is not supported
+dotnet_diagnostic.MA0238.severity = warning
 
 # MA0239: Use 'typeof' instead of 'GetType()' when the type is sealed
 dotnet_diagnostic.MA0239.severity = warning
