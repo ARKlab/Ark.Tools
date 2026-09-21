@@ -6,6 +6,7 @@ using Polly;
 
 namespace Ark.Tools.FtpClient.Core;
 
+
 public abstract class FtpClientWithConnectionBase : FtpClientBase
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();

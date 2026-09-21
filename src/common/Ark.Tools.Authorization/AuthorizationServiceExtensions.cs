@@ -2,6 +2,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Authorization;
 
+
 /// <summary>
 /// Extension methods for <see cref="IAuthorizationService"/>.
 /// </summary>

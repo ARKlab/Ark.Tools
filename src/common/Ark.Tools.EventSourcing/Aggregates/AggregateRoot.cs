@@ -8,6 +8,7 @@ using System.Reflection;
 
 namespace Ark.Tools.EventSourcing.Aggregates;
 
+
 public abstract class AggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
     : IAggregateTransaction<TAggregateRoot, TAggregateState, TAggregate>
     where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>

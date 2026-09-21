@@ -10,6 +10,7 @@ using SimpleInjector;
 
 namespace Ark.Tools.Rebus;
 
+
 public static class Ex
 {
     public static void ConfigureRebus(this Container container, Action<RebusConfigurer> configurationCallback)

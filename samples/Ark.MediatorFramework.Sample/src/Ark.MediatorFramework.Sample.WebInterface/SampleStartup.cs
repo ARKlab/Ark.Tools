@@ -170,9 +170,17 @@ public sealed class SampleStartup
         services.ConfigureHttpJsonOptions(static options =>
         {
             var context = new SampleApiJsonSerializerContext(
-                new JsonSerializerOptions().ConfigureArkDefaults());
+                new JsonSerializerOptions
+                {
+                    RespectNullableAnnotations = true,
+                    RespectRequiredConstructorParameters = true
+                }.ConfigureArkDefaults());
             var applicationContext = new ApplicationJsonSerializerContext(
-                new JsonSerializerOptions().ConfigureArkDefaults());
+                new JsonSerializerOptions
+                {
+                    RespectNullableAnnotations = true,
+                    RespectRequiredConstructorParameters = true
+                }.ConfigureArkDefaults());
             options.SerializerOptions.ConfigureArkDefaults();
             options.SerializerOptions.TypeInfoResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
                 context,

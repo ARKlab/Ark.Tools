@@ -7,7 +7,13 @@ namespace Ark.Tools.Outbox.SqlServer;
 /// </summary>
 public class HeaderSerializer
 {
-    private static readonly JsonSerializerOptions _options = new JsonSerializerOptions()
+    private static readonly JsonSerializerOptions _options = new JsonSerializerOptions
+    {
+#if NET9_0_OR_GREATER
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true
+#endif
+    }
         .ConfigureArkDefaults();
 
     static HeaderSerializer()

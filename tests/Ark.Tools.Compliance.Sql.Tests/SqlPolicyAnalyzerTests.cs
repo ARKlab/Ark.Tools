@@ -20,7 +20,7 @@ public sealed class SqlPolicyAnalyzerTests
     [TestMethod]
     public async Task UnmappedClassifiedTypeHasNoSqlDiagnostic()
     {
-        var diagnostics = await _diagnostics("""
+        var diagnostics = await _diagnosticsAsync("""
             public class Customer { [PersonalData] public string Email { get; set; } = ""; }
             """).ConfigureAwait(false);
         diagnostics.Should().BeEmpty();
@@ -30,7 +30,7 @@ public sealed class SqlPolicyAnalyzerTests
     [TestMethod]
     public async Task OptedInClassifiedMemberRequiresColumnPolicy()
     {
-        var diagnostics = await _diagnostics("""
+        var diagnostics = await _diagnosticsAsync("""
             [SqlDataPolicy(Table = "Customers")]
             public class Customer { [PersonalData] public string Email { get; set; } = ""; }
             """).ConfigureAwait(false);
@@ -41,7 +41,7 @@ public sealed class SqlPolicyAnalyzerTests
     [TestMethod]
     public async Task OptedInClassifiedFieldRequiresColumnPolicy()
     {
-        var diagnostics = await _diagnostics("""
+        var diagnostics = await _diagnosticsAsync("""
             [SqlDataPolicy(Table = "Customers")]
             public class Customer { [PersonalData] public string Email = ""; }
             """).ConfigureAwait(false);
@@ -53,7 +53,7 @@ public sealed class SqlPolicyAnalyzerTests
     [TestMethod]
     public async Task CompleteClassifiedFieldPolicyHasNoDiagnostic()
     {
-        var diagnostics = await _diagnostics("""
+        var diagnostics = await _diagnosticsAsync("""
             [SqlDataPolicy(Table = "Customers")]
             public class Customer
             {
@@ -69,7 +69,7 @@ public sealed class SqlPolicyAnalyzerTests
     [TestMethod]
     public async Task SensitiveValueTypeRequiresColumnPolicy()
     {
-        var diagnostics = await _diagnostics("""
+        var diagnostics = await _diagnosticsAsync("""
             [SqlDataPolicy(Table = "Customers")]
             public class Customer { public EmailAddress? Email { get; set; } }
             """).ConfigureAwait(false);
@@ -80,7 +80,7 @@ public sealed class SqlPolicyAnalyzerTests
     [TestMethod]
     public async Task ExplicitStorageNoneSatisfiesColumnPolicy()
     {
-        var diagnostics = await _diagnostics("""
+        var diagnostics = await _diagnosticsAsync("""
             [SqlDataPolicy(Table = "Customers")]
             public class Customer
             {
@@ -95,7 +95,7 @@ public sealed class SqlPolicyAnalyzerTests
     [TestMethod]
     public async Task InheritedClassifiedMembersRequireColumnPolicy()
     {
-        var diagnostics = await _diagnostics("""
+        var diagnostics = await _diagnosticsAsync("""
             public class BaseCustomer { [PersonalData] public string Email { get; set; } = ""; }
             [SqlDataPolicy(Table = "Customers")] public class Customer : BaseCustomer { }
             """).ConfigureAwait(false);
@@ -112,15 +112,15 @@ public sealed class SqlPolicyAnalyzerTests
                 [PersonalData] public string Email { get; set; } = "";
             }
             """;
-        var enabledDiagnostics = await _diagnostics(source).ConfigureAwait(false);
+        var enabledDiagnostics = await _diagnosticsAsync(source).ConfigureAwait(false);
         enabledDiagnostics.Should().ContainSingle(static diagnostic =>
             diagnostic.Id == "ARKPII007" && diagnostic.Severity == DiagnosticSeverity.Error);
 
-        var diagnostics = await _diagnostics(source, enabled: false).ConfigureAwait(false);
+        var diagnostics = await _diagnosticsAsync(source, enabled: false).ConfigureAwait(false);
         diagnostics.Should().BeEmpty();
     }
 
-    private static async Task<ImmutableArray<Diagnostic>> _diagnostics(string source, bool enabled = true)
+    private static async Task<ImmutableArray<Diagnostic>> _diagnosticsAsync(string source, bool enabled = true)
     {
         var compilation = SqlTestCompilation._create(source);
         compilation.GetDiagnostics().Where(static d => d.Severity == DiagnosticSeverity.Error).Should().BeEmpty();

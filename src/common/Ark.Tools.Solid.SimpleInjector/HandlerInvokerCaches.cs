@@ -9,6 +9,7 @@ using SimpleInjector;
 
 namespace Ark.Tools.Solid.SimpleInjector;
 
+
 internal static class QueryHandlerInvokerCache<TResult>
 {
     private static readonly MethodInfo _getInstance = typeof(Container).GetMethod(nameof(Container.GetInstance), [typeof(Type)])!;

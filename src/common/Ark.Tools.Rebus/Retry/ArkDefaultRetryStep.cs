@@ -11,6 +11,7 @@ using System.Collections.Concurrent;
 namespace Ark.Tools.Rebus.Retry;
 
 
+
 /// <summary>
 /// Incoming message pipeline step that implements a retry mechanism - if the call to the rest of the pipeline fails,
 /// the exception is caught and the queue transaction is rolled back. Caught exceptions are tracked with <see cref="IErrorTracker"/>, and after

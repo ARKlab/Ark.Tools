@@ -40,6 +40,12 @@ public record TestExtensions
 /// which is not compatible with source-generated JSON contexts. In real scenarios, use
 /// SqlStateProvider with appropriate JsonSerializerOptions for extension serialization only.
 /// </remarks>
+[JsonSourceGenerationOptions(
+#if NET9_0_OR_GREATER
+    RespectNullableAnnotations = true,
+    RespectRequiredConstructorParameters = true
+#endif
+)]
 [JsonSerializable(typeof(TestExtensions))]
 public partial class TestExtensionsJsonContext : JsonSerializerContext
 {

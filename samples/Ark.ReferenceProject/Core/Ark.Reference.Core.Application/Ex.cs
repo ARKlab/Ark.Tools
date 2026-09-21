@@ -34,7 +34,11 @@ public static class Ex
     /// <returns>A new JsonSerializerOptions instance configured with Ark defaults.</returns>
     public static JsonSerializerOptions CreateCoreApiJsonSerializerOptions()
     {
-        var options = new JsonSerializerOptions();
+        var options = new JsonSerializerOptions
+        {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true
+        };
         System.Text.Json.Extensions.ConfigureArkDefaults(options);
         return options;
     }

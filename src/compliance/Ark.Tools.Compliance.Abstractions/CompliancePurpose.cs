@@ -59,7 +59,7 @@ public readonly struct CompliancePurpose : IEquatable<CompliancePurpose>
     }
 
     /// <inheritdoc />
-    public override bool Equals(object? obj)
+    public override bool Equals([NotNullWhen(true)] object? obj)
     {
         return obj is CompliancePurpose other && Equals(other);
     }

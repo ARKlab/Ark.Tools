@@ -47,7 +47,11 @@ public class UniversalTypeConverterPrecedenceTests
     [TestMethod]
     public void TypeLevelJsonConverter_WinsOverTypeConverterBridge()
     {
-        var options = new JsonSerializerOptions().ConfigureArkDefaults();
+        var options = new JsonSerializerOptions
+        {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true
+        }.ConfigureArkDefaults();
 
         var json = JsonSerializer.Serialize(new Wrapped("cleartext"), options);
 

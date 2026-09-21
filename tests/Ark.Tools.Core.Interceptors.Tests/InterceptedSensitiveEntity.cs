@@ -57,7 +57,7 @@ public readonly struct InterceptedSensitiveValue : ISensitiveValue<InterceptedSe
 
     /// <inheritdoc />
     [SuppressMessage("Compliance", "ARKPII010", Justification = "Standard Equals(object) override; the value renders redacted and only Reveal yields cleartext.")]
-    public override bool Equals(object? obj) => obj is InterceptedSensitiveValue other && Equals(other);
+    public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj) => obj is InterceptedSensitiveValue other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode() => _value?.GetHashCode(StringComparison.Ordinal) ?? 0;

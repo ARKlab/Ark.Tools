@@ -181,7 +181,7 @@ public struct LocalDateRange
         return !(x == y);
     }
 
-    public override readonly bool Equals(object? obj)
+    public override readonly bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
     {
         if (obj is not LocalDateRange)
             return false;

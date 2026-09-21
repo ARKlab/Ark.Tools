@@ -36,7 +36,7 @@ public static class Ex
 #pragma warning restore MA0040 // Forward the CancellationToken parameter to methods that take one
 #pragma warning restore MA0045 // Do not use blocking calls in a sync method (need to make calling method async)
 
-        async Task branchDelegate(HttpContext ctx)
+        async Task branchDelegateAsync(HttpContext ctx)
         {
             var server = webHostBuilder.Services.GetRequiredService<FakeServer>();
 
@@ -44,7 +44,7 @@ public static class Ex
 
             using var nestedScope = nestedFactory.CreateScope();
             ctx.RequestServices = new BranchedServiceProvider(ctx.RequestServices, nestedScope.ServiceProvider);
-            await server.Process(ctx).ConfigureAwait(false);
+            await server.ProcessAsync(ctx).ConfigureAwait(false);
         }
 
         webHostBuilder.Start();
@@ -53,7 +53,7 @@ public static class Ex
         {
             builder.Use(async (HttpContext context, RequestDelegate next) =>
             {
-                await branchDelegate(context).ConfigureAwait(false);
+                await branchDelegateAsync(context).ConfigureAwait(false);
             });
         });
     }

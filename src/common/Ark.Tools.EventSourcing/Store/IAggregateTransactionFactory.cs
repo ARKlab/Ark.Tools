@@ -3,6 +3,7 @@ using Ark.Tools.EventSourcing.Aggregates;
 
 namespace Ark.Tools.EventSourcing.Store;
 
+
 public interface IAggregateTransactionFactory<TAggregateRoot, TAggregateState, TAggregate>
     where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
     where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()

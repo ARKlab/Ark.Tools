@@ -14,6 +14,8 @@ namespace Ark.MediatorFramework.Sample.API.JsonContext;
     GenerationMode = JsonSourceGenerationMode.Metadata,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DictionaryKeyPolicy = JsonKnownNamingPolicy.CamelCase,
+    RespectNullableAnnotations = true,
+    RespectRequiredConstructorParameters = true,
     Converters = new Type[]
     {
         typeof(InstantConverter),

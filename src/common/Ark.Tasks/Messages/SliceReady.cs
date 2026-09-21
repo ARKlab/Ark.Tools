@@ -11,7 +11,7 @@ public class SliceReady : IEquatable<SliceReady>
 
     public Slice ActivitySlice { get; set; }
 
-    public bool Equals(SliceReady? other)
+    public bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] SliceReady? other)
     {
         if (ReferenceEquals(this, other))
             return true;
@@ -44,7 +44,7 @@ public class SliceReady : IEquatable<SliceReady>
             return true;
     }
 
-    public override bool Equals(object? obj)
+    public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
     {
         if (obj is not SliceReady other || other.GetType() != GetType())
             return false;

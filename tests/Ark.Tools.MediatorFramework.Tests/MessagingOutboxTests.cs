@@ -169,6 +169,8 @@ public sealed partial class MessagingOutboxTests
             });
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = OutboxJsonContext.Default
         });
         return new MessagingBus(
@@ -346,5 +348,8 @@ public sealed partial class MessagingOutboxTests
 
     [JsonSerializable(typeof(TestMessage))]
     [JsonSerializable(typeof(TestEvent))]
+    [JsonSourceGenerationOptions(
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true)]
     private sealed partial class OutboxJsonContext : JsonSerializerContext;
 }

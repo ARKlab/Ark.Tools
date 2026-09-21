@@ -27,10 +27,14 @@ public class EvolvableEnumBenchmarks
     private static readonly EvolvableEnum<Status> _undefinedEvolvable = EvolvableEnum<Status>.FromNumber(999);
     private static readonly JsonSerializerOptions _strictJsonOptions = new()
     {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
         Converters = { new JsonStringEnumConverter() },
     };
     private static readonly JsonSerializerOptions _evolvableJsonOptions = new()
     {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
         Converters = { new EvolvableEnumJsonConverterFactory() },
     };
     private static readonly StrictRecord[] _strictRecords = Enumerable.Range(0, 100)

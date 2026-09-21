@@ -10,6 +10,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher;
 
+
 /// <summary>
 /// Abstract base class for resource watchers with type-safe extension data.
 /// </summary>

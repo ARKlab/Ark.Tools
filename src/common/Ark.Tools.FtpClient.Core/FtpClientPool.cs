@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 
 namespace Ark.Tools.FtpClient.Core;
 
+
 public sealed class FtpClientPool : FtpClientWithConnectionBase, IFtpClientPool
 {
     public int PoolMaxSize { get; }

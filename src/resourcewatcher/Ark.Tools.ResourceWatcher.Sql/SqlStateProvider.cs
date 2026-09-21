@@ -50,7 +50,13 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
 
         // Create internal JsonSerializerOptions with Ark defaults
         // Used for Extensions when no external context is provided
-        _internalJsonOptions = new JsonSerializerOptions();
+        _internalJsonOptions = new JsonSerializerOptions
+        {
+#if NET9_0_OR_GREATER
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true
+#endif
+        };
         _internalJsonOptions.ConfigureArkDefaults();
     }
 

@@ -2,6 +2,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Authorization.Requirement;
 
+
 /// <summary>
 /// Desbribes an <see cref="IAuthorizationRequirement"/> that takes a user defined assertion over a application defined user profile.
 /// Use of this kind of requirement, require a paired implementation of <see cref="IUserProfileProvider{TUser}"/>.

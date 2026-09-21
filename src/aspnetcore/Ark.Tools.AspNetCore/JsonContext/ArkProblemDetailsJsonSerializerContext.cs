@@ -15,7 +15,13 @@ namespace Ark.Tools.AspNetCore.JsonContext;
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    WriteIndented = false)]
+    WriteIndented = false
+#if NET9_0_OR_GREATER
+    ,
+    RespectNullableAnnotations = true,
+    RespectRequiredConstructorParameters = true
+#endif
+    )]
 [JsonSerializable(typeof(FluentValidationProblemDetails), TypeInfoPropertyName = "FluentValidationProblemDetails")]
 [JsonSerializable(typeof(FluentValidationErrors), TypeInfoPropertyName = "FluentValidationErrors")]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails), TypeInfoPropertyName = "ProblemDetails")]

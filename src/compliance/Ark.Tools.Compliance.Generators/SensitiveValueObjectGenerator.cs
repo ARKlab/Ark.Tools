@@ -292,7 +292,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.Append("    public bool Equals(").Append(typeName).AppendLine(" other) => string.Equals(_value, other._value, global::System.StringComparison.Ordinal);");
         builder.AppendLine();
         builder.AppendLine("    /// <inheritdoc />");
-        builder.AppendLine("    public override bool Equals(object? obj) => obj is " + typeName + " other && Equals(other);");
+        builder.AppendLine("    public override bool Equals([global::System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj) => obj is " + typeName + " other && Equals(other);");
         builder.AppendLine();
         builder.AppendLine("    /// <inheritdoc />");
         builder.AppendLine("    public override int GetHashCode() => _value?.GetHashCode(global::System.StringComparison.Ordinal) ?? 0;");

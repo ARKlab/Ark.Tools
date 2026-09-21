@@ -185,7 +185,7 @@ public readonly struct ZonedDateTimeRange
         return !x.Equals(y);
     }
 
-    public override readonly bool Equals(object? obj)
+    public override readonly bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
     {
         if (obj is not ZonedDateTimeRange)
             return false;

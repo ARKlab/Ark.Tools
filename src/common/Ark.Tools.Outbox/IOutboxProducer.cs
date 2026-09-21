@@ -1,6 +1,7 @@
 
 namespace Ark.Tools.Outbox;
 
+
 /// <summary>
 /// Interface for a message Producer used by Application to submit messages to the Outbox
 /// </summary>
