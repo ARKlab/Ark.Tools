@@ -13,18 +13,12 @@ namespace Ark.Reference.Core.Tests.Auth;
 [Binding]
 public class AuthTestContext
 {
-#if NET10_0_OR_GREATER
     [InfrastructureSecret]
-#endif
     public const string AUTH0_APIKEY = "banana";
-#if NET10_0_OR_GREATER
     [InfrastructureSecret]
-#endif
     public string Token => _getToken();
 
-#if NET10_0_OR_GREATER
     [InfrastructureSecret]
-#endif
     public string? ApiKey { get; private set; }
 
     private readonly JwtTokenBuilder _builder = new JwtTokenBuilder()
@@ -56,9 +50,7 @@ public class AuthTestContext
 
     [Given("User email '(.*)'")]
     public void SetUserEmail(
-#if NET10_0_OR_GREATER
         [PersonalData]
-#endif
         string userEmail)
     {
         _builder.RemoveClaim("emails");

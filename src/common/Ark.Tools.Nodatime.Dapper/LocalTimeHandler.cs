@@ -46,16 +46,7 @@ public sealed class LocalTimeHandler : SqlMapper.TypeHandler<LocalTime>
 
         if (value is string s)
         {
-#if NET9_0_OR_GREATER
-            // Use the trim-safe API available in .NET 9+
             var conv = TypeDescriptor.GetConverterFromRegisteredType(typeof(LocalTime));
-#else
-            // For .NET 8, suppress the warning as NodaTime TypeConverters are statically registered
-            [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-                Justification = "The TypeConverter for NodaTime.LocalTime is statically registered in Ark.Tools.Nodatime and will not be trimmed. The LocalTime type is a known NodaTime struct with a well-defined TypeConverter.")]
-            static TypeConverter GetConverter() => TypeDescriptor.GetConverter(typeof(LocalTime));
-            var conv = GetConverter();
-#endif
             if (conv?.CanConvertFrom(typeof(string)) == true)
                 return (LocalTime)(conv.ConvertFromString(s) ?? throw new DataException("Cannot convert " + value.GetType() + " to NodaTime.LocalTime"));
         }

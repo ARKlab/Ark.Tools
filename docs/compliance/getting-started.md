@@ -10,7 +10,7 @@ Compliance is **opt-in while the analyzer is in beta**:
 <Project Sdk="Microsoft.NET.Sdk;Ark.Tools.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
   </PropertyGroup>
 
@@ -66,7 +66,7 @@ Without `Ark.Tools.Sdk`, reference the packages explicitly:
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <!-- Enables the SQL policy targets and the compliance surface generation. -->
     <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
   </PropertyGroup>
@@ -109,7 +109,7 @@ Build. Two things happen:
    and there is no baseline yet. Accept it by copying the generated file:
 
    ```bash
-   cp obj/Debug/net8.0/ArkComplianceSurface.current.txt ArkComplianceSurface.txt
+   cp obj/Debug/net10.0/ArkComplianceSurface.current.txt ArkComplianceSurface.txt
    ```
 
    Commit `ArkComplianceSurface.txt`. From now on, every change to what personal

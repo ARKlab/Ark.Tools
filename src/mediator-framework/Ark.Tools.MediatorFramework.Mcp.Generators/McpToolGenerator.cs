@@ -57,7 +57,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF054.md");
     private static readonly DiagnosticDescriptor MissingDescription = new(
-        "ARKMF055", "Document the MCP tool", "MCP tool '{0}' must have an XML description",
+        "ARKMF055", "Document the MCP tool", "MCP tool '{0}' must have an XML description or DescriptionAttribute",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Warning, true,
         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF055.md");
     /// <inheritdoc />
@@ -374,10 +374,15 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? GetBool(toolAttribute, "AllowAnonymous", false)
             : GetBool(httpEndpoint, "AllowAnonymous", false);
-        var summary = XmlDocumentation(type, "summary", documentationFiles)
-            ?? XmlDocumentation(type.ContainingType, "summary", documentationFiles);
-        var remarks = XmlDocumentation(type, "remarks", documentationFiles)
-            ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
+        var hasDescription = TryGetDescription(type, out var attributeDescription);
+        var summary = hasDescription
+            ? attributeDescription
+            : XmlDocumentation(type, "summary", documentationFiles)
+                ?? XmlDocumentation(type.ContainingType, "summary", documentationFiles);
+        var remarks = hasDescription
+            ? null
+            : XmlDocumentation(type, "remarks", documentationFiles)
+                ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
         var description = summary is null
             ? remarks ?? string.Empty
             : remarks is null
@@ -387,7 +392,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             context.ReportDiagnostic(Diagnostic.Create(MissingDescription, location, name));
 
         var propertyDescriptions = properties
-            .Select(property => (property.Name, Description: XmlDocumentation(property, "summary", documentationFiles)))
+            .Select(property => (property.Name, Description: TryGetDescription(property, out var description)
+                ? description
+                : XmlDocumentation(property, "summary", documentationFiles)))
             .Where(item => item.Description is not null)
             .ToImmutableDictionary(item => item.Name, item => item.Description!, StringComparer.Ordinal);
 
@@ -569,6 +576,14 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return string.Join(" ", value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     }
 
+    private static bool TryGetDescription(ISymbol symbol, out string? description)
+    {
+        var attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
+            candidate.AttributeClass?.ToDisplayString() == "System.ComponentModel.DescriptionAttribute");
+        description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
+        return attribute is not null;
+    }
+
     private static string? GetString(AttributeData attribute, string name)
         => attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value as string;
 
@@ -717,10 +732,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 ? "global::System.Threading.Tasks.Task"
                 : "global::System.Threading.Tasks.Task<" + response + ">";
         var parameters = model.Properties.Select(property =>
-            "[global::System.ComponentModel.Description(\""
-            + Escape(model.PropertyDescriptions.TryGetValue(property.Name, out var propertyDescription)
+            "[global::System.ComponentModel.Description("
+            + Literal(model.PropertyDescriptions.TryGetValue(property.Name, out var propertyDescription)
                 ? propertyDescription
-                : string.Empty) + "\")] "
+                : string.Empty) + ")] "
             + ToInputType(property.Type) + " " + ToParameterName(property.Name));
 
         builder.AppendLine();
@@ -736,7 +751,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.AppendLine("            UseStructuredContent = true");
         builder.AppendLine("        )]");
         if (model.Description is not null)
-            builder.Append("        [global::System.ComponentModel.Description(\"").Append(Escape(model.Description)).AppendLine("\")]");
+            builder.Append("        [global::System.ComponentModel.Description(").Append(Literal(model.Description)).AppendLine(")]");
         builder.Append("        [global::Microsoft.AspNetCore.Authorization.")
             .Append(model.AllowAnonymous ? "AllowAnonymousAttribute" : "AuthorizeAttribute")
             .AppendLine("]");
@@ -811,6 +826,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
     private static string Escape(string value)
         => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+    private static string Literal(string value)
+        => SyntaxFactory.Literal(value).ToFullString();
 
     private readonly record struct DocumentationFileModel(string Path, string Content);
     private sealed record MarkerModel(string ContextMetadataName, string? AssemblyName, MarkerLocation? InvalidLocation);
