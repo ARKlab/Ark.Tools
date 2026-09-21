@@ -29,6 +29,8 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string ArkRebusHostAttribute = "Ark.Tools.MediatorFramework.Rebus.ArkRebusHostAttribute";
         private const string MessagingNetworkAttribute = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
         private const string MessagingParticipantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
+        private const string MappingParserTrackingName = "RebusMappingParser";
+        private const string HostParserTrackingName = "RebusHostParser";
         private static readonly DiagnosticDescriptor InvalidOwnerQueue = new(
             "ARKMF004", "Invalid Rebus owner queue",
             "The Rebus owner queue for '{0}' must not be blank", "Rebus",
@@ -37,9 +39,10 @@ namespace Ark.Tools.MediatorFramework.Generators
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             var endpointMappings = context.SyntaxProvider.CreateSyntaxProvider(
-                    static (node, _) => node is InvocationExpressionSyntax,
+                    static (node, _) => IsAssemblyMappingCandidate(node),
                     static (syntaxContext, cancellationToken) =>
                         GetAssemblyMapping(syntaxContext, cancellationToken))
+                .WithTrackingName(MappingParserTrackingName)
                 .Where(static mapping => mapping is not null)
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
@@ -47,7 +50,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Collect();
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     RebusMessageAttribute,
-                    static (_, _) => true,
+                    static (node, _) => node is TypeDeclarationSyntax,
                     static (attributeContext, _) => ExtractSourceEndpoint(attributeContext))
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value);
@@ -56,18 +59,34 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .SelectMany(static (pair, cancellationToken) =>
                     GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
 
-            var hosts = context.CompilationProvider.Select(
-                static (compilation, cancellationToken) => ReadHosts(compilation, cancellationToken));
-            var collected = sourceEndpoints.Collect().Combine(referencedEndpoints.Collect()).Combine(hosts);
+            var hostTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+                    ArkRebusHostAttribute,
+                    static (node, _) => node is TypeDeclarationSyntax,
+                    static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+                .WithTrackingName(HostParserTrackingName)
+                .Where(static hostType => hostType is not null)
+                .Select(static (hostType, _) => hostType!);
+            var hosts = context.CompilationProvider.Combine(hostTypes.Collect())
+                .Select(static (input, cancellationToken) =>
+                    ReadHosts(input.Left, input.Right, cancellationToken));
+            var collected = sourceEndpoints.Collect()
+                .Combine(referencedEndpoints.Collect())
+                .Combine(hosts);
+            var output = collected.Combine(endpointMappings.Collect());
 
             context.RegisterSourceOutput(
-                collected,
-                static (spc, item) => Emit(spc, item.Left.Left.AddRange(item.Left.Right), item.Right));
+                output,
+                static (spc, item) => Emit(
+                    spc,
+                    item.Left.Left.Left.AddRange(item.Left.Left.Right),
+                    item.Left.Right));
         }
 
         private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
         {
-            return Extract((INamedTypeSymbol)context.TargetSymbol, context.Attributes[0]);
+            return context.TargetSymbol is INamedTypeSymbol type
+                ? Extract(type, context.Attributes[0])
+                : null;
         }
 
         private static AssemblyMapping? GetAssemblyMapping(
@@ -76,14 +95,11 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             cancellationToken.ThrowIfCancellationRequested();
             var invocation = (InvocationExpressionSyntax)context.Node;
-            var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
-            var genericName = invocation.Expression.DescendantNodesAndSelf()
-                .OfType<GenericNameSyntax>()
-                .FirstOrDefault(name => name.Identifier.ValueText is "RegisterArkRebusHandlersFromAssembly"
-                    or "RegisterArkRebusHandlers"
-                    or "ConfigureArkRebusRouting");
-            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
+            var genericName = GetInvokedGenericName(invocation);
+            if (genericName is null)
                 return null;
+
+            var method = context.SemanticModel.GetSymbolInfo(invocation, cancellationToken).Symbol as IMethodSymbol;
             if (method is not null
                 ? !string.Equals(method.MetadataName, genericName.Identifier.ValueText, StringComparison.Ordinal)
                 : !IsGeneratedEndpointInvocation(invocation, genericName.Identifier.ValueText))
@@ -95,6 +111,32 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ? contextAssemblyNames
                 : GetAssemblyMarkerName(context, genericName, cancellationToken);
             return assemblyNames.IsDefaultOrEmpty ? null : new AssemblyMapping(assemblyNames);
+        }
+
+        private static bool IsAssemblyMappingCandidate(SyntaxNode node)
+        {
+            return node is InvocationExpressionSyntax invocation
+                && GetInvokedGenericName(invocation) is not null;
+        }
+
+        private static GenericNameSyntax? GetInvokedGenericName(InvocationExpressionSyntax invocation)
+        {
+            var genericName = invocation.Expression switch
+            {
+                GenericNameSyntax directName => directName,
+                MemberAccessExpressionSyntax { Name: GenericNameSyntax memberName } => memberName,
+                MemberBindingExpressionSyntax { Name: GenericNameSyntax bindingName } => bindingName,
+                _ => null,
+            };
+            if (genericName is null || genericName.TypeArgumentList.Arguments.Count != 1)
+                return null;
+
+            var methodName = genericName.Identifier.ValueText;
+            return methodName == "RegisterArkRebusHandlersFromAssembly"
+                || methodName == "RegisterArkRebusHandlers"
+                || methodName == "ConfigureArkRebusRouting"
+                    ? genericName
+                    : null;
         }
 
         private static ImmutableArray<string> GetAssemblyMarkerName(
@@ -306,12 +348,14 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static ImmutableArray<HostModel> ReadHosts(
             Compilation compilation,
+            ImmutableArray<INamedTypeSymbol> hostTypes,
             CancellationToken cancellationToken)
         {
-            return _allTypes(compilation.Assembly.GlobalNamespace)
-                .Where(type => type.GetAttributes().Any(attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == ArkRebusHostAttribute))
-                .Select(type => ReadHost(compilation, type, cancellationToken))
+            return hostTypes
+                .OrderBy(
+                    static hostType => hostType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    StringComparer.Ordinal)
+                .Select(hostType => ReadHost(compilation, hostType, cancellationToken))
                 .ToImmutableArray();
         }
 
@@ -416,6 +460,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .ToImmutableArray();
 
             return new HostModel(
+                hostType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 hostType.ContainingNamespace.IsGlobalNamespace
                     ? string.Empty
                     : hostType.ContainingNamespace.ToDisplayString(),
@@ -533,7 +578,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (items.IsDefaultOrEmpty && hosts.IsDefaultOrEmpty)
                 return;
 
-            foreach (var invalidHost in hosts.Where(static host => host.Error is not null))
+            foreach (var invalidHost in hosts
+                .Where(static host => host.Error is not null)
+                .OrderBy(static host => host.HostIdentity, StringComparer.Ordinal))
             {
                 spc.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor(
@@ -547,9 +594,14 @@ namespace Ark.Tools.MediatorFramework.Generators
                     invalidHost.Location,
                     invalidHost.Error));
             }
-            hosts = hosts.Where(static host => host.Error is null).ToImmutableArray();
+            hosts = hosts
+                .Where(static host => host.Error is null)
+                .OrderBy(static host => host.HostIdentity, StringComparer.Ordinal)
+                .ToImmutableArray();
 
-            var legacyRegistrationItems = items;
+            var legacyRegistrationItems = items
+                .OrderBy(static item => item.TypeFullName, StringComparer.Ordinal)
+                .ToImmutableArray();
             var validationItems = items.AddRange(hosts.SelectMany(static host =>
                 host.Routes.AddRange(host.Adapters).AddRange(host.LegacyEndpoints)));
             validationItems = validationItems.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
@@ -587,6 +639,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static item => item.IsValid)
                 .GroupBy(static item => item.TypeFullName)
                 .Select(static group => group.First())
+                .OrderBy(static item => item.TypeFullName, StringComparer.Ordinal)
                 .ToImmutableArray();
 
             var sb = new StringBuilder();
@@ -781,15 +834,23 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (!string.IsNullOrEmpty(host.Namespace))
                 sb.AppendLine("}");
             spc.AddSource(
-                (string.IsNullOrEmpty(host.Namespace)
-                    ? host.Name
-                    : host.Namespace.Replace('.', '_') + "_" + host.Name) + ".Rebus.g.cs",
+                GetHostHintName(host.HostIdentity) + ".Rebus.g.cs",
                 SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private static string GetHostHintName(string identity)
+        {
+            return "RebusHost_"
+                + Convert.ToBase64String(Encoding.UTF8.GetBytes(identity))
+                    .TrimEnd('=')
+                    .Replace('+', '-')
+                    .Replace('/', '_');
         }
 
         private readonly record struct AssemblyMapping(ImmutableArray<string> AssemblyNames);
 
         private sealed record HostModel(
+            string HostIdentity,
             string Namespace,
             string Name,
             string Accessibility,
@@ -810,6 +871,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public static HostModel Invalid(string error, Location location)
             {
                 return new HostModel(
+                    string.Empty,
                     string.Empty,
                     string.Empty,
                     "internal",

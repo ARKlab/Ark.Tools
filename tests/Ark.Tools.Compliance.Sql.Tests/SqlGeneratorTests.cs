@@ -158,19 +158,42 @@ public sealed class SqlGeneratorTests
             .And.NotContain("ENCRYPTED WITH");
     }
 
-    /// <summary><c>[Secret]</c> maps to the <c>InfrastructureSecret</c> information type at CRITICAL rank.</summary>
+    /// <summary>Secret classifications map to the <c>InfrastructureSecret</c> information type at CRITICAL rank.</summary>
     [TestMethod]
-    public void SecretColumnIsClassifiedAsInfrastructureSecret()
+    [DataRow("Secret")]
+    [DataRow("InfrastructureSecret")]
+    public void SecretColumnIsClassifiedAsInfrastructureSecret(string attribute)
     {
         var result = _generate("""
             [SqlDataPolicy(Table = "Customers")]
             public class Customer
             {
-                [Secret, SqlColumnPolicy("api_key", StoragePolicy.None)]
+                [$ATTRIBUTE$, SqlColumnPolicy("api_key", StoragePolicy.None)]
                 public string ApiKey { get; set; } = "";
             }
-            """);
+            """.Replace("$ATTRIBUTE$", attribute, StringComparison.Ordinal));
         result.Sql.Single().Should().Contain("INFORMATION_TYPE = 'InfrastructureSecret'").And.Contain("RANK = CRITICAL");
+    }
+
+    /// <summary>Classification precedence is stable for fields regardless of attribute declaration order.</summary>
+    [TestMethod]
+    public void ClassifiedFieldsUseStrongestClassification()
+    {
+        var result = _generate("""
+            [SqlDataPolicy(Table = "Customers")]
+            public class Customer
+            {
+                [PersonalData, SensitivePersonalData, SqlColumnPolicy("primary_email", StoragePolicy.None)]
+                public string PrimaryEmail = "";
+
+                [SensitivePersonalData, PersonalData, SqlColumnPolicy("secondary_email", StoragePolicy.None)]
+                public string SecondaryEmail = "";
+            }
+            """);
+
+        var sql = result.Sql.Single();
+        sql.Split("INFORMATION_TYPE = 'SensitivePersonalData'", StringSplitOptions.None).Length.Should().Be(3);
+        sql.Should().NotContain("INFORMATION_TYPE = 'PersonalData'");
     }
 
     /// <summary>Sensitive value object types carry classification into SQL policy output.</summary>

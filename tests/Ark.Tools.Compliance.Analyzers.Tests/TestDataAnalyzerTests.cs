@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace Ark.Tools.Compliance.Analyzers.Tests;
@@ -94,6 +95,21 @@ public sealed class TestDataAnalyzerTests
 
         diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKPII006");
         diagnostics.Select(static diagnostic => diagnostic.Id).Should().Contain("ARKPII014");
+    }
+
+    /// <summary>A fixture scan propagates cancellation that was requested before scanning starts.</summary>
+    [TestMethod]
+    public void PreCancelledFeatureFixtureScanThrows()
+    {
+        var analyzerType = typeof(TestDataComplianceAnalyzer);
+        var patterns = analyzerType.GetField("_defaultPatterns", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null);
+        var scan = analyzerType.GetMethod("_find", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var cancellationToken = new CancellationToken(canceled: true);
+
+        Action act = () => scan.Invoke(null, ["fixture.person@corporate-domain.com", patterns, cancellationToken]);
+
+        act.Should().Throw<TargetInvocationException>()
+            .Which.InnerException.Should().BeOfType<OperationCanceledException>();
     }
 
     /// <summary>The actual shared OpenAPI/Reqnroll fake generator stays deterministic and scanner-safe for all seeds.</summary>
@@ -282,7 +298,8 @@ public sealed class TestDataAnalyzerTests
         string featurePath = "Contact.feature",
         bool complianceEnabled = true,
         bool isTestProject = true,
-        DiagnosticAnalyzer? analyzer = null)
+        DiagnosticAnalyzer? analyzer = null,
+        CancellationToken cancellationToken = default)
     {
         var compilation = _compilation("safe", assemblyName);
         var options = new AnalyzerOptions(
@@ -290,7 +307,7 @@ public sealed class TestDataAnalyzerTests
             new OptionsProvider(complianceEnabled, isTestProject));
         analyzer ??= new TestDataComplianceAnalyzer();
         return await compilation.WithAnalyzers([analyzer], options)
-            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
+            .GetAnalyzerDiagnosticsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private sealed class TextFile(string path, string content) : AdditionalText

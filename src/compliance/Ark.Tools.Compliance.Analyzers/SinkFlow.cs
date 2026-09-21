@@ -44,11 +44,11 @@ internal sealed class SinkFlow
     }
 
     /// <summary>A sensitive value object renders redacted everywhere (ToString/TryFormat/debugger); only Reveal yields cleartext.</summary>
-    internal static bool _isSelfProtecting(ITypeSymbol? type)
+    internal static bool _isSelfProtecting(ITypeSymbol? type, CancellationToken cancellationToken)
     {
         if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
         {
-            type = nullable.TypeArguments.FirstOrDefault();
+            type = nullable.TypeArguments.Length == 0 ? null : nullable.TypeArguments[0];
         }
 
         if (type is not INamedTypeSymbol named)
@@ -56,14 +56,31 @@ internal sealed class SinkFlow
             return false;
         }
 
-        if (named.GetAttributes().Any(static attribute =>
-            attribute.AttributeClass?.OriginalDefinition.MetadataName == "SensitiveValueObjectAttribute`1"
-            && attribute.AttributeClass?.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance"))
+        foreach (var attribute in named.GetAttributes())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (attribute.AttributeClass?.OriginalDefinition.MetadataName == "SensitiveValueObjectAttribute`1"
+                && attribute.AttributeClass?.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance")
+            {
+                return true;
+            }
+        }
+
+        if (_isSensitiveContract(named))
         {
             return true;
         }
 
-        return _isSensitiveContract(named) || named.AllInterfaces.Any(candidate => _isSensitiveContract(candidate, named));
+        foreach (var candidate in named.AllInterfaces)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_isSensitiveContract(candidate, named))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     internal static bool _isRedacted(IOperation operation)
@@ -99,7 +116,7 @@ internal sealed class SinkFlow
         if (operation is null || !_enter(depth)
             || (operation.ConstantValue.HasValue && operation is not IFieldReferenceOperation)
             || _isRedacted(operation)
-            || _isSelfProtecting(operation.Type))
+            || _isSelfProtecting(operation.Type, _cancellationToken))
         {
             return null;
         }
@@ -159,8 +176,9 @@ internal sealed class SinkFlow
 
     private Source? _children(IEnumerable<IOperation> operations, int depth)
     {
-        foreach (var source in operations.Select(child => _find(child, depth)))
+        foreach (var child in operations)
         {
+            var source = _find(child, depth);
             if (source is not null || _exhausted)
             {
                 return source;
@@ -172,7 +190,7 @@ internal sealed class SinkFlow
 
     private Source? _direct(IOperation? operation, int depth)
     {
-        if (operation is null || !_enter(depth) || _isSelfProtecting(operation.Type))
+        if (operation is null || !_enter(depth) || _isSelfProtecting(operation.Type, _cancellationToken))
         {
             return null;
         }
@@ -191,8 +209,9 @@ internal sealed class SinkFlow
 
     private Source? _directLocal(ILocalReferenceOperation local, int depth)
     {
-        foreach (var source in _localValues(local, depth).Select(value => _direct(value, depth + 1)))
+        foreach (var value in _localValues(local, depth))
         {
+            var source = _direct(value, depth + 1);
             if (source is not null || _exhausted)
             {
                 return source;
@@ -346,7 +365,8 @@ internal sealed class SinkFlow
 
     private Source? _type(ITypeSymbol? type, int depth, HashSet<ITypeSymbol> visited)
     {
-        if (type is null || !_enter(depth) || !visited.Add(type) || _isSelfProtecting(type))
+        if (type is null || !_enter(depth) || !visited.Add(type)
+            || _isSelfProtecting(type, _cancellationToken))
         {
             return null;
         }
@@ -425,27 +445,38 @@ internal sealed class SinkFlow
         return _type(named.BaseType, depth + 1, visited);
     }
 
-    private static Source? _positionalClassification(IPropertySymbol property)
+    private Source? _positionalClassification(IPropertySymbol property)
     {
         if (!property.ContainingType.IsRecord)
         {
             return null;
         }
 
-        return property.ContainingType.InstanceConstructors
-            .SelectMany(static constructor => constructor.Parameters)
-            .Where(parameter => parameter.Name == property.Name
-                && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type))
-            .Select(_classification)
-            .FirstOrDefault(static source => source is not null);
+        foreach (var constructor in property.ContainingType.InstanceConstructors)
+        {
+            foreach (var parameter in constructor.Parameters)
+            {
+                _cancellationToken.ThrowIfCancellationRequested();
+                if (parameter.Name == property.Name
+                    && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type)
+                    && _classification(parameter) is { } source)
+                {
+                    return source;
+                }
+            }
+        }
+
+        return null;
     }
 
-    private static Source? _classification(ISymbol symbol)
+    private Source? _classification(ISymbol symbol)
     {
         var sensitive = false;
         var pseudonymous = false;
-        foreach (var type in symbol.GetAttributes().Select(static attribute => attribute.AttributeClass))
+        foreach (var attribute in symbol.GetAttributes())
         {
+            _cancellationToken.ThrowIfCancellationRequested();
+            var type = attribute.AttributeClass;
             if (type?.ToDisplayString() == "Ark.Tools.Compliance.PseudonymousAttribute")
             {
                 pseudonymous = true;
@@ -465,10 +496,21 @@ internal sealed class SinkFlow
             }
         }
 
-        if (!pseudonymous && symbol is INamedTypeSymbol named
-            && (sensitive || _isSensitiveContract(named) || named.AllInterfaces.Any(candidate => _isSensitiveContract(candidate, named))))
+        if (!pseudonymous && symbol is INamedTypeSymbol named)
         {
-            return new Source(symbol, "SensitiveValue");
+            if (sensitive || _isSensitiveContract(named))
+            {
+                return new Source(symbol, "SensitiveValue");
+            }
+
+            foreach (var candidate in named.AllInterfaces)
+            {
+                _cancellationToken.ThrowIfCancellationRequested();
+                if (_isSensitiveContract(candidate, named))
+                {
+                    return new Source(symbol, "SensitiveValue");
+                }
+            }
         }
 
         return null;

@@ -60,83 +60,100 @@ public sealed class SelfGenericInterfaceAnalyzer : DiagnosticAnalyzer
                     return;
                 }
 
-                var interfaces = type.AllInterfaces;
-                _checkGeneric(symbolContext, type, interfaces, facts._query1, facts._query2, "IQuery");
-                _checkGeneric(symbolContext, type, interfaces, facts._request1, facts._request2, "IRequest");
-                _checkCommand(symbolContext, type, interfaces, facts._command0, facts._command1);
+                _analyzeInterfaces(symbolContext, type, facts);
             }, SymbolKind.NamedType);
         });
     }
 
-    private static void _checkGeneric(
+    private static void _analyzeInterfaces(
         SymbolAnalysisContext context,
         INamedTypeSymbol type,
-        ImmutableArray<INamedTypeSymbol> interfaces,
-        INamedTypeSymbol? legacyDefinition,
+        CompilationFacts facts)
+    {
+        INamedTypeSymbol? legacyQuery = null;
+        INamedTypeSymbol? legacyRequest = null;
+        var implementsSelfQuery = false;
+        var implementsSelfRequest = false;
+        var implementsLegacyCommand = false;
+        var implementsSelfCommand = false;
+
+        foreach (var implementedInterface in type.AllInterfaces)
+        {
+            var originalDefinition = implementedInterface.OriginalDefinition;
+
+            if (legacyQuery is null
+                && SymbolEqualityComparer.Default.Equals(originalDefinition, facts._query1))
+            {
+                legacyQuery = implementedInterface;
+            }
+
+            if (legacyRequest is null
+                && SymbolEqualityComparer.Default.Equals(originalDefinition, facts._request1))
+            {
+                legacyRequest = implementedInterface;
+            }
+
+            if (SymbolEqualityComparer.Default.Equals(implementedInterface, facts._command0))
+            {
+                implementsLegacyCommand = true;
+            }
+
+            if (implementedInterface.TypeArguments.Length == 0
+                || !SymbolEqualityComparer.Default.Equals(implementedInterface.TypeArguments[0], type))
+            {
+                continue;
+            }
+
+            if (SymbolEqualityComparer.Default.Equals(originalDefinition, facts._query2))
+            {
+                implementsSelfQuery = true;
+            }
+
+            if (SymbolEqualityComparer.Default.Equals(originalDefinition, facts._request2))
+            {
+                implementsSelfRequest = true;
+            }
+
+            if (SymbolEqualityComparer.Default.Equals(originalDefinition, facts._command1))
+            {
+                implementsSelfCommand = true;
+            }
+        }
+
+        if (!implementsSelfQuery)
+        {
+            _reportGeneric(context, type, legacyQuery, facts._query2, "IQuery");
+        }
+
+        if (!implementsSelfRequest)
+        {
+            _reportGeneric(context, type, legacyRequest, facts._request2, "IRequest");
+        }
+
+        if (implementsLegacyCommand && !implementsSelfCommand && facts._command1 is not null)
+        {
+            _report(context, type, $"ICommand<{type.Name}>");
+        }
+    }
+
+    private static void _reportGeneric(
+        SymbolAnalysisContext context,
+        INamedTypeSymbol type,
+        INamedTypeSymbol? legacyInterface,
         INamedTypeSymbol? selfDefinition,
         string interfaceName)
     {
-        if (legacyDefinition is null || selfDefinition is null)
+        if (legacyInterface is null
+            || selfDefinition is null
+            || legacyInterface.TypeArguments.Length != 1
+            || legacyInterface.TypeArguments[0].Kind == SymbolKind.ErrorType)
         {
             return;
         }
 
-        var legacy = interfaces.FirstOrDefault(i =>
-            SymbolEqualityComparer.Default.Equals(i.OriginalDefinition, legacyDefinition));
-        if (legacy is null)
-        {
-            return;
-        }
-
-        if (legacy.TypeArguments.Length != 1
-            || legacy.TypeArguments[0].Kind == SymbolKind.ErrorType)
-        {
-            return;
-        }
-
-        if (_implementsSelf(type, interfaces, selfDefinition))
-        {
-            return;
-        }
-
-        var resultType = legacy.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var resultType = legacyInterface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var selfType = type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         _report(context, type, $"{interfaceName}<{selfType}, {resultType}>");
-    }
-
-    private static void _checkCommand(
-        SymbolAnalysisContext context,
-        INamedTypeSymbol type,
-        ImmutableArray<INamedTypeSymbol> interfaces,
-        INamedTypeSymbol? commandDefinition,
-        INamedTypeSymbol? selfDefinition)
-    {
-        if (commandDefinition is null || selfDefinition is null)
-        {
-            return;
-        }
-
-        if (!interfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, commandDefinition)))
-        {
-            return;
-        }
-
-        if (_implementsSelf(type, interfaces, selfDefinition))
-        {
-            return;
-        }
-
-        _report(context, type, $"ICommand<{type.Name}>");
-    }
-
-    private static bool _implementsSelf(
-        INamedTypeSymbol type,
-        ImmutableArray<INamedTypeSymbol> interfaces,
-        INamedTypeSymbol selfDefinition)
-    {
-        return interfaces.Any(i =>
-            SymbolEqualityComparer.Default.Equals(i.OriginalDefinition, selfDefinition)
-            && SymbolEqualityComparer.Default.Equals(i.TypeArguments[0], type));
     }
 
     private static void _report(SymbolAnalysisContext context, INamedTypeSymbol type, string suggested)

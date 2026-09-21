@@ -191,6 +191,23 @@ public sealed class DeclarationAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>Classification traversal stops when Roslyn cancels analysis.</summary>
+    [TestMethod]
+    public void ClassificationTraversalHonorsCancellation()
+    {
+        var compilation = _compilation("[PersonalData] class Customer { }");
+        var symbol = compilation.GetTypeByMetadataName("Customer")!;
+        var facts = ComplianceCompilationFacts._create(
+            compilation,
+            new DeclarationOptionsProvider().GlobalOptions);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Action act = () => ComplianceSymbolFacts._isClassified(symbol, facts, cancellation.Token);
+
+        act.Should().Throw<OperationCanceledException>();
+    }
+
     /// <summary>Open objects, dynamic values and delegates cannot be annotated into safety.</summary>
     [TestMethod]
     [DataRow("object")]

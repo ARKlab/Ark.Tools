@@ -143,8 +143,20 @@ internal sealed class SinkConfiguration
 
     internal static bool _implements(INamedTypeSymbol type, string metadataName)
     {
-        return _isOrDerivesFrom(type, metadataName)
-            || type.AllInterfaces.Any(item => item.ToDisplayString() == metadataName);
+        if (_isOrDerivesFrom(type, metadataName))
+        {
+            return true;
+        }
+
+        foreach (var item in type.AllInterfaces)
+        {
+            if (item.ToDisplayString() == metadataName)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static string? _rule(string kind)
