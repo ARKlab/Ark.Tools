@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Compliance classification attributes and contracts for Ark.Tools, with the compliance analyzers embedded.</Description>
+    <Description>Analyzer-free compliance classification attributes and contracts for Ark.Tools.</Description>
     <PackageTags>Ark;C#;.NET;Framework;Compliance;Privacy;PII;Classification</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
     <IsTrimmable>true</IsTrimmable>
@@ -11,25 +11,6 @@
   <ItemGroup>
     <Compile Include="../Ark.Tools.Compliance.Shared/PiiPatternScanner.cs" Link="Shared/PiiPatternScanner.cs" />
     <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" />
-  </ItemGroup>
-
-  <!-- The analyzers travel with the attributes so that any consumer of a classified public surface
-       keeps enforcing the same rules, exactly like Ark.Tools.Core ships its own analyzer. -->
-  <ItemGroup>
-    <ProjectReference Include="../Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false"
-                      PrivateAssets="all" />
-    <None Include="../Ark.Tools.Compliance.Analyzers/bin/$(Configuration)/netstandard2.0/Ark.Tools.Compliance.Analyzers.dll"
-          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="../Ark.Tools.Compliance.Analyzers.CodeFixes/bin/$(Configuration)/netstandard2.0/Ark.Tools.Compliance.Analyzers.CodeFixes.dll"
-          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <None Include="../Ark.Tools.Compliance.Analyzers/buildTransitive/ComplianceLexicon.Ark.txt"
-          Pack="true" PackagePath="buildTransitive" Visible="false" />
-    <None Include="../Ark.Tools.Compliance.Analyzers/buildTransitive/ComplianceSinks.Ark.txt"
-          Pack="true" PackagePath="buildTransitive" Visible="false" />
-    <None Include="buildTransitive/Ark.Tools.Compliance.Abstractions.targets"
-          Pack="true" PackagePath="buildTransitive" />
   </ItemGroup>
 
 </Project>

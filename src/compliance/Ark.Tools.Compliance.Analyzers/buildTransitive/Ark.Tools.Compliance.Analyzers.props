@@ -2,6 +2,7 @@
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)ComplianceLexicon.Ark.txt" />
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)ComplianceSinks.Ark.txt" />
+    <CompilerVisibleProperty Include="EnableArkToolsCompliance" />
     <CompilerVisibleProperty Include="IsTestProject" />
   </ItemGroup>
   <Target Name="_ArkComplianceFeatureFiles" BeforeTargets="CoreCompile" Condition="'$(IsTestProject)' == 'true'">
