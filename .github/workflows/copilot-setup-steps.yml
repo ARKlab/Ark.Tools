@@ -77,16 +77,6 @@ jobs:
           setup-only: true
           apm-version: 0.31.0
 
-      - name: 'Wait for Service Bus emulator'
-        run: |
-          timeout 300s bash -c '
-            until bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5300" 2>/dev/null \
-              && bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5672" 2>/dev/null; do
-              sleep 2
-            done
-            sleep 5
-          '
-
       - name: Install dotnet
         uses: actions/setup-dotnet@v6
         with:
@@ -94,3 +84,12 @@ jobs:
 
       - name: 'Install Azure Functions Core Tools'
         run: npm install --global azure-functions-core-tools@4.14.0
+
+      - name: 'Wait for Service Bus emulator'
+        run: |
+          timeout 300s bash -c '
+            until bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5300" 2>/dev/null \
+              && bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5672" 2>/dev/null; do
+              sleep 2
+            done
+          '
