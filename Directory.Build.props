@@ -80,10 +80,6 @@
 		<WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1905;</WarningsNotAsErrors>
 	</PropertyGroup>
 
-	<PropertyGroup Label="Meziantou Analyzer Warnings">
-		<WarningsNotAsErrors>$(WarningsNotAsErrors);MA0137;MA0138;MA0156;MA0161;MA0162;MA0172;MA0186;MA0214;MA0222;MA0223;MA0224;MA0225;MA0226;MA0227;MA0228;MA0229;MA0230;MA0231;MA0232;MA0233;MA0234;MA0235;MA0236;MA0237;MA0238;MA0239;</WarningsNotAsErrors>
-	</PropertyGroup>
-
 	<PropertyGroup Label="Temporary NuGet Pack Workaround">
 		<!-- use this section for TEMPORARY workaround for Nuget Errors (prereleases or vulnerabilities with no fix) -->
 		<NoWarn>$(NoWarn)</NoWarn>
