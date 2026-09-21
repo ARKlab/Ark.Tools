@@ -94,12 +94,12 @@ public sealed class GeneratorSnapshotTests
         context.Request.Headers.Accept = "application/x-msgpack";
 
         var result = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
-            .WriteStreamingResponseAsync(context, _values(), 2, CancellationToken.None);
+            .WriteStreamingResponseAsync(context, _valuesAsync(), 2, CancellationToken.None);
 
         result.GetType().Name.Should().Contain("MessagePackResult");
 
         var limited = await Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx
-            .WriteStreamingResponseAsync(context, _values(), 1, CancellationToken.None);
+            .WriteStreamingResponseAsync(context, _valuesAsync(), 1, CancellationToken.None);
         limited.GetType().Name.Should().Contain("Problem");
         ((Microsoft.AspNetCore.Http.HttpResults.ProblemHttpResult)limited).ProblemDetails.Detail
             .Should().Be("The streaming response exceeded the configured item limit of 1.");
@@ -2966,7 +2966,7 @@ public sealed class GeneratorSnapshotTests
 
     private sealed record UnformattableMessage;
 
-    private static async IAsyncEnumerable<int> _values()
+    private static async IAsyncEnumerable<int> _valuesAsync()
     {
         yield return 1;
         yield return 2;

@@ -974,10 +974,10 @@ internal sealed class HostingStreamHandler : IQueryHandler<HostingStreamQuery, I
     public async Task<IAsyncEnumerable<HostingStreamItem>> ExecuteAsync(HostingStreamQuery query, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        return _enumerate(query.Count, _state, ctk);
+        return _enumerateAsync(query.Count, _state, ctk);
     }
 
-    private static async IAsyncEnumerable<HostingStreamItem> _enumerate(
+    private static async IAsyncEnumerable<HostingStreamItem> _enumerateAsync(
         int count,
         HostingTestState state,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ctk)

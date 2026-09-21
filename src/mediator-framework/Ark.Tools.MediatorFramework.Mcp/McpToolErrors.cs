@@ -92,6 +92,9 @@ public static partial class McpToolErrors
         };
     }
 
+    [JsonSourceGenerationOptions(
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true)]
     [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
     [JsonSerializable(typeof(Dictionary<string, string[]>))]
     [JsonSerializable(typeof(Dictionary<string, object>))]

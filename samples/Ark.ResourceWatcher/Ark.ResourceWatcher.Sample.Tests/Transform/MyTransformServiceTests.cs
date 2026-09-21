@@ -37,6 +37,8 @@ public sealed class MyTransformServiceTests
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,

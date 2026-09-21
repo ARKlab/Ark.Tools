@@ -280,7 +280,9 @@ public class EvolvableEnumTests
         EvolvableEnum<Status>.FromName("X").Should().NotBe(EvolvableEnum<Status>.FromName("Y"));
         // FromName resolves declared names to their defined numeric value, so it is equal to the same value produced numerically.
         EvolvableEnum<Status>.FromNumber(1).Should().Be(EvolvableEnum<Status>.FromName("Active"));
-        (EvolvableEnum<Status>.FromValue(Status.Active) == EvolvableEnum<Status>.FromValue(Status.Active)).Should().BeTrue();
+        var active = EvolvableEnum<Status>.FromValue(Status.Active);
+        var sameActive = EvolvableEnum<Status>.FromValue(Status.Active);
+        (active == sameActive).Should().BeTrue();
         (EvolvableEnum<Status>.FromValue(Status.Active) != EvolvableEnum<Status>.FromValue(Status.Archived)).Should().BeTrue();
     }
 

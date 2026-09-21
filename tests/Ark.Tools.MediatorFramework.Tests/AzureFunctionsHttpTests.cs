@@ -158,7 +158,7 @@ public sealed class AzureFunctionsHttpTests
 
         await ArkAzureFunctionsHttp.WriteJsonStreamAsync(
             context.Response,
-            _values(),
+            _valuesAsync(),
             CancellationToken.None);
 
         context.Response.Body.Position = 0;
@@ -228,7 +228,7 @@ public sealed class AzureFunctionsHttpTests
         json["entries"]!["failing"]!["data"]!["answer"]!.GetValue<int>().Should().Be(42);
     }
 
-    private static async IAsyncEnumerable<int> _values()
+    private static async IAsyncEnumerable<int> _valuesAsync()
     {
         yield return 1;
         await Task.Yield();

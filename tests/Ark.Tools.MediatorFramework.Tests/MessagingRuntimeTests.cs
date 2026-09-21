@@ -34,6 +34,8 @@ public sealed partial class MessagingRuntimeTests
     {
         var options = new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = MessagingTestJsonContext.Default
         };
         var codec = new JsonMessagingCodec(options);
@@ -52,6 +54,8 @@ public sealed partial class MessagingRuntimeTests
     {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = MessagingTestJsonContext.Default
         });
         var processor = new MessagingHeaderProcessor(
@@ -99,7 +103,11 @@ public sealed partial class MessagingRuntimeTests
     public void StartupValidationRejectsMissingJsonMetadata()
     {
         var action = static () => MessagingJsonStartupValidation.ValidateContract<MessagingRuntimeContract>(
-            new JsonSerializerOptions());
+            new JsonSerializerOptions
+            {
+                RespectNullableAnnotations = true,
+                RespectRequiredConstructorParameters = true
+            });
 
         action.Should().Throw<InvalidOperationException>()
             .Which.Message.Should().Contain("JsonSerializerContext");
@@ -110,6 +118,8 @@ public sealed partial class MessagingRuntimeTests
     {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = MessagingTestJsonContext.Default
         });
         var registry = new MessagingCodecRegistry([codec]);
@@ -125,6 +135,8 @@ public sealed partial class MessagingRuntimeTests
     {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = MessagingTestJsonContext.Default
         });
         var registry = new MessagingCodecRegistry([codec]);
@@ -227,6 +239,8 @@ public sealed partial class MessagingRuntimeTests
     {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = MessagingTestJsonContext.Default
         });
 
@@ -740,6 +754,8 @@ public sealed partial class MessagingRuntimeTests
     {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = MessagingTestJsonContext.Default
         });
         var registry = new MessagingCodecRegistry([codec]);
@@ -767,6 +783,8 @@ public sealed partial class MessagingRuntimeTests
             DeliveryCount = deliveryCount;
             var codec = new JsonMessagingCodec(new JsonSerializerOptions
             {
+                RespectNullableAnnotations = true,
+                RespectRequiredConstructorParameters = true,
                 TypeInfoResolver = MessagingTestJsonContext.Default
             });
             var writer = new ArrayBufferWriter<byte>();
@@ -945,7 +963,10 @@ public sealed partial class MessagingRuntimeTests
         public string Name { get; set; } = string.Empty;
     }
 
-    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    [JsonSourceGenerationOptions(
+        PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true)]
     [JsonSerializable(typeof(MessagingRuntimeContract))]
     [JsonSerializable(typeof(DispatchCommand))]
     private sealed partial class MessagingTestJsonContext : JsonSerializerContext

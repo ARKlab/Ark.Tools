@@ -59,10 +59,10 @@ public sealed class StreamNumbersQueryHandler : IQueryHandler<StreamNumbersQuery
     /// <inheritdoc />
     public async Task<IAsyncEnumerable<int>> ExecuteAsync(StreamNumbersQuery query, CancellationToken ctk = default)
     {
-        return await Task.FromResult(_stream()).ConfigureAwait(false);
+        return await Task.FromResult(_streamAsync()).ConfigureAwait(false);
     }
 
-    private static async IAsyncEnumerable<int> _stream()
+    private static async IAsyncEnumerable<int> _streamAsync()
     {
         yield return 0;
 #pragma warning disable VSTHRD003 // Test coordination: the release task is completed by another request.
@@ -90,10 +90,10 @@ public sealed class StreamForeverQueryHandler : IQueryHandler<StreamForeverQuery
     /// <inheritdoc />
     public async Task<IAsyncEnumerable<int>> ExecuteAsync(StreamForeverQuery query, CancellationToken ctk = default)
     {
-        return await Task.FromResult(_stream(ctk)).ConfigureAwait(false);
+        return await Task.FromResult(_streamAsync(ctk)).ConfigureAwait(false);
     }
 
-    private static async IAsyncEnumerable<int> _stream([EnumeratorCancellation] CancellationToken ctk = default)
+    private static async IAsyncEnumerable<int> _streamAsync([EnumeratorCancellation] CancellationToken ctk = default)
     {
         var index = 0;
         try

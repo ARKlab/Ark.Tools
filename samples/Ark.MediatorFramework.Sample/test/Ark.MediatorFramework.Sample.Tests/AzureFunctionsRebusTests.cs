@@ -121,7 +121,11 @@ public sealed class AzureFunctionsRebusTests
         using var receiver = Configure.With(activator)
             .Transport(transport => transport.UseInMemoryTransport(network, "ark-mediator-sample"))
             .Serialization(static serialization => serialization.UseSystemTextJson(
-                new JsonSerializerOptions().ConfigureArkDefaults()))
+                new JsonSerializerOptions
+                {
+                    RespectNullableAnnotations = true,
+                    RespectRequiredConstructorParameters = true
+                }.ConfigureArkDefaults()))
             .Start();
 
         sender.Verify();
