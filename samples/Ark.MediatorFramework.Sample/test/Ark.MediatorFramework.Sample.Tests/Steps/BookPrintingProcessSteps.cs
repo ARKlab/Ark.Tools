@@ -6,6 +6,7 @@ using Ark.MediatorFramework.Sample.Tests.Hooks;
 
 using Ark.Tools.Core;
 using Ark.Tools.Core.BusinessRuleViolation;
+using Ark.Tools.Rebus.Tests;
 
 using AwesomeAssertions;
 
@@ -60,6 +61,7 @@ public sealed class BookPrintingProcessSteps
     public async Task ConcurrentlyStartCurrentBookPrintProcesses(Table table)
     {
         var request = table.CreateInstance<CreateBookPrintProcessRequest.V1>() with { BookId = _books.Current.Id };
+        using var drainer = DrainableInMemTransport.Drain();
         var requests = new[]
         {
             _context.DispatchRequestAsync<CreateBookPrintProcessRequest.V1, BookPrintProcessResponse>(request),
