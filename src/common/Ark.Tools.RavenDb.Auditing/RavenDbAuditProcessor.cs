@@ -8,6 +8,9 @@ using Raven.Client.Documents.Subscriptions;
 
 namespace Ark.Tools.RavenDb.Auditing;
 
+#pragma warning disable MA0137 // Preserve RavenDB processor method names
+#pragma warning disable MA0214 // Preserve RavenDB task forwarding semantics
+
 public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 {
     private readonly IDocumentStore _store;

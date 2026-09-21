@@ -7,6 +7,9 @@ using MessagePack;
 
 namespace Ark.Tools.Http;
 
+#pragma warning disable MA0137 // Preserve HTTP extension API names
+#pragma warning disable MA0214 // Preserve serializer task forwarding semantics
+
 [SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "Mimiking Flurl signatures")]
 public static partial class Ex
 {

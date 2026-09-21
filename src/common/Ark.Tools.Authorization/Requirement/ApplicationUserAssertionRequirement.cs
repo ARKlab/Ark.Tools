@@ -2,6 +2,9 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Authorization.Requirement;
 
+#pragma warning disable MA0137 // Authorization handler method names follow framework conventions
+#pragma warning disable MA0214 // Preserve framework authorization task semantics
+
 /// <summary>
 /// Desbribes an <see cref="IAuthorizationRequirement"/> that takes a user defined assertion over a application defined user profile.
 /// Use of this kind of requirement, require a paired implementation of <see cref="IUserProfileProvider{TUser}"/>.

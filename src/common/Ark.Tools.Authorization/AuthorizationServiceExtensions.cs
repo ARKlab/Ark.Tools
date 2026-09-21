@@ -2,6 +2,8 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Authorization;
 
+#pragma warning disable MA0214 // Preserve task identity in authorization pipeline adapters
+
 /// <summary>
 /// Extension methods for <see cref="IAuthorizationService"/>.
 /// </summary>

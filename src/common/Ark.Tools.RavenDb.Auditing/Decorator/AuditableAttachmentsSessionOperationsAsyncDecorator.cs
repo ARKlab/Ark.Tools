@@ -4,6 +4,8 @@ using Raven.Client.Documents.Session;
 
 namespace Ark.Tools.RavenDb.Auditing;
 
+#pragma warning disable MA0214 // Preserve RavenDB decorator task forwarding semantics
+
 public class AuditableAttachmentsSessionOperationsAsyncDecorator : IAttachmentsSessionOperationsAsync
 {
     private readonly IAttachmentsSessionOperationsAsync _inner;

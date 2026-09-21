@@ -8,6 +8,8 @@ using Polly;
 
 namespace Ark.Tools.FtpClient.Core;
 
+#pragma warning disable MA0214 // Preserve FTP operation task semantics
+
 public abstract class FtpClientBase : IFtpClient
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();

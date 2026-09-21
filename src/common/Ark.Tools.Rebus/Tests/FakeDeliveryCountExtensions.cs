@@ -5,6 +5,8 @@ using Rebus.Transport;
 
 namespace MET.International.Common.Rebus.Tests;
 
+#pragma warning disable MA0137 // Preserve test transport API names
+
 public static class FakeDeliveryCountExtensions
 {
     /// <summary>

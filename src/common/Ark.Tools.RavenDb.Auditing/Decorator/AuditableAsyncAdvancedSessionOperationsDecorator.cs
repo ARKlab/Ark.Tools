@@ -14,6 +14,8 @@ using System.Linq.Expressions;
 
 namespace Ark.Tools.RavenDb.Auditing;
 
+#pragma warning disable MA0214 // Preserve RavenDB decorator task forwarding semantics
+
 public class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSessionOperations
 {
     private readonly IAsyncAdvancedSessionOperations _inner;

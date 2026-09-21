@@ -9,6 +9,8 @@ using SimpleInjector;
 
 namespace Ark.Tools.Solid.SimpleInjector;
 
+#pragma warning disable MA0137 // Preserve SimpleInjector handler API names
+
 internal static class QueryHandlerInvokerCache<TResult>
 {
     private static readonly MethodInfo _getInstance = typeof(Container).GetMethod(nameof(Container.GetInstance), [typeof(Type)])!;

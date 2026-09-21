@@ -6,6 +6,8 @@ using System.Data;
 
 namespace Ark.Tools.Outbox.SqlServer;
 
+#pragma warning disable MA0137 // Preserve database context lifecycle method names
+
 internal abstract class OutboxContextSqlCore
 {
     private readonly IOutboxContextSqlConfig _config;

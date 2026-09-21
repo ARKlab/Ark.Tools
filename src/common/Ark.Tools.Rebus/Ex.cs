@@ -10,6 +10,9 @@ using SimpleInjector;
 
 namespace Ark.Tools.Rebus;
 
+#pragma warning disable MA0137 // Preserve Rebus extension API names
+#pragma warning disable MA0214 // Preserve Rebus task forwarding semantics
+
 public static class Ex
 {
     public static void ConfigureRebus(this Container container, Action<RebusConfigurer> configurationCallback)

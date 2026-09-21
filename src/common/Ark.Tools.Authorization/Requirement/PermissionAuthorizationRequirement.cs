@@ -5,6 +5,8 @@ using System.Collections.Concurrent;
 
 namespace Ark.Tools.Authorization.Requirement;
 
+#pragma warning disable MA0137 // Authorization handler method names follow framework conventions
+
 /// <summary>
 /// Implements an <see cref="IAuthorizationRequirement"/> which requires one application permission.
 /// Use of this kind of requirement, require a paired implementation of <see cref="IUserPermissionsProvider{TPermissionEnum}"/>

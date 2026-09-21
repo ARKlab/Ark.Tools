@@ -7,6 +7,9 @@ using System.Net.Http.Headers;
 
 namespace Ark.Tools.Http;
 
+#pragma warning disable MA0137 // Preserve HTTP extension API names
+#pragma warning disable MA0214 // Preserve formatter task forwarding semantics
+
 public static partial class Ex
 {
 #pragma warning disable VSTHRD003 // Avoid awaiting or returning a Task representing work that was not started within your context

@@ -10,6 +10,8 @@ using System.Collections.Concurrent;
 
 namespace Ark.Tools.Rebus.Retry;
 
+#pragma warning disable MA0137 // Preserve Rebus retry contract method names
+
 
 /// <summary>
 /// Incoming message pipeline step that implements a retry mechanism - if the call to the rest of the pipeline fails,

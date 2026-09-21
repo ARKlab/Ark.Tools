@@ -6,6 +6,8 @@ using Polly;
 
 namespace Ark.Tools.FtpClient.Core;
 
+#pragma warning disable MA0137 // Preserve FTP connection lifecycle method names
+
 public abstract class FtpClientWithConnectionBase : FtpClientBase
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
