@@ -3,6 +3,8 @@
 
 namespace Ark.Tools.Sql;
 
+#pragma warning disable MA0137 // Preserve the framework DisposeAsyncCore pattern
+
 public abstract class AbstractSqlAsyncContext<TTag> : ISqlAsyncContext<TTag>, IDisposable
 {
     private DbConnection? _connection;

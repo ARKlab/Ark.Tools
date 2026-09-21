@@ -3,6 +3,8 @@ using Ark.Tools.EventSourcing.Aggregates;
 
 namespace Ark.Tools.EventSourcing.Store;
 
+#pragma warning disable MA0137 // Preserve the event-sourcing contract's established method name
+
 public interface IAggregateTransactionFactory<TAggregateRoot, TAggregateState, TAggregate>
     where TAggregateRoot : AggregateRoot<TAggregateRoot, TAggregateState, TAggregate>
     where TAggregateState : AggregateState<TAggregateState, TAggregate>, new()

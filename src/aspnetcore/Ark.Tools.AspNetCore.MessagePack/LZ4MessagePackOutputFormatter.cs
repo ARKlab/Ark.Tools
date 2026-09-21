@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
+#pragma warning disable MA0214 // Framework formatter override must support synchronous fast paths
+
 public class LZ4MessagePackOutputFormatter : OutputFormatter
 {
     const string _contentType = "application/x.msgpacklz4";
@@ -66,4 +68,6 @@ public class LZ4MessagePackOutputFormatter : OutputFormatter
             return writer.FlushAsync(context.HttpContext.RequestAborted).AsTask();
         }
     }
+
+    #pragma warning restore MA0214
 }

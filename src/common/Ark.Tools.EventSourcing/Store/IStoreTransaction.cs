@@ -4,6 +4,8 @@ using System.Security.Claims;
 
 namespace Ark.Tools.EventSourcing.Store;
 
+#pragma warning disable MA0137 // Preserve the event-sourcing filter contract's established method names
+
 public interface IOperationContext
 {
     string OperationId { get; }
