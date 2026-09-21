@@ -92,5 +92,4 @@ jobs:
               && bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5672" 2>/dev/null; do
               sleep 2
             done
-            sleep 5
           '
