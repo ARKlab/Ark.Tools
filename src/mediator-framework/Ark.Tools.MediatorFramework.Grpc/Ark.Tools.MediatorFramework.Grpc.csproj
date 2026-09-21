@@ -57,10 +57,6 @@
             Pack="true" PackagePath="tools" Visible="false"
             Exclude="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\*.pdb"
             Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0')" />
-      <None Include="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\*"
-            Pack="true" PackagePath="tools/net8.0" Visible="false"
-            Exclude="$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0\*.pdb"
-            Condition="Exists('$(MSBuildThisFileDirectory)..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net8.0')" />
     </ItemGroup>
   </Target>
 

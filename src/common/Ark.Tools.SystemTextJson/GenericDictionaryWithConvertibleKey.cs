@@ -8,7 +8,6 @@ namespace Ark.Tools.SystemTextJson;
 
 public sealed class GenericDictionaryWithConvertibleKey : JsonConverterFactory
 {
-#if NET9_0_OR_GREATER
     [UnconditionalSuppressMessage("Trimming", "IL2067:DynamicallyAccessedMembers",
         Justification = "GetCompatibleGenericInterface requires DynamicallyAccessedMembers.Interfaces but cannot be added to override method parameter. The type being checked (typeToConvert) is provided by System.Text.Json serializer which preserves type metadata.")]
     public override bool CanConvert(Type typeToConvert)
@@ -36,39 +35,6 @@ public sealed class GenericDictionaryWithConvertibleKey : JsonConverterFactory
 
         return false;
     }
-#else
-    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
-        Justification = "For .NET 8 and earlier, TypeConverter discovery uses reflection. In .NET 9+, use TypeDescriptor.RegisterType to ensure converters are preserved. See migration-v6.md for details.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2062:DynamicallyAccessedMembers",
-        Justification = "For .NET 8 and earlier, TypeConverter discovery uses reflection. In .NET 9+, use TypeDescriptor.RegisterType to ensure converters are preserved. See migration-v6.md for details.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2067:DynamicallyAccessedMembers",
-        Justification = "GetCompatibleGenericInterface requires DynamicallyAccessedMembers.Interfaces but cannot be added to override method parameter. The type being checked (typeToConvert) is provided by System.Text.Json serializer which preserves type metadata.")]
-    public override bool CanConvert(Type typeToConvert)
-    {
-        Type? actualTypeToConvert;
-        Type? keyType = null;
-        if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericBaseClass(typeof(Dictionary<,>))) != null)
-        {
-            keyType = actualTypeToConvert.GetGenericArguments()[0];
-        }
-        else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IDictionary<,>))) != null)
-        {
-            keyType = actualTypeToConvert.GetGenericArguments()[0];
-        }
-        else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IReadOnlyDictionary<,>))) != null)
-        {
-            keyType = actualTypeToConvert.GetGenericArguments()[0];
-        }
-
-        if (keyType != null && keyType != typeof(string))
-        {
-            var converter = TypeDescriptor.GetConverter(keyType);
-            return converter.CanConvertFrom(typeof(string)) && converter.CanConvertTo(typeof(string));
-        }
-
-        return false;
-    }
-#endif
 
     [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType",
         Justification = "The generic type arguments (TC, TK, TV) are derived from typeToConvert which is the actual type being deserialized. The converter types (DictionaryBaseConverter, IDictionaryBaseConverter, DictionaryConverter, ReadOnlyDictionaryConverter) are all defined in this assembly and will be preserved by the trimmer.")]

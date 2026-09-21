@@ -17,9 +17,7 @@ public sealed class ArkTelemetryFileCollector : IDisposable
     /// </summary>
     public const string DirectoryEnvironmentVariable = "ARK_OTEL_FILE_DIRECTORY";
 
-#pragma warning disable MA0158 // object lock is required for net8.0 compatibility
-    private readonly object _gate = new();
-#pragma warning restore MA0158
+    private readonly Lock _gate = new();
     private readonly StreamWriter _spans;
     private readonly StreamWriter _metrics;
     private readonly ActivityListener _activityListener;

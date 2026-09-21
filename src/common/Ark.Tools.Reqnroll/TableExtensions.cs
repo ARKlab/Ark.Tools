@@ -153,31 +153,15 @@ public static partial class TableExtensions
         return result;
     }
 
-#if NET10_0_OR_GREATER
     [GeneratedRegex(
         @"^(?<root>.+?)\..+$",
         RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.NonBacktracking,
         1000)]
     private static partial Regex _rootPropertyRegex { get; }
-#else
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
-        "Meziantou.Analyzer",
-        "MA0190",
-        Justification = "GeneratedRegex partial properties are unavailable on net8.0.")]
-    [GeneratedRegex(
-        @"^(?<root>.+?)\..+$",
-        RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture | RegexOptions.NonBacktracking,
-        1000)]
-    private static partial Regex _rootPropertyRegex();
-#endif
 
     private static string _getRootPropertyMatch(string value)
     {
-#if NET10_0_OR_GREATER
         return _rootPropertyRegex.Replace(value, "${root}");
-#else
-        return _rootPropertyRegex().Replace(value, "${root}");
-#endif
     }
 
     /// <summary>
