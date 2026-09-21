@@ -13,10 +13,28 @@ namespace Ark.Tools.MediatorFramework.Generators;
 internal static class XmlDocumentation
 {
     public static string? Summary(ISymbol symbol, CancellationToken cancellationToken = default)
-        => Read(symbol, "summary", cancellationToken);
+    {
+        return TryGetDescription(symbol, out var description)
+            ? description
+            : Read(symbol, "summary", cancellationToken);
+    }
 
     public static string? Remarks(ISymbol symbol, CancellationToken cancellationToken = default)
-        => Read(symbol, "remarks", cancellationToken);
+    {
+        return TryGetDescription(symbol, out _)
+            ? null
+            : Read(symbol, "remarks", cancellationToken);
+    }
+
+    private static bool TryGetDescription(ISymbol symbol, out string? description)
+    {
+        var attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
+            candidate.AttributeClass?.ToDisplayString() == "System.ComponentModel.DescriptionAttribute");
+        description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
+        if (description is not null)
+            description = string.Join(' ', description.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return attribute is not null;
+    }
 
     private static string? Read(ISymbol symbol, string elementName, CancellationToken cancellationToken)
     {
