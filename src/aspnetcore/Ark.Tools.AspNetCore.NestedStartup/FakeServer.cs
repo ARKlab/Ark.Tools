@@ -31,12 +31,12 @@ public sealed class FakeServer : IServer
     {
         var prop = typeof(TContext).GetProperty("HttpContext") ?? throw new InvalidOperationException("TContext do not expose HttpContext property");
 
-        _process = (HttpContext ctx) =>
+        _process = async (HttpContext ctx) =>
         {
             var ccc = Activator.CreateInstance<TContext>();
             prop.SetValue(ccc, ctx);
 
-            return application.ProcessRequestAsync(ccc);
+            await application.ProcessRequestAsync(ccc).ConfigureAwait(false);
         };
 
         return Task.CompletedTask;
