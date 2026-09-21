@@ -48,6 +48,8 @@ public sealed class FakeServer : IServer
     {
     }
 
-    public Task Process(HttpContext ctx)
-        => _process?.Invoke(ctx) ?? throw new InvalidOperationException("Server has not been Started");
+    public async Task ProcessAsync(HttpContext ctx)
+    {
+        await (_process?.Invoke(ctx) ?? throw new InvalidOperationException("Server has not been Started")).ConfigureAwait(false);
+    }
 }

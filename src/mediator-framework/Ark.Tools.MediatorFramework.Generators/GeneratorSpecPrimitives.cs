@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -77,7 +78,7 @@ internal readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IRea
     }
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => obj is EquatableArray<T> other && Equals(other);
+    public override bool Equals([NotNullWhen(true)] object? obj) => obj is EquatableArray<T> other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode()
@@ -201,7 +202,7 @@ internal readonly struct LocationSpec : IEquatable<LocationSpec>
             && EndCharacter == other.EndCharacter;
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => obj is LocationSpec other && Equals(other);
+    public override bool Equals([NotNullWhen(true)] object? obj) => obj is LocationSpec other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode()

@@ -46,7 +46,7 @@ public sealed class SelfGenericInterfaceCodeFixProvider : CodeFixProvider
         context.RegisterCodeFix(
             CodeAction.Create(
                 "Use self-referencing generic interface for reflection-free dispatch",
-                ct => _fixAsync(context.Document, declaration, ct),
+                async ct => await _fixAsync(context.Document, declaration, ct).ConfigureAwait(false),
                 equivalenceKey: SelfGenericInterfaceAnalyzer.DiagnosticId),
             context.Diagnostics);
     }

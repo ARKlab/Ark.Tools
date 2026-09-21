@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Ark.Tools.Compliance;
 
 /// <summary>Marks a readonly partial string value object for safe generated rendering.</summary>
@@ -60,7 +62,7 @@ public readonly struct ValidationResult : IEquatable<ValidationResult>
     }
 
     /// <inheritdoc />
-    public override bool Equals(object? obj)
+    public override bool Equals([NotNullWhen(true)] object? obj)
     {
         return obj is ValidationResult other && Equals(other);
     }

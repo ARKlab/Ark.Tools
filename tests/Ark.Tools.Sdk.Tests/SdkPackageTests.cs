@@ -33,19 +33,19 @@ public sealed class SdkPackageTests
             Directory.Delete(artifactsRoot, true);
         }
         Directory.CreateDirectory(_feed);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "sdk", "Ark.Tools.Build", "Ark.Tools.Build.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "sdk", "Ark.Tools.Sdk", "Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Abstractions", "Ark.Tools.Compliance.Abstractions.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
@@ -66,7 +66,7 @@ public sealed class SdkPackageTests
 
         Assert.AreEqual("https://github.com/ARKlab/Ark.Tools", repository.Attribute("url")?.Value);
         Assert.AreEqual("git", repository.Attribute("type")?.Value);
-        var gitCommit = (await _run("git", "rev-parse HEAD")).Trim();
+        var gitCommit = (await _runAsync("git", "rev-parse HEAD")).Trim();
         Assert.AreEqual(gitCommit, repository.Attribute("commit")?.Value);
     }
 
@@ -79,7 +79,7 @@ public sealed class SdkPackageTests
     {
         var output = Path.Join(_root, "artifacts", "sdk-test-shared", "compliance-dependency");
         Directory.CreateDirectory(output);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"pack \"{Path.Join(_root, "src", "common", "Ark.Tools.Core", "Ark.Tools.Core.csproj")}\" -c Debug -o \"{output}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
@@ -175,18 +175,18 @@ public sealed class SdkPackageTests
             """)
             .ConfigureAwait(false);
 
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\" -p:RestoreLockedMode=false",
             _createEnvironment(scenarioRoot)).ConfigureAwait(false);
 
-        using var evaluation = JsonDocument.Parse(await _run(
+        using var evaluation = JsonDocument.Parse(await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -getItem:CompilerVisibleProperty",
             _createEnvironment(scenarioRoot)).ConfigureAwait(false));
         CollectionAssert.Contains(_getItemIdentities(evaluation, "CompilerVisibleProperty"), "EnableArkToolsCompliance");
 
-        var result = await _runForExitCode(
+        var result = await _runForExitCodeAsync(
             "dotnet",
             $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\"",
             _createEnvironment(scenarioRoot)).ConfigureAwait(false);
@@ -211,7 +211,7 @@ public sealed class SdkPackageTests
             Path.Join(enabledRoot, "Consumer.cs"),
             await File.ReadAllTextAsync(Path.Join(scenarioRoot, "Consumer.cs")).ConfigureAwait(false)).ConfigureAwait(false);
 
-        var enabledResult = await _runForExitCode(
+        var enabledResult = await _runForExitCodeAsync(
             "dotnet",
             $"build \"{Path.Join(enabledRoot, "Consumer.csproj")}\" -p:RestoreConfigFile=\"{Path.Join(enabledRoot, "NuGet.Config")}\"",
             _createEnvironment(enabledRoot)).ConfigureAwait(false);
@@ -296,9 +296,9 @@ public sealed class SdkPackageTests
         StringAssert.Contains(config, "dotnet_diagnostic.LOGGEN036.severity = warning", StringComparison.Ordinal);
 
         var scenarioRoot = Path.Join(fixtureRoot, "enabled");
-        await _run("dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore",
+        await _runAsync("dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore",
             _createSdkEnvironment(fixtureRoot)).ConfigureAwait(false);
-        var unsupported = await _runForExitCode(
+        var unsupported = await _runForExitCodeAsync(
             "dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore -p:ArkComplianceMode=Observe",
             _createSdkEnvironment(fixtureRoot)).ConfigureAwait(false);
         Assert.AreNotEqual(0, unsupported.ExitCode);
@@ -354,7 +354,7 @@ public sealed class SdkPackageTests
             }
             """).ConfigureAwait(false);
 
-        var result = await _runForExitCode(
+        var result = await _runForExitCodeAsync(
             "dotnet",
             $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\"",
             _createSdkEnvironment(fixtureRoot)).ConfigureAwait(false);
@@ -489,7 +489,7 @@ public sealed class SdkPackageTests
 
         var scenarioRoot = Path.Join(fixtureRoot, "assets-baseline");
         await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Consumer.cs"), "internal sealed class Consumer { }\n").ConfigureAwait(false);
-        await _run("dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(scenarioRoot));
+        await _runAsync("dotnet", $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(scenarioRoot));
         Assert.IsFalse(File.Exists(Path.Join(scenarioRoot, "Ark.Tools.CodingStyle.editorconfig")));
         Assert.IsFalse(File.Exists(Path.Join(scenarioRoot, "Ark.Tools.NetAnalyzers.globalconfig")));
     }
@@ -512,7 +512,7 @@ public sealed class SdkPackageTests
 
         var source = "internal sealed class Consumer { ~Consumer() { } }\n";
         var packagedRoot = await _createCompilerScenarioAsync(fixtureRoot, feed, "packaged", packageVersion, source);
-        var packagedError = await _runForExitCode(
+        var packagedError = await _runForExitCodeAsync(
             "dotnet",
             $"build \"{Path.Join(packagedRoot, "Consumer.csproj")}\" --no-restore",
             _createEnvironment(packagedRoot));
@@ -523,7 +523,7 @@ public sealed class SdkPackageTests
         await File.WriteAllTextAsync(
             Path.Join(globalRoot, ".globalconfig"),
             "is_global = true\ndotnet_diagnostic.CA1821.severity = none\n").ConfigureAwait(false);
-        await _run("dotnet", $"build \"{Path.Join(globalRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(globalRoot));
+        await _runAsync("dotnet", $"build \"{Path.Join(globalRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(globalRoot));
 
         var editorRoot = await _createCompilerScenarioAsync(fixtureRoot, feed, "source-editor", packageVersion, source);
         await File.WriteAllTextAsync(
@@ -532,7 +532,7 @@ public sealed class SdkPackageTests
         await File.WriteAllTextAsync(
             Path.Join(editorRoot, ".editorconfig"),
             "root = true\n[*.cs]\ndotnet_diagnostic.CA1821.severity = error\n").ConfigureAwait(false);
-        var editorError = await _runForExitCode(
+        var editorError = await _runForExitCodeAsync(
             "dotnet",
             $"build \"{Path.Join(editorRoot, "Consumer.csproj")}\" --no-restore",
             _createEnvironment(editorRoot));
@@ -552,7 +552,7 @@ public sealed class SdkPackageTests
             Path.Join(nested, ".editorconfig"),
             "[*.cs]\ndotnet_diagnostic.CA1821.severity = none\n").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Join(nested, "Consumer.cs"), source).ConfigureAwait(false);
-        await _run("dotnet", $"build \"{Path.Join(nestedRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(nestedRoot));
+        await _runAsync("dotnet", $"build \"{Path.Join(nestedRoot, "Consumer.csproj")}\" --no-restore", _createEnvironment(nestedRoot));
 
         var bannedProject = _createCSharpProject(
             packageVersion,
@@ -575,7 +575,7 @@ public sealed class SdkPackageTests
         CollectionAssert.AreEquivalent(
             _composedBannedApiAssets,
             _getItemIdentities(banned, "AdditionalFiles").Select(static identity => Path.GetFileName(identity) ?? "").ToArray());
-        var bannedError = await _runForExitCode(
+        var bannedError = await _runForExitCodeAsync(
             "dotnet",
             $"build \"{Path.Join(bannedRoot, "Consumer.csproj")}\" --no-restore",
             _createEnvironment(bannedRoot));
@@ -761,7 +761,7 @@ public sealed class SdkPackageTests
         await File.WriteAllTextAsync(Path.Join(nonTestRoot, "appsettings.Development.json"), "{}\n").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Join(nonTestRoot, "reqnroll.json"), "{}\n").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Join(nonTestRoot, "testconfig.json"), "{}\n").ConfigureAwait(false);
-        var nonTestEvaluation = JsonDocument.Parse(await _run(
+        var nonTestEvaluation = JsonDocument.Parse(await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(nonTestRoot, "Consumer.csproj")}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:None,Content",
             _createSdkEnvironment(nonTestRoot)));
@@ -782,7 +782,7 @@ public sealed class SdkPackageTests
         await File.WriteAllTextAsync(Path.Join(testRoot, "appsettings.Development.json"), "{}\n").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Join(testRoot, "reqnroll.json"), "{}\n").ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Join(testRoot, "testconfig.json"), "{}\n").ConfigureAwait(false);
-        var testEvaluation = JsonDocument.Parse(await _run(
+        var testEvaluation = JsonDocument.Parse(await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(testRoot, "Consumer.Tests.csproj")}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:None,Content",
             _createSdkEnvironment(testRoot)));
@@ -817,7 +817,7 @@ public sealed class SdkPackageTests
             _createSdkCSharpProject(),
             directoryProperties: "<EnableArkToolsAppSettings>false</EnableArkToolsAppSettings>");
         await File.WriteAllTextAsync(Path.Join(appSettingsDisabledRoot, "appsettings.json"), "{}\n").ConfigureAwait(false);
-        var appSettingsDisabledEvaluation = JsonDocument.Parse(await _run(
+        var appSettingsDisabledEvaluation = JsonDocument.Parse(await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(appSettingsDisabledRoot, "Consumer.Tests.csproj")}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:None,Content",
             _createSdkEnvironment(appSettingsDisabledRoot)));
@@ -832,7 +832,7 @@ public sealed class SdkPackageTests
             _createSdkCSharpProject(),
             directoryProperties: "<EnableArkToolsReqnroll>false</EnableArkToolsReqnroll>");
         await File.WriteAllTextAsync(Path.Join(reqnrollDisabledRoot, "reqnroll.json"), "{}\n").ConfigureAwait(false);
-        var reqnrollDisabledEvaluation = JsonDocument.Parse(await _run(
+        var reqnrollDisabledEvaluation = JsonDocument.Parse(await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(reqnrollDisabledRoot, "Consumer.Tests.csproj")}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:None,Content",
             _createSdkEnvironment(reqnrollDisabledRoot)));
@@ -847,7 +847,7 @@ public sealed class SdkPackageTests
             _createSdkCSharpProject(),
             directoryProperties: "<EnableArkToolsTestConfig>false</EnableArkToolsTestConfig>");
         await File.WriteAllTextAsync(Path.Join(testConfigDisabledRoot, "testconfig.json"), "{}\n").ConfigureAwait(false);
-        var testConfigDisabledEvaluation = JsonDocument.Parse(await _run(
+        var testConfigDisabledEvaluation = JsonDocument.Parse(await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(testConfigDisabledRoot, "Consumer.Tests.csproj")}\" -getItem:None",
             _createSdkEnvironment(testConfigDisabledRoot)));
@@ -981,7 +981,7 @@ public sealed class SdkPackageTests
             "Consumer.csproj",
             _createSdkCSharpProject());
         var lockedEnvironment = _createSdkEnvironment(fixtureRoot);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(lockedRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(lockedRoot, "NuGet.Config")}\"",
             lockedEnvironment);
@@ -1004,7 +1004,7 @@ public sealed class SdkPackageTests
             "Consumer.csproj",
             _createSdkCSharpProject(),
             directoryProperties: "<EnableArkToolsVisualStudioThreading>true</EnableArkToolsVisualStudioThreading>");
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(threadingOptInRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(threadingOptInRoot, "NuGet.Config")}\"",
             _createSdkEnvironment(fixtureRoot));
@@ -1016,7 +1016,7 @@ public sealed class SdkPackageTests
 
         lockedEnvironment["CI"] = "true";
         Directory.Delete(Path.Join(lockedRoot, "obj"), true);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(lockedRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(lockedRoot, "NuGet.Config")}\"",
             lockedEnvironment);
@@ -1025,7 +1025,7 @@ public sealed class SdkPackageTests
             Path.Join(lockedRoot, "Consumer.csproj"),
             _createSdkCSharpProject(targetFramework: "net8.0")).ConfigureAwait(false);
         Directory.Delete(Path.Join(lockedRoot, "obj"), true);
-        var lockedFailure = await _runForExitCode(
+        var lockedFailure = await _runForExitCodeAsync(
             "dotnet",
             $"msbuild \"{Path.Join(lockedRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(lockedRoot, "NuGet.Config")}\"",
             lockedEnvironment);
@@ -1035,7 +1035,7 @@ public sealed class SdkPackageTests
         await File.WriteAllTextAsync(
             Path.Join(lockedRoot, "Consumer.csproj"),
             _createSdkCSharpProject("<RestoreLockedMode>false</RestoreLockedMode>", targetFramework: "net8.0")).ConfigureAwait(false);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(lockedRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(lockedRoot, "NuGet.Config")}\"",
             lockedEnvironment);
@@ -1051,7 +1051,7 @@ public sealed class SdkPackageTests
   <PropertyGroup><ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally></PropertyGroup>
 </Project>
 """);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(cpmRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(cpmRoot, "NuGet.Config")}\"",
             _createSdkEnvironment(fixtureRoot));
@@ -1064,7 +1064,7 @@ public sealed class SdkPackageTests
 </Project>
 """).ConfigureAwait(false);
         Directory.Delete(Path.Join(cpmRoot, "obj"), true);
-        var cpmFailure = await _runForExitCode(
+        var cpmFailure = await _runForExitCodeAsync(
             "dotnet",
             $"msbuild \"{Path.Join(cpmRoot, "Consumer.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(cpmRoot, "NuGet.Config")}\"",
             _createSdkEnvironment(fixtureRoot));
@@ -1144,11 +1144,11 @@ public sealed class ConsumerTests
 }
 """).ConfigureAwait(false);
         var testRoot = Path.Join(scenarioRoot, "consumer-tests");
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(testRoot, "Consumer.Tests.csproj")}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(testRoot, "NuGet.Config")}\"",
             _createSdkEnvironment(scenarioRoot));
-        await _run(
+        await _runAsync(
             "dotnet",
             $"test \"{Path.Join(testRoot, "Consumer.Tests.csproj")}\" --no-restore",
             _createSdkEnvironment(scenarioRoot));
@@ -1464,7 +1464,7 @@ public sealed class ConsumerTests
             directoryProperties);
         var processEnvironment = environment ?? _createSdkEnvironment(fixtureRoot);
         var projectPath = Path.Join(scenarioRoot, projectFileName);
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{projectPath}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\" -p:RestoreLockedMode=false",
             processEnvironment);
@@ -1501,7 +1501,7 @@ public sealed class ConsumerTests
             "EnableSourceLink",
             "ArkComplianceMode"
         };
-        var output = await _run(
+        var output = await _runAsync(
             "dotnet",
             $"msbuild \"{projectPath}\" -getProperty:{string.Join(",", properties)} -getItem:PackageReference,Using,EditorConfigFiles,GlobalAnalyzerConfigFiles,AdditionalFiles",
             processEnvironment);
@@ -1612,12 +1612,12 @@ public sealed class ConsumerTests
         await File.WriteAllTextAsync(projectPath, project).ConfigureAwait(false);
         var environment = _createEnvironment(scenarioRoot);
         var globalProperty = globalDisable ? " -p:EnableArkToolsBuild=false" : "";
-        await _run(
+        await _runAsync(
             "dotnet",
             $"msbuild \"{projectPath}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\"{globalProperty}",
             environment);
         var propertyNames = _selectedProperties.Concat(_boundaryProperties).Append("ArkToolsBuildImported").Append("UsingMicrosoftBuildSqlSdk");
-        var output = await _run(
+        var output = await _runAsync(
             "dotnet",
             $"msbuild \"{projectPath}\" -getProperty:{string.Join(",", propertyNames)} -getItem:{string.Join(",", _boundaryItems.Append("Using").Append("EditorConfigFiles").Append("GlobalAnalyzerConfigFiles"))}{globalProperty}",
             environment);
@@ -1660,7 +1660,7 @@ public sealed class ConsumerTests
             project,
             directoryProperties);
         var scenarioRoot = Path.Join(fixtureRoot, scenario);
-        var output = await _run(
+        var output = await _runAsync(
             "dotnet",
             $"msbuild \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -target:Disable_SponsorLink -getItem:Analyzer",
             _createEnvironment(scenarioRoot));
@@ -1788,14 +1788,14 @@ public sealed class ConsumerTests
         return matches.Length == 0 ? null : matches[0].Metadata;
     }
 
-    private static async Task<string> _run(string fileName, string arguments, IDictionary<string, string>? environment = null)
+    private static async Task<string> _runAsync(string fileName, string arguments, IDictionary<string, string>? environment = null)
     {
-        var result = await _runForExitCode(fileName, arguments, environment);
+        var result = await _runForExitCodeAsync(fileName, arguments, environment);
         Assert.AreEqual(0, result.ExitCode, result.Output);
         return result.Output;
     }
 
-    private static async Task<(int ExitCode, string Output)> _runForExitCode(
+    private static async Task<(int ExitCode, string Output)> _runForExitCodeAsync(
         string fileName,
         string arguments,
         IDictionary<string, string>? environment = null)

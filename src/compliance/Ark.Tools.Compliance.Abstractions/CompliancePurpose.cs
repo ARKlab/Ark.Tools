@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Ark.Tools.Compliance;
 
 /// <summary>
@@ -59,7 +61,7 @@ public readonly struct CompliancePurpose : IEquatable<CompliancePurpose>
     }
 
     /// <inheritdoc />
-    public override bool Equals(object? obj)
+    public override bool Equals([NotNullWhen(true)] object? obj)
     {
         return obj is CompliancePurpose other && Equals(other);
     }
