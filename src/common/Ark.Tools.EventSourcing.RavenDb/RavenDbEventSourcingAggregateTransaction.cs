@@ -55,7 +55,7 @@ public class RavenDbEventSourcingAggregateTransaction<TAggregateRoot, TAggregate
                 token: ctk).ConfigureAwait(false);
 
            while (envelopes.Count != maxVersion
-               && await results.MoveNextAsync(ctk).ConfigureAwait(false))
+               && await results.MoveNextAsync().ConfigureAwait(false))
             {
                 var envelope = results.Current;
                 if (envelope.Document.AggregateVersion != envelopes.Count + 1)
