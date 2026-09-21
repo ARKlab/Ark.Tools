@@ -1488,6 +1488,8 @@ public sealed class GeneratorSnapshotTests
             """,
             []);
         mcpDriver.RunGeneratorsAndUpdateCompilation(mcpCompilation, out var generatedMcpCompilation, out _);
+        mcpDriver.GetRunResult().Results.Single().Diagnostics.Should().NotContain(
+            static diagnostic => diagnostic.Id == "ARKMF055");
         generatedMcpCompilation.GetDiagnostics().Should().NotContain(
             static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
     }
