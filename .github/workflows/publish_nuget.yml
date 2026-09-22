@@ -81,6 +81,9 @@ jobs:
       with:
         global-json-file: global.json
 
+    - name: 'Install Azure Functions Core Tools'
+      run: npm install --global azure-functions-core-tools@4.14.0
+
     - name: 'Get Version'
       id: version
       uses: battila7/get-version-action@v2
