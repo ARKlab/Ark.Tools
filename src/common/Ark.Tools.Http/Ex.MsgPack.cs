@@ -7,6 +7,7 @@ using MessagePack;
 
 namespace Ark.Tools.Http;
 
+
 [SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "Mimiking Flurl signatures")]
 public static partial class Ex
 {

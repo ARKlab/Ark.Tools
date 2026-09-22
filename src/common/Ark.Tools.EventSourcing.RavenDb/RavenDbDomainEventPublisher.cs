@@ -7,6 +7,7 @@ using Raven.Client.Documents.Subscriptions;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 
+
 public sealed class RavenDbDomainEventPublisher : IDisposable
 {
     private readonly IDocumentStore _store;

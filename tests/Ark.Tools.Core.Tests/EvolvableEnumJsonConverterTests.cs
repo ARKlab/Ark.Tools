@@ -22,11 +22,19 @@ public class EvolvableEnumJsonConverterTests
         Archived = 2,
     }
 
-    private static JsonSerializerOptions _createDefaultOptions() => new JsonSerializerOptions().ConfigureArkDefaults();
+    private static JsonSerializerOptions _createDefaultOptions() => new JsonSerializerOptions
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true
+    }.ConfigureArkDefaults();
 
     private static JsonSerializerOptions _createIntegerOptions()
     {
-        var options = new JsonSerializerOptions();
+        var options = new JsonSerializerOptions
+        {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true
+        };
         options.Converters.Add(new SystemTextJson.EvolvableEnumIntegerJsonConverterFactory());
         return options;
     }

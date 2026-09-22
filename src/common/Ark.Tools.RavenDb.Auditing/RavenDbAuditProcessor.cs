@@ -8,6 +8,7 @@ using Raven.Client.Documents.Subscriptions;
 
 namespace Ark.Tools.RavenDb.Auditing;
 
+
 public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 {
     private readonly IDocumentStore _store;

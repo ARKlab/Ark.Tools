@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
+
 public class MessagePackOutputFormatter : OutputFormatter
 {
     const string _contentType = "application/x-msgpack";
@@ -67,4 +68,5 @@ public class MessagePackOutputFormatter : OutputFormatter
             return writer.FlushAsync(context.HttpContext.RequestAborted).AsTask();
         }
     }
+
 }

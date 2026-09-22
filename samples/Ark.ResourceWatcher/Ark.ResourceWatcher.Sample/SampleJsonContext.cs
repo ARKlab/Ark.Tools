@@ -45,6 +45,9 @@ namespace Ark.ResourceWatcher.Sample;
 /// serialization code for these types.
 /// </para>
 /// </remarks>
+[JsonSourceGenerationOptions(
+    RespectNullableAnnotations = true,
+    RespectRequiredConstructorParameters = true)]
 [JsonSerializable(typeof(MyExtensions))]
 public sealed partial class SampleJsonContext : JsonSerializerContext
 {

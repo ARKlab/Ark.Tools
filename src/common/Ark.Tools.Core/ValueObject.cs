@@ -23,7 +23,7 @@ public abstract class ValueObject<T>
 
     protected abstract IEnumerable<object> GetAtomicValues();
 
-    public override bool Equals(object? obj)
+    public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
     {
         if (obj is null || obj.GetType() != GetType())
         {
@@ -61,7 +61,7 @@ public abstract class ValueObject<T>
         return true;
     }
 
-    public bool Equals(ValueObject<T>? obj)
+    public bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] ValueObject<T>? obj)
     {
         if (obj is null || obj.GetType() != GetType())
             return false;
@@ -69,7 +69,7 @@ public abstract class ValueObject<T>
         return _equals(obj);
     }
 
-    public bool Equals(T? obj)
+    public bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] T? obj)
     {
         return Equals(obj as ValueObject<T>);
     }

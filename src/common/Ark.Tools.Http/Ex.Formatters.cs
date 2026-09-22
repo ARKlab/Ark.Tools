@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 
 namespace Ark.Tools.Http;
 
+
 public static partial class Ex
 {
 #pragma warning disable VSTHRD003 // Avoid awaiting or returning a Task representing work that was not started within your context

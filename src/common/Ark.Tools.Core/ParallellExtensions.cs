@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Ark.Tools.Core;
 
+
 public static class ParallellExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

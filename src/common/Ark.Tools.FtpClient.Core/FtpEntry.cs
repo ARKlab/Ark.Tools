@@ -12,7 +12,7 @@ public struct FtpEntry : IEquatable<FtpEntry>
     public bool IsDirectory;
     public long Size;
 
-    public override readonly bool Equals(object? obj)
+    public override readonly bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
     {
         return obj is FtpEntry entry && Equals(entry);
     }

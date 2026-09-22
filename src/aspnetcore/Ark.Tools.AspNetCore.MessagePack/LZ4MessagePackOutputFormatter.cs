@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
+
 public class LZ4MessagePackOutputFormatter : OutputFormatter
 {
     const string _contentType = "application/x.msgpacklz4";
@@ -66,4 +67,5 @@ public class LZ4MessagePackOutputFormatter : OutputFormatter
             return writer.FlushAsync(context.HttpContext.RequestAborted).AsTask();
         }
     }
+
 }

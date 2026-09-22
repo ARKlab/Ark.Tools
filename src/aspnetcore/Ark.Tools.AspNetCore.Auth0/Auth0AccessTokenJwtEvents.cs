@@ -42,7 +42,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
         _authzApiUrl = authzApiUrl;
     }
 
-    private async Task<string> _getAuthzToken(IDistributedCache cache, CancellationToken ctk)
+    private async Task<string> _getAuthzTokenAsync(IDistributedCache cache, CancellationToken ctk)
     {
         var cacheKey = "auth0:authzToken";
         var res = await cache.GetStringAsync(cacheKey, ctk).ConfigureAwait(false);
@@ -122,7 +122,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
 
                         if (policyPayload != null)
                         {
-                            var authzToken = await _getAuthzToken(cache, ctk).ConfigureAwait(false);
+                            var authzToken = await _getAuthzTokenAsync(cache, ctk).ConfigureAwait(false);
                             var url = $"{_authzApiUrl}/api/users/{WebUtility.UrlEncode(userInfo.UserId)}/policy/{WebUtility.UrlEncode(_clientId)}";
 
                             using var client = new HttpClient();

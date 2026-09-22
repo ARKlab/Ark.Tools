@@ -16,6 +16,7 @@ using System.Diagnostics;
 namespace Ark.Tools.ResourceWatcher.WorkerHost;
 
 
+
 [SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "suffix is appropriate here")]
 public delegate void VoidEventHandler();
 

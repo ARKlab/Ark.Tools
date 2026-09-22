@@ -14,6 +14,7 @@ using System.Security.Authentication;
 namespace Ark.Tools.FtpClient.FtpProxy;
 
 
+
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable
 internal sealed class TokenProvider
 #pragma warning restore CA1001 // Types that own disposable fields should be disposable

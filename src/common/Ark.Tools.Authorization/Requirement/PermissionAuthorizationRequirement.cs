@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 
 namespace Ark.Tools.Authorization.Requirement;
 
+
 /// <summary>
 /// Implements an <see cref="IAuthorizationRequirement"/> which requires one application permission.
 /// Use of this kind of requirement, require a paired implementation of <see cref="IUserPermissionsProvider{TPermissionEnum}"/>

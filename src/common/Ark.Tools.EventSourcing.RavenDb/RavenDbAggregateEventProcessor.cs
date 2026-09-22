@@ -15,6 +15,7 @@ using System.Reflection;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 
+
 public abstract class RavenDbAggregateEventProcessor<TAggregate>
     : IDisposable
     where TAggregate : IAggregate

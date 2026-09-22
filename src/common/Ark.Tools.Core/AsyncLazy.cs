@@ -24,7 +24,7 @@ public sealed class AsyncLazy<T>
     public AsyncLazy(Func<Task<T>> factory)
     {
         ArgumentNullException.ThrowIfNull(factory);
-        _instance = new Lazy<Task<T>>(() => System.Threading.Tasks.Task.Run(factory));
+        _instance = new Lazy<Task<T>>(async () => await System.Threading.Tasks.Task.Run(factory).ConfigureAwait(false));
     }
 
     /// <summary>

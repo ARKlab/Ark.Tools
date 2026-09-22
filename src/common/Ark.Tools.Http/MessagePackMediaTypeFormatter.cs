@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 
 namespace Ark.Tools.Http;
 
+
 public class MessagePackMediaTypeFormatter : MediaTypeFormatter
 {
     private readonly MessagePackSerializerOptions _options;

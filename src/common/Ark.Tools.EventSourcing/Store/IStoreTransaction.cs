@@ -4,6 +4,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.EventSourcing.Store;
 
+
 public interface IOperationContext
 {
     string OperationId { get; }

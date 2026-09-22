@@ -5,6 +5,7 @@ using Rebus.Transport.InMem;
 
 namespace Ark.Tools.Rebus.Tests;
 
+
 public class DrainableInMemTransport : InMemTransport
 {
     private static long _drain = -1; // disabled

@@ -40,6 +40,8 @@ public sealed partial class MessagingBusTests
         delivery.Headers["tenant"].Should().Be("books");
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = TestJsonContext.Default
         });
         codec.Deserialize<TestMessage>(delivery.Payload).Value.Should().Be("Ada");
@@ -185,6 +187,8 @@ public sealed partial class MessagingBusTests
     {
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = TestJsonContext.Default
         });
         return new MessagingCodecRegistry([codec]);
@@ -297,6 +301,9 @@ public sealed partial class MessagingBusTests
 
     [JsonSerializable(typeof(TestMessage))]
     [JsonSerializable(typeof(TestEvent))]
+    [JsonSourceGenerationOptions(
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true)]
     private sealed partial class TestJsonContext : JsonSerializerContext
     {
     }

@@ -267,7 +267,7 @@ public readonly struct DateInterval
         return _compareTo(x, y) >= 0;
     }
 
-    public override readonly bool Equals(object? obj)
+    public override readonly bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
     {
         if (obj is not DateInterval)
             return false;

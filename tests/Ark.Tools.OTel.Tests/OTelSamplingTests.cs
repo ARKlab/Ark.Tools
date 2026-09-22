@@ -12,6 +12,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.OTel.Tests;
 
+
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
 /// <summary>

@@ -3,6 +3,7 @@
 
 namespace Ark.Tools.Sql;
 
+
 public abstract class AbstractSqlAsyncContext<TTag> : ISqlAsyncContext<TTag>, IDisposable
 {
     private DbConnection? _connection;

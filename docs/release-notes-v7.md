@@ -7,6 +7,12 @@ paths.
 
 ## Highlights
 
+### .NET 10 only
+
+Ark.Tools v7 drops .NET 8 support. Microsoft ends .NET 8 support in November
+2026, so all v7 packages target .NET 10. Upgrade consuming applications and
+build agents to the .NET 10 SDK before adopting v7.
+
 ### Faster hot paths
 
 The following measurements are retained benchmark results from the release

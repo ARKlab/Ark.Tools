@@ -60,7 +60,7 @@ public readonly struct ValidationResult : IEquatable<ValidationResult>
     }
 
     /// <inheritdoc />
-    public override bool Equals(object? obj)
+    public override bool Equals([NotNullWhen(true)] object? obj)
     {
         return obj is ValidationResult other && Equals(other);
     }

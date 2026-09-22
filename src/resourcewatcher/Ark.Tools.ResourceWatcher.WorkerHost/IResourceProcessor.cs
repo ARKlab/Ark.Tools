@@ -3,6 +3,7 @@
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost;
 
+
 /// <summary>
 /// Processes a resource with type-safe extension data.
 /// </summary>

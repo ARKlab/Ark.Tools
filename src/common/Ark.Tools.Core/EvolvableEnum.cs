@@ -95,7 +95,7 @@ public readonly struct EvolvableEnum<[DynamicallyAccessedMembers(DynamicallyAcce
     public bool Equals(EvolvableEnum<TEnum> other) => _value.Equals(other._value);
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => obj is EvolvableEnum<TEnum> other && Equals(other);
+    public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj) => obj is EvolvableEnum<TEnum> other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode() => _value.GetHashCode();
@@ -322,7 +322,7 @@ public readonly struct EvolvableEnum<
             : string.Equals(_unknownName, other._unknownName, StringComparison.Ordinal);
 
     /// <inheritdoc />
-    public override bool Equals(object? obj)
+    public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
         => obj is EvolvableEnum<TEnum, TBacking> other && Equals(other);
 
     /// <inheritdoc />

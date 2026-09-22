@@ -6,6 +6,7 @@ using System.Data;
 
 namespace Ark.Tools.Outbox.SqlServer;
 
+
 internal abstract class OutboxContextSqlCore
 {
     private readonly IOutboxContextSqlConfig _config;

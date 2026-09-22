@@ -50,6 +50,8 @@ public sealed class MessagingBusSampleTests
         var dataBus = new InMemoryMessagingDataBus();
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = ApplicationJsonSerializerContext.Default
         });
         using var bus = new MessagingBus(
@@ -81,6 +83,8 @@ public sealed class MessagingBusSampleTests
         var dataBus = new InMemoryMessagingDataBus();
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = ApplicationJsonSerializerContext.Default
         });
         var retryPolicy = new SampleMessagingRetryPolicy();
@@ -136,6 +140,8 @@ public sealed class MessagingBusSampleTests
         var dataBus = new InMemoryMessagingDataBus();
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = ApplicationJsonSerializerContext.Default
         });
         var retryPolicy = new SampleMessagingRetryPolicy();
@@ -283,6 +289,8 @@ public sealed class MessagingBusSampleTests
         var dataBus = new InMemoryMessagingDataBus();
         var codec = new JsonMessagingCodec(new JsonSerializerOptions
         {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
             TypeInfoResolver = ApplicationJsonSerializerContext.Default
         });
         using var bus = new MessagingBus(

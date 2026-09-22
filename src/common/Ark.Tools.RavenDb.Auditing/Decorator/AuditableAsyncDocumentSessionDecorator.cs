@@ -11,6 +11,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.RavenDb.Auditing;
 
+
 public sealed class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSession
 {
     private readonly IAsyncDocumentSession _inner;

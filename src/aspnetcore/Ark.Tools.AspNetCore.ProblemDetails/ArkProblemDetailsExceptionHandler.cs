@@ -89,7 +89,13 @@ internal sealed class ArkProblemDetailsExceptionMiddleware
 /// <summary>Source-generated JSON metadata for ProblemDetails responses.</summary>
 [System.Text.Json.Serialization.JsonSourceGenerationOptions(
     PropertyNamingPolicy = System.Text.Json.Serialization.JsonKnownNamingPolicy.CamelCase,
-    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+#if NET9_0_OR_GREATER
+    ,
+    RespectNullableAnnotations = true,
+    RespectRequiredConstructorParameters = true
+#endif
+    )]
 [System.Text.Json.Serialization.JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
 [System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, string[]>))]
 [System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, object?>))]

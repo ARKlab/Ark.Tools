@@ -82,9 +82,17 @@ public static class ApplicationComposition
         config.Logging(static logging => logging.NLog());
         config.Serialization(static serializer =>
         {
-            var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+            var contextOptions = new JsonSerializerOptions
+            {
+                RespectNullableAnnotations = true,
+                RespectRequiredConstructorParameters = true
+            }.ConfigureArkDefaults();
             var jsonContext = new ApplicationJsonSerializerContext(contextOptions);
-            var rebusOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+            var rebusOptions = new JsonSerializerOptions
+            {
+                RespectNullableAnnotations = true,
+                RespectRequiredConstructorParameters = true
+            }.ConfigureArkDefaults();
             rebusOptions.TypeInfoResolver = jsonContext;
             serializer.UseSystemTextJson(rebusOptions);
         });

@@ -10,6 +10,7 @@ using Raven.Client.ServerWide.Operations;
 
 namespace Ark.Tools.EventSourcing.RavenDb;
 
+
 public static class RavenDbStoreConfigurationExtensions
 {
     [RequiresUnreferencedCode("RavenDB document conventions use reflection. Document types must be preserved.")]
