@@ -74,6 +74,8 @@ sensitivity/masking DDL generation, and runtime log redaction. See the
 
 Upgrading from an older version? Check out our migration guides:
 
+- **[Release Notes v7 beta](docs/release-notes-v7.md)** - SDK, Compliance, Mediator Framework, OTel, and performance
+- **[Migration to v7](docs/migration-v7.md)** - Upgrade from v6.0.6, including ejected ReferenceProject solutions
 - **[Release Notes v6](docs/release-notes-v6.md)** - What's new in v6.0
 - [Migration to v6](docs/migration-v6.md) - Complete migration guide from v5 to v6
 - [Migration to v5](docs/migration-v5.md) - .NET 8.0, Reqnroll, Flurl v4, Rebus v8
