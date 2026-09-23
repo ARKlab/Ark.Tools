@@ -116,7 +116,15 @@ public static class ArkTypeConverter
             var underlying = Nullable.GetUnderlyingType(type) ?? type;
 
             if (underlying == typeof(string))
-                return static input => (T)(object)input;
+            {
+                return static input =>
+                {
+                    if (input is T typed)
+                        return typed;
+
+                    throw new InvalidCastException($"Unable to convert {typeof(string)} to {typeof(T)}.");
+                };
+            }
 
             var converter = TypeDescriptor.GetConverter(underlying);
             return input =>
@@ -139,7 +147,15 @@ public static class ArkTypeConverter
             var underlying = Nullable.GetUnderlyingType(type) ?? type;
 
             if (underlying == typeof(string))
-                return static input => (T)(object)input;
+            {
+                return static input =>
+                {
+                    if (input is T typed)
+                        return typed;
+
+                    throw new InvalidCastException($"Unable to convert {typeof(string)} to {typeof(T)}.");
+                };
+            }
 
             var converter = TypeDescriptor.GetConverterFromRegisteredType(underlying);
             return input =>
