@@ -137,7 +137,7 @@
     <PackageVersion Include="KubernetesClient" Version="19.0.2" />
     <!-- SQL -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.0" />
-    <PackageVersion Include="Dapper" Version="2.1.86" />
+    <PackageVersion Include="Dapper" Version="2.1.89" />
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.301" />
     <!-- AUTH -->
     <PackageVersion Include="Auth0.AuthenticationApi" Version="7.49.0" />
