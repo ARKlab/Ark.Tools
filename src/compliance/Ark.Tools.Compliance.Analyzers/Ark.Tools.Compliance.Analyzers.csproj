@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks></TargetFrameworks>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <BuildOutputTargetFolder>analyzers/dotnet/cs</BuildOutputTargetFolder>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
@@ -17,7 +17,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Ark.Tools.Compliance.Analyzers.Tests" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
-    <None Include="$(OutputPath)$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Update="buildTransitive/Ark.Tools.Compliance.Analyzers.props" Pack="true" PackagePath="buildTransitive/Ark.Tools.Compliance.Analyzers.props" />
     <None Update="buildTransitive/ComplianceLexicon.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceLexicon.Ark.txt" />
     <None Update="buildTransitive/ComplianceSinks.Ark.txt" Pack="true" PackagePath="buildTransitive/ComplianceSinks.Ark.txt" />
