@@ -37,7 +37,7 @@
     <PackageVersion Include="Polly" Version="8.8.0" />
     <PackageVersion Include="Polly.Caching.Memory" Version="3.0.2" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageVersion Include="MessagePack" Version="3.1.9" />
+    <PackageVersion Include="MessagePack" Version="3.1.10" />
     <PackageVersion Include="morelinq" Version="4.4.0" />
     <PackageVersion Include="System.Linq.Async" Version="7.0.1" />
     <PackageVersion Include="NodaTime" Version="3.3.4" />
@@ -137,7 +137,7 @@
     <PackageVersion Include="KubernetesClient" Version="19.0.2" />
     <!-- SQL -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.0" />
-    <PackageVersion Include="Dapper" Version="2.1.86" />
+    <PackageVersion Include="Dapper" Version="2.1.89" />
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.301" />
     <!-- AUTH -->
     <PackageVersion Include="Auth0.AuthenticationApi" Version="7.49.0" />
