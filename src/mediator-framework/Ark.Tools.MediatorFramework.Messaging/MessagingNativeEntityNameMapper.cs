@@ -13,10 +13,15 @@ internal static class MessagingNativeEntityNameMapper
 {
     internal static bool _isServiceBusCharacter(char character)
     {
-        return (character >= 'A' && character <= 'Z')
-            || (character >= 'a' && character <= 'z')
-            || (character >= '0' && character <= '9')
-            || character is '-' or '_' or '.';
+        var isUppercaseLetter = character >= 'A' && character <= 'Z';
+        var isLowercaseLetter = character >= 'a' && character <= 'z';
+        var isDigit = character >= '0' && character <= '9';
+        var isSupportedPunctuation = character is '-' or '_' or '.';
+
+        return isUppercaseLetter
+            || isLowercaseLetter
+            || isDigit
+            || isSupportedPunctuation;
     }
 
     internal static bool _isStorageQueueCharacter(char character)
