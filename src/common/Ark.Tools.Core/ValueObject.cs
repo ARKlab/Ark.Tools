@@ -44,7 +44,9 @@ public abstract class ValueObject<T>
     {
         IEnumerator<object> thisValues = GetAtomicValues().GetEnumerator();
         IEnumerator<object> otherValues = obj.GetAtomicValues().GetEnumerator();
-        while (thisValues.MoveNext() && otherValues.MoveNext())
+        var thisHasNext = thisValues.MoveNext();
+        var otherHasNext = otherValues.MoveNext();
+        while (thisHasNext && otherHasNext)
         {
             if (thisValues.Current is null ^
                 otherValues.Current is null)
@@ -57,8 +59,11 @@ public abstract class ValueObject<T>
             {
                 return false;
             }
+
+            thisHasNext = thisValues.MoveNext();
+            otherHasNext = otherValues.MoveNext();
         }
-        return true;
+        return thisHasNext == otherHasNext;
     }
 
     public bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] ValueObject<T>? obj)

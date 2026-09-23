@@ -54,18 +54,14 @@ public static class FakeDeliveryCountExtensions
             {
                 if (hasNext)
                 {
-                    try
+                    if (hasNext = e.MoveNext())
                     {
-                        if (hasNext = e.MoveNext())
-                        {
-                            v = e.Current;
-                        }
-                        else
-                        {
-                            e.Dispose();
-                        }
+                        v = e.Current;
                     }
-                    finally { e.Dispose(); }
+                    else
+                    {
+                        e.Dispose();
+                    }
                 }
 
                 return v;
