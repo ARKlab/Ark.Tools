@@ -37,7 +37,7 @@
     <PackageVersion Include="Polly" Version="8.8.0" />
     <PackageVersion Include="Polly.Caching.Memory" Version="3.0.2" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageVersion Include="MessagePack" Version="3.1.10" />
+    <PackageVersion Include="MessagePack" Version="3.1.9" />
     <PackageVersion Include="morelinq" Version="4.4.0" />
     <PackageVersion Include="System.Linq.Async" Version="7.0.1" />
     <PackageVersion Include="NodaTime" Version="3.3.4" />

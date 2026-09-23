@@ -1018,7 +1018,7 @@
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Google.Protobuf": "[3.36.2, )",
-          "MessagePack": "[3.1.10, )",
+          "MessagePack": "[3.1.9, )",
           "Microsoft.Extensions.Configuration.Abstractions": "[10.0.12, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, )",
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.12, )",
@@ -1035,7 +1035,7 @@
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
-          "MessagePack": "[3.1.10, )",
+          "MessagePack": "[3.1.9, )",
           "MessagePack.NodaTime": "[3.5.8, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
         }

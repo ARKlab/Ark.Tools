@@ -141,11 +141,12 @@ public sealed class HostingTestFixture : IAsyncDisposable
             }
             return;
         }
-        catch (OperationCanceledException) when (!ctk.IsCancellationRequested)
+        catch (OperationCanceledException exception) when (!ctk.IsCancellationRequested)
         {
             var counts = GetRebusCounts();
             throw new TimeoutException(
-                $"Rebus did not become idle. queue={counts.InQueue}, in-process={counts.InProcess}, deferred={counts.Deferred}, outbox={counts.Outbox}, error={counts.Error}.");
+                $"Rebus did not become idle. queue={counts.InQueue}, in-process={counts.InProcess}, deferred={counts.Deferred}, outbox={counts.Outbox}, error={counts.Error}.",
+                exception);
         }
     }
 
