@@ -25,6 +25,7 @@ public sealed class PackagingTests
         {
             Assert.IsNotNull(archive.GetEntry("analyzers/dotnet/cs/Ark.Tools.Compliance.Analyzers.dll"));
             Assert.IsNull(archive.GetEntry("analyzers/dotnet/cs/netstandard2.0/Ark.Tools.Compliance.Analyzers.dll"));
+            Assert.IsNull(archive.GetEntry("lib/netstandard2.0/Ark.Tools.Compliance.Analyzers.dll"));
         }
     }
 
