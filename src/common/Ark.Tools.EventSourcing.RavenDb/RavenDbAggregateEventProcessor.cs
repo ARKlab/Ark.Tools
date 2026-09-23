@@ -68,7 +68,8 @@ where startsWith(id(e), '{prefix}')
 
 
             _tokenSource = new CancellationTokenSource();
-            _subscriptionWorkerTask = Task.Run(() => _run(_tokenSource.Token), _tokenSource.Token);
+            var token = _tokenSource.Token;
+            _subscriptionWorkerTask = Task.Run(() => _run(token), token);
         }
     }
 

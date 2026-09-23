@@ -50,21 +50,29 @@ public static class FakeDeliveryCountExtensions
 
         int next()
         {
-            lock (gate)
+            try
             {
-                if (hasNext)
+                lock (gate)
                 {
-                    if (hasNext = e.MoveNext())
+                    if (hasNext)
                     {
-                        v = e.Current;
+                        if (hasNext = e.MoveNext())
+                        {
+                            v = e.Current;
+                        }
+                        else
+                        {
+                            e.Dispose();
+                        }
                     }
-                    else
-                    {
-                        e.Dispose();
-                    }
-                }
 
-                return v;
+                    return v;
+                }
+            }
+            catch
+            {
+                e.Dispose();
+                throw;
             }
         }
 
