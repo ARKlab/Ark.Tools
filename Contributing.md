@@ -1,5 +1,53 @@
 # Contributing
 
+## Test execution
+
+The repository uses the native Microsoft.Testing.Platform runner selected in
+`global.json`. Non-Reqnroll test projects reference `MSTest.SourceGeneration`
+centrally and use `MSTestSourceGenMode=ReflectionFree`. Projects referencing
+`Reqnroll.MsTest` retain their existing discovery path. These settings are
+repository-local, not defaults imposed on consumers of `Ark.Tools.Sdk`.
+
+Keep the generator, adapter, framework and analyzer package versions aligned.
+Update affected `packages.lock.json` files when changing dependencies; CI restores
+in locked mode. `ReflectionFree` generates metadata and invokers, but MSTest can
+still fall back to reflection for unsupported test shapes, including async and
+dynamic-data discovery paths. It is not an assertion that the tests are AOT-safe.
+
+Build first, then run the affected test project with `dotnet test --project
+<project.csproj> --no-build`. Keep the minimum-expected-tests guard enabled.
+For discovery changes, compare test names and data-row counts, not just exit codes.
+Inspect generated metadata with `-p:EmitCompilerGeneratedFiles=true` on the build.
+
+For an explicitly requested complete-run performance comparison:
+
+1. Start the same SQL Server, Azurite and Service Bus services used by
+   [the publish workflow](.github/workflows/publish_nuget.yml), and install Azure
+   Functions Core Tools for the boundary tests.
+2. Measure restore/build separately from `dotnet test --solution Ark.Tools.slnx
+   --no-build --no-progress --max-parallel-test-modules 3 --report-trx`.
+   Use a separate `--results-directory` for each run and capture build binlogs
+   with `-bl:<directory>/{}.binlog`.
+3. Keep coverage, configuration, module concurrency and infrastructure identical
+   between runs. Do not overlap measurements with builds or other test runs.
+   Compare TRX test durations and process wall time; cache warming and module
+   scheduling can change results independently of discovery performance.
+4. Also build and test `tests/Ark.Tools.Core.Reflection.Tests` and
+   `tests/Ark.Tools.FtpClient.FluentFtp.Tests`; these projects are outside the
+   solution.
+
+Prefer observable behavior over private-field reflection or third-party
+property-setter checks. Coordinate concurrency tests with bounded signals rather
+than elapsed-time thresholds. Preserve real timing checks for contracts such as
+broker lock expiry. Keep distinct serializer, transport, packaging and runtime
+contracts even when their scenarios look similar.
+
+Expensive immutable fixtures may be shared within a test run: the gRPC export
+tests pack their dependency closure once while keeping separate consumer
+directories. A unique package version prevents a warm NuGet cache from hiding
+changes to the packages under test. Drain subprocess stdout/stderr concurrently
+and bound process execution so failures cannot hang the suite.
+
 ## Development agents and marketplace plugins
 
 Use [APM 0.31.0](https://github.com/microsoft/apm/releases/tag/v0.31.0) and PowerShell 7.

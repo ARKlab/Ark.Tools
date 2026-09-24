@@ -14,6 +14,17 @@ namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 [TestClass]
 public sealed class GrpcProtoExportTests
 {
+    private static readonly string _packageFixture = _createTemporaryDirectory();
+    private static readonly string _packageVersion = "999.9.20-test" + Guid.NewGuid().ToString("N");
+    private static readonly Lazy<Task<string>> _packageFeed = new(static async () => await _packGrpcClosureAsync(_packageFixture).ConfigureAwait(false));
+
+    /// <summary>Removes the feed shared by the packed-consumer tests.</summary>
+    [ClassCleanup]
+    public static void CleanupPackages()
+    {
+        _deleteTemporaryDirectory(_packageFixture);
+    }
+
     /// <summary>Verifies the clean-build proto contains the generated services and methods.</summary>
     [TestMethod]
     public void ExportsDeterministicProtoServices()
@@ -169,7 +180,7 @@ public static class Program
         var fixture = _createTemporaryDirectory();
         try
         {
-            var feed = await _packGrpcClosureAsync(fixture).ConfigureAwait(false);
+            var feed = await _packageFeed.Value.ConfigureAwait(false);
             var consumer = Path.Join(fixture, "consumer");
             Directory.CreateDirectory(consumer);
             await File.WriteAllTextAsync(Path.Join(consumer, "hand.proto"), "syntax = \"proto3\";\n").ConfigureAwait(false);
@@ -227,7 +238,7 @@ public static class Program
         var fixture = _createTemporaryDirectory();
         try
         {
-            var feed = await _packGrpcClosureAsync(fixture).ConfigureAwait(false);
+            var feed = await _packageFeed.Value.ConfigureAwait(false);
             var consumer = Path.Join(fixture, "consumer");
             Directory.CreateDirectory(consumer);
             await File.WriteAllTextAsync(Path.Join(consumer, "Consumer.csproj"), _packedProject(string.Empty)).ConfigureAwait(false);
@@ -369,7 +380,7 @@ public static class Program
                 root,
                 Path.Join(root, project),
                 "--no-build", "-c", _configuration(), "-o", feed, $"-p:TargetFrameworks={_targetFramework()}",
-                "-p:PackageVersion=999.9.20", "-p:TreatWarningsAsErrors=false", "-p:NoWarn=NU5128").ConfigureAwait(false);
+                $"-p:PackageVersion={_packageVersion}", "-p:TreatWarningsAsErrors=false", "-p:NoWarn=NU5128").ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Output);
         }
 
@@ -389,7 +400,7 @@ public static class Program
   </PropertyGroup>
   {{propertiesAndItems}}
   <ItemGroup>
-    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" Version="999.9.20" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" Version="{{_packageVersion}}" />
     <PackageReference Include="SimpleInjector" Version="5.6.0" />
   </ItemGroup>
 </Project>
@@ -466,12 +477,25 @@ public static class Startup
             },
         };
         process.StartInfo.ArgumentList.Add(command);
+        process.StartInfo.ArgumentList.Add("-bl:" + Path.Join(Path.GetTempPath(), "ark-grpc-test-{}.binlog"));
         foreach (var argument in arguments)
             process.StartInfo.ArgumentList.Add(argument);
         process.Start();
-        var output = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-        output += await process.StandardError.ReadToEndAsync().ConfigureAwait(false);
-        await process.WaitForExitAsync().ConfigureAwait(false);
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+        try
+        {
+            await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException exception) when (timeout.IsCancellationRequested)
+        {
+            if (!process.HasExited)
+                process.Kill(entireProcessTree: true);
+            await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+            throw new TimeoutException($"dotnet {command} exceeded five minutes.\n{await outputTask.ConfigureAwait(false)}{await errorTask.ConfigureAwait(false)}", exception);
+        }
+        var output = await outputTask.ConfigureAwait(false) + await errorTask.ConfigureAwait(false);
         return (process.ExitCode, output);
     }
 
