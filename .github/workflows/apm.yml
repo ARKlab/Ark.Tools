@@ -40,7 +40,7 @@ jobs:
         run: apm run plugins:check
 
       - name: Restore Copilot development agents from lockfile
-        run: apm run agents:install
+        run: apm install --frozen
         env:
           GITHUB_APM_PAT: ${{ github.token }}
 
