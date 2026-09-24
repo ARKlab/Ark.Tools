@@ -2,11 +2,14 @@ name: Ark.Tools
 version: 1.3.0
 description: APM project for Ark.Tools
 author: Andrea Cuneo
+license: MIT
 targets:
   - copilot
-  - opencode
 includes: auto
-scripts: {}
+scripts:
+  agents:install: pwsh -NoProfile -File agents-plugins/Install-DevAgents.ps1
+  plugins:build: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1
+  plugins:check: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1 -Check
 devDependencies:
   apm:
     - microsoft/apm/packages/apm-guide#main
@@ -31,8 +34,6 @@ devDependencies:
       registry: false
       transport: http
       url: https://api.githubcopilot.com/mcp
-dependencies:
-  apm: []
 marketplace:
   name: Ark.Tools
   owner:
@@ -40,7 +41,7 @@ marketplace:
     url: https://github.com/ARKlab
 
   versioning:
-    strategy: lockstep
+    strategy: per_package
 
   metadata:
     homepage: https://github.com/ARKlab/Ark.Tools
@@ -51,5 +52,5 @@ marketplace:
   packages:
     - name: ark-csharp
       description: Ark CSharp development skills and agents
-      source: ./agents-plugins/ark-csharp
+      source: ./agents-plugins/published/ark-csharp
       version: 1.3.0

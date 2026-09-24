@@ -449,5 +449,17 @@ $RECYCLE.BIN/
 /packages/
 
 
-# APM dependencies
+# APM development installations (source and marketplace output stay tracked)
 apm_modules/
+/.agents/
+/.opencode/
+/.github/agents/
+/.github/skills/
+/.github/prompts/
+/.github/instructions/
+/.github/hooks/
+/.github/plugin/
+/.github/mcp.json
+/.github/lsp.json
+/opencode.json
+/lsp.json

@@ -8,8 +8,9 @@
 - Add XML documentation for all public APIs
 - Use `CultureInfo.InvariantCulture` when formatting strings for logging
 - Use `IArkFlurlClientFactory` instead of `IFlurlClientFactory`
-- Run `dotnet build` after making changes to verify compilation
+- Run `dotnet build` after changing .NET code to verify compilation
 - Run focused `dotnet test` commands for the areas affected by the changes; the full suite takes more than 5 minutes and must not be run by default
+- Changes confined to `docs/`, `agents-plugins/`, or APM do not require .NET build/test; validate documentation links or run the [APM checks in the contributing guide](Contributing.md#development-agents-and-marketplace-plugins) instead
 - Work in small, tested increments - make one logical change at a time, build and test before proceeding
 - Follow existing patterns in the codebase - check similar files first
 - Follow SOLID and KISS principles

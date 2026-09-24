@@ -84,6 +84,11 @@ Upgrading from an older version? Check out our migration guides:
 
 ## Building & Testing
 
+`dotnet build` and `dotnet test` validate .NET code only. They do not build,
+test, or affect `docs/`, `agents-plugins/`, or APM configuration and generated
+agent artifacts. Do not run them for changes confined to those areas; validate
+documentation links or use the [APM checks in the contributing guide](Contributing.md#development-agents-and-marketplace-plugins) instead.
+
 ```bash
 # Start test dependencies (SQL Server + Azurite)
 cd samples/Ark.ReferenceProject
@@ -103,6 +108,8 @@ dotnet test --configuration Debug
 ## Contributing
 
 Feel free to send PRs or to raise issues if you spot them. We try our best to improve our libraries.
+
+See the [contributing guide](Contributing.md) for development agents and marketplace plugin maintenance.
 
 **Guidelines:**
 - Avoid adding unnecessary 3rd party dependencies

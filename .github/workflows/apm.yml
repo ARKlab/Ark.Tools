@@ -1,0 +1,54 @@
+name: APM
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - apm.yml
+      - apm.lock.yaml
+      - agents-plugins/**
+      - .claude-plugin/marketplace.json
+      - .gitignore
+      - .github/workflows/apm.yml
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - apm.yml
+      - apm.lock.yaml
+      - agents-plugins/**
+      - .claude-plugin/marketplace.json
+      - .gitignore
+      - .github/workflows/apm.yml
+      - .github/workflows/copilot-setup-steps.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: microsoft/apm-action@v1
+        with:
+          setup-only: true
+          apm-version: 0.31.0
+
+      - name: Check committed plugin and marketplace output
+        run: apm run plugins:check
+
+      - name: Restore Copilot development agents from lockfile
+        run: apm run agents:install
+        env:
+          GITHUB_APM_PAT: ${{ github.token }}
+
+      - name: Verify development install leaves the checkout clean
+        shell: pwsh
+        run: |
+          $changes = git status --porcelain --untracked-files=all
+          if ($changes) {
+            $changes
+            throw 'APM installation changed tracked files or created unignored artifacts.'
+          }

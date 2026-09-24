@@ -7,9 +7,17 @@ on:
   push:
     paths:
       - .github/workflows/copilot-setup-steps.yml
+      - apm.yml
+      - apm.lock.yaml
+      - agents-plugins/Install-DevAgents.ps1
+      - agents-plugins/ark-csharp/**
   pull_request:
     paths:
       - .github/workflows/copilot-setup-steps.yml
+      - apm.yml
+      - apm.lock.yaml
+      - agents-plugins/Install-DevAgents.ps1
+      - agents-plugins/ark-csharp/**
 
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
@@ -76,6 +84,11 @@ jobs:
         with:
           setup-only: true
           apm-version: 0.31.0
+
+      - name: Restore Copilot development agents from lockfile
+        run: apm run agents:install
+        env:
+          GITHUB_APM_PAT: ${{ github.token }}
 
       - name: Install dotnet
         uses: actions/setup-dotnet@v6
