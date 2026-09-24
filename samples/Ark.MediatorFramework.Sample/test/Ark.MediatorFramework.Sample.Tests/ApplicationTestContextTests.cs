@@ -1,10 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Tests.Fakes;
 using Ark.MediatorFramework.Sample.Tests.Hooks;
-
-using Ark.Tools.Outbox;
 
 using AwesomeAssertions;
 
@@ -124,39 +121,6 @@ public sealed class ApplicationTestContextTests
 
         var action = () => proxy.NotifyAsync(new BookPrintProcessResponse());
         await action.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false);
-    }
-
-    /// <summary>Retries deterministic optimistic-concurrency failures before updating a Book.</summary>
-    [TestMethod]
-    public async Task OptimisticConcurrencyDecoratorRetriesTransientFailures()
-    {
-        var faults = new ConcurrencyFaultInjector { PendingFailures = 2 };
-        var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
-        var decoratedFactory = new FaultInjectingSampleDataContextFactory(factory, faults);
-        await using var context = new ApplicationTestContext(
-            useSqlStore: false,
-            dataContextFactory: decoratedFactory);
-
-        var book = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
-            new Book_CreateRequest.V1(new Book.V1.Create
-            {
-                Title = "Retry me",
-                Author = "Author",
-                Genre = Book.V1.Genre.Fiction,
-            })).ConfigureAwait(false);
-        var updated = await context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
-            new Book_UpdateRequest.V1(
-                new Book.V1.Input
-                {
-                    Title = "Retried successfully",
-                    Author = "Author",
-                    Genre = Book.V1.Genre.Fiction,
-                },
-                book.Id,
-                book.ETag)).ConfigureAwait(false);
-
-        updated.Title.Should().Be("Retried successfully");
-        faults.PendingFailures.Should().Be(0);
     }
 
 }

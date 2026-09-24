@@ -45,10 +45,20 @@ broker lock expiry. Keep distinct serializer, transport, packaging and runtime
 contracts even when their scenarios look similar.
 
 Expensive immutable fixtures may be shared within a test run: the gRPC export
-tests pack their dependency closure once while keeping separate consumer
-directories. A unique package version prevents a warm NuGet cache from hiding
-changes to the packages under test. Drain subprocess stdout/stderr concurrently
+tests pack their dependency closure once, in one solution-level invocation,
+while keeping separate consumer directories. A unique package version prevents
+a warm NuGet cache from hiding changes to the packages under test.
+Drain subprocess stdout/stderr concurrently
 and bound process execution so failures cannot hang the suite.
+
+Generator snapshot tests reuse immutable platform metadata references, but create
+fresh compilations and generator drivers for each scenario. Do not cache mutable
+test state or generated contract assemblies across scenarios.
+
+Consolidate duplicate scenarios only when their observable contracts match:
+optimistic-concurrency retry coverage lives in `ConcurrencyRoundtripTests`, separate
+from application-fixture scope tests. Registration tests must exercise the
+registered behavior, not merely assert that registration does not throw.
 
 ## Development agents and marketplace plugins
 
