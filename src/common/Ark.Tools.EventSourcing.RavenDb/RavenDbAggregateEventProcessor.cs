@@ -68,7 +68,8 @@ where startsWith(id(e), '{prefix}')
 
 
             _tokenSource = new CancellationTokenSource();
-            _subscriptionWorkerTask = Task.Factory.StartNew(() => _run(_tokenSource.Token), _tokenSource.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            var token = _tokenSource.Token;
+            _subscriptionWorkerTask = Task.Run(() => _run(token), token);
         }
     }
 
