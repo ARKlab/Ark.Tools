@@ -22,7 +22,7 @@ public sealed class AzureFunctionsPackagingTests
         var feed = Path.Join(root, "artifacts", "azurefunctions-pack-test");
         Directory.CreateDirectory(feed);
         var project = Path.Join(root, "src", "mediator-framework", "Ark.Tools.MediatorFramework.AzureFunctions", "Ark.Tools.MediatorFramework.AzureFunctions.csproj");
-        await _run("dotnet", $"pack \"{project}\" -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9");
+        await _run("dotnet", $"pack \"{project}\" --no-build -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9");
 
         await using var package = await ZipFile.OpenReadAsync(Path.Join(feed, "Ark.Tools.MediatorFramework.AzureFunctions.999.9.9.nupkg"));
         package.GetEntry("analyzers/dotnet/cs/Ark.Tools.MediatorFramework.AzureFunctions.Generators.dll").Should().NotBeNull();

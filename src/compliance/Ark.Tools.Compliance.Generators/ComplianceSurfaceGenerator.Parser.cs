@@ -23,17 +23,28 @@ public sealed partial class ComplianceSurfaceGenerator
         if (context.SemanticModel.GetDeclaredSymbol(context.Node, token) is not INamedTypeSymbol type)
             return null;
 
+        string? typeName = null;
+        SortedSet<string>? typeClassifications = null;
         var members = new List<MemberSpec>();
         foreach (var member in _members(type))
         {
             token.ThrowIfCancellationRequested();
-            members.Add(_parseMember(member, type, token));
+            // The type-level facts are hoisted out of the member loop: computing them per member
+            // dominated generator time on large compilations.
+            typeName ??= _name(type);
+            if (typeClassifications is null)
+            {
+                typeClassifications = new SortedSet<string>(StringComparer.Ordinal);
+                _classifications(type, typeClassifications);
+            }
+
+            members.Add(_parseMember(member, type, typeName, typeClassifications, token));
         }
 
         return members.Count == 0
             ? null
             : new TypeSpec(
-                _name(type),
+                typeName!,
                 new ImmutableEquatableArray<MemberSpec>(
                     members.OrderBy(static member => member.Key, StringComparer.Ordinal).ToImmutableArray()));
     }
@@ -67,16 +78,22 @@ public sealed partial class ComplianceSurfaceGenerator
         };
     }
 
-    private static MemberSpec _parseMember(ISymbol member, INamedTypeSymbol type, CancellationToken token)
+    private static MemberSpec _parseMember(
+        ISymbol member,
+        INamedTypeSymbol type,
+        string typeName,
+        SortedSet<string> typeClassifications,
+        CancellationToken token)
     {
         var classifications = new SortedSet<string>(StringComparer.Ordinal);
         _classifications(member, classifications);
-        _classifications(type, classifications);
+        foreach (var classification in typeClassifications)
+            classifications.Add(classification);
         var valueType = _valueType(member);
-        _typeClassifications(valueType, classifications, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+        _typeClassifications(valueType, classifications, null);
         classifications.Remove("Ark:InfrastructureSecret");
-        var key = _key(member);
         var name = _memberName(member);
+        var key = typeName + "\t" + name;
         if (classifications.Count == 0)
         {
             return new MemberSpec(
@@ -95,15 +112,7 @@ public sealed partial class ComplianceSurfaceGenerator
         var serializerAttributes = new SortedSet<string>(StringComparer.Ordinal);
         foreach (var attribute in member.GetAttributes().Concat(type.GetAttributes()))
         {
-            var serializer = attribute.AttributeClass?.ToDisplayString() switch
-            {
-                "System.Text.Json.Serialization.JsonPropertyNameAttribute" => "System.Text.Json",
-                "System.Text.Json.Serialization.JsonIncludeAttribute" => "System.Text.Json",
-                "Newtonsoft.Json.JsonPropertyAttribute" => "Newtonsoft.Json",
-                "ProtoBuf.ProtoMemberAttribute" => "Protobuf",
-                "MessagePack.KeyAttribute" => "MessagePack",
-                _ => null,
-            };
+            var serializer = _serializerAttribute(attribute.AttributeClass);
             if (serializer is not null)
                 serializerAttributes.Add(serializer);
         }
@@ -138,20 +147,22 @@ public sealed partial class ComplianceSurfaceGenerator
 
     private static void _classifications(ISymbol symbol, SortedSet<string> output)
     {
-        foreach (var name in symbol.GetAttributes().Select(static attribute => attribute.AttributeClass?.ToDisplayString()))
+        foreach (var attribute in symbol.GetAttributes())
         {
-            if (name == Prefix + "PersonalDataAttribute")
-                output.Add("Ark:PersonalData");
-            else if (name == Prefix + "SensitivePersonalDataAttribute")
-                output.Add("Ark:SensitivePersonalData");
-            else if (name == Prefix + "UserCredentialsAttribute")
-                output.Add("Ark:UserCredentials");
-            else if (name == Prefix + "InfrastructureSecretAttribute")
-                output.Add("Ark:InfrastructureSecret");
-            else if (name == Prefix + "SecretAttribute")
-                output.Add("Ark:InfrastructureSecret");
-            else if (name == Prefix + "PseudonymousAttribute")
-                output.Add("Ark:Pseudonymous");
+            var attributeClass = attribute.AttributeClass;
+            if (attributeClass is null || attributeClass.Arity != 0 || attributeClass.ContainingType is not null)
+                continue;
+            var classification = attributeClass.Name switch
+            {
+                "PersonalDataAttribute" => "Ark:PersonalData",
+                "SensitivePersonalDataAttribute" => "Ark:SensitivePersonalData",
+                "UserCredentialsAttribute" => "Ark:UserCredentials",
+                "InfrastructureSecretAttribute" or "SecretAttribute" => "Ark:InfrastructureSecret",
+                "PseudonymousAttribute" => "Ark:Pseudonymous",
+                _ => null,
+            };
+            if (classification is not null && _isNamespace(attributeClass.ContainingNamespace, "Ark.Tools.Compliance"))
+                output.Add(classification);
         }
         if (symbol is IPropertySymbol { OverriddenProperty: { } overridden })
             _classifications(overridden, output);
@@ -159,15 +170,34 @@ public sealed partial class ComplianceSurfaceGenerator
             _classifications(baseType, output);
     }
 
-    private static void _typeClassifications(ITypeSymbol? type, SortedSet<string> output, HashSet<ITypeSymbol> seen)
+    private static string? _serializerAttribute(INamedTypeSymbol? attributeClass)
     {
-        if (type is null || !seen.Add(type))
+        if (attributeClass is null || attributeClass.Arity != 0 || attributeClass.ContainingType is not null)
+            return null;
+        return attributeClass.Name switch
+        {
+            "JsonPropertyNameAttribute" or "JsonIncludeAttribute"
+                when _isNamespace(attributeClass.ContainingNamespace, "System.Text.Json.Serialization") => "System.Text.Json",
+            "JsonPropertyAttribute" when _isNamespace(attributeClass.ContainingNamespace, "Newtonsoft.Json") => "Newtonsoft.Json",
+            "ProtoMemberAttribute" when _isNamespace(attributeClass.ContainingNamespace, "ProtoBuf") => "Protobuf",
+            "KeyAttribute" when _isNamespace(attributeClass.ContainingNamespace, "MessagePack") => "MessagePack",
+            _ => null,
+        };
+    }
+
+    private static void _typeClassifications(ITypeSymbol? type, SortedSet<string> output, HashSet<ITypeSymbol>? seen)
+    {
+        if (type is null || seen?.Add(type) == false)
             return;
         _classifications(type, output);
         if (type is IArrayTypeSymbol array)
-            _typeClassifications(array.ElementType, output, seen);
-        if (type is INamedTypeSymbol named)
         {
+            seen ??= new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default) { type };
+            _typeClassifications(array.ElementType, output, seen);
+        }
+        if (type is INamedTypeSymbol named && named.TypeArguments.Length > 0)
+        {
+            seen ??= new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default) { type };
             foreach (var argument in named.TypeArguments)
                 _typeClassifications(argument, output, seen);
         }
@@ -352,8 +382,17 @@ public sealed partial class ComplianceSurfaceGenerator
             return false;
 
         typeNames.Add(_name(type));
-        var hasSensitiveValueObject = type.GetAttributes().Any(static attribute =>
-            attribute.AttributeClass?.OriginalDefinition.ToDisplayString() == Prefix + "SensitiveValueObjectAttribute<T>");
+        var hasSensitiveValueObject = false;
+        foreach (var attribute in type.GetAttributes())
+        {
+            var attributeClass = attribute.AttributeClass;
+            if (attributeClass is { Name: "SensitiveValueObjectAttribute", Arity: 1, ContainingType: null }
+                && _isNamespace(attributeClass.ContainingNamespace, "Ark.Tools.Compliance"))
+            {
+                hasSensitiveValueObject = true;
+                break;
+            }
+        }
         if (type is IArrayTypeSymbol array)
             hasSensitiveValueObject |= _valueTypeFacts(array.ElementType, typeNames, visited);
         if (type is INamedTypeSymbol named)
@@ -367,9 +406,57 @@ public sealed partial class ComplianceSurfaceGenerator
 
     private static bool _hasAttribute(ISymbol symbol, string name, bool alwaysOnly = false)
     {
-        return symbol.GetAttributes().Any(attribute => attribute.AttributeClass?.ToDisplayString() == name
+        return symbol.GetAttributes().Any(attribute => _isFullName(attribute.AttributeClass, name)
             && (!alwaysOnly || !attribute.NamedArguments.Any(static argument => argument.Key == "Condition")
                 || attribute.NamedArguments.Any(static argument => argument.Key == "Condition" && argument.Value.Value is 1)));
+    }
+
+    /// <summary>
+    /// Allocation-free equivalent of <c>type.ToDisplayString() == fullName</c> for top-level,
+    /// non-generic types: generic or nested types render with type arguments or the containing
+    /// type in their display string, so they can never equal a plain dotted name.
+    /// </summary>
+    private static bool _isFullName(INamedTypeSymbol? type, string fullName)
+    {
+        if (type is null || type.Arity != 0 || type.ContainingType is not null)
+            return false;
+
+        var name = type.Name;
+        var start = fullName.Length - name.Length;
+        if (start <= 0
+            || fullName[start - 1] != '.'
+            || string.CompareOrdinal(fullName, start, name, 0, name.Length) != 0)
+        {
+            return false;
+        }
+
+        return _isNamespace(type.ContainingNamespace, fullName, start - 1);
+    }
+
+    /// <summary>Allocation-free equivalent of <c>ns.ToDisplayString() == dotted</c>.</summary>
+    private static bool _isNamespace(INamespaceSymbol? @namespace, string dotted)
+    {
+        return _isNamespace(@namespace, dotted, dotted.Length);
+    }
+
+    private static bool _isNamespace(INamespaceSymbol? @namespace, string dotted, int end)
+    {
+        while (@namespace is { IsGlobalNamespace: false })
+        {
+            var name = @namespace.Name;
+            var start = end - name.Length;
+            if (start < 0
+                || string.CompareOrdinal(dotted, start, name, 0, name.Length) != 0
+                || (start > 0 && dotted[start - 1] != '.'))
+            {
+                return false;
+            }
+
+            end = start - 1;
+            @namespace = @namespace.ContainingNamespace;
+        }
+
+        return end == -1 && @namespace is not null;
     }
 
     private static string _name(ITypeSymbol type)
