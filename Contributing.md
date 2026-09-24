@@ -20,7 +20,7 @@ From the repository root:
 
 ```powershell
 # Restore the pinned development tools for Copilot only (also used by cloud setup).
-apm run agents:install
+apm install --frozen
 
 # Rebuild the native plugin and marketplace; requires PowerShell 7.
 apm run plugins:build
@@ -29,15 +29,10 @@ apm run plugins:build
 apm run plugins:check
 ```
 
-The Copilot restore uses `apm install --target copilot --only apm`, which
-reuses existing lockfile pins, then rejects any lockfile changes. It never
-passes `--update` or `--refresh` and does not configure MCP/LSP services.
-APM 0.31.0's `--frozen` preflight incorrectly requires installed marketplace
-dependency manifests when MCP state exists, even with `--only apm`, so it
-cannot bootstrap this repository from a clean checkout. The restore script
-uses a before/after lockfile comparison instead; CI also checks the entire
-checkout for drift. Do not bypass a failure: review intentional dependency
-changes with the maintenance commands below.
+The restore uses `apm install --frozen`, which replays the existing lockfile
+pins and fails instead of changing the lockfile. It never updates or refreshes
+remote refs; CI also checks the entire checkout for drift. Do not bypass a
+failure: review intentional dependency changes with the maintenance commands below.
 
 Run development installation and lockfile updates on Linux (including WSL
 on Windows), with both tools installed there, matching cloud setup.
@@ -60,7 +55,7 @@ apm install --update --target copilot --only apm
 ```
 
 Commit the manifest and lockfile changes, not the installed projections.
-Run `apm run agents:install` again to verify a lock-preserving restore. Development
+Run `apm install --frozen` again to verify a lock-preserving restore. Development
 dependencies are never included in the published `ark-csharp` plugin.
 
 ### Extending and publishing ark-csharp
@@ -75,7 +70,7 @@ dependencies are never included in the published `ark-csharp` plugin.
    to refresh the local development dependency and its lock metadata. Naming
    the local package explicitly refreshes its cached copy without updating
    the other dependencies' remote pins.
-4. Run `apm run plugins:check` and `apm run agents:install`.
+4. Run `apm run plugins:check` and `apm install --frozen`.
 5. Commit the sources, manifest/lock changes, published plugin, and marketplace
    index together. Merging to `master` makes the updated payload available
    through the GitHub-hosted marketplace; no separate registry upload is needed.

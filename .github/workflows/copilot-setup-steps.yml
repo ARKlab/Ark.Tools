@@ -9,14 +9,12 @@ on:
       - .github/workflows/copilot-setup-steps.yml
       - apm.yml
       - apm.lock.yaml
-      - agents-plugins/Install-DevAgents.ps1
       - agents-plugins/ark-csharp/**
   pull_request:
     paths:
       - .github/workflows/copilot-setup-steps.yml
       - apm.yml
       - apm.lock.yaml
-      - agents-plugins/Install-DevAgents.ps1
       - agents-plugins/ark-csharp/**
 
 jobs:
@@ -86,7 +84,7 @@ jobs:
           apm-version: 0.31.0
 
       - name: Restore Copilot development agents from lockfile
-        run: apm run agents:install
+        run: apm install --frozen
         env:
           GITHUB_APM_PAT: ${{ github.token }}
 
