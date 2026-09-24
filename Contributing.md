@@ -7,6 +7,8 @@ The repository uses the native Microsoft.Testing.Platform runner selected in
 centrally and use `MSTestSourceGenMode=ReflectionFree`. Projects referencing
 `Reqnroll.MsTest` retain their existing discovery path. These settings are
 repository-local, not defaults imposed on consumers of `Ark.Tools.Sdk`.
+The ResourceWatcher sample excludes build-output paths from feature generation
+so copied `.feature` files cannot become duplicate scenarios on subsequent builds.
 
 Keep the generator, adapter, framework and analyzer package versions aligned.
 Update affected `packages.lock.json` files when changing dependencies; CI restores

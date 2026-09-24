@@ -20,6 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Copied features must not generate duplicate scenarios on subsequent builds. -->
+    <ReqnrollFeatureFile Remove="$(BaseOutputPath)**/*.feature;$(BaseIntermediateOutputPath)**/*.feature" />
     <None Update="Features\*.feature">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
