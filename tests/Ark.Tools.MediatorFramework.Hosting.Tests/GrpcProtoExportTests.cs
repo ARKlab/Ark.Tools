@@ -7,6 +7,7 @@ using AwesomeAssertions;
 
 using System.Diagnostics;
 using System.Runtime.Versioning;
+using System.Xml.Linq;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
@@ -373,16 +374,18 @@ public static class Program
             "src/mediator-framework/Ark.Tools.MediatorFramework/Ark.Tools.MediatorFramework.csproj",
             "src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/Ark.Tools.MediatorFramework.Grpc.csproj",
         };
-        foreach (var project in projects)
-        {
-            var result = await _runDotnetAsync(
-                "pack",
-                root,
-                Path.Join(root, project),
-                "--no-build", "-c", _configuration(), "-o", feed, $"-p:TargetFrameworks={_targetFramework()}",
-                $"-p:PackageVersion={_packageVersion}", "-p:TreatWarningsAsErrors=false", "-p:NoWarn=NU5128").ConfigureAwait(false);
-            result.ExitCode.Should().Be(0, result.Output);
-        }
+        var solution = Path.Join(fixture, "Packages.slnx");
+        await File.WriteAllTextAsync(
+            solution,
+            new XElement("Solution", projects.Select(project =>
+                new XElement("Project", new XAttribute("Path", Path.Join(root, project))))).ToString()).ConfigureAwait(false);
+        var result = await _runDotnetAsync(
+            "pack",
+            root,
+            solution,
+            "--no-build", "-c", _configuration(), "-o", feed, $"-p:TargetFrameworks={_targetFramework()}",
+            $"-p:PackageVersion={_packageVersion}", "-p:TreatWarningsAsErrors=false", "-p:NoWarn=NU5128").ConfigureAwait(false);
+        result.ExitCode.Should().Be(0, result.Output);
 
         return feed;
     }
