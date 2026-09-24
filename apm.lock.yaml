@@ -230,6 +230,91 @@ dependencies:
     .github/agents/optimizing-dotnet-performance.agent.md: sha256:bcabb8c04cd05765bf0e0c2b6e322510b1434319121890dcfe5717d3a56198e4
   content_hash: sha256:5b4c681750c887d985590edeada596f5ed2e44af81e276f9ebe0800eb3f52761
   is_dev: true
+- repo_url: dotnet/skills
+  name: dotnet-msbuild
+  host: github.com
+  resolved_commit: 874ff14cff1015104cf343ed480a6879020b4820
+  resolved_ref: main
+  version: 0.1.10
+  virtual_path: plugins/dotnet-msbuild
+  is_virtual: true
+  package_type: skill_bundle
+  deployed_files:
+  - .agents/skills/binlog-failure-analysis
+  - .agents/skills/binlog-failure-analysis/SKILL.md
+  - .agents/skills/binlog-generation
+  - .agents/skills/binlog-generation/SKILL.md
+  - .agents/skills/build-parallelism
+  - .agents/skills/build-parallelism/SKILL.md
+  - .agents/skills/build-perf-baseline
+  - .agents/skills/build-perf-baseline/SKILL.md
+  - .agents/skills/build-perf-diagnostics
+  - .agents/skills/build-perf-diagnostics/SKILL.md
+  - .agents/skills/check-bin-obj-clash
+  - .agents/skills/check-bin-obj-clash/SKILL.md
+  - .agents/skills/copy-to-output-directory
+  - .agents/skills/copy-to-output-directory/SKILL.md
+  - .agents/skills/directory-build-organization
+  - .agents/skills/directory-build-organization/SKILL.md
+  - .agents/skills/directory-build-organization/references/common-patterns.md
+  - .agents/skills/directory-build-organization/references/multi-level-examples.md
+  - .agents/skills/directory-build-organization/references/targetframework-props-pitfall.md
+  - .agents/skills/eval-performance
+  - .agents/skills/eval-performance/SKILL.md
+  - .agents/skills/extension-points
+  - .agents/skills/extension-points/SKILL.md
+  - .agents/skills/including-generated-files
+  - .agents/skills/including-generated-files/SKILL.md
+  - .agents/skills/incremental-build
+  - .agents/skills/incremental-build/SKILL.md
+  - .agents/skills/item-management
+  - .agents/skills/item-management/SKILL.md
+  - .agents/skills/msbuild-antipatterns
+  - .agents/skills/msbuild-antipatterns/SKILL.md
+  - .agents/skills/msbuild-antipatterns/references/additional-antipatterns.md
+  - .agents/skills/msbuild-antipatterns/references/incremental-build-inputs-outputs.md
+  - .agents/skills/msbuild-antipatterns/references/private-assets.md
+  - .agents/skills/msbuild-modernization
+  - .agents/skills/msbuild-modernization/SKILL.md
+  - .agents/skills/property-patterns
+  - .agents/skills/property-patterns/SKILL.md
+  - .agents/skills/resolve-project-references
+  - .agents/skills/resolve-project-references/SKILL.md
+  - .agents/skills/target-authoring
+  - .agents/skills/target-authoring/SKILL.md
+  - .github/agents/build-perf.agent.md
+  - .github/agents/msbuild-code-review.agent.md
+  - .github/agents/msbuild.agent.md
+  deployed_file_hashes:
+    .agents/skills/binlog-failure-analysis/SKILL.md: sha256:3e14a71ad6dae2c50982d16b7f93a478f22d4818f75b63babc072fba985f1ac4
+    .agents/skills/binlog-generation/SKILL.md: sha256:6a35bd9871239d314e36836bd425c93e50c295e9794166aef620bbd0754bca85
+    .agents/skills/build-parallelism/SKILL.md: sha256:1d5bf8518ef43108fac23c47b28a08e49b7486d41c2f25078632b2758dd6eab8
+    .agents/skills/build-perf-baseline/SKILL.md: sha256:e64d070a8fcedb782dbc6a29a5ae35705a742a69a1c2f6c58a50259fbce3a689
+    .agents/skills/build-perf-diagnostics/SKILL.md: sha256:8575541b9b13f28c44ab62a248c3b141eb0fbb906893b46981b4b0546bb995a2
+    .agents/skills/check-bin-obj-clash/SKILL.md: sha256:160357b3e5926d4e762fb68c47b3fce42957b2ebc116bbabe112eae80c9dd210
+    .agents/skills/copy-to-output-directory/SKILL.md: sha256:f099db9b3165ca2e49e4c3117612ef2d4e133af67c4a33b9b32775c9b493e52c
+    .agents/skills/directory-build-organization/SKILL.md: sha256:19236a9a5ccac500f1d2bc4023bbe5c427e4ec598220af7366257de686835ff8
+    .agents/skills/directory-build-organization/references/common-patterns.md: sha256:6e651cb87034e162e8a966228cbf837612e434c564fd7f9928d38ef44a12e7f3
+    .agents/skills/directory-build-organization/references/multi-level-examples.md: sha256:6120bf2b385eb2cf348c66173bb27ade493d570db8c497881cc8319f448c820a
+    .agents/skills/directory-build-organization/references/targetframework-props-pitfall.md: sha256:a5f0b84a3138e5fdf1fdf103268493006756a1c86312952926f3a10c3e5dd738
+    .agents/skills/eval-performance/SKILL.md: sha256:54f04e50c459aaaa466cfcad4e5742be1ad3df65a96107ccfc16e1501a03c0f2
+    .agents/skills/extension-points/SKILL.md: sha256:fa274ec554b0a40f43060782a4aba9d9152ac0b162e93943ddbccbfd0bab25f8
+    .agents/skills/including-generated-files/SKILL.md: sha256:921f3cbe3078d13f6429e0ec820dbb95832c4cb4df896d80de0449c4c37c2246
+    .agents/skills/incremental-build/SKILL.md: sha256:05db7b97519627bcaaa9fd7d3212e8a6a2d68fb686c6ebf8a0472bf3a6ff8657
+    .agents/skills/item-management/SKILL.md: sha256:86d3ba145c9b334b337161cb2d25af7bfa4db20d7ca4fc3cc879461c519d0568
+    .agents/skills/msbuild-antipatterns/SKILL.md: sha256:08b36b41196b1282fc96bee299cbabf10e876969be0d9abb5b40ae4f15665ae4
+    .agents/skills/msbuild-antipatterns/references/additional-antipatterns.md: sha256:4a62a12ba5173eb5c3d8b66e2ec4a9f0248e815aacd065664175b6db72adb6d9
+    .agents/skills/msbuild-antipatterns/references/incremental-build-inputs-outputs.md: sha256:006a123ea16f95aeb216ae9e2a59be48fc82f15e66ecccdbb92fdcf03b05fdc4
+    .agents/skills/msbuild-antipatterns/references/private-assets.md: sha256:1e678c0ef9667d9df92ff71ca12737ac3a4ed26050d73e5197a2478356e0b4f5
+    .agents/skills/msbuild-modernization/SKILL.md: sha256:6abc8b21c8fbd78e59d2358783d75b0febaa5dde0bb0d9495e41a1d9d99e246d
+    .agents/skills/property-patterns/SKILL.md: sha256:d20ac0adca21952f0dba7501595b2bb7c9ae5cff1b236e5ef912fbd3a32da838
+    .agents/skills/resolve-project-references/SKILL.md: sha256:5aa288d6f2204bdf7c3519a74596b9c7c501e9e655c1cd0369a3b877fa732fd9
+    .agents/skills/target-authoring/SKILL.md: sha256:e39b9ad0bfe65746c8110f971847a1dd8988feccc10b8ad19674ab544926bcc0
+    .github/agents/build-perf.agent.md: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+    .github/agents/msbuild-code-review.agent.md: sha256:fcb16ecab137df0f2ed5014b988ae95280c268f282ceb1046b3141b555cbc9a8
+    .github/agents/msbuild.agent.md: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
+  content_hash: sha256:f0f53602bab42b6e79ee6e772e70a6b8bd11f6248341262fa30bea39021b2259
+  is_dev: true
 - repo_url: microsoft/apm
   name: apm-guide
   host: github.com
@@ -726,6 +811,42 @@ deployments:
   content_hash: sha256:dcf3848157bcfd4a167c592425eed795286e295cbbe675678ca9e2bfe3292a93
 - kind: project-relative
   target: copilot
+  value: .agents/skills/binlog-failure-analysis
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/binlog-failure-analysis/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:3e14a71ad6dae2c50982d16b7f93a478f22d4818f75b63babc072fba985f1ac4
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/binlog-generation
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/binlog-generation/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:6a35bd9871239d314e36836bd425c93e50c295e9794166aef620bbd0754bca85
+- kind: project-relative
+  target: copilot
   value: .agents/skills/brainstorming
   runtime: null
   scope: project
@@ -807,6 +928,78 @@ deployments:
   content_hash: sha256:77eb44a4ec3408bb3dafb872288ecd94beb8cf21da4f2bafa54fd08255d7808b
 - kind: project-relative
   target: copilot
+  value: .agents/skills/build-parallelism
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/build-parallelism/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:1d5bf8518ef43108fac23c47b28a08e49b7486d41c2f25078632b2758dd6eab8
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/build-perf-baseline
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/build-perf-baseline/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:e64d070a8fcedb782dbc6a29a5ae35705a742a69a1c2f6c58a50259fbce3a689
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/build-perf-diagnostics
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/build-perf-diagnostics/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:8575541b9b13f28c44ab62a248c3b141eb0fbb906893b46981b4b0546bb995a2
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/check-bin-obj-clash
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/check-bin-obj-clash/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:160357b3e5926d4e762fb68c47b3fce42957b2ebc116bbabe112eae80c9dd210
+- kind: project-relative
+  target: copilot
   value: .agents/skills/clr-activation-debugging
   runtime: null
   scope: project
@@ -852,6 +1045,24 @@ deployments:
   content_hash: sha256:f594da621cd46f457a93aebc5273ed2e102730a03086eb9cb0cb96e07e2e8472
 - kind: project-relative
   target: copilot
+  value: .agents/skills/copy-to-output-directory
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/copy-to-output-directory/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:f099db9b3165ca2e49e4c3117612ef2d4e133af67c4a33b9b32775c9b493e52c
+- kind: project-relative
+  target: copilot
   value: .agents/skills/csharp-refactoring
   runtime: null
   scope: project
@@ -877,6 +1088,51 @@ deployments:
   - dotnet/skills/plugins/dotnet
   active_owner: dotnet/skills/plugins/dotnet
   content_hash: sha256:94311ac23ea1098c130942084ceb07969f73790d59072c90b87967cbdc3b8dfa
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/directory-build-organization
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/directory-build-organization/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:19236a9a5ccac500f1d2bc4023bbe5c427e4ec598220af7366257de686835ff8
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/directory-build-organization/references/common-patterns.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:6e651cb87034e162e8a966228cbf837612e434c564fd7f9928d38ef44a12e7f3
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/directory-build-organization/references/multi-level-examples.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:6120bf2b385eb2cf348c66173bb27ade493d570db8c497881cc8319f448c820a
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/directory-build-organization/references/targetframework-props-pitfall.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:a5f0b84a3138e5fdf1fdf103268493006756a1c86312952926f3a10c3e5dd738
 - kind: project-relative
   target: copilot
   value: .agents/skills/dispatching-parallel-agents
@@ -1005,6 +1261,24 @@ deployments:
   content_hash: sha256:63bda7821ce96ad27e343b93fdf46eb31d2209ba66c387f669062909e3d532a0
 - kind: project-relative
   target: copilot
+  value: .agents/skills/eval-performance
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/eval-performance/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:54f04e50c459aaaa466cfcad4e5742be1ad3df65a96107ccfc16e1501a03c0f2
+- kind: project-relative
+  target: copilot
   value: .agents/skills/executing-plans
   runtime: null
   scope: project
@@ -1023,6 +1297,24 @@ deployments:
   content_hash: sha256:c4c3d8b628c51114cd165fb8246fe02744cd8be180032328391252e653028d9b
 - kind: project-relative
   target: copilot
+  value: .agents/skills/extension-points
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/extension-points/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:fa274ec554b0a40f43060782a4aba9d9152ac0b162e93943ddbccbfd0bab25f8
+- kind: project-relative
+  target: copilot
   value: .agents/skills/finishing-a-development-branch
   runtime: null
   scope: project
@@ -1039,6 +1331,60 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:8db5a922b242dd4e1bf824cb91c13b3e8d8e8a86d6ceaf7f0774eb9cce909d65
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/including-generated-files
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/including-generated-files/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:921f3cbe3078d13f6429e0ec820dbb95832c4cb4df896d80de0449c4c37c2246
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/incremental-build
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/incremental-build/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:05db7b97519627bcaaa9fd7d3212e8a6a2d68fb686c6ebf8a0472bf3a6ff8657
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/item-management
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/item-management/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:86d3ba145c9b334b337161cb2d25af7bfa4db20d7ca4fc3cc879461c519d0568
 - kind: project-relative
   target: copilot
   value: .agents/skills/microbenchmarking
@@ -1102,6 +1448,69 @@ deployments:
   - dotnet/skills/plugins/dotnet-diag
   active_owner: dotnet/skills/plugins/dotnet-diag
   content_hash: sha256:00279137333ae46cec081a3b85d53858cec9a7565beddf902e15a6f7abe81f09
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/msbuild-antipatterns
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/msbuild-antipatterns/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:08b36b41196b1282fc96bee299cbabf10e876969be0d9abb5b40ae4f15665ae4
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/msbuild-antipatterns/references/additional-antipatterns.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:4a62a12ba5173eb5c3d8b66e2ec4a9f0248e815aacd065664175b6db72adb6d9
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/msbuild-antipatterns/references/incremental-build-inputs-outputs.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:006a123ea16f95aeb216ae9e2a59be48fc82f15e66ecccdbb92fdcf03b05fdc4
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/msbuild-antipatterns/references/private-assets.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:1e678c0ef9667d9df92ff71ca12737ac3a4ed26050d73e5197a2478356e0b4f5
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/msbuild-modernization
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/msbuild-modernization/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:6abc8b21c8fbd78e59d2358783d75b0febaa5dde0bb0d9495e41a1d9d99e246d
 - kind: project-relative
   target: copilot
   value: .agents/skills/opentelementry-dotnet-instrumentation
@@ -1257,6 +1666,24 @@ deployments:
   content_hash: sha256:1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2
 - kind: project-relative
   target: copilot
+  value: .agents/skills/property-patterns
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/property-patterns/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:d20ac0adca21952f0dba7501595b2bb7c9ae5cff1b236e5ef912fbd3a32da838
+- kind: project-relative
+  target: copilot
   value: .agents/skills/receiving-code-review
   runtime: null
   scope: project
@@ -1300,6 +1727,24 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/resolve-project-references
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/resolve-project-references/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:5aa288d6f2204bdf7c3519a74596b9c7c501e9e655c1cd0369a3b877fa732fd9
 - kind: project-relative
   target: copilot
   value: .agents/skills/roslyn-incremental-generator-specialist
@@ -1525,6 +1970,24 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/target-authoring
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/target-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:e39b9ad0bfe65746c8110f971847a1dd8988feccc10b8ad19674ab544926bcc0
 - kind: project-relative
   target: copilot
   value: .agents/skills/test-driven-development
@@ -1770,6 +2233,33 @@ deployments:
   content_hash: sha256:64a86fd8ee7ffb82c30efb84429829029e5ea2bbb52b29f91408b14a9959041d
 - kind: project-relative
   target: copilot
+  value: .github/agents/build-perf.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+- kind: project-relative
+  target: copilot
+  value: .github/agents/msbuild-code-review.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:fcb16ecab137df0f2ed5014b988ae95280c268f282ceb1046b3141b555cbc9a8
+- kind: project-relative
+  target: copilot
+  value: .github/agents/msbuild.agent.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
+- kind: project-relative
+  target: copilot
   value: .github/agents/optimizing-dotnet-performance.agent.md
   runtime: null
   scope: project
@@ -1914,7 +2404,7 @@ deployments:
   content_hash: null
 - kind: uri
   target: mcp
-  value: github
+  value: binlog
   runtime: copilot
   scope: project
   owners:
@@ -1923,7 +2413,7 @@ deployments:
   content_hash: null
 - kind: uri
   target: mcp
-  value: io.github.github/github-mcp-server
+  value: github
   runtime: copilot
   scope: project
   owners:
@@ -1941,8 +2431,8 @@ deployments:
   content_hash: null
 mcp_servers:
 - ado
+- binlog
 - github
-- io.github.github/github-mcp-server
 - microsoftdocs
 mcp_configs:
   ado:
@@ -1950,13 +2440,23 @@ mcp_configs:
     transport: http
     registry: false
     url: https://mcp.dev.azure.com/arklabita
+  binlog:
+    name: binlog
+    transport: stdio
+    args:
+    - dnx
+    - Microsoft.AITools.BinlogMcp
+    - --yes
+    - --prerelease
+    registry: false
+    tools:
+    - '*'
+    command: dotnet
   github:
     name: github
     transport: http
     registry: false
     url: https://api.githubcopilot.com/mcp
-  io.github.github/github-mcp-server:
-    name: io.github.github/github-mcp-server
   microsoftdocs:
     name: microsoftdocs
     transport: http
@@ -1965,9 +2465,11 @@ mcp_configs:
 mcp_target_servers:
   copilot:
   - ado
+  - binlog
   - github
-  - io.github.github/github-mcp-server
   - microsoftdocs
+mcp_config_provenance:
+  binlog: dotnet-msbuild
 lsp_servers:
 - csharp
 lsp_configs:

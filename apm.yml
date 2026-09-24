@@ -7,7 +7,6 @@ targets:
   - copilot
 includes: auto
 scripts:
-  agents:install: pwsh -NoProfile -File agents-plugins/Install-DevAgents.ps1
   plugins:build: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1
   plugins:check: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1 -Check
 devDependencies:
@@ -17,7 +16,8 @@ devDependencies:
     - Aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation#master
     - dotnet/skills/plugins/dotnet#main
     - dotnet/skills/plugins/dotnet-diag#main
-    - git: https://github.com/obra/superpowers#main
+    - dotnet/skills/plugins/dotnet-msbuild#main
+    - obra/superpowers#main
     - DietrichGebert/ponytail#v4.10.0
     - ./agents-plugins/ark-csharp
   mcp:
@@ -29,7 +29,6 @@ devDependencies:
       registry: false
       transport: http
       url: https://learn.microsoft.com/api/mcp
-    - io.github.github/github-mcp-server
     - name: github
       registry: false
       transport: http
