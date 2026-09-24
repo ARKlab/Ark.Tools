@@ -18,7 +18,7 @@ public sealed class PackagingTests
         var feed = Path.Join(root, "artifacts", "compliance-analyzers-pack-test");
         Directory.CreateDirectory(feed);
         var project = Path.Join(root, "src", "compliance", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj");
-        await _runAsync("dotnet", $"pack \"{project}\" -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9").ConfigureAwait(false);
+        await _runAsync("dotnet", $"pack \"{project}\" --no-build -c Debug -o \"{feed}\" -p:PackageVersion=999.9.9").ConfigureAwait(false);
 
         var archive = await ZipFile.OpenReadAsync(Path.Join(feed, "Ark.Tools.Compliance.Analyzers.999.9.9.nupkg")).ConfigureAwait(false);
         await using (archive.ConfigureAwait(false))

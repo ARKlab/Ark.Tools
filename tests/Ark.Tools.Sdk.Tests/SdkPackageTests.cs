@@ -35,19 +35,19 @@ public sealed class SdkPackageTests
         Directory.CreateDirectory(_feed);
         await _runAsync(
             "dotnet",
-            $"pack \"{Path.Join(_root, "src", "sdk", "Ark.Tools.Build", "Ark.Tools.Build.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
+            $"pack \"{Path.Join(_root, "src", "sdk", "Ark.Tools.Build", "Ark.Tools.Build.csproj")}\" --no-build -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
         await _runAsync(
             "dotnet",
-            $"pack \"{Path.Join(_root, "src", "sdk", "Ark.Tools.Sdk", "Ark.Tools.Sdk.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
+            $"pack \"{Path.Join(_root, "src", "sdk", "Ark.Tools.Sdk", "Ark.Tools.Sdk.csproj")}\" --no-build -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
         await _runAsync(
             "dotnet",
-            $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
+            $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Analyzers", "Ark.Tools.Compliance.Analyzers.csproj")}\" --no-build -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
         await _runAsync(
             "dotnet",
-            $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Abstractions", "Ark.Tools.Compliance.Abstractions.csproj")}\" -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
+            $"pack \"{Path.Join(_root, "src", "compliance", "Ark.Tools.Compliance.Abstractions", "Ark.Tools.Compliance.Abstractions.csproj")}\" --no-build -c Debug -o \"{_feed}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
     }
 
@@ -81,7 +81,7 @@ public sealed class SdkPackageTests
         Directory.CreateDirectory(output);
         await _runAsync(
             "dotnet",
-            $"pack \"{Path.Join(_root, "src", "common", "Ark.Tools.Core", "Ark.Tools.Core.csproj")}\" -c Debug -o \"{output}\" -p:PackageVersion={_packageVersion}")
+            $"pack \"{Path.Join(_root, "src", "common", "Ark.Tools.Core", "Ark.Tools.Core.csproj")}\" --no-build -c Debug -o \"{output}\" -p:PackageVersion={_packageVersion}")
             .ConfigureAwait(false);
 
         var packagePath = Directory.GetFiles(output, "Ark.Tools.Core.*.nupkg").Single();
