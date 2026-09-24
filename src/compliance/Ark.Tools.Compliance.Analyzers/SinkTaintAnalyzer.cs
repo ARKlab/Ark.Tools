@@ -155,7 +155,8 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             foreach (var argument in invocation.Arguments)
             {
                 context.CancellationToken.ThrowIfCancellationRequested();
-                if (rule == "ARKPII004" && method.ContainingNamespace.ToDisplayString() == "System.Diagnostics.Metrics"
+                if (rule == "ARKPII004"
+                    && ComplianceSymbolFacts._isNamespace(method.ContainingNamespace, "System.Diagnostics.Metrics")
                     && argument.Parameter?.Ordinal == 0)
                 {
                     continue;
@@ -216,7 +217,7 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         foreach (var argument in invocation.Arguments)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
-            if (argument.Parameter?.Type.ToDisplayString() == "Ark.Tools.Compliance.CompliancePurpose"
+            if (ComplianceSymbolFacts._isFullName(argument.Parameter?.Type as INamedTypeSymbol, "Ark.Tools.Compliance.CompliancePurpose")
                 && argument.ArgumentKind != ArgumentKind.DefaultValue
                 && !_emptyPurpose(argument.Value, context, 0))
             {
@@ -379,7 +380,7 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         for (; type is not null; type = type.BaseType)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
-            if (type.Name == "BusinessRuleViolation" && type.ContainingNamespace.ToDisplayString().StartsWith("Ark.", StringComparison.Ordinal))
+            if (type.Name == "BusinessRuleViolation" && _isArkRootedNamespace(type.ContainingNamespace))
             {
                 isErrorContract = true;
                 break;
@@ -418,6 +419,24 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         }
     }
 
+    /// <summary>Equivalent of <c>ns.ToDisplayString().StartsWith("Ark.")</c>: root segment "Ark" with at least one child segment.</summary>
+    private static bool _isArkRootedNamespace(INamespaceSymbol? @namespace)
+    {
+        var hasChild = false;
+        while (@namespace is { IsGlobalNamespace: false })
+        {
+            if (@namespace.ContainingNamespace is { IsGlobalNamespace: true })
+            {
+                return hasChild && @namespace.Name == "Ark";
+            }
+
+            hasChild = true;
+            @namespace = @namespace.ContainingNamespace;
+        }
+
+        return false;
+    }
+
     private static bool _reviewed(
         ISymbol? symbol,
         string rule,
@@ -433,7 +452,7 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             foreach (var attribute in symbol.GetAttributes())
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (attribute.AttributeClass?.ToDisplayString() != "Ark.Tools.Compliance.ComplianceReviewedAttribute"
+                if (!ComplianceSymbolFacts._isFullName(attribute.AttributeClass, "Ark.Tools.Compliance.ComplianceReviewedAttribute")
                     || attribute.ConstructorArguments.Length < 2
                     || attribute.ConstructorArguments[0].Value is not string id || id != rule
                     || attribute.ConstructorArguments[1].Value is not string reason || string.IsNullOrWhiteSpace(reason))

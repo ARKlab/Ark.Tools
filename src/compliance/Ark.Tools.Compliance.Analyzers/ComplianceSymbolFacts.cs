@@ -249,6 +249,56 @@ internal static class ComplianceSymbolFacts
             && !normalized.StartsWith("your reason", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Allocation-free equivalent of <c>type.ToDisplayString() == fullName</c> for top-level,
+    /// non-generic types: generic or nested types render with type arguments or the containing
+    /// type in their display string, so they can never equal a plain dotted name.
+    /// </summary>
+    internal static bool _isFullName(INamedTypeSymbol? type, string fullName)
+    {
+        if (type is null || type.Arity != 0 || type.ContainingType is not null)
+        {
+            return false;
+        }
+
+        var name = type.Name;
+        var start = fullName.Length - name.Length;
+        if (start <= 0
+            || fullName[start - 1] != '.'
+            || string.CompareOrdinal(fullName, start, name, 0, name.Length) != 0)
+        {
+            return false;
+        }
+
+        return _isNamespace(type.ContainingNamespace, fullName, start - 1);
+    }
+
+    /// <summary>Allocation-free equivalent of <c>ns.ToDisplayString() == dotted</c>.</summary>
+    internal static bool _isNamespace(INamespaceSymbol? @namespace, string dotted)
+    {
+        return _isNamespace(@namespace, dotted, dotted.Length);
+    }
+
+    private static bool _isNamespace(INamespaceSymbol? @namespace, string dotted, int end)
+    {
+        while (@namespace is { IsGlobalNamespace: false })
+        {
+            var name = @namespace.Name;
+            var start = end - name.Length;
+            if (start < 0
+                || string.CompareOrdinal(dotted, start, name, 0, name.Length) != 0
+                || (start > 0 && dotted[start - 1] != '.'))
+            {
+                return false;
+            }
+
+            end = start - 1;
+            @namespace = @namespace.ContainingNamespace;
+        }
+
+        return end == -1 && @namespace is not null;
+    }
+
     internal static bool _isArkToolsComplianceNamespace(INamespaceSymbol? @namespace)
     {
         return @namespace is

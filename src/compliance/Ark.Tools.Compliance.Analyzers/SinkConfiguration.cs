@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
@@ -16,6 +17,9 @@ namespace Ark.Tools.Compliance.Analyzers;
 internal sealed class SinkConfiguration
 {
     private readonly ImmutableArray<Entry> _entries;
+    // ponytail: unbounded per-compilation cache; grows with the number of distinct invoked methods,
+    // which is bounded by compilation size and freed with the compilation.
+    private readonly ConcurrentDictionary<IMethodSymbol, string?> _ruleCache = new(SymbolEqualityComparer.Default);
 
     private SinkConfiguration(ImmutableArray<Entry> entries)
     {
@@ -68,6 +72,18 @@ internal sealed class SinkConfiguration
     internal string? _getRule(IMethodSymbol method)
     {
         method = (method.ReducedFrom ?? method).OriginalDefinition;
+        if (_ruleCache.TryGetValue(method, out var rule))
+        {
+            return rule;
+        }
+
+        rule = _computeRule(method);
+        _ruleCache.TryAdd(method, rule);
+        return rule;
+    }
+
+    private string? _computeRule(IMethodSymbol method)
+    {
         var id = method.GetDocumentationCommentId();
         for (var index = _entries.Length - 1; index >= 0; index--)
         {
@@ -92,7 +108,7 @@ internal sealed class SinkConfiguration
         }
 
         if ((_implements(type, "Microsoft.Extensions.Logging.ILogger")
-                || type.ToDisplayString() == "Microsoft.Extensions.Logging.LoggerExtensions")
+                || ComplianceSymbolFacts._isFullName(type, "Microsoft.Extensions.Logging.LoggerExtensions"))
             && (name.StartsWith("Log", StringComparison.Ordinal) || name == "BeginScope"))
         {
             return "ARKPII002";
@@ -104,14 +120,16 @@ internal sealed class SinkConfiguration
             return "ARKPII004";
         }
 
-        if (type.ContainingNamespace.ToDisplayString() == "System.Diagnostics.Metrics"
+        if (ComplianceSymbolFacts._isNamespace(type.ContainingNamespace, "System.Diagnostics.Metrics")
             && name is "Add" or "Record")
         {
             return "ARKPII004";
         }
 
-        if (type.ToDisplayString() is "System.Console" or "System.Diagnostics.Debug" or "System.Diagnostics.Trace"
-            || (type.ToDisplayString() == "System.Text.StringBuilder" && name.StartsWith("Append", StringComparison.Ordinal)))
+        if (ComplianceSymbolFacts._isFullName(type, "System.Console")
+            || ComplianceSymbolFacts._isFullName(type, "System.Diagnostics.Debug")
+            || ComplianceSymbolFacts._isFullName(type, "System.Diagnostics.Trace")
+            || (ComplianceSymbolFacts._isFullName(type, "System.Text.StringBuilder") && name.StartsWith("Append", StringComparison.Ordinal)))
         {
             return "ARKPII011";
         }
@@ -132,7 +150,7 @@ internal sealed class SinkConfiguration
     {
         for (var depth = 0; type is not null && depth < 64; depth++, type = type.BaseType)
         {
-            if (type.ToDisplayString() == metadataName)
+            if (ComplianceSymbolFacts._isFullName(type, metadataName))
             {
                 return true;
             }
@@ -150,7 +168,7 @@ internal sealed class SinkConfiguration
 
         foreach (var item in type.AllInterfaces)
         {
-            if (item.ToDisplayString() == metadataName)
+            if (ComplianceSymbolFacts._isFullName(item, metadataName))
             {
                 return true;
             }

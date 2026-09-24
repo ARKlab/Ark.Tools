@@ -60,7 +60,7 @@ internal sealed class SinkFlow
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (attribute.AttributeClass?.OriginalDefinition.MetadataName == "SensitiveValueObjectAttribute`1"
-                && attribute.AttributeClass?.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance")
+                && ComplianceSymbolFacts._isNamespace(attribute.AttributeClass?.ContainingNamespace, "Ark.Tools.Compliance"))
             {
                 return true;
             }
@@ -85,7 +85,7 @@ internal sealed class SinkFlow
 
     internal static bool _isRedacted(IOperation operation)
     {
-        if (operation.Type?.ToDisplayString() == "Ark.Tools.Compliance.RedactedValue")
+        if (ComplianceSymbolFacts._isFullName(operation.Type as INamedTypeSymbol, "Ark.Tools.Compliance.RedactedValue"))
         {
             return true;
         }
@@ -477,14 +477,14 @@ internal sealed class SinkFlow
         {
             _cancellationToken.ThrowIfCancellationRequested();
             var type = attribute.AttributeClass;
-            if (type?.ToDisplayString() == "Ark.Tools.Compliance.PseudonymousAttribute")
+            if (ComplianceSymbolFacts._isFullName(type, "Ark.Tools.Compliance.PseudonymousAttribute"))
             {
                 pseudonymous = true;
                 continue;
             }
 
             if (type?.OriginalDefinition.MetadataName == "SensitiveValueObjectAttribute`1"
-                && type?.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance")
+                && ComplianceSymbolFacts._isNamespace(type?.ContainingNamespace, "Ark.Tools.Compliance"))
             {
                 sensitive = true;
             }
@@ -519,7 +519,7 @@ internal sealed class SinkFlow
     private static bool _isSensitiveContract(INamedTypeSymbol type, ITypeSymbol? expectedType = null)
     {
         return type.OriginalDefinition.MetadataName == "ISensitiveValue`1"
-            && type.ContainingNamespace.ToDisplayString() == "Ark.Tools.Compliance"
+            && ComplianceSymbolFacts._isNamespace(type.ContainingNamespace, "Ark.Tools.Compliance")
             && (expectedType is null || (type.TypeArguments.Length == 1
                 && SymbolEqualityComparer.Default.Equals(type.TypeArguments[0], expectedType)));
     }
