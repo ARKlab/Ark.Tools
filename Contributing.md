@@ -20,7 +20,8 @@ From the repository root:
 
 ```powershell
 # Restore the pinned development tools for Copilot only (also used by cloud setup).
-apm install --frozen
+apm install --target copilot --only apm
+git diff --exit-code -- apm.lock.yaml
 
 # Rebuild the native plugin and marketplace; requires PowerShell 7.
 apm run plugins:build
@@ -29,10 +30,12 @@ apm run plugins:build
 apm run plugins:check
 ```
 
-The restore uses `apm install --frozen`, which replays the existing lockfile
-pins and fails instead of changing the lockfile. It never updates or refreshes
-remote refs; CI also checks the entire checkout for drift. Do not bypass a
-failure: review intentional dependency changes with the maintenance commands below.
+The restore reuses existing lockfile pins (never `--update`/`--refresh`) and
+the `git diff` fails if the lockfile changed; CI also checks the entire checkout
+for drift. APM 0.31.0's `--frozen` preflight cannot bootstrap a clean checkout
+(it requires installed marketplace manifests and rejects transitive MCP servers
+such as `binlog`), so it is not used. Do not bypass a failure: review
+intentional dependency changes with the maintenance commands below.
 
 Run development installation and lockfile updates on Linux (including WSL
 on Windows), with both tools installed there, matching cloud setup.
@@ -55,7 +58,7 @@ apm install --update --target copilot --only apm
 ```
 
 Commit the manifest and lockfile changes, not the installed projections.
-Run `apm install --frozen` again to verify a lock-preserving restore. Development
+Run the restore commands again to verify a lock-preserving restore. Development
 dependencies are never included in the published `ark-csharp` plugin.
 
 ### Extending and publishing ark-csharp
@@ -70,7 +73,7 @@ dependencies are never included in the published `ark-csharp` plugin.
    to refresh the local development dependency and its lock metadata. Naming
    the local package explicitly refreshes its cached copy without updating
    the other dependencies' remote pins.
-4. Run `apm run plugins:check` and `apm install --frozen`.
+4. Run `apm run plugins:check` and the restore commands above.
 5. Commit the sources, manifest/lock changes, published plugin, and marketplace
    index together. Merging to `master` makes the updated payload available
    through the GitHub-hosted marketplace; no separate registry upload is needed.

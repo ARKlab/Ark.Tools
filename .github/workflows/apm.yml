@@ -40,7 +40,11 @@ jobs:
         run: apm run plugins:check
 
       - name: Restore Copilot development agents from lockfile
-        run: apm install --frozen
+        # ponytail: APM 0.31 --frozen preflight rejects cold marketplace deps and transitive MCP.
+        # Switch back to 'apm install --frozen' once fixed upstream.
+        run: |
+          apm install --target copilot --only apm
+          git diff --exit-code --ignore-cr-at-eol -- apm.lock.yaml
         env:
           GITHUB_APM_PAT: ${{ github.token }}
 
