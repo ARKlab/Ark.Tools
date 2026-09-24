@@ -123,6 +123,12 @@
         "resolved": "4.4.1",
         "contentHash": "Ccu+MKGCRCV2OauQjEIT0XeyP+AtOYyQNuhVI+yPUjJD6RQGi+lOkE8xz+gqe1IK3KiosQy7ZS+022tUTO4K1w=="
       },
+      "MSTest.SourceGeneration": {
+        "type": "Direct",
+        "requested": "[4.4.1, )",
+        "resolved": "4.4.1",
+        "contentHash": "EcOdIc0lr7ZtBWsZwDeg4uy2ErSpROsJRdOtG2woZhR5C2iUUWxtpy3ZtvHxKc8KFbd/GUu/xsKaUdg5z7fe2Q=="
+      },
       "MSTest.TestAdapter": {
         "type": "Direct",
         "requested": "[4.4.1, )",
