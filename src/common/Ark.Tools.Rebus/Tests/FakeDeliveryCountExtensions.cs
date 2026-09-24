@@ -52,9 +52,9 @@ public static class FakeDeliveryCountExtensions
         {
             lock (gate)
             {
-                if (hasNext)
+                try
                 {
-                    try
+                    if (hasNext)
                     {
                         if (hasNext = e.MoveNext())
                         {
@@ -65,10 +65,19 @@ public static class FakeDeliveryCountExtensions
                             e.Dispose();
                         }
                     }
-                    finally { e.Dispose(); }
-                }
 
-                return v;
+                    return v;
+                }
+                catch
+                {
+                    if (hasNext)
+                    {
+                        hasNext = false;
+                        e.Dispose();
+                    }
+
+                    throw;
+                }
             }
         }
 

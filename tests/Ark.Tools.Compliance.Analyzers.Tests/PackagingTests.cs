@@ -12,7 +12,7 @@ public sealed class PackagingTests
 {
     /// <summary>The analyzer DLL is packed under analyzers/dotnet/cs instead of a TFM-specific subfolder.</summary>
     [TestMethod]
-    public async Task PackageContainsAnalyzerAtTfMFreePath()
+    public async Task PackageContainsAnalyzerAtTFMFreePath()
     {
         var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
         var feed = Path.Join(root, "artifacts", "compliance-analyzers-pack-test");

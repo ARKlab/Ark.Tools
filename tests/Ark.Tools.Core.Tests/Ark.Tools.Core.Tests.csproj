@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/common/Ark.Tools.Activity/Ark.Tools.Activity.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.NLog/Ark.Tools.NLog.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />

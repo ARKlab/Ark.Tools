@@ -46,8 +46,8 @@ public struct Resource : IEquatable<Resource>
         unchecked
         {
             int hash = 7243;
-            hash = hash * 92821 + Provider.GetHashCode(StringComparison.OrdinalIgnoreCase);
-            hash = hash * 92821 + Id.GetHashCode(StringComparison.OrdinalIgnoreCase);
+            hash = hash * 92821 + StringComparer.OrdinalIgnoreCase.GetHashCode(Provider ?? string.Empty);
+            hash = hash * 92821 + StringComparer.OrdinalIgnoreCase.GetHashCode(Id ?? string.Empty);
             return hash;
         }
     }
