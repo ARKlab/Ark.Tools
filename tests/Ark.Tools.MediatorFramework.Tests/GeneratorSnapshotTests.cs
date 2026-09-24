@@ -33,6 +33,12 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [TestClass]
 public sealed class GeneratorSnapshotTests
 {
+    private static readonly ImmutableArray<MetadataReference> _platformReferences =
+        ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
+        .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+        .Select(static path => (MetadataReference)MetadataReference.CreateFromFile(path))
+        .ToImmutableArray();
+
     [TestMethod]
     public void MessagePackResponseRequiresARegisteredResolver()
     {
@@ -3184,9 +3190,7 @@ public sealed class GeneratorSnapshotTests
 
     private static IEnumerable<MetadataReference> _getGeneratorReferences()
     {
-        return ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(static path => MetadataReference.CreateFromFile(path))
+        return _platformReferences
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
@@ -3202,9 +3206,7 @@ public sealed class GeneratorSnapshotTests
     private static async Task<ImmutableArray<Diagnostic>> _runAnalyzerResult<TAnalyzer>(string source)
         where TAnalyzer : DiagnosticAnalyzer, new()
     {
-        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(static path => MetadataReference.CreateFromFile(path))
+        var references = _platformReferences
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
@@ -3322,9 +3324,7 @@ public sealed class GeneratorSnapshotTests
         params SyntaxTree[] syntaxTrees)
         where TGenerator : IIncrementalGenerator
     {
-        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(static path => MetadataReference.CreateFromFile(path))
+        var references = _platformReferences
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
@@ -4396,9 +4396,7 @@ public sealed class GeneratorSnapshotTests
         string? baseline,
         bool enabled)
     {
-        var references = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(static path => MetadataReference.CreateFromFile(path))
+        var references = _platformReferences
             .Concat(
             [
                 MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
