@@ -19,8 +19,8 @@ The repository has two separate APM flows:
 From the repository root:
 
 ```powershell
-# Restore the pinned development tools for Copilot only (also used by cloud setup).
-apm install --target copilot --only apm
+# Restore the pinned Copilot packages, MCP and LSP servers (also used by cloud setup).
+apm install
 git diff --exit-code -- apm.lock.yaml
 
 # Rebuild the native plugin and marketplace; requires PowerShell 7.
@@ -44,8 +44,9 @@ when Windows Git checks out its `AGENTS.md` symlink as a text stub; do not
 replace the committed Linux content hash to accept that checkout. Plugin
 build/check commands work in native PowerShell 7 on either platform.
 
-Configure cloud-agent MCP servers through repository settings.
-For local service configuration or other harnesses, explicitly run
+The generated `.github/mcp.json` and `.github/lsp.json` are gitignored.
+Cloud-agent MCP servers must also be configured in repository settings.
+For other harnesses, explicitly run
 `apm install --target copilot,opencode`; review resulting lockfile changes.
 Keep authored repository instructions such as `AGENTS.md` and `.mcp.json` tracked.
 
