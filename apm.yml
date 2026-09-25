@@ -1,0 +1,5 @@
+name: Ark.Tools
+version: 6.0.6
+description: APM project for Ark.Tools support/v6
+targets:
+  - copilot

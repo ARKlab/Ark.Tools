@@ -65,9 +65,9 @@ public class EnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
         {
             _convertTheStringToAnEnum(value, enumType);
         }
-        catch
+        catch (Exception exception)
         {
-            throw new InvalidOperationException($"No enum with value {value} found");
+            throw new InvalidOperationException($"No enum with value {value} found", exception);
         }
     }
     private static void _checkThatThisNotAnObviouslyIncorrectNonNullableValue(string value)

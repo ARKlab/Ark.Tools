@@ -36,8 +36,11 @@ public static class NLogConfigurer
     {
         LogManager.Setup()
             .SetupExtensions(b => b
-                .RegisterAssembly(typeof(Configurer).Assembly)
-                .RegisterAssembly(typeof(ActivityTraceLayoutRenderer).Assembly))
+                .RegisterTarget<SlackTarget>()
+                .RegisterLayoutRenderer<HostNameLayoutRenderer>()
+                .RegisterLayoutRenderer<DemystifiedExceptionLayoutRenderer>()
+                .RegisterLayoutRenderer<ActivityIdLayoutRenderer>()
+                .RegisterLayoutRenderer<ActivityTraceLayoutRenderer>())
             ;
 
         // This has been added support NLog loggers output to Console during application initialization,
