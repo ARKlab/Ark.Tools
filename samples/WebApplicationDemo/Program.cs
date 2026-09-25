@@ -2,8 +2,6 @@ using Ark.Tools.NLog;
 using Ark.Tools.Nodatime;
 using Ark.Tools.Nodatime.Dapper;
 
-
-
 namespace WebApplicationDemo;
 
 public static class Program

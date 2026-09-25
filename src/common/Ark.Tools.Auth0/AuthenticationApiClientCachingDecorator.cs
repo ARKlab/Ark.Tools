@@ -95,6 +95,39 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         return _inner.BuildWsFedUrl();
     }
 
+    /// <summary>
+    /// Forwards a token exchange request to the underlying client.
+    /// </summary>
+    /// <param name="request">The token exchange request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The token response.</returns>
+    public async Task<AccessTokenResponse> GetTokenAsync(TokenExchangeTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Forwards an on-behalf-of token request to the underlying client.
+    /// </summary>
+    /// <param name="request">The on-behalf-of token request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The token response.</returns>
+    public async Task<OnBehalfOfTokenResponse> GetTokenOnBehalfOfAsync(OnBehalfOfTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenOnBehalfOfAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Forwards a federated connection access-token request to the underlying client.
+    /// </summary>
+    /// <param name="request">The federated connection access-token request.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The token response.</returns>
+    public async Task<AccessTokenResponse> GetTokenAsync(FederatedConnectionAccessTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        return await _inner.GetTokenAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<string> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
     {
         return await _inner.ChangePasswordAsync(request, cancellationToken).ConfigureAwait(false);

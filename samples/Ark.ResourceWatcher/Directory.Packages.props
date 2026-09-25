@@ -20,20 +20,20 @@
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
     
     <!-- Testing packages -->
-    <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
-    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.2.3" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.2.3" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.8.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.2.3" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.2.3" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.2.3" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.2.3" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.2.3" />
-    <PackageVersion Include="MSTest.TestAdapter" Version="4.2.3" />
-    <PackageVersion Include="MSTest.TestFramework" Version="4.2.3" />
-    <PackageVersion Include="MSTest.Analyzers" Version="4.2.3" />
-    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.2" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.4.1" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.4.1" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.4.1" />
+    <PackageVersion Include="MSTest.Analyzers" Version="4.4.1" />
+    <PackageVersion Include="Moq" Version="4.21.0" />
     <PackageVersion Include="Reqnroll.MsTest" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
     
@@ -42,12 +42,12 @@
     <!-- Security patches for transitive dependencies -->
     <PackageVersion Include="MailKit" Version="4.17.0" />
 
-    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.301" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="4.14.0" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.117" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.290" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" />
     <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
-    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
+    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.13" />
   </ItemGroup>
 
 </Project>
