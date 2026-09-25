@@ -50,9 +50,7 @@ Keep documentation in three distinct clusters:
 repository's agent skills and must remain unchanged.
 
 When moving documentation, use `git mv`, update every repository link including
-links outside `docs/`, and verify that all Markdown links still resolve. Avoid
-content rewrites: reclassify, adjust navigation, and preserve the consumer
-documentation surface.
+links outside `docs/`, and verify that all Markdown links still resolve.
 
 ## Build & Test Commands
 
@@ -224,7 +222,7 @@ throw new ArgumentNullException(nameof(parameter));
 ```
 
 ### Language Features
-- Target Frameworks: .NET 8.0 and .NET 10.0 (multi-targeting)
+- Target Frameworks: .NET Core LTS only
 - Nullable Reference Types: Enabled (use `?` for nullable reference types)
 - Latest C# language version
 - Code analysis enforced: `Microsoft.CodeAnalysis.NetAnalyzers`, `Meziantou.Analyzer`
@@ -238,6 +236,7 @@ throw new ArgumentNullException(nameof(parameter));
 - Configure `TableMappingConfiguration` for custom types (see `tests/Ark.Tools.ResourceWatcher.Tests/Init/TableMappingConfiguration.cs`)
 - Use horizontal table format (property names as column headers) in feature files
 - Use `AwesomeAssertions` for test assertions (FluentAssertions is deprecated)
+- Use ark-reqnroll skill for BDD tests
 
 ### Test Strategy
 - Prefer Integration tests mocking **only external** services
@@ -253,14 +252,9 @@ throw new ArgumentNullException(nameof(parameter));
 - **Pattern**: Turn off system versioning → DELETE main tables → TRUNCATE history tables → Turn on system versioning
 - Example: `[ops].[ResetFull_OnlyForTesting]` in ReferenceProject database
 
-### Example Locations
-- BDD Features: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Features/`
-- Step Definitions: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Steps/`
-- Test Host: `samples/Ark.ReferenceProject/Core/Ark.Reference.Core.Tests/Init/TestHost.cs`
-
 ## Git Commit Guidelines
 
-All commits must follow [Conventional Commits](https://www.conventionalcommits.org/):
+**CRITICAL** All commits must follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>[optional scope]: <description>
@@ -316,6 +310,7 @@ Host.CreateDefaultBuilder(args)
 - `src/aspnetcore/` - ASP.NET Core packages (Ark.Tools.AspNetCore.*)
 - `src/resourcewatcher/` - Resource Watcher packages
 - `samples/Ark.ReferenceProject/` - Example implementation and integration tests
+- `agents-plugins/` - Development and published Agents plugins using APM (Agent Package Manager)
 
 ## Key Dependencies
 
