@@ -10,6 +10,15 @@
     <PackageReference Include="AwesomeAssertions" />
   </ItemGroup>
 
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+    <MSTestSourceGenMode>ReflectionFree</MSTestSourceGenMode>
+  </PropertyGroup>
+
+  <!-- Reqnroll owns discovery for generated feature tests; the mode alone does not enable generation. -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true' and !@(PackageReference->AnyHaveMetadataValue('Identity', 'Reqnroll.MsTest'))">
+    <PackageReference Include="MSTest.SourceGeneration" PrivateAssets="all" />
+  </ItemGroup>
+
   <ItemGroup Label="Testing Platform Builder Hook" Condition="'$(IsTestProject)' == 'true'">
     <TestingPlatformBuilderHook Remove="031F8871-2660-4208-8F6B-FC142B40ABFF" />
     <TestingPlatformBuilderHook Include="031F8871-2660-4208-8F6B-FC142B40ABFF">

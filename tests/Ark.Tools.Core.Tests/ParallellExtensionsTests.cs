@@ -190,6 +190,8 @@ public class ParallellExtensionsTests
         var maxConcurrent = 0;
         var currentConcurrent = 0;
         var lockObj = new Lock();
+        var firstWaveReady = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
         // Act
         await items.Parallel(3, async item =>
@@ -199,19 +201,21 @@ public class ParallellExtensionsTests
                 currentConcurrent++;
                 if (currentConcurrent > maxConcurrent)
                     maxConcurrent = currentConcurrent;
+                if (currentConcurrent == 3)
+                    firstWaveReady.TrySetResult();
             }
 
-            await Task.Delay(50).ConfigureAwait(false);
+            await firstWaveReady.Task.WaitAsync(timeout.Token).ConfigureAwait(false);
+            await Task.Yield();
 
             lock (lockObj)
             {
                 currentConcurrent--;
             }
-        }).ConfigureAwait(false);
+        }, timeout.Token).ConfigureAwait(false);
 
         // Assert
-        maxConcurrent.Should().BeLessThanOrEqualTo(3);
-        maxConcurrent.Should().BeGreaterThan(1); // Should actually use parallelism
+        maxConcurrent.Should().Be(3);
     }
 
     /// <summary>
@@ -226,10 +230,9 @@ public class ParallellExtensionsTests
         // Act
         await items.Parallel(2, static async item =>
         {
-            await Task.Delay(10).ConfigureAwait(false);
+            await Task.Yield();
+            Assert.Fail("An empty list must not invoke the action.");
         }).ConfigureAwait(false);
-
-        // Assert - should complete without errors
     }
 
     /// <summary>
@@ -244,7 +247,8 @@ public class ParallellExtensionsTests
         // Act
         var results = await items.Parallel(2, static async item =>
         {
-            await Task.Delay(10).ConfigureAwait(false);
+            await Task.Yield();
+            Assert.Fail("An empty list must not invoke the action.");
             return item * 2;
         }).ConfigureAwait(false);
 
@@ -277,33 +281,4 @@ public class ParallellExtensionsTests
             .WithMessage("Test exception").ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Verifies that Parallel processes items in parallel, not sequentially.
-    /// </summary>
-    [TestMethod]
-    public async Task Parallel_ShouldProcessInParallel()
-    {
-        // Arrange
-        var items = Enumerable.Range(1, 4).ToList();
-        var startTimes = new ConcurrentDictionary<int, DateTime>();
-        var endTimes = new ConcurrentDictionary<int, DateTime>();
-
-        // Act
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        await items.Parallel(4, async item =>
-        {
-            startTimes[item] = DateTime.UtcNow;
-            await Task.Delay(100).ConfigureAwait(false);
-            endTimes[item] = DateTime.UtcNow;
-        }).ConfigureAwait(false);
-        sw.Stop();
-
-        // Assert
-        // If sequential, would take ~400ms. If parallel, should take ~100ms
-        sw.ElapsedMilliseconds.Should().BeLessThan(300);
-
-        // Verify items were processed concurrently by checking overlapping time windows
-        var processingStarted = startTimes.Count;
-        processingStarted.Should().Be(4);
-    }
 }

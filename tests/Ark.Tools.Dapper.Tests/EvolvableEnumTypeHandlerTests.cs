@@ -205,14 +205,19 @@ public class EvolvableEnumTypeHandlerTests
         act.Should().Throw<DataException>();
     }
 
-    /// <summary>Verifies that registering a closed EvolvableEnum type does not throw.</summary>
+    /// <summary>Verifies that registration enables Dapper to materialize symbolic enum values.</summary>
     [TestMethod]
-    public void Register_ShouldNotThrow()
+    public void Register_ShouldEnableDapperMaterialization()
     {
-        // Act
-        var act = static () => EvolvableEnumDapper.Register<Status>();
+        EvolvableEnumDapper.Register<Status>();
 
-        // Assert
-        act.Should().NotThrow();
+        using var table = new DataTable { Locale = CultureInfo.InvariantCulture };
+        table.Columns.Add("Status", typeof(string));
+        table.Rows.Add("Active");
+        using var reader = table.CreateDataReader();
+
+        var result = global::Dapper.SqlMapper.Parse<EvolvableEnum<Status>>(reader).Single();
+
+        result.Value.Should().Be(Status.Active);
     }
 }
