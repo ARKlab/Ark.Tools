@@ -17,7 +17,7 @@ permissions:
 jobs:
   build:
     name: 'Build'
-    runs-on: 'ubuntu-24.04'
+    runs-on: 'ubuntu-26.04'
     env:
       ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING: 'Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;'
     services:
