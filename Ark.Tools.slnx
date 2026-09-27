@@ -189,10 +189,12 @@
     <Project Path="tests/Ark.Tools.AspNetCore.MinimalApi.Tests/Ark.Tools.AspNetCore.MinimalApi.Tests.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/Ark.Tools.AspNetCore.ProblemDetails.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Dapper.Tests/Ark.Tools.Dapper.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.FtpClient.FluentFtp.Tests/Ark.Tools.FtpClient.FluentFtp.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MessagePack.Tests/Ark.Tools.MessagePack.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Protobuf.Tests/Ark.Tools.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Core.Tests/Ark.Tools.Core.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Core.Interceptors.Tests/Ark.Tools.Core.Interceptors.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Core.Reflection.Tests/Ark.Tools.Core.Reflection.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.Tests/Ark.Tools.MediatorFramework.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost.csproj" />
     <Project Path="tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions.csproj" />
