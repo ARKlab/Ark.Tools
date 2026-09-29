@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.289, )",
-        "resolved": "3.0.289",
-        "contentHash": "4JdVZU0mwOkcs3rtGkD/zJqoudaf7sp3KvvSWEqpsbIR1ySsdWuLoIah2lcrZ1VBEdc4hC/g7xSGzeyNOIsOzA=="
+        "requested": "[3.0.290, )",
+        "resolved": "3.0.290",
+        "contentHash": "vdSXgMEPil67EFwkcicjSCMnB7TdhUNiR1Fjw1P8MN+UeX6yP8wTb7cNT20H/ejHuUxkrxQS1Rz4QcJuMLmCkA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -109,11 +109,11 @@
       },
       "Moq": {
         "type": "Direct",
-        "requested": "[4.20.72, )",
-        "resolved": "4.20.72",
-        "contentHash": "EA55cjyNn8eTNWrgrdZJH5QLFp2L43oxl1tlkoYUKIE9pRwL784OWiTXeCV5ApS+AMYEAlt7Fo03A2XfouvHmQ==",
+        "requested": "[4.21.0, )",
+        "resolved": "4.21.0",
+        "contentHash": "HUjrhhzEJ/AfbSBCnR8lPkpveVGpV/dNuOlnpfqBNTME93izly1CRV4N5zBySqz4m2yCRlHLPy/PnPzYokbwIg==",
         "dependencies": {
-          "Castle.Core": "5.1.1"
+          "Castle.Core": "5.2.1"
         }
       },
       "MSTest.Analyzers": {
@@ -146,9 +146,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[11.4.0, )",
-        "resolved": "11.4.0",
-        "contentHash": "BZQ7tQW61+Kzlcj2QUQr0KaWAg0CPxdFF9kkiBMYTnCdyShha5ObkEFxBa+HcnAg6CtbeApPTMaxSI9By0QE4g=="
+        "requested": "[11.4.1, )",
+        "resolved": "11.4.1",
+        "contentHash": "HbyvI2RZLjW8zaJOiAtyTaCVEAAvhPp7kCkEgHne4igfAY3o7W0JAmurNrjdItUdRIXanYrWiet2ng/Jjd9+/w=="
       },
       "Reqnroll.MSTest": {
         "type": "Direct",
@@ -244,8 +244,8 @@
       },
       "Castle.Core": {
         "type": "Transitive",
-        "resolved": "5.1.1",
-        "contentHash": "rpYtIczkzGpf+EkZgDr9CClTdemhsrwA/W5hMoPjLkRFnXzH44zDLoovXeKtmxb1ykXK9aJVODSpiJml8CTw2g==",
+        "resolved": "5.2.1",
+        "contentHash": "wHARzQA695jwwKreOzNsq54KiGqKP38tv8hi8e2FXDEC/sA6BtrX90tVPDkOfVu13PbEzr00TCV8coikl+D1Iw==",
         "dependencies": {
           "System.Diagnostics.EventLog": "6.0.0"
         }
@@ -313,32 +313,32 @@
       },
       "MessagePack": {
         "type": "Transitive",
-        "resolved": "3.1.9",
-        "contentHash": "9IuUiOycxveb2R4RER5yQl7qYHMeRRMghOFuI/c+A8aX8j0zEzJ9QJD0u3Sr3MrNewUUkqOcTVLW9Zn6odZyIQ==",
+        "resolved": "3.1.10",
+        "contentHash": "IvYiuLIGLbklU8qZFp0krv1f+0d0kkWbyb+I4Qmk8p5o+JxQsKUp2L5SBHV4vVmBh+DAj3bWDukGAl+87GMwrQ==",
         "dependencies": {
-          "MessagePack.Annotations": "3.1.9",
-          "MessagePackAnalyzer": "3.1.9",
+          "MessagePack.Annotations": "3.1.10",
+          "MessagePackAnalyzer": "3.1.10",
           "Microsoft.NET.StringTools": "17.11.4"
         }
       },
       "MessagePack.Annotations": {
         "type": "Transitive",
-        "resolved": "3.1.9",
-        "contentHash": "bd+/udHmQECcfdcnlLHXR+/5Oc+UdQTEwZI5M1xw8Olymcb7SPXHleMxkkBkSLiK2+fpmY+0uAR7Jy3oiPPhKA=="
+        "resolved": "3.1.10",
+        "contentHash": "3XvSeRdiR9ujCcTuijFwn2DRO8+a2S4fkNvwMaMwnXvdUJRaWAVc37scCiFME0AYLXGtnWF+GHMZT/a+i5Vv7g=="
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.5.8",
-        "contentHash": "jK08MQ/u/lJR0MrdRIVdMKK489+ZgMUNBYDmxGswucw3GpgZ5RgW6BUlr/srYFG4Cl2yQyZYZUrP8lbW5RcItw==",
+        "resolved": "3.5.9",
+        "contentHash": "Ve1UGxovxBqTPC9d5aEZt7dGkP+Duf1atZsVaeslc7EmHCOMjWXj0vbWfrt5qusYItbtHlddcxjSAfjWv9ddWA==",
         "dependencies": {
-          "MessagePack": "3.1.9",
+          "MessagePack": "3.1.10",
           "NodaTime": "3.3.4"
         }
       },
       "MessagePackAnalyzer": {
         "type": "Transitive",
-        "resolved": "3.1.9",
-        "contentHash": "/nMSlVz4p8BjlPbgxgBfE9kHyObHvmjczShWp2rGeKMH7oVEyPd0a3Fcd6yO3Xf36Jsf2ax/VvhV28Z7F5ibmQ=="
+        "resolved": "3.1.10",
+        "contentHash": "t0sPByiRt2ipKUg64M1foAt5uDnJOiOGimE0rKXZ5CdiQw0Sf4TfELiWNjowcCHO0M6gRePrI90kXPc7rN2llw=="
       },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
@@ -931,8 +931,8 @@
       },
       "MimeKit": {
         "type": "Transitive",
-        "resolved": "4.18.0",
-        "contentHash": "foq2guy0YL0l0WuHrW4CuYicooXDpXlTOG1kuzlw9VcWfZpaf6zu3nX2kV3n6VKTrMy24vQJgE2TepszntVd3A==",
+        "resolved": "4.18.1",
+        "contentHash": "D8AfFVMFVJldWmhQWCziC9nWUN/zayFFBAKpyjVyCeh0tqBiI9jtUVuMrKgWw1EGnCp09msDZldbRvp2jfUehQ==",
         "dependencies": {
           "BouncyCastle.Cryptography": "2.7.0",
           "System.Security.Cryptography.Pkcs": "10.0.0"
@@ -1200,7 +1200,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.5.8, )"
+          "MessagePack.NodaTime": "[3.5.9, )"
         }
       },
       "ark.tools.newtonsoftjson": {
@@ -1341,11 +1341,11 @@
       },
       "MailKit": {
         "type": "CentralTransitive",
-        "requested": "[4.18.0, )",
-        "resolved": "4.18.0",
-        "contentHash": "Sk+n5f4uVKiQKECOCPcFcYtYpIt9rcli7dDboSkWM2TBbTYE7EpfudL+e5a6TFp9eMHOzNYOydzZh0b+zFGK4A==",
+        "requested": "[4.18.1, )",
+        "resolved": "4.18.1",
+        "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
         "dependencies": {
-          "MimeKit": "4.18.0"
+          "MimeKit": "4.18.1"
         }
       }
     }

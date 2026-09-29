@@ -29,9 +29,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.289, )",
-        "resolved": "3.0.289",
-        "contentHash": "4JdVZU0mwOkcs3rtGkD/zJqoudaf7sp3KvvSWEqpsbIR1ySsdWuLoIah2lcrZ1VBEdc4hC/g7xSGzeyNOIsOzA=="
+        "requested": "[3.0.290, )",
+        "resolved": "3.0.290",
+        "contentHash": "vdSXgMEPil67EFwkcicjSCMnB7TdhUNiR1Fjw1P8MN+UeX6yP8wTb7cNT20H/ejHuUxkrxQS1Rz4QcJuMLmCkA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -68,9 +68,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[11.4.0, )",
-        "resolved": "11.4.0",
-        "contentHash": "BZQ7tQW61+Kzlcj2QUQr0KaWAg0CPxdFF9kkiBMYTnCdyShha5ObkEFxBa+HcnAg6CtbeApPTMaxSI9By0QE4g=="
+        "requested": "[11.4.1, )",
+        "resolved": "11.4.1",
+        "contentHash": "HbyvI2RZLjW8zaJOiAtyTaCVEAAvhPp7kCkEgHne4igfAY3o7W0JAmurNrjdItUdRIXanYrWiet2ng/Jjd9+/w=="
       },
       "protobuf-net.Grpc.AspNetCore.Reflection": {
         "type": "Direct",
@@ -84,9 +84,9 @@
       },
       "Scalar.AspNetCore": {
         "type": "Direct",
-        "requested": "[2.17.8, )",
-        "resolved": "2.17.8",
-        "contentHash": "KboA9Qm60RiikrXQ28EzUSevksNDPhRV/jTAGEw9vbo8VAw+JFXdNm9vlOtFHwptp5yCHHaupTCIMCbT/EbiiQ=="
+        "requested": "[2.17.11, )",
+        "resolved": "2.17.11",
+        "contentHash": "aSDKZFaJQs/JKEhCwf9pzXz8eJ+mFSne1WWrtdr9bHnLmcfkZOPLtO5vJzMLYD3Z7nCT6R6t09ek5WrIoa6tKw=="
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "Direct",
@@ -149,14 +149,14 @@
       },
       "Azure.Core": {
         "type": "Transitive",
-        "resolved": "1.61.0",
-        "contentHash": "sns4J9zz7NCpfNYz9rMIly5/TjDkNsTnPAr4nNr0BUBzn6tn6RNOEHOKb7A7DhJj/dEFMSevp3Ye36cUiNmsfg==",
+        "resolved": "1.62.0",
+        "contentHash": "C0ijs91ZW2uhF/VwGLXeayb+RwTWhDxKnrsmqPWg5HkYtPQ93mzaydyMCjAzE0AG5yHc1bpaPc+NPlZUgz3w8g==",
         "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "10.0.9",
+          "Microsoft.Bcl.AsyncInterfaces": "10.0.10",
           "Microsoft.Identity.Client": "4.84.2",
           "Microsoft.Identity.Client.Extensions.Msal": "4.84.2",
           "System.ClientModel": "1.15.0",
-          "System.Memory.Data": "10.0.9"
+          "System.Memory.Data": "10.0.10"
         }
       },
       "Azure.Core.Amqp": {
@@ -170,10 +170,10 @@
       },
       "Azure.Messaging.ServiceBus": {
         "type": "Transitive",
-        "resolved": "7.20.2",
-        "contentHash": "mwr5c3Qs7FWUtwzlLOtVixYDpUuA+Ln7sNirljTHZR8kDhzdr2grlqx0RRBvGV+IDCRHt1jIRb+hi0MUzjeVmw==",
+        "resolved": "7.21.0",
+        "contentHash": "ohX6LPD0ykJciyjAHrsF92vqL7GWXjRqUon2vaZ4pg0H+5TdO7S/9zWcmi5OBpcgP6oBxs/RfHvts9YaL/SAMg==",
         "dependencies": {
-          "Azure.Core": "1.60.0",
+          "Azure.Core": "1.62.0",
           "Azure.Core.Amqp": "1.3.1",
           "Microsoft.Azure.Amqp": "2.7.0"
         }
@@ -298,10 +298,10 @@
       },
       "MessagePack.NodaTime": {
         "type": "Transitive",
-        "resolved": "3.5.8",
-        "contentHash": "jK08MQ/u/lJR0MrdRIVdMKK489+ZgMUNBYDmxGswucw3GpgZ5RgW6BUlr/srYFG4Cl2yQyZYZUrP8lbW5RcItw==",
+        "resolved": "3.5.9",
+        "contentHash": "Ve1UGxovxBqTPC9d5aEZt7dGkP+Duf1atZsVaeslc7EmHCOMjWXj0vbWfrt5qusYItbtHlddcxjSAfjWv9ddWA==",
         "dependencies": {
-          "MessagePack": "3.1.9",
+          "MessagePack": "3.1.10",
           "NodaTime": "3.3.4"
         }
       },
@@ -341,8 +341,8 @@
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
-        "resolved": "10.0.9",
-        "contentHash": "Aq7M8lG6BrHeatqKqncVm9m55ec34k6nnfPRLe/PvGg+b/pAsRM2ejofeKmCLjTXMa+5NGXm382f8CG/D5WDow=="
+        "resolved": "10.0.10",
+        "contentHash": "TFI6OKYE1XZz4SGuTSH70c6SBdPpFktXsoa1gCxTr3mKrhmXirnvaS0tKz+J3ZWICEAmMpEGn59nO4ICtUpQXA=="
       },
       "Microsoft.Bcl.Cryptography": {
         "type": "Transitive",
@@ -787,8 +787,8 @@
       },
       "Rebus": {
         "type": "Transitive",
-        "resolved": "8.9.4",
-        "contentHash": "3KUNUw3FvlXnfWcAWvVAB3vhL6stOlkeQ0GYDLacDmcyRAJAbv8kPgPrFibDRCMCyb9SCJXQ6Po8tJUHsuBJOg==",
+        "resolved": "8.9.5",
+        "contentHash": "PfsmgENA9mrAnIAJEKh/Z7KiZay3cUXkHRxcfbkp+9//wnXEWOFoPAC9b2Y38kTYCFMc8eFiD3cXPERoS104cw==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
@@ -948,8 +948,8 @@
       },
       "System.Memory.Data": {
         "type": "Transitive",
-        "resolved": "10.0.9",
-        "contentHash": "YweovHiLUoEdbr2Xv8eRqCSkTu1vMms4a6xBHaQiMSFVy32PL+hXv6Vhol2NWOmLHjaVgTyhJ3R52U6JxS6w3Q=="
+        "resolved": "10.0.10",
+        "contentHash": "roR+5AeOpflUxJQlqSfsZs/Bvi1uw4KBuTkIgF1e8l0RdalG4AUn84+sjJLclEfOV85gAjc8+Pp540qjDE5UIg=="
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "Transitive",
@@ -1046,7 +1046,7 @@
           "AspNetCore.HealthChecks.SqlServer": "[9.0.0, )",
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
           "Azure.Identity": "[1.21.0, )",
-          "Azure.Messaging.ServiceBus": "[7.20.2, )",
+          "Azure.Messaging.ServiceBus": "[7.21.0, )",
           "Microsoft.ApplicationInsights": "[3.1.2, )",
           "SSH.NET": "[2026.0.0, )"
         }
@@ -1055,7 +1055,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "MessagePack": "[3.1.9, )"
+          "MessagePack": "[3.1.10, )"
         }
       },
       "ark.tools.aspnetcore.minimalapi": {
@@ -1179,7 +1179,7 @@
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Google.Protobuf": "[3.36.2, )",
-          "MessagePack": "[3.1.9, )",
+          "MessagePack": "[3.1.10, )",
           "NodaTime": "[3.3.4, )"
         }
       },
@@ -1199,8 +1199,8 @@
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
-          "MessagePack": "[3.1.9, )",
-          "MessagePack.NodaTime": "[3.5.8, )",
+          "MessagePack": "[3.1.10, )",
+          "MessagePack.NodaTime": "[3.5.9, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
         }
       },
@@ -1308,9 +1308,9 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "Azure.Messaging.ServiceBus": "[7.20.2, )",
+          "Azure.Messaging.ServiceBus": "[7.21.0, )",
           "OpenTelemetry.Api": "[1.19.1, )",
-          "Rebus": "[8.9.4, )",
+          "Rebus": "[8.9.5, )",
           "Rebus.AzureBlobs": "[1.1.0, )",
           "Rebus.AzureServiceBus": "[10.7.1, )",
           "Rebus.NLog": "[6.0.0, )",

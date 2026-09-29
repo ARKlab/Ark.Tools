@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.289, )",
-        "resolved": "3.0.289",
-        "contentHash": "4JdVZU0mwOkcs3rtGkD/zJqoudaf7sp3KvvSWEqpsbIR1ySsdWuLoIah2lcrZ1VBEdc4hC/g7xSGzeyNOIsOzA=="
+        "requested": "[3.0.290, )",
+        "resolved": "3.0.290",
+        "contentHash": "vdSXgMEPil67EFwkcicjSCMnB7TdhUNiR1Fjw1P8MN+UeX6yP8wTb7cNT20H/ejHuUxkrxQS1Rz4QcJuMLmCkA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -46,9 +46,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[11.4.0, )",
-        "resolved": "11.4.0",
-        "contentHash": "BZQ7tQW61+Kzlcj2QUQr0KaWAg0CPxdFF9kkiBMYTnCdyShha5ObkEFxBa+HcnAg6CtbeApPTMaxSI9By0QE4g=="
+        "requested": "[11.4.1, )",
+        "resolved": "11.4.1",
+        "contentHash": "HbyvI2RZLjW8zaJOiAtyTaCVEAAvhPp7kCkEgHne4igfAY3o7W0JAmurNrjdItUdRIXanYrWiet2ng/Jjd9+/w=="
       },
       "ark.tools.compliance.abstractions": {
         "type": "Project",
