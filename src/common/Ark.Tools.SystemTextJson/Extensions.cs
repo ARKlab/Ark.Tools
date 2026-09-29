@@ -19,7 +19,7 @@ public static class Extensions
         @this.PropertyNameCaseInsensitive = true;
 
         //@this.Converters.Insert(0, new NullableStructSerializerFactory()); // not required anymore in v5
-        @this.Converters.Add(new JsonStringEnumMemberConverter()); // from macross
+        @this.Converters.Add(new ArkJsonStringEnumConverter());
         @this.Converters.Add(new GenericDictionaryWithConvertibleKey());
         @this.Converters.Add(new ValueCollectionJsonConverterFactory());
         @this.Converters.Add(new EvolvableEnumJsonConverterFactory()); // default: symbolic name; opt into EvolvableEnumIntegerJsonConverterFactory per-property for numbers
@@ -27,8 +27,8 @@ public static class Extensions
         @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
         @this.ConfigureForNodaTimeRanges();
 
-        @this.Converters.Add(new JsonIPAddressConverter());
-        @this.Converters.Add(new JsonIPEndPointConverter());
+        @this.Converters.Add(new IPAddressJsonConverter());
+        @this.Converters.Add(new IPEndPointJsonConverter());
 
         @this.Converters.Add(new UniversalInvariantTypeConverterJsonConverter()); // as last resort
 
