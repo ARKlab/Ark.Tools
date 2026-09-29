@@ -36,12 +36,11 @@ namespace Ark.Reference.Core.API.JsonContext;
     RespectNullableAnnotations = true,
     RespectRequiredConstructorParameters = true,
 
+    // Enums use built-in string conversion; register ArkJsonStringEnumConverter<TEnum> for enums using [EnumMember].
+    UseStringEnumConverter = true,
+
     Converters = new Type[]
     {
-        typeof(JsonStringEnumMemberConverter),
-        typeof(JsonIPAddressConverter),
-        typeof(JsonIPEndPointConverter),
-
         typeof(LocalDateTimeRangeConverter),
         typeof(ZonedDateTimeRangeConverter),
         typeof(LocalDateRangeConverter),

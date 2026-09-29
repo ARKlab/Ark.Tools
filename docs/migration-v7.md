@@ -129,7 +129,38 @@ formatters or a required compatibility boundary. The
 [MVC migration guide](mediator-framework/migration-from-mvc.md) describes the
 endpoint model and parity checks.
 
-## 6. Validate the migration
+## 6. Replace Macross.Json.Extensions types
+
+`Ark.Tools.SystemTextJson` no longer depends on the unmaintained
+`Macross.Json.Extensions` package. `ConfigureArkDefaults` keeps the same wire
+format, but code that referenced the Macross types (they live in the
+`System.Text.Json.Serialization` namespace, so they needed no `using`) no longer
+compiles. Replace them:
+
+| Macross | Ark.Tools.SystemTextJson |
+|---|---|
+| `JsonStringEnumMemberConverter` | `ArkJsonStringEnumConverter`, or `ArkJsonStringEnumConverter<TEnum>` for Native AOT and source-generated contexts |
+| `JsonIPAddressConverter` | `IPAddressJsonConverter` |
+| `JsonIPEndPointConverter` | `IPEndPointJsonConverter` |
+
+The enum converter honors `[JsonStringEnumMemberName]`, then `[EnumMember]`,
+then the naming policy. It keeps case-insensitive reads, integer values, and
+`[Flags]` combinations. It drops these Macross features:
+
+- `[JsonPropertyName]` on enum members. Use `[JsonStringEnumMemberName]` or
+  `[EnumMember]`.
+- The deserialization failure fallback value,
+  `JsonStringEnumMemberConverterOptionsAttribute`, and per-type target lists.
+
+`IPEndPointJsonConverter` now reads endpoints without a port as port `0`, which
+Macross documented but rejected. If you need the dropped features, reference
+`Macross.Json.Extensions` directly.
+
+In source-generated `JsonSerializerContext` options, remove the Macross types.
+Use `UseStringEnumConverter = true` for enums without `[EnumMember]`, and list
+`ArkJsonStringEnumConverter<TEnum>` for enums that use it.
+
+## 7. Validate the migration
 
 ```bash
 dotnet restore
