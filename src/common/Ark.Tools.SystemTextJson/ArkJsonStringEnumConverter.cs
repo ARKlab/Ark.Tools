@@ -214,7 +214,7 @@ internal sealed class CaseInsensitiveEnumConverter<TEnum> : JsonConverter<TEnum>
 
     private static Utf8JsonReader _createReader(string value, bool asPropertyName)
     {
-        var quoted = "\"" + JsonEncodedText.Encode(value).ToString() + "\"";
+        var quoted = "\"" + JsonEncodedText.Encode(value) + "\"";
         var json = Encoding.UTF8.GetBytes(asPropertyName ? "{" + quoted + ":null}" : quoted);
 
         var reader = new Utf8JsonReader(json);

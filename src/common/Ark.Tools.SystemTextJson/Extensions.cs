@@ -11,6 +11,7 @@ namespace System.Text.Json;
 
 public static class Extensions
 {
+    [RequiresDynamicCode("Ark default converters create generic converters per type at runtime. For Native AOT, use a source-generated JsonSerializerContext with explicit converters such as ArkJsonStringEnumConverter<TEnum>.")]
     public static JsonSerializerOptions ConfigureArkDefaults(this JsonSerializerOptions @this)
     {
         @this.AllowTrailingCommas = true;
