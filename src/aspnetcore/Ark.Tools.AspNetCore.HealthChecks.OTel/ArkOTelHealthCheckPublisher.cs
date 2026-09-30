@@ -34,7 +34,7 @@ public sealed class ArkOTelHealthCheckPublisher : IHealthCheckPublisher, IDispos
     }
 
     /// <inheritdoc />
-    public Task PublishAsync(HealthReport report, CancellationToken cancellationToken)
+    public async Task PublishAsync(HealthReport report, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(report);
 
@@ -42,7 +42,7 @@ public sealed class ArkOTelHealthCheckPublisher : IHealthCheckPublisher, IDispos
         foreach (var (name, entry) in report.Entries)
             _duration.Record(entry.Duration.TotalSeconds, new KeyValuePair<string, object?>("health_check.name", name));
 
-        return Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     private IEnumerable<Measurement<double>> _observeStatus()

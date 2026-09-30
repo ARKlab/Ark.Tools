@@ -15,28 +15,41 @@ namespace Ark.Tools.OTel.Tests;
 public sealed class HealthCheckPublisherTests
 {
     [TestMethod]
-    public async Task Publish_EmitsStatusAndDuration()
+    [DataRow(HealthStatus.Healthy, 1d)]
+    [DataRow(HealthStatus.Degraded, 0.5d)]
+    [DataRow(HealthStatus.Unhealthy, 0d)]
+    public async Task Publish_EmitsStatusAndDuration(HealthStatus status, double expected)
     {
         using var publisher = new ArkOTelHealthCheckPublisher();
-        var values = new Dictionary<string, double>();
+        // the meter name is process-wide and tests run in parallel: isolate by a unique check name
+        var checkName = "db-" + status;
+        var values = new Dictionary<string, (double Value, object? Name)>();
         using var listener = new MeterListener();
         listener.InstrumentPublished = static (i, l) =>
         {
             if (i.Meter.Name == ArkOTelHealthCheckPublisher.MeterName) l.EnableMeasurementEvents(i);
         };
-        listener.SetMeasurementEventCallback<double>((i, v, _, _) => values[i.Name] = v);
+        listener.SetMeasurementEventCallback<double>((i, v, tags, _) =>
+        {
+            object? name = null;
+            foreach (var t in tags)
+                if (t.Key == "health_check.name") name = t.Value;
+            if (Equals(name, checkName)) values[i.Name] = (v, name);
+        });
         listener.Start();
 
         var report = new HealthReport(
             new Dictionary<string, HealthReportEntry>
             {
-                ["db"] = new(HealthStatus.Degraded, null, TimeSpan.FromSeconds(2), null, null),
+                [checkName] = new(status, null, TimeSpan.FromSeconds(2), null, null),
             },
             TimeSpan.FromSeconds(2));
         await publisher.PublishAsync(report, CancellationToken.None);
         listener.RecordObservableInstruments();
 
-        values["health_check.status"].Should().Be(0.5);
-        values["health_check.duration"].Should().Be(2);
+        values["health_check.status"].Value.Should().Be(expected);
+        values["health_check.status"].Name.Should().Be(checkName);
+        values["health_check.duration"].Value.Should().Be(2);
+        values["health_check.duration"].Name.Should().Be(checkName);
     }
 }

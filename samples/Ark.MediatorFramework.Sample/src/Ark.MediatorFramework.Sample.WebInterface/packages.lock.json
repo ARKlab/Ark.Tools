@@ -302,14 +302,6 @@
         "resolved": "3.1.10",
         "contentHash": "t0sPByiRt2ipKUg64M1foAt5uDnJOiOGimE0rKXZ5CdiQw0Sf4TfELiWNjowcCHO0M6gRePrI90kXPc7rN2llw=="
       },
-      "Microsoft.ApplicationInsights": {
-        "type": "Transitive",
-        "resolved": "3.1.2",
-        "contentHash": "E+8N7Q6GS/AcyJ0xuYA48nVL4eQGGOSJZvNz/R7qQtMGCUwjLzQe9Ttpgh/7eQktngsUuNGaEzBhM7IUU0t4xA==",
-        "dependencies": {
-          "Azure.Monitor.OpenTelemetry.Exporter": "1.8.0"
-        }
-      },
       "Microsoft.AspNetCore.Authentication.OpenIdConnect": {
         "type": "Transitive",
         "resolved": "10.0.0",
@@ -1001,7 +993,6 @@
           "DotNetDiag.HealthChecks.Oracle": "[10.0.14, )",
           "DotNetDiag.HealthChecks.SqlServer": "[10.0.14, )",
           "DotNetDiag.HealthChecks.UI.Client": "[10.0.14, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
           "SSH.NET": "[2026.0.0, )"
         }
       },

@@ -2064,7 +2064,6 @@
           "DotNetDiag.HealthChecks.Oracle": "[10.0.14, )",
           "DotNetDiag.HealthChecks.SqlServer": "[10.0.14, )",
           "DotNetDiag.HealthChecks.UI.Client": "[10.0.14, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
           "SSH.NET": "[2026.0.0, )"
         }
       },
