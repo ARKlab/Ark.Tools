@@ -99,7 +99,7 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Auth0.AuthenticationApi": "[7.49.0, )",
-          "Auth0.ManagementApi": "[10.3.0, )",
+          "Auth0.ManagementApi": "[10.4.0, )",
           "JWT": "[11.1.0, )",
           "Polly": "[8.8.0, )",
           "Polly.Caching.Memory": "[3.0.2, )"
@@ -124,9 +124,9 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[10.3.0, )",
-        "resolved": "10.3.0",
-        "contentHash": "mVSvvyBKOYU0MMX6zDxA16bwCrRy8GyFYvh0lIkE/4OlmVfJzcsMLfxqTiWz3DKugLCl/MNt7CgcXAIarE+CiA==",
+        "requested": "[10.4.0, )",
+        "resolved": "10.4.0",
+        "contentHash": "FS7FGX8dNO/3N5b2hTIdqPpB60Bm82sCxKDKkM7cB5XcvgDKnuByFwmCSq0N560EDsFjjyhrQDFcgZrmoN4Xxg==",
         "dependencies": {
           "Auth0.AuthenticationApi": "7.49.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
