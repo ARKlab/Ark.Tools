@@ -2139,6 +2139,9 @@
           "SSH.NET": "[2026.0.0, )"
         }
       },
+      "ark.tools.aspnetcore.healthchecks.otel": {
+        "type": "Project"
+      },
       "ark.tools.aspnetcore.messagepack": {
         "type": "Project",
         "dependencies": {
@@ -2152,6 +2155,7 @@
       "ark.tools.aspnetcore.otel": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.AspNetCore.HealthChecks.OTel": "[1.0.0, )",
           "Ark.Tools.OTel": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",

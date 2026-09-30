@@ -498,9 +498,13 @@
         "resolved": "9.0.18",
         "contentHash": "pxuHw/tQXaHMRXEaKzzgpoGO8VeTPIzHbnp0KclXp6js5wPHn7VaqSCa8yRTAsZDcZ2XuIEnXGM2MbRDJFLBog=="
       },
+      "ark.tools.aspnetcore.healthchecks.otel": {
+        "type": "Project"
+      },
       "ark.tools.aspnetcore.otel": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.AspNetCore.HealthChecks.OTel": "[1.0.0, )",
           "Ark.Tools.OTel": "[1.0.0, )",
           "Ark.Tools.Rebus": "[1.0.0, )",
           "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",

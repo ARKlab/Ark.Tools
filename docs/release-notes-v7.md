@@ -106,6 +106,12 @@ that still call `TelemetryClient.Track*` or use Application Insights
 processors. Application Insights is no longer registered implicitly by Ark
 hosting packages. See the [telemetry upgrade guide](otel/upgrade-guide.md).
 
+### Health check metrics
+
+`Ark.Tools.AspNetCore.HealthChecks.OTel` publishes `health_check.status` (1 Healthy, 0.5 Degraded, 0 Unhealthy)
+and `health_check.duration` per check through the `Ark.HealthChecks` meter. `Ark.Tools.AspNetCore.OTel` references
+it and registers the publisher and meter automatically.
+
 ### Macross.Json.Extensions removed
 
 `Ark.Tools.SystemTextJson` replaces the unmaintained `Macross.Json.Extensions`

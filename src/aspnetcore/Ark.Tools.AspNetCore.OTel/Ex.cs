@@ -16,6 +16,7 @@ using OpenTelemetry.Trace;
 
 using System.Data.Common;
 
+using Ark.Tools.AspNetCore.HealthChecks.OTel;
 using Ark.Tools.Rebus;
 using Ark.Tools.OTel;
 
@@ -70,6 +71,8 @@ public static class Ex
         var skippedSqlQueryLabels = _getSkippedSqlQueryLabels(arkOtelConfig.SqlQueryLabelsToSkip);
         var failedTraceRegistry = new FailedTraceRegistry();
 
+        builder.Services.AddArkOTelHealthCheckPublisher();
+
         return builder
             .ConfigureResource(static resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing
@@ -106,6 +109,7 @@ public static class Ex
             .WithMetrics(static metrics => metrics
                 .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
                 .AddMeter(_mediatorMessagingInstrumentationName)
+                .AddMeter(ArkOTelHealthCheckPublisher.MeterName)
                 .AddSqlClientInstrumentation());
     }
 
