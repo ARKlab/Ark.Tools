@@ -119,8 +119,8 @@ precedence. `ArkJsonStringEnumConverter<TEnum>` is Native AOT compatible. See
 
 The unmaintained `AspNetCore.HealthChecks.*` packages are replaced by the
 maintained fork `DotNetDiag.HealthChecks.*`; namespaces are unchanged.
-`AspNetCore.HealthChecks.Publisher.ApplicationInsights` has no replacement, so
-`AddArkHealthChecks` no longer registers the Application Insights publisher.
+`AddArkHealthChecks` no longer registers the Application Insights publisher;
+reference `DotNetDiag.HealthChecks.Publisher.ApplicationInsights` if you need it.
 See [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-replace-aspnetcorediagnosticshealthchecks-packages).
 
 ## Upgrade

@@ -176,13 +176,15 @@ unchanged; only the package IDs change:
 | `AspNetCore.HealthChecks.UI` | `DotNetDiag.HealthChecks.UI` |
 | `AspNetCore.HealthChecks.UI.Client` | `DotNetDiag.HealthChecks.UI.Client` |
 | `AspNetCore.HealthChecks.UI.InMemory.Storage` | `DotNetDiag.HealthChecks.UI.InMemory.Storage` |
-| `AspNetCore.HealthChecks.Publisher.ApplicationInsights` | removed, no fork; see below |
+| `AspNetCore.HealthChecks.Publisher.ApplicationInsights` | `DotNetDiag.HealthChecks.Publisher.ApplicationInsights` (not registered by Ark anymore; see below) |
 
 If your application references these packages directly, rename them and
 refresh `packages.lock.json`.
 
 `AddArkHealthChecks` no longer registers the Application Insights health
-publisher. Use the OpenTelemetry route from
+publisher. If you still use Application Insights v3, reference
+`DotNetDiag.HealthChecks.Publisher.ApplicationInsights` and call
+`AddApplicationInsightsPublisher()` yourself. Otherwise use the OpenTelemetry route from
 [section 3](#3-move-from-application-insights-v2-to-opentelemetry), or register
 your own `IHealthCheckPublisher`.
 
