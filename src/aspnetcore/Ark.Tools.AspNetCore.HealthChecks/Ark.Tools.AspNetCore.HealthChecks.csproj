@@ -32,12 +32,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AspNetCore.HealthChecks.AzureServiceBus" />
-		<PackageReference Include="AspNetCore.HealthChecks.Network" />
-		<PackageReference Include="AspNetCore.HealthChecks.Oracle" />
-		<PackageReference Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" />
-		<PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
-		<PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+		<PackageReference Include="DotNetDiag.HealthChecks.AzureServiceBus" />
+		<PackageReference Include="DotNetDiag.HealthChecks.Network" />
+		<PackageReference Include="DotNetDiag.HealthChecks.Oracle" />
+		<PackageReference Include="DotNetDiag.HealthChecks.SqlServer" />
+		<PackageReference Include="DotNetDiag.HealthChecks.UI.Client" />
 		<PackageReference Include="SSH.NET" />
 		<PackageReference Include="Azure.Messaging.ServiceBus" />
 		<PackageReference Include="Azure.Identity" />

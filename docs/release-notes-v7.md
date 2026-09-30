@@ -115,6 +115,14 @@ converters with `ArkJsonStringEnumConverter`, `IPAddressJsonConverter`, and
 precedence. `ArkJsonStringEnumConverter<TEnum>` is Native AOT compatible. See
 [Replace Macross.Json.Extensions types](migration-v7.md#6-replace-macrossjsonextensions-types).
 
+### Health checks moved to DotNetDiag.HealthChecks
+
+The unmaintained `AspNetCore.HealthChecks.*` packages are replaced by the
+maintained fork `DotNetDiag.HealthChecks.*`; namespaces are unchanged.
+`AspNetCore.HealthChecks.Publisher.ApplicationInsights` has no replacement, so
+`AddArkHealthChecks` no longer registers the Application Insights publisher.
+See [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-replace-aspnetcorediagnosticshealthchecks-packages).
+
 ## Upgrade
 
 Read [Migration to v7](migration-v7.md) before updating production solutions,

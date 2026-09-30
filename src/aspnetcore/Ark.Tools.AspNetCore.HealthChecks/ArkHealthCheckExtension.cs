@@ -17,9 +17,7 @@ public static class ArkHealthCheckExtension
 {
     public static IServiceCollection AddArkHealthChecks(this IServiceCollection services)
     {
-        services.AddHealthChecks()
-            .AddApplicationInsightsPublisher()
-            ;
+        services.AddHealthChecks();
 
         return services;
     }

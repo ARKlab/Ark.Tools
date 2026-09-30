@@ -114,14 +114,13 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="10.0.1" />
     <!-- ASPNETCORE HEALTHCHECKS -->
-    <PackageVersion Include="AspNetCore.HealthChecks.AzureServiceBus" Version="9.0.0" />
-    <PackageVersion Include="AspNetCore.HealthChecks.Network" Version="9.0.0" />
-    <PackageVersion Include="AspNetCore.HealthChecks.Oracle" Version="9.0.0" />
-    <PackageVersion Include="AspNetCore.HealthChecks.Publisher.ApplicationInsights" Version="9.0.0" />
-    <PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.AzureServiceBus" Version="10.0.14" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.Network" Version="10.0.15" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.Oracle" Version="10.0.14" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.SqlServer" Version="10.0.14" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.UI" Version="10.0.14" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.UI.Client" Version="10.0.14" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.UI.InMemory.Storage" Version="10.0.14" />
     <PackageVersion Include="KubernetesClient" Version="19.0.2" />
     <!-- SQL -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
@@ -156,8 +155,8 @@
     <PackageVersion Include="RavenDB.Client" Version="7.2.6" />
     <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
     <!-- BUILD TOOLS -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.14.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="5.0.0" />
   </ItemGroup>
 </Project>

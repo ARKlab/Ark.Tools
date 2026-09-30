@@ -160,7 +160,39 @@ In source-generated `JsonSerializerContext` options, remove the Macross types.
 Use `UseStringEnumConverter = true` for enums without `[EnumMember]`, and list
 `ArkJsonStringEnumConverter<TEnum>` for enums that use it.
 
-## 7. Validate the migration
+## 7. Replace AspNetCore.Diagnostics.HealthChecks packages
+
+The `AspNetCore.HealthChecks.*` (Xabaril) packages are no longer maintained.
+Ark.Tools now uses the maintained fork `DotNetDiag.HealthChecks.*`. The
+namespaces (`HealthChecks.UI.Client`, `HealthChecks.Network`, ...) are
+unchanged; only the package IDs change:
+
+| Old | New |
+|---|---|
+| `AspNetCore.HealthChecks.AzureServiceBus` | `DotNetDiag.HealthChecks.AzureServiceBus` |
+| `AspNetCore.HealthChecks.Network` | `DotNetDiag.HealthChecks.Network` |
+| `AspNetCore.HealthChecks.Oracle` | `DotNetDiag.HealthChecks.Oracle` |
+| `AspNetCore.HealthChecks.SqlServer` | `DotNetDiag.HealthChecks.SqlServer` |
+| `AspNetCore.HealthChecks.UI` | `DotNetDiag.HealthChecks.UI` |
+| `AspNetCore.HealthChecks.UI.Client` | `DotNetDiag.HealthChecks.UI.Client` |
+| `AspNetCore.HealthChecks.UI.InMemory.Storage` | `DotNetDiag.HealthChecks.UI.InMemory.Storage` |
+| `AspNetCore.HealthChecks.Publisher.ApplicationInsights` | removed, no fork; see below |
+
+If your application references these packages directly, rename them and
+refresh `packages.lock.json`.
+
+`AddArkHealthChecks` no longer registers the Application Insights health
+publisher. Use the OpenTelemetry route from
+[section 3](#3-move-from-application-insights-v2-to-opentelemetry), or register
+your own `IHealthCheckPublisher`.
+
+`DotNetDiag.HealthChecks.UI` brings `Microsoft.EntityFrameworkCore.Design` and
+therefore Roslyn 5.x. Central pins for `Microsoft.CodeAnalysis.CSharp`,
+`Microsoft.CodeAnalysis.CSharp.Workspaces` and
+`Microsoft.CodeAnalysis.Workspaces.Common` must be `5.0.0` or higher if your
+solution uses central package transitive pinning.
+
+## 8. Validate the migration
 
 ```bash
 dotnet restore
