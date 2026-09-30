@@ -40,7 +40,7 @@ public sealed class ArkJsonStringEnumConverter : JsonConverterFactory
 
     /// <inheritdoc />
     [UnconditionalSuppressMessage("Trimming", "IL2071:DynamicallyAccessedMembers",
-        Justification = "Enum fields are only read to find name attributes; trimmed fields fall back to the member name like the built-in converter.")]
+        Justification = "ILLink always keeps every field of a kept enum type, and name attributes are referenced by EnumNames; System.Text.Json relies on the same guarantee in its enum converter.")]
     [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
         Justification = "The requirement is declared on the constructor.")]
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
