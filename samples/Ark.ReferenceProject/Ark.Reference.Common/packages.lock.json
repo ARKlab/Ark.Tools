@@ -175,11 +175,6 @@
           "Newtonsoft.Json": "13.0.1"
         }
       },
-      "Macross.Json.Extensions": {
-        "type": "Transitive",
-        "resolved": "3.0.0",
-        "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
-      },
       "MessagePack": {
         "type": "Transitive",
         "resolved": "3.1.10",
@@ -1101,8 +1096,7 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Macross.Json.Extensions": "[3.0.0, )"
+          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )"
         }
       },
       "Azure.Identity": {

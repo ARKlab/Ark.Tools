@@ -106,6 +106,15 @@ that still call `TelemetryClient.Track*` or use Application Insights
 processors. Application Insights is no longer registered implicitly by Ark
 hosting packages. See the [telemetry upgrade guide](otel/upgrade-guide.md).
 
+### Macross.Json.Extensions removed
+
+`Ark.Tools.SystemTextJson` replaces the unmaintained `Macross.Json.Extensions`
+converters with `ArkJsonStringEnumConverter`, `IPAddressJsonConverter`, and
+`IPEndPointJsonConverter`. The `ConfigureArkDefaults` wire format is unchanged.
+`[EnumMember]` names still apply, and `[JsonStringEnumMemberName]` now takes
+precedence. `ArkJsonStringEnumConverter<TEnum>` is Native AOT compatible. See
+[Replace Macross.Json.Extensions types](migration-v7.md#6-replace-macrossjsonextensions-types).
+
 ## Upgrade
 
 Read [Migration to v7](migration-v7.md) before updating production solutions,

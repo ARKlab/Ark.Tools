@@ -537,8 +537,7 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Macross.Json.Extensions": "[3.0.0, )"
+          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )"
         }
       },
       "FluentFTP": {
@@ -546,12 +545,6 @@
         "requested": "[55.0.0, )",
         "resolved": "55.0.0",
         "contentHash": "5ufTSEjrItvSsPWz5IZ7OTilYu42YM9fGQbogrJZsvCrKat/tz+sWHCDt0/izVvi8ZYfy3G9bZR8D9goyJ9BuA=="
-      },
-      "Macross.Json.Extensions": {
-        "type": "CentralTransitive",
-        "requested": "[3.0.0, )",
-        "resolved": "3.0.0",
-        "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
       },
       "MailKit": {
         "type": "CentralTransitive",

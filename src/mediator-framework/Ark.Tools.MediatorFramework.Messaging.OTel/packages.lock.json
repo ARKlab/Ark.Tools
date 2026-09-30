@@ -349,8 +349,7 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
-          "Macross.Json.Extensions": "[3.0.0, )"
+          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )"
         }
       },
       "Google.Protobuf": {
@@ -358,12 +357,6 @@
         "requested": "[3.36.2, )",
         "resolved": "3.36.2",
         "contentHash": "Ci1q1iJg74qAE5riTA2FbMS0wPbpruPQI/JQ9DrAsRo2VsSxgt1e/pmxGxgrci+pXJEgrSYg2vPl8rrStZkclQ=="
-      },
-      "Macross.Json.Extensions": {
-        "type": "CentralTransitive",
-        "requested": "[3.0.0, )",
-        "resolved": "3.0.0",
-        "contentHash": "AkNshs6dopj8FXsmkkJxvLivN2SyDJQDbjcds5lo9+Y6L4zpcoXdmzXQ3VVN+AIWQr0CTD5A7vkuHGAr2aypZg=="
       },
       "MailKit": {
         "type": "CentralTransitive",
