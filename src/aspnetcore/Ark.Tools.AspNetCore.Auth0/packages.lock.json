@@ -15,9 +15,9 @@
       },
       "Auth0.ManagementApi": {
         "type": "Direct",
-        "requested": "[10.3.0, )",
-        "resolved": "10.3.0",
-        "contentHash": "mVSvvyBKOYU0MMX6zDxA16bwCrRy8GyFYvh0lIkE/4OlmVfJzcsMLfxqTiWz3DKugLCl/MNt7CgcXAIarE+CiA==",
+        "requested": "[10.4.0, )",
+        "resolved": "10.4.0",
+        "contentHash": "FS7FGX8dNO/3N5b2hTIdqPpB60Bm82sCxKDKkM7cB5XcvgDKnuByFwmCSq0N560EDsFjjyhrQDFcgZrmoN4Xxg==",
         "dependencies": {
           "Auth0.AuthenticationApi": "7.49.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",

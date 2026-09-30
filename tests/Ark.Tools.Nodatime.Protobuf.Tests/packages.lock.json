@@ -356,7 +356,7 @@
         "dependencies": {
           "Google.Api.CommonProtos": "[2.17.0, )",
           "Google.Protobuf": "[3.36.2, )",
-          "NodaTime": "[3.3.4, )",
+          "NodaTime": "[3.3.5, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.4.30, )"
         }
@@ -486,9 +486,9 @@
       },
       "NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.3.4, )",
-        "resolved": "3.3.4",
-        "contentHash": "iLaEeOFjWHVibXmHa8WOMTkZdxvzTH6b7qNYts7cBmSfttCDenguHvEJsuAQGBDPV4LSA+7c0nyt4A0AR6z6zQ=="
+        "requested": "[3.3.5, )",
+        "resolved": "3.3.5",
+        "contentHash": "0qtGKHOYhQGCeUItP4RN8KJktsKD9j/B4IqmoecUL+ymReq69O71qEpZY6x0aQPZa5KDLXY41aEOOHZ9T6Uqgw=="
       },
       "NodaTime.Serialization.Protobuf": {
         "type": "CentralTransitive",
