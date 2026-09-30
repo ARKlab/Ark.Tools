@@ -55,7 +55,7 @@
     <PackageVersion Include="MSTest.TestFramework" Version="4.4.1" />
     <PackageVersion Include="MSTest.Analyzers" Version="4.4.1" />
     <PackageVersion Include="Moq" Version="4.21.0" />
-    <PackageVersion Include="NodaTime.Testing" Version="3.3.4" />
+    <PackageVersion Include="NodaTime.Testing" Version="3.3.5" />
     <PackageVersion Include="Reqnroll.MsTest" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
     
