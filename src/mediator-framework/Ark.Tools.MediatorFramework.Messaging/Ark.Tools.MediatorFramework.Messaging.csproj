@@ -15,7 +15,6 @@
     <InternalsVisibleTo Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
     <InternalsVisibleTo Include="Ark.MediatorFramework.Sample.Tests" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="NodaTime" />

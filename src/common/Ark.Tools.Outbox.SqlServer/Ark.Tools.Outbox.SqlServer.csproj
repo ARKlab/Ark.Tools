@@ -23,7 +23,6 @@
 
 	<ItemGroup>
         <PackageReference Include="Dapper" />
-		<PackageReference Include="Polly" />
 		<PackageReference Include="morelinq" />
 	</ItemGroup>
 	

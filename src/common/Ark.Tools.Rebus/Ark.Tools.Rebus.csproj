@@ -34,7 +34,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="OpenTelemetry.Api" />
 		<PackageReference Include="Rebus" />
 		<PackageReference Include="Rebus.NLog" />
 		<PackageReference Include="Rebus.AzureServiceBus" />

@@ -14,7 +14,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />    
-    <PackageReference Include="Moq" />
     <PackageReference Include="NodaTime.Testing" />
     <PackageReference Include="Reqnroll.MsTest" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />

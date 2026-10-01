@@ -38,7 +38,6 @@
     <PackageReference Include="NLog.MailKit" />
     <PackageReference Include="Slack.Webhooks" />
 
-	  <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
   <ItemGroup>

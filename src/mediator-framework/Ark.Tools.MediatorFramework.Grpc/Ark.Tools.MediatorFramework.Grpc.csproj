@@ -16,10 +16,10 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Google.Api.CommonProtos" />
-    <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.StatusProto" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
+    <!-- Keep System.Security.Cryptography.Pkcs at 10.0.12 in dependent projects. -->
     <PackageReference Include="System.ServiceModel.Primitives" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
