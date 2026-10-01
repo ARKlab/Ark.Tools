@@ -57,12 +57,6 @@
         "resolved": "4.1.13",
         "contentHash": "l9NiCqVmBBY06Lrxv61xWtiLvU1feto6j7QmMsaARBopO+QLTFDFLEIbYe8pYGjk1INJ2eWE/GGjToqQpokYAw=="
       },
-      "Newtonsoft.Json": {
-        "type": "Direct",
-        "requested": "[13.0.4, )",
-        "resolved": "13.0.4",
-        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
-      },
       "NLog": {
         "type": "Direct",
         "requested": "[6.2.1, )",
@@ -506,6 +500,12 @@
           "Microsoft.IdentityModel.Protocols": "8.23.0",
           "System.IdentityModel.Tokens.Jwt": "8.23.0"
         }
+      },
+      "Newtonsoft.Json": {
+        "type": "CentralTransitive",
+        "requested": "[13.0.4, )",
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
       },
       "NodaTime": {
         "type": "CentralTransitive",

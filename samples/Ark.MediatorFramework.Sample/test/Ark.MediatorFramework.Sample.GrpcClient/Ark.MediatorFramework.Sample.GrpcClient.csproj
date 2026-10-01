@@ -8,10 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Keep Grpc.Net.Common at 2.84.0; removing this downgrades it to 2.80.0. -->
     <PackageReference Include="Grpc.Net.Client" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
     <PackageReference Include="Google.Api.CommonProtos" />
-    <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
   </ItemGroup>

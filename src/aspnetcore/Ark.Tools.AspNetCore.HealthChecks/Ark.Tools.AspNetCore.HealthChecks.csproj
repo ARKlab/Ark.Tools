@@ -34,7 +34,6 @@
 	<ItemGroup>
 		<PackageReference Include="DotNetDiag.HealthChecks.AzureServiceBus" />
 		<PackageReference Include="DotNetDiag.HealthChecks.Network" />
-		<PackageReference Include="DotNetDiag.HealthChecks.Oracle" />
 		<PackageReference Include="DotNetDiag.HealthChecks.SqlServer" />
 		<PackageReference Include="DotNetDiag.HealthChecks.UI.Client" />
 		<PackageReference Include="SSH.NET" />

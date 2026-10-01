@@ -23,12 +23,6 @@
           "Google.Protobuf": "[3.31.1, 4.0.0]"
         }
       },
-      "Google.Protobuf": {
-        "type": "Direct",
-        "requested": "[3.36.2, )",
-        "resolved": "3.36.2",
-        "contentHash": "Ci1q1iJg74qAE5riTA2FbMS0wPbpruPQI/JQ9DrAsRo2VsSxgt1e/pmxGxgrci+pXJEgrSYg2vPl8rrStZkclQ=="
-      },
       "Grpc.StatusProto": {
         "type": "Direct",
         "requested": "[2.84.0, )",
@@ -280,7 +274,6 @@
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
           "NLog.MailKit": "[6.1.5, )",
-          "Newtonsoft.Json": "[13.0.4, )",
           "Slack.Webhooks": "[1.1.6, )"
         }
       },
@@ -328,6 +321,12 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )"
         }
+      },
+      "Google.Protobuf": {
+        "type": "CentralTransitive",
+        "requested": "[3.36.2, )",
+        "resolved": "3.36.2",
+        "contentHash": "Ci1q1iJg74qAE5riTA2FbMS0wPbpruPQI/JQ9DrAsRo2VsSxgt1e/pmxGxgrci+pXJEgrSYg2vPl8rrStZkclQ=="
       },
       "MailKit": {
         "type": "CentralTransitive",

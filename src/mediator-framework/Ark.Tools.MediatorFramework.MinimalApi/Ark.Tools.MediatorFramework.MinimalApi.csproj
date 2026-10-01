@@ -16,7 +16,6 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    <PackageReference Include="Hellang.Middleware.ProblemDetails" />
     <PackageReference Include="MessagePack" />
     <PackageReference Include="MessagePack.NodaTime" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
