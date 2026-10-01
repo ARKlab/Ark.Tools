@@ -42,12 +42,6 @@
           "Microsoft.CodeAnalysis.Common": "[5.0.0]"
         }
       },
-      "Microsoft.CodeAnalysis.NetAnalyzers": {
-        "type": "Direct",
-        "requested": "[10.0.401, )",
-        "resolved": "10.0.401",
-        "contentHash": "qGPLk4hknvVp6j9Lowa0qykw1cK7CyEyyy2aVs4dkOGroOMHJLRsMpUT53IKvYT6q78jxv96FZhzy3BrKCPgmA=="
-      },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
         "requested": "[4.1.13, )",

@@ -1,10 +1,22 @@
 is_global = true
-global_level = 90
+# Above Ark.Tools.NetAnalyzers.globalconfig (90) so the CA overrides below win; still below a consumer .globalconfig (100).
+global_level = 91
 
 #### Meziantou.Analyzer Rules (MA*) and Visual Studio Threading Analyzers (VSTHRD*) ####
 
 MA0002.report_only_non_ordinal = true
 MA0015.consider_member_access_as_parameter = true
+
+#### CA rules duplicated by enforced MA rules (skip the duplicate analysis work) ####
+
+# CA1305: Specify IFormatProvider - covered by MA0011
+dotnet_diagnostic.CA1305.severity = none
+
+# CA1310: Specify StringComparison for correctness - covered by MA0074
+dotnet_diagnostic.CA1310.severity = none
+
+# CA2016: Forward the CancellationToken parameter - covered by MA0040
+dotnet_diagnostic.CA2016.severity = none
 
 # MA0001: StringComparison is missing
 dotnet_diagnostic.MA0001.severity = none
