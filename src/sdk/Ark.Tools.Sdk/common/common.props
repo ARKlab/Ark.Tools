@@ -16,6 +16,7 @@
 
     <!-- Compliance remains opt-in while the analyzer is beta. -->
     <EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == ''">false</EnableArkToolsCompliance>
+    <EnableReferenceTrimmer Condition="'$(EnableReferenceTrimmer)' == ''">true</EnableReferenceTrimmer>
     <NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
     <NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
     <NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
