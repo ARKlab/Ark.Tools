@@ -16,7 +16,6 @@
 
     <!-- Compliance remains opt-in while the analyzer is beta. -->
     <EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == ''">false</EnableArkToolsCompliance>
-    <EnableReferenceTrimmer Condition="'$(EnableReferenceTrimmer)' == ''">true</EnableReferenceTrimmer>
     <NuGetAudit Condition="'$(NuGetAudit)' == ''">true</NuGetAudit>
     <NuGetAuditMode Condition="'$(NuGetAuditMode)' == ''">all</NuGetAuditMode>
     <NuGetAuditLevel Condition="'$(NuGetAuditLevel)' == ''">low</NuGetAuditLevel>
@@ -31,6 +30,11 @@
     <IncludeSymbols Condition="'$(IncludeSymbols)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">true</IncludeSymbols>
     <SymbolPackageFormat Condition="'$(SymbolPackageFormat)' == '' and '$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'">snupkg</SymbolPackageFormat>
 
+  </PropertyGroup>
+
+  <PropertyGroup Label="ReferenceTrimmer">
+    <EnableReferenceTrimmer Condition="'$(EnableReferenceTrimmer)' == ''">true</EnableReferenceTrimmer>
+    <ReferenceTrimmerUseSymbolAnalysis Condition="'$(ReferenceTrimmerUseSymbolAnalysis)' == ''">true</ReferenceTrimmerUseSymbolAnalysis>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false'">

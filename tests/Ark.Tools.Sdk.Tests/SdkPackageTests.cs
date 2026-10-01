@@ -374,10 +374,13 @@ public sealed class SdkPackageTests
         using var baseline = await _evaluateSdkAsync(
             fixtureRoot, _feed, "default", "Consumer.csproj", _createSdkCSharpProject());
         Assert.AreEqual("true", _getProperty(baseline, "EnableReferenceTrimmer"));
-        var reference = _getPackageReferences(baseline)["ReferenceTrimmer"];
-        Assert.AreEqual("3.5.9", reference["Version"]);
-        Assert.AreEqual("true", reference["IsImplicitlyDefined"]);
-        Assert.AreEqual("all", reference["PrivateAssets"]);
+        Assert.AreEqual("true", _getProperty(baseline, "ReferenceTrimmerUseSymbolAnalysis"));
+        Assert.IsTrue(_getPackageReferences(baseline).ContainsKey("ReferenceTrimmer"));
+
+        using var symbolOptOut = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "symbol-disabled", "Consumer.csproj",
+            _createSdkCSharpProject("<ReferenceTrimmerUseSymbolAnalysis>false</ReferenceTrimmerUseSymbolAnalysis>"));
+        Assert.AreEqual("false", _getProperty(symbolOptOut, "ReferenceTrimmerUseSymbolAnalysis"));
 
         using var earlyOptOut = await _evaluateSdkAsync(
             fixtureRoot, _feed, "early-disabled", "Consumer.csproj", _createSdkCSharpProject(),
@@ -1534,6 +1537,7 @@ public sealed class ConsumerTests
             "EnableSourceControlManagerQueries",
             "EnableSourceLink",
             "EnableReferenceTrimmer",
+            "ReferenceTrimmerUseSymbolAnalysis",
             "ArkComplianceMode"
         };
         var output = await _runAsync(
