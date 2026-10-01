@@ -28,6 +28,18 @@
   <Import Project="$(MSBuildThisFileDirectory)../../../compliance/Ark.Tools.Compliance.Analyzers/buildTransitive/Ark.Tools.Compliance.Analyzers.props"
           Condition="'$(EnableArkToolsCompliance)' == 'true' and '$(ArkToolsComplianceImplementationProject)' != 'true' and '$(_ArkToolsSdkSourceBuild)' == 'true'" />
 
+  <!-- ponytail: Microsoft.CodeAnalysis.NetAnalyzers 10.0.x ships no build props, so the SDK copy is never disabled and every
+       compilation runs both (~25% of Csc time). Drop the SDK copy; the SDK AnalysisLevel globalconfig stays. Remove once the
+       package ships DisableNETAnalyzersForNuGetPackage.props again. -->
+  <Target Name="_ArkRemoveDuplicateSdkNetAnalyzers"
+          BeforeTargets="CoreCompile"
+          Condition="'$(EnableArkToolsNetAnalyzers)' != 'false' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)"
+                Condition="'%(Analyzer.NuGetPackageId)' == '' and ('%(Analyzer.Filename)' == 'Microsoft.CodeAnalysis.NetAnalyzers' or '%(Analyzer.Filename)' == 'Microsoft.CodeAnalysis.CSharp.NetAnalyzers' or '%(Analyzer.Filename)' == 'Microsoft.CodeAnalysis.VisualBasic.NetAnalyzers')" />
+    </ItemGroup>
+  </Target>
+
   <!-- ponytail: ReferenceTrimmer 3.5.9 hashes only reference identities, so TreatAsUsed/NoWarn edits leave stale RT000x in
        incremental builds. Feed that metadata into its input hash; relies on RT internals, drop once fixed upstream. -->
   <Target Name="_ArkReferenceTrimmerHashSuppressionMetadata"

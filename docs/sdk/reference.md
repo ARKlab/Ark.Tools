@@ -199,6 +199,12 @@ generated TRX, dump, and coverage artifacts.
 | `Microsoft.Testing.Extensions.TrxReport` | Test and enabled |
 | `Microsoft.Testing.Extensions.AzureDevOpsReport` | Test and enabled |
 
+When `Microsoft.CodeAnalysis.NetAnalyzers` is injected, the SDK removes the
+.NET SDK's built-in copy of the same analyzers before `CoreCompile`, so CA
+rules run once per compilation. When `Meziantou.Analyzer` is enabled, its
+configuration turns off `CA1305`, `CA1310`, and `CA2016`, which duplicate the
+enforced `MA0011`, `MA0074`, and `MA0040`.
+
 The SDK intentionally does not add a test framework, assertion library,
 Reqnroll adapter, `Microsoft.NET.Test.Sdk`, or VSTest compatibility bridge.
 Those choices remain consumer-owned.
