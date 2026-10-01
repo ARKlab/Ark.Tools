@@ -399,6 +399,43 @@ public sealed class SdkPackageTests
         Assert.IsFalse(_getPackageReferences(sql).ContainsKey("ReferenceTrimmer"));
     }
 
+    /// <summary>
+    /// Verifies an incremental build picks up TreatAsUsed added to a reference ReferenceTrimmer reported as unused.
+    /// </summary>
+    [TestMethod]
+    public async Task ReferenceTrimmerHonorsTreatAsUsedIncrementally()
+    {
+        var fixtureRoot = Path.Join(_root, "artifacts", "sdk-reference-trimmer-incremental");
+        _prepareSdkFixture(fixtureRoot);
+        static string Project(string metadata) => $"""
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.9.0"{metadata} />
+  </ItemGroup>
+  <Sdk Name="Ark.Tools.Sdk" />
+</Project>
+""";
+        var scenarioRoot = await _createSdkScenarioAsync(
+            fixtureRoot, _feed, "incremental", "Consumer.csproj", Project("")).ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "Consumer.cs"),
+            "namespace Consumer;\n\n/// <summary>Placeholder.</summary>\npublic static class Placeholder;\n").ConfigureAwait(false);
+        var environment = _createSdkEnvironment(fixtureRoot);
+        var build = $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\"";
+
+        var unused = await _runForExitCodeAsync("dotnet", build, environment).ConfigureAwait(false);
+        Assert.AreNotEqual(0, unused.ExitCode, unused.Output);
+        StringAssert.Contains(unused.Output, "RT0003", StringComparison.Ordinal);
+
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "Consumer.csproj"), Project(" TreatAsUsed=\"true\"")).ConfigureAwait(false);
+        var treatedAsUsed = await _runForExitCodeAsync("dotnet", build, environment).ConfigureAwait(false);
+        Assert.AreEqual(0, treatedAsUsed.ExitCode, treatedAsUsed.Output);
+    }
+
     private static readonly string[] _allSyntheticAnalyzers =
     [
         "DevLooped.SponsorLink.dll",
