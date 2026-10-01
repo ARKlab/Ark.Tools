@@ -465,7 +465,7 @@ The inventory below was verified against:
 
 | Current asset | Current behavior | Disposition |
 | --- | --- | --- |
-| `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.400 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
+| `Microsoft.CodeAnalysis.NetAnalyzers` 10.0.400 | Private analyzer reference for non-SQL projects | Exclude: the .NET SDK already loads the same analyzers (`EnableNETAnalyzers`); a package copy runs every CA rule twice per compilation. CA rule versions follow the installed .NET SDK. |
 | `Microsoft.CodeAnalysis.BannedApiAnalyzers` 4.14.0 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
 | `Meziantou.Analyzer` 3.0.160 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference. |
 | `Microsoft.VisualStudio.Threading.Analyzers` 18.7.23 | Private analyzer reference for non-SQL projects | SDK: exact implicit reference when `EnableArkToolsVisualStudioThreading=true`. |
@@ -528,6 +528,10 @@ one merged configuration.
 | Suggestion | `MA0016`, `MA0051`, `MA0121` |
 | Silent | `MA0006`, `MA0007`, `MA0048`, `MA0056` |
 | None | `MA0015`, `MA0032`, `MA0049` |
+
+This file uses `global_level` 91, above `Ark.Tools.NetAnalyzers.globalconfig`
+(90), and sets `CA1305`, `CA1310`, and `CA2016` to `none` because
+`MA0011`, `MA0074`, and `MA0040` cover the same checks.
 
 #### `Ark.Tools.ErrorProne.globalconfig`
 
@@ -660,7 +664,7 @@ consumer repository:
 The package's style and analyzer options are direct compiler/design-time
 inputs. Each analyzer has its own file and switch, including analyzer severities
 currently embedded in the source coding-style configuration. Packaged global configs use a
-`global_level` below the default level
+`global_level` (90 or 91) below the default level
 `100` of a consumer `.globalconfig`, so an ordinary local global config wins.
 Source-tree `.editorconfig` entries win over global configs, and deeper local
 EditorConfig files win over shallower local files. The implementation must prove
