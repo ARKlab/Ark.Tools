@@ -83,7 +83,7 @@ directly unless the table says that a switch controls the capability.
 | `TreatTSqlWarningsAsErrors` | `true` when empty and `UsingMicrosoftBuildSqlSdk=true` | Build props | Set `false` or another value |
 | `RunSqlCodeAnalysis` | `true` when empty and `UsingMicrosoftBuildSqlSdk=true` | Build props | Set `false` or another value |
 | `EnableArkToolsCodingStyle` | Enabled unless `false` | Build props | Set `false` |
-| `EnableArkToolsNetAnalyzers` | Enabled unless `false` | Build props and SDK restore | Set `false` |
+| `EnableArkToolsNetAnalyzers` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsMeziantouAnalyzer` | Enabled unless `false` | Build props and SDK restore | Set `false` |
 | `EnableArkToolsErrorProne` | Enabled unless `false` | Build props and SDK restore | Set `false` |
 | `EnableReferenceTrimmer` | `true` when empty; installs ReferenceTrimmer for non-SQL C# projects unless `false` | Early and SDK restore | Set `false` before or in the project |
@@ -183,7 +183,6 @@ generated TRX, dump, and coverage artifacts.
 | Package | Condition |
 | --- | --- |
 | `Ark.Tools.Build` | SDK enabled |
-| `Microsoft.CodeAnalysis.NetAnalyzers` | Non-SQL and enabled |
 | `Microsoft.CodeAnalysis.BannedApiAnalyzers` | Non-SQL and enabled |
 | `Meziantou.Analyzer` | Non-SQL and enabled |
 | `Microsoft.VisualStudio.Threading.Analyzers` | Non-SQL and `EnableArkToolsVisualStudioThreading=true` |
@@ -199,9 +198,9 @@ generated TRX, dump, and coverage artifacts.
 | `Microsoft.Testing.Extensions.TrxReport` | Test and enabled |
 | `Microsoft.Testing.Extensions.AzureDevOpsReport` | Test and enabled |
 
-When `Microsoft.CodeAnalysis.NetAnalyzers` is injected, the SDK removes the
-.NET SDK's built-in copy of the same analyzers before `CoreCompile`, so CA
-rules run once per compilation. When `Meziantou.Analyzer` is enabled, its
+CA rules come from the .NET SDK's built-in analyzers, so their version follows
+the installed .NET SDK; `EnableArkToolsNetAnalyzers=false` only drops the Ark
+configuration. When `Meziantou.Analyzer` is enabled, its
 configuration turns off `CA1305`, `CA1310`, and `CA2016`, which duplicate the
 enforced `MA0011`, `MA0074`, and `MA0040`.
 

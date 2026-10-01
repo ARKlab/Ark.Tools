@@ -445,7 +445,6 @@ public sealed class SdkPackageTests
 
     private static readonly string[] _sdkAnalyzers =
     [
-        "Microsoft.CodeAnalysis.NetAnalyzers",
         "Microsoft.CodeAnalysis.BannedApiAnalyzers",
         "Meziantou.Analyzer",
         "ErrorProne.NET.CoreAnalyzers"
