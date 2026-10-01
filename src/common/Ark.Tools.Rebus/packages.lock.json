@@ -105,6 +105,12 @@
           "rebus": "8.9.0"
         }
       },
+      "ReferenceTrimmer": {
+        "type": "Direct",
+        "requested": "[3.5.9, )",
+        "resolved": "3.5.9",
+        "contentHash": "yxiTijEk4Su7Ama9Dny8HNC0tpFg7+8y5F8E2FnNuzc0+OzwAwrSxeFSRcBkW1BtC4SEiohsKFtYRH+a2QpJdQ=="
+      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.62.0",

@@ -9,8 +9,7 @@
 	<IsPackable>true</IsPackable>
 	<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
 	<_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
-	<!-- ponytail: source builds skip RT0003 until existing references are audited; remove this override after cleanup. -->
-	<EnableReferenceTrimmer>false</EnableReferenceTrimmer>
+	<EnableReferenceTrimmer>true</EnableReferenceTrimmer>
 	<!-- The compliance implementation cannot analyze itself; it is validated through dedicated analyzer tests. -->
 	<ArkToolsComplianceImplementationProject
 	  Condition="$(MSBuildProjectDirectory.Contains('/src/compliance/')) Or $(MSBuildProjectDirectory.Contains('\src\compliance\'))">true</ArkToolsComplianceImplementationProject>

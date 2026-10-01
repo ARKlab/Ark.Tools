@@ -20,7 +20,7 @@
     <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" />
     <!-- Keep System.Security.Cryptography.Pkcs at 10.0.12 in dependent projects. -->
-    <PackageReference Include="System.ServiceModel.Primitives" />
+    <PackageReference Include="System.ServiceModel.Primitives" TreatAsUsed="true" />
     <!-- Core transport-agnostic attributes and attachment abstractions. -->
     <ProjectReference Include="..\..\common\Ark.Tools.Core\Ark.Tools.Core.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Authorization\Ark.Tools.Authorization.csproj" />
