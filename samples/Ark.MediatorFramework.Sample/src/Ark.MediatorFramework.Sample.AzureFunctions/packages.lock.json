@@ -71,67 +71,6 @@
         "resolved": "11.4.1",
         "contentHash": "HbyvI2RZLjW8zaJOiAtyTaCVEAAvhPp7kCkEgHne4igfAY3o7W0JAmurNrjdItUdRIXanYrWiet2ng/Jjd9+/w=="
       },
-      "AspNetCore.HealthChecks.AzureServiceBus": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "Uzml9qWAvN6xPJejdTLznx9SIczKs/exieiJCU0Kjivt4ZTcsLdE3u2g8HJr0VWhguQad2mpGkwXtQ9nWfkm4g==",
-        "dependencies": {
-          "Azure.Messaging.ServiceBus": "7.17.0",
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11"
-        }
-      },
-      "AspNetCore.HealthChecks.Network": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "Lke7ksxhzZK8qZhSrmxnhdOHkKInzVIdGk7JBAnROQ6M66nuO9ja6ShC0osw83oE+GZazkO+F36gfwD8HlHrXA==",
-        "dependencies": {
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11",
-          "SSH.NET": "2023.0.0"
-        }
-      },
-      "AspNetCore.HealthChecks.Oracle": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "q+vhCRPgxWviMtybuJMTXxM2GzA2/h2Cm+LJyafipxVV7iDCb8uTV41E8CZ6XFJhZfZ0VIEhzE3IAL2m4i+t7g==",
-        "dependencies": {
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11",
-          "Oracle.ManagedDataAccess.Core": "3.21.120"
-        }
-      },
-      "AspNetCore.HealthChecks.Publisher.ApplicationInsights": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "v2GAyHPxJQIH8mBD5bF4GQXvYODMOOb30vaMTvv6ShXnqR2K0YSjZSAMdMc+WEBcjtUvv+1o+Mv+sf9Ho+wXWw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.21.0",
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11"
-        }
-      },
-      "AspNetCore.HealthChecks.SqlServer": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "UxCf65iCF2nU1u7AcB320abjL4CRg5swCgJECY6mKk1j5lrGMfVtskWwriGs1T29pYdRig9Vra3SPnP+4G82pA==",
-        "dependencies": {
-          "Microsoft.Data.SqlClient": "5.2.2",
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11"
-        }
-      },
-      "AspNetCore.HealthChecks.UI.Client": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "1Ub3Wvvbz7CMuFNWgLEc9qqQibiMoovDML/WHrwr5J83RPgtI20giCR92s/ipLgu7IIuqw+W/y7WpIeHqAICxg==",
-        "dependencies": {
-          "AspNetCore.HealthChecks.UI.Core": "9.0.0"
-        }
-      },
-      "AspNetCore.HealthChecks.UI.Core": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "TVriy4hgYnhfqz6NAzv8qe62Q8wf82iKUL6WV9selqeFZTq1ILi39Sic6sFQegRysvAVcnxKP/vY8z9Fk8x6XQ==",
-        "dependencies": {
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.11"
-        }
-      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.62.0",
@@ -243,6 +182,58 @@
         "type": "Transitive",
         "resolved": "2.1.89",
         "contentHash": "1VjFE664wnxvuhlgP8kS4PeFFF4jqD3VkbIHW6Zlc52zuibgcz5ICnIHcQXlTp6pURpPNGLV0ZpNe5x9KePJnA=="
+      },
+      "DotNetDiag.HealthChecks.AzureServiceBus": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "xZpeQ+bWPaS6MvO56efn01PP50GJTRYUr8MjooQ2jnsCuoYQBqrZwU+yx338eBImw7WrPAtH54Hw77lfbD6dIw==",
+        "dependencies": {
+          "Azure.Messaging.ServiceBus": "7.20.1",
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.11"
+        }
+      },
+      "DotNetDiag.HealthChecks.Network": {
+        "type": "Transitive",
+        "resolved": "10.0.15",
+        "contentHash": "B0TVAsok1ROMxowIrVhGCieMDj0RI/qL8fgOhdnA1eWq/RZ4wXTZmXbEmxGYeY+wQG9usRB+o5ur9G7SCu5OGg==",
+        "dependencies": {
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.11",
+          "SSH.NET": "2026.0.0"
+        }
+      },
+      "DotNetDiag.HealthChecks.Oracle": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "/MAWSjqjbuHxm0dAqbGsncmrlVdpKPkkMrmu3CLEwsHNOVO6Cn3ITXo2QdbefjFuHYQBN2aDTRNy1vjPPuZcgQ==",
+        "dependencies": {
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.11",
+          "Oracle.ManagedDataAccess.Core": "23.26.200"
+        }
+      },
+      "DotNetDiag.HealthChecks.SqlServer": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "XrTnkYFoU2wtkim4VO0VBaz2TmIlCB1p5n5TK0QGPgGwjw/I34M3pRv3iOXlr4UljpnIRtGf/VvuPaDBGaJtyQ==",
+        "dependencies": {
+          "Microsoft.Data.SqlClient": "7.0.2",
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.11"
+        }
+      },
+      "DotNetDiag.HealthChecks.UI.Client": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "1ncErMuqsHF0fi1aG3fjpz3U1RQsSK0izllp/zYddJiUD2RJqF7P9xB63mqVv+Inr90KH3O12DP35kCMkJNTfQ==",
+        "dependencies": {
+          "DotNetDiag.HealthChecks.UI.Core": "10.0.14"
+        }
+      },
+      "DotNetDiag.HealthChecks.UI.Core": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "tbCapQGMaRx3MMYvUnyi2xeBTqlhHxvPR4J2udMLglxOEYcOkAQvWZaDHGkJbVKI/WBMCJmaUqRz3Pe35PvB5w==",
+        "dependencies": {
+          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.11"
+        }
       },
       "FluentValidation": {
         "type": "Transitive",
@@ -657,19 +648,19 @@
       },
       "Microsoft.Extensions.Diagnostics.HealthChecks": {
         "type": "Transitive",
-        "resolved": "8.0.11",
-        "contentHash": "zLgN22Zp9pk8RHlwssRTexw4+a6wqOnKWN+VejdPn5Yhjql4XiBhkFo35Nu8mmqHIk/UEmmCnMGLWq75aFfkOw==",
+        "resolved": "10.0.11",
+        "contentHash": "fzUGzOCLquuyIxVVvvcw9h8KaUrRZ/cGTai2gBDQ1YxbdH/8eZnSyoOu+PQJYoD+RUcgTTlVe6D4+FrcaUOR9w==",
         "dependencies": {
-          "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "8.0.11",
-          "Microsoft.Extensions.Hosting.Abstractions": "8.0.1",
-          "Microsoft.Extensions.Logging.Abstractions": "8.0.2",
-          "Microsoft.Extensions.Options": "8.0.2"
+          "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "10.0.11",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.11",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.11",
+          "Microsoft.Extensions.Options": "10.0.11"
         }
       },
       "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": {
         "type": "Transitive",
-        "resolved": "8.0.11",
-        "contentHash": "So3JUdRxozRjvQ3cxU6F3nI/i4emDnjane6yMYcJhvTTTu29ltlIdoXjkFGRceIWz8yKvuEpzXItZ0x5GvN2nQ=="
+        "resolved": "10.0.11",
+        "contentHash": "5DCBP95vpklAkEfIbT2yzunianCeRtjaLrmAwoIgTf+xOJGFMmkAut/p3R2YmZL7TM1dnV81adGIg4m7Kg6wUw=="
       },
       "Microsoft.Extensions.FileProviders.Abstractions": {
         "type": "Transitive",
@@ -937,11 +928,6 @@
         "resolved": "1.0.0",
         "contentHash": "N4KeF3cpcm1PUHym1RmakkzfkEv3GRMyofVv40uXsQhCQeglr2OHNcUk2WOG51AKpGO8ynGpo9M/kFXSzghwug=="
       },
-      "Microsoft.Win32.SystemEvents": {
-        "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "hqTM5628jSsQiv+HGpiq3WKBl2c8v1KZfby2J6Pr7pEPlK9waPdgEO6b8A/+/xn/yZ9ulv8HuqK71ONy2tg67A=="
-      },
       "MimeKit": {
         "type": "Transitive",
         "resolved": "4.17.0",
@@ -1100,12 +1086,12 @@
       },
       "Oracle.ManagedDataAccess.Core": {
         "type": "Transitive",
-        "resolved": "3.21.120",
-        "contentHash": "RrSu5ZlhIqpV7mFauPfc2AkCsuWXA2cWCNXOBW+Wt7R8g6wqonWIWZN3iyhwr4mZMRrClJB/SRMtQzQMHuZPmg==",
+        "resolved": "23.26.200",
+        "contentHash": "l+k3UOpWfv7g2F4/FnenQlwMMvVk8LLlVgAn1qdl3Seyna2kkyogSHS0ceBGMKNT7KjC79rpIyFmt8Q0QveB3A==",
         "dependencies": {
-          "System.Diagnostics.PerformanceCounter": "6.0.1",
-          "System.DirectoryServices": "6.0.1",
-          "System.DirectoryServices.Protocols": "6.0.2"
+          "System.Diagnostics.PerformanceCounter": "8.0.0",
+          "System.DirectoryServices.Protocols": "8.0.2",
+          "System.Security.Cryptography.Pkcs": "8.0.1"
         }
       },
       "Polly.Core": {
@@ -1247,32 +1233,16 @@
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "Transitive",
-        "resolved": "7.0.0",
-        "contentHash": "L+zIMEaXp1vA4wZk1KLMpk6tvU0xy94R0IfmhkmTWeC4KwShsmAfbg5I19LgjsCTYp6GVdXZ2aHluVWL0QqBdA==",
+        "resolved": "8.0.0",
+        "contentHash": "lX6DXxtJqVGWw7N/QmVoiCyVQ+Q/Xp+jVXPr3gLK1jJExSn1qmAjJQeb8gnOYeeBTG3E3PmG1nu92eYj/TEjpg==",
         "dependencies": {
-          "System.Configuration.ConfigurationManager": "7.0.0"
-        }
-      },
-      "System.DirectoryServices": {
-        "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "935IbO7h5FDGYxeO3cbx/CuvBBuk/VI8sENlfmXlh1pupNOB3LAGzdYdPY8CawGJFP7KNrHK5eUlsFoz3F6cuA==",
-        "dependencies": {
-          "System.Security.Permissions": "6.0.0"
+          "System.Configuration.ConfigurationManager": "8.0.0"
         }
       },
       "System.DirectoryServices.Protocols": {
         "type": "Transitive",
-        "resolved": "6.0.2",
-        "contentHash": "vDDPWwHn3/DNZ+kPkdXHoada+tKPEC9bVqDOr4hK6HBSP7hGCUTA0Zw6WU5qpGaqa5M1/V+axHMIv+DNEbIf6g=="
-      },
-      "System.Drawing.Common": {
-        "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
-        "dependencies": {
-          "Microsoft.Win32.SystemEvents": "6.0.0"
-        }
+        "resolved": "8.0.2",
+        "contentHash": "7pSU+qkmdkwbikAvn4kpvClfyffaR7dYJw7ucBtO5d6m/7wgKZIULOZAGFLMIMOFFmg7xC67TYKptHxcbqQm+Q=="
       },
       "System.IO.FileSystem.AccessControl": {
         "type": "Transitive",
@@ -1299,14 +1269,6 @@
         "resolved": "10.0.0",
         "contentHash": "qy6C3gQRTrfhFfuiIYU1jNwWfFdJpBVo1BARW7jgMm1zTEm3LRzLLyOLJGaAuKE+nZCGkEP71y4rj9NWjqLGdQ=="
       },
-      "System.Security.Permissions": {
-        "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "T/uuc7AklkDoxmcJ7LGkyX1CcSviZuLCa4jg3PekfJ7SU0niF0IVTXwUiNVP9DSpzou2PpxJ+eNY2IfDM90ZCg==",
-        "dependencies": {
-          "System.Windows.Extensions": "6.0.0"
-        }
-      },
       "System.ServiceModel.Primitives": {
         "type": "Transitive",
         "resolved": "10.0.652802",
@@ -1320,14 +1282,6 @@
         "type": "Transitive",
         "resolved": "9.0.18",
         "contentHash": "pxuHw/tQXaHMRXEaKzzgpoGO8VeTPIzHbnp0KclXp6js5wPHn7VaqSCa8yRTAsZDcZ2XuIEnXGM2MbRDJFLBog=="
-      },
-      "System.Windows.Extensions": {
-        "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "IXoJOXIqc39AIe+CIR7koBtRGMiCt/LPM3lI+PELtDIy9XdyeSrwXFdWV9dzJ2Awl0paLWUaknLxFQ5HpHZUog==",
-        "dependencies": {
-          "System.Drawing.Common": "6.0.0"
-        }
       },
       "ark.mediatorframework.sample.api": {
         "type": "Project",
@@ -1402,15 +1356,13 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "AspNetCore.HealthChecks.AzureServiceBus": "[9.0.0, )",
-          "AspNetCore.HealthChecks.Network": "[9.0.0, )",
-          "AspNetCore.HealthChecks.Oracle": "[9.0.0, )",
-          "AspNetCore.HealthChecks.Publisher.ApplicationInsights": "[9.0.0, )",
-          "AspNetCore.HealthChecks.SqlServer": "[9.0.0, )",
-          "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
+          "DotNetDiag.HealthChecks.AzureServiceBus": "[10.0.14, )",
+          "DotNetDiag.HealthChecks.Network": "[10.0.15, )",
+          "DotNetDiag.HealthChecks.Oracle": "[10.0.14, )",
+          "DotNetDiag.HealthChecks.SqlServer": "[10.0.14, )",
+          "DotNetDiag.HealthChecks.UI.Client": "[10.0.14, )",
           "SSH.NET": "[2026.0.0, )"
         }
       },
@@ -1491,7 +1443,7 @@
           "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
+          "DotNetDiag.HealthChecks.UI.Client": "[10.0.14, )",
           "Microsoft.Azure.Functions.Worker": "[2.52.0, )",
           "Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore": "[2.1.1, )",
           "Microsoft.Azure.Functions.Worker.Extensions.ServiceBus": "[5.24.0, )",

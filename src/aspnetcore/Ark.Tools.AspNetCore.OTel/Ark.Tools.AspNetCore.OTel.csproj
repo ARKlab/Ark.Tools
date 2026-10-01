@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Ark.Tools.AspNetCore.HealthChecks.OTel\Ark.Tools.AspNetCore.HealthChecks.OTel.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.Rebus\Ark.Tools.Rebus.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.OTel\Ark.Tools.OTel.csproj" />
   </ItemGroup>

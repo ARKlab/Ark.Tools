@@ -267,6 +267,9 @@
         "resolved": "10.0.12",
         "contentHash": "wO0W8VDMeRJZakRySOmemAnrBZMwEFRlbfBtATxUiLf2I3IhSRnCp1Vt157NWptdE4IJ7eftd5n8q9LtaKHFTQ=="
       },
+      "ark.tools.aspnetcore.healthchecks.otel": {
+        "type": "Project"
+      },
       "ark.tools.compliance": {
         "type": "Project",
         "dependencies": {

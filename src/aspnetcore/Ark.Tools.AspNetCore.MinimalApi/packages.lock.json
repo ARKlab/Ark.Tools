@@ -60,11 +60,6 @@
           "SimpleInjector.Integration.AspNetCore": "5.5.0"
         }
       },
-      "AspNetCore.HealthChecks.UI.Core": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "TVriy4hgYnhfqz6NAzv8qe62Q8wf82iKUL6WV9selqeFZTq1ILi39Sic6sFQegRysvAVcnxKP/vY8z9Fk8x6XQ=="
-      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.62.0",
@@ -86,20 +81,15 @@
           "System.Memory.Data": "1.0.2"
         }
       },
-      "Azure.Monitor.OpenTelemetry.Exporter": {
-        "type": "Transitive",
-        "resolved": "1.8.0",
-        "contentHash": "JbNUQIK7uZ7Mg2fZzdsjqC/eso3Ag/tMwCqYvGvedyE1fObe6JAwCaCSMZDMrhrAaFn8x8+ZaKJelfcEK5MCcg==",
-        "dependencies": {
-          "Azure.Core": "1.54.0",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "OpenTelemetry.PersistentStorage.FileSystem": "1.0.3"
-        }
-      },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
         "resolved": "2.7.0",
         "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
+      },
+      "DotNetDiag.HealthChecks.UI.Core": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "tbCapQGMaRx3MMYvUnyi2xeBTqlhHxvPR4J2udMLglxOEYcOkAQvWZaDHGkJbVKI/WBMCJmaUqRz3Pe35PvB5w=="
       },
       "Microsoft.Azure.Amqp": {
         "type": "Transitive",
@@ -188,27 +178,6 @@
           "System.Security.Cryptography.Pkcs": "10.0.0"
         }
       },
-      "OpenTelemetry.Api.ProviderBuilderExtensions": {
-        "type": "Transitive",
-        "resolved": "1.19.1",
-        "contentHash": "HtGe72B/IhzKqdU0a3fNE5osax/Cegwxd+p4u6lOFy20nsgmeaFuP2NRyFs1WvrOv/bpkII3IvvBkKoZXG8BLg==",
-        "dependencies": {
-          "OpenTelemetry.Api": "1.19.1"
-        }
-      },
-      "OpenTelemetry.PersistentStorage.Abstractions": {
-        "type": "Transitive",
-        "resolved": "1.0.3",
-        "contentHash": "7nSE1uLY0KOHRssg1xQydDZJ/s9zECOzFT/gSDIp1KTxbgd1yziuMTsdBKZ/N1BbpUxfH6Pjq5OMd7lYogwReA=="
-      },
-      "OpenTelemetry.PersistentStorage.FileSystem": {
-        "type": "Transitive",
-        "resolved": "1.0.3",
-        "contentHash": "3k+yCroJcGBtZIia+0LgzMlBuD0U95BzcWNEGWedusBaRAD8EmkaCPAUwaCtFbb/Mg7HywbIG2zuenANPYFJ0g==",
-        "dependencies": {
-          "OpenTelemetry.PersistentStorage.Abstractions": "1.0.3"
-        }
-      },
       "SimpleInjector.Integration.AspNetCore": {
         "type": "Transitive",
         "resolved": "5.5.0",
@@ -278,15 +247,13 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "AspNetCore.HealthChecks.AzureServiceBus": "[9.0.0, )",
-          "AspNetCore.HealthChecks.Network": "[9.0.0, )",
-          "AspNetCore.HealthChecks.Oracle": "[9.0.0, )",
-          "AspNetCore.HealthChecks.Publisher.ApplicationInsights": "[9.0.0, )",
-          "AspNetCore.HealthChecks.SqlServer": "[9.0.0, )",
-          "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
-          "Microsoft.ApplicationInsights": "[3.1.2, )",
+          "DotNetDiag.HealthChecks.AzureServiceBus": "[10.0.14, )",
+          "DotNetDiag.HealthChecks.Network": "[10.0.15, )",
+          "DotNetDiag.HealthChecks.Oracle": "[10.0.14, )",
+          "DotNetDiag.HealthChecks.SqlServer": "[10.0.14, )",
+          "DotNetDiag.HealthChecks.UI.Client": "[10.0.14, )",
           "SSH.NET": "[2026.0.0, )"
         }
       },
@@ -376,60 +343,6 @@
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )"
         }
       },
-      "AspNetCore.HealthChecks.AzureServiceBus": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "Uzml9qWAvN6xPJejdTLznx9SIczKs/exieiJCU0Kjivt4ZTcsLdE3u2g8HJr0VWhguQad2mpGkwXtQ9nWfkm4g==",
-        "dependencies": {
-          "Azure.Messaging.ServiceBus": "7.17.0"
-        }
-      },
-      "AspNetCore.HealthChecks.Network": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "Lke7ksxhzZK8qZhSrmxnhdOHkKInzVIdGk7JBAnROQ6M66nuO9ja6ShC0osw83oE+GZazkO+F36gfwD8HlHrXA==",
-        "dependencies": {
-          "SSH.NET": "2023.0.0"
-        }
-      },
-      "AspNetCore.HealthChecks.Oracle": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "q+vhCRPgxWviMtybuJMTXxM2GzA2/h2Cm+LJyafipxVV7iDCb8uTV41E8CZ6XFJhZfZ0VIEhzE3IAL2m4i+t7g==",
-        "dependencies": {
-          "Oracle.ManagedDataAccess.Core": "3.21.120"
-        }
-      },
-      "AspNetCore.HealthChecks.Publisher.ApplicationInsights": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "v2GAyHPxJQIH8mBD5bF4GQXvYODMOOb30vaMTvv6ShXnqR2K0YSjZSAMdMc+WEBcjtUvv+1o+Mv+sf9Ho+wXWw==",
-        "dependencies": {
-          "Microsoft.ApplicationInsights": "2.21.0"
-        }
-      },
-      "AspNetCore.HealthChecks.SqlServer": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "UxCf65iCF2nU1u7AcB320abjL4CRg5swCgJECY6mKk1j5lrGMfVtskWwriGs1T29pYdRig9Vra3SPnP+4G82pA==",
-        "dependencies": {
-          "Microsoft.Data.SqlClient": "5.2.2"
-        }
-      },
-      "AspNetCore.HealthChecks.UI.Client": {
-        "type": "CentralTransitive",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "1Ub3Wvvbz7CMuFNWgLEc9qqQibiMoovDML/WHrwr5J83RPgtI20giCR92s/ipLgu7IIuqw+W/y7WpIeHqAICxg==",
-        "dependencies": {
-          "AspNetCore.HealthChecks.UI.Core": "9.0.0"
-        }
-      },
       "Azure.Identity": {
         "type": "CentralTransitive",
         "requested": "[1.21.0, )",
@@ -450,6 +363,51 @@
           "Microsoft.Azure.Amqp": "2.7.0"
         }
       },
+      "DotNetDiag.HealthChecks.AzureServiceBus": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "xZpeQ+bWPaS6MvO56efn01PP50GJTRYUr8MjooQ2jnsCuoYQBqrZwU+yx338eBImw7WrPAtH54Hw77lfbD6dIw==",
+        "dependencies": {
+          "Azure.Messaging.ServiceBus": "7.20.1"
+        }
+      },
+      "DotNetDiag.HealthChecks.Network": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "B0TVAsok1ROMxowIrVhGCieMDj0RI/qL8fgOhdnA1eWq/RZ4wXTZmXbEmxGYeY+wQG9usRB+o5ur9G7SCu5OGg==",
+        "dependencies": {
+          "SSH.NET": "2026.0.0"
+        }
+      },
+      "DotNetDiag.HealthChecks.Oracle": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "/MAWSjqjbuHxm0dAqbGsncmrlVdpKPkkMrmu3CLEwsHNOVO6Cn3ITXo2QdbefjFuHYQBN2aDTRNy1vjPPuZcgQ==",
+        "dependencies": {
+          "Oracle.ManagedDataAccess.Core": "23.26.200"
+        }
+      },
+      "DotNetDiag.HealthChecks.SqlServer": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "XrTnkYFoU2wtkim4VO0VBaz2TmIlCB1p5n5TK0QGPgGwjw/I34M3pRv3iOXlr4UljpnIRtGf/VvuPaDBGaJtyQ==",
+        "dependencies": {
+          "Microsoft.Data.SqlClient": "7.0.2"
+        }
+      },
+      "DotNetDiag.HealthChecks.UI.Client": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "1ncErMuqsHF0fi1aG3fjpz3U1RQsSK0izllp/zYddJiUD2RJqF7P9xB63mqVv+Inr90KH3O12DP35kCMkJNTfQ==",
+        "dependencies": {
+          "DotNetDiag.HealthChecks.UI.Core": "10.0.14"
+        }
+      },
       "MailKit": {
         "type": "CentralTransitive",
         "requested": "[4.18.1, )",
@@ -457,15 +415,6 @@
         "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
         "dependencies": {
           "MimeKit": "4.18.1"
-        }
-      },
-      "Microsoft.ApplicationInsights": {
-        "type": "CentralTransitive",
-        "requested": "[3.1.2, )",
-        "resolved": "3.1.2",
-        "contentHash": "E+8N7Q6GS/AcyJ0xuYA48nVL4eQGGOSJZvNz/R7qQtMGCUwjLzQe9Ttpgh/7eQktngsUuNGaEzBhM7IUU0t4xA==",
-        "dependencies": {
-          "Azure.Monitor.OpenTelemetry.Exporter": "1.8.0"
         }
       },
       "Microsoft.Data.SqlClient": {
@@ -611,30 +560,6 @@
         "contentHash": "jGe0WLNAoRb3efOgsa5iecmMuzP+LNdtw2Rs4N9+2pS4YN+kg8e9Z48Jk47WWebcpqF81YdWT2KNInbXZXTS7w==",
         "dependencies": {
           "NodaTime": "[3.0.0, 4.0.0)"
-        }
-      },
-      "OpenTelemetry": {
-        "type": "CentralTransitive",
-        "requested": "[1.19.1, )",
-        "resolved": "1.19.1",
-        "contentHash": "6ywhc3upf+dq8EsOohj7I7zS3l4yX9vfbtFkvyEC8xIUY4Z9iDIOVuke356eCAzIZaWtmwmmyl2UXYCp5n7I3Q==",
-        "dependencies": {
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "1.19.1"
-        }
-      },
-      "OpenTelemetry.Api": {
-        "type": "CentralTransitive",
-        "requested": "[1.19.1, )",
-        "resolved": "1.19.1",
-        "contentHash": "9JKIH+xrV0HNTFjQC8zrx9gZpDOMEljN5Htg/U0VE2IvO3N+7bKALCCsGy5tp09marX5dd8UkrgQFoLaulIBRw=="
-      },
-      "OpenTelemetry.Extensions.Hosting": {
-        "type": "CentralTransitive",
-        "requested": "[1.19.1, )",
-        "resolved": "1.19.1",
-        "contentHash": "3qqZfVmW8mKA2/fRwI83o8z+yZd33KbEqRlXrlX0+3e/U7i+z0MQiCr0L3Axxa0jGdiylIrpWX4DIT9nAbJ00A==",
-        "dependencies": {
-          "OpenTelemetry": "1.19.1"
         }
       },
       "Oracle.ManagedDataAccess.Core": {

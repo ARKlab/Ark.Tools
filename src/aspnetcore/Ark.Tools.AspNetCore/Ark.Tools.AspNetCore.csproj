@@ -36,8 +36,8 @@
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Http" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
+    <PackageReference Include="DotNetDiag.HealthChecks.UI" />
+    <PackageReference Include="DotNetDiag.HealthChecks.UI.InMemory.Storage" />
     <PackageReference Include="Asp.Versioning.OData.ApiExplorer" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Hellang.Middleware.ProblemDetails" />

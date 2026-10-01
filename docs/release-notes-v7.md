@@ -106,6 +106,12 @@ that still call `TelemetryClient.Track*` or use Application Insights
 processors. Application Insights is no longer registered implicitly by Ark
 hosting packages. See the [telemetry upgrade guide](otel/upgrade-guide.md).
 
+### Health check metrics
+
+`Ark.Tools.AspNetCore.HealthChecks.OTel` publishes `health_check.status` (1 Healthy, 0.5 Degraded, 0 Unhealthy)
+and `health_check.duration` per check through the `Ark.HealthChecks` meter. `Ark.Tools.AspNetCore.OTel` references
+it and registers the publisher and meter automatically.
+
 ### Macross.Json.Extensions removed
 
 `Ark.Tools.SystemTextJson` replaces the unmaintained `Macross.Json.Extensions`
@@ -114,6 +120,14 @@ converters with `ArkJsonStringEnumConverter`, `IPAddressJsonConverter`, and
 `[EnumMember]` names still apply, and `[JsonStringEnumMemberName]` now takes
 precedence. `ArkJsonStringEnumConverter<TEnum>` is Native AOT compatible. See
 [Replace Macross.Json.Extensions types](migration-v7.md#6-replace-macrossjsonextensions-types).
+
+### Health checks moved to DotNetDiag.HealthChecks
+
+The unmaintained `AspNetCore.HealthChecks.*` packages are replaced by the
+maintained fork `DotNetDiag.HealthChecks.*`; namespaces are unchanged.
+`AddArkHealthChecks` no longer registers the Application Insights publisher;
+reference `DotNetDiag.HealthChecks.Publisher.ApplicationInsights` if you need it.
+See [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-replace-aspnetcorediagnosticshealthchecks-packages).
 
 ## Upgrade
 

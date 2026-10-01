@@ -74,6 +74,7 @@
   <Folder Name="/src/aspnetcore/">
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.ApplicationInsights/Ark.Tools.AspNetCore.ApplicationInsights.csproj" />
+    <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.HealthChecks.OTel/Ark.Tools.AspNetCore.HealthChecks.OTel.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ark.Tools.AspNetCore.OTel.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.Auth0/Ark.Tools.AspNetCore.Auth0.csproj" />
     <Project Path="src/aspnetcore/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj" />

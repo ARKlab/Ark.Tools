@@ -2,13 +2,13 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
-      "AspNetCore.HealthChecks.UI.Client": {
+      "DotNetDiag.HealthChecks.UI.Client": {
         "type": "Direct",
-        "requested": "[9.0.0, )",
-        "resolved": "9.0.0",
-        "contentHash": "1Ub3Wvvbz7CMuFNWgLEc9qqQibiMoovDML/WHrwr5J83RPgtI20giCR92s/ipLgu7IIuqw+W/y7WpIeHqAICxg==",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "1ncErMuqsHF0fi1aG3fjpz3U1RQsSK0izllp/zYddJiUD2RJqF7P9xB63mqVv+Inr90KH3O12DP35kCMkJNTfQ==",
         "dependencies": {
-          "AspNetCore.HealthChecks.UI.Core": "9.0.0"
+          "DotNetDiag.HealthChecks.UI.Core": "10.0.14"
         }
       },
       "ErrorProne.NET.CoreAnalyzers": {
@@ -100,11 +100,6 @@
         "resolved": "11.4.1",
         "contentHash": "HbyvI2RZLjW8zaJOiAtyTaCVEAAvhPp7kCkEgHne4igfAY3o7W0JAmurNrjdItUdRIXanYrWiet2ng/Jjd9+/w=="
       },
-      "AspNetCore.HealthChecks.UI.Core": {
-        "type": "Transitive",
-        "resolved": "9.0.0",
-        "contentHash": "TVriy4hgYnhfqz6NAzv8qe62Q8wf82iKUL6WV9selqeFZTq1ILi39Sic6sFQegRysvAVcnxKP/vY8z9Fk8x6XQ=="
-      },
       "Azure.Core": {
         "type": "Transitive",
         "resolved": "1.62.0",
@@ -139,6 +134,11 @@
         "type": "Transitive",
         "resolved": "2.7.0",
         "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
+      },
+      "DotNetDiag.HealthChecks.UI.Core": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "tbCapQGMaRx3MMYvUnyi2xeBTqlhHxvPR4J2udMLglxOEYcOkAQvWZaDHGkJbVKI/WBMCJmaUqRz3Pe35PvB5w=="
       },
       "Grpc.Core.Api": {
         "type": "Transitive",
