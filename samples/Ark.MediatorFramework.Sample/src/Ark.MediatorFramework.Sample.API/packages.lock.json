@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.290, )",
-        "resolved": "3.0.290",
-        "contentHash": "vdSXgMEPil67EFwkcicjSCMnB7TdhUNiR1Fjw1P8MN+UeX6yP8wTb7cNT20H/ejHuUxkrxQS1Rz4QcJuMLmCkA=="
+        "requested": "[3.0.291, )",
+        "resolved": "3.0.291",
+        "contentHash": "YjDHtWO7GCw6mkWgqEElLHsIh+ZqAmMxihB74J/RaB2kS+ow8mjLgHX6krLIcwp4R6Sc1yQiqHN0X/DP7GVxAw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -633,8 +633,8 @@
       },
       "Rebus.SqlServer": {
         "type": "Transitive",
-        "resolved": "8.4.1",
-        "contentHash": "Rdq0SoUy8smSYrIFM9KY3r0ygVMZ8PNTrLIQtSvo6zXb5f0jGwtw9cDx8jPbGJI6859jUyNms2eO2PCkIYclRA==",
+        "resolved": "8.4.2",
+        "contentHash": "bO3ZTFT0W0SFnG7HObSxMnvaci5sRlLSddYQvXYxjjL73w3JndDbi2g31eDRvuP9C53l2Y4JWUcIEnjtpJK8qA==",
         "dependencies": {
           "microsoft.data.sqlclient": "6.1.2",
           "rebus": "8.9.0"
@@ -881,7 +881,7 @@
           "Rebus.AzureBlobs": "[1.1.0, )",
           "Rebus.AzureServiceBus": "[10.7.1, )",
           "Rebus.NLog": "[6.0.0, )",
-          "Rebus.SqlServer": "[8.4.1, )"
+          "Rebus.SqlServer": "[8.4.2, )"
         }
       },
       "ark.tools.simpleinjector": {
