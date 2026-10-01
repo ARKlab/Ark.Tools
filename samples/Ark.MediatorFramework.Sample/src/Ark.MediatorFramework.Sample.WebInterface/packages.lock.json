@@ -82,6 +82,12 @@
           "protobuf-net.Grpc.Reflection": "1.3.14"
         }
       },
+      "ReferenceTrimmer": {
+        "type": "Direct",
+        "requested": "[3.5.9, )",
+        "resolved": "3.5.9",
+        "contentHash": "yxiTijEk4Su7Ama9Dny8HNC0tpFg7+8y5F8E2FnNuzc0+OzwAwrSxeFSRcBkW1BtC4SEiohsKFtYRH+a2QpJdQ=="
+      },
       "Scalar.AspNetCore": {
         "type": "Direct",
         "requested": "[2.17.12, )",
@@ -206,14 +212,6 @@
           "SSH.NET": "2026.0.0"
         }
       },
-      "DotNetDiag.HealthChecks.Oracle": {
-        "type": "Transitive",
-        "resolved": "10.0.14",
-        "contentHash": "/MAWSjqjbuHxm0dAqbGsncmrlVdpKPkkMrmu3CLEwsHNOVO6Cn3ITXo2QdbefjFuHYQBN2aDTRNy1vjPPuZcgQ==",
-        "dependencies": {
-          "Oracle.ManagedDataAccess.Core": "23.26.200"
-        }
-      },
       "DotNetDiag.HealthChecks.SqlServer": {
         "type": "Transitive",
         "resolved": "10.0.14",
@@ -269,11 +267,6 @@
           "Google.Api.CommonProtos": "2.17.0",
           "Grpc.Core.Api": "2.84.0"
         }
-      },
-      "Hellang.Middleware.ProblemDetails": {
-        "type": "Transitive",
-        "resolved": "6.5.1",
-        "contentHash": "LgceF4mPguB/q3NWs6T3bitOFnYIANSRvfhASMgVb8ks7fSqY8jbdBHoVEuUDmxg3T7+kF21qSE0jQv9hdpLng=="
       },
       "MailKit": {
         "type": "Transitive",
@@ -699,16 +692,6 @@
           "OpenTelemetry.PersistentStorage.Abstractions": "1.0.3"
         }
       },
-      "Oracle.ManagedDataAccess.Core": {
-        "type": "Transitive",
-        "resolved": "23.26.200",
-        "contentHash": "l+k3UOpWfv7g2F4/FnenQlwMMvVk8LLlVgAn1qdl3Seyna2kkyogSHS0ceBGMKNT7KjC79rpIyFmt8Q0QveB3A==",
-        "dependencies": {
-          "System.Diagnostics.PerformanceCounter": "8.0.0",
-          "System.DirectoryServices.Protocols": "8.0.2",
-          "System.Security.Cryptography.Pkcs": "8.0.1"
-        }
-      },
       "Polly.Core": {
         "type": "Transitive",
         "resolved": "8.8.0",
@@ -891,19 +874,6 @@
           "System.Security.Cryptography.ProtectedData": "9.0.18"
         }
       },
-      "System.Diagnostics.PerformanceCounter": {
-        "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "lX6DXxtJqVGWw7N/QmVoiCyVQ+Q/Xp+jVXPr3gLK1jJExSn1qmAjJQeb8gnOYeeBTG3E3PmG1nu92eYj/TEjpg==",
-        "dependencies": {
-          "System.Configuration.ConfigurationManager": "8.0.0"
-        }
-      },
-      "System.DirectoryServices.Protocols": {
-        "type": "Transitive",
-        "resolved": "8.0.2",
-        "contentHash": "7pSU+qkmdkwbikAvn4kpvClfyffaR7dYJw7ucBtO5d6m/7wgKZIULOZAGFLMIMOFFmg7xC67TYKptHxcbqQm+Q=="
-      },
       "System.IO.Hashing": {
         "type": "Transitive",
         "resolved": "6.0.0",
@@ -990,7 +960,6 @@
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
           "DotNetDiag.HealthChecks.AzureServiceBus": "[10.0.14, )",
           "DotNetDiag.HealthChecks.Network": "[10.0.15, )",
-          "DotNetDiag.HealthChecks.Oracle": "[10.0.14, )",
           "DotNetDiag.HealthChecks.SqlServer": "[10.0.14, )",
           "DotNetDiag.HealthChecks.UI.Client": "[10.0.14, )",
           "SSH.NET": "[2026.0.0, )"
@@ -1105,7 +1074,6 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "FluentValidation": "[12.1.1, )",
           "Google.Api.CommonProtos": "[2.17.0, )",
-          "Google.Protobuf": "[3.36.2, )",
           "Grpc.StatusProto": "[2.84.0, )",
           "System.ServiceModel.Primitives": "[10.0.652802, )",
           "protobuf-net.Grpc.AspNetCore": "[1.3.14, )"
@@ -1147,7 +1115,6 @@
           "Ark.Tools.Compliance.OpenApi": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "MessagePack": "[3.1.10, )",
           "MessagePack.NodaTime": "[3.5.9, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
@@ -1174,7 +1141,6 @@
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
           "NLog.MailKit": "[6.1.5, )",
-          "Newtonsoft.Json": "[13.0.4, )",
           "Slack.Webhooks": "[1.1.6, )"
         }
       },
@@ -1246,7 +1212,6 @@
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Dapper": "[2.1.89, )",
-          "Polly": "[8.8.0, )",
           "morelinq": "[4.4.0, )"
         }
       },
@@ -1258,7 +1223,6 @@
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
-          "OpenTelemetry.Api": "[1.19.1, )",
           "Rebus": "[8.9.5, )",
           "Rebus.AzureBlobs": "[1.1.0, )",
           "Rebus.AzureServiceBus": "[10.7.1, )",
