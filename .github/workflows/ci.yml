@@ -117,7 +117,7 @@ jobs:
       run: dotnet-coverage merge **/*.coverage -f cobertura -o coverage.cobertura.xml
 
     - name: Upload coverage report
-      uses: actions/upload-code-coverage@v1.4.3
+      uses: actions/upload-code-coverage@v1.4.4
       with:
         file: coverage.cobertura.xml
         language: 'C#'
