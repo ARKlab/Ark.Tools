@@ -32,6 +32,11 @@
 
   </PropertyGroup>
 
+  <PropertyGroup Label="ReferenceTrimmer">
+    <EnableReferenceTrimmer Condition="'$(EnableReferenceTrimmer)' == ''">true</EnableReferenceTrimmer>
+    <ReferenceTrimmerUseSymbolAnalysis Condition="'$(ReferenceTrimmerUseSymbolAnalysis)' == ''">true</ReferenceTrimmerUseSymbolAnalysis>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsMtpTestProfile)' != 'false'">
     <OutputType Condition="'$(OutputType)' == ''">Exe</OutputType>
     <TestingPlatformDotnetTestSupport Condition="'$(TestingPlatformDotnetTestSupport)' == ''">true</TestingPlatformDotnetTestSupport>

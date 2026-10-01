@@ -86,6 +86,8 @@ directly unless the table says that a switch controls the capability.
 | `EnableArkToolsNetAnalyzers` | Enabled unless `false` | Build props and SDK restore | Set `false` |
 | `EnableArkToolsMeziantouAnalyzer` | Enabled unless `false` | Build props and SDK restore | Set `false` |
 | `EnableArkToolsErrorProne` | Enabled unless `false` | Build props and SDK restore | Set `false` |
+| `EnableReferenceTrimmer` | `true` when empty; installs ReferenceTrimmer for non-SQL C# projects unless `false` | Early and SDK restore | Set `false` before or in the project |
+| `ReferenceTrimmerUseSymbolAnalysis` | `true` when empty | Early | Set `false` before or in the project |
 | `EnableArkToolsVisualStudioThreading` | Disabled unless `true` | Build props and SDK restore | Set `true` |
 | `EnableArkToolsIdentityModelConfiguration` | Enabled unless `false` | Build props | Set `false` |
 | `EnableArkToolsCoreConfiguration` | Enabled unless `false` | Build props | Set `false` |
@@ -178,23 +180,24 @@ generated TRX, dump, and coverage artifacts.
 
 `Ark.Tools.Sdk` injects these private, exact package references:
 
-| Package | Version | Condition |
-| --- | --- | --- |
-| `Ark.Tools.Build` | SDK-matched | SDK enabled |
-| `Microsoft.CodeAnalysis.NetAnalyzers` | `10.0.400` | Non-SQL and enabled |
-| `Microsoft.CodeAnalysis.BannedApiAnalyzers` | `4.14.0` | Non-SQL and enabled |
-| `Meziantou.Analyzer` | `3.0.160` | Non-SQL and enabled |
-| `Microsoft.VisualStudio.Threading.Analyzers` | `18.7.23` | Non-SQL and `EnableArkToolsVisualStudioThreading=true` |
-| `ErrorProne.NET.CoreAnalyzers` | `0.1.2` | Non-SQL and enabled |
-| `Microsoft.Sbom.Targets` | `4.1.5` | Non-SQL and SBOM enabled |
-| `Polyfill` | `11.2.0` | Non-SQL and Polyfill enabled |
-| `Microsoft.Testing.Extensions.CrashDump` | `2.3.3` | Test and enabled |
-| `Microsoft.Testing.Extensions.CodeCoverage` | `18.10.0` | Test and enabled |
-| `Microsoft.Testing.Extensions.HangDump` | `2.3.3` | Test and enabled |
-| `Microsoft.Testing.Extensions.HotReload` | `2.3.3` | Test and enabled |
-| `Microsoft.Testing.Extensions.Retry` | `2.3.3` | Test and enabled |
-| `Microsoft.Testing.Extensions.TrxReport` | `2.3.3` | Test and enabled |
-| `Microsoft.Testing.Extensions.AzureDevOpsReport` | `2.3.3` | Test and enabled |
+| Package | Condition |
+| --- | --- |
+| `Ark.Tools.Build` | SDK enabled |
+| `Microsoft.CodeAnalysis.NetAnalyzers` | Non-SQL and enabled |
+| `Microsoft.CodeAnalysis.BannedApiAnalyzers` | Non-SQL and enabled |
+| `Meziantou.Analyzer` | Non-SQL and enabled |
+| `Microsoft.VisualStudio.Threading.Analyzers` | Non-SQL and `EnableArkToolsVisualStudioThreading=true` |
+| `ErrorProne.NET.CoreAnalyzers` | Non-SQL and enabled |
+| `ReferenceTrimmer` | Non-SQL C# and `EnableReferenceTrimmer` enabled |
+| `Microsoft.Sbom.Targets` | Non-SQL and SBOM enabled |
+| `Polyfill` | Non-SQL and Polyfill enabled |
+| `Microsoft.Testing.Extensions.CrashDump` | Test and enabled |
+| `Microsoft.Testing.Extensions.CodeCoverage` | Test and enabled |
+| `Microsoft.Testing.Extensions.HangDump` | Test and enabled |
+| `Microsoft.Testing.Extensions.HotReload` | Test and enabled |
+| `Microsoft.Testing.Extensions.Retry` | Test and enabled |
+| `Microsoft.Testing.Extensions.TrxReport` | Test and enabled |
+| `Microsoft.Testing.Extensions.AzureDevOpsReport` | Test and enabled |
 
 The SDK intentionally does not add a test framework, assertion library,
 Reqnroll adapter, `Microsoft.NET.Test.Sdk`, or VSTest compatibility bridge.

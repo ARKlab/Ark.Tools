@@ -146,6 +146,12 @@
         "resolved": "11.4.1",
         "contentHash": "HbyvI2RZLjW8zaJOiAtyTaCVEAAvhPp7kCkEgHne4igfAY3o7W0JAmurNrjdItUdRIXanYrWiet2ng/Jjd9+/w=="
       },
+      "ReferenceTrimmer": {
+        "type": "Direct",
+        "requested": "[3.5.9, )",
+        "resolved": "3.5.9",
+        "contentHash": "yxiTijEk4Su7Ama9Dny8HNC0tpFg7+8y5F8E2FnNuzc0+OzwAwrSxeFSRcBkW1BtC4SEiohsKFtYRH+a2QpJdQ=="
+      },
       "Reqnroll.MSTest": {
         "type": "Direct",
         "requested": "[3.3.4, )",
@@ -831,19 +837,6 @@
           "System.Composition.Runtime": "9.0.0"
         }
       },
-      "System.Diagnostics.PerformanceCounter": {
-        "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "lX6DXxtJqVGWw7N/QmVoiCyVQ+Q/Xp+jVXPr3gLK1jJExSn1qmAjJQeb8gnOYeeBTG3E3PmG1nu92eYj/TEjpg==",
-        "dependencies": {
-          "System.Configuration.ConfigurationManager": "8.0.0"
-        }
-      },
-      "System.DirectoryServices.Protocols": {
-        "type": "Transitive",
-        "resolved": "8.0.2",
-        "contentHash": "7pSU+qkmdkwbikAvn4kpvClfyffaR7dYJw7ucBtO5d6m/7wgKZIULOZAGFLMIMOFFmg7xC67TYKptHxcbqQm+Q=="
-      },
       "System.Memory.Data": {
         "type": "Transitive",
         "resolved": "10.0.10",
@@ -917,7 +910,6 @@
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
           "DotNetDiag.HealthChecks.AzureServiceBus": "[10.0.14, )",
           "DotNetDiag.HealthChecks.Network": "[10.0.15, )",
-          "DotNetDiag.HealthChecks.Oracle": "[10.0.14, )",
           "DotNetDiag.HealthChecks.SqlServer": "[10.0.14, )",
           "DotNetDiag.HealthChecks.UI.Client": "[10.0.14, )",
           "SSH.NET": "[2026.0.0, )"
@@ -1039,7 +1031,6 @@
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
           "NLog.MailKit": "[6.1.5, )",
-          "Newtonsoft.Json": "[13.0.4, )",
           "Slack.Webhooks": "[1.1.6, )"
         }
       },
@@ -1288,15 +1279,6 @@
         "contentHash": "B0TVAsok1ROMxowIrVhGCieMDj0RI/qL8fgOhdnA1eWq/RZ4wXTZmXbEmxGYeY+wQG9usRB+o5ur9G7SCu5OGg==",
         "dependencies": {
           "SSH.NET": "2026.0.0"
-        }
-      },
-      "DotNetDiag.HealthChecks.Oracle": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "/MAWSjqjbuHxm0dAqbGsncmrlVdpKPkkMrmu3CLEwsHNOVO6Cn3ITXo2QdbefjFuHYQBN2aDTRNy1vjPPuZcgQ==",
-        "dependencies": {
-          "Oracle.ManagedDataAccess.Core": "23.26.200"
         }
       },
       "DotNetDiag.HealthChecks.SqlServer": {
@@ -1718,17 +1700,6 @@
         "contentHash": "3qqZfVmW8mKA2/fRwI83o8z+yZd33KbEqRlXrlX0+3e/U7i+z0MQiCr0L3Axxa0jGdiylIrpWX4DIT9nAbJ00A==",
         "dependencies": {
           "OpenTelemetry": "1.19.1"
-        }
-      },
-      "Oracle.ManagedDataAccess.Core": {
-        "type": "CentralTransitive",
-        "requested": "[23.26.301, )",
-        "resolved": "23.26.301",
-        "contentHash": "hhl6m5sam9vWNXt4Xad+bAcB+VBMBxya16/P+R3xRMKzNVl/6ssF6HuNZNeofD+5qDaTRqhWbKjdFn65rD5KYw==",
-        "dependencies": {
-          "System.Diagnostics.PerformanceCounter": "8.0.0",
-          "System.DirectoryServices.Protocols": "8.0.2",
-          "System.Security.Cryptography.Pkcs": "8.0.1"
         }
       },
       "Polly": {

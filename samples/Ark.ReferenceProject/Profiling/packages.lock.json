@@ -76,6 +76,12 @@
         "resolved": "11.4.1",
         "contentHash": "HbyvI2RZLjW8zaJOiAtyTaCVEAAvhPp7kCkEgHne4igfAY3o7W0JAmurNrjdItUdRIXanYrWiet2ng/Jjd9+/w=="
       },
+      "ReferenceTrimmer": {
+        "type": "Direct",
+        "requested": "[3.5.9, )",
+        "resolved": "3.5.9",
+        "contentHash": "yxiTijEk4Su7Ama9Dny8HNC0tpFg7+8y5F8E2FnNuzc0+OzwAwrSxeFSRcBkW1BtC4SEiohsKFtYRH+a2QpJdQ=="
+      },
       "Asp.Versioning.Abstractions": {
         "type": "Transitive",
         "resolved": "10.2.1",
@@ -274,14 +280,6 @@
           "Newtonsoft.Json": "13.0.3"
         }
       },
-      "Castle.Core": {
-        "type": "Transitive",
-        "resolved": "5.2.1",
-        "contentHash": "wHARzQA695jwwKreOzNsq54KiGqKP38tv8hi8e2FXDEC/sA6BtrX90tVPDkOfVu13PbEzr00TCV8coikl+D1Iw==",
-        "dependencies": {
-          "System.Diagnostics.EventLog": "6.0.0"
-        }
-      },
       "CommandLineParser": {
         "type": "Transitive",
         "resolved": "2.9.1",
@@ -331,15 +329,6 @@
         "dependencies": {
           "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.11",
           "SSH.NET": "2026.0.0"
-        }
-      },
-      "DotNetDiag.HealthChecks.Oracle": {
-        "type": "Transitive",
-        "resolved": "10.0.14",
-        "contentHash": "/MAWSjqjbuHxm0dAqbGsncmrlVdpKPkkMrmu3CLEwsHNOVO6Cn3ITXo2QdbefjFuHYQBN2aDTRNy1vjPPuZcgQ==",
-        "dependencies": {
-          "Microsoft.Extensions.Diagnostics.HealthChecks": "10.0.11",
-          "Oracle.ManagedDataAccess.Core": "23.26.200"
         }
       },
       "DotNetDiag.HealthChecks.SqlServer": {
@@ -1552,16 +1541,6 @@
           "OpenTelemetry.PersistentStorage.Abstractions": "1.0.3"
         }
       },
-      "Oracle.ManagedDataAccess.Core": {
-        "type": "Transitive",
-        "resolved": "23.26.200",
-        "contentHash": "l+k3UOpWfv7g2F4/FnenQlwMMvVk8LLlVgAn1qdl3Seyna2kkyogSHS0ceBGMKNT7KjC79rpIyFmt8Q0QveB3A==",
-        "dependencies": {
-          "System.Diagnostics.PerformanceCounter": "8.0.0",
-          "System.DirectoryServices.Protocols": "8.0.2",
-          "System.Security.Cryptography.Pkcs": "8.0.1"
-        }
-      },
       "Perfolizer": {
         "type": "Transitive",
         "resolved": "0.6.1",
@@ -1851,19 +1830,6 @@
         "resolved": "10.0.12",
         "contentHash": "sOZM+VyRj1pg/ItlHsvrSbjws6oGqZveTzTNBGZ9ziwRDyKsOF3ub6vhvOdxotCIqtlnyHAIwP5sLNvgiZC+pQ=="
       },
-      "System.Diagnostics.PerformanceCounter": {
-        "type": "Transitive",
-        "resolved": "8.0.0",
-        "contentHash": "lX6DXxtJqVGWw7N/QmVoiCyVQ+Q/Xp+jVXPr3gLK1jJExSn1qmAjJQeb8gnOYeeBTG3E3PmG1nu92eYj/TEjpg==",
-        "dependencies": {
-          "System.Configuration.ConfigurationManager": "8.0.0"
-        }
-      },
-      "System.DirectoryServices.Protocols": {
-        "type": "Transitive",
-        "resolved": "8.0.2",
-        "contentHash": "7pSU+qkmdkwbikAvn4kpvClfyffaR7dYJw7ucBtO5d6m/7wgKZIULOZAGFLMIMOFFmg7xC67TYKptHxcbqQm+Q=="
-      },
       "System.IO.Hashing": {
         "type": "Transitive",
         "resolved": "10.0.3",
@@ -1997,11 +1963,9 @@
           "MSTest.TestFramework": "[4.4.1, )",
           "Microsoft.AspNetCore.TestHost": "[10.0.12, )",
           "Microsoft.SqlServer.DacFx": "[170.5.96, )",
-          "Moq": "[4.21.0, )",
           "NodaTime.Testing": "[3.3.5, )",
           "Reqnroll.MsTest": "[3.3.4, )",
-          "Reqnroll.Tools.MsBuild.Generation": "[3.3.4, )",
-          "netDumbster": "[3.1.1, )"
+          "Reqnroll.Tools.MsBuild.Generation": "[3.3.4, )"
         }
       },
       "ark.reference.core.webinterface": {
@@ -2067,7 +2031,6 @@
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
           "DotNetDiag.HealthChecks.AzureServiceBus": "[10.0.14, )",
           "DotNetDiag.HealthChecks.Network": "[10.0.15, )",
-          "DotNetDiag.HealthChecks.Oracle": "[10.0.14, )",
           "DotNetDiag.HealthChecks.SqlServer": "[10.0.14, )",
           "DotNetDiag.HealthChecks.UI.Client": "[10.0.14, )",
           "SSH.NET": "[2026.0.0, )"
@@ -2196,7 +2159,6 @@
           "Microsoft.Extensions.Hosting": "[10.0.12, )",
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.12, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.12, )",
-          "Microsoft.Extensions.Options": "[10.0.12, )",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "[10.0.12, )"
         }
       },
@@ -2230,7 +2192,6 @@
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
           "NLog.MailKit": "[6.1.5, )",
-          "Newtonsoft.Json": "[13.0.4, )",
           "Slack.Webhooks": "[1.1.6, )"
         }
       },
@@ -2277,7 +2238,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "Microsoft.Extensions.Options": "[10.0.12, )",
           "OpenTelemetry": "[1.19.1, )"
         }
       },
@@ -2304,7 +2264,6 @@
           "Ark.Tools.Sql": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Dapper": "[2.1.89, )",
-          "Polly": "[8.8.0, )",
           "morelinq": "[4.4.0, )"
         }
       },
@@ -2316,7 +2275,6 @@
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
-          "OpenTelemetry.Api": "[1.19.1, )",
           "Rebus": "[8.9.5, )",
           "Rebus.AzureBlobs": "[1.1.0, )",
           "Rebus.AzureServiceBus": "[10.7.1, )",
@@ -2583,15 +2541,6 @@
         "resolved": "2.12.2",
         "contentHash": "ZkT7qiJe0Kj0+DTZOZo+xrDy1kNmdsWFQVPIQLNx9ZJ0T9cB2LG7r+Bi60so8/+yg1nkS7QCPadrzsTG4VPKrA=="
       },
-      "Moq": {
-        "type": "CentralTransitive",
-        "requested": "[4.21.0, )",
-        "resolved": "4.21.0",
-        "contentHash": "HUjrhhzEJ/AfbSBCnR8lPkpveVGpV/dNuOlnpfqBNTME93izly1CRV4N5zBySqz4m2yCRlHLPy/PnPzYokbwIg==",
-        "dependencies": {
-          "Castle.Core": "5.2.1"
-        }
-      },
       "MSTest.Analyzers": {
         "type": "CentralTransitive",
         "requested": "[4.4.1, )",
@@ -2618,15 +2567,6 @@
         "contentHash": "zHyMqhT9A1qihb0S6qyFFEYze0GWC6FzkdoFqUYlSg89fIs/A/KQBWlkM0JNb43fKDskQU2OuFNKZFuXzRCvYg==",
         "dependencies": {
           "MSTest.Analyzers": "4.4.1"
-        }
-      },
-      "netDumbster": {
-        "type": "CentralTransitive",
-        "requested": "[3.1.1, )",
-        "resolved": "3.1.1",
-        "contentHash": "wfjonannArFjvT2a0IlNEgms5QiOPQ0q5YPeGLT68vsdYqc6vHBZuSyeD5zIcOBywk8OrXEgGbDE7diGcdGiOg==",
-        "dependencies": {
-          "MimeKit": "4.7.1"
         }
       },
       "NodaTime.Testing": {

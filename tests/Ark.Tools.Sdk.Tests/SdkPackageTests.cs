@@ -362,6 +362,80 @@ public sealed class SdkPackageTests
         StringAssert.Contains(result.Output, "LOGGEN035", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Verifies ReferenceTrimmer is installed by default for C# and can be disabled before or after SDK props.
+    /// </summary>
+    [TestMethod]
+    public async Task ReferenceTrimmerDefaultsOnAndHonorsOverrides()
+    {
+        var fixtureRoot = Path.Join(_root, "artifacts", "sdk-reference-trimmer");
+        _prepareSdkFixture(fixtureRoot);
+
+        using var baseline = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "default", "Consumer.csproj", _createSdkCSharpProject());
+        Assert.AreEqual("true", _getProperty(baseline, "EnableReferenceTrimmer"));
+        Assert.AreEqual("true", _getProperty(baseline, "ReferenceTrimmerUseSymbolAnalysis"));
+        Assert.IsTrue(_getPackageReferences(baseline).ContainsKey("ReferenceTrimmer"));
+
+        using var symbolOptOut = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "symbol-disabled", "Consumer.csproj",
+            _createSdkCSharpProject("<ReferenceTrimmerUseSymbolAnalysis>false</ReferenceTrimmerUseSymbolAnalysis>"));
+        Assert.AreEqual("false", _getProperty(symbolOptOut, "ReferenceTrimmerUseSymbolAnalysis"));
+
+        using var earlyOptOut = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "early-disabled", "Consumer.csproj", _createSdkCSharpProject(),
+            directoryProperties: "<EnableReferenceTrimmer>false</EnableReferenceTrimmer>");
+        Assert.AreEqual("false", _getProperty(earlyOptOut, "EnableReferenceTrimmer"));
+        Assert.IsFalse(_getPackageReferences(earlyOptOut).ContainsKey("ReferenceTrimmer"));
+
+        using var projectOptOut = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "project-disabled", "Consumer.csproj",
+            _createSdkCSharpProject("<EnableReferenceTrimmer>false</EnableReferenceTrimmer>"));
+        Assert.AreEqual("false", _getProperty(projectOptOut, "EnableReferenceTrimmer"));
+        Assert.IsFalse(_getPackageReferences(projectOptOut).ContainsKey("ReferenceTrimmer"));
+
+        using var sql = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "sql", "Consumer.sqlproj", _createSdkSqlProject());
+        Assert.IsFalse(_getPackageReferences(sql).ContainsKey("ReferenceTrimmer"));
+    }
+
+    /// <summary>
+    /// Verifies an incremental build picks up TreatAsUsed added to a reference ReferenceTrimmer reported as unused.
+    /// </summary>
+    [TestMethod]
+    public async Task ReferenceTrimmerHonorsTreatAsUsedIncrementally()
+    {
+        var fixtureRoot = Path.Join(_root, "artifacts", "sdk-reference-trimmer-incremental");
+        _prepareSdkFixture(fixtureRoot);
+        static string Project(string metadata) => $"""
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.9.0"{metadata} />
+  </ItemGroup>
+  <Sdk Name="Ark.Tools.Sdk" />
+</Project>
+""";
+        var scenarioRoot = await _createSdkScenarioAsync(
+            fixtureRoot, _feed, "incremental", "Consumer.csproj", Project("")).ConfigureAwait(false);
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "Consumer.cs"),
+            "namespace Consumer;\n\n/// <summary>Placeholder.</summary>\npublic static class Placeholder;\n").ConfigureAwait(false);
+        var environment = _createSdkEnvironment(fixtureRoot);
+        var build = $"build \"{Path.Join(scenarioRoot, "Consumer.csproj")}\" -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\"";
+
+        var unused = await _runForExitCodeAsync("dotnet", build, environment).ConfigureAwait(false);
+        Assert.AreNotEqual(0, unused.ExitCode, unused.Output);
+        StringAssert.Contains(unused.Output, "RT0003", StringComparison.Ordinal);
+
+        await File.WriteAllTextAsync(
+            Path.Join(scenarioRoot, "Consumer.csproj"), Project(" TreatAsUsed=\"true\"")).ConfigureAwait(false);
+        var treatedAsUsed = await _runForExitCodeAsync("dotnet", build, environment).ConfigureAwait(false);
+        Assert.AreEqual(0, treatedAsUsed.ExitCode, treatedAsUsed.Output);
+    }
+
     private static readonly string[] _allSyntheticAnalyzers =
     [
         "DevLooped.SponsorLink.dll",
@@ -1499,6 +1573,8 @@ public sealed class ConsumerTests
             "SymbolPackageFormat",
             "EnableSourceControlManagerQueries",
             "EnableSourceLink",
+            "EnableReferenceTrimmer",
+            "ReferenceTrimmerUseSymbolAnalysis",
             "ArkComplianceMode"
         };
         var output = await _runAsync(

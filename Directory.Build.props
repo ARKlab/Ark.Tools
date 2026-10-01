@@ -9,6 +9,7 @@
 	<IsPackable>true</IsPackable>
 	<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
 	<_ArkToolsSdkSourceBuild>true</_ArkToolsSdkSourceBuild>
+	<EnableReferenceTrimmer>true</EnableReferenceTrimmer>
 	<!-- The compliance implementation cannot analyze itself; it is validated through dedicated analyzer tests. -->
 	<ArkToolsComplianceImplementationProject
 	  Condition="$(MSBuildProjectDirectory.Contains('/src/compliance/')) Or $(MSBuildProjectDirectory.Contains('\src\compliance\'))">true</ArkToolsComplianceImplementationProject>
