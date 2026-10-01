@@ -362,6 +362,40 @@ public sealed class SdkPackageTests
         StringAssert.Contains(result.Output, "LOGGEN035", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Verifies ReferenceTrimmer is installed by default for C# and can be disabled before or after SDK props.
+    /// </summary>
+    [TestMethod]
+    public async Task ReferenceTrimmerDefaultsOnAndHonorsOverrides()
+    {
+        var fixtureRoot = Path.Join(_root, "artifacts", "sdk-reference-trimmer");
+        _prepareSdkFixture(fixtureRoot);
+
+        using var baseline = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "default", "Consumer.csproj", _createSdkCSharpProject());
+        Assert.AreEqual("true", _getProperty(baseline, "EnableReferenceTrimmer"));
+        var reference = _getPackageReferences(baseline)["ReferenceTrimmer"];
+        Assert.AreEqual("3.5.9", reference["Version"]);
+        Assert.AreEqual("true", reference["IsImplicitlyDefined"]);
+        Assert.AreEqual("all", reference["PrivateAssets"]);
+
+        using var earlyOptOut = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "early-disabled", "Consumer.csproj", _createSdkCSharpProject(),
+            directoryProperties: "<EnableReferenceTrimmer>false</EnableReferenceTrimmer>");
+        Assert.AreEqual("false", _getProperty(earlyOptOut, "EnableReferenceTrimmer"));
+        Assert.IsFalse(_getPackageReferences(earlyOptOut).ContainsKey("ReferenceTrimmer"));
+
+        using var projectOptOut = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "project-disabled", "Consumer.csproj",
+            _createSdkCSharpProject("<EnableReferenceTrimmer>false</EnableReferenceTrimmer>"));
+        Assert.AreEqual("false", _getProperty(projectOptOut, "EnableReferenceTrimmer"));
+        Assert.IsFalse(_getPackageReferences(projectOptOut).ContainsKey("ReferenceTrimmer"));
+
+        using var sql = await _evaluateSdkAsync(
+            fixtureRoot, _feed, "sql", "Consumer.sqlproj", _createSdkSqlProject());
+        Assert.IsFalse(_getPackageReferences(sql).ContainsKey("ReferenceTrimmer"));
+    }
+
     private static readonly string[] _allSyntheticAnalyzers =
     [
         "DevLooped.SponsorLink.dll",
@@ -1499,6 +1533,7 @@ public sealed class ConsumerTests
             "SymbolPackageFormat",
             "EnableSourceControlManagerQueries",
             "EnableSourceLink",
+            "EnableReferenceTrimmer",
             "ArkComplianceMode"
         };
         var output = await _runAsync(
