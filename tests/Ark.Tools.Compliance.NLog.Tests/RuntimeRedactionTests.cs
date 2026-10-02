@@ -72,11 +72,13 @@ public sealed class RuntimeRedactionTests
     [TestMethod]
     public void Override_CanSelectHmacAndSnapshotsOptions()
     {
-        var key = RandomNumberGenerator.GetBytes(32);
+        var key = new byte[32];
         var options = new ComplianceRedactionOptions { HmacKey = key };
         var redactor = new ComplianceRedactor(options);
-        redactor.Redact(_cleartext, ArkRedaction.Hmac).Should().StartWith("hmac:");
-        options.HmacKey![0].Should().NotBe(0);
+        var result = redactor.Redact(_cleartext, ArkRedaction.Hmac);
+        result.Should().StartWith("hmac:");
+        key[0] = 1;
+        redactor.Redact(_cleartext, ArkRedaction.Hmac).Should().Be(result);
     }
 
     /// <summary>Direct redaction modes fail closed when configured without a key.</summary>
