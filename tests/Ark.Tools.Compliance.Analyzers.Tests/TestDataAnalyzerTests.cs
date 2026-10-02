@@ -80,6 +80,30 @@ public sealed class TestDataAnalyzerTests
         (await _analyzeAsync(value).ConfigureAwait(false)).Should().BeEmpty();
     }
 
+    /// <summary>Compiler-synthesized default-argument literals are not reported at call sites.</summary>
+    [TestMethod]
+    public async Task ImplicitDefaultArgumentLiteralIsNotReported()
+    {
+        const string source = """
+            class Fixture
+            {
+                static string Contact(string email = "fixture.person@corporate-domain.com") { return email; }
+                string Value = Contact();
+            }
+            """;
+        var compilation = CSharpCompilation.Create("Fixtures.Tests",
+            [CSharpSyntaxTree.ParseText(source, path: "Fixture.cs")],
+            [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var diagnostics = await compilation.WithAnalyzers([new TestDataComplianceAnalyzer()])
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII006");
+        source.Substring(diagnostics[0].Location.SourceSpan.Start, diagnostics[0].Location.SourceSpan.Length)
+            .Should().Be("\"fixture.person@corporate-domain.com\"");
+    }
+
     /// <summary>A pattern timeout reports an incomplete scan while preserving findings from other patterns.</summary>
     [TestMethod]
     public async Task PatternTimeoutReportsIncompleteScan()

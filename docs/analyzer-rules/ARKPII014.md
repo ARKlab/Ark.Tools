@@ -8,6 +8,8 @@
 
 This diagnostic reports test data that the fixture scanner could not fully inspect within its bounded regex time limit. The analyzer reports the incomplete scan instead of silently treating the input as safe.
 
+Only string literals written in test source and Reqnroll `.feature` table cells are scanned. Compiler-synthesized literals, such as `[CallerFilePath]` values and omitted default arguments, are skipped, and values without an `@` or a digit cannot match any pattern and are not scanned. The time limit is a safety guard against runaway patterns, not a performance budget: ordinary literals finish in microseconds.
+
 ## How to fix it
 
 Shorten the literal or replace it with reserved test data. If the value is generated, keep the test fixture input bounded and deterministic.
