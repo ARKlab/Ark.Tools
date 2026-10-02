@@ -6,6 +6,9 @@
   "constraints": {
     "dotnet": "10.0.401"
   },
+  "lockFileMaintenance": {
+    "enabled": false
+  },
   "customManagers": [
     {
       "customType": "regex",
