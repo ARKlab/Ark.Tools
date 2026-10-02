@@ -37,6 +37,8 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         new Pattern(PersonalDataKind.NationalIdentifier, PersonalDataPatterns._nationalIdentifier),
         new Pattern(PersonalDataKind.Iban, PersonalDataPatterns._iban),
         new Pattern(PersonalDataKind.PostalAddress, PersonalDataPatterns._postalAddress));
+    // Every pattern requires an '@' or a digit; values without one cannot match and skip the regex scan.
+    private static readonly char[] _candidates = "@0123456789".ToCharArray();
     private readonly ImmutableArray<Pattern> _patterns;
 
     /// <summary>Initializes a new instance of the <see cref="TestDataComplianceAnalyzer"/> class.</summary>
@@ -80,7 +82,8 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     return;
                 }
 
-                if (operationContext.Operation is not ILiteralOperation { ConstantValue: { HasValue: true, Value: string value } } literal)
+                // Compiler-synthesized literals (caller-info and omitted default arguments) are not authored test data.
+                if (operationContext.Operation is not ILiteralOperation { IsImplicit: false, ConstantValue: { HasValue: true, Value: string value } } literal)
                 {
                     return;
                 }
@@ -204,8 +207,14 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         ImmutableArray<Pattern> patterns,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var findings = new List<Finding>();
         var timedOut = false;
+        if (value.IndexOfAny(_candidates) < 0)
+        {
+            return new ScanResult(findings, timedOut);
+        }
+
         foreach (var pattern in patterns)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -251,7 +260,10 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         internal Pattern(PersonalDataKind kind, string pattern)
         {
             _kind = kind;
-            _regex = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(100));
+            // ponytail: the timeout guards against runaway backtracking, not slow hosts; the patterns are
+            // near-linear and finish in microseconds. A wall-clock timeout can still fire on an extremely
+            // stalled build host; if that ever recurs, cap literal length and report ARKPII014 deterministically.
+            _regex = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(2));
         }
 
         internal Pattern(PersonalDataKind kind, Regex regex)
