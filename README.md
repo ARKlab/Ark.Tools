@@ -19,7 +19,6 @@ This is a set of core libraries developed and maintained by Ark as a set of help
 All libraries are provided via NuGet.
 
 **Supported Frameworks:**
-- .NET 8.0 LTS
 - .NET 10.0
 
 ### Sample Applications
