@@ -41,9 +41,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.291, )",
-        "resolved": "3.0.291",
-        "contentHash": "YjDHtWO7GCw6mkWgqEElLHsIh+ZqAmMxihB74J/RaB2kS+ow8mjLgHX6krLIcwp4R6Sc1yQiqHN0X/DP7GVxAw=="
+        "requested": "[3.0.294, )",
+        "resolved": "3.0.294",
+        "contentHash": "j78ENG75OozcuL0OPSIjvgLaYI4F5nS8mpK02PlXCCCXj8A4CAIfpKw27ZPvG4k8TweGqParV8Dwm2VAwBBmgg=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -65,9 +65,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[11.4.1, )",
-        "resolved": "11.4.1",
-        "contentHash": "HbyvI2RZLjW8zaJOiAtyTaCVEAAvhPp7kCkEgHne4igfAY3o7W0JAmurNrjdItUdRIXanYrWiet2ng/Jjd9+/w=="
+        "requested": "[11.4.3, )",
+        "resolved": "11.4.3",
+        "contentHash": "5wRvX7eIi9MYIfziPsSyxMVsV13LqKXT4REsp21SFHvH9HEaMOM8NjhDfxltjeXi8bleUX5t0Gcy0ZGywnlHtw=="
       },
       "protobuf-net.Grpc.AspNetCore": {
         "type": "Direct",
