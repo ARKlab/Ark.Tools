@@ -35,7 +35,7 @@
     <PackageVersion Include="Polly" Version="8.8.0" />
     <PackageVersion Include="Polly.Caching.Memory" Version="3.0.2" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageVersion Include="MessagePack" Version="3.1.10" />
+    <PackageVersion Include="MessagePack" Version="3.1.11" />
     <PackageVersion Include="morelinq" Version="4.4.0" />
     <PackageVersion Include="NodaTime" Version="3.3.5" />
     <PackageVersion Include="NodaTime.Serialization.JsonNet" Version="3.3.0" />
@@ -59,12 +59,12 @@
     <PackageVersion Include="CacheCow.Client" Version="2.13.1" />
     <PackageVersion Include="Flurl.Http" Version="4.0.2" />
     <PackageVersion Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
-    <PackageVersion Include="MessagePack.NodaTime" Version="3.5.9" />
+    <PackageVersion Include="MessagePack.NodaTime" Version="3.5.10" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.12" />
     <!-- TESTING -->
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="AwesomeAssertions.Web" Version="2.0.3" />
+    <PackageVersion Include="AwesomeAssertions.Web" Version="2.0.4" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.4.1" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.4.1" />
@@ -114,13 +114,13 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="10.0.1" />
     <!-- ASPNETCORE HEALTHCHECKS -->
-    <PackageVersion Include="DotNetDiag.HealthChecks.AzureServiceBus" Version="10.0.14" />
-    <PackageVersion Include="DotNetDiag.HealthChecks.Network" Version="10.0.15" />
-    <PackageVersion Include="DotNetDiag.HealthChecks.Oracle" Version="10.0.14" />
-    <PackageVersion Include="DotNetDiag.HealthChecks.SqlServer" Version="10.0.14" />
-    <PackageVersion Include="DotNetDiag.HealthChecks.UI" Version="10.0.14" />
-    <PackageVersion Include="DotNetDiag.HealthChecks.UI.Client" Version="10.0.14" />
-    <PackageVersion Include="DotNetDiag.HealthChecks.UI.InMemory.Storage" Version="10.0.14" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.AzureServiceBus" Version="10.0.16" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.Network" Version="10.0.16" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.Oracle" Version="10.0.16" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.SqlServer" Version="10.0.16" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.UI" Version="10.0.16" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.UI.Client" Version="10.0.16" />
+    <PackageVersion Include="DotNetDiag.HealthChecks.UI.InMemory.Storage" Version="10.0.16" />
     <PackageVersion Include="KubernetesClient" Version="19.0.2" />
     <!-- SQL -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
