@@ -4491,7 +4491,7 @@ deployments:
   content_hash: null
 - kind: uri
   target: mcp
-  value: github
+  value: github-copilot
   runtime: claude
   scope: project
   owners:
@@ -4527,7 +4527,7 @@ deployments:
   content_hash: null
 - kind: uri
   target: mcp
-  value: github
+  value: github-copilot
   runtime: copilot
   scope: project
   owners:
@@ -4546,7 +4546,7 @@ deployments:
 mcp_servers:
 - ado
 - binlog
-- github
+- github-copilot
 - microsoftdocs
 mcp_configs:
   ado:
@@ -4566,8 +4566,8 @@ mcp_configs:
     tools:
     - '*'
     command: dotnet
-  github:
-    name: github
+  github-copilot:
+    name: github-copilot
     transport: http
     registry: false
     url: https://api.githubcopilot.com/mcp
@@ -4580,12 +4580,12 @@ mcp_target_servers:
   claude:
   - ado
   - binlog
-  - github
+  - github-copilot
   - microsoftdocs
   copilot:
   - ado
   - binlog
-  - github
+  - github-copilot
   - microsoftdocs
 mcp_config_provenance:
   binlog: dotnet-msbuild

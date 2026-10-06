@@ -30,7 +30,7 @@ devDependencies:
       registry: false
       transport: http
       url: https://learn.microsoft.com/api/mcp
-    - name: github
+    - name: github-copilot
       registry: false
       transport: http
       url: https://api.githubcopilot.com/mcp
