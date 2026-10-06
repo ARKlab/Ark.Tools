@@ -62,7 +62,7 @@ registered behavior, not merely assert that registration does not throw.
 
 ## Development agents and marketplace plugins
 
-Use [APM 0.31.0](https://github.com/microsoft/apm/releases/tag/v0.31.0) and PowerShell 7.
+Use [APM 0.33.0](https://github.com/microsoft/apm/releases/tag/v0.33.0) and PowerShell 7.
 The repository has two separate APM flows:
 
 - **Development:** [apm.yml](apm.yml) and [apm.lock.yaml](apm.lock.yaml)
@@ -79,7 +79,7 @@ The repository has two separate APM flows:
 From the repository root:
 
 ```powershell
-# Restore the pinned Copilot packages, MCP and LSP servers (also used by cloud setup).
+# Restore the pinned Copilot and Claude packages, MCP and LSP servers (also used by cloud setup).
 apm install
 git diff --exit-code -- apm.lock.yaml
 
@@ -92,7 +92,7 @@ apm run plugins:check
 
 The restore reuses existing lockfile pins (never `--update`/`--refresh`) and
 the `git diff` fails if the lockfile changed; CI also checks the entire checkout
-for drift. APM 0.31.0's `--frozen` preflight cannot bootstrap a clean checkout
+for drift. APM 0.33.0's `--frozen` preflight cannot bootstrap a clean checkout
 (it requires installed marketplace manifests and rejects transitive MCP servers
 such as `binlog`), so it is not used. Do not bypass a failure: review
 intentional dependency changes with the maintenance commands below.
@@ -104,18 +104,19 @@ when Windows Git checks out its `AGENTS.md` symlink as a text stub; do not
 replace the committed Linux content hash to accept that checkout. Plugin
 build/check commands work in native PowerShell 7 on either platform.
 
-The generated `.github/mcp.json` and `.github/lsp.json` are gitignored.
+The generated `.github/mcp.json`, `.github/lsp.json`, `.mcp.json` and `.claude/`
+are gitignored. The VS Code MCP configuration is authored in `.vscode/mcp.json`.
 Cloud-agent MCP servers must also be configured in repository settings.
 For other harnesses, explicitly run
-`apm install --target copilot,opencode`; review resulting lockfile changes.
-Keep authored repository instructions such as `AGENTS.md` and `.mcp.json` tracked.
+`apm install --target copilot,claude,opencode`; review resulting lockfile changes.
+Keep authored repository instructions such as `AGENTS.md` and `.vscode/mcp.json` tracked.
 
 ### Adding or updating development dependencies
 
 ```powershell
-apm install owner/repository/path#ref --dev --target copilot --only apm
+apm install owner/repository/path#ref --dev --target copilot,claude --only apm
 # To refresh existing remote revisions deliberately:
-apm install --update --target copilot --only apm
+apm install --update --target copilot,claude --only apm
 ```
 
 Commit the manifest and lockfile changes, not the installed projections.
@@ -130,7 +131,7 @@ dependencies are never included in the published `ark-csharp` plugin.
    matching marketplace entry in root `apm.yml`. The root project version is
    independent; `per_package` version checking rejects mismatched plugin versions.
 3. Run `apm run plugins:build`, then
-   `apm install ./agents-plugins/ark-csharp --dev --target copilot --only apm`
+   `apm install ./agents-plugins/ark-csharp --dev --target copilot,claude --only apm`
    to refresh the local development dependency and its lock metadata. Naming
    the local package explicitly refreshes its cached copy without updating
    the other dependencies' remote pins.

@@ -5,6 +5,7 @@ author: Andrea Cuneo
 license: MIT
 targets:
   - copilot
+  - claude
 includes: auto
 scripts:
   plugins:build: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1
@@ -29,7 +30,7 @@ devDependencies:
       registry: false
       transport: http
       url: https://learn.microsoft.com/api/mcp
-    - name: github
+    - name: github-copilot
       registry: false
       transport: http
       url: https://api.githubcopilot.com/mcp
