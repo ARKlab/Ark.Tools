@@ -161,7 +161,8 @@ public sealed class ArkAdaptiveSampler : Sampler
         }
     }
 
-    private void _adjustRate()
+    /// <summary>Recomputes the sampling rate from the traffic seen since the last adjustment.</summary>
+    internal void _adjustRate()
     {
         lock (_adjustLock)
         {
