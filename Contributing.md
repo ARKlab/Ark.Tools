@@ -62,7 +62,7 @@ registered behavior, not merely assert that registration does not throw.
 
 ## Development agents and marketplace plugins
 
-Use [APM 0.31.0](https://github.com/microsoft/apm/releases/tag/v0.31.0) and PowerShell 7.
+Use [APM 0.33.0](https://github.com/microsoft/apm/releases/tag/v0.33.0) and PowerShell 7.
 The repository has two separate APM flows:
 
 - **Development:** [apm.yml](apm.yml) and [apm.lock.yaml](apm.lock.yaml)
@@ -92,7 +92,7 @@ apm run plugins:check
 
 The restore reuses existing lockfile pins (never `--update`/`--refresh`) and
 the `git diff` fails if the lockfile changed; CI also checks the entire checkout
-for drift. APM 0.31.0's `--frozen` preflight cannot bootstrap a clean checkout
+for drift. APM 0.33.0's `--frozen` preflight cannot bootstrap a clean checkout
 (it requires installed marketplace manifests and rejects transitive MCP servers
 such as `binlog`), so it is not used. Do not bypass a failure: review
 intentional dependency changes with the maintenance commands below.
