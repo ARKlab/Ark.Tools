@@ -148,6 +148,53 @@ public class ArkAdaptiveSamplerTests
         root!.Recorded.Should().BeTrue("a high-rate bucket should sample every span");
     }
 
+    // ── behaviour: token bucket follows the injected clock ────────────────
+
+    /// <summary>
+    /// The token bucket measures elapsed time with the injected <see cref="TimeProvider"/>:
+    /// with time frozen the initial burst is exhausted, and tokens return only when time advances.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_WhenBurstExhausted_RefillsOnlyAsTimeAdvances()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = false,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        SamplingDecision sample()
+        {
+            var parameters = new SamplingParameters(
+                default, ActivityTraceId.CreateRandom(), "OP", ActivityKind.Internal, null, null);
+            return sampler.ShouldSample(in parameters).Decision;
+        }
+
+        // Burst capacity is two seconds worth of tokens.
+        sample().Should().Be(SamplingDecision.RecordAndSample);
+        sample().Should().Be(SamplingDecision.RecordAndSample);
+        sample().Should().Be(SamplingDecision.RecordOnly, "the burst is exhausted while time is frozen");
+
+        time.Advance(TimeSpan.FromSeconds(1));
+
+        sample().Should().Be(SamplingDecision.RecordAndSample, "one second refills one token at 1 trace/s");
+        sample().Should().Be(SamplingDecision.RecordOnly);
+    }
+
+    private sealed class ManualTimeProvider : TimeProvider
+    {
+        private long _timestamp;
+
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
+        public override long GetTimestamp() => Interlocked.Read(ref _timestamp);
+
+        public void Advance(TimeSpan by) => Interlocked.Add(ref _timestamp, by.Ticks);
+    }
+
     // ── behaviour: parent propagation ─────────────────────────────────────
 
     /// <summary>

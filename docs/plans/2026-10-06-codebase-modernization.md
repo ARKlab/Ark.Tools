@@ -44,10 +44,10 @@ callers and containers keep working.
 
 ### Tasks
 
-- [ ] `OperationBucket`: take a `TimeProvider`; track `GetTimestamp()` and compute elapsed time with `GetElapsedTime`.
-- [ ] `ArkAdaptiveSampler`: add a public `(options, failedTraceRegistry, timeProvider)` constructor; existing constructors use `TimeProvider.System`. Use monotonic timestamps in `_adjustRate` and `Task.Delay(..., timeProvider)` in the controller loop.
-- [ ] Test with a hand-written `TimeProvider` subclass (no new dependency): the bucket burst is exhausted with frozen time and refills only when time advances.
-- [ ] Build `Ark.Tools.OTel`; run `tests/Ark.Tools.OTel.Tests`.
+- [x] `OperationBucket`: take a `TimeProvider`; track `GetTimestamp()` and compute elapsed time with `GetElapsedTime`.
+- [x] `ArkAdaptiveSampler`: add a public `(options, failedTraceRegistry, timeProvider)` constructor; existing constructors use `TimeProvider.System`. Use monotonic timestamps in `_adjustRate` and `Task.Delay(..., timeProvider)` in the controller loop.
+- [x] Test with a hand-written `TimeProvider` subclass (no new dependency): the bucket burst is exhausted with frozen time and refills only when time advances.
+- [x] Build `Ark.Tools.OTel`; run `tests/Ark.Tools.OTel.Tests`.
 
 ## 2. `[GeneratedRegex]` for constant patterns
 

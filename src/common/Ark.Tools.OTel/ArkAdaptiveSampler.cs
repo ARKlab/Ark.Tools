@@ -35,11 +35,12 @@ public sealed class ArkAdaptiveSampler : Sampler
     private readonly ArkAdaptiveSamplerOptions _options;
     private readonly FailedTraceRegistry _failedTraceRegistry;
     private readonly ConcurrentDictionary<string, OperationBucket> _buckets;
+    private readonly TimeProvider _timeProvider;
 
     // Stats for adaptive rate controller
     private long _totalSeen;
     private long _totalSampled;
-    private DateTime _lastAdjustment;
+    private long _lastAdjustment;
     private double _currentRate;
     private readonly Lock _adjustLock = new();
 
@@ -59,11 +60,21 @@ public sealed class ArkAdaptiveSampler : Sampler
     /// coordinate whole-operation failure promotion.
     /// </summary>
     public ArkAdaptiveSampler(ArkAdaptiveSamplerOptions options, FailedTraceRegistry failedTraceRegistry)
+        : this(options, failedTraceRegistry, TimeProvider.System)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="ArkAdaptiveSampler"/> that measures elapsed time
+    /// and schedules rate adjustments with <paramref name="timeProvider"/>.
+    /// </summary>
+    public ArkAdaptiveSampler(ArkAdaptiveSamplerOptions options, FailedTraceRegistry failedTraceRegistry, TimeProvider timeProvider)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _failedTraceRegistry = failedTraceRegistry ?? throw new ArgumentNullException(nameof(failedTraceRegistry));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _currentRate = options.TracesPerSecond;
-        _lastAdjustment = DateTime.UtcNow;
+        _lastAdjustment = timeProvider.GetTimestamp();
         _buckets = new ConcurrentDictionary<string, OperationBucket>(StringComparer.Ordinal);
 
         Description = $"ArkAdaptiveSampler{{rate={_options.TracesPerSecond}/s,bucketed={_options.EnablePerOperationBucketing}}}";
@@ -124,20 +135,20 @@ public sealed class ArkAdaptiveSampler : Sampler
     private OperationBucket _getOrCreateBucket(string operationName)
     {
         if (!_options.EnablePerOperationBucketing)
-            return _buckets.GetOrAdd("__global__", static (_, rate) => new OperationBucket(rate), _currentRate);
+            return _buckets.GetOrAdd("__global__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
 
         // If we've reached the bucket limit, use the global bucket for overflow.
         if (_buckets.Count >= _options.MaxOperationBuckets && !_buckets.ContainsKey(operationName))
-            return _buckets.GetOrAdd("__overflow__", static (_, rate) => new OperationBucket(rate), _currentRate);
+            return _buckets.GetOrAdd("__overflow__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
 
-        return _buckets.GetOrAdd(operationName, static (_, rate) => new OperationBucket(rate), _currentRate);
+        return _buckets.GetOrAdd(operationName, static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
     }
 
     private async Task _runAdaptiveControllerAsync()
     {
         while (true)
         {
-            await Task.Delay(_options.SamplingPercentageDecreaseTimeout).ConfigureAwait(false);
+            await Task.Delay(_options.SamplingPercentageDecreaseTimeout, _timeProvider).ConfigureAwait(false);
             try
             {
                 _adjustRate();
@@ -154,8 +165,8 @@ public sealed class ArkAdaptiveSampler : Sampler
     {
         lock (_adjustLock)
         {
-            var now = DateTime.UtcNow;
-            var elapsed = (now - _lastAdjustment).TotalSeconds;
+            var now = _timeProvider.GetTimestamp();
+            var elapsed = _timeProvider.GetElapsedTime(_lastAdjustment, now).TotalSeconds;
 
             if (elapsed <= 0)
                 return;
