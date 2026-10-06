@@ -458,6 +458,7 @@ apm_modules/
 /.github/prompts/
 /.github/instructions/
 /.github/hooks/
+/.claude/
 /.github/plugin/
 /.github/mcp.json
 /.github/lsp.json
