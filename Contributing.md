@@ -104,11 +104,12 @@ when Windows Git checks out its `AGENTS.md` symlink as a text stub; do not
 replace the committed Linux content hash to accept that checkout. Plugin
 build/check commands work in native PowerShell 7 on either platform.
 
-The generated `.github/mcp.json` and `.github/lsp.json` are gitignored.
+The generated `.github/mcp.json`, `.github/lsp.json`, `.mcp.json` and `.claude/`
+are gitignored. The VS Code MCP configuration is authored in `.vscode/mcp.json`.
 Cloud-agent MCP servers must also be configured in repository settings.
 For other harnesses, explicitly run
 `apm install --target copilot,opencode`; review resulting lockfile changes.
-Keep authored repository instructions such as `AGENTS.md` and `.mcp.json` tracked.
+Keep authored repository instructions such as `AGENTS.md` and `.vscode/mcp.json` tracked.
 
 ### Adding or updating development dependencies
 

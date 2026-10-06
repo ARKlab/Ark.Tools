@@ -437,6 +437,7 @@ $RECYCLE.BIN/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/mcp.json
 
 #remove dacpac files
 *.dacpac
@@ -459,6 +460,7 @@ apm_modules/
 /.github/instructions/
 /.github/hooks/
 /.claude/
+/.mcp.json
 /.github/plugin/
 /.github/mcp.json
 /.github/lsp.json
