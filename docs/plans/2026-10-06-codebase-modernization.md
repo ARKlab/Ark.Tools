@@ -8,7 +8,7 @@ item has a verdict, a scope and, when there is work, its own pull request.
 
 | # | Item | Status | PR |
 |---|------|--------|----|
-| 1 | Injectable, monotonic time in time-dependent logic | in progress | OTel sampler (stacked on this plan) |
+| 1 | Injectable, monotonic time in time-dependent logic | done for the OTel sampler; other sites kept or deferred (see below) | included in this PR (merged from #1024) |
 | 2 | `[GeneratedRegex]` for constant patterns | done, nothing to do | none |
 | 3 | `System.Threading.Lock` for dedicated lock objects | done, nothing to do | none |
 | 4 | `[LoggerMessage]` source-generated logging | done, nothing to do | none |
