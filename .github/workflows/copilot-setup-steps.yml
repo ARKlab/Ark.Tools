@@ -83,7 +83,7 @@ jobs:
           setup-only: true
           apm-version: 0.31.0
 
-      - name: Restore Copilot development agents from lockfile
+      - name: Restore Copilot and Claude development agents from lockfile
         # ponytail: APM 0.31 --frozen preflight rejects cold marketplace deps and transitive MCP.
         # Switch back to 'apm install --frozen' once fixed upstream.
         run: |

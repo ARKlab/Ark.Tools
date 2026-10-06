@@ -5,6 +5,7 @@ author: Andrea Cuneo
 license: MIT
 targets:
   - copilot
+  - claude
 includes: auto
 scripts:
   plugins:build: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1
