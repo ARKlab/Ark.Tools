@@ -25,6 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Ark.Tools.OTel.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj" />
   </ItemGroup>
 

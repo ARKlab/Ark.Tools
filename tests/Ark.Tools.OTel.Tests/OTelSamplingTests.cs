@@ -148,6 +148,92 @@ public class ArkAdaptiveSamplerTests
         root!.Recorded.Should().BeTrue("a high-rate bucket should sample every span");
     }
 
+    // ── behaviour: token bucket follows the injected clock ────────────────
+
+    /// <summary>
+    /// The token bucket measures elapsed time with the injected <see cref="TimeProvider"/>:
+    /// with time frozen the initial burst is exhausted, and tokens return only when time advances.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_WhenBurstExhausted_RefillsOnlyAsTimeAdvances()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = false,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        SamplingDecision sample()
+        {
+            var parameters = new SamplingParameters(
+                default, ActivityTraceId.CreateRandom(), "OP", ActivityKind.Internal, null, null);
+            return sampler.ShouldSample(in parameters).Decision;
+        }
+
+        // Burst capacity is two seconds worth of tokens.
+        sample().Should().Be(SamplingDecision.RecordAndSample);
+        sample().Should().Be(SamplingDecision.RecordAndSample);
+        sample().Should().Be(SamplingDecision.RecordOnly, "the burst is exhausted while time is frozen");
+
+        time.Advance(TimeSpan.FromSeconds(1));
+
+        sample().Should().Be(SamplingDecision.RecordAndSample, "one second refills one token at 1 trace/s");
+        sample().Should().Be(SamplingDecision.RecordOnly);
+    }
+
+    /// <summary>
+    /// The adaptive controller measures the observed traffic rate on the injected
+    /// <see cref="TimeProvider"/> timeline and pushes the new rate to the buckets.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_UsesInjectedClock_ToComputeObservedRate()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 10,
+            EnablePerOperationBucketing = false,
+            MovingAverageRatio = 0,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        SamplingDecision sample()
+        {
+            var parameters = new SamplingParameters(
+                default, ActivityTraceId.CreateRandom(), "OP", ActivityKind.Internal, null, null);
+            return sampler.ShouldSample(in parameters).Decision;
+        }
+
+        for (var i = 0; i < 4; i++)
+            sample().Should().Be(SamplingDecision.RecordAndSample);
+
+        // 4 traces in 2 injected seconds is 2/s, below the 10/s target, so the controller
+        // lowers the bucket rate to 2/s: the bucket now holds at most 4 tokens.
+        time.Advance(TimeSpan.FromSeconds(2));
+        sampler._adjustRate();
+
+        // Exactly 4 more samples: the original 10/s rate would allow 20, and measuring
+        // elapsed time on the wall clock instead would drive the rate to the 0.0001/s floor.
+        for (var i = 0; i < 4; i++)
+            sample().Should().Be(SamplingDecision.RecordAndSample, "sample {0} fits in the 4-token bucket", i + 1);
+        sample().Should().Be(SamplingDecision.RecordOnly, "the controller set the bucket rate to the observed 2/s");
+    }
+
+    private sealed class ManualTimeProvider : TimeProvider
+    {
+        private long _timestamp;
+
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
+        public override long GetTimestamp() => Interlocked.Read(ref _timestamp);
+
+        public void Advance(TimeSpan by) => Interlocked.Add(ref _timestamp, by.Ticks);
+    }
+
     // ── behaviour: parent propagation ─────────────────────────────────────
 
     /// <summary>

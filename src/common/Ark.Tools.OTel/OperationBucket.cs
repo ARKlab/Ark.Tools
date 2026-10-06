@@ -9,16 +9,18 @@ namespace Ark.Tools.OTel;
 internal sealed class OperationBucket
 {
     private readonly Lock _lock = new();
+    private readonly TimeProvider _timeProvider;
     private double _tokens;
     private double _rate;
-    private DateTime _lastRefill;
+    private long _lastRefill;
 
-    public OperationBucket(double rate)
+    public OperationBucket(double rate, TimeProvider timeProvider)
     {
         _rate = rate;
+        _timeProvider = timeProvider;
         // Pre-fill to allow initial burst up to 2 seconds worth of tokens.
         _tokens = rate * 2.0;
-        _lastRefill = DateTime.UtcNow;
+        _lastRefill = timeProvider.GetTimestamp();
     }
 
     /// <summary>
@@ -53,8 +55,8 @@ internal sealed class OperationBucket
 
     private void _refill()
     {
-        var now = DateTime.UtcNow;
-        var elapsed = (now - _lastRefill).TotalSeconds;
+        var now = _timeProvider.GetTimestamp();
+        var elapsed = _timeProvider.GetElapsedTime(_lastRefill, now).TotalSeconds;
         if (elapsed <= 0) return;
 
         var capacity = _rate * 2.0;
