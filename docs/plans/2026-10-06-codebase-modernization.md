@@ -14,7 +14,9 @@ item has a verdict, a scope and, when there is work, its own pull request.
 | 4 | `[LoggerMessage]` source-generated logging | done, nothing to do | none |
 
 Review items 5 (sync-over-async wrappers) and 6 (non-`async` `Task` methods) were
-dropped: the current code is acceptable as is.
+dropped from this plan by maintainer decision. This is a scoping call, not a
+waiver: the AGENTS.md rule to use `async`/`await` instead of returning a `Task`
+directly still applies to new and changed code.
 
 ---
 
@@ -85,3 +87,6 @@ does not apply; the AGENTS.md rule for structured NLog calls with
 `Microsoft.Extensions.Logging` already uses `[LoggerMessage]`
 (`SingletonBackgroundService`, `ArkAzureFunctionsEasyAuthHandler`), and
 `AnalysisLevel=latest-all` with warnings as errors makes CA1848 enforce it.
+The two intentional exceptions are the trace-level `LogTrace` calls in
+`BasicAuthAuth0ProxyMiddleware` and `BasicAuthAzureActiveDirectoryProxyMiddleware`,
+which suppress CA1848 locally with a justification.
