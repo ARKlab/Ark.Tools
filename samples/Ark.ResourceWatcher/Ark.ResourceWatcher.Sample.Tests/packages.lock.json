@@ -161,11 +161,11 @@
       },
       "AwesomeAssertions.Web": {
         "type": "Transitive",
-        "resolved": "2.0.4",
-        "contentHash": "Ez+51cFy0UkUjD0iQjmkiiqdSwfmAJDp/QGbDwstrL0QsBbawuy+NUCXABfO2z4Gh5kPmbupVslAtszu662MIQ==",
+        "resolved": "2.0.5",
+        "contentHash": "v5P7h3MrouiNsCqciNBPXxFjOtVodBBUrqz0KjU2RiQR47Vt1pXNYDuket/IuSuEeg88sILEEO50e+8R3ifS5A==",
         "dependencies": {
           "AwesomeAssertions": "9.0.0",
-          "HttpMessageFormatter": "2.0.4",
+          "HttpMessageFormatter": "2.0.5",
           "Microsoft.AspNetCore.WebUtilities": "2.3.0"
         }
       },
@@ -289,8 +289,8 @@
       },
       "HttpMessageFormatter": {
         "type": "Transitive",
-        "resolved": "2.0.4",
-        "contentHash": "LkO6i/o3eXrh7hHIyWxeCjmREuumGctL76psNV3yngR+PgNTgWC/5VMTGw4jxWzF776JvcKvnfANpP1MQqqGsQ==",
+        "resolved": "2.0.5",
+        "contentHash": "llLJHBjjvZX90RlPrTXXo1zkYsrj6xU3qPHxeklnAkQyhkME1fAQo/XcKwYFJiLHf5bbJN0ZG0V7pK4KUhPT0A==",
         "dependencies": {
           "Microsoft.AspNetCore.WebUtilities": "2.3.0"
         }
@@ -1258,7 +1258,7 @@
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Http": "[1.0.0, )",
           "AwesomeAssertions": "[9.6.0, )",
-          "AwesomeAssertions.Web": "[2.0.4, )",
+          "AwesomeAssertions.Web": "[2.0.5, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.23.0, )",
           "Reqnroll": "[3.3.4, )"
         }
