@@ -104,6 +104,37 @@ internal static class EquatableArrayExtensions
         => new(values as ImmutableArray<T>? ?? values.ToImmutableArray());
 }
 
+/// <summary>
+/// Treats compilations as equal when their assembly name and metadata references are the same, so a
+/// pipeline step that only reads referenced (metadata) symbols reruns when references change instead of
+/// on every source edit. Steps using this comparer must not read source symbols from the compilation.
+/// </summary>
+internal sealed class MetadataReferencesComparer : IEqualityComparer<Compilation>
+{
+    private MetadataReferencesComparer()
+    {
+    }
+
+    /// <summary>Gets the shared comparer instance.</summary>
+    public static MetadataReferencesComparer Instance { get; } = new();
+
+    /// <inheritdoc />
+    public bool Equals(Compilation? x, Compilation? y)
+    {
+        if (ReferenceEquals(x, y))
+            return true;
+        if (x is null || y is null)
+            return false;
+
+        return string.Equals(x.AssemblyName, y.AssemblyName, StringComparison.Ordinal)
+            && x.References.SequenceEqual(y.References);
+    }
+
+    /// <inheritdoc />
+    public int GetHashCode(Compilation obj)
+        => obj.AssemblyName is null ? 0 : StringComparer.Ordinal.GetHashCode(obj.AssemblyName);
+}
+
 /// <summary>A symbol-free description of a source location carried by generator specifications.</summary>
 internal readonly struct LocationSpec : IEquatable<LocationSpec>
 {

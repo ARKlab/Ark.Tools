@@ -26,6 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Ark.Tools.MediatorFramework.Generators/GeneratorSpecPrimitives.cs" Link="GeneratorSpecPrimitives.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
   </ItemGroup>

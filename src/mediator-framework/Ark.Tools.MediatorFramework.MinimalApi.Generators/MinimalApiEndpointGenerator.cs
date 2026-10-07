@@ -37,6 +37,8 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string VersioningAttribute = "Ark.Tools.MediatorFramework.VersioningAttribute";
         private const string ArkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
         private const string MappingParserTrackingName = "MinimalApiMappingParser";
+        private const string EndpointParserTrackingName = "MinimalApiEndpointParser";
+        private const string ReferencedEndpointsTrackingName = "MinimalApiReferencedEndpoints";
         private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private const string List = "System.Collections.Generic.List`1";
         private const string ReadOnlyList = "System.Collections.Generic.IReadOnlyList`1";
@@ -97,21 +99,28 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
                 .SelectMany(static (mapping, _) => mapping.AssemblyNames)
-                .Collect();
+                .Collect()
+                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies));
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     HttpEndpointAttribute,
                     static (node, _) => node is TypeDeclarationSyntax,
                     static (attributeContext, _) => ExtractSourceEndpoint(attributeContext))
+                .WithTrackingName(EndpointParserTrackingName)
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value);
+            // The referenced-assembly scan reads metadata symbols only, so it reruns when references change.
             var referencedEndpoints = context.CompilationProvider
+                .WithComparer(MetadataReferencesComparer.Instance)
                 .Combine(endpointAssemblies)
-                .SelectMany(static (pair, cancellationToken) =>
-                    GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
+                .Select(static (pair, cancellationToken) => new EquatableArray<EndpointModel>(
+                    GetReferencedEndpoints(pair.Left, pair.Right.Values, cancellationToken)))
+                .WithTrackingName(ReferencedEndpointsTrackingName);
 
             var collected = sourceEndpoints.Collect()
-                .Combine(referencedEndpoints.Collect())
-                .Combine(endpointMappings.Collect());
+                .Select(static (endpoints, _) => new EquatableArray<EndpointModel>(endpoints))
+                .Combine(referencedEndpoints)
+                .Combine(endpointMappings.Collect()
+                    .Select(static (mappings, _) => new EquatableArray<EndpointAssemblyMapping>(mappings)));
 
             context.RegisterSourceOutput(
                 collected,
@@ -123,7 +132,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
                     }
 
-                    Emit(spc, pair.Left.Left.AddRange(pair.Left.Right));
+                    Emit(spc, pair.Left.Left.Values.AddRange(pair.Left.Right.Values));
                 });
         }
 
@@ -803,7 +812,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     spc.CancellationToken.ThrowIfCancellationRequested();
                     var currentEndpointIndex = endpointIndex++;
                     foreach (var diagnostic in e.Diagnostics)
-                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
+                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
                     if (!e.IsValid)
                         continue;
                     foreach (var property in e.InvalidServerSetProperties)
@@ -821,7 +830,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     }
                     foreach (var property in e.UnsupportedAttachmentCollections)
                         spc.ReportDiagnostic(Diagnostic.Create(UnsupportedAttachmentCollection, e.Location, e.TypeName, property));
-                    if (e.UnsupportedAttachmentCollections.Length > 0)
+                    if (e.UnsupportedAttachmentCollections.Count > 0)
                         continue;
 
                     var processorService = e.Kind == HandlerKind.Query
@@ -904,7 +913,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             }
                             else
                             {
-                                if (e.IsRecord && e.ServerSetProperties.Length > 0)
+                                if (e.IsRecord && e.ServerSetProperties.Count > 0)
                                     sb.AppendLine("                var request = body with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default")) + " };");
                                 else
                                     sb.AppendLine("                var request = body;");
@@ -966,7 +975,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             else
                                 sb.AppendLine("                var request = " + ConstructEnvelope(e, assignments) + ";");
                         }
-                        else if (e.IsRecord && e.ServerSetProperties.Length > 0)
+                        else if (e.IsRecord && e.ServerSetProperties.Count > 0)
                         {
                             sb.AppendLine("                request = request with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default")) + " };");
                         }
@@ -1242,7 +1251,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static void EmitAllowedContentTypeCheck(StringBuilder sb, EndpointModel endpoint, string fileVariable)
         {
-            if (endpoint.AllowedContentTypes.IsDefaultOrEmpty)
+            if (endpoint.AllowedContentTypes.IsEmpty)
                 return;
             var allowedTypes = string.Join(", ", endpoint.AllowedContentTypes.Select(Literal));
             sb.AppendLine("                    if (!global::System.Linq.Enumerable.Contains(new[] { " + allowedTypes + " }, " + fileVariable + ".ContentType, global::System.StringComparer.OrdinalIgnoreCase))");
@@ -1330,7 +1339,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
                 sb.AppendLine("                var request = body with { " + assignments + " };");
             }
-            else if (endpoint.IsRecord && endpoint.ServerSetProperties.Length > 0)
+            else if (endpoint.IsRecord && endpoint.ServerSetProperties.Count > 0)
             {
                 sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
             }
@@ -1457,7 +1466,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static string ConstructEnvelope(EndpointModel endpoint, string assignments)
         {
-            if (endpoint.ConstructorParameters.IsDefaultOrEmpty)
+            if (endpoint.ConstructorParameters.IsEmpty)
                 return "new " + endpoint.TypeFullName + " { " + assignments + " }";
 
             var values = assignments
@@ -1485,7 +1494,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             Command = 3,
         }
 
-        private readonly record struct EndpointAssemblyMapping(ImmutableArray<string> AssemblyNames, Location? InvalidVersionPrefixLocation);
+        // Locations stay Roslyn source locations: they compare by syntax tree and span, so unrelated edits
+        // keep models equal, and reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
+        private readonly record struct EndpointAssemblyMapping(EquatableArray<string> AssemblyNames, Location? InvalidVersionPrefixLocation);
 
         private readonly record struct EndpointModel
         {
@@ -1564,7 +1575,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 AttachmentResponse = attachmentResponse;
                 StreamElement = streamElement;
                 Location = location;
-                Diagnostics = diagnostics;
+                Diagnostics = diagnostics.ToImmutableArray();
                 IsValid = diagnostics.Count == 0;
             }
 
@@ -1575,7 +1586,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ApiGroup = "Ark";
                 Summary = null;
                 Remarks = null;
-                Diagnostics = diagnostics;
+                Diagnostics = diagnostics.ToImmutableArray();
                 IsValid = false;
                 Verb = string.Empty;
                 Template = string.Empty;
@@ -1623,38 +1634,38 @@ namespace Ark.Tools.MediatorFramework.Generators
             public int MaxFileCount { get; }
             public int MaxMessagePackStreamedItems { get; }
 
-            public ImmutableArray<string> AllowedContentTypes { get; }
-            public ImmutableArray<PropertyModel> Properties { get; }
+            public EquatableArray<string> AllowedContentTypes { get; }
+            public EquatableArray<PropertyModel> Properties { get; }
             public string? BodyProperty { get; }
             public string? ETagProperty { get; }
             public string? ResponseETagProperty { get; }
             public bool IsRecord { get; }
-            public ImmutableArray<string> ConstructorParameters { get; }
-            public ImmutableArray<string> ServerSetProperties { get; }
-            public ImmutableArray<string> InvalidServerSetProperties { get; }
-            public ImmutableArray<string> SuspiciousProperties { get; }
+            public EquatableArray<string> ConstructorParameters { get; }
+            public EquatableArray<string> ServerSetProperties { get; }
+            public EquatableArray<string> InvalidServerSetProperties { get; }
+            public EquatableArray<string> SuspiciousProperties { get; }
             public int AttachmentCount { get; }
-            public ImmutableArray<string> UnsupportedAttachmentCollections { get; }
+            public EquatableArray<string> UnsupportedAttachmentCollections { get; }
             public bool AttachmentResponse { get; }
             public string? StreamElement { get; }
             public bool IsStreaming => StreamElement is not null;
             public Location? Location { get; }
-            public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
+            public EquatableArray<DiagnosticInfo> Diagnostics { get; }
             public bool IsValid { get; }
         }
 
         private readonly record struct DiagnosticInfo
         {
-            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, params object[] arguments)
+            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, params string[] arguments)
             {
                 Descriptor = descriptor;
                 Location = location;
-                Arguments = arguments.Length == 0 ? new object[] { typeName } : new[] { (object)typeName }.Concat(arguments).ToArray();
+                Arguments = new[] { typeName }.Concat(arguments).ToImmutableArray();
             }
 
             public DiagnosticDescriptor Descriptor { get; }
             public Location Location { get; }
-            public object[] Arguments { get; }
+            public EquatableArray<string> Arguments { get; }
         }
 
         private static Location GetLocation(AttributeData attribute)
