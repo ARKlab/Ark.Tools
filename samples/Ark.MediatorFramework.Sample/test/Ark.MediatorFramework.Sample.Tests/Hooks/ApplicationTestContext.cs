@@ -77,7 +77,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             Environment.GetEnvironmentVariable("ARK_SAMPLE_INMEMORY_TESTS"),
             "1",
             StringComparison.Ordinal);
-        _connectionString = connectionString ?? Environment.GetEnvironmentVariable("ARK_SAMPLE_SQL_CONNECTION");
+        _connectionString = connectionString ?? (_usesSqlStore ? DatabaseHooks.ConnectionString : null);
         ApplicationComposition.Register(
             _container,
             _usesSqlStore,
