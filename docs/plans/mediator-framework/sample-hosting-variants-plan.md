@@ -569,6 +569,7 @@ real processes would. Remove the moved scenarios from the old test project.
 **Interfaces:**
 - Consumes: Task 1 `GetPendingCount`; Task 3 `ApplicationOptions`, `Register`, `RegisterNotificationSubscriber`, `RegisterAuditSubscriber`.
 - Produces: native messaging dispatches `IRequest<TSelf, TResponse>` contracts listed in `Processes` (response discarded); `CreateBookReviewRequest.V1` is sent as-is by every host variant.
+- Produces: `BookReviewFailureHandler : ICommandHandler<MessagingFailed<CreateBookReviewRequest.V1>>`, registered in `ApplicationComposition.Register` next to `BookPrintProcessFailureHandler`. `SampleMessagingRetryPolicy` enables second-level retries, so the generated `HandlerServiceTypes` require it and `ConfigureArkMessagingFunctions` validates it.
 - Produces (test-only, used by later tasks as reference): `ParticipantProcess` (container + `ServiceProvider` + started `IHostedService`s for one participant), `InMemoryMessagingHarness.EnsureTopologyAsync(InMemoryMessagingTransport)`.
 
 - [ ] **Step 0: Framework — requests as messages**
@@ -1052,7 +1053,14 @@ If `Reject an unauthorized book review through the background bus` does not
 reach a dead letter, inspect `SampleMessagingRetryPolicy`
 (`SecondLevelRetriesEnabled = true`) and the generated
 `SampleMessagingParticipant.DispatchFailedAsync`: an unhandled
-`MessagingFailed<CreateBookReviewRequest.V1>` must dead-letter. Fix the test
+`MessagingFailed<CreateBookReviewRequest.V1>` must dead-letter.
+`BookReviewFailureHandler` (Step 0) gives that semantics explicitly: a failed
+review has no compensating state, so the handler logs the review id, book id
+and first exception message (structured NLog, `CultureInfo.InvariantCulture`)
+and rethrows as `InvalidOperationException("Background book review failed.")`
+so the delivery dead-letters with its diagnostics. Verify against the
+framework that a throwing second-level handler dead-letters; if it instead
+re-enters retries, use the framework's explicit dead-letter path. Fix the test
 harness, not the policy. The scenario must fail for the authorization reason:
 assert the dead letter's reason/description is not `UnknownContractName`.
 
@@ -2301,9 +2309,11 @@ public sealed class RebusTopologyTests
 - `Worker`/`Notification`/`Audit`: `RebusPrincipalContextWithFallbackProvider`,
   matching `RegisterNotificationSubscriber`/`RegisterAuditSubscriber`,
   `RebusHosting.Configure<THost>(c, t => t.UseInMemoryTransport(network, <queue>), …)`
-  with `timeouts.StoreInMemoryTests()` and `options.AddInProcessMessageInspector()`
-  applied through an optional `Action<OptionsConfigurer>? configureOptions`
-  parameter on `RebusHosting.Configure`. `<queue>` is the participant identity
+  with `options.AddInProcessMessageInspector()` applied through the optional
+  `Action<OptionsConfigurer>? configureOptions` parameter, and timeout storage
+  applied through `configureTest`:
+  `cfg => cfg.Timeouts(t => t.StoreInMemoryTests())` (`StoreInMemoryTests`
+  extends `StandardConfigurer<ITimeoutManager>`, not `OptionsConfigurer`). `<queue>` is the participant identity
   (`SampleMessagingParticipant.Identity`, …).
 - Each factory calls `container.Verify(); container.StartBus();` and then
   `await THost.SubscribeAsync(...)` before returning.
