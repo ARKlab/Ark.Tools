@@ -156,7 +156,9 @@ network declarations, and `ApplicationJsonSerializerContext`.
 - `ApplicationComposition.Register(Container, ApplicationOptions)`
   registers the shared graph. `ApplicationOptions` carries the SQL
   connection string and clock; there is no hard-coded fallback connection
-  string.
+  string. The well-known local SQL emulator connection (the one in
+  `docker-compose.yml`) lives in each host's `appsettings.Development.json`
+  and in the test configuration, not in Application code.
 - Each process registers the handlers of its own participant. The
   `registerBookPrintNotificationHandler` flag and the sink overrides are
   removed from `Register`.
