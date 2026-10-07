@@ -24,6 +24,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private const string _hostSpecStage = "AzureFunctionsHostSpecs";
     private const string _endpointAttributeStage = "AzureFunctionsEndpointAttributes";
     private const string _endpointSpecStage = "AzureFunctionsEndpointSpecs";
+    private const string _referencedEndpointStage = "AzureFunctionsReferencedEndpoints";
     private const string _specStage = "AzureFunctionsSpecs";
     private const string _outputStage = "AzureFunctionsOutput";
 
@@ -97,15 +98,34 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .Select(static (endpoint, _) => endpoint!.Value)
             .WithTrackingName(_endpointSpecStage)
             .Collect();
-        var specs = hosts.Combine(sourceEndpoints)
-            .Select(static (pair, _) => new AzureFunctionsAggregateSpec(
-                pair.Left
-                    .OrderBy(static host => host.MarkerFullyQualifiedType, StringComparer.Ordinal)
-                    .ThenBy(static host => host.Prefix, StringComparer.Ordinal)
-                    .ToImmutableArray(),
-                pair.Right
-                    .OrderBy(static endpoint => endpoint.FullyQualifiedType, StringComparer.Ordinal)
-                    .ToImmutableArray()))
+        // Referenced contract assemblies are scanned only when the metadata references change.
+        var referencedEndpoints = context.CompilationProvider
+            .WithComparer(MetadataReferencesComparer.Instance)
+            .Combine(hosts.Select(static (values, _) => new EquatableArray<string>(values
+                .Where(static host => !host.MarkerIsInSource)
+                .Select(static host => host.MarkerAssemblyName)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(static assemblyName => assemblyName, StringComparer.Ordinal)
+                .ToImmutableArray())))
+            .Select(static (pair, cancellationToken) => new EquatableArray<AssemblyEndpointsSpec>(
+                AzureFunctionsEndpointParser._readReferencedEndpoints(pair.Left, pair.Right.Values, cancellationToken)))
+            .WithTrackingName(_referencedEndpointStage);
+        var specs = hosts.Combine(sourceEndpoints).Combine(referencedEndpoints)
+            .Select(static (input, _) =>
+            {
+                var ((hostSpecs, endpoints), referenced) = input;
+                return new AzureFunctionsAggregateSpec(
+                    hostSpecs
+                        .Select(host => host.MarkerIsInSource
+                            ? host
+                            : host with { MetadataEndpoints = _metadataEndpoints(referenced, host.MarkerAssemblyName) })
+                        .OrderBy(static host => host.MarkerFullyQualifiedType, StringComparer.Ordinal)
+                        .ThenBy(static host => host.Prefix, StringComparer.Ordinal)
+                        .ToImmutableArray(),
+                    endpoints
+                        .OrderBy(static endpoint => endpoint.FullyQualifiedType, StringComparer.Ordinal)
+                        .ToImmutableArray());
+            })
             .WithTrackingName(_specStage);
         var output = specs
             .Select(static (spec, _) => spec)
@@ -115,6 +135,19 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             output,
             static (productionContext, spec) =>
                 _emit(productionContext, spec.Hosts.Values, spec.Endpoints.Values));
+    }
+
+    private static EquatableArray<EndpointSpec> _metadataEndpoints(
+        EquatableArray<AssemblyEndpointsSpec> referenced,
+        string assemblyName)
+    {
+        foreach (var assembly in referenced)
+        {
+            if (string.Equals(assembly.AssemblyName, assemblyName, StringComparison.Ordinal))
+                return assembly.Endpoints;
+        }
+
+        return EquatableArray<EndpointSpec>.Empty;
     }
 
     private static void _emit(

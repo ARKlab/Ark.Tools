@@ -271,6 +271,34 @@ public sealed class GeneratorIncrementalityTests
             expectedOutput: ["sealed partial class BookMessagingNetwork", "CompressionAlgorithm.Gzip", "DispatchAsync", "ARKMSG008"]);
     }
 
+    [TestMethod]
+    public void AzureFunctionsGeneratorReusesCachedOutputOnUnrelatedEdit()
+    {
+        var contracts = _createReference(
+            "FunctionsContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace FunctionsContracts;
+            public sealed class Marker { }
+            [HttpEndpoint("GET", "/referenced")]
+            public sealed class GetReferenced : IQuery<string> { }
+            """);
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            [assembly: HttpHost(typeof(FunctionsContracts.Marker), "/api/v{version}")]
+            """;
+
+        _assertReusesCachedOutput(
+            new AzureFunctions.Generators.AzureFunctionsEndpointGenerator(),
+            source,
+            source.Replace("/api/v{version}", "/v{version}/api", StringComparison.Ordinal),
+            [contracts],
+            cachedSteps: ["AzureFunctionsReferencedEndpoints"],
+            unchangedSteps: ["AzureFunctionsHostSpecs", "AzureFunctionsSpecs", "AzureFunctionsOutput"],
+            expectedOutput: ["global::FunctionsContracts.GetReferenced", "api/v1/referenced"]);
+    }
+
     private static void _assertReusesCachedOutput(
         IIncrementalGenerator generator,
         string source,
