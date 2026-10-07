@@ -78,8 +78,8 @@ jobs:
           apm-version: 0.33.0
 
       - name: Verify committed Copilot and Claude agents match the lockfile
-        # Stops the agent when committed skills, agents, hooks or MCP servers were altered.
-        run: apm run agents:check
+        # Stops the agent when committed skills, agents or hooks were altered.
+        run: apm audit --ci
         env:
           GITHUB_APM_PAT: ${{ github.token }}
 

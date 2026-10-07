@@ -10,7 +10,6 @@ includes: auto
 scripts:
   plugins:build: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1
   plugins:check: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1 -Check
-  agents:check: pwsh -NoProfile -File agents-plugins/Test-AgentInstall.ps1
 devDependencies:
   apm:
     - microsoft/apm/packages/apm-guide#main

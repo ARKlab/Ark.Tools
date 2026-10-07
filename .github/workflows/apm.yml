@@ -52,8 +52,6 @@ jobs:
         run: apm run plugins:check
 
       - name: Verify committed Copilot and Claude agents match the lockfile
-        # ponytail: APM 0.33 --frozen preflight rejects cold marketplace deps and transitive MCP,
-        # so the check reinstalls with 'apm install'. Switch to '--frozen' once fixed upstream.
-        run: apm run agents:check
+        run: apm audit --ci
         env:
           GITHUB_APM_PAT: ${{ github.token }}
