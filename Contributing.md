@@ -171,6 +171,6 @@ package-local lockfile. APM 0.31 embeds timestamped, path-attested metadata when
 that lock exists; the build rejects it rather than breaking reproducibility or
 silently invalidating the attestation during manifest relocation.
 
-The dedicated [APM workflow](.github/workflows/apm.yml) checks publication drift
-and a clean, lock-preserving Copilot restore, without building .NET or starting emulators.
+The [CI workflow](.github/workflows/ci.yml) checks publication drift and runs
+`apm audit --ci` before building .NET.
 Consumers can add `ARKlab/Ark.Tools` as a marketplace and install `ark-csharp`.
