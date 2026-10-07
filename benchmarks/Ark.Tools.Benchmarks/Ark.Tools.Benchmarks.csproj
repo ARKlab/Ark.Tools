@@ -16,6 +16,8 @@
     <PackageReference Include="BenchmarkDotNet" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Dapper/Ark.Tools.Dapper.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.MessagePack/Ark.Tools.MessagePack.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/Ark.Tools.MediatorFramework.Messaging.csproj" />

@@ -1072,6 +1072,13 @@
           "NodaTime": "[3.3.5, )"
         }
       },
+      "ark.tools.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Dapper": "[2.1.89, )"
+        }
+      },
       "ark.tools.hosting": {
         "type": "Project",
         "dependencies": {
@@ -1130,6 +1137,13 @@
           "MessagePack": "[3.1.11, )",
           "MessagePack.NodaTime": "[3.5.10, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
+        }
+      },
+      "ark.tools.messagepack": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "MessagePack": "[3.1.11, )"
         }
       },
       "ark.tools.newtonsoftjson": {
