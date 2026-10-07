@@ -80,6 +80,60 @@ public sealed class GeneratorIncrementalityTests
             unchangedSteps: ["MinimalApiEndpointParser", "MinimalApiMappingParser"]);
     }
 
+    [TestMethod]
+    public void GrpcGeneratorReusesCachedOutputOnUnrelatedEdit()
+    {
+        var contracts = _createReference(
+            "GrpcContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            namespace GrpcContracts;
+            public sealed class Marker { }
+            [GrpcMethod("GetReferenced")]
+            [ProtoContract]
+            public sealed class GetReferenced : IQuery<ReferencedResponse>
+            {
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class ReferencedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            MapArkGrpcServicesFromAssembly<GrpcContracts.Marker>();
+            [GrpcMethod("GetSource")]
+            [ProtoContract]
+            public sealed class GetSource : IQuery<SourceResponse>
+            {
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class SourceResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """;
+
+        _assertReusesCachedOutput(
+            new ArkGrpcEndpointGenerator(),
+            source,
+            source.Replace("[ProtoMember(1)]\n    public string Value", "[ProtoMember(2)]\n    public string Value", StringComparison.Ordinal),
+            [contracts],
+            cachedSteps: ["GrpcReferencedEndpoints", "GrpcReferencedProtoContracts"],
+            unchangedSteps: ["GrpcMappingParser", "GrpcEndpointParser", "GrpcProtoContractParser", "GrpcOutput"]);
+    }
+
     private static void _assertReusesCachedOutput(
         IIncrementalGenerator generator,
         string source,
@@ -190,6 +244,7 @@ public sealed class GeneratorIncrementalityTests
         [
             MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
         ]);
     }
 }
