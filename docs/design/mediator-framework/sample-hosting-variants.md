@@ -1,6 +1,6 @@
 # Mediator Framework sample: one service, many hosts
 
-Status: **accepted** — design approved; implementation plan pending.
+Status: **accepted** — implementation plan: [`sample-hosting-variants-plan.md`](../../plans/mediator-framework/sample-hosting-variants-plan.md).
 
 ## Problem
 
@@ -46,13 +46,15 @@ the same monorepo shape as `samples/Ark.ReferenceProject`.
 | D2 | Host combinations are variants of a service, under `<Service>/Hosts/<Variant>/`. |
 | D3 | Three variants: `Web` (Minimal API + gRPC + MCP + native messaging), `WebRebus` (Minimal API + Rebus), `Functions` (Azure Functions HTTP + native messaging triggers). |
 | D4 | One root `Ark.MediatorFramework.Sample.slnx`; no per-variant solution. |
-| D5 | Each variant is self-contained: `Core/` plus one `Hosts/<Variant>/` is a complete application. Process code is duplicated across variants rather than shared. |
+| D5 | Each variant is self-contained: `Core/` plus one `Hosts/<Variant>/` is a complete application. Within a variant, processes share one `…Core.<Variant>.Hosting` library; nothing is shared across variants. |
 | D6 | All four messaging participants are kept; each participant runs in its own process in every variant. |
 | D7 | The print worker publishes `BookPrintCompleted`; the Api participant only sends. |
 | D8 | API and Application reference no Rebus, Azure Functions, or ASP.NET Core package. |
 | D9 | Application tests use the native in-memory messaging transport and are identical for every variant. |
 | D10 | Production composition reads configuration; test switches exist only in test projects. |
 | D11 | The current sample layout is retired once the three variants pass. |
+| D12 | Message principal flow is explicit per host: native hosts register `UserContextOutgoingStep`/`UserContextIncomingStep`; Rebus hosts keep `AutomaticallyFlowUserContext`. |
+| D13 | `[RebusMessage]` is removed from contracts; participant declarations are the only routing source. |
 
 ## Layout
 
@@ -72,6 +74,7 @@ samples/Ark.MediatorFramework.Sample/
     ├── Ark.MediatorFramework.Sample.Core.Tests/
     └── Hosts/
         ├── Web/
+        │   ├── Ark.MediatorFramework.Sample.Core.Web.Hosting/
         │   ├── Ark.MediatorFramework.Sample.Core.Web.WebInterface/
         │   ├── Ark.MediatorFramework.Sample.Core.Web.Processor/
         │   ├── Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor/
@@ -81,6 +84,7 @@ samples/Ark.MediatorFramework.Sample/
         │   ├── Ark.MediatorFramework.Sample.Core.Web.Tests/
         │   └── README.md
         ├── WebRebus/
+        │   ├── Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/
         │   ├── Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface/
         │   ├── Ark.MediatorFramework.Sample.Core.WebRebus.Processor/
         │   ├── Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor/
@@ -88,6 +92,7 @@ samples/Ark.MediatorFramework.Sample/
         │   ├── Ark.MediatorFramework.Sample.Core.WebRebus.Tests/
         │   └── README.md
         └── Functions/
+            ├── Ark.MediatorFramework.Sample.Core.Functions.Hosting/
             ├── Ark.MediatorFramework.Sample.Core.Functions.Api/
             ├── Ark.MediatorFramework.Sample.Core.Functions.Processor/
             ├── Ark.MediatorFramework.Sample.Core.Functions.Notifications/
@@ -120,7 +125,7 @@ composition requires exactly one Producer or Receiver.
 | --- | --- | --- | --- | --- |
 | Api | Sends `ProcessBookPrintProcessRequest` and `CreateBookReviewRequest` | `Web.WebInterface` (producer) | `WebRebus.WebInterface` (one-way client) | `Functions.Api` (producer) |
 | Print worker (`ark-mediator-sample`) | Processes the sent messages; publishes `BookPrintCompleted` | `Web.Processor` | `WebRebus.Processor` | `Functions.Processor` |
-| Notification subscriber | Calls the external print-notification adapter | `Web.NotificationProcessor` | `WebRebus.NotificationProcessor` | `Functions.Notifications` |
+| Notification subscriber | Records the notification through `IBookPrintNotificationSink` | `Web.NotificationProcessor` | `WebRebus.NotificationProcessor` | `Functions.Notifications` |
 | Audit subscriber | Records the print audit effect | `Web.AuditProcessor` | `WebRebus.AuditProcessor` | `Functions.Audit` |
 | Outbox drain | Dispatches committed envelopes | `Web.OutboxProcessor` (`MessagingOutboxProcessor`) | Rebus outbox in each Rebus process | `Functions.OutboxProcessor` (`MessagingOutboxProcessor`) |
 
@@ -128,9 +133,12 @@ Application changes:
 
 - `Publishes = [BookPrintCompleted]` moves from the Api participant to the
   print worker.
+- `SampleMessagingPublisherParticipant` is renamed `SampleMessagingApiParticipant`.
 - `ProcessBookPrintProcessHandler` publishes `BookPrintCompleted` through the
-  context outbox when a print process completes. Today the event is published
-  only by a test.
+  context outbox in the transaction that completes the print process. Today the
+  event is published only by a test. The worker keeps its inline call to the
+  external `IPrintCompletedNotificationService`, so the existing
+  failed-notification scenario is unchanged.
 
 Within one variant every participant uses the same stack. Rebus and native
 messaging are never mixed on one network.
@@ -166,8 +174,12 @@ network declarations, and `ApplicationJsonSerializerContext`.
   `RegisterOutboundRebus`) moves to the `WebRebus` variant. The
   `Ark.Tools.MediatorFramework.Rebus` and `Ark.Tools.Outbox.Rebus`
   references are removed.
-- `FailingRebusRequest` and its handler move to the `WebRebus` variant;
-  dead-letter behavior is a host concern.
+- `FailingRebusRequest` and its handler are deleted. No feature uses them;
+  the Rebus dead-letter path is demonstrated by the unauthorized background
+  review in the `WebRebus` tests.
+- Subscriber handlers are registered by the subscriber process
+  (`RegisterNotificationSubscriber`, `RegisterAuditSubscriber`), because both
+  implement `ICommandHandler<BookPrintCompleted>`.
 - The in-memory context factory stays in Application because it implements
   the same context contract as SQL and is used by `Core.Tests`.
 
@@ -178,8 +190,8 @@ Unchanged apart from the rename.
 ### Application tests (`Core.Tests`)
 
 - References API, Application, and Database only.
-- Composes all four participants on `InMemoryMessagingTransport` in one
-  scenario-owned composition, so the full flow (create print process → worker
+- Composes all four participants on `InMemoryMessagingTransport`, one
+  container per participant as in a real deployment, so the full flow (create print process → worker
   completes → completion published → notified and audited) is observable
   through contracts and binding drivers.
 - SQL profile by default; `ARK_SAMPLE_INMEMORY_TESTS=1` selects the in-memory
@@ -189,8 +201,9 @@ Unchanged apart from the rename.
 
 ## Host variants
 
-Every host project contains `Program.cs`, one composition class, and
-configuration files. Host composition:
+Every process project contains `Program.cs` and configuration files; the
+composition shared by a variant's processes lives in its `Hosting` library.
+Host composition:
 
 - builds the SimpleInjector container through `ApplicationComposition`;
 - adds only its transport, participant, and process concerns;
@@ -269,6 +282,9 @@ Every step builds the root solution and passes the affected tests.
 - **Process count.** Five processes per native variant is heavy for local
   runs. Variant READMEs list the minimum set needed for a given scenario;
   `docker-compose.yml` provides SQL, Azurite, and a Service Bus emulator.
+- **Framework change.** `InMemoryMessagingTransport.GetPendingCount` is added
+  so host-neutral tests can wait for in-memory work to drain without
+  `InternalsVisibleTo`.
 - **Framework gaps.** A variant may reveal a missing framework capability
   (for example, hosting a producer in the Functions HTTP app). Such gaps get
   their own task and framework tests before the variant depends on them.
