@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.Generators;
+using Ark.Tools.MediatorFramework.Mcp.Generators;
 using Ark.Tools.Solid;
 
 using AwesomeAssertions;
@@ -184,6 +185,51 @@ public sealed class GeneratorIncrementalityTests
             expectedOutput: ["typeBased.Map<global::RebusContracts.ReferencedCommand>(\"referenced\")", "sealed partial class OrdersRebusHost", "Map<global::RebusContracts.ProcessOrder>(\"orders\")"]);
     }
 
+    [TestMethod]
+    public void McpGeneratorReusesCachedOutputOnUnrelatedEdit()
+    {
+        var contracts = _createReference(
+            "McpContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace McpContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class ListOrders : IQuery<string>
+            {
+                public string Filter { get; set; } = string.Empty;
+            }
+            """);
+        var documentation = new TestAdditionalText(
+            "/documentation/McpContracts.xml",
+            """
+            <doc><members><member name="T:McpContracts.ListOrders"><summary>Lists orders.</summary></member></members></doc>
+            """);
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            [ArkGenerateMcpToolsForAssembly(typeof(McpContracts.Marker))]
+            [ArkGenerateMcpToolsForAssembly(typeof(SourceMarker))]
+            public partial class McpContext { }
+            public sealed class SourceMarker { }
+            /// <summary>Creates an order.</summary>
+            [McpTool]
+            public sealed class CreateOrder : ICommand { }
+            """;
+
+        _assertReusesCachedOutput(
+            new McpToolGenerator(),
+            source,
+            source.Replace("Creates an order.", "Creates a new order.", StringComparison.Ordinal),
+            [contracts],
+            cachedSteps: ["McpReferencedContracts", "McpReferencedDocumentation"],
+            unchangedSteps: ["McpMarkerParser", "McpContractParser", "McpDocumentationParser", "McpModel"],
+            expectedOutput: ["Description(\"Lists orders.\")", "Description(\"Creates an order.\")", "global::McpContracts.ListOrders(", "global::CreateOrder("],
+            additionalTexts: [documentation]);
+    }
+
     private static void _assertReusesCachedOutput(
         IIncrementalGenerator generator,
         string source,
@@ -191,7 +237,8 @@ public sealed class GeneratorIncrementalityTests
         MetadataReference[] references,
         string[] cachedSteps,
         string[] unchangedSteps,
-        string[] expectedOutput)
+        string[] expectedOutput,
+        AdditionalText[]? additionalTexts = null)
     {
         var sourceTree = CSharpSyntaxTree.ParseText(source, path: "Contracts.cs");
         var unrelatedTree = CSharpSyntaxTree.ParseText(_unrelatedSource, path: "Unrelated.cs");
@@ -202,6 +249,7 @@ public sealed class GeneratorIncrementalityTests
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [generator.AsSourceGenerator()],
+            additionalTexts: additionalTexts,
             driverOptions: new GeneratorDriverOptions(
                 IncrementalGeneratorOutputKind.None,
                 trackIncrementalGeneratorSteps: true));
@@ -290,6 +338,14 @@ public sealed class GeneratorIncrementalityTests
         return MetadataReference.CreateFromImage(stream.ToArray());
     }
 
+    private sealed class TestAdditionalText(string path, string content) : AdditionalText
+    {
+        public override string Path => path;
+
+        public override Microsoft.CodeAnalysis.Text.SourceText? GetText(CancellationToken cancellationToken = default)
+            => Microsoft.CodeAnalysis.Text.SourceText.From(content, System.Text.Encoding.UTF8);
+    }
+
     private static IEnumerable<MetadataReference> _getReferences()
     {
         return _platformReferences.Concat(
@@ -297,6 +353,7 @@ public sealed class GeneratorIncrementalityTests
             MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(Rebus.ArkRebusHostAttribute).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(Mcp.IMcpToolContext).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
         ]);
     }

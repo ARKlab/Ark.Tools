@@ -11,6 +11,8 @@ using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
+using Ark.Tools.MediatorFramework.Generators;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -35,6 +37,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private const string HttpEndpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
     private const string MarkerParserTrackingName = "McpMarkerParser";
     private const string DocumentationParserTrackingName = "McpDocumentationParser";
+    private const string ContractParserTrackingName = "McpContractParser";
+    private const string ReferencedContractsTrackingName = "McpReferencedContracts";
+    private const string ReferencedDocumentationTrackingName = "McpReferencedDocumentation";
+    private const string ModelTrackingName = "McpModel";
 
     private static readonly DiagnosticDescriptor InvalidName = new(
         "ARKMF050", "Use a valid MCP tool name", "MCP tool name '{0}' is invalid; rename the tool to a valid MCP identifier",
@@ -68,37 +74,113 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => GetMarkers(attributeContext))
             .WithTrackingName(MarkerParserTrackingName)
-            .SelectMany(static (markerGroup, _) => markerGroup);
-        var documentationFiles = context.AdditionalTextsProvider
+            .SelectMany(static (markerGroup, _) => markerGroup)
+            .Collect()
+            .Select(static (markerModels, _) => new EquatableArray<MarkerModel>(markerModels));
+        var markerAssemblies = markers
+            .Select(static (markerModels, _) => new EquatableArray<string>(markerModels
+                .Select(static marker => marker.AssemblyName)
+                .Where(static assemblyName => assemblyName is not null)
+                .Select(static assemblyName => assemblyName!)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(static assemblyName => assemblyName, StringComparer.Ordinal)
+                .ToImmutableArray()));
+        var sourceContracts = context.SyntaxProvider.ForAttributeWithMetadataName(
+                ToolAttribute,
+                static (node, _) => node is TypeDeclarationSyntax,
+                static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol type
+                    ? CreateContract(type)
+                    : null)
+            .WithTrackingName(ContractParserTrackingName)
+            .Where(static contract => contract is not null)
+            .Select(static (contract, _) => contract!)
+            .Collect()
+            .Select(static (contracts, _) => new EquatableArray<ContractModel>(contracts));
+        // Referenced-assembly scans read metadata symbols and documentation files only, so they rerun
+        // when references change instead of on every edit.
+        var referenceScope = context.CompilationProvider
+            .WithComparer(MetadataReferencesComparer.Instance);
+        var referencedContracts = referenceScope
+            .Combine(markerAssemblies)
+            .Select(static (pair, cancellationToken) => new EquatableArray<AssemblyContracts>(
+                FindReferencedContracts(pair.Left, pair.Right.Values, cancellationToken)))
+            .WithTrackingName(ReferencedContractsTrackingName);
+        var groups = markers
+            .Combine(sourceContracts)
+            .Combine(referencedContracts)
+            .Combine(context.CompilationProvider.Select(static (compilation, _) => compilation.AssemblyName))
+            .Select(static (input, cancellationToken) =>
+            {
+                var (((markerModels, source), referenced), assemblyName) = input;
+                return CreateGroups(markerModels.Values, source.Values, referenced.Values, assemblyName, cancellationToken);
+            })
+            .WithTrackingName(ModelTrackingName);
+        var documentationAssemblies = groups
+            .Select(static (model, _) => model.DocumentationAssemblyNames);
+        var additionalDocumentation = context.AdditionalTextsProvider
             .Where(static text => string.Equals(Path.GetExtension(text.Path), ".xml", StringComparison.OrdinalIgnoreCase))
             .Select(static (text, cancellationToken) => GetDocumentationFile(text, cancellationToken))
             .WithTrackingName(DocumentationParserTrackingName)
-            .Collect();
+            .Collect()
+            .Combine(documentationAssemblies)
+            .Select(static (pair, cancellationToken) => new EquatableArray<DocumentationAssembly>(
+                GetAdditionalDocumentation(pair.Left, pair.Right.Values, cancellationToken)));
+        var referencedDocumentation = referenceScope
+            .Combine(documentationAssemblies)
+            .Combine(additionalDocumentation)
+            .Select(static (input, cancellationToken) => new EquatableArray<DocumentationAssembly>(
+                GetReferencedDocumentation(input.Left.Left, input.Left.Right.Values, input.Right.Values, cancellationToken)))
+            .WithTrackingName(ReferencedDocumentationTrackingName);
 
         context.RegisterSourceOutput(
-            context.CompilationProvider.Combine(markers.Collect()).Combine(documentationFiles),
+            groups.Combine(additionalDocumentation).Combine(referencedDocumentation),
             static (sourceProductionContext, input) =>
-                Emit(sourceProductionContext, input.Left.Left, input.Left.Right, input.Right));
+                Emit(
+                    sourceProductionContext,
+                    input.Left.Left,
+                    input.Left.Right.Values.AddRange(input.Right.Values)));
     }
 
-    private static ImmutableArray<MarkerModel> GetMarkers(GeneratorAttributeSyntaxContext context)
+    private static EquatableArray<MarkerModel> GetMarkers(GeneratorAttributeSyntaxContext context)
     {
         if (context.TargetSymbol is not INamedTypeSymbol type)
-            return [];
+            return EquatableArray<MarkerModel>.Empty;
 
         var invalidLocation = IsPartial(type) && AllContainingTypesArePartial(type)
             ? null
             : CreateLocation(context.Attributes[0].ApplicationSyntaxReference?.GetSyntax().GetLocation());
         var contextMetadataName = GetMetadataName(type);
+        var contextModel = CreateContextModel(type);
         return context.Attributes
             .Select(marker => new MarkerModel(
                 contextMetadataName,
                 marker.ConstructorArguments.FirstOrDefault().Value is INamedTypeSymbol markerType
                     ? markerType.ContainingAssembly.Name
                     : null,
-                invalidLocation))
+                invalidLocation,
+                contextModel))
             .OrderBy(static marker => marker.AssemblyName, StringComparer.Ordinal)
             .ToImmutableArray();
+    }
+
+    private static ContextModel CreateContextModel(INamedTypeSymbol type)
+    {
+        var containingTypes = new Stack<INamedTypeSymbol>();
+        for (var containingType = type.ContainingType;
+            containingType is not null;
+            containingType = containingType.ContainingType)
+        {
+            containingTypes.Push(containingType);
+        }
+
+        return new ContextModel(
+            type.ContainingNamespace.IsGlobalNamespace ? null : type.ContainingNamespace.ToDisplayString(),
+            containingTypes
+                .Select(static containingType => GetPartialTypeDeclaration(containingType) + GetTypeConstraints(containingType))
+                .ToImmutableArray(),
+            GetPartialTypeDeclaration(type),
+            GetTypeConstraints(type),
+            GetHintName(type));
     }
 
     private static bool AllContainingTypesArePartial(INamedTypeSymbol type)
@@ -165,89 +247,107 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             text.GetText(cancellationToken)?.ToString() ?? string.Empty);
     }
 
-    private static void Emit(
-        SourceProductionContext context,
-        Compilation compilation,
+    private static McpModel CreateGroups(
         ImmutableArray<MarkerModel> markers,
-        ImmutableArray<DocumentationFileModel> additionalDocumentationFiles)
+        ImmutableArray<ContractModel> sourceContracts,
+        ImmutableArray<AssemblyContracts> referencedContracts,
+        string? compilationAssemblyName,
+        CancellationToken cancellationToken)
     {
         if (markers.IsDefaultOrEmpty)
-            return;
+            return new McpModel(EquatableArray<ContextGroup>.Empty, EquatableArray<string>.Empty);
 
         var grouped = markers
             .GroupBy(static marker => marker.ContextMetadataName, StringComparer.Ordinal)
             .OrderBy(static group => group.Key, StringComparer.Ordinal)
             .ToImmutableArray();
 
-        var contractCache = new Dictionary<string, ImmutableArray<INamedTypeSymbol>>(StringComparer.Ordinal);
-        var contractTypesByContext = new Dictionary<string, ImmutableArray<INamedTypeSymbol>>(StringComparer.Ordinal);
+        var contextGroups = ImmutableArray.CreateBuilder<ContextGroup>(grouped.Length);
         var documentationAssemblyNames = new HashSet<string>(StringComparer.Ordinal);
         foreach (var group in grouped)
         {
-            context.CancellationToken.ThrowIfCancellationRequested();
-            var contractTypes = new List<INamedTypeSymbol>();
+            cancellationToken.ThrowIfCancellationRequested();
+            var contracts = new List<ContractModel>();
             foreach (var assemblyName in group
                 .Where(static value => value.AssemblyName is not null)
                 .Select(static value => value.AssemblyName!)
                 .OrderBy(static assemblyName => assemblyName, StringComparer.Ordinal))
             {
-                if (!contractCache.TryGetValue(assemblyName, out var cachedContracts))
+                if (string.Equals(compilationAssemblyName, assemblyName, StringComparison.Ordinal))
+                    contracts.AddRange(sourceContracts);
+                foreach (var referenced in referencedContracts.Where(referenced =>
+                    string.Equals(referenced.AssemblyName, assemblyName, StringComparison.Ordinal)))
                 {
-                    cachedContracts = FindContracts(compilation, assemblyName, context.CancellationToken);
-                    contractCache.Add(assemblyName, cachedContracts);
+                    contracts.AddRange(referenced.Contracts);
                 }
-
-                contractTypes.AddRange(cachedContracts);
             }
 
-            var distinctContracts = contractTypes
-                .GroupBy(type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
-                .Select(grouping => grouping.First())
-                .OrderBy(type => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), StringComparer.Ordinal)
+            var distinctContracts = contracts
+                .GroupBy(static contract => contract.TypeFullName, StringComparer.Ordinal)
+                .Select(static grouping => grouping.First())
+                .OrderBy(static contract => contract.TypeFullName, StringComparer.Ordinal)
                 .ToImmutableArray();
-            contractTypesByContext.Add(group.Key, distinctContracts);
             foreach (var contract in distinctContracts)
-                documentationAssemblyNames.Add(contract.ContainingAssembly.Name);
+                documentationAssemblyNames.Add(contract.AssemblyName);
+
+            var marker = group.First();
+            contextGroups.Add(new ContextGroup(marker.Context, marker.InvalidLocation, distinctContracts));
         }
 
-        var documentationFiles = GetDocumentationFiles(
-            compilation,
-            additionalDocumentationFiles,
-            documentationAssemblyNames);
-        foreach (var group in grouped)
+        return new McpModel(
+            contextGroups.MoveToImmutable(),
+            documentationAssemblyNames.OrderBy(static name => name, StringComparer.Ordinal).ToImmutableArray());
+    }
+
+    private static void Emit(
+        SourceProductionContext context,
+        McpModel model,
+        ImmutableArray<DocumentationAssembly> documentation)
+    {
+        if (model.Groups.IsEmpty)
+            return;
+
+        var documentationFiles = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.Ordinal);
+        foreach (var assembly in documentation)
+        {
+            if (documentationFiles.ContainsKey(assembly.AssemblyName))
+                continue;
+
+            var members = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var member in assembly.Members)
+                members.Add(member.Id, member.Xml);
+            documentationFiles.Add(assembly.AssemblyName, members);
+        }
+
+        foreach (var group in model.Groups)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
-            var marker = group.First();
-            if (marker.InvalidLocation is not null)
+            if (group.InvalidLocation is not null)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor("ARKMF056", "Declare the MCP context as partial", "MCP context and containing types must be declared partial",
                         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
                         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF056.md"),
-                    ToLocation(marker.InvalidLocation.Value)));
+                    ToLocation(group.InvalidLocation.Value)));
                 continue;
             }
 
-            var contextType = compilation.GetTypeByMetadataName(group.Key);
-            if (contextType is null)
-                continue;
-
-            var contracts = contractTypesByContext[group.Key]
-                .Select(contract => CreateModel(contract, compilation, documentationFiles, context))
-                .Where(static model => model is not null)
-                .Select(static model => model!)
-                .OrderBy(static model => model.Name, StringComparer.Ordinal)
+            var contracts = group.Contracts
+                .Select(contract => CreateTool(contract, documentationFiles, context))
+                .Where(static tool => tool is not null)
+                .Select(static tool => tool!)
+                .OrderBy(static tool => tool.Contract.Name, StringComparer.Ordinal)
                 .ToImmutableArray();
 
             var names = new HashSet<string>(StringComparer.Ordinal);
             foreach (var contract in contracts)
             {
-                if (!names.Add(contract.Name))
-                    context.ReportDiagnostic(Diagnostic.Create(DuplicateName, contract.Location, contract.Name));
+                if (!names.Add(contract.Contract.Name))
+                    context.ReportDiagnostic(Diagnostic.Create(DuplicateName, contract.Contract.Location, contract.Contract.Name));
             }
 
-            var source = Render(contextType, contracts);
-            context.AddSource(GetHintName(contextType) + ".Mcp.g.cs", source);
+            var source = Render(group.Context, contracts);
+            context.AddSource(group.Context.HintName + ".Mcp.g.cs", source);
         }
     }
 
@@ -259,24 +359,26 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 .Replace('+', '-')
                 .Replace('/', '_');
 
-    private static ImmutableArray<INamedTypeSymbol> FindContracts(
+    private static ImmutableArray<AssemblyContracts> FindReferencedContracts(
         Compilation compilation,
-        string? assemblyName,
+        ImmutableArray<string> assemblyNames,
         CancellationToken cancellationToken)
     {
-        if (assemblyName is null)
-            return [];
+        var builder = ImmutableArray.CreateBuilder<AssemblyContracts>(assemblyNames.Length);
+        foreach (var assemblyName in assemblyNames)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var contracts = compilation.SourceModule.ReferencedAssemblySymbols
+                .Where(assembly => string.Equals(assembly.Name, assemblyName, StringComparison.Ordinal))
+                .SelectMany(assembly => AllTypes(assembly.GlobalNamespace, cancellationToken))
+                .Where(type => type.GetAttributes().Any(attribute =>
+                    attribute.AttributeClass?.ToDisplayString() == ToolAttribute))
+                .Select(CreateContract)
+                .ToImmutableArray();
+            builder.Add(new AssemblyContracts(assemblyName, contracts));
+        }
 
-        var assemblies = new List<IAssemblySymbol>();
-        if (string.Equals(compilation.AssemblyName, assemblyName, StringComparison.Ordinal))
-            assemblies.Add(compilation.Assembly);
-        assemblies.AddRange(compilation.SourceModule.ReferencedAssemblySymbols
-            .Where(assembly => string.Equals(assembly.Name, assemblyName, StringComparison.Ordinal)));
-
-        return assemblies.SelectMany(assembly => AllTypes(assembly.GlobalNamespace, cancellationToken))
-            .Where(type => type.GetAttributes().Any(attribute =>
-                attribute.AttributeClass?.ToDisplayString() == ToolAttribute))
-            .ToImmutableArray();
+        return builder.MoveToImmutable();
     }
 
     private static IEnumerable<INamedTypeSymbol> AllTypes(INamespaceSymbol namespaceSymbol, CancellationToken cancellationToken)
@@ -305,22 +407,21 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
     }
 
-    private static ContractModel? CreateModel(
-        INamedTypeSymbol type,
-        Compilation compilation,
-        IReadOnlyDictionary<string, IReadOnlyDictionary<string, XElement>> documentationFiles,
-        SourceProductionContext context)
+    /// <summary>
+    /// Reads everything a tool needs from the contract symbol. Validation diagnostics that do not depend
+    /// on XML documentation are captured here; documentation is resolved at the output boundary.
+    /// </summary>
+    private static ContractModel CreateContract(INamedTypeSymbol type)
     {
         var toolAttribute = type.GetAttributes().First(attribute =>
             attribute.AttributeClass?.ToDisplayString() == ToolAttribute);
         var kind = GetHandlerKind(type, out var responseType);
         var location = toolAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation();
         var contractName = type.Name;
+        var typeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var assemblyName = type.ContainingAssembly.Name;
         if (kind is null)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(UnsupportedContract, location, contractName));
-            return null;
-        }
+            return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(UnsupportedContract, location, contractName));
 
         var name = GetString(toolAttribute, "Name") ?? contractName;
         var apiGroup = type.GetAttributes()
@@ -335,39 +436,27 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var retired = version is null ? 0 : GetInt(version, "Retired");
 
         if (name.Length is 0 or > 128 || name.Any(character => !(char.IsLetterOrDigit(character) || character is '_' or '-' or '.')))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(InvalidName, location, name));
-            return null;
-        }
+            return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(InvalidName, location, name));
 
         var properties = type.GetMembers()
             .OfType<IPropertySymbol>()
             .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
             .OrderBy(property => property.MetadataName, StringComparer.Ordinal)
             .ToImmutableArray();
-        var invalid = false;
+        var diagnostics = new List<DiagnosticInfo>();
         foreach (var property in properties)
         {
             if (property.IsIndexer || property.SetMethod is null && !HasConstructorParameter(type, property))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
-                invalid = true;
-            }
+                diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
             if (property.GetAttributes().Any(attribute =>
                 attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute))
-            {
-                context.ReportDiagnostic(Diagnostic.Create(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
-                invalid = true;
-            }
+                diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
         }
-        if (invalid)
-            return null;
+        if (diagnostics.Count > 0)
+            return ContractModel.Invalid(typeFullName, assemblyName, location, diagnostics.ToArray());
         var constructor = FindConstructor(type, properties);
         if (constructor is null)
-        {
-            context.ReportDiagnostic(Diagnostic.Create(MissingConstructor, location, contractName));
-            return null;
-        }
+            return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(MissingConstructor, location, contractName));
 
         var httpEndpoint = type.GetAttributes()
             .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == HttpEndpointAttribute);
@@ -375,33 +464,13 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             ? GetBool(toolAttribute, "AllowAnonymous", false)
             : GetBool(httpEndpoint, "AllowAnonymous", false);
         var hasDescription = TryGetDescription(type, out var attributeDescription);
-        var summary = hasDescription
-            ? attributeDescription
-            : XmlDocumentation(type, "summary", documentationFiles)
-                ?? XmlDocumentation(type.ContainingType, "summary", documentationFiles);
-        var remarks = hasDescription
-            ? null
-            : XmlDocumentation(type, "remarks", documentationFiles)
-                ?? XmlDocumentation(type.ContainingType, "remarks", documentationFiles);
-        var description = summary is null
-            ? remarks ?? string.Empty
-            : remarks is null
-                ? summary
-                : summary + " " + remarks;
-        if (description.Length == 0)
-            context.ReportDiagnostic(Diagnostic.Create(MissingDescription, location, name));
-
-        var propertyDescriptions = properties
-            .Select(property => (property.Name, Description: TryGetDescription(property, out var description)
-                ? description
-                : XmlDocumentation(property, "summary", documentationFiles)))
-            .Where(item => item.Description is not null)
-            .ToImmutableDictionary(item => item.Name, item => item.Description!, StringComparer.Ordinal);
 
         return new ContractModel(
-            type,
+            typeFullName,
+            assemblyName,
+            EquatableArray<DiagnosticInfo>.Empty,
+            true,
             name,
-            description.Length == 0 ? null : description,
             introduced,
             retired,
             GetBool(toolAttribute, "ReadOnly", kind == HandlerKind.Query),
@@ -410,11 +479,66 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             GetBool(toolAttribute, "OpenWorld", true),
             allowAnonymous,
             kind.Value,
-            responseType!,
-            constructor,
-            properties,
-            propertyDescriptions,
+            responseType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            responseType is not null && IsAttachment(responseType),
+            hasDescription,
+            attributeDescription,
+            CreateDocumentationSource(type),
+            type.ContainingType is null ? null : CreateDocumentationSource(type.ContainingType),
+            properties
+                .Select(property => new PropertyModel(
+                    property.Name,
+                    ToInputType(property.Type),
+                    IsAttachment(property.Type),
+                    property.SetMethod is not null,
+                    TryGetDescription(property, out var propertyDescription),
+                    propertyDescription,
+                    CreateDocumentationSource(property)))
+                .ToImmutableArray(),
+            constructor.Parameters.Select(static parameter => parameter.Name).ToImmutableArray(),
             location);
+    }
+
+    private static DocumentationSource CreateDocumentationSource(ISymbol symbol)
+        => new(
+            symbol.GetDocumentationCommentXml() ?? string.Empty,
+            symbol.ContainingAssembly.Name,
+            symbol.GetDocumentationCommentId());
+
+    private static ToolModel? CreateTool(
+        ContractModel contract,
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> documentationFiles,
+        SourceProductionContext context)
+    {
+        foreach (var diagnostic in contract.Diagnostics)
+            context.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
+        if (!contract.IsValid)
+            return null;
+
+        var summary = contract.HasDescriptionAttribute
+            ? contract.AttributeDescription
+            : XmlDocumentation(contract.Documentation, "summary", documentationFiles)
+                ?? XmlDocumentation(contract.ContainingTypeDocumentation, "summary", documentationFiles);
+        var remarks = contract.HasDescriptionAttribute
+            ? null
+            : XmlDocumentation(contract.Documentation, "remarks", documentationFiles)
+                ?? XmlDocumentation(contract.ContainingTypeDocumentation, "remarks", documentationFiles);
+        var description = summary is null
+            ? remarks ?? string.Empty
+            : remarks is null
+                ? summary
+                : summary + " " + remarks;
+        if (description.Length == 0)
+            context.ReportDiagnostic(Diagnostic.Create(MissingDescription, contract.Location, contract.Name));
+
+        var propertyDescriptions = contract.Properties
+            .Select(property => (property.Name, Description: property.HasDescriptionAttribute
+                ? property.AttributeDescription
+                : XmlDocumentation(property.Documentation, "summary", documentationFiles)))
+            .Where(item => item.Description is not null)
+            .ToImmutableDictionary(item => item.Name, item => item.Description!, StringComparer.Ordinal);
+
+        return new ToolModel(contract, description.Length == 0 ? null : description, propertyDescriptions);
     }
 
     private static bool HasConstructorParameter(INamedTypeSymbol type, IPropertySymbol property)
@@ -448,18 +572,15 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return null;
     }
 
-    private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, XElement>> GetDocumentationFiles(
-        Compilation compilation,
+    private static ImmutableArray<DocumentationAssembly> GetAdditionalDocumentation(
         ImmutableArray<DocumentationFileModel> additionalDocumentationFiles,
-        IEnumerable<string> assemblyNames)
+        ImmutableArray<string> assemblyNames,
+        CancellationToken cancellationToken)
     {
-        var selectedAssemblyNames = new HashSet<string>(assemblyNames, StringComparer.Ordinal);
-        var documentationFiles = new Dictionary<string, IReadOnlyDictionary<string, XElement>>(StringComparer.Ordinal);
-        if (selectedAssemblyNames.Count == 0)
-            return documentationFiles;
-
-        foreach (var assemblyName in selectedAssemblyNames.OrderBy(static name => name, StringComparer.Ordinal))
+        var documentationFiles = ImmutableArray.CreateBuilder<DocumentationAssembly>();
+        foreach (var assemblyName in assemblyNames)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var documentationFile = additionalDocumentationFiles
                 .Where(file => string.Equals(
                     Path.GetFileNameWithoutExtension(file.Path),
@@ -473,8 +594,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
             try
             {
-                documentationFiles[assemblyName] = GetDocumentationMembers(
-                    XDocument.Parse(documentationFile.Value.Content, LoadOptions.None));
+                documentationFiles.Add(new DocumentationAssembly(
+                    assemblyName,
+                    GetDocumentationMembers(XDocument.Parse(documentationFile.Value.Content, LoadOptions.None))));
             }
             catch (XmlException)
             {
@@ -482,12 +604,30 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             }
         }
 
+        return documentationFiles.ToImmutable();
+    }
+
+    private static ImmutableArray<DocumentationAssembly> GetReferencedDocumentation(
+        Compilation compilation,
+        ImmutableArray<string> assemblyNames,
+        ImmutableArray<DocumentationAssembly> additionalDocumentation,
+        CancellationToken cancellationToken)
+    {
+        var selectedAssemblyNames = new HashSet<string>(assemblyNames, StringComparer.Ordinal);
+        var loadedAssemblyNames = new HashSet<string>(
+            additionalDocumentation.Select(static documentation => documentation.AssemblyName),
+            StringComparer.Ordinal);
+        var documentationFiles = ImmutableArray.CreateBuilder<DocumentationAssembly>();
+        if (selectedAssemblyNames.Count == 0)
+            return documentationFiles.ToImmutable();
+
         foreach (var reference in compilation.References)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (reference is not PortableExecutableReference portableReference
                 || portableReference.FilePath is null
                 || compilation.GetAssemblyOrModuleSymbol(reference) is not IAssemblySymbol assembly
-                || documentationFiles.ContainsKey(assembly.Name)
+                || loadedAssemblyNames.Contains(assembly.Name)
                 || !selectedAssemblyNames.Contains(assembly.Name))
             {
                 continue;
@@ -510,7 +650,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
             try
             {
-                documentationFiles[assembly.Name] = GetDocumentationMembers(XDocument.Load(documentationFile));
+                documentationFiles.Add(new DocumentationAssembly(
+                    assembly.Name,
+                    GetDocumentationMembers(XDocument.Load(documentationFile))));
+                loadedAssemblyNames.Add(assembly.Name);
             }
             catch (IOException)
             {
@@ -522,46 +665,47 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             }
         }
 
-        return documentationFiles;
+        return documentationFiles.ToImmutable();
     }
 
-    private static IReadOnlyDictionary<string, XElement> GetDocumentationMembers(XDocument document)
+    private static ImmutableArray<DocumentationMember> GetDocumentationMembers(XDocument document)
     {
-        var members = new Dictionary<string, XElement>(StringComparer.Ordinal);
+        var members = ImmutableArray.CreateBuilder<DocumentationMember>();
+        var names = new HashSet<string>(StringComparer.Ordinal);
         var membersElement = document.Root?.Element("members");
         if (membersElement is not null)
         {
             foreach (var member in membersElement.Elements("member"))
             {
                 var name = member.Attribute("name")?.Value;
-                if (name is not null && !members.ContainsKey(name))
-                    members.Add(name, member);
+                if (name is not null && names.Add(name))
+                    members.Add(new DocumentationMember(name, member.ToString(SaveOptions.DisableFormatting)));
             }
         }
 
-        return members;
+        return members.ToImmutable();
     }
 
     private static string NormalizePath(string path)
         => Path.GetFullPath(path).Replace('\\', '/');
 
     private static string? XmlDocumentation(
-        ISymbol? symbol,
+        DocumentationSource? source,
         string element,
-        IReadOnlyDictionary<string, IReadOnlyDictionary<string, XElement>> documentationFiles)
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> documentationFiles)
     {
-        if (symbol is null)
+        if (source is not { } documentation)
             return null;
 
-        var xml = symbol.GetDocumentationCommentXml() ?? string.Empty;
+        var xml = documentation.Xml;
         if (string.IsNullOrWhiteSpace(xml)
-            && documentationFiles.TryGetValue(symbol.ContainingAssembly.Name, out var documentationFile))
+            && documentationFiles.TryGetValue(documentation.AssemblyName, out var documentationFile))
         {
-            var documentationId = symbol.GetDocumentationCommentId();
+            var documentationId = documentation.DocumentationId;
             if (documentationId is not null
                 && documentationFile.TryGetValue(documentationId, out var member))
             {
-                xml = member.ToString(SaveOptions.DisableFormatting);
+                xml = member;
             }
         }
         if (string.IsNullOrWhiteSpace(xml))
@@ -598,39 +742,29 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static int GetInt(AttributeData attribute, string name)
         => attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value is int value ? value : 0;
 
-    private static string Render(INamedTypeSymbol contextType, ImmutableArray<ContractModel> contracts)
+    private static string Render(ContextModel contextModel, ImmutableArray<ToolModel> contracts)
     {
         var builder = new StringBuilder();
         builder.AppendLine("// <auto-generated />");
         builder.AppendLine("using global::Microsoft.Extensions.DependencyInjection;");
         builder.AppendLine();
-        if (!contextType.ContainingNamespace.IsGlobalNamespace)
+        if (contextModel.Namespace is not null)
         {
-            builder.Append("namespace ").Append(contextType.ContainingNamespace.ToDisplayString()).AppendLine(";");
+            builder.Append("namespace ").Append(contextModel.Namespace).AppendLine(";");
             builder.AppendLine();
         }
 
-        var containingTypes = new Stack<INamedTypeSymbol>();
-        for (var containingType = contextType.ContainingType;
-            containingType is not null;
-            containingType = containingType.ContainingType)
-        {
-            containingTypes.Push(containingType);
-        }
-
         var indentation = 0;
-        while (containingTypes.Count > 0)
+        foreach (var containingType in contextModel.ContainingDeclarations)
         {
-            var containingType = containingTypes.Pop();
             builder.Append(' ', indentation * 4)
-                .Append(GetPartialTypeDeclaration(containingType))
-                .Append(GetTypeConstraints(containingType))
+                .Append(containingType)
                 .AppendLine();
             builder.Append(' ', indentation * 4).AppendLine("{");
             indentation++;
         }
 
-        AppendIndented(builder, RenderContext(contextType, contracts), indentation);
+        AppendIndented(builder, RenderContext(contextModel, contracts), indentation);
         while (indentation > 0)
         {
             indentation--;
@@ -640,12 +774,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return builder.ToString();
     }
 
-    private static string RenderContext(INamedTypeSymbol contextType, ImmutableArray<ContractModel> contracts)
+    private static string RenderContext(ContextModel contextModel, ImmutableArray<ToolModel> contracts)
     {
         var builder = new StringBuilder();
-        builder.Append(GetPartialTypeDeclaration(contextType))
+        builder.Append(contextModel.Declaration)
             .Append(" : global::Ark.Tools.MediatorFramework.Mcp.IMcpToolContext")
-            .Append(GetTypeConstraints(contextType))
+            .Append(contextModel.Constraints)
             .AppendLine();
         builder.AppendLine("{");
         builder.AppendLine("    public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder)");
@@ -692,11 +826,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             builder.Append(' ', indentation * 4).AppendLine(line);
     }
 
-    private static void RenderVersionMap(StringBuilder builder, ImmutableArray<ContractModel> contracts)
+    private static void RenderVersionMap(StringBuilder builder, ImmutableArray<ToolModel> contracts)
     {
         var maxVersion = contracts.Length == 0
             ? 1
-            : contracts.Max(model => Math.Max(model.Introduced, model.Retired));
+            : contracts.Max(tool => Math.Max(tool.Contract.Introduced, tool.Contract.Retired));
         builder.AppendLine("        builder.Services.AddSingleton<global::Ark.Tools.MediatorFramework.Mcp.IMcpToolVersionMap>(");
         builder.AppendLine("            new global::Ark.Tools.MediatorFramework.Mcp.McpToolVersionMap(");
         builder.AppendLine("                new global::System.Collections.Generic.Dictionary<int, string[]>");
@@ -707,9 +841,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             builder.Append(string.Join(
                 ", ",
                 contracts
-                    .Where(model => version >= model.Introduced
-                        && (model.Retired == 0 || version < model.Retired))
-                    .Select(model => "\"" + Escape(model.Name) + "\"")));
+                    .Where(tool => version >= tool.Contract.Introduced
+                        && (tool.Contract.Retired == 0 || version < tool.Contract.Retired))
+                    .Select(tool => "\"" + Escape(tool.Contract.Name) + "\"")));
             builder.AppendLine("],");
         }
         builder.AppendLine("                },");
@@ -717,15 +851,16 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.Append(string.Join(
             ", ",
             contracts
-                .Where(model => model.Retired == 0)
-                .Select(model => "\"" + Escape(model.Name) + "\"")));
+                .Where(tool => tool.Contract.Retired == 0)
+                .Select(tool => "\"" + Escape(tool.Contract.Name) + "\"")));
         builder.AppendLine("]));");
     }
 
-    private static void RenderTool(StringBuilder builder, ContractModel model, int index)
+    private static void RenderTool(StringBuilder builder, ToolModel tool, int index)
     {
-        var response = model.ResponseType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var attachmentResponse = model.ResponseType is not null && IsAttachment(model.ResponseType);
+        var model = tool.Contract;
+        var response = model.ResponseType;
+        var attachmentResponse = model.AttachmentResponse;
         var returnType = attachmentResponse
             ? "global::System.Threading.Tasks.Task<global::ModelContextProtocol.Protocol.EmbeddedResourceBlock>"
             : model.Kind == HandlerKind.Command
@@ -733,10 +868,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 : "global::System.Threading.Tasks.Task<" + response + ">";
         var parameters = model.Properties.Select(property =>
             "[global::System.ComponentModel.Description("
-            + Literal(model.PropertyDescriptions.TryGetValue(property.Name, out var propertyDescription)
+            + Literal(tool.PropertyDescriptions.TryGetValue(property.Name, out var propertyDescription)
                 ? propertyDescription
                 : string.Empty) + ")] "
-            + ToInputType(property.Type) + " " + ToParameterName(property.Name));
+            + property.InputType + " " + ToParameterName(property.Name));
 
         builder.AppendLine();
         builder.AppendLine("    [global::ModelContextProtocol.Server.McpServerToolType]");
@@ -750,27 +885,27 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.Append("            OpenWorld = ").Append(model.OpenWorld ? "true" : "false").AppendLine(",");
         builder.AppendLine("            UseStructuredContent = true");
         builder.AppendLine("        )]");
-        if (model.Description is not null)
-            builder.Append("        [global::System.ComponentModel.Description(").Append(Literal(model.Description)).AppendLine(")]");
+        if (tool.Description is not null)
+            builder.Append("        [global::System.ComponentModel.Description(").Append(Literal(tool.Description)).AppendLine(")]");
         builder.Append("        [global::Microsoft.AspNetCore.Authorization.")
             .Append(model.AllowAnonymous ? "AllowAnonymousAttribute" : "AuthorizeAttribute")
             .AppendLine("]");
         builder.Append("        public static async ").Append(returnType).Append(" ExecuteAsync(")
-            .Append(string.Join(", ", parameters)).Append(model.Properties.Length > 0 ? ", " : string.Empty)
+            .Append(string.Join(", ", parameters)).Append(model.Properties.Count > 0 ? ", " : string.Empty)
             .Append("global::System.IServiceProvider services, global::System.Threading.CancellationToken cancellationToken)").AppendLine();
         builder.AppendLine("        {");
-        builder.Append("            var request = new ").Append(model.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).Append("(");
-        builder.Append(string.Join(", ", model.Constructor.Parameters.Select(parameter =>
-            ToParameterName(model.Properties.First(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)).Name)
-            + (IsAttachment(model.Properties.First(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)).Type)
+        builder.Append("            var request = new ").Append(model.TypeFullName).Append("(");
+        builder.Append(string.Join(", ", model.ConstructorParameters.Select(parameter =>
+            ToParameterName(model.Properties.First(property => string.Equals(property.Name, parameter, StringComparison.OrdinalIgnoreCase)).Name)
+            + (model.Properties.First(property => string.Equals(property.Name, parameter, StringComparison.OrdinalIgnoreCase)).IsAttachment
                 ? ".ToAttachment()" : string.Empty))));
-        var settable = model.Properties.Where(property => property.SetMethod is not null).ToImmutableArray();
+        var settable = model.Properties.Where(property => property.HasSetter).ToImmutableArray();
         if (settable.Length > 0)
         {
             builder.AppendLine(")");
             builder.AppendLine("            {");
             foreach (var property in settable)
-                if (!model.Constructor.Parameters.Any(parameter => string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase)))
+                if (!model.ConstructorParameters.Any(parameter => string.Equals(parameter, property.Name, StringComparison.OrdinalIgnoreCase)))
                     builder.Append("                ").Append(property.Name).Append(" = ").Append(ToInputValue(property)).AppendLine(",");
             builder.AppendLine("            };");
         }
@@ -810,8 +945,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             ? "global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentInput"
             : type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-    private static string ToInputValue(IPropertySymbol property)
-        => IsAttachment(property.Type)
+    private static string ToInputValue(PropertyModel property)
+        => property.IsAttachment
             ? ToParameterName(property.Name) + ".ToAttachment()"
             : ToParameterName(property.Name);
 
@@ -831,7 +966,16 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         => SyntaxFactory.Literal(value).ToFullString();
 
     private readonly record struct DocumentationFileModel(string Path, string Content);
-    private sealed record MarkerModel(string ContextMetadataName, string? AssemblyName, MarkerLocation? InvalidLocation);
+    private readonly record struct DocumentationMember(string Id, string Xml);
+    private sealed record DocumentationAssembly(string AssemblyName, EquatableArray<DocumentationMember> Members);
+    private readonly record struct DocumentationSource(string Xml, string AssemblyName, string? DocumentationId);
+    private sealed record MarkerModel(string ContextMetadataName, string? AssemblyName, MarkerLocation? InvalidLocation, ContextModel Context);
+    private sealed record ContextModel(
+        string? Namespace,
+        EquatableArray<string> ContainingDeclarations,
+        string Declaration,
+        string Constraints,
+        string HintName);
     private readonly record struct MarkerLocation(
         string FilePath,
         int Start,
@@ -840,10 +984,41 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         int StartCharacter,
         int EndLine,
         int EndCharacter);
-    private sealed record ContractModel(
-        INamedTypeSymbol Type,
+    private sealed record ContextGroup(ContextModel Context, MarkerLocation? InvalidLocation, EquatableArray<ContractModel> Contracts);
+    private sealed record McpModel(EquatableArray<ContextGroup> Groups, EquatableArray<string> DocumentationAssemblyNames);
+    private sealed record AssemblyContracts(string AssemblyName, EquatableArray<ContractModel> Contracts);
+
+    // Roslyn source locations compare by syntax tree and span, so they keep models equatable while
+    // reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
+    private readonly record struct DiagnosticInfo
+    {
+        public DiagnosticInfo(DiagnosticDescriptor descriptor, Location? location, params string[] arguments)
+        {
+            Descriptor = descriptor;
+            Location = location;
+            Arguments = arguments.ToImmutableArray();
+        }
+
+        public DiagnosticDescriptor Descriptor { get; }
+        public Location? Location { get; }
+        public EquatableArray<string> Arguments { get; }
+    }
+
+    private readonly record struct PropertyModel(
         string Name,
-        string? Description,
+        string InputType,
+        bool IsAttachment,
+        bool HasSetter,
+        bool HasDescriptionAttribute,
+        string? AttributeDescription,
+        DocumentationSource Documentation);
+
+    private sealed record ContractModel(
+        string TypeFullName,
+        string AssemblyName,
+        EquatableArray<DiagnosticInfo> Diagnostics,
+        bool IsValid,
+        string Name,
         int Introduced,
         int Retired,
         bool ReadOnly,
@@ -852,11 +1027,51 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         bool OpenWorld,
         bool AllowAnonymous,
         HandlerKind Kind,
-        ITypeSymbol? ResponseType,
-        IMethodSymbol Constructor,
-        ImmutableArray<IPropertySymbol> Properties,
-        ImmutableDictionary<string, string> PropertyDescriptions,
-        Location? Location);
+        string? ResponseType,
+        bool AttachmentResponse,
+        bool HasDescriptionAttribute,
+        string? AttributeDescription,
+        DocumentationSource Documentation,
+        DocumentationSource? ContainingTypeDocumentation,
+        EquatableArray<PropertyModel> Properties,
+        EquatableArray<string> ConstructorParameters,
+        Location? Location)
+    {
+        public static ContractModel Invalid(
+            string typeFullName,
+            string assemblyName,
+            Location? location,
+            params DiagnosticInfo[] diagnostics)
+            => new(
+                typeFullName,
+                assemblyName,
+                diagnostics.ToImmutableArray(),
+                false,
+                string.Empty,
+                0,
+                0,
+                false,
+                false,
+                false,
+                false,
+                false,
+                default,
+                null,
+                false,
+                false,
+                null,
+                default,
+                null,
+                EquatableArray<PropertyModel>.Empty,
+                EquatableArray<string>.Empty,
+                location);
+    }
+
+    private sealed record ToolModel(
+        ContractModel Contract,
+        string? Description,
+        ImmutableDictionary<string, string> PropertyDescriptions);
+
     private enum HandlerKind { Query, Request, Command }
 
 }
