@@ -216,6 +216,9 @@ Host composition:
 - builds the SimpleInjector container through `ApplicationComposition`;
 - adds only its transport, participant, and process concerns;
 - reads every connection from configuration (Key Vault optional);
+- uses one Azure Blob claim-check DataBus shared by all processes of the
+  variant (`ConnectionStrings:DataBus`, Azurite locally); the in-memory DataBus
+  is only for tests that run every participant in one process;
 - takes no test flags. Tests override configuration or replace services via
   the host builder.
 

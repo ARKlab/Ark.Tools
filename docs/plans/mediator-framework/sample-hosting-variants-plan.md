@@ -581,15 +581,22 @@ real processes would. Remove the moved scenarios from the old test project.
   <ItemGroup>
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.API\Ark.MediatorFramework.Sample.Core.API.csproj" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
-    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Database\Ark.MediatorFramework.Sample.Core.Database.sqlproj"
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Database\Ark.MediatorFramework.Sample.Core.Database.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ProjectReference>
+    <None Include="..\Ark.MediatorFramework.Sample.Core.Database\bin\$(Configuration)\Ark.MediatorFramework.Sample.Core.Database.dacpac"
+          Link="Ark.MediatorFramework.Sample.Core.Database.dacpac"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
 ```
 
-Copy the `ProjectReference` metadata used today for the `.sqlproj` from the old
-test project so the DACPAC is copied to the output directory.
+The `.sqlproj` metadata and the linked `.dacpac` item are the same wiring the
+old test project uses, with the renamed paths, so `DatabaseHooks` finds
+`Ark.MediatorFramework.Sample.Core.Database.dacpac` in the output directory.
 
 - [ ] **Step 2: Move the files**
 
@@ -784,31 +791,45 @@ context factory, one principal provider, one transport, and one DataBus:
         if (_api is not null)
             return;
         await InMemoryMessagingHarness.EnsureTopologyAsync(_transport, ctk).ConfigureAwait(false);
-        _api = await _startAsync(_container, static (b, t, d) => b.Producer<SampleMessagingPublisherParticipant>(p => p
-            .UseTransport(t).UseDataBus(d).UseOutbox()), ctk).ConfigureAwait(false);
+        _api = await _startAsync(_container, _principalProvider, static (b, t, d) => b.Producer<SampleMessagingPublisherParticipant>(p => p
+            .UseTransport(t).UseDataBus(d).UseOutgoingPipeline(typeof(UserContextOutgoingStep)).UseOutbox()), ctk).ConfigureAwait(false);
         _processes.Add(_api);
-        _processes.Add(await _startAsync(_newContainer(), static (b, t, d) => b.Receiver<SampleMessagingParticipant>(r => r
-            .UseTransport(t).UseDataBus(d).UseOutbox()), ctk).ConfigureAwait(false));
-        var notification = _newContainer();
+        var workerPrincipal = new MessagePrincipalProvider();
+        _processes.Add(await _startAsync(_newContainer(workerPrincipal), workerPrincipal, static (b, t, d) => b.Receiver<SampleMessagingParticipant>(r => r
+            .UseTransport(t).UseDataBus(d)
+            .UseIncomingPipeline(typeof(UserContextIncomingStep)).UseOutgoingPipeline(typeof(UserContextOutgoingStep))
+            .UseOutbox()), ctk).ConfigureAwait(false));
+        var notificationPrincipal = new MessagePrincipalProvider();
+        var notification = _newContainer(notificationPrincipal);
         ApplicationComposition.RegisterNotificationSubscriber(notification, Notifications);
-        _processes.Add(await _startAsync(notification, static (b, t, d) => b.Receiver<SampleMessagingNotificationParticipant>(r => r
-            .UseTransport(t).UseDataBus(d)), ctk).ConfigureAwait(false));
-        var audit = _newContainer();
+        _processes.Add(await _startAsync(notification, notificationPrincipal, static (b, t, d) => b.Receiver<SampleMessagingNotificationParticipant>(r => r
+            .UseTransport(t).UseDataBus(d).UseIncomingPipeline(typeof(UserContextIncomingStep))), ctk).ConfigureAwait(false));
+        var auditPrincipal = new MessagePrincipalProvider();
+        var audit = _newContainer(auditPrincipal);
         ApplicationComposition.RegisterAuditSubscriber(audit, Audits);
-        _processes.Add(await _startAsync(audit, static (b, t, d) => b.Receiver<SampleMessagingAuditParticipant>(r => r
-            .UseTransport(t).UseDataBus(d)), ctk).ConfigureAwait(false));
+        _processes.Add(await _startAsync(audit, auditPrincipal, static (b, t, d) => b.Receiver<SampleMessagingAuditParticipant>(r => r
+            .UseTransport(t).UseDataBus(d).UseIncomingPipeline(typeof(UserContextIncomingStep))), ctk).ConfigureAwait(false));
         _processes.Add(await _startOutboxProcessorAsync(ctk).ConfigureAwait(false));
     }
 ```
 
+Principal flow is per participant, as in production processes: the api
+container keeps the scenario-controlled `_principalProvider`, and its producer
+copies that principal into message headers with `UserContextOutgoingStep`. Each
+receiver gets its own `MessagePrincipalProvider` (test-local copy of the
+`AsyncLocal` provider defined in Task 6, file `Hooks/MessagePrincipalProvider.cs`),
+fed by `UserContextIncomingStep` and forwarded by its own
+`UserContextOutgoingStep` (the worker publishes). No container shares the api
+provider, so a broken header round trip fails the authorization scenarios.
+
 Supporting members (same class):
 
 ```csharp
-    private Container _newContainer()
+    private Container _newContainer(IContextProvider<ClaimsPrincipal> principal)
     {
         var container = new Container { Options = { DefaultScopedLifestyle = new AsyncScopedLifestyle() } };
         ApplicationComposition.Register(container, _applicationOptions);
-        container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
+        container.RegisterInstance(principal);
         container.RegisterAuthorization();
         container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
         return container;
@@ -816,6 +837,7 @@ Supporting members (same class):
 
     private async Task<ParticipantProcess> _startAsync(
         Container container,
+        IContextProvider<ClaimsPrincipal> principal,
         Action<MessagingCompositionBuilder<SampleMessagingNetwork>, IMessagingTransport, IMessagingDataBus> select,
         CancellationToken ctk)
     {
@@ -824,6 +846,10 @@ Supporting members (same class):
             services =>
             {
                 InMemoryMessagingHarness.ConfigureJson(services);
+                // Register step instances before ConfigureArkMessaging so a framework TryAdd keeps them.
+                services.AddSingleton(new UserContextOutgoingStep(() => principal.Current));
+                if (principal is MessagePrincipalProvider receiverPrincipal)
+                    services.AddSingleton(new UserContextIncomingStep(receiverPrincipal.Set));
                 services.AddSingleton(_testProcessingOptions);
                 services.ConfigureArkMessaging<SampleMessagingNetwork>(b => select(b, _transport, _dataBus));
             },
@@ -869,6 +895,10 @@ Rules for this step:
 - `DisposeAsync` disposes `_processes` in reverse order (the api process owns
   `_container`), then detaches the external-service binding.
 - Delete `SendAsync`, `StartOutboundBus`, `Network`, and every `Rebus` using.
+- Add `Hooks/MessagePrincipalProvider.cs`: same code as
+  `MessagingPrincipalContextProvider` in Task 6 Step 2 (an `AsyncLocal<ClaimsPrincipal?>`
+  with `Current` and `Set`), in the `Core.Tests.Hooks` namespace. The test
+  project cannot reference a host, so it keeps its own copy.
 - Add `RecordingBookPrintSink` in `Fakes/`: implements both
   `IBookPrintNotificationSink` and `IBookPrintAuditSink`, stores book IDs in a
   `ConcurrentQueue<Guid>`, and exposes `IReadOnlyCollection<Guid> BookIds`.
@@ -1253,6 +1283,9 @@ using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Solid.SimpleInjector;
 
+using Ark.Tools.MediatorFramework.Messaging.Azure;
+
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using SimpleInjector;
@@ -1336,6 +1369,27 @@ public static class WebHosting
         }
     }
 
+    /// <summary>Creates the claim-check DataBus shared by every Web process.</summary>
+    /// <remarks>
+    /// Every process of the variant must read the attachments the others write, so the store is
+    /// Azure Blob Storage, never the process-local in-memory DataBus. Locally the connection points
+    /// at Azurite from docker-compose.
+    /// </remarks>
+    /// <param name="configuration">The process configuration.</param>
+    /// <returns>The shared DataBus.</returns>
+    public static IMessagingDataBus CreateDataBus(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        return new AzureBlobMessagingDataBus(new AzureBlobDataBusOptions
+        {
+            ContainerName = "amf1-databus",
+            Prefix = "sample/",
+            MinimumAttachmentLifetime = TimeSpan.FromDays(7),
+            ConnectionString = configuration.GetConnectionString("DataBus")
+                ?? throw new InvalidOperationException("ConnectionStrings:DataBus is required."),
+        });
+    }
+
     /// <summary>Exposes the participant bus, which lives in Microsoft DI, to the application container.</summary>
     /// <param name="container">The application container.</param>
     /// <param name="services">Returns the built root provider; called lazily on first resolution.</param>
@@ -1398,7 +1452,7 @@ try
         ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
     await using var container = WebHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
     await using var transport = new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus));
-    var startup = SampleHost.Configure(builder, container, transport, new InMemoryMessagingDataBus());
+    var startup = SampleHost.Configure(builder, container, transport, WebHosting.CreateDataBus(builder.Configuration));
     var app = builder.Build();
     startup.Configure(app);
     await app.RunAsync().ConfigureAwait(false);
@@ -1407,8 +1461,11 @@ try
 
 Keep the existing `catch`/`finally` NLog blocks unchanged.
 `appsettings.Development.json` holds the local SQL emulator connection under
-`ConnectionStrings:Sample` and the Service Bus emulator connection under
-`ConnectionStrings:ServiceBus` (from `docker-compose.yml`).
+`ConnectionStrings:Sample`, the Service Bus emulator connection under
+`ConnectionStrings:ServiceBus`, and `UseDevelopmentStorage=true` (Azurite) under
+`ConnectionStrings:DataBus` (all from `docker-compose.yml`). Every Web process
+uses the same three keys. The in-memory DataBus appears only in tests, where
+all participants share one instance in one process.
 If `ServiceBusMessagingTransport` is not `IAsyncDisposable`, replace
 `await using` with a hosted-service-owned disposal as `OutboxProcessor/Program.cs` does today.
 
@@ -1450,7 +1507,7 @@ try
     await using var container = WebHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
     await using var transport = new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus));
     WebHosting.AddParticipant<SampleMessagingParticipant>(
-        builder.Services, container, transport, new InMemoryMessagingDataBus(), receiver: true);
+        builder.Services, container, transport, WebHosting.CreateDataBus(builder.Configuration), receiver: true);
     IHost? built = null;
     WebHosting.BridgeBus(container, () => built?.Services
         ?? throw new InvalidOperationException("The host is not built yet."));
@@ -1545,7 +1602,7 @@ exported under the new WebInterface `proto/` folder.
 
 `W/README.md`: process table (5 processes + what each hosts), required
 configuration keys (`ConnectionStrings:Sample`, `ConnectionStrings:ServiceBus`,
-`EntraId:*`), `docker compose up -d db servicebus` and one `dotnet run` per
+`ConnectionStrings:DataBus`, `EntraId:*`), `docker compose up -d sqlserver servicebus azurite` and one `dotnet run` per
 process, and the minimum set for a scenario (WebInterface + Processor +
 OutboxProcessor for the print workflow).
 
@@ -1579,7 +1636,7 @@ Application and API.
 **Interfaces:**
 - Produces:
   - `RebusHosting.CreateContainer(ApplicationOptions options) : Container`
-  - `RebusHosting.Configure<THost>(Container container, Action<StandardConfigurer<ITransport>> transport, bool startOutboxProcessor, Action<OptionsConfigurer>? configureOptions = null) where THost : IArkRebusHost` — serializer (`ApplicationJsonSerializerContext`), `logging.NLog()`, `AutomaticallyFlowUserContext`, OpenTelemetry, generated routing/options of `THost`, outbox, `RebusMessagingBus` registered as `IBus`/`IBusOutboxEnlistment`.
+  - `RebusHosting.Configure<THost>(Container container, Action<StandardConfigurer<ITransport>> transport, bool startOutboxProcessor, Action<OptionsConfigurer>? configureOptions = null, Action<RebusConfigurer>? configureTest = null) where THost : IArkRebusHost` — serializer (`ApplicationJsonSerializerContext`), `logging.NLog()`, `AutomaticallyFlowUserContext`, OpenTelemetry, generated routing/options of `THost`, outbox, `RebusMessagingBus` registered as `IBus`/`IBusOutboxEnlistment`.
 
 - [ ] **Step 1: Write the failing topology test**
 
@@ -1608,10 +1665,10 @@ public sealed class RebusTopologyTests
         var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
         var notifications = new RecordingSink();
         var audits = new RecordingSink();
-        await using var api = WebRebusTestHosts.Api(network, factory);
-        await using var worker = WebRebusTestHosts.Worker(network, factory);
-        await using var notification = WebRebusTestHosts.Notification(network, factory, notifications);
-        await using var audit = WebRebusTestHosts.Audit(network, factory, audits);
+        await using var api = await WebRebusTestHosts.ApiAsync(network, factory).ConfigureAwait(false);
+        await using var worker = await WebRebusTestHosts.WorkerAsync(network, factory).ConfigureAwait(false);
+        await using var notification = await WebRebusTestHosts.NotificationAsync(network, factory, notifications).ConfigureAwait(false);
+        await using var audit = await WebRebusTestHosts.AuditAsync(network, factory, audits).ConfigureAwait(false);
 
         var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(WebRebusTestHosts.NewBook())
             .ConfigureAwait(false);
@@ -1628,8 +1685,8 @@ public sealed class RebusTopologyTests
     {
         var network = new InMemNetwork();
         var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
-        await using var api = WebRebusTestHosts.Api(network, factory);
-        await using var worker = WebRebusTestHosts.Worker(network, factory);
+        await using var api = await WebRebusTestHosts.ApiAsync(network, factory).ConfigureAwait(false);
+        await using var worker = await WebRebusTestHosts.WorkerAsync(network, factory).ConfigureAwait(false);
         var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(WebRebusTestHosts.NewBook())
             .ConfigureAwait(false);
 
@@ -1652,7 +1709,18 @@ public sealed class RebusTopologyTests
   `IContextProvider<ClaimsPrincipal>` registered only in the api container
   (default: all `ApplicationScopes`); `DisposeAsync` disposes the container
   (which stops the bus).
-- `Api(network, factory)`: `RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory })`,
+- Factories are `async` (`ApiAsync`, `WorkerAsync`, `NotificationAsync`,
+  `AuditAsync`) because starting a generated Rebus host does not subscribe it:
+  after `container.StartBus()` each factory calls
+  `await THost.SubscribeAsync(container.GetInstance<global::Rebus.Bus.IBus>())`
+  (`IArkRebusHost.SubscribeAsync`). Rebus in-memory transport pub/sub needs a
+  shared subscription store: pass one `InMemorySubscriberStore` to every test
+  process and configure
+  `cfg.Subscriptions(s => s.StoreInMemory(subscriberStore))` through an
+  optional `Action<RebusConfigurer>? configureTest` argument on
+  `RebusHosting.Configure`; production uses Azure Service Bus topics and needs
+  no subscription storage.
+- `ApiAsync(network, factory)`: `RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory })`,
   settable principal provider,
   `RebusHosting.Configure<ApiRebusHost>(c, t => t.UseDrainableInMemoryTransportAsOneWayClient(network), startOutboxProcessor: false)`.
 - `Worker`: `startOutboxProcessor: true` — the worker drains the shared outbox
@@ -1666,7 +1734,8 @@ public sealed class RebusTopologyTests
   applied through an optional `Action<OptionsConfigurer>? configureOptions`
   parameter on `RebusHosting.Configure`. `<queue>` is the participant identity
   (`SampleMessagingParticipant.Identity`, …).
-- Each factory calls `container.Verify(); container.StartBus();` before returning.
+- Each factory calls `container.Verify(); container.StartBus();` and then
+  `await THost.SubscribeAsync(...)` before returning.
 - `NewBook()` returns `new Book_CreateRequest.V1(new Book.V1.Create { Title = "Dune", Author = "Herbert", Genre = Book.V1.Genre.Fiction })`.
 - `WaitUntilAsync(Func<bool> condition)` polls every 50 ms and throws
   `TimeoutException` after 5 s.
@@ -1693,11 +1762,13 @@ Move the bodies of `ConfigureRebusOutbox` and `ConfigureRebusCommon` from
     /// <param name="transport">Selects the Rebus transport.</param>
     /// <param name="startOutboxProcessor">Whether this process drains the Rebus outbox.</param>
     /// <param name="configureOptions">Optional extra Rebus options, used by tests.</param>
+    /// <param name="configureTest">Optional extra Rebus configuration (in-memory subscriptions, timeouts), used by tests.</param>
     public static void Configure<THost>(
         Container container,
         Action<StandardConfigurer<ITransport>> transport,
         bool startOutboxProcessor,
-        Action<OptionsConfigurer>? configureOptions = null)
+        Action<OptionsConfigurer>? configureOptions = null,
+        Action<RebusConfigurer>? configureTest = null)
         where THost : IArkRebusHost
     {
         ArgumentNullException.ThrowIfNull(container);
@@ -1723,6 +1794,7 @@ Move the bodies of `ConfigureRebusOutbox` and `ConfigureRebusCommon` from
                 THost.ConfigureOptions(options);
                 configureOptions?.Invoke(options);
             });
+            configureTest?.Invoke(cfg);
         });
     }
 ```
@@ -1743,13 +1815,16 @@ nothing).
 - `…WebRebus.Processor`: from the moved `RebusProcessor`; `[ArkRebusHost(typeof(SampleMessagingParticipant))] public sealed partial class WorkerRebusHost;`
   `Program.cs` builds `RebusHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = … })`,
   `RebusHosting.Configure<WorkerRebusHost>(container, t => t.UseAzureServiceBus(conn, "ark-mediator-sample"), startOutboxProcessor: true)`,
-  `container.Verify(); container.StartBus();` and waits on `Host` lifetime as
+  `container.Verify(); container.StartBus(); await WorkerRebusHost.SubscribeAsync(container.GetInstance<global::Rebus.Bus.IBus>());`
+  and waits on `Host` lifetime as
   the Web processors do (generic host + `IHostedService` that disposes the
   container on stop).
 - `…WebRebus.NotificationProcessor`/`…AuditProcessor`: same with their
   `ArkRebusHost` over `SampleMessagingNotificationParticipant` /
   `SampleMessagingAuditParticipant` and the matching
-  `RegisterNotificationSubscriber`/`RegisterAuditSubscriber`.
+  `RegisterNotificationSubscriber`/`RegisterAuditSubscriber`; both call their
+  host's `SubscribeAsync` after `StartBus`, which is what subscribes them to
+  `BookPrintCompleted`.
 - `…WebRebus.WebInterface`: copy of the Web variant's `SampleStartup` with the
   gRPC, MCP, MessagePack and messaging producer parts removed;
   `[ArkRebusHost(typeof(SampleMessagingApiParticipant))] public sealed partial class ApiRebusHost;`
@@ -1823,7 +1898,12 @@ git commit -m "feat(samples): add web rebus host variant" -m "Assisted-by: Claud
 - Modify: `.vscode/settings.json` (`azureFunctions.projectSubpath` → `samples\\Ark.MediatorFramework.Sample\\Core\\Hosts\\Functions\\Ark.MediatorFramework.Sample.Core.Functions.Api`)
 
 **Interfaces:**
-- Produces: `FunctionsHosting.CreateContainer(ApplicationOptions options)`; `FunctionsHosting.AddUserContext(IServiceCollection services, Container container) : MessagingPrincipalContextProvider` — registers the principal provider in Microsoft DI **before** `AddArkAzureFunctions` (so its `TryAddSingleton` keeps ours and the SimpleInjector bridge forwards it) and the `UserContextIncomingStep`/`UserContextOutgoingStep` instances.
+- Produces: `FunctionsHosting.CreateContainer(ApplicationOptions options)`;
+  `FunctionsHosting.DataBusOptions(IConfiguration configuration) : AzureBlobDataBusOptions`
+  (same values as `WebHosting.CreateDataBus`: container `amf1-databus`, prefix
+  `sample/`, 7-day minimum lifetime, `ConnectionStrings:DataBus` required) — one
+  shared Blob store for every Functions app, because each app is a separate
+  process and an in-memory DataBus would strand claim-checked payloads; `FunctionsHosting.AddUserContext(IServiceCollection services, Container container) : MessagingPrincipalContextProvider` — registers the principal provider in Microsoft DI **before** `AddArkAzureFunctions` (so its `TryAddSingleton` keeps ours and the SimpleInjector bridge forwards it) and the `UserContextIncomingStep`/`UserContextOutgoingStep` instances.
 
 - [ ] **Step 1: Write the failing composition tests**
 
@@ -1895,7 +1975,7 @@ Each of `Processor`, `Notifications`, `Audit` contains:
 (participant type per app) and a `Program.cs` derived from the old
 `AzureFunctions/Program.cs` with: `FunctionsHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = builder.Configuration.GetConnectionString("Sample") ?? throw … })`;
 the subscriber registration for Notifications/Audit; `FunctionsHosting.AddUserContext`
-before `AddArkAzureFunctions`; `ConfigureArkMessagingFunctions(... .UseTransport(t => t.UseServiceBus()).UseDataBus(d => d.UseInMemory()).UseOutbox(o => o.UseEnqueue()))`;
+before `AddArkAzureFunctions`; `ConfigureArkMessagingFunctions(... .UseTransport(t => t.UseServiceBus()).UseDataBus(d => d.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration))).UseOutbox(o => o.UseEnqueue()))`;
 `AddArkAzureFunctionsSimpleInjectorBridge(container)`; the authentication block
 kept only in `Api`. These apps do not set `FunctionsInDependencies`, so they do
 not expose the HTTP functions from the Hosting library.
@@ -1914,7 +1994,7 @@ builder.Services.ConfigureArkMessaging(
     SampleMessagingNetwork.Registry,
     messaging => messaging.Producer<SampleMessagingApiParticipant>(p => p
         .UseTransport(t => t.UseServiceBus(new ServiceBusClient(serviceBusConnection)))
-        .UseDataBus(d => d.UseInMemory())
+        .UseDataBus(d => d.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration)))
         .UseOutgoingPipeline(typeof(UserContextOutgoingStep))
         .UseOutbox()));
 builder.Services.AddArkAzureFunctionsSimpleInjectorBridge(container);
@@ -1967,15 +2047,26 @@ public async Task ExhaustedWorkerMessageIsDeadLetteredOnServiceBus()
     // An unauthorized CreateBookReviewRequest.V1 envelope, produced through the Api
     // participant's restricted IBus composed exactly as Api/Program.cs does, with
     // the emulator transport and no review scope on the principal.
-    await FunctionsTestHosts.SendAsUnauthorizedAsync(client, new CreateBookReviewRequest.V1 { BookId = Guid.NewGuid(), Rating = 5, Text = "Good" })
+    var store = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+    await using var outbox = await FunctionsTestHosts.StartOutboxProcessorAsync(client, store).ConfigureAwait(false);
+    await FunctionsTestHosts.SendAsUnauthorizedAsync(client, store, new CreateBookReviewRequest.V1 { BookId = Guid.NewGuid(), Rating = 5, Text = "Good" })
         .ConfigureAwait(false);
-    await using var processor = await FunctionsTestHosts.StartWorkerTriggerAsync(client).ConfigureAwait(false);
+    await FunctionsTestHosts.WaitForEmptyOutboxAsync(store).ConfigureAwait(false);
+    await using var processor = await FunctionsTestHosts.StartWorkerTriggerAsync(client, store).ConfigureAwait(false);
 
     await using var deadLetters = client.CreateReceiver(queue, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter });
     var dead = await deadLetters.ReceiveMessageAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
     dead.Should().NotBeNull();
 }
 ```
+
+The Api producer composes `UseOutbox()`, so `SendAsUnauthorizedAsync` only
+commits an envelope to `store`'s outbox. `StartOutboxProcessorAsync` composes
+the same service collection as `Core.Functions.OutboxProcessor/Program.cs`
+(`AddArkMessagingOutboxProcessor(store, batchSize: 10)` over a
+`ServiceBusMessagingTransport` built from `client`) and starts its hosted
+service; `WaitForEmptyOutboxAsync` polls the outbox count every 50 ms until 0
+(timeout 10 s). Only then is the message on the worker queue.
 
 `FunctionsTestHosts.StartWorkerTriggerAsync` composes the Processor app's
 service collection (same calls as its `Program.cs`, transport from the emulator
@@ -2025,7 +2116,8 @@ Expected: all green, last line prints `old layout removed`.
 - [ ] **Step 8: README and commit**
 
 `F/README.md`: 5 deployables, `local.settings.json` keys per app (copied from
-the old examples), `func start --port 7071..7074`, outbox processor run command.
+the old examples, plus `ConnectionStrings__DataBus` = `UseDevelopmentStorage=true`
+for Azurite in every app), `func start --port 7071..7074`, outbox processor run command.
 
 ```bash
 git add -A samples/Ark.MediatorFramework.Sample Ark.Tools.slnx .vscode/settings.json \
