@@ -104,7 +104,7 @@ apm audit --ci
 The restore reuses existing lockfile pins (never `--update`/`--refresh`) and
 the `git diff` fails if the lockfile changed. `apm audit --ci` fails when a committed
 skill, agent or hook differs from the lockfile; files APM never deployed are not
-checked. The APM workflow and Copilot setup steps run it, so the cloud agent does
+checked. The CI workflow and Copilot setup steps run it, so the cloud agent does
 not start on altered outputs. APM 0.33.0's `--frozen` preflight cannot bootstrap a clean checkout
 (it requires installed marketplace manifests and rejects transitive MCP servers
 such as `binlog`), so it is not used. Do not bypass a failure: review
