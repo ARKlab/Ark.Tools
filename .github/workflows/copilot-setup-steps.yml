@@ -83,6 +83,14 @@ jobs:
         env:
           GITHUB_APM_PAT: ${{ github.token }}
 
+      - name: Restore apm_modules referenced by committed agents
+        # Leaves committed outputs unchanged; only populates the ignored package cache.
+        run: |
+          apm install
+          git diff --exit-code
+        env:
+          GITHUB_APM_PAT: ${{ github.token }}
+
       - name: Install dotnet
         uses: actions/setup-dotnet@v6
         with:
