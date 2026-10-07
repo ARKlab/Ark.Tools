@@ -1,7 +1,5 @@
-using Ark.Reference.Common;
-using Ark.Reference.Core.Application;
 using Ark.Reference.Core.Application.Config;
-using Ark.Reference.Core.WebInterface;
+using Ark.Reference.Core.InProcessHost;
 using Ark.Tools.Http;
 using Ark.Tools.Outbox;
 using Ark.Tools.OTel;
@@ -9,11 +7,6 @@ using Ark.Tools.Rebus.Tests;
 
 using AwesomeAssertions;
 
-using Flurl.Http.Configuration;
-
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -24,14 +17,9 @@ using OpenTelemetry.Trace;
 
 using Polly;
 
-using Rebus.Persistence.InMem;
-using Rebus.Transport.InMem;
-
 using Reqnroll;
 
 using SimpleInjector;
-
-using System.Security.Claims;
 
 [assembly: DoNotParallelize]
 
@@ -42,20 +30,18 @@ public sealed class TestHost : IDisposable
 {
     private static readonly Uri _baseUri = new("https://localhost:5001");
 
-    public static ApiHostConfig? TestConfig { get; private set; }
-    public static ICoreDataContextConfig DBConfig => TestConfig ?? throw new InvalidOperationException("TestConfig is null");
+    public static ApiHostConfig TestConfig => ReferenceTestHost.Config;
+    public static ICoreDataContextConfig DBConfig => TestConfig;
 
-    public static IHost Server { get => _server ?? throw new InvalidOperationException("_server is null"); set => _server = value; }
-    public static ArkFlurlClientFactory Factory { get => _factory ?? throw new InvalidOperationException("_server is null"); set => _factory = value; }
+    public static IHost Server => ReferenceTestHost.Server;
+    public static ArkFlurlClientFactory Factory => ReferenceTestHost.Factory;
     internal static readonly OtelTestCollector _telemetry = new();
     internal static ComplianceLogCollector _logs = null!;
 
-    private static ArkFlurlClientFactory? _factory;
     private static ArkTelemetryFileCollector? _fileTelemetry;
-    public static readonly TestEnv Env = new();
+    public static TestEnv Env => ReferenceTestHost.Env;
 
     private static ScenarioContext? _scenarioContext;
-    private static IHost? _server;
     private AwesomeAssertions.Execution.AssertionScope? _afterScenarioAssertionScope;
 
     [BeforeScenario(Order = 0)]
@@ -191,8 +177,7 @@ public sealed class TestHost : IDisposable
     [BeforeTestRun(Order = 0)]
     public static void BeforeTests0()
     {
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "IntegrationTests");
-        GlobalInit.InitStatics();
+        ReferenceTestHost.Initialize();
     }
 
     [BeforeTestRun]
@@ -203,26 +188,12 @@ public sealed class TestHost : IDisposable
         //ApplicationConstants.ComputeIdleDetectWindow = TimeSpan.FromSeconds(1);
 
         _fileTelemetry = ArkTelemetryFileCollector.StartFromEnvironment();
-        var builder = Program.GetHostBuilder([])
-            .ConfigureWebHost(static wh =>
-            {
-                wh.UseTestServer()
-                .ConfigureServices(static services =>
-                {
-                    services.AddTransient<Func<ScenarioContext>>(static s => static () => _scenarioContext ?? throw new InvalidOperationException("ScenarioContext is accessed outside of a Scenario."));
-                    services.AddSingleton(Env.RebusNetwork);
-                    services.AddSingleton(Env.RebusSubscriber);
-                    services.AddSingleton(MockIClock.FakeClock);
-                });
-            });
-
-        Server = builder.Start();
+        ReferenceTestHost.Start(static services =>
+        {
+            services.AddTransient<Func<ScenarioContext>>(static s => static () => _scenarioContext ?? throw new InvalidOperationException("ScenarioContext is accessed outside of a Scenario."));
+            services.AddSingleton(MockIClock.FakeClock);
+        });
         _logs = new ComplianceLogCollector();
-        Factory = new ArkFlurlClientFactory(new TestServerfactory(Server.GetTestServer()));
-
-        var configuration = Server.Services.GetRequiredService<IConfiguration>();
-
-        TestConfig = configuration.BuildApiHostConfig();
     }
 
     [BeforeFeature(Order = 0)]
@@ -257,7 +228,7 @@ public sealed class TestHost : IDisposable
     [AfterTestRun]
     public static void AfterTests()
     {
-        _server?.Dispose();
+        ReferenceTestHost.Stop();
         _logs.Dispose();
         _fileTelemetry?.Dispose();
         _telemetry.Dispose();
@@ -275,36 +246,4 @@ public sealed class TestHost : IDisposable
         }
 #pragma warning restore ERP022
     }
-}
-
-sealed class TestServerfactory : DefaultFlurlClientFactory
-{
-    private readonly TestServer _server;
-
-    public TestServerfactory(TestServer server)
-    {
-        _server = server;
-    }
-
-    public override HttpMessageHandler CreateInnerHandler()
-    {
-        return _server.CreateHandler();
-    }
-}
-
-
-public class TestEnv
-{
-    public TestEnv()
-    {
-        TestDataFilePath = Path.GetDirectoryName(AppContext.BaseDirectory) + @"\TestData\";
-    }
-
-    public ClaimsPrincipal TestPrincipal { get; } = new ClaimsPrincipal(new ClaimsIdentity([
-        new Claim(ClaimTypes.NameIdentifier, "IntegrationTests")
-        ], "SYSTEM"));
-
-    public InMemNetwork RebusNetwork { get; } = new InMemNetwork(true);
-    public InMemorySubscriberStore RebusSubscriber { get; } = new InMemorySubscriberStore();
-    public string TestDataFilePath { get; }
 }

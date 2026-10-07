@@ -3,7 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace Ark.Reference.Core.Tests.Auth;
+namespace Ark.Reference.Core.InProcessHost.Auth;
 
 public sealed class JwtTokenBuilder
 {

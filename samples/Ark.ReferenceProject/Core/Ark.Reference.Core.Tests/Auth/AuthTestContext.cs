@@ -1,10 +1,9 @@
 using Ark.Reference.Common.Auth;
 using Ark.Reference.Core.Common.Auth;
+using Ark.Reference.Core.InProcessHost.Auth;
 using Ark.Tools.Compliance;
 
 using Flurl.Http;
-
-using Microsoft.IdentityModel.Tokens;
 
 using Reqnroll;
 
@@ -21,13 +20,7 @@ public class AuthTestContext
     [InfrastructureSecret]
     public string? ApiKey { get; private set; }
 
-    private readonly JwtTokenBuilder _builder = new JwtTokenBuilder()
-                            .AddSecurityKey(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.IntegrationTestsEncryptionKey)))
-                            .AddSubject("TestSubject")
-                            .AddAudience(AuthConstants.IntegrationTestsAudience)
-                            .AddIssuer($"https://{AuthConstants.IntegrationTestsDomain}/")
-                            .AddExpiry(60)
-                            ;
+    private readonly JwtTokenBuilder _builder = TestTokens.CreateBuilder();
 
     private readonly string _scopeClaim = AuthConstants.ScopePrefix;
     private List<string> _scopes = new();

@@ -35,12 +35,6 @@
         "resolved": "3.0.294",
         "contentHash": "j78ENG75OozcuL0OPSIjvgLaYI4F5nS8mpK02PlXCCCXj8A4CAIfpKw27ZPvG4k8TweGqParV8Dwm2VAwBBmgg=="
       },
-      "Microsoft.AspNetCore.TestHost": {
-        "type": "Direct",
-        "requested": "[10.0.12, )",
-        "resolved": "10.0.12",
-        "contentHash": "bTHgbcjSrLxlqSasYRDU9BcJ3hDGoqIjtDY0soLNrndOWi3kxtOyddwUMaNZgtoI2Uf6y7ZQs2EuVj0c20B7mA=="
-      },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
         "requested": "[4.14.0, )",
@@ -2019,6 +2013,16 @@
           "Ark.Tools.Compliance.Sql": "[999.9.9, )"
         }
       },
+      "ark.reference.core.inprocesshost": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Reference.Common": "[6.6.6, )",
+          "Ark.Reference.Core.Application": "[6.6.6, )",
+          "Ark.Reference.Core.Common": "[6.6.6, )",
+          "Ark.Reference.Core.WebInterface": "[6.6.6, )",
+          "Microsoft.AspNetCore.TestHost": "[10.0.12, )"
+        }
+      },
       "ark.reference.core.webinterface": {
         "type": "Project",
         "dependencies": {
@@ -2468,6 +2472,12 @@
           "Microsoft.Extensions.Options": "10.0.12",
           "System.Security.Cryptography.Xml": "10.0.12"
         }
+      },
+      "Microsoft.AspNetCore.TestHost": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "bTHgbcjSrLxlqSasYRDU9BcJ3hDGoqIjtDY0soLNrndOWi3kxtOyddwUMaNZgtoI2Uf6y7ZQs2EuVj0c20B7mA=="
       },
       "Microsoft.CodeAnalysis.CSharp.Workspaces": {
         "type": "CentralTransitive",
