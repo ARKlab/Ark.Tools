@@ -142,8 +142,9 @@ public sealed class ArkAdaptiveSampler : Sampler
             return existing;
 
         // If we've reached the bucket limit, use the global bucket for overflow.
+        // Look up again first: another thread may have added this operation's bucket meanwhile.
         if (_buckets.Count >= _options.MaxOperationBuckets)
-            return _buckets.GetOrAdd("__overflow__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
+            return _buckets.TryGetValue(operationName, out existing) ? existing : _buckets.GetOrAdd("__overflow__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
 
         return _buckets.GetOrAdd(operationName, static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
     }
