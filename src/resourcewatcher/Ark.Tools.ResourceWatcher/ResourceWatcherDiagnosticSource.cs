@@ -5,6 +5,7 @@ using NLog;
 using NodaTime;
 using NodaTime.Text;
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Linq.Expressions;
@@ -24,6 +25,7 @@ internal sealed class ResourceWatcherDiagnosticSource
 
     private static readonly DiagnosticListener _source = new(DiagnosticListenerName);
     private static readonly ActivitySource _activitySource = new(ActivitySourceName);
+    private static readonly ConcurrentDictionary<string, string> _activityNames = new(StringComparer.Ordinal);
     private static readonly Meter _meter = new(ResourceWatcherInstrumentation.MeterName);
     private static readonly Counter<long> _runs = _meter.CreateCounter<long>("ark.tools.resourcewatcher.runs");
     private static readonly Counter<long> _listedResources = _meter.CreateCounter<long>("ark.tools.resourcewatcher.resources.listed");
@@ -423,7 +425,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         Justification = "Generic type parameter has DynamicallyAccessedMembers annotation. Anonymous types with primitive properties and types marked with DynamicDependency are preserved.")]
     private static Activity _start<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string operationName, Func<T> getPayload, bool unlinkFromParent = false)
     {
-        string activityName = BaseActivityName + "." + _toSnakeCase(operationName);
+        string activityName = _toActivityName(operationName);
         string legacyActivityName = _legacyBaseActivityName + "." + operationName;
         var payload = getPayload();
 
@@ -461,7 +463,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         Justification = "Generic type parameter has DynamicallyAccessedMembers annotation. Anonymous types with primitive properties and types marked with DynamicDependency are preserved.")]
     private static void _reportEvent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string eventName, Func<T> getPayload)
     {
-        var name = BaseActivityName + "." + _toSnakeCase(eventName);
+        var name = _toActivityName(eventName);
         var legacyName = _legacyBaseActivityName + "." + eventName;
         var payload = getPayload();
 
@@ -477,7 +479,7 @@ internal sealed class ResourceWatcherDiagnosticSource
         Justification = "Anonymous type contains only primitive properties that are always preserved.")]
     private static void _reportException(string exceptionName, Exception ex, string tenant)
     {
-        var name = BaseActivityName + "." + _toSnakeCase(exceptionName);
+        var name = _toActivityName(exceptionName);
         var legacyName = _legacyBaseActivityName + "." + exceptionName;
 
         if (_source.IsEnabled())
@@ -494,12 +496,12 @@ internal sealed class ResourceWatcherDiagnosticSource
         Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
     }
 
-    private static void _setMappedTag(Activity activity, string propertyName, object? value)
+    private static void _setMappedTag(Activity activity, string tagName, object? value)
     {
         if (value is null)
             return;
 
-        activity.SetTag(_toSnakeCase(propertyName), _toTagValue(value));
+        activity.SetTag(tagName, _toTagValue(value));
     }
 
     private static void _setMappedException(Activity activity, Exception? exception)
@@ -511,10 +513,10 @@ internal sealed class ResourceWatcherDiagnosticSource
         activity.SetStatus(ActivityStatusCode.Error, exception.Message);
     }
 
-    private static void _addMappedTag(ActivityTagsCollection tags, string propertyName, object? value)
+    private static void _addMappedTag(ActivityTagsCollection tags, string tagName, object? value)
     {
         if (value is not null)
-            tags[_toSnakeCase(propertyName)] = _toTagValue(value);
+            tags[tagName] = _toTagValue(value);
     }
 
     private static void _addActivityEvent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string name, T payload)
@@ -545,6 +547,12 @@ internal sealed class ResourceWatcherDiagnosticSource
             return;
 
         activity.AddException(exception);
+    }
+
+    // Operation names are call-site constants, so the set is small and fixed.
+    private static string _toActivityName(string operationName)
+    {
+        return _activityNames.GetOrAdd(operationName, static n => BaseActivityName + "." + _toSnakeCase(n));
     }
 
     private static string _toSnakeCase(string value)
@@ -597,7 +605,7 @@ internal sealed class ResourceWatcherDiagnosticSource
                         nameof(_setMappedTag),
                         null,
                         activity,
-                        Expression.Constant(property.Name),
+                        Expression.Constant(_toSnakeCase(property.Name)),
                         Expression.Convert(value, typeof(object))));
                 }
             }
@@ -624,7 +632,7 @@ internal sealed class ResourceWatcherDiagnosticSource
                     nameof(_addMappedTag),
                     null,
                     tags,
-                    Expression.Constant(property.Name),
+                    Expression.Constant(_toSnakeCase(property.Name)),
                     Expression.Convert(Expression.Property(payload, property), typeof(object))));
             }
 
