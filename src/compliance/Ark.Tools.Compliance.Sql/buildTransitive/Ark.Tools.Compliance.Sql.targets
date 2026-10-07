@@ -127,6 +127,17 @@
   </Target>
   <!-- Entry point for database projects that materialize the generated policy scripts directly.
        ArkGenerateComplianceSql only fires after CoreCompile during a normal build; requesting it
-       standalone on a clean build would find no generated manifest, so run Compile first here. -->
-  <Target Name="ArkGenerateComplianceSqlStandalone" DependsOnTargets="Compile;ArkGenerateComplianceSql" />
+       standalone on a clean build would find no generated manifest, so run Compile first here.
+       It returns the generated scripts (full paths), so callers need no global properties: those
+       would build the project's reference graph again into the same output folders. The scripts are
+       globbed because items from an earlier request on this project are not kept. -->
+  <Target Name="ArkGenerateComplianceSqlStandalone" DependsOnTargets="Compile;ArkGenerateComplianceSql"
+          Returns="@(_ArkComplianceSqlStandaloneScript)">
+    <PropertyGroup>
+      <ArkComplianceSqlOutputPath Condition="'$(ArkComplianceSqlOutputPath)' == ''">$(IntermediateOutputPath)ArkCompliance.Sql</ArkComplianceSqlOutputPath>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(EnableArkToolsCompliance)' == 'true'">
+      <_ArkComplianceSqlStandaloneScript Include="$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(ArkComplianceSqlOutputPath)'))policy-*.compliance.sql" />
+    </ItemGroup>
+  </Target>
 </Project>

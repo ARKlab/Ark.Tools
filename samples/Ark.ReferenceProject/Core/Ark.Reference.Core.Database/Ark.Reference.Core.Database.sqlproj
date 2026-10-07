@@ -69,21 +69,13 @@
   </ItemGroup>
   <Target Name="ArkMaterializeComplianceSql" BeforeTargets="_SetupSqlBuildInputs;SqlBuild"
           Condition="'$(DesignTimeBuild)' != 'true'">
-    <ItemGroup>
-      <_ArkComplianceSqlPolicyToDelete Include="$(ArkComplianceSqlOutputPath)\**\policy-*.compliance.sql" />
-    </ItemGroup>
-    <Delete Files="@(_ArkComplianceSqlPolicyToDelete)" />
-    <MSBuild Projects="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj"
-            Targets="ArkGenerateComplianceSqlStandalone"
-            Properties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)\Ark.Reference.Common;EnableArkToolsCompliance=true"
-            BuildInParallel="false" />
-    <MSBuild Projects="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj"
-            Targets="ArkGenerateComplianceSqlStandalone"
-            Properties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)\Ark.Reference.Core.Common;EnableArkToolsCompliance=true"
-            BuildInParallel="false" />
-    <ItemGroup>
-      <_ArkComplianceSqlPolicy Include="$(ArkComplianceSqlOutputPath)\**\policy-*.compliance.sql" />
-    </ItemGroup>
+    <!-- No extra Properties: the call reuses the projects' normal build instead of rebuilding
+         their whole reference graph a second time into the same obj folders. -->
+    <MSBuild Projects="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj;..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj"
+             Targets="ArkGenerateComplianceSqlStandalone"
+             BuildInParallel="false">
+      <Output TaskParameter="TargetOutputs" ItemName="_ArkComplianceSqlPolicy" />
+    </MSBuild>
     <MakeDir Directories="$(ArkComplianceSqlOutputPath)" />
     <ReadLinesFromFile File="%(_ArkComplianceSqlPolicy.Identity)"
                       Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0">
@@ -91,6 +83,7 @@
     </ReadLinesFromFile>
     <WriteLinesToFile File="$(ArkComplianceSqlOutputPath)\CompliancePolicies.sql"
                       Lines="@(_ArkComplianceSqlLine)"
-                      Overwrite="true" />
+                      Overwrite="true"
+                      WriteOnlyWhenDifferent="true" />
   </Target>
 </Project>

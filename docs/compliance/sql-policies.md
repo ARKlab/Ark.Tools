@@ -86,7 +86,9 @@ post-deployment script. Three pieces:
 
 **1. A custom target** that asks each entity project for its policies (via the
 package's `ArkGenerateComplianceSqlStandalone` entry point — it compiles the
-project first, so it works on clean builds) and concatenates them:
+project first, so it works on clean builds, and returns the generated scripts)
+and concatenates them. The entity projects set `EnableArkToolsCompliance=true`
+themselves:
 
 ```xml
 <Project DefaultTargets="Build">
@@ -98,26 +100,15 @@ project first, so it works on clean builds) and concatenates them:
 
   <Target Name="ArkMaterializeComplianceSql" BeforeTargets="_SetupSqlBuildInputs;SqlBuild"
           Condition="'$(DesignTimeBuild)' != 'true'">
-    <!-- Start clean so removed policies do not linger. -->
-    <ItemGroup>
-      <_ArkComplianceSqlPolicyToDelete Include="$(ArkComplianceSqlOutputPath)\**\policy-*.compliance.sql" />
-    </ItemGroup>
-    <Delete Files="@(_ArkComplianceSqlPolicyToDelete)" />
-
-    <!-- One <MSBuild> invocation per project that declares [SqlDataPolicy] entities. -->
+    <!-- List every project that declares [SqlDataPolicy] entities. -->
     <MSBuild Projects="..\MyApp.Common\MyApp.Common.csproj"
              Targets="ArkGenerateComplianceSqlStandalone"
-             Properties="ArkComplianceSqlOutputPath=$(ArkComplianceSqlOutputPath)\MyApp.Common;EnableArkToolsCompliance=true"
-             BuildInParallel="false" />
+             BuildInParallel="false">
+      <Output TaskParameter="TargetOutputs" ItemName="_ArkComplianceSqlPolicy" />
+    </MSBuild>
 
     <!-- Concatenate everything into a single deployable script. -->
-    <ItemGroup>
-      <_ArkComplianceSqlPolicy Include="$(ArkComplianceSqlOutputPath)\**\policy-*.compliance.sql" />
-    </ItemGroup>
-    <MakeDir Directories="$(ArkComplianceSqlOutputPath)"
-             Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0" />
-    <Delete Files="$(ArkComplianceSqlOutputPath)\CompliancePolicies.sql"
-            Condition="@(_ArkComplianceSqlPolicy->Count()) == 0" />
+    <MakeDir Directories="$(ArkComplianceSqlOutputPath)" />
     <ReadLinesFromFile File="%(_ArkComplianceSqlPolicy.Identity)"
                        Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0">
       <Output TaskParameter="Lines" ItemName="_ArkComplianceSqlLine" />
@@ -125,11 +116,17 @@ project first, so it works on clean builds) and concatenates them:
     <WriteLinesToFile File="$(ArkComplianceSqlOutputPath)\CompliancePolicies.sql"
                       Lines="@(_ArkComplianceSqlLine)"
                       Overwrite="true"
-                      Condition="@(_ArkComplianceSqlPolicy->Count()) &gt; 0" />
+                      WriteOnlyWhenDifferent="true" />
   </Target>
 
 </Project>
 ```
+
+Do not pass `Properties` to the `<MSBuild>` call. Extra global properties make
+MSBuild build the entity project and its whole reference graph a second time,
+into the same `obj` folders. The two builds then overwrite each other's outputs,
+so every later build recompiles them. `WriteOnlyWhenDifferent` keeps the
+concatenated file's timestamp, so an unchanged database project stays up to date.
 
 **2. The post-deployment script** includes the concatenated file:
 
