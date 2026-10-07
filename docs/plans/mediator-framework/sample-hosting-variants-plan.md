@@ -2375,7 +2375,7 @@ Each of `Processor`, `Notifications`, `Audit` contains:
 (participant type per app) and a `Program.cs` derived from the old
 `AzureFunctions/Program.cs` with: `FunctionsHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = builder.Configuration.GetConnectionString("Sample") ?? throw … })`;
 the subscriber registration for Notifications/Audit; `FunctionsHosting.AddUserContext`
-before `AddArkAzureFunctions`; `ConfigureArkMessagingFunctions(... .UseTransport(t => t.UseServiceBus()).UseDataBus(d => d.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration))).UseOutbox(o => o.UseEnqueue()))`;
+before `AddArkAzureFunctions`; `AddArkSolidProcessors(container)` (bridges the scoped `ICommandProcessor`/`IRequestProcessor` and the handler verifier into MS DI, as the old Functions `Program.cs` does); then `ConfigureArkMessagingFunctions(... .UseTransport(t => t.UseServiceBus()).UseDataBus(d => d.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration))).UseOutbox(o => o.UseEnqueue()))`;
 `AddArkAzureFunctionsSimpleInjectorBridge(container)`; the authentication block
 kept only in `Api`. These apps do not set `FunctionsInDependencies`, so they do
 not expose the HTTP functions from the Hosting library.

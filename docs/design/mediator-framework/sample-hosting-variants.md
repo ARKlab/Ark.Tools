@@ -127,7 +127,7 @@ composition requires exactly one Producer or Receiver.
 | Print worker (`ark-mediator-sample`) | Processes the sent messages; publishes `BookPrintCompleted` | `Web.Processor` | `WebRebus.Processor` | `Functions.Processor` |
 | Notification subscriber | Records the notification through `IBookPrintNotificationSink` | `Web.NotificationProcessor` | `WebRebus.NotificationProcessor` | `Functions.Notifications` |
 | Audit subscriber | Records the print audit effect | `Web.AuditProcessor` | `WebRebus.AuditProcessor` | `Functions.Audit` |
-| Outbox drain | Dispatches committed envelopes | `Web.OutboxProcessor` (`MessagingOutboxProcessor`) | Rebus outbox in each Rebus process | `Functions.OutboxProcessor` (`MessagingOutboxProcessor`) |
+| Outbox drain | Dispatches committed envelopes | `Web.OutboxProcessor` (`MessagingOutboxProcessor`) | Rebus outbox processor in `WebRebus.Processor` only (the Api enlists; subscribers send nothing) | `Functions.OutboxProcessor` (`MessagingOutboxProcessor`) |
 
 Application changes:
 
