@@ -871,12 +871,12 @@ public sealed class SdkPackageTests
         Assert.IsNotNull(appsettingsEnvironment);
         Assert.IsNotNull(reqnroll);
         Assert.IsNotNull(testConfig);
-        Assert.AreEqual("Always", appsettingsBase!["CopyToOutputDirectory"]);
+        Assert.AreEqual("IfDifferent", appsettingsBase!["CopyToOutputDirectory"]);
         Assert.AreEqual("Always", appsettingsBase["CopyToPublishDirectory"]);
-        Assert.AreEqual("Always", appsettingsEnvironment!["CopyToOutputDirectory"]);
+        Assert.AreEqual("IfDifferent", appsettingsEnvironment!["CopyToOutputDirectory"]);
         Assert.AreEqual("Never", appsettingsEnvironment["CopyToPublishDirectory"]);
-        Assert.AreEqual("Always", reqnroll!["CopyToOutputDirectory"]);
-        Assert.AreEqual("Always", testConfig!["CopyToOutputDirectory"]);
+        Assert.AreEqual("IfDifferent", reqnroll!["CopyToOutputDirectory"]);
+        Assert.AreEqual("IfDifferent", testConfig!["CopyToOutputDirectory"]);
         Assert.AreEqual(1, noneFileNames.Count(file => string.Equals(file, "appsettings.json", StringComparison.Ordinal)));
         Assert.AreEqual(1, noneFileNames.Count(file => string.Equals(file, "appsettings.Development.json", StringComparison.Ordinal)));
         CollectionAssert.Contains(noneFileNames, "reqnroll.json");

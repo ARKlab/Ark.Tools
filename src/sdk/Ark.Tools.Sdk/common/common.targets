@@ -42,8 +42,10 @@
   <ItemGroup Condition="'$(EnableArkToolsAppSettings)' != 'false'">
     <Content Remove="$(MSBuildProjectDirectory)/appsettings*.json" />
     <Content Remove="$(MSBuildProjectDirectory)/appsettings.*.json" />
+    <!-- IfDifferent resets an output copy a test or app changed, without copying on every build,
+         so no-op builds stay no-op and the Visual Studio fast up-to-date check can skip them. -->
     <None Update="$(MSBuildProjectDirectory)/appsettings*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>IfDifferent</CopyToOutputDirectory>
       <CopyToPublishDirectory Condition="'%(Filename)' == 'appsettings'">Always</CopyToPublishDirectory>
       <CopyToPublishDirectory Condition="'%(Filename)' != 'appsettings'">Never</CopyToPublishDirectory>
     </None>
