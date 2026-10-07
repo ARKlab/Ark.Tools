@@ -23,7 +23,9 @@ namespace Ark.Tools.Benchmarks;
 [MemoryDiagnoser]
 public class EvolvableEnumConversionBenchmarks
 {
-    private static readonly EvolvableEnum<Status> _defined = Status.Active;
+    // Instance fields, not constants or static readonly values, which the JIT can fold into constants.
+    private readonly Status _status = Status.Active;
+    private readonly EvolvableEnum<Status> _defined = Status.Active;
     private static readonly JsonSerializerOptions _numberJsonOptions = new()
     {
         RespectNullableAnnotations = true,
@@ -51,7 +53,7 @@ public class EvolvableEnumConversionBenchmarks
     [Benchmark]
     public EvolvableEnum<Status> FromValue()
     {
-        return Status.Active;
+        return _status;
     }
 
     /// <summary>Reads the strict enum value back.</summary>
