@@ -56,11 +56,21 @@ The generated `CompliancePolicies.sql` is identical to the old output.
 - `SkipUnchangedFilesOnCopyAlways=true` in the repository `Directory.Build.props`
   files: `CopyToOutputDirectory=Always` items (appsettings, Reqnroll, testconfig)
   are copied only when they differ. The SDK package default is unchanged.
-- CI caches the NuGet package folder through `actions/setup-dotnet`, keyed by
-  the `packages.lock.json` files.
 
 ### Considered and not changed
 
+- NuGet package caching through `actions/setup-dotnet` (`cache: true`) was tried
+  on this PR's CI runs and reverted. Restoring and downloading the cache costs as
+  much time as it saves:
+
+  | Run | Install dotnet | Restore | Cache save | Total |
+  |---|---:|---:|---:|---:|
+  | No cache (two `master` runs) | 0s | 35-37s | - | 35-37s |
+  | Cache miss (two runs) | 2-7s | 32-35s | 12-14s | 48-54s |
+  | Cache hit (two runs) | 14-36s | 21-25s | 1s | 36-62s |
+
+  A miss, which happens on every lock file change, adds the cache upload. A hit
+  saves 10-14 seconds of restore but spends as much or more downloading the cache.
 - `dotnet pack --no-build` in CI saves about 25 seconds, but `GenerateSbom`
   failed intermittently without the build step. Not worth the flakiness.
 - `ILLink.RoslynAnalyzer` is the largest analyzer by CPU time (about 30% of
