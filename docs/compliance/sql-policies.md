@@ -128,6 +128,11 @@ into the same `obj` folders. The two builds then overwrite each other's outputs,
 so every later build recompiles them. `WriteOnlyWhenDifferent` keeps the
 concatenated file's timestamp, so an unchanged database project stays up to date.
 
+The policies are generated per target framework. If an entity project sets
+`TargetFrameworks`, pass only the framework to read, for example
+`Properties="TargetFramework=net10.0"`. That matches the inner build MSBuild
+already runs for that framework, so it does not cause a second build.
+
 **2. The post-deployment script** includes the concatenated file:
 
 ```sql

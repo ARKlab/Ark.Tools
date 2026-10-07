@@ -94,8 +94,8 @@ regressions.
 # From the repository root
 docker compose up -d
 
-# Wait until the Service Bus emulator accepts connections (it starts after SQL Server)
-timeout 300s bash -c 'until (echo > /dev/tcp/127.0.0.1/5300) 2>/dev/null; do sleep 2; done'
+# Wait until the Service Bus emulator accepts connections on both ports (it starts after SQL Server)
+timeout 300s bash -c 'until (echo > /dev/tcp/127.0.0.1/5300) 2>/dev/null && (echo > /dev/tcp/127.0.0.1/5672) 2>/dev/null; do sleep 2; done'
 
 # Stop and remove the containers when done
 docker compose down
