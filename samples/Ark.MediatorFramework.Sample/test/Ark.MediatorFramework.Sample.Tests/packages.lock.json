@@ -210,11 +210,11 @@
       },
       "AwesomeAssertions.Web": {
         "type": "Transitive",
-        "resolved": "2.0.4",
-        "contentHash": "Ez+51cFy0UkUjD0iQjmkiiqdSwfmAJDp/QGbDwstrL0QsBbawuy+NUCXABfO2z4Gh5kPmbupVslAtszu662MIQ==",
+        "resolved": "2.0.5",
+        "contentHash": "v5P7h3MrouiNsCqciNBPXxFjOtVodBBUrqz0KjU2RiQR47Vt1pXNYDuket/IuSuEeg88sILEEO50e+8R3ifS5A==",
         "dependencies": {
           "AwesomeAssertions": "9.0.0",
-          "HttpMessageFormatter": "2.0.4",
+          "HttpMessageFormatter": "2.0.5",
           "Microsoft.AspNetCore.WebUtilities": "2.3.0"
         }
       },
@@ -524,8 +524,8 @@
       },
       "HttpMessageFormatter": {
         "type": "Transitive",
-        "resolved": "2.0.4",
-        "contentHash": "LkO6i/o3eXrh7hHIyWxeCjmREuumGctL76psNV3yngR+PgNTgWC/5VMTGw4jxWzF776JvcKvnfANpP1MQqqGsQ==",
+        "resolved": "2.0.5",
+        "contentHash": "llLJHBjjvZX90RlPrTXXo1zkYsrj6xU3qPHxeklnAkQyhkME1fAQo/XcKwYFJiLHf5bbJN0ZG0V7pK4KUhPT0A==",
         "dependencies": {
           "Microsoft.AspNetCore.WebUtilities": "2.3.0"
         }
@@ -2001,7 +2001,7 @@
           "Azure.Identity": "[1.21.0, )",
           "Microsoft.Identity.Web": "[4.16.0, )",
           "Scalar.AspNetCore": "[2.17.14, )",
-          "Swashbuckle.AspNetCore.SwaggerUI": "[10.2.3, )",
+          "Swashbuckle.AspNetCore.SwaggerUI": "[10.3.0, )",
           "protobuf-net.Grpc.AspNetCore.Reflection": "[1.3.14, )"
         }
       },
@@ -2383,7 +2383,7 @@
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Http": "[1.0.0, )",
           "AwesomeAssertions": "[9.6.0, )",
-          "AwesomeAssertions.Web": "[2.0.4, )",
+          "AwesomeAssertions.Web": "[2.0.5, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.23.0, )",
           "Reqnroll": "[3.3.4, )"
         }
@@ -2648,9 +2648,9 @@
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "CentralTransitive",
-        "requested": "[10.2.3, )",
-        "resolved": "10.2.3",
-        "contentHash": "nthWONRs/FJ4yyG206g1cC52WEG8EqrjuMWjGdR+5XG7lbjFto6NqcI9EMICgVFom/UivIjUVwI76ZHbHwTPfQ=="
+        "requested": "[10.3.0, )",
+        "resolved": "10.3.0",
+        "contentHash": "3qcin6S55lsFTsWf0vQO3P0bFc0tvk2EOkH+6wgJF9UQUk1WqsDUPEkexQE9Ievc+3zTPoYds9BTlvPMRbmkcQ=="
       },
       "System.Diagnostics.PerformanceCounter": {
         "type": "CentralTransitive",
