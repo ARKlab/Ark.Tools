@@ -4473,25 +4473,7 @@ deployments:
   content_hash: null
 - kind: uri
   target: mcp
-  value: ado
-  runtime: claude
-  scope: project
-  owners:
-  - .
-  active_owner: .
-  content_hash: null
-- kind: uri
-  target: mcp
   value: binlog
-  runtime: claude
-  scope: project
-  owners:
-  - .
-  active_owner: .
-  content_hash: null
-- kind: uri
-  target: mcp
-  value: github-copilot
   runtime: claude
   scope: project
   owners:
@@ -4509,25 +4491,7 @@ deployments:
   content_hash: null
 - kind: uri
   target: mcp
-  value: ado
-  runtime: copilot
-  scope: project
-  owners:
-  - .
-  active_owner: .
-  content_hash: null
-- kind: uri
-  target: mcp
   value: binlog
-  runtime: copilot
-  scope: project
-  owners:
-  - .
-  active_owner: .
-  content_hash: null
-- kind: uri
-  target: mcp
-  value: github-copilot
   runtime: copilot
   scope: project
   owners:
@@ -4544,16 +4508,9 @@ deployments:
   active_owner: .
   content_hash: null
 mcp_servers:
-- ado
 - binlog
-- github-copilot
 - microsoftdocs
 mcp_configs:
-  ado:
-    name: ado
-    transport: http
-    registry: false
-    url: https://mcp.dev.azure.com/arklabita
   binlog:
     name: binlog
     transport: stdio
@@ -4566,11 +4523,6 @@ mcp_configs:
     tools:
     - '*'
     command: dotnet
-  github-copilot:
-    name: github-copilot
-    transport: http
-    registry: false
-    url: https://api.githubcopilot.com/mcp
   microsoftdocs:
     name: microsoftdocs
     transport: http
@@ -4578,14 +4530,10 @@ mcp_configs:
     url: https://learn.microsoft.com/api/mcp
 mcp_target_servers:
   claude:
-  - ado
   - binlog
-  - github-copilot
   - microsoftdocs
   copilot:
-  - ado
   - binlog
-  - github-copilot
   - microsoftdocs
 mcp_config_provenance:
   binlog: dotnet-msbuild
