@@ -10,6 +10,11 @@
   "lockFileMaintenance": {
     "enabled": false
   },
+  "apm": {
+    "lockFileMaintenance": {
+      "enabled": true
+    }
+  },
   "customManagers": [
     {
       "customType": "regex",
