@@ -14,6 +14,8 @@ internal sealed class ShredObjectToDataTable<T>
     private readonly FieldInfo[] _fi;
     private readonly PropertyInfo[] _pi;
     private readonly Dictionary<string, int> _ordinalMap;
+    // Members of derived runtime types already added to the table. An instance shreds a single table.
+    private readonly Dictionary<Type, (FieldInfo[] Fields, PropertyInfo[] Properties)> _derivedMembers = new();
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
     private readonly Type _type;
 
@@ -136,10 +138,16 @@ internal sealed class ShredObjectToDataTable<T>
         if (instance is not null && instance.GetType() != typeof(T))
         {
             // If the instance is derived from T, extend the table schema 
-            // and get the properties and fields.
-            ExtendTable(table, instance.GetType());
-            fi = instance.GetType().GetFields();
-            pi = instance.GetType().GetProperties();
+            // and get the properties and fields, once per derived type.
+            var type = instance.GetType();
+            if (!_derivedMembers.TryGetValue(type, out var members))
+            {
+                ExtendTable(table, type);
+                members = (type.GetFields(), type.GetProperties());
+                _derivedMembers.Add(type, members);
+            }
+
+            (fi, pi) = members;
         }
 
         // Add the property and field values of the instance to an array.
