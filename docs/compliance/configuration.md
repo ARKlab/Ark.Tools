@@ -25,7 +25,7 @@ Everything a consumer can set, in one place.
 | Target | When | Purpose |
 | --- | --- | --- |
 | `ArkGenerateComplianceSql` | `AfterTargets="CoreCompile"`, only when `EnableArkToolsCompliance=true` | Expands generator output into `policy-*.compliance.sql` files under `$(ArkComplianceSqlOutputPath)`, applying `@(ArkComplianceSqlToken)`. Outputs the `@(ArkComplianceSqlScript)` item. Stale files are deleted. |
-| `ArkGenerateComplianceSqlStandalone` | invoked explicitly | Entry point for database projects: depends on `Compile`, so it works on a clean build, and returns the project's `policy-*.compliance.sql` files (full paths). Invoke via `<MSBuild Projects="…" Targets="ArkGenerateComplianceSqlStandalone">` without `Properties`, and read `TargetOutputs`. |
+| `ArkGenerateComplianceSqlStandalone` | invoked explicitly | Entry point for database projects: depends on `Compile`, so it works on a clean build, and returns the project's `policy-*.compliance.sql` files (full paths). Invoke via `<MSBuild Projects="…" Targets="ArkGenerateComplianceSqlStandalone">` and read `TargetOutputs`. Pass no `Properties`, except `TargetFramework=<tfm>` when the project sets `TargetFrameworks`. |
 
 ## Environment variables
 
