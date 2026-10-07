@@ -96,11 +96,16 @@ apm run plugins:build
 
 # Check all published files and marketplace metadata against their sources.
 apm run plugins:check
+
+# Check committed Copilot and Claude outputs against a clean install; needs a clean checkout.
+apm run agents:check
 ```
 
 The restore reuses existing lockfile pins (never `--update`/`--refresh`) and
-the `git diff` fails if the lockfile changed; CI also checks the entire checkout
-for drift. APM 0.33.0's `--frozen` preflight cannot bootstrap a clean checkout
+the `git diff` fails if the lockfile changed. `agents:check` runs `apm audit --ci`,
+then deletes and reinstalls the outputs, so edited, added or removed skills, agents,
+hooks and MCP servers all fail it. The APM workflow and Copilot setup steps run it,
+so the cloud agent does not start on altered outputs. APM 0.33.0's `--frozen` preflight cannot bootstrap a clean checkout
 (it requires installed marketplace manifests and rejects transitive MCP servers
 such as `binlog`), so it is not used. Do not bypass a failure: review
 intentional dependency changes with the maintenance commands below.
@@ -132,8 +137,9 @@ apm install --update --target copilot,claude --only apm
 ```
 
 Commit the manifest, lockfile and regenerated outputs together.
-Renovate does the same for tag-pinned dependencies: its `apm` manager runs
-`apm install` with the APM version pinned in `renovate.json` and commits every changed output.
+Renovate does the same: its `apm` manager runs `apm install` with the APM version
+pinned in `renovate.json` and commits every changed output. It bumps tag-pinned
+dependencies; lock file maintenance, enabled for `apm` only, refreshes branch pins.
 Run the restore commands again to verify a lock-preserving restore. Development
 dependencies are never included in the published `ark-csharp` plugin.
 

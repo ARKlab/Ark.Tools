@@ -51,20 +51,9 @@ jobs:
       - name: Check committed plugin and marketplace output
         run: apm run plugins:check
 
-      - name: Restore Copilot and Claude development agents from lockfile
-        # ponytail: APM 0.33 --frozen preflight rejects cold marketplace deps and transitive MCP.
-        # Switch back to 'apm install --frozen' once fixed upstream.
-        run: |
-          apm install
-          git diff --exit-code --ignore-cr-at-eol -- apm.lock.yaml
+      - name: Verify committed Copilot and Claude agents match the lockfile
+        # ponytail: APM 0.33 --frozen preflight rejects cold marketplace deps and transitive MCP,
+        # so the check reinstalls with 'apm install'. Switch to '--frozen' once fixed upstream.
+        run: apm run agents:check
         env:
           GITHUB_APM_PAT: ${{ github.token }}
-
-      - name: Verify committed Copilot and Claude outputs match the install
-        shell: pwsh
-        run: |
-          $changes = git status --porcelain --untracked-files=all
-          if ($changes) {
-            $changes
-            throw 'Committed APM outputs are stale: run apm install and commit the changes.'
-          }

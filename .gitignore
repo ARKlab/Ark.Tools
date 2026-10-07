@@ -453,6 +453,7 @@ $RECYCLE.BIN/
 # APM: installed Copilot and Claude outputs are tracked; only the package cache
 # and outputs for harnesses not targeted in apm.yml are ignored
 apm_modules/
+/.claude/settings.local.json
 /.opencode/
 /.github/plugin/
 /opencode.json
