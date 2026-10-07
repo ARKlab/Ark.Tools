@@ -94,7 +94,7 @@ public sealed class EvolvableEnumTypeHandler<TEnum, TBacking> :
 
 internal static class EvolvableEnumDapperValue
 {
-    public static string GetName(string? name, object value) => name
+    public static string GetName<TValue>(string? name, TValue value) => name
         ?? throw new EvolvableEnumConversionException(
             $"Cannot write '{value}' as a SQL string because it has no symbolic name.");
 
