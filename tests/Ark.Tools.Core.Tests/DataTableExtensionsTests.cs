@@ -539,6 +539,54 @@ public class DataTableExtensionsTests
         second.Rows[1]["Id"].Should().Be(3);
     }
 
+    private class Shape
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+
+    private sealed class Circle : Shape
+    {
+        public double Radius { get; set; }
+    }
+
+    private sealed class Square : Shape
+    {
+        public double Side { get; set; }
+    }
+
+    /// <summary>
+    /// Alternating derived types each contribute their own columns and values, including after
+    /// their members are cached on first sight.
+    /// </summary>
+    [TestMethod]
+    public void ToDataTablePolymorphic_WithAlternatingDerivedTypes_MapsEveryRowsOwnMembers()
+    {
+        Shape[] shapes =
+        [
+            new Circle { Name = "c1", Radius = 1 },
+            new Square { Name = "s1", Side = 2 },
+            new Circle { Name = "c2", Radius = 3 },
+            new Square { Name = "s2", Side = 4 },
+        ];
+
+        using var table = Ark.Tools.Core.Reflection.ArkDataTableExtensions.ToDataTablePolymorphic(shapes);
+
+        table.Columns.Cast<DataColumn>().Select(static c => c.ColumnName)
+            .Should().BeEquivalentTo("Name", "Radius", "Side");
+        table.Rows.Count.Should().Be(4);
+        table.Rows[0]["Name"].Should().Be("c1");
+        table.Rows[0]["Radius"].Should().Be(1d);
+        table.Rows[0]["Side"].Should().Be(DBNull.Value);
+        table.Rows[1]["Side"].Should().Be(2d);
+        table.Rows[1]["Radius"].Should().Be(DBNull.Value);
+        table.Rows[2]["Name"].Should().Be("c2");
+        table.Rows[2]["Radius"].Should().Be(3d);
+        table.Rows[2]["Side"].Should().Be(DBNull.Value);
+        table.Rows[3]["Name"].Should().Be("s2");
+        table.Rows[3]["Side"].Should().Be(4d);
+        table.Rows[3]["Radius"].Should().Be(DBNull.Value);
+    }
+
     private static IEnumerable<Entity> _throwAfterFirst()
     {
         yield return new Entity { Id = 1 };
