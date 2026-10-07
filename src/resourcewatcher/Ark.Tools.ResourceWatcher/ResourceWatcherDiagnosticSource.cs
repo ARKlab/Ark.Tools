@@ -479,7 +479,6 @@ internal sealed class ResourceWatcherDiagnosticSource
         Justification = "Anonymous type contains only primitive properties that are always preserved.")]
     private static void _reportException(string exceptionName, Exception ex, string tenant)
     {
-        var name = _toActivityName(exceptionName);
         var legacyName = _legacyBaseActivityName + "." + exceptionName;
 
         if (_source.IsEnabled())
