@@ -1,6 +1,7 @@
 # Local test dependencies for the whole repository: the same SQL Server, Azurite and
 # Service Bus emulator services that CI runs (.github/workflows/ci.yml).
 # Start with `docker compose up -d` from the repository root.
+# Ports are published on loopback only: the services use well-known development credentials.
 services:
   db:
     image: mcr.microsoft.com/mssql/server:2025-latest
@@ -12,14 +13,14 @@ services:
       # Azure Sql is Enterprise - match it
       MSSQL_PID: EnterpriseDeveloper
     ports:
-      - "1433:1433"
+      - "127.0.0.1:1433:1433"
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     ports:
-      - "10000:10000"
-      - "10001:10001"
-      - "10002:10002"
+      - "127.0.0.1:10000:10000"
+      - "127.0.0.1:10001:10001"
+      - "127.0.0.1:10002:10002"
     restart: unless-stopped
     # Temporary workaround: --skipApiVersionCheck is needed until Azurite supports the latest Azure Storage API version
     # See: https://github.com/Azure/Azurite/issues/2623
@@ -38,5 +39,5 @@ services:
       EMULATOR_HTTP_PORT: 5300
       SQL_WAIT_INTERVAL: 90
     ports:
-      - "5672:5672"
-      - "5300:5300"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:5300:5300"
