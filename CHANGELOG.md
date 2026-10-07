@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The compliance analyzers do less work per operation, which shortens builds of projects that enable them.
 - `Ark.Tools.Sdk` copies `appsettings*.json`, `reqnroll*.json` and `testconfig.json` to the output with `CopyToOutputDirectory=IfDifferent` instead of `Always`. An edited output copy is still restored, but unchanged files are no longer copied on every build, so no-op builds and the Visual Studio up-to-date check can skip the project. Requires MSBuild 17.13 or later.
 - `EvolvableEnum` conversions (`FromValue`, the implicit and explicit operators, and `Value`) no longer allocate, and writing names to JSON and Dapper parameters allocates less.
-- The MediatorFramework source generators (Minimal API, gRPC, Rebus, MCP, messaging network and Azure Functions) reuse their previous results when unrelated code changes, so editing projects that use them is faster in the IDE. The generated code is unchanged.
+- The MediatorFramework source generators (Minimal API, gRPC, Rebus, MCP, messaging network and Azure Functions) reuse their previous results when code in other files changes, so editing projects that use them is faster in the IDE. The generated code is unchanged.
 
 ### Fixed
 

@@ -1130,8 +1130,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             }
 
             public DiagnosticDescriptor Descriptor { get; }
-            // Roslyn source locations compare by syntax tree and span, so they keep models equatable
+            // Roslyn source locations compare by syntax tree and span, so edits in other files keep models equal
             // while reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
+            // Any edit in the declaring file creates a new syntax tree and reruns the output.
             public Location Location { get; }
             public EquatableArray<string> Arguments { get; }
         }

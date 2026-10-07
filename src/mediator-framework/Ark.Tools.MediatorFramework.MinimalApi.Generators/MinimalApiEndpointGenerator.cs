@@ -1494,8 +1494,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             Command = 3,
         }
 
-        // Locations stay Roslyn source locations: they compare by syntax tree and span, so unrelated edits
+        // Locations stay Roslyn source locations: they compare by syntax tree and span, so edits in other files
         // keep models equal, and reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
+        // Any edit in the declaring file creates a new syntax tree and reruns the output.
         private readonly record struct EndpointAssemblyMapping(EquatableArray<string> AssemblyNames, Location? InvalidVersionPrefixLocation);
 
         private readonly record struct EndpointModel

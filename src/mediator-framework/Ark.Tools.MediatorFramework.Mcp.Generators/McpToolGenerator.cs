@@ -988,8 +988,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private sealed record McpModel(EquatableArray<ContextGroup> Groups, EquatableArray<string> DocumentationAssemblyNames);
     private sealed record AssemblyContracts(string AssemblyName, EquatableArray<ContractModel> Contracts);
 
-    // Roslyn source locations compare by syntax tree and span, so they keep models equatable while
+    // Roslyn source locations compare by syntax tree and span, so edits in other files keep models equal while
     // reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
+    // Any edit in the declaring file creates a new syntax tree and reruns the output.
     private readonly record struct DiagnosticInfo
     {
         public DiagnosticInfo(DiagnosticDescriptor descriptor, Location? location, params string[] arguments)
