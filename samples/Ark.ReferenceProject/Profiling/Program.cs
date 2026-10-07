@@ -3,8 +3,6 @@
 
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
-using Ark.Reference.Common.Auth;
-using Ark.Reference.Core.Common.Auth;
 using Ark.Reference.Core.InProcessHost;
 using Ark.Reference.Core.InProcessHost.Auth;
 using Ark.Tools.Compliance;
@@ -46,14 +44,7 @@ public class ReferenceEndpointBenchmarks
     private static readonly ManualResetEventSlim _iterationCleanupDelay = new();
     private const string _sqlClientSwitchEnvironmentVariable = "ARK_SQLCLIENT_SWITCH";
 
-    [InfrastructureSecret]
-    private readonly string _token = TestTokens.CreateBuilder()
-        .AddSubject("Admin")
-        .AddClaim("user_id", "Admin")
-        .AddClaim("name", "Admin")
-        .AddClaim(AuthConstants.ScopePrefix, PermissionsConstants.AdminGrant)
-        .Build()
-        .Value;
+    private readonly ApiAuthContext _auth = new();
     private IFlurlClient? _client;
     private Book.V1.Output[] _books = [];
     private int _bookSequence;
@@ -249,7 +240,7 @@ public class ReferenceEndpointBenchmarks
 
     private IFlurlRequest _send(IFlurlClient client, string path)
     {
-        return client.Request(path).WithOAuthBearerToken(_token);
+        return _auth.SetAuth(client.Request(path));
     }
 
     private static void _deployDatabase()
