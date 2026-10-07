@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- In-process API host shared by the integration tests and the profiling harness.
+       It must not reference a test framework, so executables can consume it. -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Ark.Reference.Common\Ark.Reference.Common.csproj" />
+    <ProjectReference Include="..\Ark.Reference.Core.Application\Ark.Reference.Core.Application.csproj" />
+    <ProjectReference Include="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj" />
+    <ProjectReference Include="..\Ark.Reference.Core.WebInterface\Ark.Reference.Core.WebInterface.csproj" />
+  </ItemGroup>
+
+</Project>

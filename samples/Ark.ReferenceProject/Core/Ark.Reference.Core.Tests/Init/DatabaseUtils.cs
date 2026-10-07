@@ -5,7 +5,7 @@ using Microsoft.SqlServer.Dac;
 
 using Reqnroll;
 
-using Ark.Tools.Compliance;
+using Ark.Reference.Core.InProcessHost;
 
 using System.Data;
 
@@ -18,23 +18,12 @@ namespace Ark.Reference.Core.Tests.Init;
 public sealed class DatabaseUtils
 {
     /// <summary>
-    /// Gets the connection string used by the reference project test database.
-    /// </summary>
-    [InfrastructureSecret]
-    public const string DatabaseConnectionString = @"Data Source=127.0.0.1;User Id=sa;Password=IntegrationTestsDbPassword85!;Pooling=True;Connect Timeout=60;Encrypt=True;TrustServerCertificate=True";
-
-    /// <summary>
     /// Creates the logging database when it does not already exist.
     /// </summary>
     [BeforeTestRun(Order = -1)]
     public static async Task CreateNLogDatabaseIfNotExists()
     {
-        var conn = new SqlConnection(DatabaseConnectionString);
-        await using var _ = conn.ConfigureAwait(false);
-        await conn.OpenAsync().ConfigureAwait(false);
-        var cmd = new SqlCommand("IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn);
-        await using var _cmd = cmd.ConfigureAwait(false);
-        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        await TestDatabase.CreateNLogDatabaseIfNotExists().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -43,7 +32,7 @@ public sealed class DatabaseUtils
     [BeforeTestRun(Order = -1)]
     public static void DeployDB()
     {
-        var instance = new DacServices(DatabaseConnectionString);
+        var instance = new DacServices(TestDatabase.ConnectionString);
         using var dacpac = DacPackage.Load("Ark.Reference.Core.Database.dacpac");
         instance.Deploy(dacpac, "Ark.Reference.Core.Database", true, new DacDeployOptions()
         {

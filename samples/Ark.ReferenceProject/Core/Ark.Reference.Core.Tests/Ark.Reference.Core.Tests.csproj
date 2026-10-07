@@ -8,7 +8,6 @@
 	<ItemGroup>
 		<PackageReference Include="ExcelDataReader" />
 		<PackageReference Include="ExcelDataReader.DataSet" />
-		<PackageReference Include="Microsoft.AspNetCore.TestHost" />
 		<PackageReference Include="Microsoft.SqlServer.DacFx" />
 		<PackageReference Include="NodaTime.Testing" />
 		<PackageReference Include="Reqnroll.MsTest" />
@@ -25,6 +24,7 @@
     <ProjectReference Include="..\Ark.Reference.Core.API\Ark.Reference.Core.API.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.Application\Ark.Reference.Core.Application.csproj" />
     <ProjectReference Include="..\Ark.Reference.Core.Common\Ark.Reference.Core.Common.csproj" />
+    <ProjectReference Include="..\Ark.Reference.Core.InProcessHost\Ark.Reference.Core.InProcessHost.csproj" />
 	  <ProjectReference Include="..\Ark.Reference.Core.Database\Ark.Reference.Core.Database.sqlproj">
 		  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 		  <OutputItemType>Content</OutputItemType>

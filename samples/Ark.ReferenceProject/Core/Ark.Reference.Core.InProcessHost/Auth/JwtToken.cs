@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 using Ark.Tools.Compliance;
 
-namespace Ark.Reference.Core.Tests.Auth;
+namespace Ark.Reference.Core.InProcessHost.Auth;
 
 public sealed class JwtToken
 {

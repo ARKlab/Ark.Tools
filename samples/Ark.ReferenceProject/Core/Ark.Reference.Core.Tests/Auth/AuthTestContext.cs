@@ -1,10 +1,7 @@
-using Ark.Reference.Common.Auth;
-using Ark.Reference.Core.Common.Auth;
+using Ark.Reference.Core.InProcessHost.Auth;
 using Ark.Tools.Compliance;
 
 using Flurl.Http;
-
-using Microsoft.IdentityModel.Tokens;
 
 using Reqnroll;
 
@@ -16,36 +13,17 @@ public class AuthTestContext
     [InfrastructureSecret]
     public const string AUTH0_APIKEY = "banana";
     [InfrastructureSecret]
-    public string Token => _getToken();
+    public string Token => _auth.Token;
 
     [InfrastructureSecret]
-    public string? ApiKey { get; private set; }
+    public string? ApiKey => _auth.ApiKey;
 
-    private readonly JwtTokenBuilder _builder = new JwtTokenBuilder()
-                            .AddSecurityKey(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(AuthConstants.IntegrationTestsEncryptionKey)))
-                            .AddSubject("TestSubject")
-                            .AddAudience(AuthConstants.IntegrationTestsAudience)
-                            .AddIssuer($"https://{AuthConstants.IntegrationTestsDomain}/")
-                            .AddExpiry(60)
-                            ;
-
-    private readonly string _scopeClaim = AuthConstants.ScopePrefix;
-    private List<string> _scopes = new();
-
-    public AuthTestContext()
-    {
-        SetUserAdmin();
-    }
+    private readonly ApiAuthContext _auth = new();
 
     [Given("User '(.*)'")]
     public void SetUser(string user)
     {
-        _builder.AddSubject(user);
-        _builder.RemoveClaim("user_id");
-        _builder.AddClaim("user_id", user);
-
-        _builder.RemoveClaim("name");
-        _builder.AddClaim("name", user);
+        _auth.SetUser(user);
     }
 
     [Given("User email '(.*)'")]
@@ -53,34 +31,25 @@ public class AuthTestContext
         [PersonalData]
         string userEmail)
     {
-        _builder.RemoveClaim("emails");
-        _builder.AddClaim("emails", userEmail);
+        _auth.SetUserEmail(userEmail);
     }
 
     [Given("Admin User")]
     public void SetUserAdmin()
     {
-        SetUser("Admin");
-        //_scopes = AuthScopes.All.ToList();
-        _scopes.Add(PermissionsConstants.AdminGrant);
+        _auth.SetUserAdmin();
     }
 
 
     [Given("Subject '(.*)'")]
     public void SetSubject(string subject)
     {
-        ApiKey = null;
-
-        _builder.AddSubject(subject);
+        _auth.SetSubject(subject);
     }
 
     public IFlurlRequest SetAuth(IFlurlRequest request)
     {
-        if (ApiKey != null)
-            request.WithHeader("x-api-key", ApiKey);
-        else
-            request.WithOAuthBearerToken(Token);
-        return request;
+        return _auth.SetAuth(request);
     }
 
     [BeforeScenario]
@@ -92,37 +61,26 @@ public class AuthTestContext
     [Given(@"User scopes as")]
     public void GivenUserScopesAs(Table table)
     {
-        _scopes = table.Rows.SelectMany(static x => x.Values).ToList();
+        _auth.SetScopes(table.Rows.SelectMany(static x => x.Values));
     }
     [Given(@"User has no Permissions")]
     public void GivenUserNoScopes()
     {
-        _scopes = new List<string>();
+        _auth.SetScopes([]);
     }
 
     [Given(@"User has scope '(.*)'")]
     public void GivenUserHasScope(string scope)
     {
-        _scopes.Add(scope);
+        _auth.AddScope(scope);
     }
 
     [Given(@"New User with scope '(.*)'")]
     public void GivenNewUserWithScope(string scope)
     {
         GivenUserNoScopes();
-        _scopes.Add(scope);
-        _getToken();
-    }
-
-    private string _getToken()
-    {
-        _builder.RemoveClaim(_scopeClaim);
-
-        foreach (var s in _scopes)
-            _builder.AddClaim(_scopeClaim, s);
-
-        return _builder.Build().Value;
-
+        _auth.AddScope(scope);
+        _ = _auth.Token;
     }
 
 }

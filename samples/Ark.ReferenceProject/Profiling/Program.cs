@@ -3,8 +3,8 @@
 
 using Ark.Reference.Core.Common.Dto;
 using Ark.Reference.Core.Common.Enum;
-using Ark.Reference.Core.Tests.Auth;
-using Ark.Reference.Core.Tests.Init;
+using Ark.Reference.Core.InProcessHost;
+using Ark.Reference.Core.InProcessHost.Auth;
 using Ark.Tools.Compliance;
 using Ark.Tools.Rebus.Tests;
 
@@ -44,7 +44,7 @@ public class ReferenceEndpointBenchmarks
     private static readonly ManualResetEventSlim _iterationCleanupDelay = new();
     private const string _sqlClientSwitchEnvironmentVariable = "ARK_SQLCLIENT_SWITCH";
 
-    private readonly AuthTestContext _auth = new();
+    private readonly ApiAuthContext _auth = new();
     private IFlurlClient? _client;
     private Book.V1.Output[] _books = [];
     private int _bookSequence;
@@ -58,14 +58,14 @@ public class ReferenceEndpointBenchmarks
         Directory.SetCurrentDirectory(AppContext.BaseDirectory);
         _configureSqlClientSwitch();
         _deployDatabase();
-        await DatabaseUtils.CreateNLogDatabaseIfNotExists().ConfigureAwait(false);
+        await TestDatabase.CreateNLogDatabaseIfNotExists().ConfigureAwait(false);
         Environment.SetEnvironmentVariable(
             "ConnectionStrings__Core.Database",
-            $"{DatabaseUtils.DatabaseConnectionString};Initial Catalog=Ark.Reference.Core.Database");
-        TestHost.BeforeTests0();
-        TestHost.BeforeTests();
+            $"{TestDatabase.ConnectionString};Initial Catalog=Ark.Reference.Core.Database");
+        ReferenceTestHost.Initialize();
+        ReferenceTestHost.Start();
 
-        _client = TestHost.Factory.Get(new Uri("https://localhost:5001"));
+        _client = ReferenceTestHost.Factory.Get(new Uri("https://localhost:5001"));
         _books = new Book.V1.Output[_requestsPerBenchmark];
         for (var index = 0; index < _books.Length; index++)
             _books[index] = await _createBook().ConfigureAwait(false);
@@ -168,7 +168,7 @@ public class ReferenceEndpointBenchmarks
         while (timeout.Elapsed < _rebusIdleTimeout)
         {
             _iterationCleanupDelay.Wait(TimeSpan.FromMilliseconds(100));
-            if (TestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
+            if (ReferenceTestHost.Env.RebusNetwork.Count() == 0 && InProcessMessageInspectorStep.Count == 0)
             {
                 consecutiveIdleChecks++;
                 if (consecutiveIdleChecks == 2)
@@ -190,8 +190,8 @@ public class ReferenceEndpointBenchmarks
     public async Task Cleanup()
     {
         _client?.Dispose();
-        await TestHost.Server.StopAsync().ConfigureAwait(false);
-        TestHost.AfterTests();
+        await ReferenceTestHost.Server.StopAsync().ConfigureAwait(false);
+        ReferenceTestHost.Stop();
     }
 
     private static void _configureSqlClientSwitch()
@@ -247,7 +247,7 @@ public class ReferenceEndpointBenchmarks
     {
         var dacpacPath = Path.Join(AppContext.BaseDirectory, "Ark.Reference.Core.Database.dacpac");
         using var dacpac = DacPackage.Load(dacpacPath);
-        var services = new DacServices(DatabaseUtils.DatabaseConnectionString);
+        var services = new DacServices(TestDatabase.ConnectionString);
         services.Deploy(
             dacpac,
             "Ark.Reference.Core.Database",
