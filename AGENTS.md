@@ -56,7 +56,7 @@ links outside `docs/`, and verify that all Markdown links still resolve.
 
 ### Prerequisites
 - .NET SDK 10.0.100 (specified in `global.json`)
-- Docker (for integration tests requiring SQL Server and Azurite)
+- Docker (for integration tests requiring SQL Server, Azurite and the Service Bus emulator)
 
 ### Basic Commands
 ```bash
@@ -85,10 +85,26 @@ dotnet test --filter "TestCategory=sqlstateprovider&DisplayName~Update"
 ```
 
 ### Start Test Dependencies
+The root `docker-compose.yml` starts the same services as CI: SQL Server (`1433`),
+Azurite (`10000`-`10002`) and the Service Bus emulator (`5672`, `5300`).
+Without them, integration tests fail with connection errors, which are not
+regressions.
+
 ```bash
-cd samples/Ark.ReferenceProject
-docker-compose up -d
+# From the repository root
+docker compose up -d
+
+# Wait until the Service Bus emulator accepts connections (it starts after SQL Server)
+timeout 300s bash -c 'until (echo > /dev/tcp/127.0.0.1/5300) 2>/dev/null; do sleep 2; done'
+
+# Stop and remove the containers when done
+docker compose down
 ```
+
+The messaging tests read `ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING` and fall back
+to the local emulator defaults, so no environment variable is needed with this
+compose file. The Azure Functions boundary tests also need Azure Functions Core
+Tools (`npm install --global azure-functions-core-tools@4`).
 
 ## Code Style & Conventions
 

@@ -1,0 +1,42 @@
+# Local test dependencies for the whole repository: the same SQL Server, Azurite and
+# Service Bus emulator services that CI runs (.github/workflows/ci.yml).
+# Start with `docker compose up -d` from the repository root.
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: IntegrationTestsDbPassword85!
+      MSSQL_COLLATION: Latin1_General_CI_AS_KS
+      # Azure Sql is Enterprise - match it
+      MSSQL_PID: EnterpriseDeveloper
+    ports:
+      - "1433:1433"
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    restart: unless-stopped
+    # Temporary workaround: --skipApiVersionCheck is needed until Azurite supports the latest Azure Storage API version
+    # See: https://github.com/Azure/Azurite/issues/2623
+    command: azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
+
+  # Used by the MediatorFramework messaging tests. The emulator stores its state in the db service.
+  servicebus:
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      ACCEPT_EULA: Y
+      SQL_SERVER: db
+      MSSQL_SA_PASSWORD: IntegrationTestsDbPassword85!
+      EMULATOR_HTTP_PORT: 5300
+      SQL_WAIT_INTERVAL: 90
+    ports:
+      - "5672:5672"
+      - "5300:5300"
