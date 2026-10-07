@@ -1461,6 +1461,7 @@ on Task 5's branch; the Task 6 branch is based on this one.
 **Interfaces:**
 - Produces: `public MessagingModeBuilder<TNetwork, TParticipant> MessagingModeBuilder<TNetwork, TParticipant>.UseResourceManagement(IMessagingTransportManagement management)` — throws `InvalidOperationException("A resource management seam is already selected.")` on a second call, like the other `Use*` selectors.
 - Produces: `MessagingParticipantDescriptor.SubscribedTopics : IReadOnlyList<MessagingTopicResource>` — one entry per subscribed event: topic `<publisherIdentity>-<contractName>`, owner = publisher identity (the same name `PublishedTopics` gives the publisher).
+- Produces: `MessagingParticipantDescriptor.KnownNetworkTopics : IReadOnlyList<string>` — every topic of the network (each member's published contracts), so reconciliation still lists a topic this participant stopped subscribing to and deletes its stale subscription, as the Functions generator's `KnownTopics` does.
 - Produces: under `CreateIfMissing`, a fluent Producer or Receiver provisions: identity queue (receivers only), published and subscribed topics, one forwarding subscription per subscribed topic named and forwarded to the participant identity. Subscription names match what Task 4's `InMemoryMessagingHarness.EnsureTopologyAsync` creates, so the harness stays valid.
 
 - [ ] **Step 1: Write the failing tests**
@@ -1549,8 +1550,11 @@ message source) but not `IMessagingTransportManagement`. Replace the
 event (read it from `TestPublisher`'s generated `PublishedTopics`). Stop the
 hosted services in reverse order at the end of each test. Also add one
 generator test (in the existing `MessagingNetworkGenerator` test class) that
-asserts the emitted `CreateDescriptor` passes the subscribed topic, and
-regenerate any snapshot the change moves.
+asserts the emitted `CreateDescriptor` passes the subscribed topic and every
+network topic as `knownNetworkTopics`, and regenerate any snapshot the change
+moves. Add one reconciliation test: the recording management returns, for a
+network topic the receiver does not subscribe to, an existing subscription
+owned by the receiver; after start it was deleted.
 
 Adapt `TestNetwork`/`TestPublisher`/`NonManagingTransport`/`RecordingTransportManagement`
 to the names the test project already uses; create only what does not exist.
@@ -1589,9 +1593,11 @@ In `MessagingModeBuilder<TNetwork, TParticipant>`:
 the 4-argument overload adds the optional `management` parameter and uses
 `management ?? transport as IMessagingTransportManagement`.
 
-`MessagingParticipantDescriptor` gains a last optional ctor parameter
-`IEnumerable<MessagingTopicResource>? subscribedTopics = null` stored like
-`PublishedTopics`. In `MessagingNetworkGenerator`, `CreateDescriptor` emits it
+`MessagingParticipantDescriptor` gains last optional ctor parameters
+`IEnumerable<MessagingTopicResource>? subscribedTopics = null` and
+`IEnumerable<string>? knownNetworkTopics = null`, stored like
+`PublishedTopics`. The generator emits `knownNetworkTopics` from every network
+member's `Publishes` (`<memberIdentity>-<contractName>`, ordinal-sorted). In `MessagingNetworkGenerator`, `CreateDescriptor` emits it
 after the published-topics array: for each `participant.Subscribes` contract
 with exactly one publisher in the network (other cases already report a
 diagnostic), `new MessagingTopicResource("<publisherIdentity>-<contractName>", "<publisherIdentity>")`.
@@ -1616,7 +1622,7 @@ The 4-argument overload builds the manifest from both lists:
                         participant.Identity,
                         maximumDeliveryCount,
                         participant.Identity)),
-                    topics.Select(static topic => topic.Name),
+                    participant.KnownNetworkTopics,
                     participant.Network.ResourceLifecycle)
                 : null;
 ```
