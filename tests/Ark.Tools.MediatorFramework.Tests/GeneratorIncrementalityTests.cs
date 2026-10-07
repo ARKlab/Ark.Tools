@@ -230,6 +230,47 @@ public sealed class GeneratorIncrementalityTests
             additionalTexts: [documentation]);
     }
 
+    [TestMethod]
+    public void MessagingNetworkGeneratorReusesCachedOutputOnUnrelatedEdit()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.print_book")]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [Event(Name = "books.print_completed")]
+            public sealed class PrintCompleted : ICommand<PrintCompleted> { }
+            [Event(Name = "books.lost")]
+            public sealed class BookLost : ICommand<BookLost> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Publishes = new[] { typeof(PrintCompleted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json,
+                Compression = CompressionAlgorithm.Gzip,
+                CompressionMinimumSizeBytes = 1024)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingParticipant(
+                Subscribes = new[] { typeof(PrintCompleted), typeof(BookLost) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class AuditParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant), typeof(AuditParticipant) },
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """;
+
+        _assertReusesCachedOutput(
+            new MessagingNetworkGenerator(),
+            source,
+            source.Replace("CompressionMinimumSizeBytes = 1024", "CompressionMinimumSizeBytes = 2048", StringComparison.Ordinal),
+            [],
+            cachedSteps: ["MessagingNetworkSpecs", "MessagingNetworkOutput"],
+            unchangedSteps: ["MessagingNetworkParser", "MessagingParticipantParser"],
+            expectedOutput: ["sealed partial class BookMessagingNetwork", "CompressionAlgorithm.Gzip", "DispatchAsync", "ARKMSG008"]);
+    }
+
     private static void _assertReusesCachedOutput(
         IIncrementalGenerator generator,
         string source,
