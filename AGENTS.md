@@ -280,6 +280,10 @@ refactor(Core): simplify error handling logic
 - Keep description under 50 characters
 - Use the body to explain why vs. what/how (when necessary)
 
+## Changelog
+
+- Record dependency updates in `CHANGELOG.md` only for major version bumps. Do not add entries for minor or patch dependency bumps, including those in published packages.
+
 ## Common Patterns
 
 ### NLog Configuration
