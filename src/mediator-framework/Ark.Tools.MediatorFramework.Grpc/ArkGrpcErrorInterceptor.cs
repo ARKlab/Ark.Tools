@@ -28,6 +28,7 @@ namespace Ark.Tools.MediatorFramework.Grpc;
 public sealed class ArkGrpcErrorInterceptor : Interceptor
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, PropertyInfo[]> _extensionProperties = new();
     private readonly bool _includeExceptionDetails;
 
     /// <summary>Initializes the gRPC error interceptor.</summary>
@@ -221,7 +222,22 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
         Justification = "Business-rule violation properties are part of the preserved client-visible contract.")]
     private static Dictionary<string, string> _getExtensions(BusinessRuleViolation violation)
     {
-        var properties = violation.GetType()
+        // Property discovery is per type; only the values are read per violation.
+        var properties = _extensionProperties.GetOrAdd(violation.GetType(), _discoverExtensionProperties);
+
+        return properties.ToDictionary(
+            static property => property.Name,
+            property => JsonSerializer.Serialize(property.GetValue(violation), property.PropertyType, ArkSerializerOptions.JsonOptions),
+            StringComparer.Ordinal);
+    }
+
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2070",
+        Justification = "Business-rule violation properties are part of the preserved client-visible contract.")]
+    private static PropertyInfo[] _discoverExtensionProperties(System.Type violationType)
+    {
+        return violationType
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(static property => property.GetMethod is not null
                 && !property.GetMethod.IsStatic
@@ -233,12 +249,8 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
             .Select(static group => group
                 .OrderByDescending(static property => _getInheritanceDepth(property.DeclaringType))
                 .First())
-            .OrderBy(static property => property.Name, StringComparer.Ordinal);
-
-        return properties.ToDictionary(
-            static property => property.Name,
-            property => JsonSerializer.Serialize(property.GetValue(violation), property.PropertyType, ArkSerializerOptions.JsonOptions),
-            StringComparer.Ordinal);
+            .OrderBy(static property => property.Name, StringComparer.Ordinal)
+            .ToArray();
     }
 
     private static int _getInheritanceDepth(System.Type? type)

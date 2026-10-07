@@ -62,8 +62,7 @@ public abstract class JsonPolymorphicConverter<TBase, TDiscriminatorEnum> : Json
             throw new JsonException();
         }
 
-        var jsonObject = jsonDocument.RootElement.GetRawText();
-        var result = (TBase?)JsonSerializer.Deserialize(jsonObject, type, options);
+        var result = (TBase?)JsonSerializer.Deserialize(jsonDocument.RootElement, type, options);
 
         return result;
     }

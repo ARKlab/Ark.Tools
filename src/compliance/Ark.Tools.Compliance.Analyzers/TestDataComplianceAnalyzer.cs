@@ -77,13 +77,14 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
             var isTestProject = _isTestProject(start.Compilation, start.Options.AnalyzerConfigOptionsProvider.GlobalOptions);
             start.RegisterOperationAction(operationContext =>
             {
-                if (!isTestProject && !_isTestPath(operationContext.Operation.Syntax.SyntaxTree.FilePath))
+                // Compiler-synthesized literals (caller-info and omitted default arguments) are not authored test data.
+                // Checked before the path test, which allocates and would run for every literal.
+                if (operationContext.Operation is not ILiteralOperation { IsImplicit: false, ConstantValue: { HasValue: true, Value: string value } } literal)
                 {
                     return;
                 }
 
-                // Compiler-synthesized literals (caller-info and omitted default arguments) are not authored test data.
-                if (operationContext.Operation is not ILiteralOperation { IsImplicit: false, ConstantValue: { HasValue: true, Value: string value } } literal)
+                if (!isTestProject && !_isTestPath(operationContext.Operation.Syntax.SyntaxTree.FilePath))
                 {
                     return;
                 }

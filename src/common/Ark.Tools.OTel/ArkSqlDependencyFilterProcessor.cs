@@ -16,7 +16,7 @@ namespace Ark.Tools.OTel;
 /// </summary>
 public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
 {
-    private readonly string? _dataSource;
+    private readonly string? _configuredServer;
     private readonly string? _database;
     private readonly bool _enabled;
 
@@ -38,9 +38,10 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
                 {
                     ConnectionString = sqlConnectionString,
                 };
-                _dataSource = _read(builder, "Data Source", "DataSource", "Server", "Address", "Addr", "Network Address");
+                var dataSource = _read(builder, "Data Source", "DataSource", "Server", "Address", "Addr", "Network Address");
                 _database = _read(builder, "Initial Catalog", "InitialCatalog", "Database");
-                _enabled = !string.IsNullOrWhiteSpace(_dataSource) &&
+                _configuredServer = dataSource?.Split(',', 2)[0].Trim();
+                _enabled = !string.IsNullOrWhiteSpace(dataSource) &&
                            !string.IsNullOrWhiteSpace(_database);
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -80,7 +81,7 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
                     ?? data.GetTagItem("net.peer.name") as string
                     ?? data.GetTagItem("peer.service") as string;
 
-        var configuredServer = _dataSource!.Split(',', 2)[0].Trim();
+        var configuredServer = _configuredServer!;
         if (peerName != null &&
             (peerName.Equals(configuredServer, StringComparison.OrdinalIgnoreCase) ||
              peerName.Contains(configuredServer, StringComparison.OrdinalIgnoreCase)))

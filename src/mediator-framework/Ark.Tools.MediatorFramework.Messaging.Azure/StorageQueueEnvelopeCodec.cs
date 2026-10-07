@@ -169,6 +169,9 @@ public static class StorageQueueEnvelopeCodec
             new ReadOnlySequence<byte>(canonical[offset..]));
     }
 
+    // Stateless and thread-safe: shared by every decoded header.
+    private static readonly UTF8Encoding _strictUtf8 = new(false, true);
+
     private static string _readUtf8(ReadOnlySpan<byte> source, ref int offset)
     {
         var length = _readVarInt(source, ref offset);
@@ -177,7 +180,7 @@ public static class StorageQueueEnvelopeCodec
 
         try
         {
-            var value = new UTF8Encoding(false, true).GetString(source.Slice(offset, length));
+            var value = _strictUtf8.GetString(source.Slice(offset, length));
             offset += length;
             return value;
         }

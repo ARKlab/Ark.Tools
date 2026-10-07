@@ -137,9 +137,14 @@ public sealed class ArkAdaptiveSampler : Sampler
         if (!_options.EnablePerOperationBucketing)
             return _buckets.GetOrAdd("__global__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
 
+        // Look up first: ConcurrentDictionary.Count takes every internal lock, so keep it off the common path.
+        if (_buckets.TryGetValue(operationName, out var existing))
+            return existing;
+
         // If we've reached the bucket limit, use the global bucket for overflow.
-        if (_buckets.Count >= _options.MaxOperationBuckets && !_buckets.ContainsKey(operationName))
-            return _buckets.GetOrAdd("__overflow__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
+        // Look up again first: another thread may have added this operation's bucket meanwhile.
+        if (_buckets.Count >= _options.MaxOperationBuckets)
+            return _buckets.TryGetValue(operationName, out existing) ? existing : _buckets.GetOrAdd("__overflow__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
 
         return _buckets.GetOrAdd(operationName, static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
     }

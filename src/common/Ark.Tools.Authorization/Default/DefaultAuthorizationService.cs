@@ -138,12 +138,15 @@ public class DefaultAuthorizationService : IAuthorizationService
 
         if (authorized)
         {
-            _logger.UserAuthorizationSucceeded(_getUserNameForLogging(user), policy.Name);
+            // Both messages are Trace-level; skip the claim lookups when Trace is off.
+            if (_logger.IsTraceEnabled)
+                _logger.UserAuthorizationSucceeded(_getUserNameForLogging(user), policy.Name);
             return (authorized, messages);
         }
         else
         {
-            _logger.UserAuthorizationFailed(_getUserNameForLogging(user), policy.Name, authContext.PendingRequirements);
+            if (_logger.IsTraceEnabled)
+                _logger.UserAuthorizationFailed(_getUserNameForLogging(user), policy.Name, authContext.PendingRequirements);
             return (authorized, messages);
         }
     }

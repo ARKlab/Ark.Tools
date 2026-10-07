@@ -2,6 +2,11 @@
 
 ## Test execution
 
+Integration tests need SQL Server, Azurite and the Service Bus emulator. Start
+them with `docker compose up -d` from the repository root; the root
+[`docker-compose.yml`](docker-compose.yml) runs the same services as CI. Stop them
+with `docker compose down`.
+
 The repository uses the native Microsoft.Testing.Platform runner selected in
 `global.json`. Non-Reqnroll test projects reference `MSTest.SourceGeneration`
 centrally and use `MSTestSourceGenMode=ReflectionFree`. Projects referencing
@@ -24,8 +29,10 @@ Inspect generated metadata with `-p:EmitCompilerGeneratedFiles=true` on the buil
 For an explicitly requested complete-run performance comparison:
 
 1. Start the same SQL Server, Azurite and Service Bus services used by
-   [the publish workflow](.github/workflows/publish_nuget.yml), and install Azure
-   Functions Core Tools for the boundary tests.
+   [the publish workflow](.github/workflows/publish_nuget.yml) with
+   `docker compose up -d` from the repository root (see
+   [`docker-compose.yml`](docker-compose.yml)), and install Azure Functions Core
+   Tools for the boundary tests.
 2. Measure restore/build separately from `dotnet test --solution Ark.Tools.slnx
    --no-build --no-progress --max-parallel-test-modules 3 --report-trx`.
    Use a separate `--results-directory` for each run and capture build binlogs

@@ -151,7 +151,7 @@ public static class Extensions
     [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use JsonSerializer.Deserialize with JsonTypeInfo<T> for trim-safe deserialization.")]
     public static T? ToObject<T>(this JsonElement element, JsonSerializerOptions? jsonSerializerOptions = null)
     {
-        return element.GetRawText().Deserialize<T>(jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        return JsonSerializer.Deserialize<T>(element, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
     public static T? ToObject<T>(this JsonElement element, JsonTypeInfo<T> jsonTypeInfo)
@@ -167,7 +167,7 @@ public static class Extensions
     [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed. Use JsonSerializer.Deserialize with JsonTypeInfo<T> for trim-safe deserialization.")]
     public static T? ToObject<T>(this JsonDocument document, JsonSerializerOptions? jsonSerializerOptions = null)
     {
-        return document.RootElement.GetRawText().Deserialize<T>(jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
+        return JsonSerializer.Deserialize<T>(document, jsonSerializerOptions ?? ArkSerializerOptions.JsonOptions);
     }
 
     public static T? ToObject<T>(this JsonDocument document, JsonTypeInfo<T> jsonTypeInfo)

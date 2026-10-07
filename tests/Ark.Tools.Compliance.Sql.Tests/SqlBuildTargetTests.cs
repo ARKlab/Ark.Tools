@@ -62,6 +62,61 @@ public sealed class SqlBuildTargetTests
         result.Log.Should().Contain("Invalid or duplicate ArkComplianceSqlToken");
     }
 
+    /// <summary>
+    /// The standalone entry point returns the generated scripts as full paths, so a database project
+    /// can collect them without passing global properties.
+    /// </summary>
+    [TestMethod]
+    public async Task StandaloneTargetReturnsGeneratedScriptsAsFullPaths()
+    {
+        var directory = Path.Join(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));
+        var generatorDirectory = Path.Join(directory, "generated", "Ark.Tools.Compliance.Generators",
+            "Ark.Tools.Compliance.Generators.SqlPolicyGenerator");
+        Directory.CreateDirectory(generatorDirectory);
+        try
+        {
+            await File.WriteAllTextAsync(Path.Join(generatorDirectory, "ArkComplianceSql.manifest.g.cs"),
+                "// ArkComplianceSqlTemplate:" + _fileName + ":"
+                + Convert.ToBase64String(Encoding.UTF8.GetBytes("ALTER TABLE [dbo].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');"))
+                + "\n").ConfigureAwait(false);
+            // The caller mirrors a database project: no Properties on the MSBuild call, outputs read from TargetOutputs.
+            var project = new XDocument(new XElement("Project",
+                new XElement("PropertyGroup",
+                    new XElement("TargetFramework", "net10.0"),
+                    new XElement("EnableArkToolsCompliance", "true"),
+                    new XElement("IntermediateOutputPath", "obj/"),
+                    new XElement("CompilerGeneratedFilesOutputPath", "generated")),
+                new XElement("Import", new XAttribute("Project",
+                    Path.Join(AppContext.BaseDirectory, "Fixtures", "Ark.Tools.Compliance.Sql.targets"))),
+                new XElement("Target", new XAttribute("Name", "Compile")),
+                new XElement("Target", new XAttribute("Name", "Collect"),
+                    new XElement("MSBuild",
+                        new XAttribute("Projects", "$(MSBuildProjectFullPath)"),
+                        new XAttribute("Targets", "ArkGenerateComplianceSqlStandalone"),
+                        new XElement("Output", new XAttribute("TaskParameter", "TargetOutputs"),
+                            new XAttribute("ItemName", "_Policy"))),
+                    new XElement("WriteLinesToFile",
+                        new XAttribute("File", "outputs.txt"),
+                        new XAttribute("Lines", "@(_Policy)"),
+                        new XAttribute("Overwrite", "true")))));
+            var projectPath = Path.Join(directory, "database.proj");
+            project.Save(projectPath);
+
+            var (exitCode, log) = await _runMsBuildAsync(directory, projectPath, "-t:Collect").ConfigureAwait(false);
+
+            exitCode.Should().Be(0, log);
+            var outputs = await File.ReadAllLinesAsync(Path.Join(directory, "outputs.txt")).ConfigureAwait(false);
+            outputs.Should().ContainSingle();
+            Path.IsPathFullyQualified(outputs[0]).Should().BeTrue(outputs[0]);
+            Path.GetFileName(outputs[0]).Should().Be(_fileName);
+            (await File.ReadAllTextAsync(outputs[0]).ConfigureAwait(false)).Should().Contain("ADD MASKED WITH (FUNCTION = 'email()')");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static async Task<(int ExitCode, string Log, string Sql)> _runAsync(string template, (string Name, string Value)[] tokens)
     {
         var directory = Path.Join(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));
@@ -82,34 +137,36 @@ public sealed class SqlBuildTargetTests
                         .Replace("$", "%24", StringComparison.Ordinal))))));
             var projectPath = Path.Join(directory, "tokens.proj");
             project.Save(projectPath);
-            var start = new ProcessStartInfo("dotnet")
-            {
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                WorkingDirectory = directory,
-            };
-            start.Environment["TMPDIR"] = directory;
-            foreach (var argument in new[]
-                     {
-                         "msbuild", projectPath, "-t:Render", "-nologo", "-verbosity:quiet",
-                         "-p:TemplateFile=" + manifest, "-p:SqlOutputDirectory=" + directory,
-                     })
-            {
-                start.ArgumentList.Add(argument);
-            }
-            using var process = Process.Start(start)!;
-            var output = process.StandardOutput.ReadToEndAsync();
-            var error = process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync().ConfigureAwait(false);
-            var log = await output.ConfigureAwait(false) + await error.ConfigureAwait(false);
+            var (exitCode, log) = await _runMsBuildAsync(directory, projectPath, "-t:Render",
+                "-p:TemplateFile=" + manifest, "-p:SqlOutputDirectory=" + directory).ConfigureAwait(false);
             var path = Path.Join(directory, Path.GetFileName(_fileName));
             var sql = File.Exists(path) ? await File.ReadAllTextAsync(path).ConfigureAwait(false) : string.Empty;
-            return (process.ExitCode, log, sql);
+            return (exitCode, log, sql);
         }
         finally
         {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    private static async Task<(int ExitCode, string Log)> _runMsBuildAsync(string directory, string projectPath, params string[] arguments)
+    {
+        var start = new ProcessStartInfo("dotnet")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            WorkingDirectory = directory,
+        };
+        start.Environment["TMPDIR"] = directory;
+        foreach (var argument in new[] { "msbuild", projectPath, "-nologo", "-verbosity:quiet" }.Concat(arguments))
+        {
+            start.ArgumentList.Add(argument);
+        }
+        using var process = Process.Start(start)!;
+        var output = process.StandardOutput.ReadToEndAsync();
+        var error = process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync().ConfigureAwait(false);
+        return (process.ExitCode, await output.ConfigureAwait(false) + await error.ConfigureAwait(false));
     }
 }

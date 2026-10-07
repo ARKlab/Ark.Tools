@@ -32,9 +32,8 @@ public static class ArkSqlQueryLabel
         var lineStart = 0;
         while (lineStart < queryText.Length)
         {
-            var lineEnd = queryText.IndexOfAny(['\r', '\n'], lineStart);
-            if (lineEnd < 0)
-                lineEnd = queryText.Length;
+            var lineEnd = queryText.AsSpan(lineStart).IndexOfAny('\r', '\n');
+            lineEnd = lineEnd < 0 ? queryText.Length : lineStart + lineEnd;
 
             var line = queryText.AsSpan(lineStart, lineEnd - lineStart);
             var commentStart = _findCommentStart(line);

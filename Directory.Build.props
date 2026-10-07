@@ -19,6 +19,8 @@
 	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == '' and '$(TargetFramework)' == '' and $([System.String]::Copy('$(TargetFrameworks)').Contains('net10'))">true</EnableArkToolsCompliance>
 	<EnableArkToolsCompliance Condition="'$(EnableArkToolsCompliance)' == '' and '$(TargetFramework)' == '' and !$([System.String]::Copy('$(TargetFrameworks)').Contains('net10'))">false</EnableArkToolsCompliance>
 	<TreatWarningsAsErrors Condition="'$(TreatWarningsAsErrors)' == ''">true</TreatWarningsAsErrors>
+	<!-- CopyToOutputDirectory=Always items (appsettings, reqnroll, testconfig) copy only when they differ, so no-op builds stay no-op. -->
+	<SkipUnchangedFilesOnCopyAlways Condition="'$(SkipUnchangedFilesOnCopyAlways)' == ''">true</SkipUnchangedFilesOnCopyAlways>
 	<MSBuildTreatWarningsAsErrors Condition="'$(MSBuildTreatWarningsAsErrors)' == ''">true</MSBuildTreatWarningsAsErrors>
   </PropertyGroup>
 
