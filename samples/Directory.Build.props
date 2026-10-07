@@ -5,6 +5,8 @@
     <!-- Samples dogfood the compliance analyzers even while the SDK default is opt-out. -->
     <EnableArkToolsCompliance>true</EnableArkToolsCompliance>
     <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
+    <!-- CopyToOutputDirectory=Always items copy only when they differ, so no-op builds stay no-op. -->
+    <SkipUnchangedFilesOnCopyAlways Condition="'$(SkipUnchangedFilesOnCopyAlways)' == ''">true</SkipUnchangedFilesOnCopyAlways>
   </PropertyGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)../src/sdk/Ark.Tools.Sdk/Sdk/Sdk.props" />
