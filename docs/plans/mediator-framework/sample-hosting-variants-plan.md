@@ -561,48 +561,79 @@ real processes would. Remove the moved scenarios from the old test project.
 - Create: `C/…Core.Tests/Hooks/ParticipantProcess.cs`
 - Create: `C/…Core.Tests/Hooks/BackgroundMessagingContext.cs` (replaces `RebusScenarioContext`)
 - Create: `C/…Core.Tests/Steps/BackgroundMessagingSteps.cs` (replaces `RebusSteps`)
-- Create: `C/…Core.Application/Messages/ProcessBookReviewRequest.cs`, `C/…Core.Application/Handlers/Book/ProcessBookReviewRequestHandler.cs` (Step 0)
-- Modify: `C/…Core.Application/Messages/MessagingDeclarations.cs`, `C/…Core.Application/Host/ApplicationComposition.cs`, `C/…Core.Application/JsonContext/ApplicationJsonSerializerContext.cs` (Step 0)
+- Modify (Step 0, framework): `src/mediator-framework/Ark.Tools.MediatorFramework.Generators/MessagingNetworkGenerator.cs`, `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/{MessagingParticipantDescriptor,MessagingDispatcher,IMessagingPipelineProcessor,FluentMessagingComposition}.cs`, `src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions/MessagingFunctionsServiceCollectionExtensions.cs` and the generated-trigger emitter if it calls the dispatch delegate, `AnalyzerReleases.Unshipped.md`, the analyzer rule docs under `docs/mediator-framework/`, `CHANGELOG.md`, API surface and generator snapshots the change moves
+- Test (Step 0): `tests/Ark.Tools.MediatorFramework.Tests/` (generator compile test + runtime dispatch test)
 - Delete from old project: `Hooks/ProcessWideApplicationTestFixture.cs`, `ProcessWideApplicationFixtureTests.cs` (the process-wide pattern is not carried forward), `Steps/RebusSteps.cs`, `Hooks/RebusScenarioContext.cs` (Rebus behavior moves to WebRebus tests in Task 6)
 - Modify: `S/Ark.MediatorFramework.Sample.slnx`, `Ark.Tools.slnx`
 
 **Interfaces:**
 - Consumes: Task 1 `GetPendingCount`; Task 3 `ApplicationOptions`, `Register`, `RegisterNotificationSubscriber`, `RegisterAuditSubscriber`.
-- Produces: `ProcessBookReviewRequest : ICommand<ProcessBookReviewRequest>` (`CreateBookReviewRequest.V1 Review`), the message every host variant sends for a background review.
+- Produces: native messaging dispatches `IRequest<TSelf, TResponse>` contracts listed in `Processes` (response discarded); `CreateBookReviewRequest.V1` is sent as-is by every host variant.
 - Produces (test-only, used by later tasks as reference): `ParticipantProcess` (container + `ServiceProvider` + started `IHostedService`s for one participant), `InMemoryMessagingHarness.EnsureTopologyAsync(InMemoryMessagingTransport)`.
 
-- [ ] **Step 0: Background review as a command**
+- [ ] **Step 0: Framework — requests as messages**
 
-Native messaging binds only `ICommand<TSelf>` contracts listed in `Processes`
-(`MessagingNetworkGenerator` filters with `_implementsCommand`). Today
-`CreateBookReviewRequest.V1` (an `IRequest<V1, BookReview>`) is listed there,
-gets no dispatch case, and dead-letters as `UnknownContractName`. Wrap it in a
-command, following `ProcessBookPrintProcessRequest`:
+Ruling (user): a request is a valid *message* (sent to one processor); it is
+not a valid *event*. Native messaging must honour that. Today the generator
+breaks it in three ways, all fixed here in `Ark.Tools.MediatorFramework`, with
+the Application unchanged (`SampleMessagingParticipant.Processes` keeps
+`CreateBookReviewRequest.V1`):
 
-```csharp
-/// <summary>Creates a book review in the background.</summary>
-[Message(Name = "books_process_book_review")]
-public sealed record ProcessBookReviewRequest : ICommand<ProcessBookReviewRequest>
-{
-    /// <summary>Gets the review request to execute.</summary>
-    public required CreateBookReviewRequest.V1 Review { get; init; }
-}
-```
+1. `MessagingNetworkGenerator` emits dispatch cases only for `ICommand<TSelf>`
+   (`.Where(contract => !canEmitBinder || _implementsCommand(...))`); a request
+   in `Processes` gets no case and dead-letters as `UnknownContractName`.
+2. Case bodies have no braces, so a participant processing two or more
+   contracts redeclares `message`/`failed` in one switch scope (CS0128).
+3. Nothing reports a `Processes`/`Subscribes` contract the binder cannot
+   dispatch, and ARKMSG018 accepts `IRequest` for `[Event]` contracts.
 
-`ProcessBookReviewRequestHandler : ICommandHandler<ProcessBookReviewRequest>`
-executes `command.Review` through the decorated
-`IRequestHandler<CreateBookReviewRequest.V1, BookReview>` (or the request
-processor, whichever the print handler's pattern uses), so authorization and
-validation decorators still run. Register it next to the print handler in
-`ApplicationComposition`, add the record to `ApplicationJsonSerializerContext`,
-and replace `typeof(CreateBookReviewRequest.V1)` with
-`typeof(ProcessBookReviewRequest)` in `SampleMessagingParticipant.Processes`.
-No `[RebusMessage]` (Task 7 removes that path). Leave
-`CreateBookReviewRequest.V1`'s own attributes alone; the old Rebus tests use
-them until Task 7.
+Changes:
 
-Commit separately:
-`feat(samples): process background book reviews as a command`.
+- Dispatch seam carries both processors. Add `IRequestProcessor` next to
+  `ICommandProcessor` in `MessagingDispatch`, `MessagingFailedDispatch`,
+  `MessagingDispatcher`'s delegate fields, and the
+  `IMessagingPipelineProcessor.ProcessIncomingAsync` terminal
+  (`Func<ICommandProcessor, IRequestProcessor, CancellationToken, Task>`); the
+  service-provider pipeline resolves both from the scope. Update every caller
+  (fluent receiver, Functions composition and generated triggers, tests). The
+  framework is unreleased; record the signature change in the changelog.
+- Generator, `DispatchAsync`: a `Processes` contract implementing
+  `IRequest<TSelf, TResponse>` emits
+  `await requestProcessor.ExecuteAsync<T, TResponse>(message, ctk).ConfigureAwait(false);`
+  and discards the response. Commands are unchanged.
+- `DispatchFailedAsync` and second-level retries: unchanged shape —
+  `MessagingFailed<T>` is a command for any `T`, so requests use the command
+  processor there.
+- `HandlerServiceTypes`: emit `IRequestHandler<T, TResponse>` for requests
+  (keep `ICommandHandler<MessagingFailed<T>>` when second-level retries are on).
+- Wrap every emitted `case` body in braces.
+- Diagnostics: a request in `Subscribes` or `Publishes`, or an `[Event]`
+  contract implementing `IRequest`, is an error (tighten ARKMSG018 to
+  `ICommand<TSelf>` only; if ARKMSG018 is listed in
+  `AnalyzerReleases.Shipped.md`, add a new rule id instead of changing it).
+  A `Processes` contract that is neither command nor request is an error with
+  a new rule id. Register new ids in `AnalyzerReleases.Unshipped.md` and the
+  analyzer rule docs.
+- Investigate the CS1061 the implementer saw (`ConfigureAwait` on
+  `MessagingStreamPayloadReader` in the stream binder): fix it if it is real,
+  otherwise make the compile test reference what the binder needs.
+
+Tests (write first, see them fail):
+- Generator compile test, following `GeneratorSnapshotTests._runGeneratorDriver`
+  + `RunGeneratorsAndUpdateCompilation`: a participant with
+  `Processes = { SomeCommand, SomeRequest }` and second-level retries compiles
+  with no errors, and `DispatchAsync` contains a request-processor call.
+- Generator diagnostics tests: request in `Subscribes`; request `[Event]`;
+  non-command/non-request in `Processes`.
+- Runtime test on `InMemoryMessagingTransport`: a receiver whose participant
+  processes a request runs its `IRequestHandler` once and settles the message.
+
+CHANGELOG (`## [Unreleased]`): `Added` — native messaging processes request
+contracts sent as messages; `Fixed` — participants processing several
+contracts now compile, and undispatchable contracts are reported at build time.
+
+Commit separately before the sample work:
+`feat(MediatorFramework): dispatch requests sent as messages`.
 
 - [ ] **Step 1: Project file**
 
@@ -999,9 +1030,8 @@ over `Queues`.
 `Steps/BackgroundMessagingSteps.cs` keeps the step texts from `RebusSteps`:
 
 - `[When("I dispatch a book review for the current book through the background bus with")]`
-  builds `new ProcessBookReviewRequest { Review = request }` from the table's
-  `CreateBookReviewRequest.V1` and sends it through the api process bus:
-  `await application.SendAsync(message)` → implement as
+  sends through the api process bus:
+  `await application.SendAsync(request)` → implement as
   `await _api.Services.GetRequiredService<IBus>().Send(request, cancellationToken: ctk)`
   exposed from `ApplicationTestContext.SendAsync<T>(T message, CancellationToken ctk)`.
 - `[Then("the error queue contains the failed message")]` waits with
@@ -1022,7 +1052,7 @@ If `Reject an unauthorized book review through the background bus` does not
 reach a dead letter, inspect `SampleMessagingRetryPolicy`
 (`SecondLevelRetriesEnabled = true`) and the generated
 `SampleMessagingParticipant.DispatchFailedAsync`: an unhandled
-`MessagingFailed<ProcessBookReviewRequest>` must dead-letter. Fix the test
+`MessagingFailed<CreateBookReviewRequest.V1>` must dead-letter. Fix the test
 harness, not the policy. The scenario must fail for the authorization reason:
 assert the dead letter's reason/description is not `UnknownContractName`.
 
@@ -1145,7 +1175,7 @@ public sealed partial class SampleMessagingApiParticipant;
 /// <summary>Declares the print worker: processes background work and publishes completed prints.</summary>
 [MessagingParticipant(
     Identity = "ark-mediator-sample",
-    Processes = new[] { typeof(ProcessBookPrintProcessRequest), typeof(ProcessBookReviewRequest) },
+    Processes = new[] { typeof(ProcessBookPrintProcessRequest), typeof(CreateBookReviewRequest.V1) },
     Publishes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,
@@ -2062,10 +2092,7 @@ public sealed class RebusTopologyTests
             .ConfigureAwait(false);
 
         api.SetScopes(ApplicationScopes.BookRead, ApplicationScopes.BookWrite);
-        await api.SendAsync(new ProcessBookReviewRequest
-            {
-                Review = new CreateBookReviewRequest.V1 { BookId = book.Id, Rating = 5, Text = "Good" },
-            })
+        await api.SendAsync(new CreateBookReviewRequest.V1 { BookId = book.Id, Rating = 5, Text = "Good" })
             .ConfigureAwait(false);
 
         await WebRebusTestHosts.WaitUntilAsync(() => network.GetCount("error") > 0).ConfigureAwait(false);

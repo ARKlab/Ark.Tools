@@ -123,7 +123,7 @@ composition requires exactly one Producer or Receiver.
 
 | Participant | Role | `Web` | `WebRebus` | `Functions` |
 | --- | --- | --- | --- | --- |
-| Api | Sends `ProcessBookPrintProcessRequest` and `ProcessBookReviewRequest` | `Web.WebInterface` (producer) | `WebRebus.WebInterface` (one-way client) | `Functions.Api` (producer) |
+| Api | Sends `ProcessBookPrintProcessRequest` and `CreateBookReviewRequest` | `Web.WebInterface` (producer) | `WebRebus.WebInterface` (one-way client) | `Functions.Api` (producer) |
 | Print worker (`ark-mediator-sample`) | Processes the sent messages; publishes `BookPrintCompleted` | `Web.Processor` | `WebRebus.Processor` | `Functions.Processor` |
 | Notification subscriber | Records the notification through `IBookPrintNotificationSink` | `Web.NotificationProcessor` | `WebRebus.NotificationProcessor` | `Functions.Notifications` |
 | Audit subscriber | Records the print audit effect | `Web.AuditProcessor` | `WebRebus.AuditProcessor` | `Functions.Audit` |
@@ -309,6 +309,13 @@ Every step builds the root solution and passes the affected tests.
   `UseResourceManagement(IMessagingTransportManagement)`, so the Web variant's
   print worker can provision its published topic on Service Bus
   (`ServiceBusTransportManagement`), as Azure Functions composition already can.
+  Fluent receivers also provision their identity queue and forwarding
+  subscriptions.
+- **Framework change.** Native messaging dispatches request contracts
+  (`IRequest<TSelf, TResponse>`) listed in `Processes`, discarding the response,
+  so `CreateBookReviewRequest` travels as a message on every variant. A request
+  is a message, never an event: the generator rejects requests in `Publishes`,
+  `Subscribes`, or `[Event]` contracts.
 - **Framework change.** `InMemoryMessagingTransport.GetPendingCount` is added
   so host-neutral tests can wait for in-memory work to drain without
   `InternalsVisibleTo`.
