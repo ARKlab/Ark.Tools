@@ -86,6 +86,9 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 {
                     start.RegisterOperationAction(operationContext =>
                     {
+                        // The flag only ever goes from 0 to 1; once set, the type walk below is wasted work.
+                        if (Volatile.Read(ref hasServiceCollectionSetup) != 0)
+                            return;
                         operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var creation = (Microsoft.CodeAnalysis.Operations.IObjectCreationOperation)operationContext.Operation;
                         if (_isServiceCollection(creation.Type, serviceCollectionType, operationContext.CancellationToken))
@@ -95,6 +98,8 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                     }, Microsoft.CodeAnalysis.OperationKind.ObjectCreation);
                     start.RegisterOperationAction(operationContext =>
                     {
+                        if (Volatile.Read(ref hasServiceCollectionSetup) != 0)
+                            return;
                         operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var property = (Microsoft.CodeAnalysis.Operations.IPropertyReferenceOperation)operationContext.Operation;
                         if (_isServiceCollection(property.Type, serviceCollectionType, operationContext.CancellationToken))
@@ -104,6 +109,8 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                     }, Microsoft.CodeAnalysis.OperationKind.PropertyReference);
                     start.RegisterOperationAction(operationContext =>
                     {
+                        if (Volatile.Read(ref hasServiceCollectionSetup) != 0)
+                            return;
                         operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var parameter = (Microsoft.CodeAnalysis.Operations.IParameterReferenceOperation)operationContext.Operation;
                         if (_isServiceCollection(parameter.Type, serviceCollectionType, operationContext.CancellationToken))

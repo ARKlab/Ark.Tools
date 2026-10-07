@@ -145,7 +145,8 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
     {
         var method = invocation.TargetMethod;
         var rule = sinks._getRule(method);
-        if (_isExceptionData(invocation.Instance, context, 0) && method.Name is "Add" or "set_Item")
+        // Name check first: the data-flow walk is far more expensive and only matters for these two.
+        if (method.Name is "Add" or "set_Item" && _isExceptionData(invocation.Instance, context, 0))
         {
             rule = "ARKPII003";
         }
