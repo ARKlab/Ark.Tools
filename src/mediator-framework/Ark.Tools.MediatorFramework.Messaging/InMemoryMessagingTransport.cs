@@ -280,6 +280,21 @@ public sealed class InMemoryMessagingTransport :
         }
     }
 
+    /// <summary>Gets the number of deliveries that are not yet settled for a queue.</summary>
+    /// <remarks>Counts visible, scheduled, and locked deliveries. Dead letters are excluded.</remarks>
+    /// <param name="queue">The queue name.</param>
+    /// <returns>The pending delivery count, or zero when the queue does not exist.</returns>
+    public int GetPendingCount(string queue)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(queue);
+        lock (_gate)
+        {
+            return _queues.TryGetValue(queue, out var target)
+                ? target._visible.Count + target._scheduled.Count + target._locked.Count
+                : 0;
+        }
+    }
+
     /// <inheritdoc />
     public async Task EnsureQueueAsync(
         string queue,

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Warning `ARKMSG029` for a `[Message]` or `[Event]` contract with no explicit name whose type name is only a version, such as a nested `V1`, because its default logical name (`ark.v1`) is meaningless on the wire and collides with other such contracts (`ARKMSG020`). Set `Name` on the attribute; the default naming rule is unchanged.
 - `ArkAdaptiveSampler` has a constructor that accepts a `TimeProvider`, so tests can control sampling time.
 - `ArkGenerateComplianceSqlStandalone` returns the generated `policy-*.compliance.sql` files, so database projects can collect them without passing global properties. See the updated database project example in the SQL policies guide.
+- `InMemoryMessagingTransport.GetPendingCount` reports unsettled deliveries per queue, so tests can wait for in-memory messaging to drain.
 
 ### Changed
 
