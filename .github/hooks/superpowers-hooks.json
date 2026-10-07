@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "sessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\".github/hooks/scripts/superpowers/hooks/run-hook.cmd\" session-start",
+            "shell": "bash",
+            "async": false
+          }
+        ]
+      }
+    ]
+  },
+  "version": 1
+}

@@ -9,8 +9,14 @@ on:
       - agents-plugins/**
       - .claude-plugin/marketplace.json
       - .gitignore
+      - .claude/**
+      - .agents/**
+      - .github/agents/**
+      - .github/hooks/**
+      - .github/mcp.json
+      - .github/lsp.json
+      - .mcp.json
       - .github/workflows/apm.yml
-      - .github/workflows/copilot-setup-steps.yml
   pull_request:
     paths:
       - apm.yml
@@ -18,8 +24,14 @@ on:
       - agents-plugins/**
       - .claude-plugin/marketplace.json
       - .gitignore
+      - .claude/**
+      - .agents/**
+      - .github/agents/**
+      - .github/hooks/**
+      - .github/mcp.json
+      - .github/lsp.json
+      - .mcp.json
       - .github/workflows/apm.yml
-      - .github/workflows/copilot-setup-steps.yml
   workflow_dispatch:
 
 permissions:
@@ -48,11 +60,11 @@ jobs:
         env:
           GITHUB_APM_PAT: ${{ github.token }}
 
-      - name: Verify development install leaves the checkout clean
+      - name: Verify committed Copilot and Claude outputs match the install
         shell: pwsh
         run: |
           $changes = git status --porcelain --untracked-files=all
           if ($changes) {
             $changes
-            throw 'APM installation changed tracked files or created unignored artifacts.'
+            throw 'Committed APM outputs are stale: run apm install and commit the changes.'
           }

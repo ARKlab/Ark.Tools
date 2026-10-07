@@ -73,8 +73,9 @@ Use [APM 0.33.0](https://github.com/microsoft/apm/releases/tag/v0.33.0) and Powe
 The repository has two separate APM flows:
 
 - **Development:** [apm.yml](apm.yml) and [apm.lock.yaml](apm.lock.yaml)
-  declare and pin development dependencies. Installed skills, agents, hooks,
-  and generated harness configuration are ignored, not vendored.
+  declare and pin development dependencies. Installed Copilot and Claude
+  skills, agents, hooks, MCP and LSP configuration are committed, so every
+  harness and cloud session has them at startup without running APM.
 - **Publication:** [agents-plugins/ark-csharp](agents-plugins/ark-csharp/)
   contains the authored `apm.yml` and `.apm/` assets.
   [agents-plugins/published/ark-csharp](agents-plugins/published/ark-csharp/)
@@ -86,7 +87,7 @@ The repository has two separate APM flows:
 From the repository root:
 
 ```powershell
-# Restore the pinned Copilot and Claude packages, MCP and LSP servers (also used by cloud setup).
+# Regenerate the committed Copilot and Claude packages, MCP and LSP servers from the lockfile.
 apm install
 git diff --exit-code -- apm.lock.yaml
 
@@ -105,14 +106,18 @@ such as `binlog`), so it is not used. Do not bypass a failure: review
 intentional dependency changes with the maintenance commands below.
 
 Run development installation and lockfile updates on Linux (including WSL
-on Windows), with both tools installed there, matching cloud setup.
+on Windows), with both tools installed there, matching CI.
 APM 0.31.0 hashes `superpowers` differently
 when Windows Git checks out its `AGENTS.md` symlink as a text stub; do not
 replace the committed Linux content hash to accept that checkout. Plugin
 build/check commands work in native PowerShell 7 on either platform.
 
-The generated `.github/mcp.json`, `.github/lsp.json`, `.mcp.json` and `.claude/`
-are gitignored. The VS Code MCP configuration is authored in `.vscode/mcp.json`.
+The generated `.agents/`, `.claude/`, `.github/agents/`, `.github/hooks/`,
+`.github/mcp.json`, `.github/lsp.json` and `.mcp.json` are committed; do not edit
+them by hand. `.claude/settings.json` sets `enableAllProjectMcpServers`, which
+APM preserves. Only project MCP servers belong in `apm.yml`; platform servers
+such as GitHub and Azure DevOps are configured per user or organization.
+The VS Code MCP configuration is authored in `.vscode/mcp.json`.
 Cloud-agent MCP servers must also be configured in repository settings.
 For other harnesses, explicitly run
 `apm install --target copilot,claude,opencode`; review resulting lockfile changes.
@@ -126,7 +131,9 @@ apm install owner/repository/path#ref --dev --target copilot,claude --only apm
 apm install --update --target copilot,claude --only apm
 ```
 
-Commit the manifest and lockfile changes, not the installed projections.
+Commit the manifest, lockfile and regenerated outputs together.
+Renovate does the same for tag-pinned dependencies: its `apm` manager runs
+`apm install` with the APM version pinned in `renovate.json` and commits every changed output.
 Run the restore commands again to verify a lock-preserving restore. Development
 dependencies are never included in the published `ark-csharp` plugin.
 

@@ -7,15 +7,9 @@ on:
   push:
     paths:
       - .github/workflows/copilot-setup-steps.yml
-      - apm.yml
-      - apm.lock.yaml
-      - agents-plugins/ark-csharp/**
   pull_request:
     paths:
       - .github/workflows/copilot-setup-steps.yml
-      - apm.yml
-      - apm.lock.yaml
-      - agents-plugins/ark-csharp/**
 
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
@@ -76,21 +70,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-
-      - name: Install APM
-        uses: microsoft/apm-action@v1
-        with:
-          setup-only: true
-          apm-version: 0.33.0
-
-      - name: Restore Copilot and Claude development agents from lockfile
-        # ponytail: APM 0.33 --frozen preflight rejects cold marketplace deps and transitive MCP.
-        # Switch back to 'apm install --frozen' once fixed upstream.
-        run: |
-          apm install
-          git diff --exit-code --ignore-cr-at-eol -- apm.lock.yaml
-        env:
-          GITHUB_APM_PAT: ${{ github.token }}
 
       - name: Install dotnet
         uses: actions/setup-dotnet@v6
