@@ -123,7 +123,7 @@ composition requires exactly one Producer or Receiver.
 
 | Participant | Role | `Web` | `WebRebus` | `Functions` |
 | --- | --- | --- | --- | --- |
-| Api | Sends `ProcessBookPrintProcessRequest` and `CreateBookReviewRequest` | `Web.WebInterface` (producer) | `WebRebus.WebInterface` (one-way client) | `Functions.Api` (producer) |
+| Api | Sends `ProcessBookPrintProcessRequest` and `ProcessBookReviewRequest` | `Web.WebInterface` (producer) | `WebRebus.WebInterface` (one-way client) | `Functions.Api` (producer) |
 | Print worker (`ark-mediator-sample`) | Processes the sent messages; publishes `BookPrintCompleted` | `Web.Processor` | `WebRebus.Processor` | `Functions.Processor` |
 | Notification subscriber | Records the notification through `IBookPrintNotificationSink` | `Web.NotificationProcessor` | `WebRebus.NotificationProcessor` | `Functions.Notifications` |
 | Audit subscriber | Records the print audit effect | `Web.AuditProcessor` | `WebRebus.AuditProcessor` | `Functions.Audit` |

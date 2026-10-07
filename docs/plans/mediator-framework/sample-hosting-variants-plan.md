@@ -561,13 +561,48 @@ real processes would. Remove the moved scenarios from the old test project.
 - Create: `C/…Core.Tests/Hooks/ParticipantProcess.cs`
 - Create: `C/…Core.Tests/Hooks/BackgroundMessagingContext.cs` (replaces `RebusScenarioContext`)
 - Create: `C/…Core.Tests/Steps/BackgroundMessagingSteps.cs` (replaces `RebusSteps`)
-- Create: `C/…Core.Tests/appsettings.IntegrationTests.json`
+- Create: `C/…Core.Application/Messages/ProcessBookReviewRequest.cs`, `C/…Core.Application/Handlers/Book/ProcessBookReviewRequestHandler.cs` (Step 0)
+- Modify: `C/…Core.Application/Messages/MessagingDeclarations.cs`, `C/…Core.Application/Host/ApplicationComposition.cs`, `C/…Core.Application/JsonContext/ApplicationJsonSerializerContext.cs` (Step 0)
 - Delete from old project: `Hooks/ProcessWideApplicationTestFixture.cs`, `ProcessWideApplicationFixtureTests.cs` (the process-wide pattern is not carried forward), `Steps/RebusSteps.cs`, `Hooks/RebusScenarioContext.cs` (Rebus behavior moves to WebRebus tests in Task 6)
 - Modify: `S/Ark.MediatorFramework.Sample.slnx`, `Ark.Tools.slnx`
 
 **Interfaces:**
 - Consumes: Task 1 `GetPendingCount`; Task 3 `ApplicationOptions`, `Register`, `RegisterNotificationSubscriber`, `RegisterAuditSubscriber`.
+- Produces: `ProcessBookReviewRequest : ICommand<ProcessBookReviewRequest>` (`CreateBookReviewRequest.V1 Review`), the message every host variant sends for a background review.
 - Produces (test-only, used by later tasks as reference): `ParticipantProcess` (container + `ServiceProvider` + started `IHostedService`s for one participant), `InMemoryMessagingHarness.EnsureTopologyAsync(InMemoryMessagingTransport)`.
+
+- [ ] **Step 0: Background review as a command**
+
+Native messaging binds only `ICommand<TSelf>` contracts listed in `Processes`
+(`MessagingNetworkGenerator` filters with `_implementsCommand`). Today
+`CreateBookReviewRequest.V1` (an `IRequest<V1, BookReview>`) is listed there,
+gets no dispatch case, and dead-letters as `UnknownContractName`. Wrap it in a
+command, following `ProcessBookPrintProcessRequest`:
+
+```csharp
+/// <summary>Creates a book review in the background.</summary>
+[Message(Name = "books_process_book_review")]
+public sealed record ProcessBookReviewRequest : ICommand<ProcessBookReviewRequest>
+{
+    /// <summary>Gets the review request to execute.</summary>
+    public required CreateBookReviewRequest.V1 Review { get; init; }
+}
+```
+
+`ProcessBookReviewRequestHandler : ICommandHandler<ProcessBookReviewRequest>`
+executes `command.Review` through the decorated
+`IRequestHandler<CreateBookReviewRequest.V1, BookReview>` (or the request
+processor, whichever the print handler's pattern uses), so authorization and
+validation decorators still run. Register it next to the print handler in
+`ApplicationComposition`, add the record to `ApplicationJsonSerializerContext`,
+and replace `typeof(CreateBookReviewRequest.V1)` with
+`typeof(ProcessBookReviewRequest)` in `SampleMessagingParticipant.Processes`.
+No `[RebusMessage]` (Task 7 removes that path). Leave
+`CreateBookReviewRequest.V1`'s own attributes alone; the old Rebus tests use
+them until Task 7.
+
+Commit separately:
+`feat(samples): process background book reviews as a command`.
 
 - [ ] **Step 1: Project file**
 
@@ -964,8 +999,9 @@ over `Queues`.
 `Steps/BackgroundMessagingSteps.cs` keeps the step texts from `RebusSteps`:
 
 - `[When("I dispatch a book review for the current book through the background bus with")]`
-  sends through the api process bus:
-  `await application.SendAsync(request)` → implement as
+  builds `new ProcessBookReviewRequest { Review = request }` from the table's
+  `CreateBookReviewRequest.V1` and sends it through the api process bus:
+  `await application.SendAsync(message)` → implement as
   `await _api.Services.GetRequiredService<IBus>().Send(request, cancellationToken: ctk)`
   exposed from `ApplicationTestContext.SendAsync<T>(T message, CancellationToken ctk)`.
 - `[Then("the error queue contains the failed message")]` waits with
@@ -986,8 +1022,9 @@ If `Reject an unauthorized book review through the background bus` does not
 reach a dead letter, inspect `SampleMessagingRetryPolicy`
 (`SecondLevelRetriesEnabled = true`) and the generated
 `SampleMessagingParticipant.DispatchFailedAsync`: an unhandled
-`MessagingFailed<CreateBookReviewRequest.V1>` must dead-letter. Fix the test
-harness, not the policy.
+`MessagingFailed<ProcessBookReviewRequest>` must dead-letter. Fix the test
+harness, not the policy. The scenario must fail for the authorization reason:
+assert the dead letter's reason/description is not `UnknownContractName`.
 
 - [ ] **Step 8: Old project still builds and passes**
 
@@ -1108,7 +1145,7 @@ public sealed partial class SampleMessagingApiParticipant;
 /// <summary>Declares the print worker: processes background work and publishes completed prints.</summary>
 [MessagingParticipant(
     Identity = "ark-mediator-sample",
-    Processes = new[] { typeof(ProcessBookPrintProcessRequest), typeof(CreateBookReviewRequest.V1) },
+    Processes = new[] { typeof(ProcessBookPrintProcessRequest), typeof(ProcessBookReviewRequest) },
     Publishes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,
@@ -1204,18 +1241,33 @@ management lives in the separate `ServiceBusTransportManagement`. A Service Bus
 publisher composed with `ConfigureArkMessaging` therefore fails with
 "does not provide resource lifecycle management". Azure Functions composition
 already passes `ServiceBusTransportManagement` explicitly; the fluent builder
-needs the same seam. Branch: `feature/mf-sample-05b-resource-management`, based
+needs the same seam.
+
+The seam alone is not enough for receivers. The 4-argument overload builds a
+manifest only when `PublishedTopics.Count > 0`, with `identityQueue: null` and
+no subscriptions, because `MessagingParticipantDescriptor` carries no
+subscription data. A fluent Service Bus receiver therefore starts against a
+missing identity queue and missing forwarding subscriptions. This task also
+emits the subscribed topics into the generated descriptor and builds the full
+manifest — identity queue, owned and subscribed topics, forwarding
+subscriptions — the same resources the Azure Functions generator emits
+(`MessagingFunctionsGenerator`, `MessagingResourceManifest` block). Branch: `feature/mf-sample-05b-resource-management`, based
 on Task 5's branch; the Task 6 branch is based on this one.
 
 **Files:**
 - Modify: `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/FluentMessagingComposition.cs` (`MessagingModeBuilder`: field + `UseResourceManagement`; `_registerCommon` passes it)
-- Modify: `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/MessagingServiceCollectionExtensions.cs` (4-argument `_addArkMessagingParticipant` overload gains `IMessagingTransportManagement? management = null`, used as `management ?? transport as IMessagingTransportManagement`)
+- Modify: `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/MessagingServiceCollectionExtensions.cs` (4-argument `_addArkMessagingParticipant` overload gains `IMessagingTransportManagement? management = null`, used as `management ?? transport as IMessagingTransportManagement`, and builds the full manifest)
+- Modify: `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/MessagingParticipantDescriptor.cs` (optional `subscribedTopics` ctor parameter, `SubscribedTopics` property)
+- Modify: `src/mediator-framework/Ark.Tools.MediatorFramework.Generators/MessagingNetworkGenerator.cs` (`CreateDescriptor` emits `subscribedTopics`)
+- Modify: generator snapshot/approval files and `ArkApiSurface.txt` baselines that the change moves (regenerate with the repo's tooling, never by hand)
 - Test: `tests/Ark.Tools.MediatorFramework.Tests/FluentMessagingResourceManagementTests.cs`
 - Modify: `CHANGELOG.md` (`## [Unreleased]` → `### Added`)
 - Modify: `docs/mediator-framework/host-setup-and-composition.md` (one sentence plus snippet under *Fluent native messaging composition*)
 
 **Interfaces:**
 - Produces: `public MessagingModeBuilder<TNetwork, TParticipant> MessagingModeBuilder<TNetwork, TParticipant>.UseResourceManagement(IMessagingTransportManagement management)` — throws `InvalidOperationException("A resource management seam is already selected.")` on a second call, like the other `Use*` selectors.
+- Produces: `MessagingParticipantDescriptor.SubscribedTopics : IReadOnlyList<MessagingTopicResource>` — one entry per subscribed event: topic `<publisherIdentity>-<contractName>`, owner = publisher identity (the same name `PublishedTopics` gives the publisher).
+- Produces: under `CreateIfMissing`, a fluent Producer or Receiver provisions: identity queue (receivers only), published and subscribed topics, one forwarding subscription per subscribed topic named and forwarded to the participant identity. Subscription names match what Task 4's `InMemoryMessagingHarness.EnsureTopologyAsync` creates, so the harness stays valid.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1272,7 +1324,39 @@ public void SecondManagementSeamIsRejected()
 
     act.Should().Throw<InvalidOperationException>().WithMessage("*already selected*");
 }
+
+[TestMethod]
+public async Task ExplicitManagementSeamProvisionsReceiverQueueAndSubscriptions()
+{
+    var management = new RecordingTransportManagement();
+    var services = new ServiceCollection();
+    services.AddLogging();
+    services.ConfigureArkMessaging<TestNetwork>(b => b.Receiver<TestSubscriber>(r => r
+        .UseTransport(new NonManagingMessageSourceTransport())
+        .UseInMemoryDataBus()
+        .UseResourceManagement(management)));
+    await using var provider = services.BuildServiceProvider();
+
+    foreach (var hosted in provider.GetServices<IHostedService>())
+        await hosted.StartAsync(default).ConfigureAwait(false);
+
+    management.EnsuredQueues.Should().Contain(TestSubscriber.Identity);
+    management.EnsuredTopics.Should().Contain(TestPublisher.Identity + "-" + "<contract name of the subscribed event>");
+    management.EnsuredSubscriptions.Should().ContainSingle(s =>
+        s.Name == TestSubscriber.Identity && s.ForwardToQueue == TestSubscriber.Identity);
+}
 ```
+
+`TestSubscriber` is a test participant that subscribes to the event
+`TestPublisher` publishes; `NonManagingMessageSourceTransport` implements
+`IMessagingTransport` and `IMessagingMessageSource` (a receiver requires a
+message source) but not `IMessagingTransportManagement`. Replace the
+`<contract name …>` placeholder with the derived name the generator gives the
+event (read it from `TestPublisher`'s generated `PublishedTopics`). Stop the
+hosted services in reverse order at the end of each test. Also add one
+generator test (in the existing `MessagingNetworkGenerator` test class) that
+asserts the emitted `CreateDescriptor` passes the subscribed topic, and
+regenerate any snapshot the change moves.
 
 Adapt `TestNetwork`/`TestPublisher`/`NonManagingTransport`/`RecordingTransportManagement`
 to the names the test project already uses; create only what does not exist.
@@ -1309,19 +1393,56 @@ In `MessagingModeBuilder<TNetwork, TParticipant>`:
 
 `_registerCommon` passes `_resourceManagement` to `_addArkMessagingParticipant`;
 the 4-argument overload adds the optional `management` parameter and uses
-`management ?? transport as IMessagingTransportManagement`. No behavior change
-for callers that do not use the new method.
+`management ?? transport as IMessagingTransportManagement`.
+
+`MessagingParticipantDescriptor` gains a last optional ctor parameter
+`IEnumerable<MessagingTopicResource>? subscribedTopics = null` stored like
+`PublishedTopics`. In `MessagingNetworkGenerator`, `CreateDescriptor` emits it
+after the published-topics array: for each `participant.Subscribes` contract
+with exactly one publisher in the network (other cases already report a
+diagnostic), `new MessagingTopicResource("<publisherIdentity>-<contractName>", "<publisherIdentity>")`.
+
+The 4-argument overload builds the manifest from both lists:
+
+```csharp
+        var hasResources = participant.PublishedTopics.Count > 0 || participant.Receives;
+        var maximumDeliveryCount = checked(participant.RetryPolicy.MaximumDeliveryCount
+            * (participant.RetryPolicy.SecondLevelRetriesEnabled ? 2 : 1));
+        var topics = participant.PublishedTopics.Concat(participant.SubscribedTopics).ToArray();
+        var resources = participant.Network.ResourceLifecycle == MessagingResourceLifecycle.CreateIfMissing
+            && hasResources
+                ? new MessagingResourceManifest(
+                    participant.Identity,
+                    participant.Receives ? participant.Identity : null,
+                    maximumDeliveryCount,
+                    topics,
+                    participant.SubscribedTopics.Select(topic => new MessagingSubscriptionResource(
+                        topic.Name,
+                        participant.Identity,
+                        participant.Identity,
+                        maximumDeliveryCount,
+                        participant.Identity)),
+                    topics.Select(static topic => topic.Name),
+                    participant.Network.ResourceLifecycle)
+                : null;
+```
+
+The delivery count matches the Functions generator (`MaximumDeliveryCount`,
+doubled when second-level retries are on). Before this task a fluent receiver
+with no published topics provisioned nothing; it now provisions its queue and
+subscriptions, so an in-memory or Service Bus receiver needs a management seam
+(the in-memory transport is its own). Callers on `External` are unchanged.
 
 - [ ] **Step 4: Run tests**
 
-Run the Step 2 command; expected: 3 passed. Then
+Run the Step 2 command; expected: 4 passed. Then
 `dotnet test tests/Ark.Tools.MediatorFramework.Tests --filter "FullyQualifiedName~Messaging"`;
 expected: no regressions.
 
 - [ ] **Step 5: Docs and changelog**
 
 CHANGELOG `Added`:
-`- Fluent native messaging composition accepts an explicit resource-management seam (UseResourceManagement), so Service Bus publishers outside Azure Functions can provision their topics.`
+`- Fluent native messaging composition accepts an explicit resource-management seam (UseResourceManagement) and provisions a receiver's queue, topics and forwarding subscriptions, so Service Bus hosts outside Azure Functions can self-provision under CreateIfMissing.`
 
 `host-setup-and-composition.md`, after the first fluent snippet:
 
@@ -1330,15 +1451,17 @@ CHANGELOG `Added`:
 .UseResourceManagement(new ServiceBusTransportManagement(administrationClient))
 ```
 
-with one sentence: a transport that does not manage its own resources needs an
-explicit seam when the network uses `CreateIfMissing`.
+with two sentences: a transport that does not manage its own resources needs an
+explicit seam when the network uses `CreateIfMissing`; with it, Producers
+provision their topics and Receivers also their identity queue and forwarding
+subscriptions.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/mediator-framework/Ark.Tools.MediatorFramework.Messaging tests/Ark.Tools.MediatorFramework.Tests \
+git add src/mediator-framework tests/Ark.Tools.MediatorFramework.Tests \
   CHANGELOG.md docs/mediator-framework/host-setup-and-composition.md
-git commit -m "feat(MediatorFramework): accept explicit messaging resource management" -m "Assisted-by: Claude"
+git commit -m "feat(MediatorFramework): provision fluent messaging host resources" -m "Assisted-by: Claude"
 ```
 
 ---
@@ -1939,7 +2062,10 @@ public sealed class RebusTopologyTests
             .ConfigureAwait(false);
 
         api.SetScopes(ApplicationScopes.BookRead, ApplicationScopes.BookWrite);
-        await api.SendAsync(new CreateBookReviewRequest.V1 { BookId = book.Id, Rating = 5, Text = "Good" })
+        await api.SendAsync(new ProcessBookReviewRequest
+            {
+                Review = new CreateBookReviewRequest.V1 { BookId = book.Id, Rating = 5, Text = "Good" },
+            })
             .ConfigureAwait(false);
 
         await WebRebusTestHosts.WaitUntilAsync(() => network.GetCount("error") > 0).ConfigureAwait(false);
