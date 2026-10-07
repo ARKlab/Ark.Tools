@@ -167,7 +167,9 @@ public static class ArkMessagePackEx
 
     private static bool _prefersMessagePack(string? accept)
     {
-        if (string.IsNullOrWhiteSpace(accept))
+        // Most requests never mention MessagePack; skip the split when it cannot match.
+        if (string.IsNullOrWhiteSpace(accept)
+            || !accept.Contains(_messagePackMediaType, StringComparison.OrdinalIgnoreCase))
             return false;
 
         return accept.Split(',', StringSplitOptions.TrimEntries)

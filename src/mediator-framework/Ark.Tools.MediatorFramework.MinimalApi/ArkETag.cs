@@ -5,11 +5,18 @@ using Ark.Tools.Compliance;
 
 using Microsoft.AspNetCore.Http;
 
+using System.Buffers;
+
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
 /// <summary>Reads and validates HTTP opaque ETag preconditions.</summary>
 public static class ArkETag
 {
+    // Characters that would allow header injection: quote, backslash, controls and DEL.
+    private static readonly SearchValues<char> _unsafeCharacters = SearchValues.Create(
+        "\"\\\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009\u000a\u000b\u000c\u000d\u000e\u000f" +
+        "\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f\u007f");
+
     /// <summary>
     /// Reads the first <c>If-Match</c> value, or <c>*</c> from <c>If-None-Match</c> when present.
     /// Only the first comma-separated <c>If-Match</c> entry is honored.
@@ -35,8 +42,7 @@ public static class ArkETag
     public static bool IsValidToken(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return value.All(static character => character != '"' && character != '\\'
-            && character >= '\u0020' && character != '\u007f');
+        return !value.AsSpan().ContainsAny(_unsafeCharacters);
     }
 
     /// <summary>Applies a handler-produced ETag and handles a matching conditional GET.</summary>
@@ -53,12 +59,9 @@ public static class ArkETag
         if (string.IsNullOrEmpty(token))
             return null;
 
-        if (!IsValidToken(token))
+        var position = token.AsSpan().IndexOfAny(_unsafeCharacters);
+        if (position >= 0)
         {
-            var position = token.Select(static (character, index) => (character, index))
-                .First(static item => item.character == '"' || item.character == '\\'
-                    || item.character < '\u0020' || item.character == '\u007f')
-                .index;
             throw new InvalidOperationException($"ETag token contains an invalid character at position {position}.");
         }
 
@@ -66,8 +69,11 @@ public static class ArkETag
         if (!conditionalGet)
             return null;
 
-        var matches = context.Request.Headers.IfNoneMatch
-            .ToString()
+        var ifNoneMatch = context.Request.Headers.IfNoneMatch.ToString();
+        if (ifNoneMatch.Length == 0)
+            return null;
+
+        var matches = ifNoneMatch
             .Split(',', StringSplitOptions.TrimEntries)
             .Select(static value => value.StartsWith("W/", StringComparison.Ordinal)
                 ? _unquote(value[2..])
