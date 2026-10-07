@@ -356,6 +356,21 @@ public sealed class ApplicationCompositionTests
     }
 
     [TestMethod]
+    public void RegisterRejectsBothPersistenceSources()
+    {
+        using var container = _newContainer();
+
+        var act = () => ApplicationComposition.Register(container, new ApplicationOptions
+        {
+            SqlConnectionString = "Server=unused;Database=unused",
+            DataContextFactory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory()),
+        });
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*SqlConnectionString*DataContextFactory*");
+    }
+
+    [TestMethod]
     public void SubscribersRegisterTheirOwnCompletedPrintHandler()
     {
         using var notification = _newContainer();
@@ -521,7 +536,7 @@ old test project reads `DatabaseHooks.ConnectionString`.
 ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test $S/test/Ark.MediatorFramework.Sample.Tests
 ```
 
-Expected: all pass, including the 2 new tests.
+Expected: all pass, including the 3 new tests.
 
 - [ ] **Step 6: Full build and commit**
 
@@ -870,7 +885,7 @@ Supporting members (same class):
                 services.AddSingleton(_testProcessingOptions);
                 services.ConfigureArkMessaging<SampleMessagingNetwork>(b => select(b, _transport, _dataBus));
             },
-            ctk).ConfigureAwait(false);
+            ctk: ctk).ConfigureAwait(false);
     }
 
     private async Task<ParticipantProcess> _startOutboxProcessorAsync(CancellationToken ctk)
@@ -886,7 +901,7 @@ Supporting members (same class):
                     batchSize: 10);
             },
             bridgeBus: false,
-            ctk).ConfigureAwait(false);
+            ctk: ctk).ConfigureAwait(false);
     }
 ```
 
@@ -1425,7 +1440,9 @@ namespace Ark.MediatorFramework.Sample.Core.Web.Hosting;
 /// <summary>Exposes the principal restored from the current message to the application.</summary>
 public sealed class MessagingPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
 {
-    private static readonly AsyncLocal<ClaimsPrincipal?> _current = new();
+    // Instance field, not static: each participant (and each test participant in one process)
+    // owns its ambient principal, so nothing leaks between providers.
+    private readonly AsyncLocal<ClaimsPrincipal?> _current = new();
 
     /// <inheritdoc />
     public ClaimsPrincipal Current => _current.Value ?? new ClaimsPrincipal(new ClaimsIdentity());
@@ -1453,7 +1470,7 @@ using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Solid.SimpleInjector;
 
-using Ark.Tools.MediatorFramework.Messaging.Azure;
+using Azure.Messaging.ServiceBus.Administration;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -1692,7 +1709,6 @@ using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.Web.Hosting;
 using Ark.Tools.MediatorFramework.Messaging;
-using Ark.Tools.MediatorFramework.Messaging.Azure;
 using Ark.Tools.NLog;
 
 using Azure.Messaging.ServiceBus;
@@ -1796,10 +1812,27 @@ await app.StartAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 ```
 
 `OutboxProcessorCompositionTests` now targets the Web variant's
-`OutboxProcessor` composition. Add one MCP test:
-`McpToolsListIncludesBookTools` — `POST /mcp/v1` `tools/list` with the
-integration-test bearer and assert `books.get` is present (use the same
-authenticated `HttpClient` helper as `BookTransportBoundaryTests`).
+`OutboxProcessor` composition. The ported `BookTransportBoundaryTests` only
+inspects route metadata and invokes the gRPC service by reflection, so add the
+hosted round trips the spec promises, all on the TestServer arrange block above
+and the same authenticated `HttpClient` helper:
+
+- `HttpRoundTripTests.CreateThenGetBook` — `POST /api/v1/books` with a
+  `Book.V1.Create` body, assert 200 and an `id`; `GET /api/v1/books/{id}`,
+  assert the same title. Take the exact routes from the generated
+  `[HttpEndpoint]` metadata of `Book_CreateRequest.V1` / `Book_GetQuery.V1`.
+- `GrpcClientRoundTripTests.CreateThenGetBookThroughGeneratedClient` — build a
+  `GrpcChannel.ForAddress(server.BaseAddress, new GrpcChannelOptions { HttpHandler = server.CreateHandler() })`,
+  use the client generated in `…Core.Web.GrpcClient` from the exported protos,
+  attach the bearer as call metadata, create a book and read it back.
+- `OpenApiDocumentTests.V1DocumentMatchesSnapshot` — `GET /openapi/v1.json`,
+  compare (normalized line endings) with the committed
+  `W/…Core.Web.Tests/Snapshots/openapi.v1.json`; on mismatch write
+  `openapi.v1.received.json` next to it and fail with the accept instruction
+  (copy received over the snapshot). Create the snapshot on the first run and
+  commit it.
+- `McpToolsListIncludesBookTools` — `POST /mcp/v1` `tools/list` with the
+  integration-test bearer and assert `books.get` is present.
 
 - [ ] **Step 7: Run**
 
