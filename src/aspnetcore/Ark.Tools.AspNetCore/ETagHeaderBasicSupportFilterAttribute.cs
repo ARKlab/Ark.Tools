@@ -12,16 +12,15 @@ namespace Ark.Tools.AspNetCore;
 
 public sealed class ETagHeaderBasicSupportFilterAttribute : ActionFilterAttribute
 {
+    private static readonly string[] _writeMethods = [HttpMethods.Put, HttpMethods.Post, HttpMethods.Patch];
+    private static readonly string[] _readMethods = [HttpMethods.Get, HttpMethods.Head];
+
     public override void OnActionExecuting(ActionExecutingContext context)
     {
-        var reqHeader = context.HttpContext.Request.GetTypedHeaders();
-
-        string[] methods = [HttpMethods.Put, HttpMethods.Post, HttpMethods.Patch];
-        if (methods.Contains(context.HttpContext.Request.Method, StringComparer.Ordinal)
-            && context.ActionArguments.Values.OfType<IEntityWithETag>().Count() == 1
-            )
+        if (Array.IndexOf(_writeMethods, context.HttpContext.Request.Method) >= 0
+            && _singleEntityWithETag(context.ActionArguments.Values) is { } input)
         {
-            var input = context.ActionArguments.Values.OfType<IEntityWithETag>().Single();
+            var reqHeader = context.HttpContext.Request.GetTypedHeaders();
             if (reqHeader.IfMatch.Count == 1)
                 input._ETag = reqHeader.IfMatch[0].Tag.ToString()[1..^1];
             if (reqHeader.IfNoneMatch.Count == 1 && reqHeader.IfNoneMatch[0].Equals(EntityTagHeaderValue.Any))
@@ -33,17 +32,13 @@ public sealed class ETagHeaderBasicSupportFilterAttribute : ActionFilterAttribut
 
     public override void OnResultExecuting(ResultExecutingContext context)
     {
-        var reqHeader = context.HttpContext.Request.GetTypedHeaders();
-        var resHeader = context.HttpContext.Response.GetTypedHeaders();
-
         // if we're returing an object with Etag
         if (context.Result is ObjectResult result
             && result.Value is IEntityWithETag etag)
         {
             // if is a GET with If-None-Match and there is a match return 304
-            string[] getMethods = [HttpMethods.Get, HttpMethods.Head];
-            if (getMethods.Contains(context.HttpContext.Request.Method, StringComparer.Ordinal)
-                && reqHeader.IfNoneMatch?.Contains(new EntityTagHeaderValue($"\"{etag._ETag}\"")) == true)
+            if (Array.IndexOf(_readMethods, context.HttpContext.Request.Method) >= 0
+                && context.HttpContext.Request.GetTypedHeaders().IfNoneMatch?.Contains(new EntityTagHeaderValue($"\"{etag._ETag}\"")) == true)
                 context.Result = new StatusCodeResult(304);
 
             //I add only if ETag is not null
@@ -53,10 +48,24 @@ public sealed class ETagHeaderBasicSupportFilterAttribute : ActionFilterAttribut
                 if (etag._ETag.All(char.IsWhiteSpace) || string.IsNullOrEmpty(etag._ETag))
                     throw new InvalidOperationException("ETag value is empty or consists only of white-space characters");
 
-                resHeader.ETag = new EntityTagHeaderValue($"\"{etag._ETag}\"");
+                context.HttpContext.Response.GetTypedHeaders().ETag = new EntityTagHeaderValue($"\"{etag._ETag}\"");
             }
         }
 
         base.OnResultExecuting(context);
+    }
+
+    // One pass over the arguments: the entity when exactly one argument carries an ETag, otherwise null.
+    private static IEntityWithETag? _singleEntityWithETag(IEnumerable<object?> arguments)
+    {
+        IEntityWithETag? found = null;
+        var count = 0;
+        foreach (var argument in arguments)
+        {
+            if (argument is IEntityWithETag entity && ++count == 1)
+                found = entity;
+        }
+
+        return count == 1 ? found : null;
     }
 }
