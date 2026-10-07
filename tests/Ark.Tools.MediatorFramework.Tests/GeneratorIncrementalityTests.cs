@@ -77,7 +77,8 @@ public sealed class GeneratorIncrementalityTests
             source.Replace("/source", "/changed", StringComparison.Ordinal),
             [contracts],
             cachedSteps: ["MinimalApiReferencedEndpoints"],
-            unchangedSteps: ["MinimalApiEndpointParser", "MinimalApiMappingParser"]);
+            unchangedSteps: ["MinimalApiEndpointParser", "MinimalApiMappingParser"],
+            expectedOutput: ["global::MinimalApiContracts.GetReferenced", "global::CreateSource", "ARKMF003"]);
     }
 
     [TestMethod]
@@ -131,7 +132,56 @@ public sealed class GeneratorIncrementalityTests
             source.Replace("[ProtoMember(1)]\n    public string Value", "[ProtoMember(2)]\n    public string Value", StringComparison.Ordinal),
             [contracts],
             cachedSteps: ["GrpcReferencedEndpoints", "GrpcReferencedProtoContracts"],
-            unchangedSteps: ["GrpcMappingParser", "GrpcEndpointParser", "GrpcProtoContractParser", "GrpcOutput"]);
+            unchangedSteps: ["GrpcMappingParser", "GrpcEndpointParser", "GrpcProtoContractParser", "GrpcOutput"],
+            expectedOutput: ["rpc GetReferenced", "message ReferencedResponse", "rpc GetSource", "message SourceResponse"]);
+    }
+
+    [TestMethod]
+    public void RebusGeneratorReusesCachedOutputOnUnrelatedEdit()
+    {
+        var contracts = _createReference(
+            "RebusContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace RebusContracts;
+            public sealed class Marker { }
+            [RebusMessage(OwnerQueue = "referenced")]
+            public sealed class ReferencedCommand : ICommand { }
+            [Message]
+            public sealed class ProcessOrder : ICommand { }
+            [MessagingParticipant(
+                Identity = "orders",
+                Processes = new[] { typeof(ProcessOrder) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class OrdersParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(OrdersParticipant) })]
+            public sealed class OrdersNetwork { }
+            """);
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = "source")]
+            public sealed class SourceCommand : ICommand { }
+            [ArkRebusHost(typeof(RebusContracts.OrdersParticipant))]
+            public sealed partial class OrdersRebusHost { }
+            public static class Startup
+            {
+                public static void Configure() => RegisterArkRebusHandlersFromAssembly<RebusContracts.Marker>();
+                private static void RegisterArkRebusHandlersFromAssembly<T>() { }
+            }
+            """;
+
+        _assertReusesCachedOutput(
+            new ArkRebusEndpointGenerator(),
+            source,
+            source.Replace("\"source\"", "\"changed\"", StringComparison.Ordinal),
+            [contracts],
+            cachedSteps: ["RebusReferencedEndpoints", "RebusReferencedNetworks", "RebusReferencedLegacyEndpoints"],
+            unchangedSteps: ["RebusMappingParser", "RebusEndpointParser", "RebusHostParser", "RebusHostModel"],
+            expectedOutput: ["typeBased.Map<global::RebusContracts.ReferencedCommand>(\"referenced\")", "sealed partial class OrdersRebusHost", "Map<global::RebusContracts.ProcessOrder>(\"orders\")"]);
     }
 
     private static void _assertReusesCachedOutput(
@@ -140,7 +190,8 @@ public sealed class GeneratorIncrementalityTests
         string relevantEdit,
         MetadataReference[] references,
         string[] cachedSteps,
-        string[] unchangedSteps)
+        string[] unchangedSteps,
+        string[] expectedOutput)
     {
         var sourceTree = CSharpSyntaxTree.ParseText(source, path: "Contracts.cs");
         var unrelatedTree = CSharpSyntaxTree.ParseText(_unrelatedSource, path: "Unrelated.cs");
@@ -157,7 +208,8 @@ public sealed class GeneratorIncrementalityTests
 
         driver = driver.RunGenerators(compilation);
         var original = _describeOutput(driver);
-        original.Should().Contain(".g.cs", "the scenario must generate sources to be meaningful");
+        foreach (var expected in expectedOutput)
+            original.Should().Contain(expected, "the scenario must exercise the cached steps");
 
         compilation = compilation.ReplaceSyntaxTree(
             unrelatedTree,
@@ -244,6 +296,7 @@ public sealed class GeneratorIncrementalityTests
         [
             MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(Rebus.ArkRebusHostAttribute).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
         ]);
     }

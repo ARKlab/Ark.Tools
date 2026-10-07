@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -31,6 +32,12 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string MessagingParticipantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
         private const string MappingParserTrackingName = "RebusMappingParser";
         private const string HostParserTrackingName = "RebusHostParser";
+        private const string EndpointParserTrackingName = "RebusEndpointParser";
+        private const string ReferencedEndpointsTrackingName = "RebusReferencedEndpoints";
+        private const string NetworkParserTrackingName = "RebusNetworkParser";
+        private const string ReferencedNetworksTrackingName = "RebusReferencedNetworks";
+        private const string ReferencedLegacyEndpointsTrackingName = "RebusReferencedLegacyEndpoints";
+        private const string HostModelTrackingName = "RebusHostModel";
         private static readonly DiagnosticDescriptor InvalidOwnerQueue = new(
             "ARKMF004", "Invalid Rebus owner queue",
             "The Rebus owner queue for '{0}' must not be blank", "Rebus",
@@ -47,39 +54,94 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
                 .SelectMany(static (mapping, _) => mapping.AssemblyNames)
-                .Collect();
+                .Collect()
+                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies));
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     RebusMessageAttribute,
                     static (node, _) => node is TypeDeclarationSyntax,
                     static (attributeContext, _) => ExtractSourceEndpoint(attributeContext))
+                .WithTrackingName(EndpointParserTrackingName)
                 .Where(static endpoint => endpoint is not null)
-                .Select(static (endpoint, _) => endpoint!.Value);
-            var referencedEndpoints = context.CompilationProvider
+                .Select(static (endpoint, _) => endpoint!.Value)
+                .Collect()
+                .Select(static (endpoints, _) => new EquatableArray<EndpointModel>(endpoints));
+            // Referenced-assembly scans read metadata symbols only, so they rerun when references change.
+            var referenceScope = context.CompilationProvider
+                .WithComparer(MetadataReferencesComparer.Instance);
+            var referencedEndpoints = referenceScope
                 .Combine(endpointAssemblies)
-                .SelectMany(static (pair, cancellationToken) =>
-                    GetReferencedEndpoints(pair.Left, pair.Right, cancellationToken));
+                .Select(static (pair, cancellationToken) => new EquatableArray<EndpointModel>(
+                    GetReferencedEndpoints(pair.Left, pair.Right.Values, cancellationToken)))
+                .WithTrackingName(ReferencedEndpointsTrackingName);
 
-            var hostTypes = context.SyntaxProvider.ForAttributeWithMetadataName(
+            var hostCandidates = context.SyntaxProvider.ForAttributeWithMetadataName(
                     ArkRebusHostAttribute,
                     static (node, _) => node is TypeDeclarationSyntax,
-                    static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
+                    static (attributeContext, _) => GetHostCandidate(attributeContext))
                 .WithTrackingName(HostParserTrackingName)
-                .Where(static hostType => hostType is not null)
-                .Select(static (hostType, _) => hostType!);
-            var hosts = context.CompilationProvider.Combine(hostTypes.Collect())
+                .Where(static candidate => candidate is not null)
+                .Select(static (candidate, _) => candidate!.Value)
+                .Collect()
+                .Select(static (candidates, _) => new EquatableArray<HostCandidate>(candidates));
+            var sourceNetworks = context.SyntaxProvider.ForAttributeWithMetadataName(
+                    MessagingNetworkAttribute,
+                    static (node, _) => node is TypeDeclarationSyntax,
+                    static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol network
+                        ? GetMetadataName(network)
+                        : null)
+                .WithTrackingName(NetworkParserTrackingName)
+                .Where(static network => network is not null)
+                .Select(static (network, _) => network!)
+                .Collect()
+                .Select(static (networks, _) => new EquatableArray<string>(networks));
+            var referencedNetworks = referenceScope
+                .Combine(hostCandidates.Select(static (candidates, _) => !candidates.IsEmpty))
+                .Select(static (pair, cancellationToken) => pair.Right
+                    ? new EquatableArray<TypeReference>(GetReferencedNetworks(pair.Left, cancellationToken))
+                    : EquatableArray<TypeReference>.Empty)
+                .WithTrackingName(ReferencedNetworksTrackingName);
+            var referencedLegacyEndpoints = referenceScope
+                .Combine(hostCandidates.Select(static (candidates, _) => new EquatableArray<string>(candidates
+                    .Select(static candidate => candidate.ParticipantAssemblyName)
+                    .Where(static assemblyName => assemblyName is not null)
+                    .Select(static assemblyName => assemblyName!)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(static assemblyName => assemblyName, StringComparer.Ordinal)
+                    .ToImmutableArray())))
+                .Select(static (pair, cancellationToken) => new EquatableArray<AssemblyEndpoints>(
+                    GetReferencedLegacyEndpoints(pair.Left, pair.Right.Values, cancellationToken)))
+                .WithTrackingName(ReferencedLegacyEndpointsTrackingName);
+            // Host models resolve a few symbols by name on each compilation; the assembly-wide scans
+            // they depend on are computed above, and the resulting models are equatable.
+            var hosts = hostCandidates
+                .Combine(sourceNetworks)
+                .Combine(referencedNetworks)
+                .Combine(referencedLegacyEndpoints)
+                .Combine(sourceEndpoints)
+                .Combine(context.CompilationProvider)
                 .Select(static (input, cancellationToken) =>
-                    ReadHosts(input.Left, input.Right, cancellationToken));
-            var collected = sourceEndpoints.Collect()
-                .Combine(referencedEndpoints.Collect())
-                .Combine(hosts);
-            var output = collected.Combine(endpointMappings.Collect());
+                {
+                    var (((((candidates, networks), networkReferences), legacyEndpoints), endpoints), compilation) = input;
+                    return new EquatableArray<HostModel>(ReadHosts(
+                        compilation,
+                        candidates.Values,
+                        new NetworkIndex(networks.Values, networkReferences.Values),
+                        new LegacyEndpointIndex(endpoints.Values, legacyEndpoints.Values),
+                        cancellationToken));
+                })
+                .WithTrackingName(HostModelTrackingName);
+            var output = sourceEndpoints
+                .Combine(referencedEndpoints)
+                .Combine(hosts)
+                .Combine(endpointMappings.Collect()
+                    .Select(static (mappings, _) => new EquatableArray<AssemblyMapping>(mappings)));
 
             context.RegisterSourceOutput(
                 output,
                 static (spc, item) => Emit(
                     spc,
-                    item.Left.Left.Left.AddRange(item.Left.Left.Right),
-                    item.Left.Right));
+                    item.Left.Left.Left.Values.AddRange(item.Left.Left.Right.Values),
+                    item.Left.Right.Values));
         }
 
         private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
@@ -346,22 +408,94 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static Location GetLocation(AttributeData attribute)
             => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
 
-        private static ImmutableArray<HostModel> ReadHosts(
+        private static HostCandidate? GetHostCandidate(GeneratorAttributeSyntaxContext context)
+        {
+            if (context.TargetSymbol is not INamedTypeSymbol hostType)
+                return null;
+
+            var participant = context.Attributes[0].ConstructorArguments.FirstOrDefault().Value as INamedTypeSymbol;
+            return new HostCandidate(GetMetadataName(hostType), participant?.ContainingAssembly?.Name);
+        }
+
+        private static string GetMetadataName(INamedTypeSymbol type)
+        {
+            var names = new Stack<string>();
+            for (var current = type; current is not null; current = current.ContainingType)
+                names.Push(current.MetadataName);
+
+            return type.ContainingNamespace.IsGlobalNamespace
+                ? string.Join("+", names)
+                : type.ContainingNamespace.ToDisplayString() + "." + string.Join("+", names);
+        }
+
+        private static ImmutableArray<TypeReference> GetReferencedNetworks(
             Compilation compilation,
-            ImmutableArray<INamedTypeSymbol> hostTypes,
             CancellationToken cancellationToken)
         {
-            return hostTypes
+            var builder = ImmutableArray.CreateBuilder<TypeReference>();
+            foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                foreach (var type in _allTypes(assembly.GlobalNamespace))
+                {
+                    if (type.GetAttributes().Any(
+                        attribute => attribute.AttributeClass?.ToDisplayString() == MessagingNetworkAttribute))
+                        builder.Add(new TypeReference(assembly.Name, GetMetadataName(type)));
+                }
+            }
+
+            return builder.ToImmutable();
+        }
+
+        private static ImmutableArray<AssemblyEndpoints> GetReferencedLegacyEndpoints(
+            Compilation compilation,
+            ImmutableArray<string> assemblyNames,
+            CancellationToken cancellationToken)
+        {
+            var builder = ImmutableArray.CreateBuilder<AssemblyEndpoints>();
+            foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols
+                .Where(assembly => assemblyNames.Contains(assembly.Name, StringComparer.Ordinal)))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                builder.Add(new AssemblyEndpoints(assembly.Name, ReadLegacyEndpoints(assembly)));
+            }
+
+            return builder.ToImmutable();
+        }
+
+        private static ImmutableArray<EndpointModel> ReadLegacyEndpoints(IAssemblySymbol assembly)
+            => _allTypes(assembly.GlobalNamespace)
+                .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
+                    attribute => attribute.AttributeClass?.ToDisplayString() == RebusMessageAttribute)))
+                .Where(static item => item.Attribute is not null)
+                .Select(static item => Extract(item.Type, item.Attribute!))
+                .Where(static endpoint => endpoint is not null)
+                .Select(static endpoint => endpoint!.Value)
+                .ToImmutableArray();
+
+        private static ImmutableArray<HostModel> ReadHosts(
+            Compilation compilation,
+            ImmutableArray<HostCandidate> candidates,
+            NetworkIndex networkIndex,
+            LegacyEndpointIndex legacyEndpointIndex,
+            CancellationToken cancellationToken)
+        {
+            return candidates
+                .Select(candidate => compilation.Assembly.GetTypeByMetadataName(candidate.MetadataName))
+                .Where(static hostType => hostType is not null)
+                .Select(static hostType => hostType!)
                 .OrderBy(
                     static hostType => hostType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     StringComparer.Ordinal)
-                .Select(hostType => ReadHost(compilation, hostType, cancellationToken))
+                .Select(hostType => ReadHost(compilation, hostType, networkIndex, legacyEndpointIndex, cancellationToken))
                 .ToImmutableArray();
         }
 
         private static HostModel ReadHost(
             Compilation compilation,
             INamedTypeSymbol hostType,
+            NetworkIndex networkIndex,
+            LegacyEndpointIndex legacyEndpointIndex,
             CancellationToken cancellationToken)
         {
             var hostAttribute = hostType.GetAttributes().FirstOrDefault(
@@ -389,8 +523,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (participantAttribute is null)
                 return HostModel.Invalid("The Rebus host binding must reference a messaging participant.", GetLocation(hostAttribute));
 
-            var networks = _assemblies(compilation)
-                .SelectMany(assembly => _allTypes(assembly.GlobalNamespace))
+            var networks = networkIndex.Resolve(compilation)
                 .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
                     attribute => attribute.AttributeClass?.ToDisplayString() == MessagingNetworkAttribute)))
                 .Where(item => item.Attribute is not null && _types(item.Attribute!, "Members")
@@ -450,14 +583,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .ToImmutableArray();
             var legacyEndpoints = adapters.IsDefaultOrEmpty
                 ? ImmutableArray<EndpointModel>.Empty
-                : _allTypes(participant.ContainingAssembly.GlobalNamespace)
-                    .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
-                        attribute => attribute.AttributeClass?.ToDisplayString() == RebusMessageAttribute)))
-                    .Where(static item => item.Attribute is not null)
-                    .Select(static item => Extract(item.Type, item.Attribute!))
-                    .Where(static endpoint => endpoint is not null)
-                    .Select(static endpoint => endpoint!.Value)
-                    .ToImmutableArray();
+                : legacyEndpointIndex.Get(compilation, participant.ContainingAssembly);
 
             return new HostModel(
                 hostType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -495,7 +621,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                         descriptor,
                         type.Name,
                         diagnosticLocation,
-                        arguments)),
+                        arguments.Select(static argument =>
+                            Convert.ToString(argument, CultureInfo.InvariantCulture) ?? string.Empty).ToArray())),
                 type,
                 owner,
                 protocol);
@@ -525,13 +652,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 }
             }
             return null;
-        }
-
-        private static IEnumerable<IAssemblySymbol> _assemblies(Compilation compilation)
-        {
-            yield return compilation.Assembly;
-            foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols)
-                yield return assembly;
         }
 
         private static ImmutableArray<INamedTypeSymbol> _types(AttributeData attribute, string name)
@@ -603,13 +723,13 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .OrderBy(static item => item.TypeFullName, StringComparer.Ordinal)
                 .ToImmutableArray();
             var validationItems = items.AddRange(hosts.SelectMany(static host =>
-                host.Routes.AddRange(host.Adapters).AddRange(host.LegacyEndpoints)));
+                host.Routes.Values.AddRange(host.Adapters.Values).AddRange(host.LegacyEndpoints.Values)));
             validationItems = validationItems.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
             foreach (var item in validationItems)
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
                 foreach (var diagnostic in item.Diagnostics)
-                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
+                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
             }
             foreach (var group in validationItems.Where(static item => item.IsValid).GroupBy(static item => item.TypeFullName))
             {
@@ -632,7 +752,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         item.Location,
                         queues[0]!,
                         queues[1]!);
-                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments));
+                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
                 }
             }
             items = items
@@ -722,15 +842,15 @@ namespace Ark.Tools.MediatorFramework.Generators
             var retryExpression = host.RetryTypeFullName is null
                 ? "global::Ark.Tools.MediatorFramework.Messaging.MessagingDefaultRetryPolicy.Instance"
                 : "new " + host.RetryTypeFullName + "()";
-            var handlers = host.Adapters
-                .AddRange(host.LegacyEndpoints)
+            var handlers = host.Adapters.Values
+                .AddRange(host.LegacyEndpoints.Values)
                 .Where(static endpoint => endpoint.IsValid)
                 .GroupBy(static endpoint => endpoint.TypeFullName)
                 .Select(static group => group.First())
                 .OrderBy(static endpoint => endpoint.TypeFullName, StringComparer.Ordinal)
                 .ToImmutableArray();
-            var routes = host.Routes
-                .AddRange(host.LegacyEndpoints)
+            var routes = host.Routes.Values
+                .AddRange(host.LegacyEndpoints.Values)
                 .Where(static endpoint => endpoint.OwnerQueue is not null)
                 .GroupBy(static endpoint => endpoint.TypeFullName)
                 .Select(static group => group.First())
@@ -794,7 +914,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("            var retry = " + retryExpression + ";");
             sb.AppendLine("            return new global::Ark.Tools.MediatorFramework.Rebus.ArkRebusParticipantRequirements(");
             sb.AppendLine("                " + StringLiteral(host.Identity) + ",");
-            sb.AppendLine("                " + (host.Adapters.IsDefaultOrEmpty ? "null" : StringLiteral(host.Identity)) + ",");
+            sb.AppendLine("                " + (host.Adapters.IsEmpty ? "null" : StringLiteral(host.Identity)) + ",");
             sb.AppendLine("                new global::System.Type[]");
             sb.AppendLine("                {");
             foreach (var contract in host.Publishes)
@@ -847,7 +967,72 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Replace('/', '_');
         }
 
-        private readonly record struct AssemblyMapping(ImmutableArray<string> AssemblyNames);
+        private readonly record struct AssemblyMapping(EquatableArray<string> AssemblyNames);
+
+        private readonly record struct HostCandidate(string MetadataName, string? ParticipantAssemblyName);
+
+        private readonly record struct TypeReference(string AssemblyName, string MetadataName);
+
+        private readonly record struct AssemblyEndpoints(string AssemblyName, EquatableArray<EndpointModel> Endpoints);
+
+        /// <summary>Finds messaging networks without walking every type of every assembly on each run.</summary>
+        private readonly struct NetworkIndex
+        {
+            private readonly ImmutableArray<string> _sourceNetworks;
+            private readonly ImmutableArray<TypeReference> _referencedNetworks;
+
+            public NetworkIndex(ImmutableArray<string> sourceNetworks, ImmutableArray<TypeReference> referencedNetworks)
+            {
+                _sourceNetworks = sourceNetworks;
+                _referencedNetworks = referencedNetworks;
+            }
+
+            public IEnumerable<INamedTypeSymbol> Resolve(Compilation compilation)
+            {
+                foreach (var network in _sourceNetworks.Distinct(StringComparer.Ordinal))
+                {
+                    if (compilation.Assembly.GetTypeByMetadataName(network) is { } type)
+                        yield return type;
+                }
+
+                foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+                {
+                    foreach (var network in _referencedNetworks.Where(network =>
+                        string.Equals(network.AssemblyName, assembly.Name, StringComparison.Ordinal)))
+                    {
+                        if (assembly.GetTypeByMetadataName(network.MetadataName) is { } type)
+                            yield return type;
+                    }
+                }
+            }
+        }
+
+        /// <summary>Supplies the legacy Rebus endpoints declared by a participant assembly.</summary>
+        private readonly struct LegacyEndpointIndex
+        {
+            private readonly ImmutableArray<EndpointModel> _sourceEndpoints;
+            private readonly ImmutableArray<AssemblyEndpoints> _referencedEndpoints;
+
+            public LegacyEndpointIndex(ImmutableArray<EndpointModel> sourceEndpoints, ImmutableArray<AssemblyEndpoints> referencedEndpoints)
+            {
+                _sourceEndpoints = sourceEndpoints;
+                _referencedEndpoints = referencedEndpoints;
+            }
+
+            public ImmutableArray<EndpointModel> Get(Compilation compilation, IAssemblySymbol assembly)
+            {
+                if (SymbolEqualityComparer.Default.Equals(assembly, compilation.Assembly))
+                    return _sourceEndpoints;
+
+                foreach (var referenced in _referencedEndpoints)
+                {
+                    if (string.Equals(referenced.AssemblyName, assembly.Name, StringComparison.Ordinal))
+                        return referenced.Endpoints.Values;
+                }
+
+                return ReadLegacyEndpoints(assembly);
+            }
+        }
 
         private sealed record HostModel(
             string HostIdentity,
@@ -856,15 +1041,15 @@ namespace Ark.Tools.MediatorFramework.Generators
             string Accessibility,
             string ParticipantTypeFullName,
             string Identity,
-            ImmutableArray<string> Processes,
-            ImmutableArray<string> Publishes,
-            ImmutableArray<string> Subscribes,
+            EquatableArray<string> Processes,
+            EquatableArray<string> Publishes,
+            EquatableArray<string> Subscribes,
             string? RetryTypeFullName,
             bool RequiresCompression,
             bool RequiresDataBus,
-            ImmutableArray<EndpointModel> Routes,
-            ImmutableArray<EndpointModel> Adapters,
-            ImmutableArray<EndpointModel> LegacyEndpoints,
+            EquatableArray<EndpointModel> Routes,
+            EquatableArray<EndpointModel> Adapters,
+            EquatableArray<EndpointModel> LegacyEndpoints,
             string? Error,
             Location Location)
         {
@@ -906,7 +1091,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 TypeName = typeName;
                 Response = response;
                 OwnerQueue = ownerQueue;
-                Diagnostics = diagnostics;
+                Diagnostics = diagnostics.ToImmutableArray();
                 IsCommand = isCommand;
                 Location = location;
                 IsValid = diagnostics.Count == 0;
@@ -916,7 +1101,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             {
                 TypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 TypeName = GeneratedName(type);
-                Diagnostics = new[] { diagnostic };
+                Diagnostics = ImmutableArray.Create(diagnostic);
                 IsCommand = false;
                 Location = diagnostic.Location;
                 IsValid = false;
@@ -929,7 +1114,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public string TypeName { get; }
             public string? Response { get; }
             public string? OwnerQueue { get; }
-            public IReadOnlyList<DiagnosticInfo> Diagnostics { get; }
+            public EquatableArray<DiagnosticInfo> Diagnostics { get; }
             public bool IsCommand { get; }
             public Location Location { get; }
             public bool IsValid { get; }
@@ -937,18 +1122,18 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private readonly record struct DiagnosticInfo
         {
-            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, params object[] arguments)
+            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location, params string[] arguments)
             {
                 Descriptor = descriptor;
                 Location = location;
-                Arguments = arguments.Length == 0
-                    ? new object[] { typeName }
-                    : new[] { (object)typeName }.Concat(arguments).ToArray();
+                Arguments = new[] { typeName }.Concat(arguments).ToImmutableArray();
             }
 
             public DiagnosticDescriptor Descriptor { get; }
+            // Roslyn source locations compare by syntax tree and span, so they keep models equatable
+            // while reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
             public Location Location { get; }
-            public object[] Arguments { get; }
+            public EquatableArray<string> Arguments { get; }
         }
 
         private static string StringLiteral(string value)
