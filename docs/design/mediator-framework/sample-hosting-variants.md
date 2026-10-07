@@ -144,9 +144,12 @@ Application changes:
   `Running` to `Completed` (SQL `WHERE … [Status] = @Running`, and the same
   transition guard in the in-memory context). A redelivered message reads the
   process as `Completed` and takes the early-return branch, which never
-  publishes. A commit failure rolls back the state change and the envelope
-  together. A redelivery scenario asserts exactly one notification and one
-  audit per completed print.
+  publishes. With SQL Server (every deployed variant) a commit failure rolls
+  back the state change and the envelope together. The in-memory profile is a
+  test double: its context applies state changes immediately and only the
+  outbox is transactional, so it does not give that guarantee, and no
+  scenario injects a commit failure on that profile. A redelivery scenario
+  asserts exactly one notification and one audit per completed print.
 
 Within one variant every participant uses the same stack. Rebus and native
 messaging are never mixed on one network.
@@ -255,12 +258,15 @@ Host composition:
   `MessagingFunctionsHost` each.
 - `OutboxProcessor`: always-running `MessagingOutboxProcessor`; Functions
   never poll the outbox.
-- `Functions.Tests`: startup, generated HTTP function round trip, trigger
-  binding and dispatch, and settlement plus dead-lettering against the
-  Service Bus emulator from `docker-compose.yml`. The trigger apps are compiled
-  for Service Bus and the network requires pub/sub, so a Storage Queue/Azurite
-  profile is not a valid test of this variant. The emulator test is gated on
-  `ARK_SAMPLE_SERVICEBUS_EMULATOR=1`, like the SQL profile.
+- `Functions.Tests`: composition (Api is producer-only; one participant per
+  trigger app) and an Api → outbox processor → worker queue delivery test on
+  the Service Bus emulator, following the repository's emulator convention
+  (`ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING`, entities created with
+  `ServiceBusAdministrationClient`). The trigger apps are compiled for Service
+  Bus and the network requires pub/sub, so a Storage Queue/Azurite profile is
+  not a valid test of this variant. Trigger settlement and dead-lettering are
+  framework behavior covered by the framework's Functions tests; retry
+  exhaustion for this application is covered by `Core.Tests`.
 
 ## Documentation
 

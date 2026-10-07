@@ -541,7 +541,7 @@ real processes would. Remove the moved scenarios from the old test project.
 
 **Files:**
 - Create: `C/Ark.MediatorFramework.Sample.Core.Tests/Ark.MediatorFramework.Sample.Core.Tests.csproj`
-- Move (git mv from `S/test/Ark.MediatorFramework.Sample.Tests/`): `Features/`, `Steps/BookSteps.cs`, `Steps/BookPrintingProcessSteps.cs`, `Drivers/`, `Fakes/`, `Init/`, `Hooks/HooksOrder.cs`, `Hooks/DatabaseHooks.cs`, `Hooks/SampleTestContext.cs`, `Hooks/ApplicationTestContext.cs`, `ApplicationTestContextTests.cs`, `ApplicationCompositionTests.cs`, `ConcurrencyRoundtripTests.cs`, `AsyncEnumerableStreamingTests.cs`, `BookStreamingAndEditionTests.cs`, `TestAssemblyConfiguration.cs`, `GlobalUsings.cs` (copy, keep original for old project)
+- Move (git mv from `S/test/Ark.MediatorFramework.Sample.Tests/`): `Features/`, `Auth/` (`AuthTestContext` holds the `Given I am an authenticated user…` bindings the feature uses), `NativeOutboxIntegrationTests.cs` (minus `DedicatedHostResolvesExactlyOneReservedProcessor`, see Step 2), `Steps/BookSteps.cs`, `Steps/BookPrintingProcessSteps.cs`, `Drivers/`, `Fakes/`, `Init/`, `Hooks/HooksOrder.cs`, `Hooks/DatabaseHooks.cs`, `Hooks/SampleTestContext.cs`, `Hooks/ApplicationTestContext.cs`, `ApplicationTestContextTests.cs`, `ApplicationCompositionTests.cs`, `ConcurrencyRoundtripTests.cs`, `AsyncEnumerableStreamingTests.cs`, `BookStreamingAndEditionTests.cs`, `TestAssemblyConfiguration.cs`, `GlobalUsings.cs` (copy, keep original for old project)
 - Create: `C/…Core.Tests/Hooks/InMemoryMessagingHarness.cs`
 - Create: `C/…Core.Tests/Hooks/ParticipantProcess.cs`
 - Create: `C/…Core.Tests/Hooks/BackgroundMessagingContext.cs` (replaces `RebusScenarioContext`)
@@ -604,11 +604,12 @@ old test project uses, with the renamed paths, so `DatabaseHooks` finds
 OLD=$S/test/Ark.MediatorFramework.Sample.Tests
 NEW=$S/Core/Ark.MediatorFramework.Sample.Core.Tests
 mkdir -p $NEW/Hooks $NEW/Steps
-for f in Features Drivers Fakes Init; do git mv $OLD/$f $NEW/$f; done
+for f in Features Auth Drivers Fakes Init; do git mv $OLD/$f $NEW/$f; done
 for f in Hooks/HooksOrder.cs Hooks/DatabaseHooks.cs Hooks/SampleTestContext.cs Hooks/ApplicationTestContext.cs \
          Steps/BookSteps.cs Steps/BookPrintingProcessSteps.cs \
          ApplicationTestContextTests.cs ApplicationCompositionTests.cs ConcurrencyRoundtripTests.cs \
-         AsyncEnumerableStreamingTests.cs BookStreamingAndEditionTests.cs TestAssemblyConfiguration.cs; do
+         AsyncEnumerableStreamingTests.cs BookStreamingAndEditionTests.cs TestAssemblyConfiguration.cs \
+         NativeOutboxIntegrationTests.cs; do
   git mv $OLD/$f $NEW/$f
 done
 cp $OLD/GlobalUsings.cs $NEW/GlobalUsings.cs
@@ -618,7 +619,15 @@ grep -rl 'Ark.MediatorFramework.Sample.Tests' $NEW | xargs sed -i 's/Ark\.Mediat
 ```
 
 `RebusRetryTests.cs` is deleted here and re-created against the WebRebus host
-in Task 6. In `GlobalUsings.cs` of the new project remove any `Rebus`,
+in Task 7.
+
+`NativeOutboxIntegrationTests` moves because its two SQL tests exercise the
+Application's outbox context through `DatabaseHooks`, which moves too. Its third
+test, `DedicatedHostResolvesExactlyOneReservedProcessor`, uses the old
+`OutboxProcessorComposition` host: cut it out of the moved file and paste it,
+unchanged, into a new `$OLD/OutboxProcessorCompositionTests.cs` (same usings it
+needs, no `DatabaseHooks` dependency), so the old project still compiles and
+the test still runs. Task 6 moves that file to `Web.Tests`. In `GlobalUsings.cs` of the new project remove any `Rebus`,
 `WebInterface`, `AzureFunctions`, or `RebusProcessor` usings.
 
 - [ ] **Step 3: Write `ParticipantProcess`**
@@ -1170,7 +1179,7 @@ Replaces the old `WebInterface`, `OutboxProcessor`, and `GrpcClient` projects.
 - Create: `W/…Core.Web.Processor/`, `W/…Core.Web.NotificationProcessor/`, `W/…Core.Web.AuditProcessor/` — each `*.csproj`, `Program.cs`, `appsettings.json`, `appsettings.Development.json`
 - Move + rename: `S/src/Ark.MediatorFramework.Sample.OutboxProcessor` → `W/…Core.Web.OutboxProcessor`
 - Move + rename: `S/test/Ark.MediatorFramework.Sample.GrpcClient` → `W/…Core.Web.GrpcClient`
-- Create: `W/…Core.Web.Tests/` — moved from the old test project: `BookTransportBoundaryTests.cs`, `CompositionRootTests.cs`, `NodaTimeContractRoundtripTests.cs`, `ApplicationInsightsTests.cs`, `NativeOutboxIntegrationTests.cs`, `Auth/`
+- Create: `W/…Core.Web.Tests/` — moved from the old test project: `BookTransportBoundaryTests.cs`, `CompositionRootTests.cs`, `NodaTimeContractRoundtripTests.cs`, `ApplicationInsightsTests.cs`, `OutboxProcessorCompositionTests.cs`
 - Create: `W/README.md`
 - Modify: `S/Directory.Build.props` (`ArkExportProtoDir` → `$(MSBuildThisFileDirectory)Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/proto`)
 - Modify: both solution files
@@ -1559,7 +1568,7 @@ csproj, update `AdditionalImportDirs` to
 OLD=$S/test/Ark.MediatorFramework.Sample.Tests
 T=$S/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests
 for f in BookTransportBoundaryTests.cs CompositionRootTests.cs NodaTimeContractRoundtripTests.cs \
-         ApplicationInsightsTests.cs NativeOutboxIntegrationTests.cs Auth; do git mv $OLD/$f $T/$f; done
+         ApplicationInsightsTests.cs OutboxProcessorCompositionTests.cs; do git mv $OLD/$f $T/$f; done
 ```
 
 Rewrite each test's arrange block to the new seams:
@@ -1581,7 +1590,8 @@ startup.Configure(app);
 await app.StartAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 ```
 
-`NativeOutboxIntegrationTests` keeps its SQL-only gating. Add one MCP test:
+`OutboxProcessorCompositionTests` now targets the Web variant's
+`OutboxProcessor` composition. Add one MCP test:
 `McpToolsListIncludesBookTools` — `POST /mcp/v1` `tools/list` with the
 integration-test bearer and assert `books.get` is present (use the same
 authenticated `HttpClient` helper as `BookTransportBoundaryTests`).
@@ -1889,8 +1899,7 @@ git commit -m "feat(samples): add web rebus host variant" -m "Assisted-by: Claud
 **Files:**
 - Create: `F/…Core.Functions.Hosting/` — `…Hosting.csproj`, `HttpHost.cs` (from old `Functions/FunctionGeneration.cs`), `FunctionsHosting.cs`, `MessagingPrincipalContextProvider.cs` (same code as Web's, own namespace)
 - Create: `F/…Core.Functions.Api/` (from old `AzureFunctions`: `Program.cs`, `host.json`, `local.settings.json.example`), `F/…Core.Functions.Processor/`, `F/…Core.Functions.Notifications/` (from old `AzureFunctions` messaging trigger), `F/…Core.Functions.Audit/` (from old `AuditFunctions`), `F/…Core.Functions.OutboxProcessor/`
-- Create: `F/…Core.Functions.Tests/` — native parts of `AzureFunctionsRebusTests.cs` renamed `FunctionsCompositionTests.cs`; new `ServiceBusSettlementTests.cs`
-- Create: `S/servicebus-emulator/Config.json`; Modify: `S/docker-compose.yml` (mount it)
+- Create: `F/…Core.Functions.Tests/` — native parts of `AzureFunctionsRebusTests.cs` renamed `FunctionsCompositionTests.cs`; new `ServiceBusDeliveryTests.cs`
 - Create: `F/README.md`
 - Delete: `S/src/` (now only old `AzureFunctions`, `AuditFunctions`, `Functions`), `S/test/` (old test project), `S/Ark.MediatorFramework.Sample.yml`, `.buildStage.yml`, `.deployStage.yml` (replaced in Task 9)
 - Modify: `C/…Core.Application/Host/ApplicationComposition.cs` (delete the temporary legacy `Register` overload)
@@ -1989,6 +1998,9 @@ health checks, App Insights, NLog; replaces the native composition with
 `AddArkSolidProcessors(container)`, then:
 
 ```csharp
+var serviceBusConnection = builder.Configuration["AzureServiceBus:ConnectionString"];
+if (string.IsNullOrWhiteSpace(serviceBusConnection))
+    throw new InvalidOperationException("AzureServiceBus:ConnectionString is required.");
 builder.Services.ConfigureArkMessaging(
     SampleMessagingNetwork.CreateOptions(),
     SampleMessagingNetwork.Registry,
@@ -2030,69 +2042,72 @@ trigger apps are compiled for Service Bus and whose network requires pub/sub
 `MessagingSourceTestExtensions` removes the last use of framework internals,
 so the `InternalsVisibleTo` entry can go.
 
-Add `ServiceBusSettlementTests.cs`, run only when
-`ARK_SAMPLE_SERVICEBUS_EMULATOR=1` (otherwise `Assert.Inconclusive`, same
-gating style as the SQL profile):
+Add `ServiceBusDeliveryTests.cs`. It follows the repository's emulator
+convention (see `tests/Ark.Tools.MediatorFramework.Tests/ServiceBusMessagingTransportConformanceTests.cs`):
+connection from `ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING`, defaulting to the
+documented local emulator value exactly as that test class does; entities
+created and deleted with `ServiceBusAdministrationClient`; no `Config.json`.
+CI already runs the emulator service.
 
 ```csharp
 [TestMethod]
-public async Task ExhaustedWorkerMessageIsDeadLetteredOnServiceBus()
+public async Task ApiMessageReachesWorkerQueueThroughTheOutbox()
 {
-    if (!string.Equals(Environment.GetEnvironmentVariable("ARK_SAMPLE_SERVICEBUS_EMULATOR"), "1", StringComparison.Ordinal))
-        Assert.Inconclusive("Set ARK_SAMPLE_SERVICEBUS_EMULATOR=1 with the docker-compose servicebus service running.");
+    var connection = ServiceBusEmulator.ConnectionString;
+    var queue = FunctionsTestHosts.WorkerQueueName();
+    var administration = new ServiceBusAdministrationClient(connection);
+    await ServiceBusEmulator.RecreateQueueAsync(administration, queue).ConfigureAwait(false);
+    try
+    {
+        await using var client = new ServiceBusClient(connection);
+        var store = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+        await using var api = await FunctionsTestHosts.StartApiProducerAsync(client, store).ConfigureAwait(false);
+        await using var outbox = await FunctionsTestHosts.StartOutboxProcessorAsync(client, store).ConfigureAwait(false);
 
-    await using var client = new ServiceBusClient(ServiceBusEmulator.ConnectionString);
-    var queue = ServiceBusMessagingTransport.ToNativeEntityName(SampleMessagingParticipant.Identity);
-    await using var sender = client.CreateSender(queue);
-    // An unauthorized CreateBookReviewRequest.V1 envelope, produced through the Api
-    // participant's restricted IBus composed exactly as Api/Program.cs does, with
-    // the emulator transport and no review scope on the principal.
-    var store = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
-    await using var outbox = await FunctionsTestHosts.StartOutboxProcessorAsync(client, store).ConfigureAwait(false);
-    await FunctionsTestHosts.SendAsUnauthorizedAsync(client, store, new CreateBookReviewRequest.V1 { BookId = Guid.NewGuid(), Rating = 5, Text = "Good" })
-        .ConfigureAwait(false);
-    await FunctionsTestHosts.WaitForEmptyOutboxAsync(store).ConfigureAwait(false);
-    await using var processor = await FunctionsTestHosts.StartWorkerTriggerAsync(client, store).ConfigureAwait(false);
+        var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(FunctionsTestHosts.NewBook())
+            .ConfigureAwait(false);
+        await api.DispatchAsync<CreateBookPrintProcessRequest.V1, BookPrintProcessResponse>(
+            new CreateBookPrintProcessRequest.V1 { BookId = book.Id }).ConfigureAwait(false);
 
-    await using var deadLetters = client.CreateReceiver(queue, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter });
-    var dead = await deadLetters.ReceiveMessageAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
-    dead.Should().NotBeNull();
+        await using var receiver = client.CreateReceiver(queue);
+        var message = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+        message.Should().NotBeNull();
+        message!.ApplicationProperties[MessagingHeaders.MessageType].Should().Be("books_process_book_print_process");
+        message.ApplicationProperties.Should().ContainKey(UserContextHeaderName);
+    }
+    finally
+    {
+        await administration.DeleteQueueAsync(queue).ConfigureAwait(false);
+    }
 }
 ```
 
-The Api producer composes `UseOutbox()`, so `SendAsUnauthorizedAsync` only
-commits an envelope to `store`'s outbox. `StartOutboxProcessorAsync` composes
-the same service collection as `Core.Functions.OutboxProcessor/Program.cs`
-(`AddArkMessagingOutboxProcessor(store, batchSize: 10)` over a
-`ServiceBusMessagingTransport` built from `client`) and starts its hosted
-service; `WaitForEmptyOutboxAsync` polls the outbox count every 50 ms until 0
-(timeout 10 s). Only then is the message on the worker queue.
+- `StartApiProducerAsync` composes the Api app's service collection exactly as
+  `Api/Program.cs` does (`FunctionsHosting.CreateContainer`, producer with
+  `UseOutbox()` and `UseOutgoingPipeline(typeof(UserContextOutgoingStep))`),
+  with `UseServiceBus(client)` and the in-memory DataBus (single-process test).
+  It returns a dispatch facade like `ParticipantProcess` in Task 4 and sets an
+  authenticated principal with all `ApplicationScopes`.
+- `StartOutboxProcessorAsync` composes the same service collection as
+  `Core.Functions.OutboxProcessor/Program.cs`
+  (`AddArkMessagingOutboxProcessor(store, batchSize: 10)` over a
+  `ServiceBusMessagingTransport` built from `client`) and starts its hosted
+  service. The Api producer only commits envelopes to `store`'s outbox; this
+  processor is what puts them on the queue.
+- `WorkerQueueName()` returns the native entity name the Processor app's
+  generated manifest binds to (read it from the generated
+  `ArkGeneratedMessagingFunctions.Manifest` of the Processor project, or from
+  `ServiceBusMessagingTransport`'s name mapping if it exposes one).
+- `UserContextHeaderName` is the header `UserContextOutgoingStep` writes; take
+  the constant from `Ark.Tools.MediatorFramework.Messaging` (check
+  `UserContextMessagingSteps.cs`).
 
-`FunctionsTestHosts.StartWorkerTriggerAsync` composes the Processor app's
-service collection (same calls as its `Program.cs`, transport from the emulator
-client) and drives the generated Service Bus trigger with a
-`ServiceBusReceiver` loop, passing a real `ServiceBusMessageActions`-compatible
-settlement adapter if the generated trigger requires one; mirror whatever the
-framework's own Functions trigger tests use for settlement. If
-`ToNativeEntityName` is not available on `ServiceBusMessagingTransport`, use
-the queue name from the Processor app's generated manifest.
-`ServiceBusEmulator.ConnectionString` reads `ConnectionStrings:ServiceBus`
-from the test project's `appsettings.IntegrationTests.json`, which holds the
-emulator's documented local development connection string (see the Azure
-Service Bus emulator docs); no real namespace credential is used.
-
-Create `S/servicebus-emulator/Config.json` declaring the three participant
-queues (max delivery count = `SampleMessagingRetryPolicy.MaximumDeliveryCount * 2`,
-as the in-memory harness uses), the completed-print topic, and its two
-forwarding subscriptions; take the native entity names from the generated
-messaging registry (`dotnet build -p:EmitCompilerGeneratedFiles=true` on the
-Application project, then read the generated network file). Mount it in
-`docker-compose.yml` under the `servicebus` service:
-
-```yaml
-    volumes:
-      - ./servicebus-emulator/Config.json:/ServiceBus_Emulator/ConfigFiles/Config.json
-```
+Settlement and dead-lettering of generated Service Bus triggers are framework
+behavior (`ServiceBusMessageActions` is required by the generated function and
+covered by the framework's Functions trigger tests); retry exhaustion to a dead
+letter is covered for this application by the Core.Tests scenario
+`Reject an unauthorized book review through the background bus`. This variant's
+tests do not drive a real broker settlement loop.
 
 Delete the legacy `Register(Container, bool, …)` overload from
 `ApplicationComposition`. Remove the sample entry from `InternalsVisibleTo`.
@@ -2101,9 +2116,7 @@ Remove every old project from `Ark.Tools.slnx` and the sample slnx.
 - [ ] **Step 7: Run everything**
 
 ```bash
-dotnet test $S/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests
-docker compose -f $S/docker-compose.yml up -d servicebus
-ARK_SAMPLE_SERVICEBUS_EMULATOR=1 dotnet test $S/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests
+dotnet test $S/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests   # needs the Service Bus emulator (CI service)
 dotnet test $S/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests
 dotnet test $S/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Tests
 ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test $S/Core/Ark.MediatorFramework.Sample.Core.Tests
