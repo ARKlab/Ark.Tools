@@ -305,6 +305,10 @@ Every step builds the root solution and passes the affected tests.
 - **Process count.** Five processes per native variant is heavy for local
   runs. Variant READMEs list the minimum set needed for a given scenario;
   `docker-compose.yml` provides SQL, Azurite, and a Service Bus emulator.
+- **Framework change.** Fluent native composition gains
+  `UseResourceManagement(IMessagingTransportManagement)`, so the Web variant's
+  print worker can provision its published topic on Service Bus
+  (`ServiceBusTransportManagement`), as Azure Functions composition already can.
 - **Framework change.** `InMemoryMessagingTransport.GetPendingCount` is added
   so host-neutral tests can wait for in-memory work to drain without
   `InternalsVisibleTo`.

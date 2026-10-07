@@ -668,11 +668,16 @@ public sealed class ParticipantProcess : IAsyncDisposable
     /// <summary>Composes and starts one participant.</summary>
     /// <param name="container">The application container, already populated by <c>ApplicationComposition</c>.</param>
     /// <param name="configureMessaging">Registers the participant with <c>ConfigureArkMessaging</c>.</param>
+    /// <param name="bridgeBus">
+    /// <see langword="true"/> to expose the participant bus to the container; <see langword="false"/> for the
+    /// dedicated outbox processor, which registers no bus.
+    /// </param>
     /// <param name="ctk">The cancellation token.</param>
     /// <returns>The started participant.</returns>
     public static async Task<ParticipantProcess> StartAsync(
         Container container,
         Action<IServiceCollection> configureMessaging,
+        bool bridgeBus = true,
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(container);
@@ -682,10 +687,13 @@ public sealed class ParticipantProcess : IAsyncDisposable
         services.AddArkSolidProcessors(container);
         configureMessaging(services);
         var provider = services.BuildServiceProvider(validateScopes: true);
-        container.RegisterSingleton<Ark.Tools.MediatorFramework.IBus>(
-            () => provider.GetRequiredService<Ark.Tools.MediatorFramework.IBus>());
-        container.RegisterSingleton<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(
-            () => provider.GetRequiredService<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>());
+        if (bridgeBus)
+        {
+            container.RegisterSingleton<Ark.Tools.MediatorFramework.IBus>(
+                () => provider.GetRequiredService<Ark.Tools.MediatorFramework.IBus>());
+            container.RegisterSingleton<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(
+                () => provider.GetRequiredService<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>());
+        }
         container.Verify();
         var process = new ParticipantProcess(container, provider);
         foreach (var hosted in process._hosted)
@@ -877,6 +885,7 @@ Supporting members (same class):
                     _applicationOptions.DataContextFactory ?? _sqlOutboxFactory(),
                     batchSize: 10);
             },
+            bridgeBus: false,
             ctk).ConfigureAwait(false);
     }
 ```
@@ -1169,6 +1178,156 @@ git commit -m "feat(samples): publish completed book prints from the print worke
 
 ---
 
+### Task 5b: Resource management for fluent native hosts
+
+A native participant that publishes needs its topics provisioned under the
+default `CreateIfMissing` lifecycle. `ConfigureArkMessaging` obtains the
+`IMessagingTransportManagement` seam only as `transport as IMessagingTransportManagement`
+(`MessagingServiceCollectionExtensions._addArkMessagingParticipant`, 4-argument
+overload). `ServiceBusMessagingTransport` does not implement it; Service Bus
+management lives in the separate `ServiceBusTransportManagement`. A Service Bus
+publisher composed with `ConfigureArkMessaging` therefore fails with
+"does not provide resource lifecycle management". Azure Functions composition
+already passes `ServiceBusTransportManagement` explicitly; the fluent builder
+needs the same seam. Branch: `feature/mf-sample-05b-resource-management`, based
+on Task 5's branch; the Task 6 branch is based on this one.
+
+**Files:**
+- Modify: `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/FluentMessagingComposition.cs` (`MessagingModeBuilder`: field + `UseResourceManagement`; `_registerCommon` passes it)
+- Modify: `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/MessagingServiceCollectionExtensions.cs` (4-argument `_addArkMessagingParticipant` overload gains `IMessagingTransportManagement? management = null`, used as `management ?? transport as IMessagingTransportManagement`)
+- Test: `tests/Ark.Tools.MediatorFramework.Tests/FluentMessagingResourceManagementTests.cs`
+- Modify: `CHANGELOG.md` (`## [Unreleased]` → `### Added`)
+- Modify: `docs/mediator-framework/host-setup-and-composition.md` (one sentence plus snippet under *Fluent native messaging composition*)
+
+**Interfaces:**
+- Produces: `public MessagingModeBuilder<TNetwork, TParticipant> MessagingModeBuilder<TNetwork, TParticipant>.UseResourceManagement(IMessagingTransportManagement management)` — throws `InvalidOperationException("A resource management seam is already selected.")` on a second call, like the other `Use*` selectors.
+
+- [ ] **Step 1: Write the failing tests**
+
+Use a test transport that implements `IMessagingTransport` only (no
+management), the sample-independent test network/participants that
+`tests/Ark.Tools.MediatorFramework.Tests` already declares for fluent
+composition tests (find one whose participant publishes an event; reuse it),
+and a recording `IMessagingTransportManagement` fake (the test project already
+has fakes for `MessagingResourceLifecycleTests`; reuse one if it records
+`EnsureTopicAsync`).
+
+```csharp
+[TestMethod]
+public void PublisherWithoutManagementSeamFailsComposition()
+{
+    var services = new ServiceCollection();
+
+    var act = () => services.ConfigureArkMessaging<TestNetwork>(b => b.Producer<TestPublisher>(p => p
+        .UseTransport(new NonManagingTransport())
+        .UseInMemoryDataBus()));
+
+    act.Should().Throw<InvalidOperationException>().WithMessage("*resource lifecycle management*");
+}
+
+[TestMethod]
+public async Task ExplicitManagementSeamProvisionsPublishedTopics()
+{
+    var management = new RecordingTransportManagement();
+    var services = new ServiceCollection();
+    services.AddLogging();
+    services.ConfigureArkMessaging<TestNetwork>(b => b.Producer<TestPublisher>(p => p
+        .UseTransport(new NonManagingTransport())
+        .UseInMemoryDataBus()
+        .UseResourceManagement(management)));
+    await using var provider = services.BuildServiceProvider();
+
+    foreach (var hosted in provider.GetServices<IHostedService>())
+        await hosted.StartAsync(default).ConfigureAwait(false);
+
+    management.EnsuredTopics.Should().NotBeEmpty();
+}
+
+[TestMethod]
+public void SecondManagementSeamIsRejected()
+{
+    var services = new ServiceCollection();
+    var management = new RecordingTransportManagement();
+
+    var act = () => services.ConfigureArkMessaging<TestNetwork>(b => b.Producer<TestPublisher>(p => p
+        .UseTransport(new NonManagingTransport())
+        .UseInMemoryDataBus()
+        .UseResourceManagement(management)
+        .UseResourceManagement(management)));
+
+    act.Should().Throw<InvalidOperationException>().WithMessage("*already selected*");
+}
+```
+
+Adapt `TestNetwork`/`TestPublisher`/`NonManagingTransport`/`RecordingTransportManagement`
+to the names the test project already uses; create only what does not exist.
+
+- [ ] **Step 2: Run to verify they fail**
+
+Run: `dotnet test tests/Ark.Tools.MediatorFramework.Tests --filter "FullyQualifiedName~FluentMessagingResourceManagementTests"`
+Expected: build error, `UseResourceManagement` not found.
+
+- [ ] **Step 3: Implement**
+
+In `MessagingModeBuilder<TNetwork, TParticipant>`:
+
+```csharp
+    private IMessagingTransportManagement? _resourceManagement;
+
+    /// <summary>Uses an explicit resource-management seam for <c>CreateIfMissing</c> provisioning.</summary>
+    /// <remarks>
+    /// Needed when the transport does not implement <see cref="IMessagingTransportManagement"/> itself,
+    /// for example <c>ServiceBusMessagingTransport</c> with <c>ServiceBusTransportManagement</c>.
+    /// </remarks>
+    /// <param name="management">The resource-management seam.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseResourceManagement(
+        IMessagingTransportManagement management)
+    {
+        ArgumentNullException.ThrowIfNull(management);
+        _resourceManagement = _resourceManagement is null
+            ? management
+            : throw new InvalidOperationException("A resource management seam is already selected.");
+        return this;
+    }
+```
+
+`_registerCommon` passes `_resourceManagement` to `_addArkMessagingParticipant`;
+the 4-argument overload adds the optional `management` parameter and uses
+`management ?? transport as IMessagingTransportManagement`. No behavior change
+for callers that do not use the new method.
+
+- [ ] **Step 4: Run tests**
+
+Run the Step 2 command; expected: 3 passed. Then
+`dotnet test tests/Ark.Tools.MediatorFramework.Tests --filter "FullyQualifiedName~Messaging"`;
+expected: no regressions.
+
+- [ ] **Step 5: Docs and changelog**
+
+CHANGELOG `Added`:
+`- Fluent native messaging composition accepts an explicit resource-management seam (UseResourceManagement), so Service Bus publishers outside Azure Functions can provision their topics.`
+
+`host-setup-and-composition.md`, after the first fluent snippet:
+
+```csharp
+.UseTransport(transport => transport.UseServiceBus(client))
+.UseResourceManagement(new ServiceBusTransportManagement(administrationClient))
+```
+
+with one sentence: a transport that does not manage its own resources needs an
+explicit seam when the network uses `CreateIfMissing`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/mediator-framework/Ark.Tools.MediatorFramework.Messaging tests/Ark.Tools.MediatorFramework.Tests \
+  CHANGELOG.md docs/mediator-framework/host-setup-and-composition.md
+git commit -m "feat(MediatorFramework): accept explicit messaging resource management" -m "Assisted-by: Claude"
+```
+
+---
+
 ### Task 6: `Web` variant (Minimal API + gRPC + MCP + native messaging)
 
 Replaces the old `WebInterface`, `OutboxProcessor`, and `GrpcClient` projects.
@@ -1188,7 +1347,9 @@ Replaces the old `WebInterface`, `OutboxProcessor`, and `GrpcClient` projects.
 - Consumes: Task 3 `ApplicationComposition`, `ApplicationOptions`; Task 5 participants.
 - Produces:
   - `WebHosting.CreateContainer(ApplicationOptions options) : Container` — `Register` + authorization + `ScopeAuthorizationHandler`.
-  - `WebHosting.AddParticipant<TParticipant>(IServiceCollection services, Container container, IMessagingTransport transport, IMessagingDataBus dataBus, bool receiver)` — JSON codec options, `AddArkSolidProcessors`, user-context steps, `ConfigureArkMessaging` Producer or Receiver (both with `UseOutbox()`).
+  - `WebHosting.AddParticipant<TParticipant>(IServiceCollection services, Container container, IMessagingTransport transport, IMessagingDataBus dataBus, IMessagingTransportManagement? resourceManagement, bool receiver)` — JSON codec options, `AddArkSolidProcessors`, user-context steps, `ConfigureArkMessaging` Producer or Receiver (both with `UseOutbox()`, plus `UseResourceManagement` when a manager is given).
+  - `WebHosting.CreateResourceManagement(IConfiguration configuration) : IMessagingTransportManagement`.
+- Consumes: Task 5b `MessagingModeBuilder.UseResourceManagement(IMessagingTransportManagement)`.
   - `WebHosting.BridgeBus(Container container, Func<IServiceProvider> services)` — lazy `IBus`/`IBusOutboxEnlistment` registrations resolved from the built provider.
   - `MessagingPrincipalContextProvider : IContextProvider<ClaimsPrincipal>` with `void Set(ClaimsPrincipal principal)` backed by `AsyncLocal`.
 
@@ -1226,7 +1387,7 @@ public sealed class ProcessorCompositionTests
         var services = new ServiceCollection();
         services.AddLogging();
 
-        WebHosting.AddParticipant<SampleMessagingAuditParticipant>(services, container, transport, dataBus, receiver: true);
+        WebHosting.AddParticipant<SampleMessagingAuditParticipant>(services, container, transport, dataBus, resourceManagement: null, receiver: true);
         await using var provider = services.BuildServiceProvider();
         WebHosting.BridgeBus(container, () => provider);
         container.Verify();
@@ -1327,12 +1488,18 @@ public static class WebHosting
     /// <param name="container">The application container.</param>
     /// <param name="transport">The messaging transport.</param>
     /// <param name="dataBus">The claim-check DataBus.</param>
+    /// <param name="resourceManagement">
+    /// Provisions the participant's published topics (`CreateIfMissing`). Production passes
+    /// <c>ServiceBusTransportManagement</c>; tests pass <see langword="null"/> because the in-memory
+    /// transport manages its own resources.
+    /// </param>
     /// <param name="receiver"><see langword="true"/> to host a processor; <see langword="false"/> for a producer.</param>
     public static void AddParticipant<TParticipant>(
         IServiceCollection services,
         Container container,
         IMessagingTransport transport,
         IMessagingDataBus dataBus,
+        IMessagingTransportManagement? resourceManagement,
         bool receiver)
         where TParticipant : class, IMessagingParticipant<TParticipant>
     {
@@ -1356,12 +1523,16 @@ public static class WebHosting
             services.ConfigureArkMessaging(
                 SampleMessagingNetwork.CreateOptions(),
                 SampleMessagingNetwork.Registry,
-                messaging => messaging.Receiver<TParticipant>(r => r
-                    .UseTransport(transport)
-                    .UseDataBus(dataBus)
-                    .UseIncomingPipeline(typeof(UserContextIncomingStep))
-                    .UseOutgoingPipeline(typeof(UserContextOutgoingStep))
-                    .UseOutbox()));
+                messaging => messaging.Receiver<TParticipant>(r =>
+                {
+                    r.UseTransport(transport)
+                        .UseDataBus(dataBus)
+                        .UseIncomingPipeline(typeof(UserContextIncomingStep))
+                        .UseOutgoingPipeline(typeof(UserContextOutgoingStep))
+                        .UseOutbox();
+                    if (resourceManagement is not null)
+                        r.UseResourceManagement(resourceManagement);
+                }));
         }
         else
         {
@@ -1370,12 +1541,33 @@ public static class WebHosting
             services.ConfigureArkMessaging(
                 SampleMessagingNetwork.CreateOptions(),
                 SampleMessagingNetwork.Registry,
-                messaging => messaging.Producer<TParticipant>(p => p
-                    .UseTransport(transport)
-                    .UseDataBus(dataBus)
-                    .UseOutgoingPipeline(typeof(UserContextOutgoingStep))
-                    .UseOutbox()));
+                messaging => messaging.Producer<TParticipant>(p =>
+                {
+                    p.UseTransport(transport)
+                        .UseDataBus(dataBus)
+                        .UseOutgoingPipeline(typeof(UserContextOutgoingStep))
+                        .UseOutbox();
+                    if (resourceManagement is not null)
+                        p.UseResourceManagement(resourceManagement);
+                }));
         }
+    }
+
+    /// <summary>Creates the Service Bus resource manager that provisions published topics.</summary>
+    /// <remarks>
+    /// Reads <c>ConnectionStrings:ServiceBusAdministration</c>, falling back to
+    /// <c>ConnectionStrings:ServiceBus</c>. A namespace uses one connection for both; the local
+    /// emulator serves administration on a different port, so development settings set both keys.
+    /// </remarks>
+    /// <param name="configuration">The process configuration.</param>
+    /// <returns>The resource manager.</returns>
+    public static IMessagingTransportManagement CreateResourceManagement(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var connection = configuration.GetConnectionString("ServiceBusAdministration")
+            ?? configuration.GetConnectionString("ServiceBus")
+            ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
+        return new ServiceBusTransportManagement(new ServiceBusAdministrationClient(connection));
     }
 
     /// <summary>Creates the claim-check DataBus shared by every Web process.</summary>
@@ -1441,7 +1633,10 @@ Edits:
 - `ConfigureServices`: delete the `InMemNetwork` registration, both
   `IHostedService` registrations, `OnContainerVerified = … StartBus()`, and
   the inline `ConfigureArkMessaging` producer; call
-  `WebHosting.AddParticipant<SampleMessagingApiParticipant>(services, _container, _transport, _dataBus, receiver: false)`.
+  `WebHosting.AddParticipant<SampleMessagingApiParticipant>(services, _container, _transport, _dataBus, _resourceManagement, receiver: false)`
+  (`SampleStartup` and `SampleHost.Configure` gain an `IMessagingTransportManagement? resourceManagement`
+  parameter next to `dataBus`; `Program.cs` passes `WebHosting.CreateResourceManagement(builder.Configuration)`,
+  tests pass `null`).
   In `CrossWireContainer` also register
   `IContextProvider<ClaimsPrincipal>` as `AspNetCoreUserContextProvider` over the
   forwarded `IHttpContextAccessor`, and call
@@ -1461,7 +1656,9 @@ try
         ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
     await using var container = WebHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
     await using var transport = new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus));
-    var startup = SampleHost.Configure(builder, container, transport, WebHosting.CreateDataBus(builder.Configuration));
+    var startup = SampleHost.Configure(
+        builder, container, transport, WebHosting.CreateDataBus(builder.Configuration),
+        WebHosting.CreateResourceManagement(builder.Configuration));
     var app = builder.Build();
     startup.Configure(app);
     await app.RunAsync().ConfigureAwait(false);
@@ -1472,7 +1669,9 @@ Keep the existing `catch`/`finally` NLog blocks unchanged.
 `appsettings.Development.json` holds the local SQL emulator connection under
 `ConnectionStrings:Sample`, the Service Bus emulator connection under
 `ConnectionStrings:ServiceBus`, and `UseDevelopmentStorage=true` (Azurite) under
-`ConnectionStrings:DataBus` (all from `docker-compose.yml`). Every Web process
+`ConnectionStrings:DataBus` (all from `docker-compose.yml`), plus
+`ConnectionStrings:ServiceBusAdministration` for the emulator's administration
+port. Every Web process
 uses the same three keys. The in-memory DataBus appears only in tests, where
 all participants share one instance in one process.
 If `ServiceBusMessagingTransport` is not `IAsyncDisposable`, replace
@@ -1516,7 +1715,8 @@ try
     await using var container = WebHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
     await using var transport = new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus));
     WebHosting.AddParticipant<SampleMessagingParticipant>(
-        builder.Services, container, transport, WebHosting.CreateDataBus(builder.Configuration), receiver: true);
+        builder.Services, container, transport, WebHosting.CreateDataBus(builder.Configuration),
+        WebHosting.CreateResourceManagement(builder.Configuration), receiver: true);
     IHost? built = null;
     WebHosting.BridgeBus(container, () => built?.Services
         ?? throw new InvalidOperationException("The host is not built yet."));
@@ -1555,10 +1755,15 @@ git mv $S/src/Ark.MediatorFramework.Sample.OutboxProcessor $S/Core/Hosts/Web/Ark
 git mv $S/test/Ark.MediatorFramework.Sample.GrpcClient $S/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.GrpcClient
 ```
 
-Rename csproj files and namespaces as in Step 3. In `OutboxProcessor/Program.cs`
-read `ConnectionStrings:Sample` and `ConnectionStrings:ServiceBus` from
-`ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true).AddEnvironmentVariables()`
-instead of the two `ARK_SAMPLE_*` environment variables. In the GrpcClient
+Rename csproj files and namespaces as in Step 3. Rewrite
+`OutboxProcessor/Program.cs` on `Host.CreateApplicationBuilder(args)` like the
+other Web processes (Step 4), so configuration comes from the generic host
+defaults: `appsettings.json`, `appsettings.{Environment}.json` (local values in
+`appsettings.Development.json`), then environment variables. Read
+`ConnectionStrings:Sample` and `ConnectionStrings:ServiceBus` from
+`builder.Configuration` instead of the two `ARK_SAMPLE_*` environment
+variables, register the processor with `AddArkMessagingOutboxProcessor`, and run
+the host. In the GrpcClient
 csproj, update `AdditionalImportDirs` to
 `../Ark.MediatorFramework.Sample.Core.Web.WebInterface/proto`.
 
@@ -1584,7 +1789,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     ContentRootPath = AppContext.BaseDirectory,
 });
 builder.WebHost.UseTestServer();
-var startup = SampleHost.Configure(builder, container, transport, new InMemoryMessagingDataBus());
+var startup = SampleHost.Configure(builder, container, transport, new InMemoryMessagingDataBus(), resourceManagement: null);
 await using var app = builder.Build();
 startup.Configure(app);
 await app.StartAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
@@ -2053,13 +2258,12 @@ CI already runs the emulator service.
 [TestMethod]
 public async Task ApiMessageReachesWorkerQueueThroughTheOutbox()
 {
-    var connection = ServiceBusEmulator.ConnectionString;
     var queue = FunctionsTestHosts.WorkerQueueName();
-    var administration = new ServiceBusAdministrationClient(connection);
+    var administration = new ServiceBusAdministrationClient(ServiceBusEmulator.AdministrationConnectionString);
     await ServiceBusEmulator.RecreateQueueAsync(administration, queue).ConfigureAwait(false);
     try
     {
-        await using var client = new ServiceBusClient(connection);
+        await using var client = new ServiceBusClient(ServiceBusEmulator.DataPlaneConnectionString);
         var store = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
         await using var api = await FunctionsTestHosts.StartApiProducerAsync(client, store).ConfigureAwait(false);
         await using var outbox = await FunctionsTestHosts.StartOutboxProcessorAsync(client, store).ConfigureAwait(false);
@@ -2082,6 +2286,13 @@ public async Task ApiMessageReachesWorkerQueueThroughTheOutbox()
 }
 ```
 
+- `ServiceBusEmulator` (test-only static class) mirrors
+  `ServiceBusMessagingTransportConformanceTests`: `AdministrationConnectionString`
+  is `ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING` or the documented default
+  (HTTP administration port 5300); `DataPlaneConnectionString` is the same
+  string with the endpoint port removed (copy `_dataPlaneConnectionString` and
+  its `[ComplianceReviewed]` attribute verbatim). Administration clients use the
+  first, `ServiceBusClient` uses the second.
 - `StartApiProducerAsync` composes the Api app's service collection exactly as
   `Api/Program.cs` does (`FunctionsHosting.CreateContainer`, producer with
   `UseOutbox()` and `UseOutgoingPipeline(typeof(UserContextOutgoingStep))`),
@@ -2157,8 +2368,13 @@ Base each variant's three files on the deleted
 `git show HEAD~1:samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.buildStage.yml`).
 Each build stage: restore locked, start SQL, build the root sample slnx, run
 `Core.Tests` + the variant's tests, publish that variant's deployables plus the
-DACPAC. Each deploy stage keeps `enableDeployment: 'false'`. Triggers: `master`
-and PRs, with path filters `Core/*` + `Core/Hosts/<Variant>/*`.
+DACPAC. The `Functions` build stage additionally starts the Service Bus emulator
+(same image and environment as `.github/workflows/ci.yml`, pointed at the SQL
+container), waits until ports 5300 and 5672 accept connections, and sets
+`ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING` before running the Functions tests.
+Each deploy stage keeps `enableDeployment: 'false'`. Triggers: keep the current
+pipeline's branches, `master` and `develop`, for both push and PR, with path
+filters `Core/*` + `Core/Hosts/<Variant>/*`.
 
 - [ ] **Step 2: Rewrite links**
 
@@ -2203,7 +2419,7 @@ sample paths: mention them in the PR, do not fix).
   participant".
 - `design.md` *Sample mapping*: replace the WebInterface paragraph with a link
   to `sample-hosting-variants.md` and a three-line summary.
-- Board: add a "Sample hosting variants" section with one row linking this plan.
+- Board: set the existing `SHV` row in `docs/plans/mediator-framework/tasks/README.md` to `Complete` (the section already exists).
 
 - [ ] **Step 5: Commit**
 
@@ -2225,6 +2441,7 @@ git commit -m "docs(samples): document mediator sample hosting variants" -m "Ass
 | D5 self-contained variants, duplicated process code | 6–8 (variant `Hosting` library; outbox processor duplicated) |
 | D6 four participants, one process each | 4 (tests), 6, 7, 8 |
 | D7 worker publishes `BookPrintCompleted` | 5 |
+| Service Bus publisher provisioning outside Functions (framework gap) | 5b |
 | D8 API/Application free of host packages | 7 (Rebus), 8 (legacy overload) |
 | D9 host-neutral application tests | 4 |
 | D10 configuration-driven composition, no test flags | 3, 6–8 |
