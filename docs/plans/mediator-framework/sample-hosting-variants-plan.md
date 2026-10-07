@@ -48,6 +48,12 @@ MSTest + AwesomeAssertions, SQL Server DACPAC, Service Bus (emulator for tests).
   `ARK_SAMPLE_INMEMORY_TESTS=1` when Docker is unavailable, and with the SQL
   profile (`docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d db`)
   before pushing.
+- Locked restore: `Ark.Tools.Sdk` sets `RestorePackagesWithLockFile=true` and
+  CI restores with `RestoreLockedMode=true`. Every project created or whose
+  references change in a task gets its `packages.lock.json` regenerated with
+  `dotnet restore <project>` and committed in the same commit; moved projects
+  keep theirs (`git mv` the folder). Before each commit run
+  `dotnet restore Ark.Tools.slnx -p:RestoreLockedMode=true`; expected: success.
 - `ArkApiSurface.txt` diffs are accepted only for the renames and topology
   changes this plan names. Accept with
   `dotnet build <project> -p:EmitCompilerGeneratedFiles=true` then copy
@@ -136,26 +142,30 @@ public sealed class InMemoryMessagingTransportPendingCountTests
     }
 
     [TestMethod]
-    public async Task PendingCountIncludesVisibleAndLockedDeliveries()
+    public async Task PendingCountIncludesVisibleScheduledAndLockedDeliveries()
     {
         var transport = new InMemoryMessagingTransport();
-        await transport.SendAsync("q", _headers, new ReadOnlySequence<byte>([1]), default).ConfigureAwait(false);
-        await transport.SendAsync("q", _headers, new ReadOnlySequence<byte>([2]), default).ConfigureAwait(false);
+        await transport.SendAsync("q", _headers, new ReadOnlySequence<byte>([1]), dueTime: null, default)
+            .ConfigureAwait(false);
+        await transport.SendAsync("q", _headers, new ReadOnlySequence<byte>([2]), DateTimeOffset.UtcNow.AddHours(1), default)
+            .ConfigureAwait(false);
 
-        transport.GetPendingCount("q").Should().Be(2);
+        transport.GetPendingCount("q").Should().Be(2, "one visible and one scheduled delivery are pending");
 
         var batch = await transport.ReceiveBatchAsync("q", 1, TimeSpan.Zero, default).ConfigureAwait(false);
-        transport.GetPendingCount("q").Should().Be(2);
+        batch.Should().ContainSingle();
+        transport.GetPendingCount("q").Should().Be(2, "the locked delivery and the scheduled delivery are pending");
 
         await batch[0].CompleteAsync(default).ConfigureAwait(false);
-        transport.GetPendingCount("q").Should().Be(1);
+        transport.GetPendingCount("q").Should().Be(1, "only the scheduled delivery is pending");
     }
 }
 ```
 
-Before running, open `InMemoryMessagingTransport.SendAsync` and match the exact
-parameter list (queue, headers, payload, optional scheduling, token); adjust the
-two `SendAsync` calls only if the signature differs.
+`SendAsync(string queue, IReadOnlyDictionary<string,string> headers, ReadOnlySequence<byte> payload, DateTimeOffset? dueTime, CancellationToken ctk)`
+puts a future `dueTime` into the scheduled queue, so the second assertion fails
+if `_scheduled.Count` is omitted and the third fails if `_locked.Count` is
+omitted.
 
 - [ ] **Step 2: Run test to verify it fails**
 
