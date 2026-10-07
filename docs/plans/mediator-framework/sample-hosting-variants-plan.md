@@ -1079,6 +1079,170 @@ git commit -m "test(samples): run application scenarios on in-memory messaging" 
 
 ---
 
+### Task 4b: Idempotent book-review creation
+
+`CreateBookReviewRequest.V1` travels as an at-least-once message on every
+variant (Task 4). `CreateBookReviewHandler` generates a new `Guid` and inserts
+on every call, so a settlement failure after commit creates a duplicate review
+on redelivery. The sender now supplies the review identifier, and the handler
+treats a repeat as a no-op that returns the stored review. Branch:
+`feature/mf-sample-04b-review-idempotency`, based on Task 4's branch; the
+Task 5 branch is based on this one.
+
+**Files:**
+- Modify: `C/…Core.API/BookReviewContracts.cs` (`V1.ReviewId`)
+- Modify: `C/…Core.Application/Handlers/Book/BookReviewHandlers.cs`
+- Modify: `C/…Core.Application/DAL/SampleDataContext.cs` (interface + SQL `ReadBookReviewAsync`)
+- Modify: `C/…Core.Application/DAL/InMemorySampleDataContextFactory.cs` (`ReadBookReviewAsync`)
+- Create: `C/…Core.Application/Exceptions/BookReviewIdConflictViolation.cs`
+- Modify: `C/…Core.Tests/Features/Books.feature`, `C/…Core.Tests/Steps/` (review steps and `BackgroundMessagingSteps`), `C/…Core.Tests/Drivers/BookDriver.cs`
+- Modify: `C/…Core.API/ArkApiSurface.txt` (accepted diff: `V1.ReviewId`), any OpenAPI or MCP snapshot that lists the request schema
+- Modify: `samples/Ark.MediatorFramework.Sample/README.md` or the Core README section on reviews (one paragraph)
+
+**Interfaces:**
+- Consumes: Task 4 `ApplicationTestContext.SendAsync<T>`, `BackgroundMessagingSteps`, `BookDriver`.
+- Produces: `CreateBookReviewRequest.V1.ReviewId : Guid?` — the client-generated review id. When set, a repeated request with the same id and the same `BookId` returns the stored review and writes nothing. When unset, the handler generates one (the plain HTTP call stays non-idempotent, as it is today). Every bus sender in every variant sets it.
+- Produces: `ISampleDataContext.ReadBookReviewAsync(Guid id, CancellationToken ctk = default) : Task<BookReview?>`.
+- Produces: `BookReviewIdConflictViolation(Guid reviewId) : BusinessRuleViolation` — the id already belongs to a review of another book.
+
+- [ ] **Step 1: Write the failing scenarios**
+
+Append to `Rule: Book reviews demonstrate child-resource behavior`:
+
+```gherkin
+        Scenario: Repeating a book review with the same identifier creates it once
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I create a book review with
+                | ReviewId                             | Rating | Text            |
+                | 5d1f3c1e-8a59-4f39-9d55-0c6a0f7b2a11 | 5      | Excellent book! |
+            And I create a book review with
+                | ReviewId                             | Rating | Text            |
+                | 5d1f3c1e-8a59-4f39-9d55-0c6a0f7b2a11 | 5      | Excellent book! |
+            Then the book review was created
+            And the last two book reviews have the same identifier
+            When I list book reviews with
+                | Skip | Limit |
+                | 0    | 10    |
+            Then the book review list has 1 results
+            And the audit log has 1 entries for the book review
+
+        Scenario: Redelivering a background book review creates it once
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user
+            When I dispatch the same book review for the current book through the background bus twice with
+                | Rating | Text            |
+                | 5      | Excellent book! |
+            And I wait for the background bus to be idle and the outbox to be empty
+            When I list book reviews with
+                | Skip | Limit |
+                | 0    | 10    |
+            Then the book review list has 1 results
+            And the audit log has 1 entries for the book review
+
+        Scenario: Reject a review identifier that belongs to another book
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I create a book review with
+                | ReviewId                             | Rating | Text            |
+                | 7c2e4b10-3d6a-4c8e-b1f2-9a0d5e6f7a22 | 5      | Excellent book! |
+            And I create a book with
+                | Title       | Author | Genre   |
+                | Neuromancer | Gibson | Fiction |
+            When I create a book review with
+                | ReviewId                             | Rating | Text   |
+                | 7c2e4b10-3d6a-4c8e-b1f2-9a0d5e6f7a22 | 4      | Second |
+            Then the book request fails with a business rule violation
+```
+
+Reuse existing step texts where they exist (book creation, review list,
+failure assertions; the business-rule failure step already exists for print
+processes — use its exact text). New bindings:
+- `the last two book reviews have the same identifier` — `BookDriver` keeps the
+  previous and current `BookReview`.
+- `the audit log has {int} entries for the book review` — counts audit entries
+  with `EntityType = "BookReview"` and `Identifier` = the current review id,
+  through the existing audit accessor of `ApplicationTestContext`.
+- `I dispatch the same book review … twice with` — builds one V1 with
+  `ReviewId = Guid.NewGuid()` and sends it twice through `SendAsync`. Two
+  sends of one payload are what a redelivery looks like to the handler.
+
+The existing `I dispatch a book review … through the background bus with`
+step also sets `ReviewId = Guid.NewGuid()`: every bus sender supplies the id.
+
+- [ ] **Step 2: Run to verify they fail**
+
+Run: `ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test $S/Core/Ark.MediatorFramework.Sample.Core.Tests --filter "DisplayName~review"`
+Expected: build error (`ReviewId` not found), then after Step 3's contract
+change only, the three scenarios fail on counts / missing violation.
+
+- [ ] **Step 3: Implement**
+
+Contract (`BookReviewContracts.cs`, inside `V1`):
+
+```csharp
+        /// <summary>
+        /// Gets the client-generated review identifier. Repeating a request with the same identifier for the
+        /// same book returns the stored review and writes nothing; senders over a message bus must set it so
+        /// that redelivery is idempotent. When omitted, the server generates a new identifier.
+        /// </summary>
+        public Guid? ReviewId { get; init; }
+```
+
+Data context: `ReadBookReviewAsync(Guid id, CancellationToken ctk = default)`
+returning `BookReview?`. SQL: `SELECT [Id], [BookId], [UserId], [Rating], [Text], [CreatedAt] FROM [dbo].[BookReview] WHERE [Id] = @Id;`
+in the current transaction. In-memory: `_bookReviews.TryGetValue`.
+
+Handler, after the book existence check and before building the review:
+
+```csharp
+        var reviewId = request.ReviewId ?? Guid.NewGuid();
+        var existing = await context.ReadBookReviewAsync(reviewId, ctk).ConfigureAwait(false);
+        if (existing is not null)
+        {
+            return existing.BookId == request.BookId
+                ? existing
+                : throw new BusinessRuleViolationException(new BookReviewIdConflictViolation(reviewId));
+        }
+```
+
+and use `reviewId` as `BookReview.Id`. No schema change: `PK_BookReview`
+already rejects a concurrent duplicate insert; that delivery fails, is
+retried, and then takes the early-return branch.
+
+`BookReviewIdConflictViolation` follows `BookPrintingProcessAlreadyRunningViolation`:
+title `"The review identifier is already in use."`, `Detail` naming the id,
+property `ReviewId`.
+
+Validator: `RuleFor(r => r.ReviewId).NotEqual(Guid.Empty).When(r => r.ReviewId.HasValue);`
+
+Accept the `ArkApiSurface.txt` diff (`ReviewId` only) per Global Constraints,
+and any OpenAPI/MCP schema snapshot that now lists `reviewId`.
+
+- [ ] **Step 4: Run tests**
+
+Run the Step 2 command; expected: all review scenarios pass. Then the whole
+in-memory profile: `ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test $S/Core/Ark.MediatorFramework.Sample.Core.Tests`;
+expected: no regressions. Build the old projects still in the solution
+(`dotnet build Ark.Tools.slnx`); expected: success. SQL runs in CI.
+
+- [ ] **Step 5: Docs and commit**
+
+One paragraph in the sample README where reviews are described: bus senders
+set `ReviewId`; a repeat is a no-op; the HTTP call without it is not
+idempotent. No CHANGELOG entry (sample-only).
+
+```bash
+git add -A samples/Ark.MediatorFramework.Sample
+git commit -m "feat(samples): make book review creation idempotent" -m "Assisted-by: Claude"
+```
+
+---
+
 ### Task 5: The print worker publishes `BookPrintCompleted`
 
 **Files:**
@@ -2092,7 +2256,7 @@ public sealed class RebusTopologyTests
             .ConfigureAwait(false);
 
         api.SetScopes(ApplicationScopes.BookRead, ApplicationScopes.BookWrite);
-        await api.SendAsync(new CreateBookReviewRequest.V1 { BookId = book.Id, Rating = 5, Text = "Good" })
+        await api.SendAsync(new CreateBookReviewRequest.V1 { ReviewId = Guid.NewGuid(), BookId = book.Id, Rating = 5, Text = "Good" })
             .ConfigureAwait(false);
 
         await WebRebusTestHosts.WaitUntilAsync(() => network.GetCount("error") > 0).ConfigureAwait(false);

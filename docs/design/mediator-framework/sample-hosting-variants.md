@@ -150,6 +150,11 @@ Application changes:
   outbox is transactional, so it does not give that guarantee, and no
   scenario injects a commit failure on that profile. A redelivery scenario
   asserts exactly one notification and one audit per completed print.
+- Review idempotency: `CreateBookReviewRequest.V1` carries an optional
+  client-generated `ReviewId`. Every bus sender sets it; a repeated request with
+  the same id and book returns the stored review and writes nothing, so a
+  redelivery after commit creates no duplicate. Reusing an id for another book
+  is a business-rule violation. Without the id the HTTP call is not idempotent.
 
 Within one variant every participant uses the same stack. Rebus and native
 messaging are never mixed on one network.
