@@ -139,6 +139,14 @@ Application changes:
   event is published only by a test. The worker keeps its inline call to the
   external `IPrintCompletedNotificationService`, so the existing
   failed-notification scenario is unchanged.
+- Idempotency boundary: delivery is at-least-once. The event is enqueued only
+  in the transaction whose conditional update moves the process from
+  `Running` to `Completed` (SQL `WHERE … [Status] = @Running`, and the same
+  transition guard in the in-memory context). A redelivered message reads the
+  process as `Completed` and takes the early-return branch, which never
+  publishes. A commit failure rolls back the state change and the envelope
+  together. A redelivery scenario asserts exactly one notification and one
+  audit per completed print.
 
 Within one variant every participant uses the same stack. Rebus and native
 messaging are never mixed on one network.
@@ -230,9 +238,11 @@ Host composition:
 - `WebInterface`: generated Minimal API endpoints; Rebus one-way client with
   the Rebus outbox. No gRPC or MCP.
 - `Processor`, `NotificationProcessor`, `AuditProcessor`: Rebus receivers,
-  one `ArkRebusHost` each, Rebus outbox processor enabled.
-- `WebRebus.Tests`: startup, HTTP round trip, Rebus retry, dead-letter
-  (`FailingRebusRequest`), outbox dispatch.
+  one `ArkRebusHost` each. The worker runs the Rebus outbox processor and
+  drains the shared outbox table; the other processes enlist nothing.
+- `WebRebus.Tests`: startup, HTTP round trip, completed print reaching both
+  subscribers, retry exhaustion to the error queue (unauthorized background
+  review), outbox dispatch.
 
 ### `Functions` — Azure Functions + native messaging
 
@@ -243,7 +253,11 @@ Host composition:
 - `OutboxProcessor`: always-running `MessagingOutboxProcessor`; Functions
   never poll the outbox.
 - `Functions.Tests`: startup, generated HTTP function round trip, trigger
-  binding and settlement, poison queue on Azurite (Storage Queue profile).
+  binding and dispatch, and settlement plus dead-lettering against the
+  Service Bus emulator from `docker-compose.yml`. The trigger apps are compiled
+  for Service Bus and the network requires pub/sub, so a Storage Queue/Azurite
+  profile is not a valid test of this variant. The emulator test is gated on
+  `ARK_SAMPLE_SERVICEBUS_EMULATOR=1`, like the SQL profile.
 
 ## Documentation
 

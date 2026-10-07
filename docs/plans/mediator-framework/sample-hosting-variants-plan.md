@@ -16,7 +16,7 @@ reference a host. The old layout is deleted as each variant replaces it.
 
 **Tech Stack:** .NET 10, SimpleInjector, Ark.Tools.MediatorFramework (Minimal
 API, gRPC, MCP, native messaging, Azure Functions, Rebus generators), Reqnroll +
-MSTest + AwesomeAssertions, SQL Server DACPAC, Azurite, Service Bus.
+MSTest + AwesomeAssertions, SQL Server DACPAC, Service Bus (emulator for tests).
 
 **Spec:** [`docs/design/mediator-framework/sample-hosting-variants.md`](../../design/mediator-framework/sample-hosting-variants.md)
 
@@ -968,7 +968,39 @@ Append to `Rule: Book printing runs asynchronously` in `Books.feature`:
             Then the completed print of the current book was notified and audited
 ```
 
-Add the binding in `BookPrintingProcessSteps.cs`:
+Add a redelivery scenario to pin the idempotency boundary (spec: *Messaging
+topology*):
+
+```gherkin
+        Scenario: Publish a completed book print once when its message is redelivered
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I start a book print process for the current book with
+                | ShouldFail |
+                | false      |
+            And I wait for the background bus to be idle and the outbox to be empty
+            And the current book print process message is delivered again
+            And I wait for the background bus to be idle and the outbox to be empty
+            Then the completed print of the current book was notified and audited
+```
+
+Add the bindings in `BookPrintingProcessSteps.cs`:
+
+```csharp
+    /// <summary>Simulates at-least-once redelivery of the worker message.</summary>
+    [When("the current book print process message is delivered again")]
+    public async Task CurrentProcessMessageIsDeliveredAgain()
+    {
+        var process = Current ?? throw new InvalidOperationException("No current book print process.");
+        await _sampleContext.Application.SendAsync(new ProcessBookPrintProcessRequest { Id = process.Id })
+            .ConfigureAwait(false);
+    }
+```
+
+`Current` is the class's existing `BookPrintProcessResponse?` property.
+`ContainSingle` in the next binding is what makes the redelivery scenario
+fail if the worker publishes twice.
 
 ```csharp
     /// <summary>Asserts that both subscribers received the completed-print event.</summary>
@@ -1772,7 +1804,8 @@ git commit -m "feat(samples): add web rebus host variant" -m "Assisted-by: Claud
 **Files:**
 - Create: `F/…Core.Functions.Hosting/` — `…Hosting.csproj`, `HttpHost.cs` (from old `Functions/FunctionGeneration.cs`), `FunctionsHosting.cs`, `MessagingPrincipalContextProvider.cs` (same code as Web's, own namespace)
 - Create: `F/…Core.Functions.Api/` (from old `AzureFunctions`: `Program.cs`, `host.json`, `local.settings.json.example`), `F/…Core.Functions.Processor/`, `F/…Core.Functions.Notifications/` (from old `AzureFunctions` messaging trigger), `F/…Core.Functions.Audit/` (from old `AuditFunctions`), `F/…Core.Functions.OutboxProcessor/`
-- Create: `F/…Core.Functions.Tests/` — ported `MessagingBusSampleTests.cs` (Storage Queue/Azurite parts), native parts of `AzureFunctionsRebusTests.cs` renamed `FunctionsCompositionTests.cs`
+- Create: `F/…Core.Functions.Tests/` — native parts of `AzureFunctionsRebusTests.cs` renamed `FunctionsCompositionTests.cs`; new `ServiceBusSettlementTests.cs`
+- Create: `S/servicebus-emulator/Config.json`; Modify: `S/docker-compose.yml` (mount it)
 - Create: `F/README.md`
 - Delete: `S/src/` (now only old `AzureFunctions`, `AuditFunctions`, `Functions`), `S/test/` (old test project), `S/Ark.MediatorFramework.Sample.yml`, `.buildStage.yml`, `.deployStage.yml` (replaced in Task 9)
 - Modify: `C/…Core.Application/Host/ApplicationComposition.cs` (delete the temporary legacy `Register` overload)
@@ -1892,20 +1925,73 @@ Copy the Web variant's `OutboxProcessor` into `F/…Core.Functions.OutboxProcess
 ```bash
 OLD=$S/test/Ark.MediatorFramework.Sample.Tests
 T=$S/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests
-git mv $OLD/MessagingBusSampleTests.cs $T/MessagingBusSampleTests.cs
-git mv $OLD/MessagingSourceTestExtensions.cs $T/MessagingSourceTestExtensions.cs
 git mv $OLD/AzureFunctionsRebusTests.cs $T/FunctionsCompositionTests.cs
 git rm -r $S/src $S/test
 git rm $S/Ark.MediatorFramework.Sample.yml $S/Ark.MediatorFramework.Sample.buildStage.yml $S/Ark.MediatorFramework.Sample.deployStage.yml
 ```
 
-`MessagingSourceTestExtensions` uses framework internals
-(`MessagingReceiveBackoff`). Replace its use in `MessagingBusSampleTests` with
-real `MessagingProcessorHost` composition (as `ParticipantProcess` in Task 4)
-and delete the file, so the `InternalsVisibleTo` entry can go. Rewrite
-`MessagingBusSampleTests` to compose the new Functions trigger apps' service
-collections; drop `WebInterfaceCompositionIsPublisherOnly` (covered by
-`ApiAppIsProducerOnly`).
+`MessagingBusSampleTests.cs` and `MessagingSourceTestExtensions.cs` are deleted
+with the old project, not ported. Their send-routing, retry-boundary, and
+fan-out checks are covered by the `Core.Tests` scenarios on real processor
+hosts; their Storage Queue/Azurite checks do not apply to this variant, whose
+trigger apps are compiled for Service Bus and whose network requires pub/sub
+(Storage Queue transport behavior stays covered by
+`tests/Ark.Tools.MediatorFramework.Tests`). Deleting
+`MessagingSourceTestExtensions` removes the last use of framework internals,
+so the `InternalsVisibleTo` entry can go.
+
+Add `ServiceBusSettlementTests.cs`, run only when
+`ARK_SAMPLE_SERVICEBUS_EMULATOR=1` (otherwise `Assert.Inconclusive`, same
+gating style as the SQL profile):
+
+```csharp
+[TestMethod]
+public async Task ExhaustedWorkerMessageIsDeadLetteredOnServiceBus()
+{
+    if (!string.Equals(Environment.GetEnvironmentVariable("ARK_SAMPLE_SERVICEBUS_EMULATOR"), "1", StringComparison.Ordinal))
+        Assert.Inconclusive("Set ARK_SAMPLE_SERVICEBUS_EMULATOR=1 with the docker-compose servicebus service running.");
+
+    await using var client = new ServiceBusClient(ServiceBusEmulator.ConnectionString);
+    var queue = ServiceBusMessagingTransport.ToNativeEntityName(SampleMessagingParticipant.Identity);
+    await using var sender = client.CreateSender(queue);
+    // An unauthorized CreateBookReviewRequest.V1 envelope, produced through the Api
+    // participant's restricted IBus composed exactly as Api/Program.cs does, with
+    // the emulator transport and no review scope on the principal.
+    await FunctionsTestHosts.SendAsUnauthorizedAsync(client, new CreateBookReviewRequest.V1 { BookId = Guid.NewGuid(), Rating = 5, Text = "Good" })
+        .ConfigureAwait(false);
+    await using var processor = await FunctionsTestHosts.StartWorkerTriggerAsync(client).ConfigureAwait(false);
+
+    await using var deadLetters = client.CreateReceiver(queue, new ServiceBusReceiverOptions { SubQueue = SubQueue.DeadLetter });
+    var dead = await deadLetters.ReceiveMessageAsync(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+    dead.Should().NotBeNull();
+}
+```
+
+`FunctionsTestHosts.StartWorkerTriggerAsync` composes the Processor app's
+service collection (same calls as its `Program.cs`, transport from the emulator
+client) and drives the generated Service Bus trigger with a
+`ServiceBusReceiver` loop, passing a real `ServiceBusMessageActions`-compatible
+settlement adapter if the generated trigger requires one; mirror whatever the
+framework's own Functions trigger tests use for settlement. If
+`ToNativeEntityName` is not available on `ServiceBusMessagingTransport`, use
+the queue name from the Processor app's generated manifest.
+`ServiceBusEmulator.ConnectionString` reads `ConnectionStrings:ServiceBus`
+from the test project's `appsettings.IntegrationTests.json`, which holds the
+emulator's documented local development connection string (see the Azure
+Service Bus emulator docs); no real namespace credential is used.
+
+Create `S/servicebus-emulator/Config.json` declaring the three participant
+queues (max delivery count = `SampleMessagingRetryPolicy.MaximumDeliveryCount * 2`,
+as the in-memory harness uses), the completed-print topic, and its two
+forwarding subscriptions; take the native entity names from the generated
+messaging registry (`dotnet build -p:EmitCompilerGeneratedFiles=true` on the
+Application project, then read the generated network file). Mount it in
+`docker-compose.yml` under the `servicebus` service:
+
+```yaml
+    volumes:
+      - ./servicebus-emulator/Config.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+```
 
 Delete the legacy `Register(Container, bool, …)` overload from
 `ApplicationComposition`. Remove the sample entry from `InternalsVisibleTo`.
@@ -1914,8 +2000,9 @@ Remove every old project from `Ark.Tools.slnx` and the sample slnx.
 - [ ] **Step 7: Run everything**
 
 ```bash
-docker compose -f $S/docker-compose.yml up -d azurite
 dotnet test $S/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests
+docker compose -f $S/docker-compose.yml up -d servicebus
+ARK_SAMPLE_SERVICEBUS_EMULATOR=1 dotnet test $S/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests
 dotnet test $S/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests
 dotnet test $S/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Tests
 ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test $S/Core/Ark.MediatorFramework.Sample.Core.Tests
