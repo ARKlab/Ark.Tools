@@ -16,7 +16,7 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
     <PackageReference Include="Ark.Tools.Outbox" />
-    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
+    <ProjectReference Include="..\..\Core\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
   </ItemGroup>
 
 </Project>

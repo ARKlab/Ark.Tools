@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
-    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Application\Ark.MediatorFramework.Sample.Application.csproj" />
+    <ProjectReference Include="..\..\Core\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
   </ItemGroup>
 
 </Project>

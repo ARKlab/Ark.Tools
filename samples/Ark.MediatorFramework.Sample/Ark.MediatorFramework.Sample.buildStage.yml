@@ -87,7 +87,7 @@ stages:
           - task: CopyFiles@2
             displayName: Stage database package
             inputs:
-              SourceFolder: '${{ parameters.workingDirectory }}/src/Ark.MediatorFramework.Sample.Database/bin/$(buildConfiguration)'
+              SourceFolder: '${{ parameters.workingDirectory }}/Core/Ark.MediatorFramework.Sample.Core.Database/bin/$(buildConfiguration)'
               Contents: '**/*.dacpac'
               TargetFolder: '$(Build.ArtifactStagingDirectory)/database'
               flattenFolders: true

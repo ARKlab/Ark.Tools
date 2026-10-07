@@ -2,10 +2,10 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.Generated;
-using Ark.MediatorFramework.Sample.API.JsonContext;
+using Ark.MediatorFramework.Sample.Core.API.JsonContext;
 
 using Ark.MediatorFramework.Sample.WebInterface.Auth;
-using Ark.MediatorFramework.Sample.Application.JsonContext;
+using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.Compliance;
 using Ark.Tools.AspNetCore.MinimalApi;
@@ -188,12 +188,12 @@ public sealed class SampleStartup
                 new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
         });
         var messagingNetwork =
-            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.CreateOptions();
+            Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingNetwork.CreateOptions();
         services.ConfigureArkMessaging(
             messagingNetwork,
-            Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingNetwork.Registry,
+            Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingNetwork.Registry,
             static messaging => messaging.Producer<
-                    Ark.MediatorFramework.Sample.Application.Messages.SampleMessagingPublisherParticipant>(
+                    Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingPublisherParticipant>(
                     static producer => producer
                         .UseTransport(static transport => transport.UseInMemory())
                         .UseDataBus(static dataBus => dataBus.UseInMemory(

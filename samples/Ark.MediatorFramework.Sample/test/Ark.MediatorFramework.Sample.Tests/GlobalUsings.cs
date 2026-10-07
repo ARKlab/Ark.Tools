@@ -3,11 +3,11 @@
 
 global using Ark.Tools.MediatorFramework;
 
-global using Ark.MediatorFramework.Sample.API;
-global using Ark.MediatorFramework.Sample.API.Authorization;
-global using Ark.MediatorFramework.Sample.Application.Authorization;
-global using Ark.MediatorFramework.Sample.Application.DAL;
-global using Ark.MediatorFramework.Sample.Application.Exceptions;
-global using Ark.MediatorFramework.Sample.Application.Host;
-global using Ark.MediatorFramework.Sample.Application.Messages;
-global using Ark.MediatorFramework.Sample.Application.Services;
+global using Ark.MediatorFramework.Sample.Core.API;
+global using Ark.MediatorFramework.Sample.Core.API.Authorization;
+global using Ark.MediatorFramework.Sample.Core.Application.Authorization;
+global using Ark.MediatorFramework.Sample.Core.Application.DAL;
+global using Ark.MediatorFramework.Sample.Core.Application.Exceptions;
+global using Ark.MediatorFramework.Sample.Core.Application.Host;
+global using Ark.MediatorFramework.Sample.Core.Application.Messages;
+global using Ark.MediatorFramework.Sample.Core.Application.Services;

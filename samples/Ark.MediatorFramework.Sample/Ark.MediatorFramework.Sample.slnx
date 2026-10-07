@@ -1,11 +1,13 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Ark.MediatorFramework.Sample.API/Ark.MediatorFramework.Sample.API.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj">
+  <Folder Name="/Core/">
+    <Project Path="Core/Ark.MediatorFramework.Sample.Core.API/Ark.MediatorFramework.Sample.Core.API.csproj" />
+    <Project Path="Core/Ark.MediatorFramework.Sample.Core.Application/Ark.MediatorFramework.Sample.Core.Application.csproj" />
+    <Project Path="Core/Ark.MediatorFramework.Sample.Core.Database/Ark.MediatorFramework.Sample.Core.Database.sqlproj">
       <Build />
       <Deploy />
     </Project>
+  </Folder>
+  <Folder Name="/src/">
     <Project Path="src/Ark.MediatorFramework.Sample.AuditFunctions/Ark.MediatorFramework.Sample.AuditFunctions.csproj" />
     <Project Path="src/Ark.MediatorFramework.Sample.Functions/Ark.MediatorFramework.Sample.Functions.csproj" />
     <Project Path="src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />

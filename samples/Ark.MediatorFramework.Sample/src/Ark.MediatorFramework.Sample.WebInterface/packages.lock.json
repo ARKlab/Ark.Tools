@@ -893,7 +893,7 @@
         "resolved": "10.0.652802",
         "contentHash": "ULfGNl75BNXkpF42wNV2CDXJ64dUZZEa8xO2mBsc4tqbW9QjruxjEB6bAr4Z/T1rNU+leOztIjCJQYsBGFWYlw=="
       },
-      "ark.mediatorframework.sample.api": {
+      "ark.mediatorframework.sample.core.api": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
@@ -908,10 +908,10 @@
           "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
         }
       },
-      "ark.mediatorframework.sample.application": {
+      "ark.mediatorframework.sample.core.application": {
         "type": "Project",
         "dependencies": {
-          "Ark.MediatorFramework.Sample.API": "[6.6.6, )",
+          "Ark.MediatorFramework.Sample.Core.API": "[6.6.6, )",
           "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
@@ -935,7 +935,7 @@
       "ark.mediatorframework.sample.rebusprocessor": {
         "type": "Project",
         "dependencies": {
-          "Ark.MediatorFramework.Sample.Application": "[6.6.6, )",
+          "Ark.MediatorFramework.Sample.Core.Application": "[6.6.6, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Outbox": "[1.0.0, )",
