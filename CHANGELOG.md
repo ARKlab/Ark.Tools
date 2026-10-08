@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Azure Functions Service Bus hosts read an optional `<connection key>:administrationConnectionString` setting for resource provisioning, so trigger apps can provision against the local Service Bus emulator, which serves administration on a separate port.
 - `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.
 - Disposing a service provider after the messaging outbox processor has started no longer throws `ObjectDisposedException`.
+- A Service Bus transport selected with `UseTransport(transport => transport.UseServiceBus(client))` is now disposed, together with its client, when the service provider is disposed. It used to stay open after host shutdown. A transport passed with `Use(transport)` or `UseTransport(transport)` is still owned by the caller.
 - Exported gRPC `.proto` files import only the files they use, so clients that treat warnings as errors no longer fail on unused imports.
 - Messaging participants that process or subscribe to several contracts now compile.
 - An `[ArkRebusHost]` over a participant that subscribes to events now compiles: the generated `SubscribeAsync` called a Rebus `BusExtensions` class that does not exist.
