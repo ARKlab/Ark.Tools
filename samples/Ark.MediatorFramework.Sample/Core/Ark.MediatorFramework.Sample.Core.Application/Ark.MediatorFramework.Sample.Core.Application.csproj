@@ -12,7 +12,6 @@
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Grpc" />
     <PackageReference Include="Ark.Tools.Solid" />
     <PackageReference Include="Ark.Tools.Solid.FluentValidaton" />
@@ -20,7 +19,6 @@
     <PackageReference Include="Ark.Tools.SystemTextJson" />
     <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
     <PackageReference Include="Ark.Tools.Outbox" />
-    <PackageReference Include="Ark.Tools.Outbox.Rebus" />
     <PackageReference Include="Ark.Tools.Outbox.SqlServer" />
     <PackageReference Include="Ark.Tools.Sql" />
     <PackageReference Include="Ark.Tools.Sql.SqlServer" />

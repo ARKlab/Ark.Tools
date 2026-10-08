@@ -9,125 +9,21 @@ using Ark.Tools.Dapper;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 using Ark.Tools.Outbox;
-using Ark.Tools.Rebus;
 using FluentValidation;
 
 using NodaTime;
 
-using Rebus.Config;
-using Rebus.Routing;
-using Rebus.Serialization.Json;
-using Rebus.Transport;
-
-using System.Text.Json;
-
 using SimpleInjector;
-
-using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 
 namespace Ark.MediatorFramework.Sample.Core.Application.Host;
 
 /// <summary>
 /// Transport-agnostic composition of the application layer: the pure handlers, the shared context
 /// factory and the cross-cutting decorator. The hosting layer adds the transport concerns (user context,
-/// Minimal API endpoints, Rebus) on top of this registration.
+/// endpoints, messaging) on top of this registration.
 /// </summary>
 public static class ApplicationComposition
 {
-    /// <summary>
-    /// Configures the Rebus outbox on a transport configurer. Both outbound-only and full-processor
-    /// compositions use the outbox; only the processor sets <paramref name="startProcessor"/> to
-    /// <see langword="true"/>.
-    /// </summary>
-    /// <param name="transport">The transport configurer to attach the outbox to.</param>
-    /// <param name="container">The container used to resolve <see cref="IOutboxAsyncContextFactory"/>.</param>
-    /// <param name="startProcessor">
-    /// <see langword="true"/> to start the background outbox processor (full-processor host only);
-    /// <see langword="false"/> for outbound-only hosts that only need to enqueue messages.
-    /// </param>
-    public static void ConfigureRebusOutbox(
-        StandardConfigurer<ITransport> transport,
-        Container container,
-        bool startProcessor)
-    {
-        ArgumentNullException.ThrowIfNull(transport);
-        ArgumentNullException.ThrowIfNull(container);
-
-        transport.Outbox(outbox =>
-        {
-            outbox.OutboxAsyncContextFactory(factory => factory.Use(container.GetInstance<IOutboxAsyncContextFactory>()));
-            outbox.OutboxOptions(options => options.StartProcessor = startProcessor);
-        });
-    }
-
-    /// <summary>
-    /// Configures routing, serialization, and user-context propagation that must be identical
-    /// between outbound-only and full-processor Rebus configurations.
-    /// </summary>
-    /// <param name="config">The Rebus configurer.</param>
-    /// <param name="container">The SimpleInjector container used for user-context flow.</param>
-    /// <param name="configureRouting">Configures generated owner routing.</param>
-    /// <param name="configureOptions">Optional extra options applied after the common ones.</param>
-    public static void ConfigureRebusCommon(
-        RebusConfigurer config,
-        Container container,
-        Action<StandardConfigurer<IRouter>> configureRouting,
-        Action<OptionsConfigurer>? configureOptions = null)
-    {
-        ArgumentNullException.ThrowIfNull(config);
-        ArgumentNullException.ThrowIfNull(container);
-        ArgumentNullException.ThrowIfNull(configureRouting);
-
-        config.Routing(configureRouting);
-        config.Logging(static logging => logging.NLog());
-        config.Serialization(static serializer =>
-        {
-            var contextOptions = new JsonSerializerOptions
-            {
-                RespectNullableAnnotations = true,
-                RespectRequiredConstructorParameters = true
-            }.ConfigureArkDefaults();
-            var jsonContext = new ApplicationJsonSerializerContext(contextOptions);
-            var rebusOptions = new JsonSerializerOptions
-            {
-                RespectNullableAnnotations = true,
-                RespectRequiredConstructorParameters = true
-            }.ConfigureArkDefaults();
-            rebusOptions.TypeInfoResolver = jsonContext;
-            serializer.UseSystemTextJson(rebusOptions);
-        });
-        config.Options(options =>
-        {
-            options.AutomaticallyFlowUserContext(container);
-            options.UseOpenTelemetry(container);
-            options.UseOpenTelemetryMetrics(container);
-            configureOptions?.Invoke(options);
-        });
-    }
-
-    /// <summary>
-    /// Registers Rebus as an outbound-only client. This composition never registers handlers,
-    /// an input queue, workers, subscriptions, or an outbox processor.
-    /// </summary>
-    /// <param name="container">The application container.</param>
-    /// <param name="configureTransport">Configures the outbound transport.</param>
-    /// <param name="configureRouting">Configures generated owner routing.</param>
-    public static void RegisterOutboundRebus(
-        Container container,
-        Action<StandardConfigurer<ITransport>> configureTransport,
-        Action<StandardConfigurer<IRouter>> configureRouting)
-    {
-        ArgumentNullException.ThrowIfNull(container);
-        ArgumentNullException.ThrowIfNull(configureTransport);
-        ArgumentNullException.ThrowIfNull(configureRouting);
-
-        container.ConfigureRebus(config =>
-        {
-            config.Transport(configureTransport);
-            ConfigureRebusCommon(config, container, configureRouting);
-        });
-    }
-
     /// <summary>Registers the shared application graph.</summary>
     /// <param name="container">The application container.</param>
     /// <param name="options">The persistence, clock, and external adapter choices.</param>
@@ -266,7 +162,6 @@ public static class ApplicationComposition
         container.Register<IRequestHandler<DescribeBookEditionRequest.V1, BookEditionDescription>, DescribeBookEditionHandler>();
         container.Register<IRequestHandler<UploadBookCoverRequest.V1, UploadResponse>, UploadBookCoverHandler>();
         container.Register<IQueryHandler<DownloadBookCoverQuery.V1, IArkAttachment>, DownloadBookCoverHandler>();
-        container.Register<IRequestHandler<FailingRebusRequest, DeadLetterAck>, FailingRebusRequestHandler>();
         container.Register<ICommandHandler<MessagingFailed<BookPrintCompleted>>, BookPrintCompletedFailureHandler>();
 
         // Cross-cutting concern applied transport-agnostically.
