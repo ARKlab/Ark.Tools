@@ -15,8 +15,6 @@ using NLog;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-using Polly;
-
 using Reqnroll;
 
 using SimpleInjector;
@@ -97,50 +95,48 @@ public sealed class TestHost : IDisposable
 
         var ctx = Server.Services.GetRequiredService<Container>().GetInstance<IOutboxAsyncContextFactory>();
 
-        var (inqueue, inprocess, deferred, outbox, errorMessages) =
-            await Policy
-                .HandleResult<(int inqueue, int inprocess, int deferred, int outbox, int errorMessages)>(
-                    static (c) =>
-                    {
-                        int def = c.deferred;
-                        return c.errorMessages == 0 && (c.inqueue + c.inprocess + def + c.outbox) == 0;
-                    }
-                ) // if true, go again
-                .WaitAndRetryAsync(1, static i => TimeSpan.FromMilliseconds(100))
-                .WrapAsync(
-                    Policy
-                        .HandleResult<(int inqueue, int inprocess, int deferred, int outbox, int errorMessages)>(
-                            static (c) =>
-                            {
-                                int def = c.deferred;
-                                return c.errorMessages == 0 && (c.inqueue + c.inprocess + def + c.outbox) > 0; // if true, go again
-                            }
-                        )
-                        .WaitAndRetryAsync(600, static _ => TimeSpan.FromMilliseconds(100))
-                 )
-                .ExecuteAsync(async () =>
-                {
-                    var inqueue = Env.RebusNetwork.Count();
-                    var inprocess = InProcessMessageInspectorStep.Count;
-                    var errorMessages = Env.RebusNetwork.Count("error");
-                    var due = ignoreDeferred ? 0 : TestsInMemoryTimeoutManager.DueCount;
+        // Rebus can briefly report no work between outbox dequeue and message dispatch: require consecutive idle samples
+        const int RequiredIdleSamples = 5;
+        var idleSamples = 0;
+        (int inqueue, int inprocess, int deferred, int outbox, int errorMessages) counts = default;
+        for (var poll = 0; poll < 600 && idleSamples < RequiredIdleSamples; poll++)
+        {
+            if (poll > 0)
+                await Task.Delay(100).ConfigureAwait(false);
 
+            counts = await _sampleBusAsync(ctx, ignoreDeferred).ConfigureAwait(false);
+            if (counts.errorMessages > 0)
+                break;
 
-                    var outbox = await ctx.CreateAsync().ConfigureAwait(false);
-                    await using var _ = outbox.ConfigureAwait(false);
-                    var outboxCount = await outbox.CountAsync().ConfigureAwait(false);
-                    await outbox.CommitAsync().ConfigureAwait(false);
+            idleSamples = counts.inqueue + counts.inprocess + counts.deferred + counts.outbox == 0 ? idleSamples + 1 : 0;
+        }
 
-                    return (inqueue, inprocess, due, outboxCount, errorMessages);
-                }).ConfigureAwait(false);
-
+        var (inqueue, inprocess, deferred, outbox, errorMessages) = counts;
         errorMessages.Should().Be(0);
         inqueue.Should().Be(0);
         inprocess.Should().Be(0);
         deferred.Should().Be(0);
         outbox.Should().Be(0);
+        idleSamples.Should().Be(RequiredIdleSamples, "the bus must stay idle for consecutive samples");
 
         _flushTelemetry();
+    }
+
+    private static async Task<(int inqueue, int inprocess, int deferred, int outbox, int errorMessages)> _sampleBusAsync(
+        IOutboxAsyncContextFactory ctx,
+        bool ignoreDeferred)
+    {
+        var inqueue = Env.RebusNetwork.Count();
+        var inprocess = InProcessMessageInspectorStep.Count;
+        var errorMessages = Env.RebusNetwork.Count("error");
+        var due = ignoreDeferred ? 0 : TestsInMemoryTimeoutManager.DueCount;
+
+        var outbox = await ctx.CreateAsync().ConfigureAwait(false);
+        await using var _ = outbox.ConfigureAwait(false);
+        var outboxCount = await outbox.CountAsync().ConfigureAwait(false);
+        await outbox.CommitAsync().ConfigureAwait(false);
+
+        return (inqueue, inprocess, due, outboxCount, errorMessages);
     }
 
     private static void _flushTelemetry()
