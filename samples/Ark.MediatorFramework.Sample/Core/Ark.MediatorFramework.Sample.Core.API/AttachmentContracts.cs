@@ -59,10 +59,12 @@ public static class DownloadBookCoverQuery
     [GrpcMethod("DownloadBookCover")]
     [GrpcService("Books")]
     [RequireScopePolicy(ApplicationScopes.BookCover)]
+    [ProtoContract]
     public sealed record V1 : IQuery<V1, IArkAttachment>
     {
         /// <summary>Gets the book identifier.</summary>
         [HttpRoute]
+        [ProtoMember(1)]
         public Guid Id { get; init; }
     }
 }
