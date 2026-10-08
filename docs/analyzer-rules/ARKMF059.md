@@ -63,8 +63,11 @@ explicitly, unless it binds the contract with `[AsParameters]` as described
 above. An explicit route or query value is read as follows:
 
 - a type from the list above is bound by ASP.NET Core;
-- a string collection, such as `string[]`, `List<string>`, `IEnumerable<string>`
-  or `IReadOnlyList<string>`, receives every value of the query parameter;
+- a string collection receives every value of the query parameter. The
+  supported shapes are `string[]`, `StringValues`, and `IEnumerable`,
+  `IReadOnlyCollection`, `IReadOnlyList`, `ICollection`, `IList`, `List`,
+  `ISet`, `HashSet` and `ImmutableArray` of `string`. Any other string
+  collection, such as `Queue<string>` or `IReadOnlySet<string>`, is reported;
 - any other single value is converted with its `TypeConverter` at runtime, so a
   converter registered with `TypeDescriptor`, such as the Ark.Tools NodaTime
   converters, is used.
@@ -95,8 +98,9 @@ would otherwise be silently ignored.
 
 For every verb, a route or `[HttpQuery]` value is converted from a single
 string with `ArkTypeConverter` at runtime, and an `[HttpQuery]` string
-collection, such as `string[]`, `List<string>` or `IEnumerable<string>`,
-receives every value of the query parameter. The rule reports a route or
+collection of a supported shape (the same shapes as the Minimal API generator),
+such as `string[]`, `List<string>` or `IEnumerable<string>`, receives every
+value of the query parameter. The rule reports a route or
 `[HttpQuery]` property whose type is any other array or collection, or a
 complex object: no type converter converts a single string to it. Unlike the
 Minimal API generator, the Azure Functions generator does not bind arrays such
@@ -164,7 +168,9 @@ public sealed record AddCopies : IRequest<AddCopies, int>
     public Guid BookId { get; init; }
 
     [HttpQuery]
-    public List<int> Shelves { get; init; } = []; // ARKMF059: use int[]
+    // ARKMF059: use int[] on Minimal API; Azure Functions binds no int[],
+    // so use string[] and parse the values in the handler
+    public List<int> Shelves { get; init; } = [];
 }
 ```
 

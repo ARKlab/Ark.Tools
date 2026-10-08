@@ -64,12 +64,36 @@ internal static class HttpStringBinding
                 && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, targetType));
     }
 
-    /// <summary>Gets whether the type is a string array or implements <c>IEnumerable&lt;string&gt;</c>.</summary>
+    /// <summary>
+    /// Gets whether the type is a string collection the generators can build from every value of a query parameter:
+    /// <c>string[]</c>, <c>StringValues</c>, or <c>IEnumerable</c>, <c>IReadOnlyCollection</c>, <c>IReadOnlyList</c>,
+    /// <c>ICollection</c>, <c>IList</c>, <c>List</c>, <c>ISet</c>, <c>HashSet</c> or <c>ImmutableArray</c> of
+    /// <c>string</c>. Any other collection is not convertible from a string.
+    /// </summary>
     /// <param name="type">The property type.</param>
-    /// <returns><see langword="true"/> for a string collection.</returns>
+    /// <returns><see langword="true"/> for a supported string collection.</returns>
     public static bool IsStringCollection(ITypeSymbol type)
-        => (type is IArrayTypeSymbol array && array.ElementType.SpecialType == SpecialType.System_String)
-            || _enumerableInterfaces(type).Any(static iface => iface.TypeArguments[0].SpecialType == SpecialType.System_String);
+        => type switch
+        {
+            IArrayTypeSymbol array => array.ElementType.SpecialType == SpecialType.System_String,
+            INamedTypeSymbol named when named.ToDisplayString() == "Microsoft.Extensions.Primitives.StringValues" => true,
+            INamedTypeSymbol { TypeArguments.Length: 1 } named => named.TypeArguments[0].SpecialType == SpecialType.System_String
+                && _stringCollectionShapes.Contains(named.OriginalDefinition.ToDisplayString()),
+            _ => false,
+        };
+
+    private static readonly HashSet<string> _stringCollectionShapes =
+    [
+        "System.Collections.Generic.IEnumerable<T>",
+        "System.Collections.Generic.IReadOnlyCollection<T>",
+        "System.Collections.Generic.IReadOnlyList<T>",
+        "System.Collections.Generic.ICollection<T>",
+        "System.Collections.Generic.IList<T>",
+        "System.Collections.Generic.List<T>",
+        "System.Collections.Generic.ISet<T>",
+        "System.Collections.Generic.HashSet<T>",
+        "System.Collections.Immutable.ImmutableArray<T>",
+    ];
 
     /// <summary>Gets whether the type, or the type wrapped by <c>Nullable&lt;T&gt;</c>, is an array or a collection.</summary>
     /// <param name="type">The property type.</param>
