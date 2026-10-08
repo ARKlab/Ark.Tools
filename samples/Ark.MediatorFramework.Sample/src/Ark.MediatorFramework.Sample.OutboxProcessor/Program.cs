@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application.DAL;
+using Ark.MediatorFramework.Sample.Core.Application.DAL;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Outbox;
 using Ark.Tools.Sql.SqlServer;

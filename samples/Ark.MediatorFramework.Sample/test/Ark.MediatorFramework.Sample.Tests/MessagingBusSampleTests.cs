@@ -3,7 +3,7 @@
 
 extern alias AuditFunctions;
 
-using Ark.MediatorFramework.Sample.Application.JsonContext;
+using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.AzureFunctions;
 using Ark.MediatorFramework.Sample.WebInterface;
 using Ark.Tools.MediatorFramework.Messaging;

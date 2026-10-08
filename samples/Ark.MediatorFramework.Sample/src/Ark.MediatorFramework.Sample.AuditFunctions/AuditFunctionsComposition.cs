@@ -1,10 +1,10 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Application.Authorization;
-using Ark.MediatorFramework.Sample.Application.Host;
-using Ark.MediatorFramework.Sample.Application.Messages;
-using Ark.MediatorFramework.Sample.Application.Services;
+using Ark.MediatorFramework.Sample.Core.Application.Authorization;
+using Ark.MediatorFramework.Sample.Core.Application.Host;
+using Ark.MediatorFramework.Sample.Core.Application.Messages;
+using Ark.MediatorFramework.Sample.Core.Application.Services;
 
 using Ark.Tools.Compliance;
 using Ark.Tools.Solid;

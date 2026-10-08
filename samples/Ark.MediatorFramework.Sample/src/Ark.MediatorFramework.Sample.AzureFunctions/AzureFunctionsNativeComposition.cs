@@ -5,8 +5,8 @@ using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Solid;
 using Ark.Tools.Compliance;
 
-using Ark.MediatorFramework.Sample.Application.Messages;
-using Ark.MediatorFramework.Sample.Application.Services;
+using Ark.MediatorFramework.Sample.Core.Application.Messages;
+using Ark.MediatorFramework.Sample.Core.Application.Services;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;

@@ -28,20 +28,20 @@
     <None Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\appsettings.json"
           CopyToOutputDirectory="PreserveNewest"
           Link="appsettings.json" />
-    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.Database\Ark.MediatorFramework.Sample.Database.sqlproj">
+    <ProjectReference Include="..\..\Core\Ark.MediatorFramework.Sample.Core.Database\Ark.MediatorFramework.Sample.Core.Database.sqlproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <OutputItemType>Content</OutputItemType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </ProjectReference>
-    <None Include="..\..\src\Ark.MediatorFramework.Sample.Database\bin\$(Configuration)\Ark.MediatorFramework.Sample.Database.dacpac"
-          Link="Ark.MediatorFramework.Sample.Database.dacpac"
+    <None Include="..\..\Core\Ark.MediatorFramework.Sample.Core.Database\bin\$(Configuration)\Ark.MediatorFramework.Sample.Core.Database.dacpac"
+          Link="Ark.MediatorFramework.Sample.Core.Database.dacpac"
           CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.AzureFunctions\Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.AuditFunctions\Ark.MediatorFramework.Sample.AuditFunctions.csproj">
       <Aliases>AuditFunctions</Aliases>
     </ProjectReference>
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.OutboxProcessor\Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
-    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.API\Ark.MediatorFramework.Sample.API.csproj" />
+    <ProjectReference Include="..\..\Core\Ark.MediatorFramework.Sample.Core.API\Ark.MediatorFramework.Sample.Core.API.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />
   </ItemGroup>
 

@@ -1243,7 +1243,7 @@
         "resolved": "9.0.18",
         "contentHash": "pxuHw/tQXaHMRXEaKzzgpoGO8VeTPIzHbnp0KclXp6js5wPHn7VaqSCa8yRTAsZDcZ2XuIEnXGM2MbRDJFLBog=="
       },
-      "ark.mediatorframework.sample.api": {
+      "ark.mediatorframework.sample.core.api": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
@@ -1258,10 +1258,10 @@
           "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
         }
       },
-      "ark.mediatorframework.sample.application": {
+      "ark.mediatorframework.sample.core.application": {
         "type": "Project",
         "dependencies": {
-          "Ark.MediatorFramework.Sample.API": "[6.6.6, )",
+          "Ark.MediatorFramework.Sample.Core.API": "[6.6.6, )",
           "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",

@@ -75,11 +75,11 @@ Ark.MediatorFramework.Sample/
 ├── Ark.MediatorFramework.Sample.buildStage.yml
 ├── Ark.MediatorFramework.Sample.deployStage.yml
 ├── src/
-│   ├── Ark.MediatorFramework.Sample.API/
+│   ├── Ark.MediatorFramework.Sample.Core.API/
 │   │   ├── Authorization/       # public scopes and policy attributes
 │   │   ├── JsonContext/          # public API JSON source-generation context
 │   │   └── *Contracts.cs         # public request, query, response, and DTO types
-│   ├── Ark.MediatorFramework.Sample.Application/
+│   ├── Ark.MediatorFramework.Sample.Core.Application/
 │   │   ├── Authorization/       # application authorization handler
 │   │   ├── DAL/                  # SQL and in-memory data contexts
 │   │   ├── Handlers/             # request, query, command, and message handlers
@@ -88,7 +88,7 @@ Ark.MediatorFramework.Sample/
 │   │   ├── JsonContext/           # application/Rebus JSON source-generation context
 │   │   ├── Messages/             # internal Rebus contracts
 │   │   └── Services/             # decorators and application services
-│   ├── Ark.MediatorFramework.Sample.Database/
+│   ├── Ark.MediatorFramework.Sample.Core.Database/
 │   ├── Ark.MediatorFramework.Sample.AuditFunctions/ # independent audit subscriber
 │   ├── Ark.MediatorFramework.Sample.OutboxProcessor/
 │   ├── Ark.MediatorFramework.Sample.RebusProcessor/
@@ -101,11 +101,11 @@ Ark.MediatorFramework.Sample/
 
 ### Assembly boundary
 
-`Ark.MediatorFramework.Sample.API` is the only assembly intended for API
+`Ark.MediatorFramework.Sample.Core.API` is the only assembly intended for API
 consumers. It contains public contracts such as `Book_CreateRequest`, `GetAuditsQuery`,
 and `DescribeBookEditionRequest`.
 
-`Ark.MediatorFramework.Sample.Application` contains behavior and internal
+`Ark.MediatorFramework.Sample.Core.Application` contains behavior and internal
 workflow messages such as `ProcessBookPrintProcessRequest` and
 `FailingRebusRequest`. A client can depend on the API without receiving the
 worker's topology or dead-letter demonstration types.
