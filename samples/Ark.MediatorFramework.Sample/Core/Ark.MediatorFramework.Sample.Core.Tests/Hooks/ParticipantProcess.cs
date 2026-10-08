@@ -51,16 +51,32 @@ public sealed class ParticipantProcess : IAsyncDisposable
         services.AddArkSolidProcessors(container);
         configureMessaging(services);
         var provider = services.BuildServiceProvider(validateScopes: true);
-        if (bridgeBus)
+        var started = new List<IHostedService>();
+        try
         {
-            container.RegisterSingleton<IBus>(() => provider.GetRequiredService<IBus>());
-            container.RegisterSingleton<IBusOutboxEnlistment>(() => provider.GetRequiredService<IBusOutboxEnlistment>());
+            if (bridgeBus)
+            {
+                container.RegisterSingleton<IBus>(() => provider.GetRequiredService<IBus>());
+                container.RegisterSingleton<IBusOutboxEnlistment>(() => provider.GetRequiredService<IBusOutboxEnlistment>());
+            }
+            container.Verify();
+            var process = new ParticipantProcess(container, provider);
+            foreach (var hosted in process._hosted)
+            {
+                await hosted.StartAsync(ctk).ConfigureAwait(false);
+                started.Add(hosted);
+            }
+            return process;
         }
-        container.Verify();
-        var process = new ParticipantProcess(container, provider);
-        foreach (var hosted in process._hosted)
-            await hosted.StartAsync(ctk).ConfigureAwait(false);
-        return process;
+        catch
+        {
+            // The caller only owns the process once it is returned, so a failed start is rolled back here.
+            for (var i = started.Count - 1; i >= 0; i--)
+                await started[i].StopAsync(CancellationToken.None).ConfigureAwait(false);
+            await provider.DisposeAsync().ConfigureAwait(false);
+            await container.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
     /// <inheritdoc />
