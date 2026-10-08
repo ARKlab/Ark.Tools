@@ -22,8 +22,9 @@ design is in
 - The same handler pipeline applies validation, authorization, auditing, and
   optimistic-concurrency retry regardless of the caller.
 - JSON uses source-generated metadata and Ark.Tools defaults.
-- Every messaging participant runs in its own process, with its own queue, and
-  commits its messages through a transactional outbox.
+- Every messaging participant runs in its own process and commits its messages
+  through a transactional outbox. Receivers own a queue; the API participant only
+  sends, so it has none.
 - The sample supports SQL Server and an explicit in-memory test profile.
 - The framework generates HTTP endpoints, gRPC services, exported `.proto` files,
   OpenAPI documents, MCP tools, and messaging routing/handlers from contracts
