@@ -35,6 +35,11 @@ public sealed class MessagingFunctionsHostAttribute : Attribute
     public MessagingFunctionsTriggerBinding Binding { get; }
 
     /// <summary>Gets or sets the host configuration key containing the transport connection.</summary>
+    /// <remarks>
+    /// For Service Bus, the optional child setting <c>administrationConnectionString</c> (for example
+    /// <c>AzureServiceBus:ConnectionString:administrationConnectionString</c>) supplies a separate
+    /// connection string for resource provisioning, such as the local emulator's administration port.
+    /// </remarks>
     public string? ConnectionConfigurationKey { get; set; }
 
     /// <summary>Gets or sets the host configuration key containing the managed identity client id.</summary>

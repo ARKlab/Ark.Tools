@@ -189,10 +189,13 @@ internal static class MessagingFunctionsServiceCollectionExtensions
 #pragma warning disable CA2000 // The registered transport owns the client and the service provider owns the transport.
         ServiceBusClient client;
         ServiceBusAdministrationClient administration;
+        var administrationConnection = _serviceBusAdministrationConnectionString(
+            configuration,
+            manifest.ConnectionConfigurationKey);
         if (!string.IsNullOrWhiteSpace(connection) && _isConnectionString(connection))
         {
             client = new ServiceBusClient(connection);
-            administration = new ServiceBusAdministrationClient(connection);
+            administration = new ServiceBusAdministrationClient(administrationConnection ?? connection);
         }
 
         else
@@ -209,7 +212,9 @@ internal static class MessagingFunctionsServiceCollectionExtensions
                 manifest.ConnectionConfigurationKey,
                 manifest.ManagedIdentityConfigurationKey);
             client = new ServiceBusClient(serviceNamespace, credential);
-            administration = new ServiceBusAdministrationClient(serviceNamespace, credential);
+            administration = administrationConnection is null
+                ? new ServiceBusAdministrationClient(serviceNamespace, credential)
+                : new ServiceBusAdministrationClient(administrationConnection);
         }
 
         var transport = new ServiceBusMessagingTransport(client, lockDuration: serviceBusOptions.LockDuration);
@@ -376,6 +381,34 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(stepTypes);
         foreach (var stepType in stepTypes)
             services.TryAddScoped(stepType, stepType);
+    }
+
+    /// <summary>Resolves the connection string that Service Bus resource provisioning uses.</summary>
+    /// <remarks>
+    /// The optional <c>&lt;connection key&gt;:administrationConnectionString</c> setting overrides the
+    /// data-plane connection for administration, for example for the local emulator, which serves
+    /// administration on a separate port. Without it, a connection string at the connection key serves
+    /// both, and a namespace is administered with the same token credential as the data plane.
+    /// </remarks>
+    /// <param name="configuration">The host configuration.</param>
+    /// <param name="connectionConfigurationKey">The Functions connection setting name.</param>
+    /// <returns>
+    /// The administration connection string, or <see langword="null"/> when administration uses the
+    /// token credential.
+    /// </returns>
+    internal static string? _serviceBusAdministrationConnectionString(
+        IConfiguration configuration,
+        string connectionConfigurationKey)
+    {
+        var administration = configuration[
+            string.Concat(connectionConfigurationKey, ":administrationConnectionString")];
+        if (!string.IsNullOrWhiteSpace(administration))
+            return administration;
+
+        var connection = configuration[connectionConfigurationKey];
+        return !string.IsNullOrWhiteSpace(connection) && _isConnectionString(connection)
+            ? connection
+            : null;
     }
 
     private static bool _isConnectionString(string value)
