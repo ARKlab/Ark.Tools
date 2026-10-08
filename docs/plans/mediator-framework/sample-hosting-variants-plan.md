@@ -2859,7 +2859,8 @@ stacked PR (ARKlab/Ark.Tools#1047) and are not a plan task.
 
 **Decision:** move the attributes into `Ark.Tools.MediatorFramework`. Its
 dependencies are `Ark.Tools.Outbox`, `Ark.Tools.Solid` and `protobuf-net`, so it
-is host-free. No new Abstractions package is needed.
+is host-free. No new Abstractions package is needed. The packages are in
+beta, so the move is a plain breaking move: no type forwarding.
 
 **Files:**
 - Move: contract-level attribute types from
@@ -2870,8 +2871,6 @@ is host-free. No new Abstractions package is needed.
   already use the namespace `Ark.Tools.MediatorFramework`. Audit both packages
   for any other type a contracts project must reference. Host-level types stay:
   `ArkGenerate*ForAssemblyAttribute`, host attributes, runtime helpers.
-- Add: `[assembly: TypeForwardedTo(...)]` in each source assembly for every
-  moved type.
 - Modify: `Core.API` and `Core.Application` csproj files: drop the
   `MinimalApi` and `Grpc` package references. Regenerate their
   `packages.lock.json`.
@@ -2893,7 +2892,7 @@ is host-free. No new Abstractions package is needed.
   `Core.API` or `Core.Application` uses. Remove both references from the two
   projects and build: the errors are the list. Record it in the task report.
 - [ ] **Step 2: Move.** Move each type to the base package, keeping its
-  namespace. Add `TypeForwardedTo` in the old assembly. Keep the XML docs.
+  namespace and XML docs. Do not add `TypeForwardedTo`.
 - [ ] **Step 3: Drop the references.** `Core.API` and `Core.Application` reference no
   package that carries `Microsoft.AspNetCore.App`. Check with
   `dotnet list <project> package --include-transitive`: no
@@ -2902,9 +2901,10 @@ is host-free. No new Abstractions package is needed.
   emitted Minimal API, gRPC and MCP code and `Books.proto`. They must be
   unchanged from the Task 10 head; `git diff` of the generated files is empty.
 - [ ] **Step 5: Accept the API surface and release notes.** Update the `ArkApiSurface.txt` files
-  that change. Add a `### Changed` CHANGELOG entry: the attributes moved to
-  `Ark.Tools.MediatorFramework` and are type-forwarded, so existing references
-  keep compiling and binding.
+  that change. Add a `**Breaking:**` line under `### Changed` in the CHANGELOG: the attributes moved to
+  `Ark.Tools.MediatorFramework`, with the namespace unchanged. Projects that
+  reference the base package keep compiling; binaries built against the old
+  assembly must be rebuilt.
 - [ ] **Step 6: Test.** Run `dotnet build Ark.Tools.slnx` (0 warnings), the
   MediatorFramework generator and hosting tests, and the four sample test
   projects with `ARK_SAMPLE_INMEMORY_TESTS=1`.
