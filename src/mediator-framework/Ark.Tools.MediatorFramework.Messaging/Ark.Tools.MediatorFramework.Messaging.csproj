@@ -13,7 +13,6 @@
     <InternalsVisibleTo Include="Ark.Tools.MediatorFramework.Tests" />
     <InternalsVisibleTo Include="Ark.Tools.MediatorFramework.AzureFunctions" />
     <InternalsVisibleTo Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
-    <InternalsVisibleTo Include="Ark.MediatorFramework.Sample.Tests" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />

@@ -4,14 +4,11 @@
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Core;
-using Ark.Tools.Compliance;
 using Ark.Tools.Dapper;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 using Ark.Tools.Outbox;
 using FluentValidation;
-
-using NodaTime;
 
 using SimpleInjector;
 
@@ -54,48 +51,6 @@ public static class ApplicationComposition
         ArgumentNullException.ThrowIfNull(sink);
         container.RegisterInstance(sink);
         container.Register<ICommandHandler<BookPrintCompleted>, BookPrintAuditHandler>();
-    }
-
-    /// <summary>Registers the pure domain graph into the given container.</summary>
-    /// <remarks>Temporary: removed when the legacy hosts are deleted.</remarks>
-    /// <param name="container">The SimpleInjector container to register into.</param>
-    /// <param name="useSqlStore">Whether to use the SQL-backed context.</param>
-    /// <param name="connectionString">SQL Server connection string; required when <paramref name="useSqlStore"/> is set and no context factory is given.</param>
-    /// <param name="clock">Optional clock override used by tests.</param>
-    /// <param name="dataContextFactory">Optional context factory shared with another host container.</param>
-    /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
-    /// <param name="registerBookPrintNotificationHandler">
-    /// Whether to register the notification subscriber handler.
-    /// </param>
-    /// <param name="bookPrintNotificationSink">Optional notification sink.</param>
-    /// <param name="bookPrintAuditSink">Optional audit sink.</param>
-    public static void Register(
-        Container container,
-        bool useSqlStore = true,
-        [InfrastructureSecret] string? connectionString = null,
-        IClock? clock = null,
-        ISampleDataContextFactory? dataContextFactory = null,
-        IPrintCompletedNotificationService? printCompletedNotificationService = null,
-        bool registerBookPrintNotificationHandler = true,
-        IBookPrintNotificationSink? bookPrintNotificationSink = null,
-        IBookPrintAuditSink? bookPrintAuditSink = null)
-    {
-        ArgumentNullException.ThrowIfNull(container);
-        _registerShared(container, new ApplicationOptions
-        {
-            SqlConnectionString = dataContextFactory is null && useSqlStore
-                ? connectionString ?? throw new InvalidOperationException("A SQL connection string is required.")
-                : null,
-            DataContextFactory = dataContextFactory
-                ?? (useSqlStore ? null : new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory())),
-            Clock = clock ?? SystemClock.Instance,
-            PrintCompletedNotificationService = printCompletedNotificationService
-                ?? new NoOpPrintCompletedNotificationService(),
-        });
-        container.RegisterInstance(bookPrintNotificationSink ?? new NoOpBookPrintNotificationSink());
-        container.RegisterInstance(bookPrintAuditSink ?? new NoOpBookPrintAuditSink());
-        if (registerBookPrintNotificationHandler)
-            container.Register<ICommandHandler<BookPrintCompleted>, BookPrintNotificationHandler>();
     }
 
     private static void _registerShared(Container container, ApplicationOptions options)
