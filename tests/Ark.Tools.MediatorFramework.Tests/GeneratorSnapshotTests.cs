@@ -4145,6 +4145,105 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorWarnsOnVersionOnlyDefaultName()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public static class CreateBookReviewRequest
+            {
+                [Message]
+                public sealed class V1 : ICommand<V1> { }
+            }
+            public static class DeleteBookReviewRequest
+            {
+                [Event(Name = "books.review_deleted")]
+                public sealed class V1 : ICommand<V1> { }
+            }
+            [MessagingParticipant(
+                Processes = new[] { typeof(CreateBookReviewRequest.V1), typeof(DeleteBookReviewRequest.V1) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class ReviewParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(ReviewParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public sealed partial class ReviewNetwork { }
+            """);
+
+        var warnings = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMSG029").ToArray();
+        warnings.Should().ContainSingle();
+        warnings[0].Severity.Should().Be(DiagnosticSeverity.Warning);
+        warnings[0].GetMessage().Should().Contain("CreateBookReviewRequest.V1").And.Contain("ark.v1").And.Contain("[Message(Name");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorDoesNotWarnWhenVersionedContractHasExplicitName()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public static class CreateBookReviewRequest
+            {
+                [Message(Name = "books.create_review")]
+                public sealed class V1 : ICommand<V1> { }
+            }
+            public static class DeleteBookReviewRequest
+            {
+                [Event(Name = "books.review_deleted")]
+                public sealed class V1 : ICommand<V1> { }
+            }
+            [MessagingParticipant(
+                Processes = new[] { typeof(CreateBookReviewRequest.V1), typeof(DeleteBookReviewRequest.V1) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class ReviewParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(ReviewParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public sealed partial class ReviewNetwork { }
+            """);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMSG029");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMSG020");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsVersionOnlyDefaultNameCollision()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public static class CreateBookReviewRequest
+            {
+                [Message]
+                public sealed class V1 : ICommand<V1> { }
+            }
+            public static class DeleteBookReviewRequest
+            {
+                [Message]
+                public sealed class V1 : ICommand<V1> { }
+            }
+            [MessagingParticipant(
+                Processes = new[] { typeof(CreateBookReviewRequest.V1), typeof(DeleteBookReviewRequest.V1) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class ReviewParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(ReviewParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public sealed partial class ReviewNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(static diagnostic =>
+            diagnostic.Id == "ARKMSG020" && diagnostic.GetMessage().Contains("ark.v1"));
+        result.Diagnostics.Count(static diagnostic => diagnostic.Id == "ARKMSG029").Should().Be(2);
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorSupportsGlobalNamespaceDeclaringTypes()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(

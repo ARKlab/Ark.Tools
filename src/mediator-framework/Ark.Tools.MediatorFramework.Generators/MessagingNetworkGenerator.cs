@@ -114,6 +114,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "ARKMSG023", "Messaging declaring type must be partial",
         "Type '{0}' is marked with [{1}] but is not a non-nested, non-generic partial class, so its routing members cannot be generated",
         DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _versionOnlyDefaultName = _rule(
+        "ARKMSG029", "Default messaging contract name is version-only",
+        "Contract '{0}' has no explicit name and its default logical name '{1}' derives from a bare version type name; set an explicit name, for example [{2}(Name = \"...\")]",
+        DiagnosticSeverity.Warning);
     private static DiagnosticDescriptor _rule(string id, string title, string message, DiagnosticSeverity severity)
     {
         return new DiagnosticDescriptor(id, title, message, "Ark.Tools.MediatorFramework", severity, true,
@@ -379,6 +383,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 if (!aliases.TryAdd(alias, contract))
                     _report(context, _duplicateAlias, contract, alias);
             }
+            if (contract.HasVersionOnlyDefaultName)
+                _report(context, _versionOnlyDefaultName, contract, contract.DisplayName, current, contract.HasMessage ? "Message" : "Event");
             if (!currentNames.TryAdd(current, contract))
                 _report(context, _duplicateName, contract, current);
         }
@@ -478,6 +484,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     attributes.Event is not null,
                     attributes.Name,
                     attributes.FormerNames,
+                    attributes.Name is null
+                        && (attributes.Message is not null || attributes.Event is not null)
+                        && _isBareVersion(contract.Name),
                     _isEventShape(contract),
                     commandInterface is not null && _implementsCommand(contract, commandInterface),
                     MessagingContractTopologyValidator._hasMessagePackAttribute(contract),
@@ -586,6 +595,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             attribute.AttributeClass?.ToDisplayString() == _eventAttribute);
         var source = message ?? @event;
         return (message, @event, _string(source, "Name"), _strings(source, "FormerNames"));
+    }
+
+    // Equivalent to ^V\d+$ on the type name.
+    private static bool _isBareVersion(string name)
+    {
+        return name.Length > 1 && name[0] == 'V' && name.Skip(1).All(static character => character is >= '0' and <= '9');
     }
 
     private static bool _isEventShape(INamedTypeSymbol symbol)
@@ -1428,6 +1443,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             "ARKMSG023" => _nonPartialDeclaringType,
             "ARKMSG025" => MessagingContractTopologyValidator._missingMessagePackShape,
             "ARKMSG026" => MessagingContractTopologyValidator._missingProtobufShape,
+            "ARKMSG029" => _versionOnlyDefaultName,
             _ => throw new InvalidOperationException("Unknown messaging diagnostic: " + id),
         };
     }
@@ -1495,6 +1511,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         bool HasEvent,
         string? ExplicitName,
         EquatableArray<string> FormerNames,
+        bool HasVersionOnlyDefaultName,
         bool IsEventShape,
         bool ImplementsCommand,
         bool HasMessagePackAttribute,
