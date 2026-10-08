@@ -903,7 +903,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
             foreach (var contract in host.Subscribes)
             {
-                sb.AppendLine("            await global::Rebus.Bus.BusExtensions.Subscribe<" + contract + ">(bus).ConfigureAwait(false);");
+                sb.AppendLine("            await bus.Subscribe<" + contract + ">().ConfigureAwait(false);");
                 sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
             }
             sb.AppendLine("        }");

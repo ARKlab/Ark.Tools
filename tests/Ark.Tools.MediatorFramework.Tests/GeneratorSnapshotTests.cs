@@ -2459,6 +2459,49 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void RebusGeneratorCompilesSubscriberHost()
+    {
+        var (driver, compilation) = _runGeneratorDriver<ArkRebusEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+
+            [Message]
+            public sealed class OrderShipped;
+
+            [MessagingParticipant(
+                Identity = "orders",
+                Publishes = new[] { typeof(OrderShipped) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class PublisherParticipant;
+
+            [MessagingParticipant(
+                Identity = "shipping-notifications",
+                Subscribes = new[] { typeof(OrderShipped) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class SubscriberParticipant;
+
+            [MessagingNetwork(Members = new[] { typeof(PublisherParticipant), typeof(SubscriberParticipant) })]
+            public sealed class OrdersNetwork;
+
+            [ArkRebusHost(typeof(SubscriberParticipant))]
+            public sealed partial class SubscriberRebusHost;
+            """,
+            [],
+            MetadataReference.CreateFromFile(typeof(global::Rebus.Bus.IBus).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(Ark.Tools.Rebus.Retry.ArkRetryStrategyConfigurationExtensions).Assembly.Location));
+
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+
+        generatedCompilation.GetDiagnostics().Should().NotContain(
+            static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
+            .Should().Contain("await bus.Subscribe<global::OrderShipped>().ConfigureAwait(false);");
+    }
+
+    [TestMethod]
     public void RebusGeneratorRejectsHostBindingWithoutNetwork()
     {
         var result = _runGeneratorResult<ArkRebusEndpointGenerator>(

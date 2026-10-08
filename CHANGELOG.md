@@ -33,5 +33,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Disposing a service provider after the messaging outbox processor has started no longer throws `ObjectDisposedException`.
 - Exported gRPC `.proto` files import only the files they use, so clients that treat warnings as errors no longer fail on unused imports.
 - Messaging participants that process or subscribe to several contracts now compile.
+- An `[ArkRebusHost]` over a participant that subscribes to events now compiles: the generated `SubscribeAsync` called a Rebus `BusExtensions` class that does not exist.
 - Generated messaging stream dispatch compiles in projects without implicit usings.
 - Undispatchable messaging contracts are reported at build time: an event (declared, published, or subscribed) that is not an `ICommand<TSelf>`, including a request (`ARKMSG018`), and a processed contract that is neither a command nor a request (`ARKMSG027`).
