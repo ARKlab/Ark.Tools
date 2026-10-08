@@ -22,6 +22,7 @@ lives in [`docs/plans/mediator-framework/`](../../plans/mediator-framework/READM
 | [`azure-functions-design.md`](azure-functions-design.md) | Proposed .NET isolated Azure Functions HTTP hosting architecture and parity contract. |
 | [`mcp-design.md`](mcp-design.md) | Proposed source-generated MCP tool bridge using the official ASP.NET Core MCP SDK. |
 | [`messaging-throughput-prd.md`](messaging-throughput-prd.md) | Proposed high-throughput messaging receivers: receive/processing seam split, adaptive concurrency, credit-bounded prefetch, lock renewal, transport profiles. |
+| [`sample-hosting-variants.md`](sample-hosting-variants.md) | Sample reorganization: one Core service hosted by Web, WebRebus, and Functions variants without changing API, Application, or application tests. |
 | [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
 | [`migration-from-mvc.md`](../../mediator-framework/migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
 

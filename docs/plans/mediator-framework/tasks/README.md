@@ -100,6 +100,12 @@ not stop at a contract, schema, host, or documentation change.
 | --- | --- | --- |
 | [NET-01](aspnetcore/NET-01-openapi-xml-docs.md) | OpenAPI 3.1 verification, YAML, and doc UI decision | Complete |
 
+### Sample hosting variants
+
+| Task | Title | Status |
+| --- | --- | --- |
+| [SHV](../sample-hosting-variants-plan.md) | Core service hosted by Web, WebRebus, and Functions variants | Pending |
+
 ## Release-scope extension
 
 | Task | Title | Status |
