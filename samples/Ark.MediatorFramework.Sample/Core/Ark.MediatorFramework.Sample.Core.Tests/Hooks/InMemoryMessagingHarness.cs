@@ -50,6 +50,8 @@ public static class InMemoryMessagingHarness
     {
         services.Configure<JsonSerializerOptions>(static options =>
         {
+            // Same settings as the hosts: the Ark defaults (camelCase, EvolvableEnum and NodaTime converters).
+            options.ConfigureArkDefaults();
             options.RespectNullableAnnotations = true;
             options.RespectRequiredConstructorParameters = true;
             options.TypeInfoResolver = ApplicationJsonSerializerContext.Default;
