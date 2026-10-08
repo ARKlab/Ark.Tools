@@ -2825,6 +2825,35 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsBindQueryPropertiesOfBodyVerbCommands()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("PUT", "/books/{id}/archive")]
+            public sealed record ArchiveBook : ICommand<ArchiveBook>
+            {
+                public System.Guid Id { get; init; }
+                [HttpQuery] public bool Notify { get; init; }
+                public string Reason { get; init; } = string.Empty;
+            }
+            """;
+
+        var minimalApi = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+        var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+
+        minimalApi.Diagnostics.Should().BeEmpty();
+        minimalApi.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Notify\")] bool Notify,");
+        minimalApi.Generated.Should().Contain("var request = body with { Id = Id, Notify = Notify };");
+        functions.Diagnostics.Should().BeEmpty();
+        functions.Generated.Should().Contain("request.Query.TryGetValue(\"Notify\", out var _qs_Notify)");
+        functions.Generated.Should().Contain("body = body with { Notify = _query_Notify };");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorBindsStringCollectionTypes()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
