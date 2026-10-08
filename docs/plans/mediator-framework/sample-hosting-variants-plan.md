@@ -1621,7 +1621,9 @@ the 4-argument overload adds the optional `management` parameter and uses
 `MessagingParticipantDescriptor` gains last optional ctor parameters
 `IEnumerable<MessagingTopicResource>? subscribedTopics = null` and
 `IEnumerable<string>? knownNetworkTopics = null`, stored like
-`PublishedTopics`. The generator emits `knownNetworkTopics` from every network
+`PublishedTopics`. When `knownNetworkTopics` is omitted it defaults to the
+distinct names of the descriptor's published and subscribed topics, so a
+hand-written descriptor still passes `MessagingResourceManifest` validation. The generator emits `knownNetworkTopics` from every network
 member's `Publishes` (`<memberIdentity>-<contractName>`, ordinal-sorted). In `MessagingNetworkGenerator`, `CreateDescriptor` emits it
 after the published-topics array: for each `participant.Subscribes` contract
 with exactly one publisher in the network (other cases already report a
@@ -1664,7 +1666,8 @@ subscriptions, so an in-memory or Service Bus receiver needs a management seam
 
 - [ ] **Step 4: Run tests**
 
-Run the Step 2 command; expected: 4 passed. Then
+Run the Step 2 command; expected: 6 passed (the four tests above plus the
+reconciliation and publish-and-subscribe-to-the-same-event tests). Then
 `dotnet test tests/Ark.Tools.MediatorFramework.Tests --filter "FullyQualifiedName~Messaging"`;
 expected: no regressions.
 
@@ -2183,10 +2186,12 @@ inspects route metadata and invokes the gRPC service by reflection, so add the
 hosted round trips the spec promises, all on the TestServer arrange block above
 and the same authenticated `HttpClient` helper:
 
-- `HttpRoundTripTests.CreateThenGetBook` — `POST /api/v1/books` with a
-  `Book.V1.Create` body, assert 200 and an `id`; `GET /api/v1/books/{id}`,
-  assert the same title. Take the exact routes from the generated
-  `[HttpEndpoint]` metadata of `Book_CreateRequest.V1` / `Book_GetQuery.V1`.
+- `HttpRoundTripTests.CreateThenGetBook` — only contracts with
+  `[HttpEndpoint]` get Minimal API routes, and `Book_CreateRequest.V1` /
+  `Book_GetQuery.V1` have none. Use the attributed ones: `POST /api/v1/books/bulk`
+  with one book (assert 200 and a non-empty `id`), `POST /api/v1/books/{id}/reviews`
+  (assert 200), then `GET /api/v1/books/{id}/reviews?Skip=0&Limit=25` and assert
+  the review text comes back.
 - `GrpcClientRoundTripTests.DescribeEditionAndStreamBooksThroughGeneratedClient` — build a
   `GrpcChannel.ForAddress(server.BaseAddress, new GrpcChannelOptions { HttpHandler = server.CreateHandler() })`,
   use the client generated in `…Core.Web.GrpcClient` from the exported protos,
@@ -2487,11 +2492,10 @@ the same arrange shape as Task 6 Step 6: `WebApplication.CreateBuilder` with
 `EnvironmentName = "IntegrationTests"`, then the `WebRebusStartup` composition
 over `RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory })`
 and `RebusHosting.Configure<ApiRebusHost>(c, t => t.UseDrainableInMemoryTransportAsOneWayClient(network), startOutboxProcessor: false)`.
-It sends `POST /api/v1/books` with a `Book.V1.Create` body through an
-authenticated `HttpClient`, using a test-only copy of Task 6's bearer helper,
-and asserts 200 and an `id`. It then sends `GET /api/v1/books/{id}` and
-asserts the same title. Take the routes from the generated `[HttpEndpoint]`
-metadata.
+Through an authenticated `HttpClient` (a test-only copy of Task 6's bearer
+helper) it runs the same attributed-route round trip as Task 6:
+`POST /api/v1/books/bulk`, `POST /api/v1/books/{id}/reviews`, then
+`GET /api/v1/books/{id}/reviews?Skip=0&Limit=25`.
 
 ```bash
 grep -rn "Rebus" $S/Core/Ark.MediatorFramework.Sample.Core.API $S/Core/Ark.MediatorFramework.Sample.Core.Application \
@@ -2550,19 +2554,40 @@ git commit -m "feat(samples): add web rebus host variant" -m "Assisted-by: Claud
 
 ```csharp
 [TestMethod]
-public void ApiAppIsProducerOnly()
+public async Task ApiAppIsProducerOnly()
 {
-    // Build the Api Functions service collection exactly as Api/Program.cs does,
-    // with an in-memory transport injected; assert no MessagingProcessorHost and
-    // no MessagingTriggeredHostMarker registration, and that IBus is resolvable.
+    await using var container = FunctionsHosting.CreateContainer(_inMemoryOptions());
+    var services = new ServiceCollection();
+    services.AddLogging();
+    FunctionsHosting.AddApiProducer(
+        services,
+        container,
+        static transport => transport.UseInMemory(),
+        static dataBus => dataBus.UseInMemory(lifetime: Duration.FromHours(2)));
+    await using var provider = services.BuildServiceProvider();
+
+    services.Should().NotContain(static service => service.ServiceType == typeof(MessagingTriggeredHostMarker));
+    provider.GetServices<IHostedService>().OfType<MessagingProcessorHost>().Should().BeEmpty();
+    provider.GetRequiredService<IBus>().Should().NotBeNull();
 }
 
 [TestMethod]
 public void EachTriggerAppDeclaresOneParticipant()
 {
-    // For Processor, Notifications, Audit: read the assembly-level
-    // MessagingFunctionsHostAttribute and assert the participant type:
-    // SampleMessagingParticipant, SampleMessagingNotificationParticipant, SampleMessagingAuditParticipant.
+    _participant(typeof(ProcessorFunctions)).Should().Be<SampleMessagingParticipant>();
+    _participant(typeof(NotificationsFunctions)).Should().Be<SampleMessagingNotificationParticipant>();
+    _participant(typeof(AuditFunctions)).Should().Be<SampleMessagingAuditParticipant>();
+}
+
+// Reads the participant type from the trigger app's assembly-level MessagingFunctionsHostAttribute.
+private static Type _participant(Type generatedFunctions)
+{
+    return generatedFunctions.Assembly.GetCustomAttribute<MessagingFunctionsHostAttribute>()!.Participant;
+}
+
+private static ApplicationOptions _inMemoryOptions()
+{
+    return new ApplicationOptions { DataContextFactory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory()) };
 }
 ```
 
@@ -2912,6 +2937,10 @@ commit lands on that PR:
 - [ ] The processor hosts load Key Vault configuration.
 - [ ] `CreateBookReviewRequest.V1` gets the explicit wire name
   `books/book-review.create`.
+- [ ] Native messaging JSON in Web, Functions and the Core.Tests harness calls
+  `ConfigureArkDefaults()` before setting the source-generated context, so
+  contracts with `EvolvableEnum` or NodaTime members deserialize instead of
+  dead-lettering.
 
 ### Task 11: Host-free contract attributes
 
