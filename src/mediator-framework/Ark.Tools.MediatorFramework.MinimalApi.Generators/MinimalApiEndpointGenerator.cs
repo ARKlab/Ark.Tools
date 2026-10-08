@@ -147,15 +147,19 @@ namespace Ark.Tools.MediatorFramework.Generators
                     spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
             }
 
-            // A contract from a referenced assembly has no source location: report at the host call that discovers it.
+            // A contract from a referenced assembly has no source location: report at every host call that discovers
+            // it, so suppressing the diagnostic at one call does not hide it at the others.
             foreach (var endpoint in referencedEndpoints.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal))
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
+                var locations = mappings
+                    .Where(mapping => mapping.Location is not null && mapping.AssemblyNames.Values.Contains(endpoint.AssemblyName))
+                    .Select(static mapping => mapping.Location!)
+                    .ToArray();
                 foreach (var diagnostic in endpoint.Diagnostics.Where(static diagnostic => !diagnostic.Location.IsInSource))
                 {
-                    var location = mappings.FirstOrDefault(mapping => mapping.AssemblyNames.Values.Contains(endpoint.AssemblyName)).Location
-                        ?? diagnostic.Location;
-                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, location, diagnostic.Arguments.Cast<object>().ToArray()));
+                    foreach (var location in locations.Length == 0 ? new[] { diagnostic.Location } : locations)
+                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, location, diagnostic.Arguments.Cast<object>().ToArray()));
                 }
             }
         }

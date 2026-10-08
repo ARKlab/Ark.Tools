@@ -3129,6 +3129,44 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorReportsReferencedGetContractAtEveryHostCall()
+    {
+        var contracts = _createMetadataReference(
+            "Contracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Marker;
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public Filter? Filter { get; init; }
+            }
+            """);
+        const string source =
+            """
+            public static class Host
+            {
+                public static void MapPublic() => MapArkEndpointsFromAssembly<Marker>();
+                public static void MapInternal() => MapArkEndpointsFromAssembly<Marker>();
+            }
+            """;
+
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source, [], contracts);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Should().HaveCount(2);
+        diagnostics.Select(static diagnostic => diagnostic.Location.SourceSpan.Start)
+            .Should().BeEquivalentTo([
+                source.IndexOf("MapArkEndpointsFromAssembly", StringComparison.Ordinal),
+                source.LastIndexOf("MapArkEndpointsFromAssembly", StringComparison.Ordinal)]);
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorEmitsNegotiationOnlyForOptedInEndpoints()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(

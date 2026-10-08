@@ -47,8 +47,9 @@ reports a property when:
   inferred body parameters` at startup. A route-bound property is accepted.
 
 The diagnostic is reported at the property. When the contract is in a
-referenced assembly, it is reported at the `MapArkEndpoints` or
-`MapArkEndpointsFromAssembly` call that discovers it.
+referenced assembly, it is reported at every `MapArkEndpoints` or
+`MapArkEndpointsFromAssembly` call that discovers it, so a `#pragma` around one
+call does not hide it at the others.
 
 ### Azure Functions generator
 
