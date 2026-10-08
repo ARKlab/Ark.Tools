@@ -3440,6 +3440,41 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    [DataRow("[ServerSet]", false)]
+    [DataRow("", true)]
+    public void GrpcGeneratorImportsNodaTimeProtoOnlyForEmittedPeriodFields(string elapsedAttribute, bool imported)
+    {
+        var generated = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string UserId { get; set; } = string.Empty;
+                {{elapsedAttribute}}
+                [ProtoMember(2)]
+                public NodaTime.Period? Elapsed { get; set; }
+            }
+
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """,
+            [],
+            MetadataReference.CreateFromFile(typeof(NodaTime.Period).Assembly.Location)).Generated;
+
+        generated.Contains("import \\\"ark/nodatime.proto\\\";", StringComparison.Ordinal).Should().Be(imported);
+        generated.Contains("ark.nodatime.Period elapsed = 2;", StringComparison.Ordinal).Should().Be(imported);
+    }
+
+    [TestMethod]
     public void GrpcGeneratorEmitsStreamingAttachmentCollectionUpload()
     {
         var generated = _runGenerator<ArkGrpcEndpointGenerator>(
