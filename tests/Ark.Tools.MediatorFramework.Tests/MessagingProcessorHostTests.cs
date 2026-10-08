@@ -111,7 +111,7 @@ public sealed class MessagingProcessorHostTests
             new MessagingProcessingOptions { InitialConcurrency = 2, MaximumConcurrency = 8 });
 
         await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
-        await _waitUntilAsync(() => host.Outstanding == host.PrefetchBudget).ConfigureAwait(false);
+        await _waitUntilBudgetReceivedAsync(source, host).ConfigureAwait(false);
         var deliveredWhenFull = source._delivered;
         var receivesWhenFull = source._receives;
         await Task.Delay(200).ConfigureAwait(false);
@@ -203,7 +203,7 @@ public sealed class MessagingProcessorHostTests
             });
 
         await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
-        await _waitUntilAsync(() => host.Outstanding == host.PrefetchBudget).ConfigureAwait(false);
+        await _waitUntilBudgetReceivedAsync(source, host).ConfigureAwait(false);
         await host.StopAsync(CancellationToken.None).ConfigureAwait(false);
 
         completed.Should().BeGreaterThanOrEqualTo(host.PrefetchBudget, "in-flight and buffered work finishes inside the window");
@@ -228,7 +228,7 @@ public sealed class MessagingProcessorHostTests
             });
 
         await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
-        await _waitUntilAsync(() => host.Outstanding == host.PrefetchBudget).ConfigureAwait(false);
+        await _waitUntilBudgetReceivedAsync(source, host).ConfigureAwait(false);
         await host.StopAsync(CancellationToken.None).ConfigureAwait(false);
 
         source._abandoned.Should().Be(host.PrefetchBudget, "nothing may still hold a lock once the drain window elapsed");
@@ -299,6 +299,15 @@ public sealed class MessagingProcessorHostTests
             timeout.Token.ThrowIfCancellationRequested();
             await Task.Delay(5, timeout.Token).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Waits until the broker has actually handed the host a full budget of deliveries.</summary>
+    private static async Task _waitUntilBudgetReceivedAsync(ScriptedSource source, MessagingProcessorHost host)
+    {
+        // Outstanding counts credit as soon as the receive loop reserves it, before the receive call is
+        // made, so it can equal the budget while nothing has been received yet; stopping then cancels
+        // that receive and leaves nothing to drain. A delivery the source returned is always buffered.
+        await _waitUntilAsync(() => source._delivered >= host.PrefetchBudget).ConfigureAwait(false);
     }
 
     /// <summary>A clock that fails exactly once, on the first reading taken after it is armed.</summary>
