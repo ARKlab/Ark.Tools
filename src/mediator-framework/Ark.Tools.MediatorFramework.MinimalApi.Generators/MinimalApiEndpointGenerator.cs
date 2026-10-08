@@ -39,6 +39,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string MappingParserTrackingName = "MinimalApiMappingParser";
         private const string EndpointParserTrackingName = "MinimalApiEndpointParser";
         private const string ReferencedEndpointsTrackingName = "MinimalApiReferencedEndpoints";
+        private const string EmissionInputTrackingName = "MinimalApiEmissionInput";
         private const string Enumerable = "System.Collections.Generic.IEnumerable`1";
         private const string List = "System.Collections.Generic.List`1";
         private const string ReadOnlyList = "System.Collections.Generic.IReadOnlyList`1";
@@ -116,24 +117,47 @@ namespace Ark.Tools.MediatorFramework.Generators
                     GetReferencedEndpoints(pair.Left, pair.Right.Values, cancellationToken)))
                 .WithTrackingName(ReferencedEndpointsTrackingName);
 
-            var collected = sourceEndpoints.Collect()
+            // The emitted source does not depend on the mapping calls' locations, so an edit to the host file that
+            // declares them leaves the emission input unchanged.
+            var emission = sourceEndpoints.Collect()
                 .Select(static (endpoints, _) => new EquatableArray<EndpointModel>(endpoints))
                 .Combine(referencedEndpoints)
-                .Combine(endpointMappings.Collect()
-                    .Select(static (mappings, _) => new EquatableArray<EndpointAssemblyMapping>(mappings)));
-
+                .WithTrackingName(EmissionInputTrackingName);
             context.RegisterSourceOutput(
-                collected,
-                static (spc, pair) =>
-                {
-                    foreach (var mapping in pair.Right)
-                    {
-                        if (mapping.InvalidVersionPrefixLocation is not null)
-                            spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
-                    }
+                emission,
+                static (spc, pair) => Emit(spc, pair.Left.Values.AddRange(pair.Right.Values)));
 
-                    Emit(spc, pair.Left.Left.Values.AddRange(pair.Left.Right.Values), pair.Right.Values);
-                });
+            // Diagnostics only: the mapping calls and the referenced contracts reported at them.
+            var mappingDiagnostics = endpointMappings.Collect()
+                .Select(static (mappings, _) => new EquatableArray<EndpointAssemblyMapping>(mappings))
+                .Combine(referencedEndpoints);
+            context.RegisterSourceOutput(
+                mappingDiagnostics,
+                static (spc, pair) => ReportMappingDiagnostics(spc, pair.Left.Values, pair.Right.Values));
+        }
+
+        private static void ReportMappingDiagnostics(
+            SourceProductionContext spc,
+            ImmutableArray<EndpointAssemblyMapping> mappings,
+            ImmutableArray<EndpointModel> referencedEndpoints)
+        {
+            foreach (var mapping in mappings)
+            {
+                if (mapping.InvalidVersionPrefixLocation is not null)
+                    spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
+            }
+
+            // A contract from a referenced assembly has no source location: report at the host call that discovers it.
+            foreach (var endpoint in referencedEndpoints.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal))
+            {
+                spc.CancellationToken.ThrowIfCancellationRequested();
+                foreach (var diagnostic in endpoint.Diagnostics.Where(static diagnostic => !diagnostic.Location.IsInSource))
+                {
+                    var location = mappings.FirstOrDefault(mapping => mapping.AssemblyNames.Values.Contains(endpoint.AssemblyName)).Location
+                        ?? diagnostic.Location;
+                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, location, diagnostic.Arguments.Cast<object>().ToArray()));
+                }
+            }
         }
 
         private static void EmitResponseETagAssignment(StringBuilder sb, EndpointModel endpoint)
@@ -744,10 +768,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             return match?.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
 
-        private static void Emit(
-            SourceProductionContext spc,
-            ImmutableArray<EndpointModel> items,
-            ImmutableArray<EndpointAssemblyMapping> mappings)
+        private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
         {
             if (items.IsDefaultOrEmpty)
                 return;
@@ -845,16 +866,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 {
                     spc.CancellationToken.ThrowIfCancellationRequested();
                     var currentEndpointIndex = endpointIndex++;
-                    foreach (var diagnostic in e.Diagnostics)
-                    {
-                        // A contract from a referenced assembly has no source location: report at the host call
-                        // that discovers it.
-                        var location = diagnostic.Location.IsInSource
-                            ? diagnostic.Location
-                            : mappings.FirstOrDefault(mapping => mapping.AssemblyNames.Values.Contains(e.AssemblyName)).Location
-                                ?? diagnostic.Location;
-                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, location, diagnostic.Arguments.Cast<object>().ToArray()));
-                    }
+                    // Diagnostics without a source location are reported at the host call by ReportMappingDiagnostics.
+                    foreach (var diagnostic in e.Diagnostics.Where(static diagnostic => diagnostic.Location.IsInSource))
+                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
                     if (!e.IsValid)
                         continue;
                     foreach (var property in e.InvalidServerSetProperties)
