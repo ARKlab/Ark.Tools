@@ -42,6 +42,18 @@ pr:
       - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.Core.WebRebus.buildStage.yml
       - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.Core.WebRebus.deployStage.yml
 
+resources:
+  containers:
+  # Same SQL Server image and settings as .github/workflows/ci.yml.
+  - container: sqlserver
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    env:
+      ACCEPT_EULA: 'Y'
+      MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
+      MSSQL_COLLATION: Latin1_General_CI_AS_KS
+    ports:
+      - 1433:1433
+
 variables:
   workingDirectory: '$(Build.SourcesDirectory)/samples/Ark.MediatorFramework.Sample'
   vmImageName: 'ubuntu-22.04'

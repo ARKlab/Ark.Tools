@@ -24,6 +24,8 @@ stages:
         timeoutInMinutes: 60
         pool:
           vmImage: ${{ parameters.vmImageName }}
+        services:
+          sqlserver: sqlserver
         steps:
           - task: UseDotNet@2
             displayName: Use sample SDK
@@ -31,16 +33,13 @@ stages:
               useGlobalJson: true
               workingDirectory: ${{ parameters.workingDirectory }}
 
-          # Same SQL Server image and settings as .github/workflows/ci.yml.
+          # Azure DevOps does not wait for service container health.
+          # The container name is generated, so find it by image.
           - script: |
-              docker network create sample-net
-              docker run -d --name sqlserver --network sample-net -p 1433:1433 \
-                -e ACCEPT_EULA=Y \
-                -e MSSQL_SA_PASSWORD='IntegrationTestsDbPassword85!' \
-                -e MSSQL_COLLATION=Latin1_General_CI_AS_KS \
-                mcr.microsoft.com/mssql/server:2025-latest
-              timeout 120s bash -c 'until docker exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "IntegrationTestsDbPassword85!" -C -Q "SELECT 1" > /dev/null 2>&1; do sleep 2; done'
-            displayName: Start SQL Server
+              sqlId=$(docker ps --filter ancestor=mcr.microsoft.com/mssql/server:2025-latest -q)
+              [ -n "$sqlId" ] || { echo 'SQL Server service container not found'; exit 1; }
+              timeout 120s bash -c 'until docker exec "$0" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "IntegrationTestsDbPassword85!" -C -Q "SELECT 1" > /dev/null 2>&1; do sleep 2; done' "$sqlId"
+            displayName: Wait for SQL Server
 
           - task: DotNetCoreCLI@2
             displayName: Restore sample
