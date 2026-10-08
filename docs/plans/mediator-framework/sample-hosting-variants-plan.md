@@ -2178,10 +2178,13 @@ and the same authenticated `HttpClient` helper:
   `Book.V1.Create` body, assert 200 and an `id`; `GET /api/v1/books/{id}`,
   assert the same title. Take the exact routes from the generated
   `[HttpEndpoint]` metadata of `Book_CreateRequest.V1` / `Book_GetQuery.V1`.
-- `GrpcClientRoundTripTests.CreateThenGetBookThroughGeneratedClient` — build a
+- `GrpcClientRoundTripTests.DescribeEditionAndStreamBooksThroughGeneratedClient` — build a
   `GrpcChannel.ForAddress(server.BaseAddress, new GrpcChannelOptions { HttpHandler = server.CreateHandler() })`,
   use the client generated in `…Core.Web.GrpcClient` from the exported protos,
-  attach the bearer as call metadata, create a book and read it back.
+  attach the bearer as call metadata, call `DescribeBookEdition` and read the
+  `StreamBooks` server stream. These are the operations `Books.proto` exports.
+  `Book_CreateRequest.V1` and `Book_GetQuery.V1` carry no `[GrpcMethod]`, so
+  they are HTTP-only.
 - `OpenApiDocumentTests.V1DocumentMatchesSnapshot` — `GET /openapi/v1.json`,
   compare (normalized line endings) with the committed
   `W/…Core.Web.Tests/Snapshots/openapi.v1.json`; on mismatch write
