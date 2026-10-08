@@ -22,18 +22,10 @@ devDependencies:
     - DietrichGebert/ponytail#v4.13.0
     - ./agents-plugins/ark-csharp
   mcp:
-    - name: ado
-      registry: false
-      transport: http
-      url: https://mcp.dev.azure.com/arklabita
     - name: microsoftdocs
       registry: false
       transport: http
       url: https://learn.microsoft.com/api/mcp
-    - name: github-copilot
-      registry: false
-      transport: http
-      url: https://api.githubcopilot.com/mcp
 marketplace:
   name: Ark.Tools
   owner:

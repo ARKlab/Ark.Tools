@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "microsoftdocs": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "binlog": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "dnx",
+        "Microsoft.AITools.BinlogMcp",
+        "--yes",
+        "--prerelease"
+      ]
+    }
+  }
+}

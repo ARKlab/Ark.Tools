@@ -1,0 +1,23 @@
+{
+  "name": "apm-lsp",
+  "lspServers": {
+    "csharp": {
+      "command": "dnx",
+      "args": [
+        "roslyn-language-server",
+        "--yes",
+        "--prerelease",
+        "--",
+        "--stdio",
+        "--daemon-mode",
+        "--autoLoadProjects"
+      ],
+      "extensionToLanguage": {
+        ".cs": "csharp",
+        ".razor": "aspnetcorerazor",
+        ".cshtml": "aspnetcorerazor"
+      },
+      "startupTimeout": 120000
+    }
+  }
+}

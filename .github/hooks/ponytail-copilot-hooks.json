@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "node -e \"require(require('node:path').join(process.env.PLUGIN_ROOT.replaceAll(String.fromCharCode(92), '/'), 'hooks/ponytail-activate.js'))\" || exit 0",
+        "powershell": "if (Get-Command node -ErrorAction SilentlyContinue) { node -e \"require(require('node:path').join(process.env.PLUGIN_ROOT.replaceAll(String.fromCharCode(92), '/'), 'hooks/ponytail-activate.js'))\" }",
+        "timeoutSec": 5
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "node -e \"require(require('node:path').join(process.env.PLUGIN_ROOT.replaceAll(String.fromCharCode(92), '/'), 'hooks/ponytail-mode-tracker.js'))\" || exit 0",
+        "powershell": "if (Get-Command node -ErrorAction SilentlyContinue) { node -e \"require(require('node:path').join(process.env.PLUGIN_ROOT.replaceAll(String.fromCharCode(92), '/'), 'hooks/ponytail-mode-tracker.js'))\" }",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}

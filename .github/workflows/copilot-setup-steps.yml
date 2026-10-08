@@ -7,15 +7,9 @@ on:
   push:
     paths:
       - .github/workflows/copilot-setup-steps.yml
-      - apm.yml
-      - apm.lock.yaml
-      - agents-plugins/ark-csharp/**
   pull_request:
     paths:
       - .github/workflows/copilot-setup-steps.yml
-      - apm.yml
-      - apm.lock.yaml
-      - agents-plugins/ark-csharp/**
 
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
@@ -83,12 +77,17 @@ jobs:
           setup-only: true
           apm-version: 0.33.0
 
-      - name: Restore Copilot and Claude development agents from lockfile
-        # ponytail: APM 0.33 --frozen preflight rejects cold marketplace deps and transitive MCP.
-        # Switch back to 'apm install --frozen' once fixed upstream.
+      - name: Verify committed Copilot and Claude agents match the lockfile
+        # Stops the agent when committed skills, agents or hooks were altered.
+        run: apm audit --ci
+        env:
+          GITHUB_APM_PAT: ${{ github.token }}
+
+      - name: Restore apm_modules referenced by committed agents
+        # Leaves committed outputs unchanged; only populates the ignored package cache.
         run: |
           apm install
-          git diff --exit-code --ignore-cr-at-eol -- apm.lock.yaml
+          git diff --exit-code
         env:
           GITHUB_APM_PAT: ${{ github.token }}
 

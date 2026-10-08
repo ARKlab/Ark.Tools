@@ -73,8 +73,11 @@ Use [APM 0.33.0](https://github.com/microsoft/apm/releases/tag/v0.33.0) and Powe
 The repository has two separate APM flows:
 
 - **Development:** [apm.yml](apm.yml) and [apm.lock.yaml](apm.lock.yaml)
-  declare and pin development dependencies. Installed skills, agents, hooks,
-  and generated harness configuration are ignored, not vendored.
+  declare and pin development dependencies. Installed Copilot and Claude
+  skills, agents, hooks, MCP and LSP configuration are committed, so every
+  harness and cloud session has them at startup. Some agents link into the
+  ignored `apm_modules/`; run `apm install` after cloning to restore it (cloud
+  setup does this automatically).
 - **Publication:** [agents-plugins/ark-csharp](agents-plugins/ark-csharp/)
   contains the authored `apm.yml` and `.apm/` assets.
   [agents-plugins/published/ark-csharp](agents-plugins/published/ark-csharp/)
@@ -86,7 +89,7 @@ The repository has two separate APM flows:
 From the repository root:
 
 ```powershell
-# Restore the pinned Copilot and Claude packages, MCP and LSP servers (also used by cloud setup).
+# Regenerate the committed Copilot and Claude packages, MCP and LSP servers from the lockfile.
 apm install
 git diff --exit-code -- apm.lock.yaml
 
@@ -95,24 +98,33 @@ apm run plugins:build
 
 # Check all published files and marketplace metadata against their sources.
 apm run plugins:check
+
+# Check committed Copilot and Claude outputs against the lockfile.
+apm audit --ci
 ```
 
 The restore reuses existing lockfile pins (never `--update`/`--refresh`) and
-the `git diff` fails if the lockfile changed; CI also checks the entire checkout
-for drift. APM 0.33.0's `--frozen` preflight cannot bootstrap a clean checkout
+the `git diff` fails if the lockfile changed. `apm audit --ci` fails when a committed
+skill, agent or hook differs from the lockfile; files APM never deployed are not
+checked. The CI workflow and Copilot setup steps run it, so the cloud agent does
+not start on altered outputs. APM 0.33.0's `--frozen` preflight cannot bootstrap a clean checkout
 (it requires installed marketplace manifests and rejects transitive MCP servers
 such as `binlog`), so it is not used. Do not bypass a failure: review
 intentional dependency changes with the maintenance commands below.
 
 Run development installation and lockfile updates on Linux (including WSL
-on Windows), with both tools installed there, matching cloud setup.
+on Windows), with both tools installed there, matching CI.
 APM 0.31.0 hashes `superpowers` differently
 when Windows Git checks out its `AGENTS.md` symlink as a text stub; do not
 replace the committed Linux content hash to accept that checkout. Plugin
 build/check commands work in native PowerShell 7 on either platform.
 
-The generated `.github/mcp.json`, `.github/lsp.json`, `.mcp.json` and `.claude/`
-are gitignored. The VS Code MCP configuration is authored in `.vscode/mcp.json`.
+The generated `.agents/`, `.claude/`, `.github/agents/`, `.github/hooks/`,
+`.github/mcp.json`, `.github/lsp.json` and `.mcp.json` are committed; do not edit
+them by hand. `.claude/settings.json` sets `enableAllProjectMcpServers`, which
+APM preserves. Only project MCP servers belong in `apm.yml`; platform servers
+such as GitHub and Azure DevOps are configured per user or organization.
+The VS Code MCP configuration is authored in `.vscode/mcp.json`.
 Cloud-agent MCP servers must also be configured in repository settings.
 For other harnesses, explicitly run
 `apm install --target copilot,claude,opencode`; review resulting lockfile changes.
@@ -126,7 +138,10 @@ apm install owner/repository/path#ref --dev --target copilot,claude --only apm
 apm install --update --target copilot,claude --only apm
 ```
 
-Commit the manifest and lockfile changes, not the installed projections.
+Commit the manifest, lockfile and regenerated outputs together.
+Renovate does the same: its `apm` manager runs `apm install` with the APM version
+pinned in `renovate.json` and commits every changed output. It bumps tag-pinned
+dependencies; lock file maintenance, enabled for `apm` only, refreshes branch pins.
 Run the restore commands again to verify a lock-preserving restore. Development
 dependencies are never included in the published `ark-csharp` plugin.
 
@@ -158,6 +173,6 @@ package-local lockfile. APM 0.31 embeds timestamped, path-attested metadata when
 that lock exists; the build rejects it rather than breaking reproducibility or
 silently invalidating the attestation during manifest relocation.
 
-The dedicated [APM workflow](.github/workflows/apm.yml) checks publication drift
-and a clean, lock-preserving Copilot restore, without building .NET or starting emulators.
+The [CI workflow](.github/workflows/ci.yml) checks publication drift and runs
+`apm audit --ci` before building .NET.
 Consumers can add `ARKlab/Ark.Tools` as a marketplace and install `ark-csharp`.
