@@ -298,7 +298,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             {
                 _add(processors, contract, participant);
                 if (!contract.IsSelfCommand && contract.RequestResponseTypeName is null)
-                    _report(context, _undispatchableMessage, contract, participant.Identity, contract.DisplayName);
+                    _report(context, _undispatchableMessage, participant.Symbol, participant.Identity, contract.DisplayName);
             }
             foreach (var contract in participant.Publishes)
                 _add(publishers, contract, participant);

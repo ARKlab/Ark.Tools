@@ -4199,7 +4199,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MessagingNetworkGeneratorRejectsUndispatchableProcessedContract()
     {
-        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+        const string source =
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
@@ -4214,9 +4214,12 @@ public sealed class GeneratorSnapshotTests
                 Members = new[] { typeof(LookupParticipant) },
                 Requires = MessagingCapabilities.SendReceive)]
             public sealed partial class BookMessagingNetwork { }
-            """);
+            """;
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(source);
 
-        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG027");
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMSG027").Subject;
+        source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length)
+            .Should().Be("LookupParticipant");
     }
 
     [TestMethod]
