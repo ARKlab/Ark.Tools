@@ -102,17 +102,9 @@ public sealed class HttpRoundTripTests
         var ctk = host.App.Lifetime.ApplicationStopping;
         using var client = host.CreateClient(ApplicationScopes.BookRead);
 
-        // The generated endpoint accepts MessagePack, so it reads a request body even for GET: send an empty JSON
-        // object and let the query string supply the values.
-        using var empty = _json("{}");
-        using var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            new Uri("/api/v1/books/stream?Count=3&DelayMilliseconds=0", UriKind.Relative))
-        {
-            Content = empty,
-        };
-
-        using var response = await client.SendAsync(request, ctk).ConfigureAwait(false);
+        using var response = await client.GetAsync(
+            new Uri("/api/v1/books/stream?Count=3&DelayMilliseconds=0", UriKind.Relative),
+            ctk).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(ctk).ConfigureAwait(false));
         using var items = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ctk).ConfigureAwait(false));

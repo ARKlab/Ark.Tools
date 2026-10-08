@@ -132,7 +132,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
                     }
 
-                    Emit(spc, pair.Left.Left.Values.AddRange(pair.Left.Right.Values));
+                    Emit(spc, pair.Left.Left.Values.AddRange(pair.Left.Right.Values), pair.Right.Values);
                 });
         }
 
@@ -202,7 +202,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 && !prefix.Contains("{version}", StringComparison.OrdinalIgnoreCase)
                     ? versionPrefix.Expression.GetLocation()
                     : null;
-            return new EndpointAssemblyMapping(assemblyNames, invalidVersionPrefixLocation);
+            return new EndpointAssemblyMapping(assemblyNames, invalidVersionPrefixLocation, invocation.GetLocation());
         }
 
         private static bool IsAssemblyMappingCandidate(SyntaxNode node)
@@ -538,6 +538,24 @@ namespace Ark.Tools.MediatorFramework.Generators
                 if (!properties.Any(property => string.Equals(property.Name, routeName, StringComparison.OrdinalIgnoreCase)))
                     diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.MissingRouteProperty, type.Name, GetLocation(http), routeName));
             }
+            if (verb is "GET" or "HEAD" or "DELETE")
+            {
+                foreach (var property in AllProperties(type)
+                    .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
+                    .Where(property => !HasAttribute(property, serverSetAttr))
+                    .Where(property => HasAttribute(property, httpBodyAttr)
+                        || IsAttachmentType(property.Type, attachmentType)
+                        || IsPotentialAttachmentCollection(property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                        || IsComplexOrComplexCollection(property.Type, enumerableType)))
+                {
+                    diagnostics.Add(new DiagnosticInfo(
+                        DiagnosticDescriptors.PropertyNotBindableWithoutBody,
+                        type.Name,
+                        property.Locations.FirstOrDefault(static location => location.IsInSource) ?? GetLocation(http),
+                        verb,
+                        property.Name));
+                }
+            }
             var bodyBinding = verb is not ("GET" or "DELETE");
             var hasInvalidBodyShape = bodyBinding && (!type.IsRecord || properties.Any(property => !property.HasPublicSetter));
             if (hasInvalidBodyShape)
@@ -593,6 +611,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 attachmentResponse,
                 streamElement,
                 type.Locations.FirstOrDefault(),
+                type.ContainingAssembly?.Name ?? string.Empty,
                 diagnostics);
         }
 
@@ -713,7 +732,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             return match?.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
 
-        private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
+        private static void Emit(
+            SourceProductionContext spc,
+            ImmutableArray<EndpointModel> items,
+            ImmutableArray<EndpointAssemblyMapping> mappings)
         {
             if (items.IsDefaultOrEmpty)
                 return;
@@ -746,7 +768,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (!items.IsDefaultOrEmpty)
             {
                 var messagePackEndpoints = items
-                    .Where(static endpoint => endpoint.AcceptsMessagePack)
+                    .Where(static endpoint => endpoint.AcceptsMessagePack && endpoint.Verb is not ("GET" or "DELETE"))
                     .Select(static endpoint => endpoint.TypeFullName)
                     .Distinct(StringComparer.Ordinal)
                     .ToArray();
@@ -812,7 +834,15 @@ namespace Ark.Tools.MediatorFramework.Generators
                     spc.CancellationToken.ThrowIfCancellationRequested();
                     var currentEndpointIndex = endpointIndex++;
                     foreach (var diagnostic in e.Diagnostics)
-                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
+                    {
+                        // A contract from a referenced assembly has no source location: report at the host call
+                        // that discovers it.
+                        var location = diagnostic.Location.IsInSource
+                            ? diagnostic.Location
+                            : mappings.FirstOrDefault(mapping => mapping.AssemblyNames.Values.Contains(e.AssemblyName)).Location
+                                ?? diagnostic.Location;
+                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, location, diagnostic.Arguments.Cast<object>().ToArray()));
+                    }
                     if (!e.IsValid)
                         continue;
                     foreach (var property in e.InvalidServerSetProperties)
@@ -867,7 +897,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                             continue;
                         }
 
-                        if (e.AcceptsMessagePack)
+                        // GET and DELETE never read a body: they bind from route and query below and only
+                        // negotiate the MessagePack response.
+                        if (e.AcceptsMessagePack && bodyVerb)
                         {
                             sb.AppendLine("            group." + map + "(" + templateVariable + ", static async (");
                             if (explicitBindings)
@@ -924,9 +956,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
                             if (e.IsStreaming)
                             {
-                                sb.AppendLine("                if (global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.PrefersMessagePackForGeneratedEndpoint(httpContext.Request.Headers.Accept))");
-                                sb.AppendLine("                    return await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteStreamingResponseAsync<" + e.StreamElement + ">(httpContext, result, " + e.MaxMessagePackStreamedItems + ", cancellationToken, " + SuccessStatusCode(e) + ").ConfigureAwait(false);");
-                                sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), statusCode: " + SuccessStatusCode(e) + ");");
+                                EmitMessagePackStreamingResult(sb, e);
                             }
                             else
                             {
@@ -983,18 +1013,24 @@ namespace Ark.Tools.MediatorFramework.Generators
                         EmitETagAssignment(sb, e);
                         sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
                         sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
+                        var responseContentTypes = e.AcceptsMessagePack ? ", \"application/json\", \"application/x-msgpack\"" : string.Empty;
                         if (e.IsStreaming)
                         {
-                            sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken);");
-                            sb.AppendLine("            }).Produces<global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">>(" + SuccessStatusCode(e) + ")"
+                            if (e.AcceptsMessagePack)
+                                EmitMessagePackStreamingResult(sb, e);
+                            else
+                                sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken);");
+                            sb.AppendLine("            }).Produces<global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">>(" + SuccessStatusCode(e) + responseContentTypes + ")"
                                 + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                             continue;
                         }
                         sb.AppendLine("                if (result is null)");
                         sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(e) + ";");
                         EmitResponseETagAssignment(sb, e);
-                        sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(e) + ";");
-                        sb.AppendLine("            }).Produces<" + e.Response + ">(" + SuccessStatusCode(e) + ").Produces(" + NullResultStatusCode(e)
+                        sb.AppendLine(e.AcceptsMessagePack
+                            ? "                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken, " + SuccessStatusCode(e) + ", " + NullResultStatusCode(e) + ");"
+                            : "                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(e) + ";");
+                        sb.AppendLine("            }).Produces<" + e.Response + ">(" + SuccessStatusCode(e) + responseContentTypes + ").Produces(" + NullResultStatusCode(e)
                             + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                     }
                 }
@@ -1033,6 +1069,13 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("}");
 
             spc.AddSource("ArkGeneratedEndpoints.MinimalApi.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private static void EmitMessagePackStreamingResult(StringBuilder sb, EndpointModel e)
+        {
+            sb.AppendLine("                if (global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.PrefersMessagePackForGeneratedEndpoint(httpContext.Request.Headers.Accept))");
+            sb.AppendLine("                    return await global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteStreamingResponseAsync<" + e.StreamElement + ">(httpContext, result, " + e.MaxMessagePackStreamedItems + ", cancellationToken, " + SuccessStatusCode(e) + ").ConfigureAwait(false);");
+            sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), statusCode: " + SuccessStatusCode(e) + ");");
         }
 
         private static string HandlerService(EndpointModel item)
@@ -1156,6 +1199,44 @@ namespace Ark.Tools.MediatorFramework.Generators
                         || method.Parameters[1].Type.ToDisplayString() == "System.IFormatProvider")
                     && method.Parameters[^1].RefKind == RefKind.Out
                     && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, targetType));
+        }
+
+        // A complex object is a data shape with public settable or init properties and no string conversion
+        // visible at compile time (static TryParse or [TypeConverter]). Converters registered at runtime through
+        // TypeDescriptor, such as the NodaTime ones, target types without settable properties, so they pass.
+        private static bool IsComplexOrComplexCollection(ITypeSymbol type, INamedTypeSymbol? enumerableType)
+        {
+            if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
+                type = nullable.TypeArguments[0];
+            if (type.SpecialType != SpecialType.None || type.TypeKind == TypeKind.Enum)
+                return false;
+
+            var element = type is IArrayTypeSymbol array
+                ? array.ElementType
+                : (type as INamedTypeSymbol)?.AllInterfaces.Append((INamedTypeSymbol)type)
+                    .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(candidate.OriginalDefinition, enumerableType))
+                    ?.TypeArguments[0];
+            if (element is not null)
+                return IsComplexOrComplexCollection(element, null);
+
+            return RequiresTypeConverterBinding(type)
+                && !HasTypeConverterAttribute(type)
+                && type is INamedTypeSymbol named
+                && AllProperties(named).Any(property => !property.IsStatic
+                    && property.DeclaredAccessibility == Accessibility.Public
+                    && property.SetMethod is { DeclaredAccessibility: Accessibility.Public });
+        }
+
+        private static bool HasTypeConverterAttribute(ITypeSymbol type)
+        {
+            for (var current = type; current is not null; current = current.BaseType)
+            {
+                if (current.GetAttributes().Any(attribute =>
+                    attribute.AttributeClass?.ToDisplayString() == "System.ComponentModel.TypeConverterAttribute"))
+                    return true;
+            }
+
+            return false;
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
@@ -1497,7 +1578,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         // Locations stay Roslyn source locations: they compare by syntax tree and span, so edits in other files
         // keep models equal, and reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
         // Any edit in the declaring file creates a new syntax tree and reruns the output.
-        private readonly record struct EndpointAssemblyMapping(EquatableArray<string> AssemblyNames, Location? InvalidVersionPrefixLocation);
+        private readonly record struct EndpointAssemblyMapping(EquatableArray<string> AssemblyNames, Location? InvalidVersionPrefixLocation, Location? Location);
 
         private readonly record struct EndpointModel
         {
@@ -1536,6 +1617,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 bool attachmentResponse,
                 string? streamElement,
                 Location? location,
+                string assemblyName,
                 IReadOnlyList<DiagnosticInfo> diagnostics)
             {
                 TypeFullName = typeFullName;
@@ -1576,14 +1658,16 @@ namespace Ark.Tools.MediatorFramework.Generators
                 AttachmentResponse = attachmentResponse;
                 StreamElement = streamElement;
                 Location = location;
+                AssemblyName = assemblyName;
                 Diagnostics = diagnostics.ToImmutableArray();
                 IsValid = diagnostics.Count == 0;
             }
 
-            private EndpointModel(string typeFullName, string typeName, IReadOnlyList<DiagnosticInfo> diagnostics)
+            private EndpointModel(string typeFullName, string typeName, string assemblyName, IReadOnlyList<DiagnosticInfo> diagnostics)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
+                AssemblyName = assemblyName;
                 ApiGroup = "Ark";
                 Summary = null;
                 Remarks = null;
@@ -1610,7 +1694,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             }
 
             public static EndpointModel Invalid(INamedTypeSymbol type, IReadOnlyList<DiagnosticInfo> diagnostics)
-                => new(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), type.Name, diagnostics);
+                => new(type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), type.Name, type.ContainingAssembly?.Name ?? string.Empty, diagnostics);
 
             public string TypeFullName { get; }
             public string TypeName { get; }
@@ -1651,6 +1735,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public string? StreamElement { get; }
             public bool IsStreaming => StreamElement is not null;
             public Location? Location { get; }
+            public string AssemblyName { get; }
             public EquatableArray<DiagnosticInfo> Diagnostics { get; }
             public bool IsValid { get; }
         }
