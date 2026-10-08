@@ -2899,7 +2899,9 @@ beta, so the move is a plain breaking move: no type forwarding.
   `Ark.Tools.MediatorFramework.MinimalApi`, `.Grpc` or `Microsoft.AspNetCore.*`.
 - [ ] **Step 4: Verify the generators.** Build the sample and inspect the
   emitted Minimal API, gRPC and MCP code and `Books.proto`. They must be
-  unchanged from the Task 10 head; `git diff` of the generated files is empty.
+  unchanged from the head of the final-review PR (ARKlab/Ark.Tools#1047,
+  branch `feature/mf-sample-10-final-review-fixes`), which is this task's
+  base; `git diff` of the generated files is empty.
 - [ ] **Step 5: Accept the API surface and release notes.** Update the `ArkApiSurface.txt` files
   that change. Add a `**Breaking:**` line under `### Changed` in the CHANGELOG: the attributes moved to
   `Ark.Tools.MediatorFramework`, with the namespace unchanged. Projects that
@@ -2911,7 +2913,9 @@ beta, so the move is a plain breaking move: no type forwarding.
 - [ ] **Step 7: Commit.**
 
 ```bash
+git add src/mediator-framework docs CHANGELOG.md
 git commit -m "refactor(MediatorFramework): move contract attributes to base package" -m "Assisted-by: Claude"
+git add samples/Ark.MediatorFramework.Sample Ark.Tools.slnx
 git commit -m "build(samples): drop host packages from core api and application" -m "Assisted-by: Claude"
 ```
 

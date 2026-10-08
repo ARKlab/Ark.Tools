@@ -224,9 +224,11 @@ Host composition:
 - builds the SimpleInjector container through `ApplicationComposition`;
 - adds only its transport, participant, and process concerns;
 - reads every connection from configuration (Key Vault optional);
-- uses one Azure Blob claim-check DataBus shared by all processes of the
-  variant (`ConnectionStrings:DataBus`, Azurite locally); the in-memory DataBus
-  is only for tests that run every participant in one process;
+- for the native messaging variants (`Web`, `Functions`), uses one Azure Blob
+  claim-check DataBus shared by all processes of the variant
+  (`ConnectionStrings:DataBus`, Azurite locally); the in-memory DataBus is only
+  for tests that run every participant in one process. `WebRebus` configures no
+  claim-check DataBus because no bus contract carries an attachment;
 - takes no test flags. Tests override configuration or replace services via
   the host builder.
 
