@@ -989,12 +989,12 @@ namespace Ark.Tools.MediatorFramework.Generators
                             {
                                 var assignments = string.Join(", ", e.Properties
                                     .Where(property => property.IsRoute || property.IsQuery)
-                                    .Select(property => property.IsServerSet ? property.Name + " = default" : property.Name + " = " + BindingValue(property))
+                                    .Select(property => property.IsServerSet ? property.Name + " = default!" : property.Name + " = " + BindingValue(property))
                                     .Concat(e.BodyProperty is null ? System.Linq.Enumerable.Empty<string>() : new[] { e.BodyProperty + " = body" })
                                     .Concat(e.ServerSetProperties.Where(property =>
                                         !e.Properties.Any(candidate =>
                                             candidate.Name == property && (candidate.IsRoute || candidate.IsQuery)))
-                                        .Select(property => property + " = default")));
+                                        .Select(property => property + " = default!")));
                                 sb.AppendLine(e.BodyProperty is null
                                     ? "                var request = body with { " + assignments + " };"
                                     : "                var request = " + ConstructEnvelope(e, assignments) + ";");
@@ -1002,7 +1002,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             else
                             {
                                 if (e.IsRecord && e.ServerSetProperties.Count > 0)
-                                    sb.AppendLine("                var request = body with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default")) + " };");
+                                    sb.AppendLine("                var request = body with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default!")) + " };");
                                 else
                                     sb.AppendLine("                var request = body;");
                             }
@@ -1053,7 +1053,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                                 .Where(property => property.IsRoute || property.IsQuery)
                                 .Select(property => property.Name + " = " + BindingValue(property))
                                 .Concat(e.BodyProperty is null ? System.Linq.Enumerable.Empty<string>() : new[] { e.BodyProperty + " = body" })
-                                .Concat(e.ServerSetProperties.Select(property => property + " = default")));
+                                .Concat(e.ServerSetProperties.Select(property => property + " = default!")));
                             if (bodyVerb)
                                 sb.AppendLine(e.BodyProperty is null
                                     ? "                var request = body with { " + assignments + " };"
@@ -1063,7 +1063,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         }
                         else if (e.IsRecord && e.ServerSetProperties.Count > 0)
                         {
-                            sb.AppendLine("                request = request with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default")) + " };");
+                            sb.AppendLine("                request = request with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default!")) + " };");
                         }
                         EmitServerSetAssignments(sb, e, "request");
                         EmitETagAssignment(sb, e);
@@ -1240,7 +1240,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 return;
 
             foreach (var property in endpoint.ServerSetProperties)
-                sb.Append("                ").Append(variable).Append('.').Append(property).AppendLine(" = default;");
+                sb.Append("                ").Append(variable).Append('.').Append(property).AppendLine(" = default!;");
         }
 
         private static void EmitETagAssignment(StringBuilder sb, EndpointModel endpoint)
@@ -1363,7 +1363,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (!asParameters)
             {
                 var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + BindingValue(property))
-                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
+                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default!")));
                 sb.AppendLine("                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
             }
             EmitServerSetAssignments(sb, endpoint, "request");
@@ -1416,14 +1416,14 @@ namespace Ark.Tools.MediatorFramework.Generators
                 var assignments = string.Join(", ", endpoint.Properties
                     .Where(property => property.IsRoute || property.IsQuery)
                     .Select(property => property.Name + " = " + BindingValue(property))
-                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
+                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default!")));
                 sb.AppendLine(bodyVerb
                     ? "                var request = body with { " + assignments + " };"
                     : "                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
             }
             else if (endpoint.IsRecord && endpoint.ServerSetProperties.Count > 0)
             {
-                sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
+                sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default!")) + " };");
             }
             EmitServerSetAssignments(sb, endpoint, "request");
             sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(httpContext.RequestServices);");

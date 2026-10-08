@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Messaging participants that process or subscribe to several contracts now compile.
 - A Minimal API `GET` or `DELETE` endpoint for a command, or for a request or query without route or `[HttpQuery]` properties, no longer binds its `[ServerSet]` properties from the query string. A server-set property of a type that ASP.NET Core cannot bind from a string, such as a class or a NodaTime type, made the endpoint fail at startup.
 - Azure Functions binds an `[HttpQuery]` string collection, such as `string[]`, `List<string>`, `IEnumerable<string>` or `IQueryPaged.Sort`, from every value of the query parameter. It used to set an interface such as `IEnumerable<string>` to `null` and fail the request for any other string collection.
+- Generated Minimal API endpoints that reset a non-nullable reference `[ServerSet]` property, such as `string`, no longer raise `CS8625`, which failed builds that treat warnings as errors.
 - A Minimal API route or `[HttpQuery]` property whose type implements `IParsable<T>` without a public static `TryParse` method, such as an explicit interface implementation, is now bound by ASP.NET Core. It used to be read through its `TypeConverter`, so every request that carried the value failed with `400`.
 - An `[ArkRebusHost]` over a participant that subscribes to events now compiles: the generated `SubscribeAsync` called a Rebus `BusExtensions` class that does not exist.
 - Generated messaging stream dispatch compiles in projects without implicit usings.

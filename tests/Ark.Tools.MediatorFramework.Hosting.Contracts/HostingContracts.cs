@@ -182,6 +182,10 @@ public sealed record HostingOwnedQuery : Solid.IQuery<HostingOwnedQuery, Hosting
     /// <summary>Gets or sets the server-owned owner.</summary>
     [ServerSet]
     public HostingOwner? Owner { get; set; }
+
+    /// <summary>Gets or sets the server-owned tenant, a non-nullable reference the endpoint resets.</summary>
+    [ServerSet]
+    public string Tenant { get; set; } = string.Empty;
 }
 
 /// <summary>Command contract exposed through HTTP, gRPC, and Rebus.</summary>

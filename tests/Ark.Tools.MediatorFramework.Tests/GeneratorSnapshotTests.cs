@@ -2971,7 +2971,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("request = request with { UserId = default };");
+        generated.Should().Contain("request = request with { UserId = default! };");
         generated.Should().NotContain("FromQuery(Name = \"UserId\")");
     }
 
@@ -3027,16 +3027,16 @@ public sealed class GeneratorSnapshotTests
         result.Diagnostics.Should().BeEmpty();
         result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Skip\")] int Skip,");
         result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Author\")] string? Author,");
-        result.Generated.Should().Contain("var request = new global::ListBooks { Skip = Skip, Author = Author, Owner = default };");
+        result.Generated.Should().Contain("var request = new global::ListBooks { Skip = Skip, Author = Author, Owner = default! };");
         result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"id\")] int Id,");
         result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Force\")] bool Force,");
-        result.Generated.Should().Contain("var request = new global::DeleteBook { Id = Id, Force = Force, RequestedAt = default };");
-        result.Generated.Should().Contain("var request = new global::GetMe { Owner = default };");
+        result.Generated.Should().Contain("var request = new global::DeleteBook { Id = Id, Force = Force, RequestedAt = default! };");
+        result.Generated.Should().Contain("var request = new global::GetMe { Owner = default! };");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListBooks");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DeleteBook");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::GetMe");
         result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListShelves request,");
-        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default };");
+        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DownloadExport");
     }
 
@@ -3064,8 +3064,8 @@ public sealed class GeneratorSnapshotTests
             """);
 
         result.Diagnostics.Should().BeEmpty();
-        result.Generated.Should().Contain("var request = new global::SearchBooks(Term) { Page = Page, Owner = default };");
-        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default };");
+        result.Generated.Should().Contain("var request = new global::SearchBooks(Term) { Page = Page, Owner = default! };");
+        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
     }
 
     [TestMethod]
