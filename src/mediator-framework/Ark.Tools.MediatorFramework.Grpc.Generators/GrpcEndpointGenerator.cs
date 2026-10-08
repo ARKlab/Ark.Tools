@@ -752,7 +752,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 {
                     content.AppendLine("import \"ark/nodatime.proto\";");
                 }
-                if (active.Any(item => item.AttachmentResponse || item.AttachmentRequest != AttachmentRequestKind.None))
+                // Download chunks are declared locally; only uploads use ark.mediator.UploadDocumentChunk.
+                if (active.Any(item => item.AttachmentRequest != AttachmentRequestKind.None))
                     content.AppendLine("import \"ark/mediator.proto\";");
                 content.AppendLine();
                 if (active.Any(item => item.AttachmentResponse))
