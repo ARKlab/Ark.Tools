@@ -1200,6 +1200,63 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorTracksFieldsOfMessageOnlyContract()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            [Message]
+            public sealed class RecalculatePrint
+            {
+                public int Id { get; set; }
+            }
+            """;
+
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("CONTRACT RecalculatePrint -> RecalculatePrint [group=Ark]");
+        generated.Should().Contain("CONTRACT RecalculatePrint.Id : int");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorTracksFieldsOfEventOnlyContract()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            [Event]
+            public sealed class PrintCompleted
+            {
+                public int Id { get; set; }
+            }
+            """;
+
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("CONTRACT PrintCompleted -> PrintCompleted [group=Ark]");
+        generated.Should().Contain("CONTRACT PrintCompleted.Id : int");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorListsMultiAttributeContractOnce()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+            [Message, RebusMessage]
+            public sealed class RecalculatePrint
+            {
+                public int Id { get; set; }
+            }
+            """;
+
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Split("CONTRACT RecalculatePrint.Id : int").Length.Should().Be(2);
+    }
+
+    [TestMethod]
     public void ApiSurfaceGeneratorEmitsExplicitEntriesForEvolvableEnumMembers()
     {
         const string source =

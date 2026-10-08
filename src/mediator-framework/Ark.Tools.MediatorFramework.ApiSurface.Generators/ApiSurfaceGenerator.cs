@@ -554,11 +554,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
         var request = TypeName(type);
         AddMessagingLines(messagingBlocks, locBuilder, type, message, @event, participant, network, networkMemberships);
-        if (message is not null || @event is not null || participant is not null || network is not null)
-        {
-            if (http is null && grpc is null && rebus is null)
-                return;
-        }
+        if (http is null && grpc is null && rebus is null && message is null && @event is null)
+            return;
         var result = ResultType(type);
         var metadata = new List<string>();
         var group = StringArgument(Attribute(type, ApiGroup), 0) ?? "Ark";
