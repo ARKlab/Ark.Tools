@@ -2945,6 +2945,71 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorNeverExposesServerSetPropertiesToAsParameters()
+    {
+        // [AsParameters] would show server-set properties to ASP.NET, which infers a body for a type it cannot bind
+        // from a string and fails at startup: the client properties are bound explicitly instead.
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Owner
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            public readonly struct Stamp
+            {
+                public long Ticks { get; }
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public int Skip { get; init; }
+                public string? Author { get; init; }
+                [ServerSet] public Owner? Owner { get; set; }
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : ICommand<DeleteBook>
+            {
+                public int Id { get; init; }
+                public bool Force { get; init; }
+                [ServerSet] public Stamp RequestedAt { get; init; }
+            }
+            [HttpEndpoint("GET", "/me")]
+            public sealed class GetMe : IQuery<string>
+            {
+                [ServerSet] public Owner? Owner { get; set; }
+            }
+            [HttpEndpoint("GET", "/shelves")]
+            public sealed record ListShelves : IQuery<string>
+            {
+                public int Skip { get; init; }
+            }
+            [HttpEndpoint("GET", "/exports")]
+            public sealed record DownloadExport : IQuery<IArkAttachment>
+            {
+                public int Year { get; init; }
+                [ServerSet] public string? RequestedBy { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Skip\")] int Skip,");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Author\")] string? Author,");
+        result.Generated.Should().Contain("var request = new global::ListBooks { Skip = Skip, Author = Author, Owner = default };");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"id\")] int Id,");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Force\")] bool Force,");
+        result.Generated.Should().Contain("var request = new global::DeleteBook { Id = Id, Force = Force, RequestedAt = default };");
+        result.Generated.Should().Contain("var request = new global::GetMe { Owner = default };");
+        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListBooks");
+        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DeleteBook");
+        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::GetMe");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListShelves request,");
+        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year };");
+        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DownloadExport");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorWarnsOnSuspiciousProperties()
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(

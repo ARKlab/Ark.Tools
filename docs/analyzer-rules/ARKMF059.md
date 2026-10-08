@@ -15,8 +15,8 @@ the first for any other property.
 A `GET` or `DELETE` endpoint, and a `HEAD` Azure Functions function, never
 reads the request body, including when `AcceptsMessagePack = true` (MessagePack
 then applies to the response only). Every property of the contract must therefore be bound from the route
-or the query string. Properties marked `[ServerSet]` are filled by the server
-and are not checked.
+or the query string. Properties marked `[ServerSet]` are filled by the server,
+are never bound from the request, and are not checked.
 
 ### Minimal API generator
 
@@ -52,6 +52,11 @@ reports a property when:
   `LocalDate` and `Instant`, is inferred as a body and the endpoint throws
   `InvalidOperationException: Body was inferred but the method does not allow
   inferred body parameters` at startup.
+
+  A contract with `[ServerSet]` properties is not bound with `[AsParameters]`,
+  which would expose them to ASP.NET Core: its other properties are bound
+  explicitly from the route or query string, and the rules above still apply
+  to them.
 
 For every verb, the endpoint binds a route or `[HttpQuery]` property
 explicitly, unless it binds the contract with `[AsParameters]` as described

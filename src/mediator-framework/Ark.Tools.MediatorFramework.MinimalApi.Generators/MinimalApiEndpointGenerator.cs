@@ -622,6 +622,16 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(property => !property.IsAttachmentCollection))
                 diagnostics.Add(new DiagnosticInfo(UnsupportedAttachmentCollection, type.Name, GetLocation(http), property.Name));
 
+            // [AsParameters] would expose server-set properties to ASP.NET binding, which then reads them from the
+            // query string, or fails at startup when it cannot bind their type from a string. Bind the client
+            // properties explicitly instead, as [AsParameters] would: the check above already holds them to its rules.
+            var boundProperties = asParameters && properties.Any(static property => property.IsServerSet)
+                ? properties.Select(static property => !property.IsRoute && !property.IsServerSet && property.HasPublicSetter
+                        ? property with { IsQuery = true }
+                        : property)
+                    .ToImmutableArray()
+                : properties;
+
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 GeneratedName(type),
@@ -644,7 +654,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 maxFileCount,
                 maxStreamedItems,
                 allowedContentTypes,
-                properties,
+                boundProperties,
                 bodyProperties.Length == 0 ? null : bodyProperties[0].Name,
                 etagProperties.Length == 0 ? null : etagProperties[0].Name,
                 responseETagProperties.Length == 0 ? null : responseETagProperties[0].Name,
@@ -915,9 +925,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                         ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                         : string.Empty;
                     var bodyVerb = e.Verb != "GET" && e.Verb != "DELETE";
-                    var explicitBindings = (e.Properties.Any(property => property.IsRoute || property.IsQuery)
+                    var explicitBindings = ((e.Properties.Any(property => property.IsRoute || property.IsQuery)
                         || e.BodyProperty is not null)
-                        && (bodyVerb || e.Verb == "GET" || e.Verb == "DELETE");
+                        && (bodyVerb || e.Verb == "GET" || e.Verb == "DELETE"))
+                        || BindsServerSetExplicitly(e);
 
                     foreach (var version in ActiveVersions(e, maxVersion))
                     {
@@ -1339,15 +1350,16 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
             }
 
-            if (bindings.Length == 0)
+            var asParameters = bindings.Length == 0 && !BindsServerSetExplicitly(endpoint);
+            if (asParameters)
                 sb.AppendLine("                [global::Microsoft.AspNetCore.Http.AsParameters] " + endpoint.TypeFullName + " request,");
             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
             sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
             sb.AppendLine("            {");
-            if (bindings.Length > 0)
+            if (!asParameters)
             {
                 var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + BindingValue(property)));
-                sb.AppendLine("                var request = new " + endpoint.TypeFullName + " { " + assignments + " };");
+                sb.AppendLine("                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
             }
             EmitServerSetAssignments(sb, endpoint, "request");
             EmitETagAssignment(sb, endpoint);
@@ -1369,7 +1381,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             int maxVersion)
         {
             var bodyVerb = endpoint.Verb != "GET" && endpoint.Verb != "DELETE";
-            var explicitBindings = bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery);
+            var explicitBindings = (bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery))
+                || BindsServerSetExplicitly(endpoint);
             sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             if (explicitBindings)
             {
@@ -1382,7 +1395,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                         .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
                 }
 
-                sb.AppendLine("                " + endpoint.TypeFullName + " body,");
+                if (bodyVerb)
+                    sb.AppendLine("                " + endpoint.TypeFullName + " body,");
             }
             else
             {
@@ -1398,7 +1412,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Where(property => property.IsRoute || property.IsQuery)
                     .Select(property => property.Name + " = " + BindingValue(property))
                     .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
-                sb.AppendLine("                var request = body with { " + assignments + " };");
+                sb.AppendLine(bodyVerb
+                    ? "                var request = body with { " + assignments + " };"
+                    : "                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
             }
             else if (endpoint.IsRecord && endpoint.ServerSetProperties.Count > 0)
             {
@@ -1412,6 +1428,11 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.Append(".Produces(204)");
             sb.Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
+
+        // A GET or DELETE contract with server-set properties binds its client properties explicitly, never with
+        // [AsParameters], so ASP.NET never sees the server-set properties.
+        private static bool BindsServerSetExplicitly(EndpointModel endpoint)
+            => endpoint.Verb is "GET" or "DELETE" && endpoint.Properties.Any(static property => property.IsServerSet);
 
         private static string MultipartMetadata(EndpointModel endpoint)
         {
@@ -1781,7 +1802,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public bool IsString { get; }
             public bool IsRoute { get; }
             public string BindingName { get; }
-            public bool IsQuery { get; }
+            public bool IsQuery { get; init; }
             public bool IsServerSet { get; }
             public bool IsETag { get; }
             public bool IsNullable { get; }

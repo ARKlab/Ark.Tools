@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A Service Bus transport selected with `UseTransport(transport => transport.UseServiceBus(client))` is now disposed, together with its client, when the service provider is disposed. It used to stay open after host shutdown. A transport passed with `Use(transport)` or `UseTransport(transport)` is still owned by the caller.
 - Exported gRPC `.proto` files import only the files they use, so clients that treat warnings as errors no longer fail on unused imports.
 - Messaging participants that process or subscribe to several contracts now compile.
+- A Minimal API `GET` or `DELETE` endpoint for a command, or for a request or query without route or `[HttpQuery]` properties, no longer binds its `[ServerSet]` properties from the query string. A server-set property of a type that ASP.NET Core cannot bind from a string, such as a class or a NodaTime type, made the endpoint fail at startup.
 - Azure Functions binds an `[HttpQuery]` string collection, such as `string[]`, `List<string>`, `IEnumerable<string>` or `IQueryPaged.Sort`, from every value of the query parameter. It used to set an interface such as `IEnumerable<string>` to `null` and fail the request for any other string collection.
 - A Minimal API route or `[HttpQuery]` property whose type implements `IParsable<T>` without a public static `TryParse` method, such as an explicit interface implementation, is now bound by ASP.NET Core. It used to be read through its `TypeConverter`, so every request that carried the value failed with `400`.
 - An `[ArkRebusHost]` over a participant that subscribes to events now compiles: the generated `SubscribeAsync` called a Rebus `BusExtensions` class that does not exist.
@@ -49,3 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Undispatchable messaging contracts are reported at build time: an event (declared, published, or subscribed) that is not an `ICommand<TSelf>`, including a request (`ARKMSG018`), and a processed contract that is neither a command nor a request (`ARKMSG027`).
 - A messaging participant that lists the same contract twice in `Processes`, `Publishes` or `Subscribes` is reported at build time (`ARKMSG028`) instead of failing at startup.
 - Generated Minimal API `GET` and `DELETE` endpoints with `AcceptsMessagePack = true` no longer read the request body, so a plain `GET` without content no longer fails. They bind from the route and query string and negotiate MessagePack for the response only, and OpenAPI no longer lists a request body for them. These endpoints now apply the response `[ETag]` handling of plain endpoints, so `If-None-Match` can return `304 Not Modified`, and startup no longer validates a MessagePack formatter for their request types.
+
+### Security
+
+- A Minimal API `GET` or `DELETE` endpoint that returns an `IArkAttachment`, for a record without route or `[HttpQuery]` properties, no longer lets a client set its `[ServerSet]` properties from the query string. The generated endpoint bound them and never reset them.
