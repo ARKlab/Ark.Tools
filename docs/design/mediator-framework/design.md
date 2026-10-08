@@ -972,7 +972,7 @@ metadata that changed.
 
 ## Testing strategy
 
-- `samples/Ark.MediatorFramework.Sample/test/…Sample.Tests` demonstrates **how
+- `samples/Ark.MediatorFramework.Sample/Core/…Core.Tests` demonstrates **how
   an application built on the framework is tested**: behavioral (BDD) tests
   written with **Reqnroll** (Gherkin feature files), dispatching application
   contracts through a scenario-owned composition and asserting business state.
@@ -1008,10 +1008,17 @@ project in the solution fails to build.
 The verifiable sample (`samples/Ark.MediatorFramework.Sample`) implements the
 core of this design using dependencies already approved in the repo where
 possible, and demonstrates the source generator on the Minimal API transport.
-Mirroring the ReferenceProject, it separates the transport-agnostic
-**Application** assembly (pure contracts/handlers, store, decorator) from the
-**WebInterface** hosting assembly, where the selected requests/queries are
-exposed via endpoints and the transports (user context, Rebus) are wired.
+The sample is one `Core` service hosted by three interchangeable host variants;
+see [`sample-hosting-variants.md`](sample-hosting-variants.md) for the design.
+
+- `Core` holds the API contracts, the transport-agnostic Application assembly
+  (handlers, store, decorator), the database and the application tests, and
+  references no host package.
+- `Core/Hosts/Web` (Minimal API, gRPC and MCP) and `Core/Hosts/Functions` use
+  native Ark messaging; `Core/Hosts/WebRebus` uses Rebus.
+- Each host runs one process per messaging participant and shares only its own
+  `Hosting` library.
+
 See [`implementation-plan.md`](../../plans/mediator-framework/implementation-plan.md) for exactly which pieces
 are proven in code versus specified for follow-up, and [`tasks.md`](../../plans/mediator-framework/tasks.md)
 for acceptance criteria.
