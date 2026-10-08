@@ -10,7 +10,7 @@ A contract marked with `[Message]` or `[Event]` that sets no `Name` gets a defau
 
 The rule reports a `[Message]` or `[Event]` contract with no explicit `Name` whose type name is `V` followed by digits only.
 
-The default naming rule is unchanged, so adding an explicit name changes the wire name of a contract that is already deployed. Keep the old name in `FormerNames` so existing consumers still resolve it.
+The default naming rule is unchanged, so adding an explicit name changes the wire name of a contract that is already deployed. That is a topology migration, not a rename: `FormerNames` is a receive-only alias, so it lets an updated consumer read messages that still carry `ark.v1`, but it does not let deployed consumers read the new name and it does not keep or remove the old queue or topic. Migrate explicitly: deploy consumers that know both names, drain the old destination, then switch producers. If that migration is not worth it, keep the deployed name and suppress the rule (see below).
 
 ## How to fix it
 

@@ -4179,6 +4179,34 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorWarnsOnVersionOnlyDefaultEventName()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public static class BookReviewDeleted
+            {
+                [Event]
+                public sealed class V1 : ICommand<V1> { }
+            }
+            [MessagingParticipant(
+                Processes = new[] { typeof(BookReviewDeleted.V1) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class ReviewParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(ReviewParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public sealed partial class ReviewNetwork { }
+            """);
+
+        var warnings = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMSG029").ToArray();
+        warnings.Should().ContainSingle();
+        warnings[0].GetMessage().Should().Contain("BookReviewDeleted.V1").And.Contain("ark.v1").And.Contain("[Event(Name");
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorDoesNotWarnWhenVersionedContractHasExplicitName()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
