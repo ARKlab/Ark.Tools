@@ -38,6 +38,7 @@ public static class CreateBookReviewRequest
 {
     /// <summary>Version one of the book-review creation request.</summary>
     [HttpEndpoint("POST", "/api/v{version}/books/{bookId}/reviews")]
+    [Message(Name = "books/book-review.create")]
     [RequireScopePolicy(ApplicationScopes.BookReviewsWrite)]
     public sealed record V1 : IRequest<V1, BookReview>
     {
