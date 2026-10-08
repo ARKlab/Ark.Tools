@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Mediator Framework
-- **Diagnostic message:** `HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' cannot be bound from the route or query string`
+- **Diagnostic message:** `HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]`
 
 ## What it checks
 
@@ -17,7 +17,13 @@ The rule reports a property, unless it is marked `[ServerSet]`, when:
 - it is an `IArkAttachment` or a collection of attachments;
 - its type is a complex object, or a collection of complex objects. A complex
   object has public settable or `init` properties and neither a static
-  `TryParse(string, out T)` method nor a `[TypeConverter]` attribute.
+  `TryParse(string, out T)` method nor a `[TypeConverter]` attribute;
+- it would be silently dropped. When a request or query has at least one
+  route or `[HttpQuery]` property, the endpoint binds only those properties, so
+  any other settable property (other than an `[ETag]` property, which comes
+  from the `If-Match` header) is never set. Contracts without route or query
+  properties bind every property from the query string, and commands always
+  bind the whole contract.
 
 Types converted through a `TypeConverter` registered at runtime, such as the
 NodaTime types registered by `Ark.Tools.Nodatime`, have no settable
@@ -29,7 +35,9 @@ referenced assembly, it is reported at the `MapArkEndpoints` or
 
 ## How to fix it
 
-Flatten the complex value into scalar query properties, use `POST` for a
+Mark every input property `[HttpRoute]` or `[HttpQuery]`, or `[ServerSet]`
+when the server fills it. Flatten a complex value into scalar query properties,
+use `POST` for a
 request that needs a body, or give the type a static `TryParse` method or a
 `[TypeConverter]` attribute so it can be read from a single string.
 
@@ -56,6 +64,21 @@ public sealed record ListBooks : IQuery<ListBooks, IReadOnlyList<Book>>
 {
     [HttpQuery]
     public string? Author { get; init; }
+}
+```
+
+A dropped property:
+
+```csharp
+[HttpEndpoint("GET", "/api/v{version}/books/{bookId}/reviews")]
+public sealed record ListReviews : IQuery<ListReviews, IReadOnlyList<Review>>
+{
+    public Guid BookId { get; init; }
+
+    [HttpQuery]
+    public int Skip { get; init; }
+
+    public int Limit { get; init; } // ARKMF059: add [HttpQuery]
 }
 ```
 

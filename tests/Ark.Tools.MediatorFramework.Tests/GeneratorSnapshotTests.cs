@@ -2898,6 +2898,52 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorRejectsGetPropertiesThatWouldBeSilentlyDropped()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/books/{id}/reviews")]
+            public sealed record ListReviews : IQuery<string>
+            {
+                public int Id { get; init; }
+                [HttpQuery] public int Skip { get; init; }
+                public int Limit { get; init; }
+                [ServerSet] public string? UserId { get; set; }
+                [ETag] public string? Version { get; init; }
+                public string Display => "reviews";
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : IRequest<string>
+            {
+                public int Id { get; init; }
+                public string Reason { get; init; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public int Skip { get; init; }
+                public int Limit { get; init; }
+            }
+            [HttpEndpoint("DELETE", "/books/{id}/cache")]
+            public sealed record ClearBookCache : ICommand<ClearBookCache>
+            {
+                public int Id { get; init; }
+                public bool Force { get; init; }
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Limit", "Reason");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("global::ListBooks");
+        result.Generated.Should().Contain("global::ClearBookCache");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorReportsReferencedGetContractAtTheHostCall()
     {
         var contracts = _createMetadataReference(

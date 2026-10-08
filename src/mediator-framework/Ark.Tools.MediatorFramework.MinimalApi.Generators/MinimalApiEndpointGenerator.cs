@@ -540,13 +540,22 @@ namespace Ark.Tools.MediatorFramework.Generators
             }
             if (verb is "GET" or "HEAD" or "DELETE")
             {
+                // Once a property is route or query bound, the endpoint binds only those properties: any other
+                // settable property would be silently dropped. Commands always bind the whole contract.
+                var unbound = kind != HandlerKind.Command && properties.Any(property => property.IsRoute || property.IsQuery)
+                    ? new HashSet<string>(
+                        properties.Where(property => !property.IsRoute && !property.IsQuery && !property.IsETag && property.HasPublicSetter)
+                            .Select(property => property.Name),
+                        StringComparer.Ordinal)
+                    : new HashSet<string>(StringComparer.Ordinal);
                 foreach (var property in AllProperties(type)
                     .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                     .Where(property => !HasAttribute(property, serverSetAttr))
                     .Where(property => HasAttribute(property, httpBodyAttr)
                         || IsAttachmentType(property.Type, attachmentType)
                         || IsPotentialAttachmentCollection(property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
-                        || IsComplexOrComplexCollection(property.Type, enumerableType)))
+                        || IsComplexOrComplexCollection(property.Type, enumerableType)
+                        || unbound.Contains(property.Name)))
                 {
                     diagnostics.Add(new DiagnosticInfo(
                         DiagnosticDescriptors.PropertyNotBindableWithoutBody,

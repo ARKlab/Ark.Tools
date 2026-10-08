@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Native messaging processes request contracts (`IRequest<TSelf, TResponse>`) listed in a participant's `Processes`: the request handler runs and the response is discarded.
 - `MessagingFailFastReason.HandlerRejected` lets a second-level handler dead-letter a message it gives up on, instead of returning it to retries.
 - Fluent native messaging composition accepts an explicit resource-management seam (`UseResourceManagement`) and provisions a receiver's queue, topics and forwarding subscriptions, so Service Bus hosts outside Azure Functions can self-provision under `CreateIfMissing`.
-- The Minimal API generator reports `ARKMF059` when a `GET` or `DELETE` contract has a property that cannot be bound from the route or query string, such as a complex object, a collection of complex objects, an attachment or an `[HttpBody]` property. Its diagnostics for contracts in a referenced assembly are reported at the `MapArkEndpoints` call that discovers them.
+- The Minimal API generator reports `ARKMF059` when a `GET` or `DELETE` contract has a property that cannot be bound from the route or query string, such as a complex object, a collection of complex objects, an attachment, an `[HttpBody]` property, or a property that would be silently dropped because it is not marked `[HttpRoute]` or `[HttpQuery]` while other properties are. Its diagnostics for contracts in a referenced assembly are reported at the `MapArkEndpoints` call that discovers them.
 
 ### Changed
 
