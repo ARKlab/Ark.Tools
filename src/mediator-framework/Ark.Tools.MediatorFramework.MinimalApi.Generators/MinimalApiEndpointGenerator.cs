@@ -586,12 +586,13 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                 .Where(property => !HasAttribute(property, serverSetAttr)))
             {
-                var needsBody = noBody
-                    && (HasAttribute(property, httpBodyAttr)
-                        || IsAttachmentType(property.Type, attachmentType)
-                        || IsPotentialAttachmentCollection(property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
-                        || HttpStringBinding.IsComplexOrComplexCollection(property.Type)
-                        || (unbound.Contains(property.Name) && (!asParameters || !HttpStringBinding.IsStringBindable(property.Type))));
+                var bodyShaped = HasAttribute(property, httpBodyAttr)
+                    || IsAttachmentType(property.Type, attachmentType)
+                    || IsPotentialAttachmentCollection(property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                    || HttpStringBinding.IsComplexOrComplexCollection(property.Type);
+                var droppedOrInferredBody = unbound.Contains(property.Name)
+                    && (!asParameters || !HttpStringBinding.IsStringBindable(property.Type));
+                var needsBody = noBody && (bodyShaped || droppedOrInferredBody);
                 var notConvertible = !asParameters && routeOrQuery.Contains(property.Name) && !CanBindExplicitly(property.Type);
                 if (!needsBody && !notConvertible)
                     continue;
@@ -925,9 +926,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                         ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                         : string.Empty;
                     var bodyVerb = e.Verb != "GET" && e.Verb != "DELETE";
-                    var explicitBindings = ((e.Properties.Any(property => property.IsRoute || property.IsQuery)
-                        || e.BodyProperty is not null)
-                        && (bodyVerb || e.Verb == "GET" || e.Verb == "DELETE"))
+                    var explicitBindings = e.Properties.Any(property => property.IsRoute || property.IsQuery)
+                        || e.BodyProperty is not null
                         || BindsServerSetExplicitly(e);
 
                     foreach (var version in ActiveVersions(e, maxVersion))
@@ -1224,11 +1224,15 @@ namespace Ark.Tools.MediatorFramework.Generators
         // rejects an array of any other type at startup, and no TypeConverter converts a string to a collection or a
         // complex object, so every request that carries the value fails.
         private static bool CanBindExplicitly(ITypeSymbol type)
-            => HttpStringBinding.IsStringBindable(type)
-                || HttpStringBinding.IsStringCollection(type)
-                || (!HttpStringBinding.IsComplexOrComplexCollection(type)
-                    && (!HttpStringBinding.IsCollection(type)
-                        || (type is not IArrayTypeSymbol && HttpStringBinding.HasTypeConverterAttribute(type))));
+        {
+            if (HttpStringBinding.IsStringBindable(type) || HttpStringBinding.IsStringCollection(type))
+                return true;
+            if (HttpStringBinding.IsComplexOrComplexCollection(type))
+                return false;
+
+            return !HttpStringBinding.IsCollection(type)
+                || (type is not IArrayTypeSymbol && HttpStringBinding.HasTypeConverterAttribute(type));
+        }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
         {
