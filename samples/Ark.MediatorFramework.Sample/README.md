@@ -270,18 +270,23 @@ do not point their processors at the same outbox rows.
 ## Native AMF topology
 
 `BookPrintCompleted` is declared once in the Application assembly. Its logical
-topic is `sample-messaging-publisher-books/book-print.completed`; Service Bus
-maps it to the native topic below. The publisher participant owns its topic; the Azure Functions host records
+topic is `ark-mediator-sample-books/book-print.completed`; Service Bus
+maps it to the native topic below. The print worker participant (`ark-mediator-sample`) owns its topic; the Azure Functions host records
 notification effects; and the separate AuditFunctions host records audit
 effects. The topic forwards independent copies to the
-`sample-messaging-notification` and `sample-messaging-audit` queues:
+`sample-messaging-notification` and `sample-messaging-audit` queues.
+
+Environments provisioned before this change hold the old topic
+`sample-messaging-publisher-books/book-print.completed`; delete it or leave it orphaned.
+
+The flow:
 
 ```text
 native publisher / native SQL outbox
         |
         | amf1-* headers + native envelope
         v
-sample-messaging-publisher-books-book-print.completed-d320f7b71a7f80da8b35e92355395b14c45c7763a520b5aec672ad65d77b26aa topic
+ark-mediator-sample-books-book-print.completed-6c781d065b678ff1b867ba3b86d5c8a5481c888ba0a4b1064a7d093107cbe40f topic
         |
         +---- forwarding subscription ----> sample-messaging-notification
         |                                      |

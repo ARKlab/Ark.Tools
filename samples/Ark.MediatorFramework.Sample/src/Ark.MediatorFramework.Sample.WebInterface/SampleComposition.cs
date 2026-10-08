@@ -21,7 +21,7 @@ using NodaTime;
 namespace Ark.MediatorFramework.Sample.WebInterface;
 
 /// <summary>Generated Rebus host for the sample web application.</summary>
-[ArkRebusHost(typeof(SampleMessagingPublisherParticipant))]
+[ArkRebusHost(typeof(SampleMessagingApiParticipant))]
 public sealed partial class SampleRebusHost;
 
 /// <summary>

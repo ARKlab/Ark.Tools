@@ -48,6 +48,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     private readonly List<ParticipantProcess> _processes = [];
     private Task? _started;
     private ParticipantProcess? _api;
+    private ParticipantProcess? _worker;
     private bool _disposed;
 
     /// <summary>
@@ -221,6 +222,31 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             ctk).ConfigureAwait(false);
     }
 
+    /// <summary>Dispatches a request through its decorated application handler in the worker participant's container.</summary>
+    /// <remarks>
+    /// Print processing and its <c>BookPrintCompleted</c> publication are owned by the worker. Use this for
+    /// worker-owned requests such as <c>ResumeBookPrintProcessRequest</c>.
+    /// </remarks>
+    /// <typeparam name="TRequest">The request type.</typeparam>
+    /// <typeparam name="TResponse">The response type.</typeparam>
+    /// <param name="request">The request instance.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The handler response.</returns>
+    public async Task<TResponse> DispatchWorkerRequestAsync<TRequest, TResponse>(
+        TRequest request,
+        CancellationToken ctk = default)
+        where TRequest : IRequest<TResponse>
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        await StartAsync(ctk).ConfigureAwait(false);
+        var scope = AsyncScopedLifestyle.BeginScope(_worker!.Container);
+        await using var __scope = scope.ConfigureAwait(false);
+        return await _worker.Container.GetInstance<IRequestHandler<TRequest, TResponse>>()
+            .ExecuteAsync(request, ctk)
+            .ConfigureAwait(false);
+    }
+
     /// <summary>Dispatches a query through its decorated application handler.</summary>
     /// <typeparam name="TQuery">The query type.</typeparam>
     /// <typeparam name="TResponse">The response type.</typeparam>
@@ -339,20 +365,21 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         _api = await _startParticipantAsync(
             _container,
             _principalProvider,
-            static (b, t, d) => b.Producer<SampleMessagingPublisherParticipant>(p => p
+            static (b, t, d) => b.Producer<SampleMessagingApiParticipant>(p => p
                 .UseTransport(t).UseDataBus(d).UseOutgoingPipeline(typeof(UserContextOutgoingStep)).UseOutbox()),
             ctk).ConfigureAwait(false);
         _processes.Add(_api);
 
         var workerPrincipal = new MessagePrincipalProvider();
-        _processes.Add(await _startParticipantAsync(
+        _worker = await _startParticipantAsync(
             _newContainer(workerPrincipal),
             workerPrincipal,
             static (b, t, d) => b.Receiver<SampleMessagingParticipant>(r => r
                 .UseTransport(t).UseDataBus(d)
                 .UseIncomingPipeline(typeof(UserContextIncomingStep)).UseOutgoingPipeline(typeof(UserContextOutgoingStep))
                 .UseOutbox()),
-            ctk).ConfigureAwait(false));
+            ctk).ConfigureAwait(false);
+        _processes.Add(_worker);
 
         var notificationPrincipal = new MessagePrincipalProvider();
         var notification = _newContainer(notificationPrincipal);

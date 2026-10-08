@@ -3,17 +3,17 @@
 
 namespace Ark.MediatorFramework.Sample.Core.Application.Messages;
 
-/// <summary>Declares the sample Web host publisher-only participant.</summary>
+/// <summary>Declares the API participant: sends background work, publishes nothing.</summary>
 [MessagingParticipant(
-    Publishes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json)]
-public sealed partial class SampleMessagingPublisherParticipant;
+public sealed partial class SampleMessagingApiParticipant;
 
-/// <summary>Declares the sample background message consumer participant.</summary>
+/// <summary>Declares the print worker: processes background work and publishes completed prints.</summary>
 [MessagingParticipant(
     Identity = "ark-mediator-sample",
     Processes = new[] { typeof(ProcessBookPrintProcessRequest), typeof(CreateBookReviewRequest.V1) },
+    Publishes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,
     Retry = typeof(SampleMessagingRetryPolicy))]
@@ -55,7 +55,7 @@ public sealed class SampleMessagingRetryPolicy : IMessagingRetryPolicy
 [MessagingNetwork(
     Members = new[]
     {
-        typeof(SampleMessagingPublisherParticipant),
+        typeof(SampleMessagingApiParticipant),
         typeof(SampleMessagingParticipant),
         typeof(SampleMessagingNotificationParticipant),
         typeof(SampleMessagingAuditParticipant),

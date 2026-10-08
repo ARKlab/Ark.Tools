@@ -17,6 +17,7 @@ public sealed class ProcessBookPrintProcessHandler :
     IRequestHandler<ResumeBookPrintProcessRequest, BookPrintProcessResponse>
 {
     private readonly ISampleDataContextFactory _factory;
+    private readonly IBus _bus;
     private readonly IContextProvider<ClaimsPrincipal> _user;
     private readonly IClock _clock;
     private readonly IPrintCompletedNotificationService _printCompletedNotificationService;
@@ -24,11 +25,13 @@ public sealed class ProcessBookPrintProcessHandler :
     /// <summary>Initializes a new instance of the <see cref="ProcessBookPrintProcessHandler"/> class.</summary>
     public ProcessBookPrintProcessHandler(
         ISampleDataContextFactory factory,
+        IBus bus,
         IContextProvider<ClaimsPrincipal> user,
         IClock clock,
         IPrintCompletedNotificationService printCompletedNotificationService)
     {
         _factory = factory;
+        _bus = bus;
         _user = user;
         _clock = clock;
         _printCompletedNotificationService = printCompletedNotificationService;
@@ -135,6 +138,14 @@ public sealed class ProcessBookPrintProcessHandler :
             return current;
         }
         await context.WriteAuditAsync(_createAudit(process.Id), ctk).ConfigureAwait(false);
+        if (process.Status == BookPrintProcessStatus.Completed)
+        {
+            var enlistment = _bus as IBusOutboxEnlistment
+                ?? throw new InvalidOperationException("The configured messaging bus does not support outbox enlistment.");
+            using var scope = enlistment.Enlist(context.OutboxContext);
+            await _bus.Publish(new BookPrintCompleted { BookId = process.BookId }, cancellationToken: ctk).ConfigureAwait(false);
+            await scope.CompleteAsync(ctk).ConfigureAwait(false);
+        }
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return process;
     }

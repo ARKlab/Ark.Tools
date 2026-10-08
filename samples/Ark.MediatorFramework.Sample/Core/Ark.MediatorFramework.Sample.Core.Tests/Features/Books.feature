@@ -359,6 +359,28 @@ Feature: Books
             Then the current book print process has error details
             And the print-completion notification service was called
 
+        Scenario: Notify and audit a completed book print
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I start a book print process for the current book with
+                | ShouldFail |
+                | false      |
+            And I wait for the background bus to be idle and the outbox to be empty
+            Then the completed print of the current book was notified and audited
+
+        Scenario: Publish a completed book print once when its message is redelivered
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I start a book print process for the current book with
+                | ShouldFail |
+                | false      |
+            And I wait for the background bus to be idle and the outbox to be empty
+            And the current book print process message is delivered again
+            And I wait for the background bus to be idle and the outbox to be empty
+            Then the completed print of the current book was notified and audited
+
     Rule: Book streaming and editions use transport-neutral contracts
 
         Scenario: Stream bounded Book items with cancellation

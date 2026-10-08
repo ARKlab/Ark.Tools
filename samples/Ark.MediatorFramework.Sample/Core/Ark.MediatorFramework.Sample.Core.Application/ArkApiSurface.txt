@@ -19,14 +19,24 @@ MESSAGE Ark.MediatorFramework.Sample.Core.Application.Messages.ProcessBookPrintP
 END
 NETWORK Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingNetwork
   members:
+    - Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingApiParticipant
     - Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingAuditParticipant
     - Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingNotificationParticipant
     - Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingParticipant
-    - Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingPublisherParticipant
   requires:
     - pubsub
     - receive
     - scheduled_send
+END
+PARTICIPANT Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingApiParticipant
+  network: Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingNetwork
+  identity: sample-messaging-api
+  processes: -
+  publishes: -
+  subscribes: -
+  serializers:
+    - json
+  default: json
 END
 PARTICIPANT Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingAuditParticipant
   network: Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingNetwork
@@ -56,16 +66,6 @@ PARTICIPANT Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagi
   processes:
     - ark_mediator_framework_sample_core_api_create_book_review_request_v1
     - books_process_book_print_process
-  publishes: -
-  subscribes: -
-  serializers:
-    - json
-  default: json
-END
-PARTICIPANT Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingPublisherParticipant
-  network: Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingNetwork
-  identity: sample-messaging-publisher
-  processes: -
   publishes:
     - books/book-print.completed
   subscribes: -
