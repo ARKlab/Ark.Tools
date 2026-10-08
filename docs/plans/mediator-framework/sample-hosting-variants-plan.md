@@ -1953,6 +1953,7 @@ public static class WebHosting
         {
             ContainerName = "amf1-databus",
             Prefix = "sample/",
+            EnsureContainer = true, // a fresh Azurite has no container
             MinimumAttachmentLifetime = TimeSpan.FromDays(7),
             ConnectionString = configuration.GetConnectionString("DataBus")
                 ?? throw new InvalidOperationException("ConnectionStrings:DataBus is required."),
@@ -2849,6 +2850,26 @@ git commit -m "docs(samples): document mediator sample hosting variants" -m "Ass
 ```
 
 ---
+
+### Final-review follow-ups (ARKlab/Ark.Tools#1047)
+
+The final-review PR is not a plan task, but it delivers spec requirements the
+tasks above left open:
+
+- Every variant offloads oversized messages through its claim-check DataBus.
+  WebRebus configures the Rebus DataBus in every process, following
+  ReferenceProject `ApiHost`: `StoreInBlobStorage` from
+  `ConnectionStrings:DataBus` and
+  `SendBigMessagesAsAttachments((256 - 64 - 2) * 1024)`. The native variants
+  use `IMessagingDataBus`.
+- Each variant has a test that sends a message above the threshold and asserts
+  that the payload arrives whole and its body went through the DataBus.
+- Generated GET, HEAD and DELETE endpoints bind from route and query only.
+  ARKMF059/060 reject contracts that would need a body.
+- ARKMSG028 reports duplicate participant topic entries at build time.
+- The processor hosts load Key Vault configuration.
+- `CreateBookReviewRequest.V1` gets the explicit wire name
+  `books/book-review.create`.
 
 ### Task 11: Host-free contract attributes
 
