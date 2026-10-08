@@ -723,7 +723,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var active = group.ToArray();
+                var active = group.Where(item => IsBindable(item, contractLookup)).ToArray();
+                if (active.Length == 0)
+                    continue;
                 var requestNames = active
                     .Select(item => ProtoTypeName(item.TypeFullName, contractLookup))
                     .ToHashSet(StringComparer.Ordinal);
@@ -742,9 +744,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Append(Literal(compilation.ProtoNamespace))
                     .AppendLine(";");
                 content.AppendLine();
-                content.AppendLine("import \"google/type/date.proto\";");
-                content.AppendLine("import \"google/type/datetime.proto\";");
-                content.AppendLine("import \"google/protobuf/empty.proto\";");
+                // Well-known imports are inserted once the used types are known: protoc warns on unused imports.
+                var wellKnownImportsAt = content.Length;
+                var usedTypes = new HashSet<string>(StringComparer.Ordinal);
                 if (reachable.Any(type => contractLookup.ByType.TryGetValue(type, out var contract)
                     && contract.Members.Items.Any(member => IsArkNodaTimePeriod(member.Type))))
                 {
@@ -772,7 +774,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 foreach (var contract in contracts
                     .Where(contract => reachable.Contains(contract.TypeFullName))
                     .OrderBy(static contract => contract.Name, StringComparer.Ordinal))
-                    EmitProtoMessage(content, contract, contractLookup, requestNames.Contains(contract.Name));
+                    EmitProtoMessage(content, contract, contractLookup, requestNames.Contains(contract.Name), usedTypes);
 
                 var maxVersion = active.Max(static x => Math.Max(
                     x.GrpcIntroducedIn,
@@ -789,21 +791,36 @@ namespace Ark.Tools.MediatorFramework.Generators
                     foreach (var item in versionItems)
                     {
                         WriteComment(content, item.Summary, "  ");
+                        var request = ProtoTypeName(item.TypeFullName, contractLookup);
+                        var response = ProtoTypeName(item.IsStreaming ? item.StreamElement! : item.Response, contractLookup);
                         content.Append("  rpc ").Append(item.GrpcMethod)
                             .Append(item.AttachmentRequest != AttachmentRequestKind.None
                                 ? "(stream ark.mediator.UploadDocumentChunk) returns "
-                                : "(" + ProtoTypeName(item.TypeFullName, contractLookup) + ") returns ");
+                                : "(" + request + ") returns ");
+                        if (item.AttachmentRequest == AttachmentRequestKind.None)
+                            usedTypes.Add(request);
                         if (item.AttachmentResponse)
                             content.Append("(stream DownloadDocumentChunk);");
                         else if (item.IsStreaming)
-                            content.Append("(stream ").Append(ProtoTypeName(item.StreamElement!, contractLookup)).Append(");");
+                            content.Append("(stream ").Append(response).Append(");");
                         else
-                            content.Append('(').Append(ProtoTypeName(item.Response, contractLookup)).Append(");");
+                            content.Append('(').Append(response).Append(");");
+                        if (!item.AttachmentResponse)
+                            usedTypes.Add(response);
                         content.AppendLine();
                     }
                     content.AppendLine("}");
                     content.AppendLine();
                 }
+
+                var wellKnownImports = new StringBuilder();
+                if (usedTypes.Contains("google.type.Date"))
+                    wellKnownImports.AppendLine("import \"google/type/date.proto\";");
+                if (usedTypes.Contains("google.type.DateTime"))
+                    wellKnownImports.AppendLine("import \"google/type/datetime.proto\";");
+                if (usedTypes.Contains("google.protobuf.Empty"))
+                    wellKnownImports.AppendLine("import \"google/protobuf/empty.proto\";");
+                content.Insert(wellKnownImportsAt, wellKnownImports.ToString());
 
                 var fileName = Identifier(group.Key) + ".proto";
                 EmitProtoEntry(sb, fileName, content.ToString());
@@ -839,7 +856,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             StringBuilder sb,
             ProtoContractModel contract,
             ProtoContractLookup contractLookup,
-            bool isRequest)
+            bool isRequest,
+            ISet<string> usedTypes)
         {
             WriteComment(sb, contract.Summary);
             sb.Append("message ").Append(contract.Name).AppendLine(" {");
@@ -857,6 +875,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             {
                 WriteComment(sb, member.Description);
                 var type = member.PrecomputedProtoType ?? ProtoTypeName(member.Type, contractLookup);
+                usedTypes.Add(type);
                 sb.Append("  ");
                 if (member.IsRepeated)
                     sb.Append("repeated ");
@@ -972,20 +991,25 @@ namespace Ark.Tools.MediatorFramework.Generators
         }
 
         private static string ProtoTypeName(string typeName, ProtoContractLookup contractLookup)
+            => ResolveProtoTypeName(typeName, contractLookup) ?? "bytes";
+
+        // Returns null for a type that is neither a mapped scalar nor a [ProtoContract]: protobuf-net cannot
+        // serialize it, so the server does not bind a method that uses it as a message.
+        private static string? ResolveProtoTypeName(string typeName, ProtoContractLookup contractLookup)
         {
             if (typeName.EndsWith("[]", StringComparison.Ordinal))
-                return ProtoTypeName(typeName[..^2], contractLookup);
+                return ResolveProtoTypeName(typeName[..^2], contractLookup);
 
             foreach (var collectionPrefix in _collectionPrefixes)
             {
                 if (typeName.StartsWith(collectionPrefix, StringComparison.Ordinal)
                     && typeName.EndsWith(">", StringComparison.Ordinal))
-                    return ProtoTypeName(typeName[collectionPrefix.Length..^1], contractLookup);
+                    return ResolveProtoTypeName(typeName[collectionPrefix.Length..^1], contractLookup);
             }
 
             if (typeName.StartsWith("global::System.Nullable<", StringComparison.Ordinal)
                 && typeName.EndsWith(">", StringComparison.Ordinal))
-                return ProtoTypeName(typeName["global::System.Nullable<".Length..^1], contractLookup);
+                return ResolveProtoTypeName(typeName["global::System.Nullable<".Length..^1], contractLookup);
 
             if (typeName.StartsWith("global::Ark.Tools.Core.EvolvableEnum<", StringComparison.Ordinal))
             {
@@ -1035,8 +1059,15 @@ namespace Ark.Tools.MediatorFramework.Generators
 
             return contractLookup.ByType.TryGetValue(typeName, out var contract)
                 ? contract.Name
-                : "bytes";
+                : null;
         }
+
+        // Exports only methods the server can bind, so the proto matches the served service.
+        private static bool IsBindable(EndpointModel item, ProtoContractLookup contractLookup)
+            => (item.AttachmentRequest != AttachmentRequestKind.None
+                    || ResolveProtoTypeName(item.TypeFullName, contractLookup) is not null)
+                && (item.AttachmentResponse
+                    || ResolveProtoTypeName(item.IsStreaming ? item.StreamElement! : item.Response, contractLookup) is not null);
 
         private static bool IsRepeatedProtoType(ITypeSymbol type)
         {

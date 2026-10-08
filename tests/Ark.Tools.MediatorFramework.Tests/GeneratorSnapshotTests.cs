@@ -133,7 +133,9 @@ public sealed class GeneratorSnapshotTests
             using System.Collections.Generic;
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
+            using ProtoBuf;
             [GrpcMethod("GetStream")]
+            [ProtoContract]
             public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
             """);
         grpc.Should().Contain("IAsyncEnumerable<string> GetStreamAsync");
@@ -2253,11 +2255,14 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
+            using ProtoBuf;
             [GrpcMethod("Delete")]
+            [ProtoContract]
             public sealed class DeleteCommand : ICommand<DeleteCommand>
             {
             }
             [GrpcMethod("DeleteAgain")]
+            [ProtoContract]
             public sealed class DeleteAgainCommand : ICommand<DeleteAgainCommand>
             {
             }
@@ -2265,6 +2270,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("Google.Protobuf.WellKnownTypes.Empty");
         generated.Should().Contain("google.protobuf.Empty");
+        generated.Should().Contain("import \\\"google/protobuf/empty.proto\\\";");
         generated.Should().Contain("MapArkGrpcServices<TContext>");
         generated.Should().Contain("await processor.ExecuteAsync<global::DeleteCommand>");
         generated.Should().Contain("Missing mediator handler registrations");
@@ -2888,11 +2894,49 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().Contain("public static class ArkGeneratedProtos");
-        generated.Should().Contain("import \\\"google/type/date.proto\\\";");
-        generated.Should().Contain("import \\\"google/type/datetime.proto\\\";");
+        // Only used imports are emitted: protoc warns on unused ones.
+        generated.Should().NotContain("import \\\"google/type/date.proto\\\";");
+        generated.Should().NotContain("import \\\"google/type/datetime.proto\\\";");
+        generated.Should().NotContain("import \\\"google/protobuf/empty.proto\\\";");
         generated.Should().NotContain("import \\\"ark/nodatime.proto\\\";");
         generated.Should().Contain("service GreetingsV1");
         generated.Should().NotContain("\"Documents.proto\"");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorExportsOnlyBindableMethodsToProto()
+    {
+        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcService("Greetings")]
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string Name { get; set; } = string.Empty;
+            }
+            [GrpcService("Greetings")]
+            [GrpcMethod("DownloadGreeting")]
+            public sealed class DownloadGreeting : IQuery<IArkAttachment>
+            {
+                public System.Guid Id { get; set; }
+            }
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """);
+
+        generated.Should().Contain("rpc GetGreeting(GetGreeting) returns (Greeting);");
+        generated.Should().NotContain("rpc DownloadGreeting");
+        generated.Should().NotContain("(bytes)");
+        generated.Should().NotContain("message DownloadDocumentChunk");
     }
 
     [TestMethod]
