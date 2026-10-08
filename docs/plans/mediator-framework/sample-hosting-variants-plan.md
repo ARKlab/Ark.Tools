@@ -46,7 +46,7 @@ MSTest + AwesomeAssertions, SQL Server DACPAC, Service Bus (emulator for tests).
 - Each task ends green: `dotnet build Ark.Tools.slnx --configuration Debug`
   succeeds and the affected test projects pass. Run sample tests with
   `ARK_SAMPLE_INMEMORY_TESTS=1` when Docker is unavailable, and with the SQL
-  profile (`docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d db`)
+  profile (`docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d sqlserver`)
   before pushing.
 - Locked restore: `Ark.Tools.Sdk` sets `RestorePackagesWithLockFile=true` and
   CI restores with `RestoreLockedMode=true`. Every project created or whose
@@ -1046,7 +1046,7 @@ ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test $S/Core/Ark.MediatorFramework.Sample.Cor
 ```
 
 Expected: every scenario of `Books.feature` and every moved MSTest passes.
-Then with SQL: `docker compose -f $S/docker-compose.yml up -d db` and the
+Then with SQL: `docker compose -f $S/docker-compose.yml up -d sqlserver` and the
 same command without `ARK_SAMPLE_INMEMORY_TESTS`. Expected: all pass.
 
 If `Reject an unauthorized book review through the background bus` does not
@@ -1218,9 +1218,14 @@ Handler, after the book existence check and before building the review:
         }
 ```
 
-and use `reviewId` as `BookReview.Id`. No schema change: `PK_BookReview`
-already rejects a concurrent duplicate insert; that delivery fails, is
-retried, and then takes the early-return branch.
+and use `reviewId` as `BookReview.Id`. Move `SaveBookReviewAsync` before
+`WriteAuditAsync`, so the insert is the first write: two concurrent deliveries
+of the same message can both read "missing", and the losing one must fail on
+the insert before it has any side effect (the in-memory audit write is
+immediate; SQL rolls the transaction back either way). No schema change:
+`PK_BookReview` (SQL) and the in-memory `TryAdd` reject the duplicate insert;
+that delivery fails, is retried, and then takes the early-return branch. The
+redelivery scenario therefore also holds when the two sends run concurrently.
 
 `BookReviewIdConflictViolation` follows `BookPrintingProcessAlreadyRunningViolation`:
 title `"The review identifier is already in use."`, `Detail` naming the id,
@@ -1749,7 +1754,7 @@ public sealed class ProcessorCompositionTests
 }
 ```
 
-Run: `dotnet test W/Ark.MediatorFramework.Sample.Core.Web.Tests --filter "FullyQualifiedName~ProcessorCompositionTests"`
+Run: `dotnet test $S/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests --filter "FullyQualifiedName~ProcessorCompositionTests"`
 Expected: build error, `WebHosting` not found. (Create the test project first:
 copy the old test `.csproj`, drop Reqnroll/DacFx/Rebus/Functions references,
 reference `…Core.Web.Hosting`, `…Core.Web.WebInterface`, `…Core.Web.GrpcClient`,
@@ -2216,7 +2221,7 @@ Application and API.
 - Create: `WR/…Core.WebRebus.WebInterface/` — `…csproj`, `Program.cs`, `WebRebusStartup.cs`, `appsettings*.json`
 - Move + rename: `S/src/Ark.MediatorFramework.Sample.RebusProcessor` → `WR/…Core.WebRebus.Processor`
 - Create: `WR/…Core.WebRebus.NotificationProcessor/`, `WR/…Core.WebRebus.AuditProcessor/`
-- Create: `WR/…Core.WebRebus.Tests/` — `RebusTopologyTests.cs`, `CompositionRootTests.cs`
+- Create: `WR/…Core.WebRebus.Tests/` — `RebusTopologyTests.cs`, `CompositionRootTests.cs`, `HttpRoundTripTests.cs`
 - Create: `WR/README.md`
 - Modify: `C/…Core.Application/Host/ApplicationComposition.cs` (delete `ConfigureRebusOutbox`, `ConfigureRebusCommon`, `RegisterOutboundRebus`)
 - Modify: `C/…Core.Application/*.csproj`, `C/…Core.API/*.csproj` (drop Rebus packages)
@@ -2253,13 +2258,14 @@ public sealed class RebusTopologyTests
     public async Task CompletedPrintReachesBothRebusSubscribers()
     {
         var network = new InMemNetwork();
+        var subscribers = new InMemorySubscriberStore();
         var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
         var notifications = new RecordingSink();
         var audits = new RecordingSink();
-        await using var api = await WebRebusTestHosts.ApiAsync(network, factory).ConfigureAwait(false);
-        await using var worker = await WebRebusTestHosts.WorkerAsync(network, factory).ConfigureAwait(false);
-        await using var notification = await WebRebusTestHosts.NotificationAsync(network, factory, notifications).ConfigureAwait(false);
-        await using var audit = await WebRebusTestHosts.AuditAsync(network, factory, audits).ConfigureAwait(false);
+        await using var api = await WebRebusTestHosts.ApiAsync(network, subscribers, factory).ConfigureAwait(false);
+        await using var worker = await WebRebusTestHosts.WorkerAsync(network, subscribers, factory).ConfigureAwait(false);
+        await using var notification = await WebRebusTestHosts.NotificationAsync(network, subscribers, factory, notifications).ConfigureAwait(false);
+        await using var audit = await WebRebusTestHosts.AuditAsync(network, subscribers, factory, audits).ConfigureAwait(false);
 
         var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(WebRebusTestHosts.NewBook())
             .ConfigureAwait(false);
@@ -2275,9 +2281,10 @@ public sealed class RebusTopologyTests
     public async Task UnauthorizedBackgroundReviewMovesToErrorQueue()
     {
         var network = new InMemNetwork();
+        var subscribers = new InMemorySubscriberStore();
         var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
-        await using var api = await WebRebusTestHosts.ApiAsync(network, factory).ConfigureAwait(false);
-        await using var worker = await WebRebusTestHosts.WorkerAsync(network, factory).ConfigureAwait(false);
+        await using var api = await WebRebusTestHosts.ApiAsync(network, subscribers, factory).ConfigureAwait(false);
+        await using var worker = await WebRebusTestHosts.WorkerAsync(network, subscribers, factory).ConfigureAwait(false);
         var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(WebRebusTestHosts.NewBook())
             .ConfigureAwait(false);
 
@@ -2311,7 +2318,10 @@ public sealed class RebusTopologyTests
   optional `Action<RebusConfigurer>? configureTest` argument on
   `RebusHosting.Configure`; production uses Azure Service Bus topics and needs
   no subscription storage.
-- `ApiAsync(network, factory)`: `RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory })`,
+- Every factory takes `(InMemNetwork network, InMemorySubscriberStore subscribers, InMemorySampleDataContextFactory factory, …)`
+  and passes `subscribers` to `configureTest` as above, so the worker publisher
+  and both subscribers share one subscription table.
+- `ApiAsync(network, subscribers, factory)`: `RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory })`,
   settable principal provider,
   `RebusHosting.Configure<ApiRebusHost>(c, t => t.UseDrainableInMemoryTransportAsOneWayClient(network), startOutboxProcessor: false)`.
 - `Worker`: `startOutboxProcessor: true` — the worker drains the shared outbox
@@ -2446,7 +2456,21 @@ needs approval).
 - Accept the API/Application `ArkApiSurface.txt` diff: only the removed
   `REBUS` lines and the removed `FailingRebusRequest`/`DeadLetterAck` contracts.
 
-- [ ] **Step 5: Verify the boundary**
+- [ ] **Step 5: Hosted HTTP round trip and boundary check**
+
+Add `WR/…Core.WebRebus.Tests/HttpRoundTripTests.cs`, which covers the Minimal API
+route, authentication, binding and serialization of this host. The spec requires
+it for every variant.
+`CreateThenGetBook` hosts `WebRebus.WebInterface` on `UseTestServer()` with
+the same arrange shape as Task 6 Step 6: `WebApplication.CreateBuilder` with
+`EnvironmentName = "IntegrationTests"`, then the `WebRebusStartup` composition
+over `RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory })`
+and `RebusHosting.Configure<ApiRebusHost>(c, t => t.UseDrainableInMemoryTransportAsOneWayClient(network), startOutboxProcessor: false)`.
+It sends `POST /api/v1/books` with a `Book.V1.Create` body through an
+authenticated `HttpClient`, using a test-only copy of Task 6's bearer helper,
+and asserts 200 and an `id`. It then sends `GET /api/v1/books/{id}` and
+asserts the same title. Take the routes from the generated `[HttpEndpoint]`
+metadata.
 
 ```bash
 grep -rn "Rebus" $S/Core/Ark.MediatorFramework.Sample.Core.API $S/Core/Ark.MediatorFramework.Sample.Core.Application \
@@ -2748,11 +2772,17 @@ Each build stage: restore locked, start SQL, build the root sample slnx, run
 `Core.Tests` + the variant's tests, publish that variant's deployables plus the
 DACPAC. The `Functions` build stage additionally starts the Service Bus emulator
 (same image and environment as `.github/workflows/ci.yml`, pointed at the SQL
-container), waits until ports 5300 and 5672 accept connections, and sets
+container), waits until ports 5300 and 5672 accept connections and then
+sleeps 5 seconds more (the readiness sequence of `.github/workflows/publish_nuget.yml`),
+and sets
 `ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING` before running the Functions tests.
 Each deploy stage keeps `enableDeployment: 'false'`. Triggers: keep the current
 pipeline's branches, `master` and `develop`, for both push and PR, with path
-filters `Core/*` + `Core/Hosts/<Variant>/*`.
+filters `Core/*` + `Core/Hosts/<Variant>/*` plus the shared sample-root inputs
+every variant consumes: `Directory.Build.props`, `Directory.Build.targets` (if
+present), `Directory.Packages.props`, `Ark.MediatorFramework.Sample.slnx`,
+`docker-compose.yml`, and the variant's own pipeline files and shared
+templates.
 
 - [ ] **Step 2: Rewrite links**
 
