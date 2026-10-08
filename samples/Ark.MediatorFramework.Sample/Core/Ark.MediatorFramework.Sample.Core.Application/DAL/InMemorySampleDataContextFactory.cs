@@ -212,6 +212,11 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
+        public async Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default)
+        {
+            return await Task.FromResult(_owner._bookReviews.TryGetValue(id, out var review) ? review : null).ConfigureAwait(false);
+        }
+
         public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
             Guid bookId,
             int skip,

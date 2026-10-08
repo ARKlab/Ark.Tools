@@ -133,6 +133,11 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             await _inner.SaveBookReviewAsync(review, ctk).ConfigureAwait(false);
         }
 
+        public async Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default)
+        {
+            return await _inner.ReadBookReviewAsync(id, ctk).ConfigureAwait(false);
+        }
+
         public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
             Guid bookId,
             int skip,

@@ -50,6 +50,9 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Saves a book review.</summary>
     Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default);
 
+    /// <summary>Reads a book review by identifier.</summary>
+    Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default);
+
     /// <summary>Reads bounded reviews for a book.</summary>
     Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(Guid bookId, int skip, int limit, CancellationToken ctk = default);
 
@@ -359,6 +362,18 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             """;
         var command = new CommandDefinition(sql, review, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads a book review by identifier in the current transaction.</summary>
+    public async Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default)
+    {
+        const string sql = """
+            SELECT [Id], [BookId], [UserId], [Rating], [Text], [CreatedAt]
+            FROM [dbo].[BookReview]
+            WHERE [Id] = @Id;
+            """;
+        var command = new CommandDefinition(sql, new { Id = id }, Transaction, cancellationToken: ctk);
+        return await Connection.QuerySingleOrDefaultAsync<BookReview>(command).ConfigureAwait(false);
     }
 
     /// <summary>Reads bounded reviews for a book in the current transaction.</summary>

@@ -34,6 +34,12 @@ public sealed class BookDriver
     /// <summary>Gets the latest created review.</summary>
     public BookReview? CurrentReview { get; private set; }
 
+    /// <summary>Gets or sets the identifier of the review the scenario is about, including one created over the bus.</summary>
+    public Guid? CurrentReviewId { get; set; }
+
+    /// <summary>Gets the review created before <see cref="CurrentReview"/>.</summary>
+    public BookReview? PreviousReview { get; private set; }
+
     /// <summary>Gets the latest review list.</summary>
     public IReadOnlyList<BookReview>? Reviews { get; private set; }
 
@@ -120,16 +126,40 @@ public sealed class BookDriver
     }
 
     /// <summary>Creates a review for the active book.</summary>
-    public async Task CreateReviewAsync(int rating, string text, CancellationToken ctk = default)
+    /// <param name="rating">The rating.</param>
+    /// <param name="text">The review text.</param>
+    /// <param name="reviewId">The optional client-generated review identifier.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task CreateReviewAsync(int rating, string text, Guid? reviewId = null, CancellationToken ctk = default)
     {
-        CurrentReview = await _context.DispatchRequestAsync<CreateBookReviewRequest.V1, BookReview>(
+        var review = await _context.DispatchRequestAsync<CreateBookReviewRequest.V1, BookReview>(
             new CreateBookReviewRequest.V1
             {
                 BookId = Current.Id,
+                ReviewId = reviewId,
                 Rating = rating,
                 Text = text,
             },
             ctk).ConfigureAwait(false);
+        PreviousReview = CurrentReview;
+        CurrentReview = review;
+        CurrentReviewId = review.Id;
+    }
+
+    /// <summary>Counts the audit records written for the latest review.</summary>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The number of matching audit records.</returns>
+    public async Task<long> CountCurrentReviewAuditsAsync(CancellationToken ctk = default)
+    {
+        var audits = await _context.DispatchQueryAsync<GetAuditsQuery.V1, PagedResult<AuditRecord>>(
+            new GetAuditsQuery.V1
+            {
+                EntityType = nameof(BookReview),
+                Identifier = (CurrentReviewId ?? throw new InvalidOperationException("No current review is available in this scenario.")).ToString("D"),
+                Limit = 25,
+            },
+            ctk).ConfigureAwait(false);
+        return audits.Count;
     }
 
     /// <summary>Lists reviews for the active book.</summary>

@@ -46,6 +46,13 @@ public static class CreateBookReviewRequest
         [HttpRoute]
         public Guid BookId { get; init; }
 
+        /// <summary>
+        /// Gets the client-generated review identifier. Repeating a request with the same identifier for the
+        /// same book returns the stored review and writes nothing; senders over a message bus must set it so
+        /// that redelivery is idempotent. When omitted, the server generates a new identifier.
+        /// </summary>
+        public Guid? ReviewId { get; init; }
+
         /// <summary>Gets the rating from one to five.</summary>
         public int Rating { get; init; }
 

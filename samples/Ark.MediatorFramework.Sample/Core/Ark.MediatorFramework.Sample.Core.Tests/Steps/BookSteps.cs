@@ -6,6 +6,7 @@ using Ark.MediatorFramework.Sample.Core.Tests.Hooks;
 
 using Ark.Tools.Authorization;
 using Ark.Tools.Core;
+using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Core.EntityTag;
 using Ark.Tools.Reqnroll;
 
@@ -309,13 +310,40 @@ public sealed class BookSteps
     }
 
     /// <summary>Creates a review for the active book.</summary>
+    [Given("I create a book review with")]
     [When("I create a book review with")]
     public async Task CreateBookReview(Table table)
     {
         var values = table.Rows.Single();
         var rating = int.Parse(values["Rating"], CultureInfo.InvariantCulture);
-        _exception = await _captureAsync(() => _books.CreateReviewAsync(rating, values["Text"]))
+        Guid? reviewId = values.TryGetValue("ReviewId", out var id) ? Guid.Parse(id) : null;
+        _exception = await _captureAsync(() => _books.CreateReviewAsync(rating, values["Text"], reviewId))
             .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that the last two created reviews are the same stored review.</summary>
+    [Then("the last two book reviews have the same identifier")]
+    public void LastTwoBookReviewsHaveTheSameIdentifier()
+    {
+        _books.PreviousReview.Should().NotBeNull();
+        _books.CurrentReview.Should().NotBeNull();
+        _books.CurrentReview!.Id.Should().Be(_books.PreviousReview!.Id);
+    }
+
+    /// <summary>Asserts the number of audit records written for the latest review.</summary>
+    /// <param name="count">The expected number of audit records.</param>
+    [Then("the audit log has (.*) entries for the book review")]
+    public async Task AuditLogHasEntriesForBookReview(int count)
+    {
+        (await _books.CountCurrentReviewAuditsAsync().ConfigureAwait(false)).Should().Be(count);
+    }
+
+    /// <summary>Asserts that a book request failed with a business-rule violation.</summary>
+    [Then("the book request fails with a business rule violation")]
+    public void BookRequestFailsWithBusinessRuleViolation()
+    {
+        _exception.Should().BeOfType<BusinessRuleViolationException>()
+            .Which.BusinessRuleViolation.Should().BeOfType<BookReviewIdConflictViolation>();
     }
 
     /// <summary>Asserts that a review was created.</summary>
