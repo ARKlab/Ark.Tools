@@ -161,6 +161,15 @@ Feature: Books
                 | 6      | Bad  |
             Then the book request fails validation
 
+        Scenario: Reject a book review with an empty review identifier
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I create a book review with
+                | ReviewId                             | Rating | Text |
+                | 00000000-0000-0000-0000-000000000000 | 5      | Good |
+            Then the book request fails validation
+
         Scenario: Reject a book review without its write scope
             Given I create a book with
                 | Title | Author  | Genre   |

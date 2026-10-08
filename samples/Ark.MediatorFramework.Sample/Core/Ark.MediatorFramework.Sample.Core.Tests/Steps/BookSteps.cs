@@ -309,8 +309,17 @@ public sealed class BookSteps
         table.CompareToInstance(audits.Data.Single());
     }
 
-    /// <summary>Creates a review for the active book.</summary>
+    /// <summary>Creates a review for the active book and requires it to succeed.</summary>
+    /// <param name="table">The review request data.</param>
     [Given("I create a book review with")]
+    public async Task GivenCreateBookReview(Table table)
+    {
+        await CreateBookReview(table).ConfigureAwait(false);
+        _exception.Should().BeNull();
+        _books.CurrentReview.Should().NotBeNull();
+    }
+
+    /// <summary>Creates a review for the active book.</summary>
     [When("I create a book review with")]
     public async Task CreateBookReview(Table table)
     {
