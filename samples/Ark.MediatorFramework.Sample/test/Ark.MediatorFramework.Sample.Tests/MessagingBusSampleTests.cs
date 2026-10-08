@@ -94,6 +94,7 @@ public sealed class MessagingBusSampleTests
         var state = new DispatchState();
         container.RegisterInstance(state);
         container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
+        container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
         container.Register<ICommandHandler<ProcessBookPrintProcessRequest>, FailingBookCommandHandler>(Lifestyle.Scoped);
         container.Register<ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>, RecordingBookFailureHandler>(Lifestyle.Scoped);
         await using var provider = _buildServiceProvider(container);
@@ -394,7 +395,7 @@ public sealed class MessagingBusSampleTests
         MessagingNetworkOptions network,
         JsonMessagingCodec codec,
         IMessagingRetryPolicy retryPolicy,
-        Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> dispatch,
+        Func<string, IMessagingPayloadReader, ICommandProcessor, IRequestProcessor, CancellationToken, Task> dispatch,
         Func<string, IMessagingPayloadReader, int, MessagingExceptionInfo, ICommandProcessor, CancellationToken, Task> dispatchFailed)
     {
         return new MessagingDispatcher(
@@ -420,11 +421,14 @@ public sealed class MessagingBusSampleTests
         public async Task ProcessIncomingAsync(
             IReadOnlyList<Type> orderedStepTypes,
             MessagingIncomingContext context,
-            Func<ICommandProcessor, CancellationToken, Task> terminal,
+            Func<ICommandProcessor, IRequestProcessor, CancellationToken, Task> terminal,
             CancellationToken cancellationToken)
         {
             await using var scope = AsyncScopedLifestyle.BeginScope(_container);
-            await terminal(_container.GetInstance<ICommandProcessor>(), cancellationToken)
+            await terminal(
+                _container.GetInstance<ICommandProcessor>(),
+                _container.GetInstance<IRequestProcessor>(),
+                cancellationToken)
                 .ConfigureAwait(false);
         }
 

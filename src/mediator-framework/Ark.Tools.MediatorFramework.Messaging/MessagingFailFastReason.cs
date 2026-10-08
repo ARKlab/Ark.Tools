@@ -40,5 +40,8 @@ public enum MessagingFailFastReason
     InvalidCompressedPayload,
 
     /// <summary>The payload cannot be deserialized as its declared contract.</summary>
-    MalformedPayload
+    MalformedPayload,
+
+    /// <summary>The second-level handler gave up on the message, which must not be retried.</summary>
+    HandlerRejected
 }

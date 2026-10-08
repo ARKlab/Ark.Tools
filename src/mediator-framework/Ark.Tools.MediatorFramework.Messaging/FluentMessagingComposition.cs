@@ -648,8 +648,8 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             participant.RetryPolicy,
             serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
-            (logicalName, payload, processor, ctk) =>
-                participant.Dispatch!(logicalName, payload, processor, ctk),
+            (logicalName, payload, processor, requestProcessor, ctk) =>
+                participant.Dispatch!(logicalName, payload, processor, requestProcessor, ctk),
             participant.DispatchFailed is null
                 ? null
                 : (logicalName, payload, deliveryCount, error, processor, ctk) =>

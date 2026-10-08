@@ -29,5 +29,6 @@ ARKMSG022 | Ark.Tools.MediatorFramework | Error | Messaging contract alias colli
 ARKMSG023 | Ark.Tools.MediatorFramework | Error | Messaging declaring type must be a non-nested, non-generic partial class
 ARKMSG025 | Ark.Tools.MediatorFramework | Error | MessagePack contract shape is missing
 ARKMSG026 | Ark.Tools.MediatorFramework | Error | Google.Protobuf contract shape is missing
+ARKMSG027 | Ark.Tools.MediatorFramework | Error | Processed contract cannot be dispatched
 ARKMF021 | Ark.Tools.MediatorFramework | Error | Contract has multiple Solid kinds
 ARKMSG029 | Ark.Tools.MediatorFramework | Warning | Default messaging contract name is version-only

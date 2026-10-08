@@ -406,6 +406,7 @@ public sealed class MessagingFunctionsCompositionTests
         string logicalName,
         IMessagingPayloadReader payload,
         ICommandProcessor processor,
+        IRequestProcessor requestProcessor,
         CancellationToken ctk)
     {
         await Task.CompletedTask.ConfigureAwait(false);

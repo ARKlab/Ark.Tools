@@ -168,7 +168,11 @@ public sealed partial class PrintingParticipant;
 ```
 
 `Processes` owns a message, `Publishes` owns an event, and `Subscribes` requests
-copies of events published on the same network. Exactly one member must process
+copies of events published on the same network. A message is an
+`ICommand<TSelf>` or an `IRequest<TSelf, TResponse>`; a request runs its
+`IRequestHandler` and the response is discarded. An event must be an
+`ICommand<TSelf>`: a request is never an event (`ARKMSG018`), and a processed
+contract that is neither shape is rejected (`ARKMSG027`). Exactly one member must process
 each message or publish each event; subscriptions must be satisfiable and use a
 serializer supported by the subscriber. `DefaultSerializer` must be included in
 `Serializers`. Retry and compression are participant-owned and may differ

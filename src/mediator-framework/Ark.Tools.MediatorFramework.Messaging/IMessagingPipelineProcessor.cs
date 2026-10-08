@@ -19,14 +19,14 @@ public interface IMessagingPipelineProcessor
     /// <param name="orderedStepTypes">The incoming step types in execution order.</param>
     /// <param name="context">The incoming delivery context.</param>
     /// <param name="terminal">
-    /// The terminal dispatch continuation that receives the scoped command processor.
+    /// The terminal dispatch continuation that receives the scoped command and request processors.
     /// </param>
     /// <param name="cancellationToken">The invocation cancellation token.</param>
     /// <returns>A task that completes after the incoming pipeline finishes.</returns>
     Task ProcessIncomingAsync(
         IReadOnlyList<Type> orderedStepTypes,
         MessagingIncomingContext context,
-        Func<ICommandProcessor, CancellationToken, Task> terminal,
+        Func<ICommandProcessor, IRequestProcessor, CancellationToken, Task> terminal,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -56,7 +56,7 @@ internal sealed class ServiceProviderMessagingPipelineProcessor : IMessagingPipe
     public async Task ProcessIncomingAsync(
         IReadOnlyList<Type> orderedStepTypes,
         MessagingIncomingContext context,
-        Func<ICommandProcessor, CancellationToken, Task> terminal,
+        Func<ICommandProcessor, IRequestProcessor, CancellationToken, Task> terminal,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(orderedStepTypes);
@@ -67,10 +67,11 @@ internal sealed class ServiceProviderMessagingPipelineProcessor : IMessagingPipe
         await using var _scope = scope.ConfigureAwait(false);
         var scopedProvider = scope.ServiceProvider;
         var scopedCommandProcessor = scopedProvider.GetRequiredService<ICommandProcessor>();
+        var scopedRequestProcessor = scopedProvider.GetRequiredService<IRequestProcessor>();
         await MessagingPipelineInvoker._invokeIncomingCoreAsync(
             MessagingPipelineInvoker._resolveIncomingSteps(scopedProvider, orderedStepTypes),
             context,
-            () => terminal(scopedCommandProcessor, cancellationToken),
+            () => terminal(scopedCommandProcessor, scopedRequestProcessor, cancellationToken),
             cancellationToken).ConfigureAwait(false);
     }
 

@@ -157,8 +157,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             descriptor.RetryPolicy,
             serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
-            (logicalName, payload, processor, ctk) =>
-                descriptor.Dispatch!(logicalName, payload, processor, ctk),
+            (logicalName, payload, processor, requestProcessor, ctk) =>
+                descriptor.Dispatch!(logicalName, payload, processor, requestProcessor, ctk),
             descriptor.DispatchFailed is null
                 ? null
                 : (logicalName, payload, deliveryCount, error, processor, ctk) =>

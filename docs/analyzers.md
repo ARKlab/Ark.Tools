@@ -90,6 +90,7 @@ Every Ark.Tools diagnostic has a dedicated page with its severity, rule-specific
 - [ARKMSG023](analyzer-rules/ARKMSG023.md)
 - [ARKMSG025](analyzer-rules/ARKMSG025.md)
 - [ARKMSG026](analyzer-rules/ARKMSG026.md)
+- [ARKMSG027](analyzer-rules/ARKMSG027.md)
 - [ARKMSG029](analyzer-rules/ARKMSG029.md)
 - [ARKPII001](analyzer-rules/ARKPII001.md)
 - [ARKPII002](analyzer-rules/ARKPII002.md)

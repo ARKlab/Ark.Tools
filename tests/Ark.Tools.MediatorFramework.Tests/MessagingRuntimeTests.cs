@@ -344,7 +344,7 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             provider,
             new TestRetryPolicy(3, secondLevelRetriesEnabled: false),
-            static async (_, payload, _, token) =>
+            static async (_, payload, _, _, token) =>
             {
                 await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             });
@@ -370,7 +370,7 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             provider,
             new TestRetryPolicy(3, secondLevelRetriesEnabled: false),
-            static async (_, payload, _, token) =>
+            static async (_, payload, _, _, token) =>
             {
                 await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             });
@@ -393,7 +393,7 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             provider,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            static async (_, payload, _, token) =>
+            static async (_, payload, _, _, token) =>
             {
                 await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             },
@@ -422,7 +422,7 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             provider,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            static (_, _, _, _) => throw new InvalidOperationException("handler failed"),
+            static (_, _, _, _, _) => throw new InvalidOperationException("handler failed"),
             async (_, payload, count, error, processor, token) =>
             {
                 var message = await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
@@ -455,7 +455,7 @@ public sealed partial class MessagingRuntimeTests
         var dispatcher = _createDispatcher(
             provider,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            static (_, _, _, _) => throw new InvalidOperationException("handler failed"),
+            static (_, _, _, _, _) => throw new InvalidOperationException("handler failed"),
             static (_, _, _, _, _, _) => throw new global::SimpleInjector.ActivationException("missing handler"));
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
@@ -476,7 +476,7 @@ public sealed partial class MessagingRuntimeTests
                 3,
                 secondLevelRetriesEnabled: false,
                 maximumHandlerDuration: TimeSpan.FromMilliseconds(30)),
-            static async (_, _, _, _) =>
+            static async (_, _, _, _, _) =>
                 await Task.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None).ConfigureAwait(false));
 
         await dispatcher.OnDeliveryAsync(delivery, CancellationToken.None).ConfigureAwait(false);
@@ -494,7 +494,7 @@ public sealed partial class MessagingRuntimeTests
         var act = () => _createDispatcher(
             provider,
             new TestRetryPolicy(2, secondLevelRetriesEnabled: true),
-            static async (_, payload, _, token) =>
+            static async (_, payload, _, _, token) =>
             {
                 await payload.DeserializeAsync<DispatchCommand>(token).ConfigureAwait(false);
             });
@@ -735,6 +735,7 @@ public sealed partial class MessagingRuntimeTests
         var services = new ServiceCollection()
             ._addArkMessaging();
         services.AddScoped<ICommandProcessor, TestCommandProcessor>();
+        services.AddScoped<IRequestProcessor, TestRequestProcessor>();
         configure?.Invoke(services);
         return services.BuildServiceProvider();
     }
@@ -742,7 +743,7 @@ public sealed partial class MessagingRuntimeTests
     private static MessagingDispatcher _createDispatcher(
         IServiceProvider serviceProvider,
         IMessagingRetryPolicy retryPolicy,
-        Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> dispatch,
+        Func<string, IMessagingPayloadReader, ICommandProcessor, IRequestProcessor, CancellationToken, Task> dispatch,
         Func<
             string,
             IMessagingPayloadReader,
@@ -869,6 +870,28 @@ public sealed partial class MessagingRuntimeTests
         }
     }
 
+    private sealed class TestRequestProcessor : IRequestProcessor
+    {
+        [Obsolete("Test seam.", error: true)]
+        public TResponse Execute<TResponse>(IRequest<TResponse> request)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<TResponse> ExecuteAsync<TRequest, TResponse>(
+            IRequest<TRequest, TResponse> request,
+            CancellationToken ctk = default)
+            where TRequest : class, IRequest<TRequest, TResponse>
+        {
+            throw new NotSupportedException();
+        }
+    }
+
     private sealed class RecordingFailedHandler : ICommandHandler<MessagingFailed<DispatchCommand>>
     {
         public async Task ExecuteAsync(MessagingFailed<DispatchCommand> command, CancellationToken ctk = default)
@@ -907,10 +930,10 @@ public sealed partial class MessagingRuntimeTests
         public async Task ProcessIncomingAsync(
             IReadOnlyList<System.Type> orderedStepTypes,
             MessagingIncomingContext context,
-            Func<ICommandProcessor, CancellationToken, Task> terminal,
+            Func<ICommandProcessor, IRequestProcessor, CancellationToken, Task> terminal,
             CancellationToken cancellationToken)
         {
-            await terminal(new TestCommandProcessor(), cancellationToken).ConfigureAwait(false);
+            await terminal(new TestCommandProcessor(), new TestRequestProcessor(), cancellationToken).ConfigureAwait(false);
         }
 
         public async Task ProcessOutgoingAsync(
