@@ -123,11 +123,39 @@ public sealed class FluentMessagingResourceManagementTests
             s.Topic == _loopedTopic && s.Name == TestLoopback.Identity);
     }
 
+    /// <summary>A descriptor without explicit known topics treats its published and subscribed topics as known.</summary>
+    [TestMethod]
+    public void DescriptorDefaultsKnownNetworkTopicsToPublishedAndSubscribedTopics()
+    {
+        var options = TestNetwork.CreateOptions();
+        var descriptor = new MessagingParticipantDescriptor(
+            typeof(TestLoopback),
+            options,
+            TestNetwork.Registry,
+            TestLoopback.Identity,
+            new[] { SerializationProtocol.Json },
+            MessagingDefaultRetryPolicy.Instance,
+            CompressionAlgorithm.None,
+            0,
+            receives: false,
+            dispatch: null,
+            dispatchFailed: null,
+            publishedTopics: [new MessagingTopicResource(_loopedTopic, TestLoopback.Identity)],
+            subscribedTopics:
+            [
+                new MessagingTopicResource(_loopedTopic, TestLoopback.Identity),
+                new MessagingTopicResource(_printedTopic, TestPublisher.Identity),
+            ]);
+
+        descriptor.KnownNetworkTopics.Should().Equal(_loopedTopic, _printedTopic);
+    }
+
     private static async Task _runAsync(Action<MessagingCompositionBuilder<TestNetwork>> configure)
     {
         var services = new ServiceCollection();
         services.Configure<JsonSerializerOptions>(
             static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+        services.AddScoped<IRequestProcessor, UnusedRequestProcessor>();
         services.ConfigureArkMessaging(configure);
         var provider = services.BuildServiceProvider();
         await using (provider.ConfigureAwait(false))
