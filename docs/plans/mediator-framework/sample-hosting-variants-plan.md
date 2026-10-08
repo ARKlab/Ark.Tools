@@ -2610,6 +2610,16 @@ before `AddArkAzureFunctions`; `AddArkSolidProcessors(container)` (bridges the s
 kept only in `Api`. These apps do not set `FunctionsInDependencies`, so they do
 not expose the HTTP functions from the Hosting library.
 
+Provisioning against the emulator needs the administration endpoint (port
+5300), not the data-plane one. `ConfigureArkMessagingFunctions` builds
+`ServiceBusAdministrationClient` from the optional
+`<ConnectionConfigurationKey>:administrationConnectionString` setting
+(`AzureServiceBus:ConnectionString:administrationConnectionString`) and falls
+back to the data-plane connection when it is absent. Add this seam to
+`Ark.Tools.MediatorFramework.AzureFunctions` with a composition test that
+asserts the administration client uses the separate connection, plus a
+CHANGELOG `Added` line. The trigger apps' development settings set both keys.
+
 - [ ] **Step 4: Api app**
 
 From the old `AzureFunctions` project: `FunctionsInDependencies = true`,
