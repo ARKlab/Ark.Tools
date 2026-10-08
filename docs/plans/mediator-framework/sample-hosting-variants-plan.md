@@ -1562,7 +1562,9 @@ asserts the emitted `CreateDescriptor` passes the subscribed topic and every
 network topic as `knownNetworkTopics`, and regenerate any snapshot the change
 moves. Add one reconciliation test: the recording management returns, for a
 network topic the receiver does not subscribe to, an existing subscription
-owned by the receiver; after start it was deleted.
+owned by the receiver; after start it was deleted. Add one composition test for a
+participant that publishes and subscribes to the same event: it starts and
+ensures that topic once.
 
 Adapt `TestNetwork`/`TestPublisher`/`NonManagingTransport`/`RecordingTransportManagement`
 to the names the test project already uses; create only what does not exist.
@@ -1616,7 +1618,11 @@ The 4-argument overload builds the manifest from both lists:
         var hasResources = participant.PublishedTopics.Count > 0 || participant.Receives;
         var maximumDeliveryCount = checked(participant.RetryPolicy.MaximumDeliveryCount
             * (participant.RetryPolicy.SecondLevelRetriesEnabled ? 2 : 1));
-        var topics = participant.PublishedTopics.Concat(participant.SubscribedTopics).ToArray();
+        // A participant may publish and subscribe to the same event: dedupe by name,
+        // MessagingResourceManifest rejects duplicate topics.
+        var topics = participant.PublishedTopics.Concat(participant.SubscribedTopics)
+            .DistinctBy(static topic => topic.Name, StringComparer.Ordinal)
+            .ToArray();
         var resources = participant.Network.ResourceLifecycle == MessagingResourceLifecycle.CreateIfMissing
             && hasResources
                 ? new MessagingResourceManifest(
@@ -2110,9 +2116,15 @@ defaults: `appsettings.json`, `appsettings.{Environment}.json` (local values in
 `ConnectionStrings:Sample` and `ConnectionStrings:ServiceBus` from
 `builder.Configuration` instead of the two `ARK_SAMPLE_*` environment
 variables, register the processor with `AddArkMessagingOutboxProcessor`, and run
-the host. In the GrpcClient
-csproj, update `AdditionalImportDirs` to
-`../Ark.MediatorFramework.Sample.Core.Web.WebInterface/proto`.
+the host. In the OutboxProcessor csproj, point the Application
+`ProjectReference` at
+`..\..\..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj`
+(the host now sits three levels below `Core/`). In the GrpcClient csproj, point
+both the WebInterface `ProjectReference`
+(`..\Ark.MediatorFramework.Sample.Core.Web.WebInterface\Ark.MediatorFramework.Sample.Core.Web.WebInterface.csproj`)
+and the `AdditionalImportDirs` entry
+(`../Ark.MediatorFramework.Sample.Core.Web.WebInterface/proto`) at the sibling
+WebInterface. Build both projects before committing.
 
 - [ ] **Step 6: Port the host-boundary tests**
 
