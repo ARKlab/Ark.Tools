@@ -769,10 +769,10 @@ same package):
 
 | Package | Contents |
 | --- | --- |
-| `Ark.Tools.MediatorFramework` | transport-neutral core: HTTP contract metadata, `IArkAttachment`/`ArkAttachment`, shared versioning primitives |
+| `Ark.Tools.MediatorFramework` | transport-neutral core: HTTP and gRPC contract metadata (`[GrpcMethod]`/`[GrpcService]`), `IArkAttachment`/`ArkAttachment`, shared versioning primitives |
 | `Ark.Tools.MediatorFramework.MinimalApi` | HTTP runtime helpers + the Minimal API endpoint generator |
 | `Ark.Tools.MediatorFramework.Rebus` | `[RebusMessage]`, Rebus runtime helpers + the Rebus wrapper generator |
-| `Ark.Tools.MediatorFramework.Grpc` | `[GrpcMethod]`/`[GrpcService]`, gRPC runtime helpers (interceptor, upload adapter) + the gRPC service generator |
+| `Ark.Tools.MediatorFramework.Grpc` | gRPC runtime helpers (interceptor, upload adapter) + the gRPC service generator |
 
 An application references only the transports it hosts; each generator reacts
 only to its own attribute, so adding a transport never re-runs the others.
