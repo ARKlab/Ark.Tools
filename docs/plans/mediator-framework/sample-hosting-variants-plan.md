@@ -709,8 +709,17 @@ test, `DedicatedHostResolvesExactlyOneReservedProcessor`, uses the old
 `OutboxProcessorComposition` host: cut it out of the moved file and paste it,
 unchanged, into a new `$OLD/OutboxProcessorCompositionTests.cs` (same usings it
 needs, no `DatabaseHooks` dependency), so the old project still compiles and
-the test still runs. Task 6 moves that file to `Web.Tests`. In `GlobalUsings.cs` of the new project remove any `Rebus`,
+the test still runs. Task 6 moves that file to `Web.Tests`. Then remove from
+the moved `NativeOutboxIntegrationTests.cs` the
+`Ark.MediatorFramework.Sample.OutboxProcessor` using and every DI or hosting
+using that only the cut test needed. In `GlobalUsings.cs` of the new project remove any `Rebus`,
 `WebInterface`, `AzureFunctions`, or `RebusProcessor` usings.
+
+In the moved `Steps/BookPrintingProcessSteps.cs`, delete
+`using var drainer = DrainableInMemTransport.Drain();` from
+`ConcurrentlyStartCurrentBookPrintProcesses` and the `Ark.Tools.Rebus.Tests`
+using. The two requests are dispatched in-process and race on the database, so
+they need no transport barrier, and `Core.Tests` keeps no Rebus reference.
 
 - [ ] **Step 3: Write `ParticipantProcess`**
 
