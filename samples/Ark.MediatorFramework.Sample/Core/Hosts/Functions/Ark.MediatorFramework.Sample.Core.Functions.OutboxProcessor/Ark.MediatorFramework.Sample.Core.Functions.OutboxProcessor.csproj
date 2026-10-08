@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+      <!-- SimpleInjector-composed host without an IServiceCollection: Microsoft telemetry
+         is only a transitive reference and redaction cannot be registered here. -->
+    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
+    <PackageReference Include="Ark.Tools.Outbox" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
+  </ItemGroup>
+
+</Project>
