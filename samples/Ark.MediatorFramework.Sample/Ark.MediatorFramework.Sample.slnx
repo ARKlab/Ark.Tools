@@ -2,6 +2,7 @@
   <Folder Name="/Core/">
     <Project Path="Core/Ark.MediatorFramework.Sample.Core.API/Ark.MediatorFramework.Sample.Core.API.csproj" />
     <Project Path="Core/Ark.MediatorFramework.Sample.Core.Application/Ark.MediatorFramework.Sample.Core.Application.csproj" />
+    <Project Path="Core/Ark.MediatorFramework.Sample.Core.Tests/Ark.MediatorFramework.Sample.Core.Tests.csproj" />
     <Project Path="Core/Ark.MediatorFramework.Sample.Core.Database/Ark.MediatorFramework.Sample.Core.Database.sqlproj">
       <Build />
       <Deploy />

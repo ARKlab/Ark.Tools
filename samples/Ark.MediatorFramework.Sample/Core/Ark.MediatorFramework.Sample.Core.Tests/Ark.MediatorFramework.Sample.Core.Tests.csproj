@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SqlServer.DacFx" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="NodaTime.Testing" />
+    <PackageReference Include="Reqnroll.MsTest" />
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
+    <PackageReference Include="Ark.Tools.Reqnroll" />
+    <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
+    <PackageReference Include="Ark.Tools.OTel" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.API\Ark.MediatorFramework.Sample.Core.API.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Database\Ark.MediatorFramework.Sample.Core.Database.sqlproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ProjectReference>
+    <None Include="..\Ark.MediatorFramework.Sample.Core.Database\bin\$(Configuration)\Ark.MediatorFramework.Sample.Core.Database.dacpac"
+          Link="Ark.MediatorFramework.Sample.Core.Database.dacpac"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
