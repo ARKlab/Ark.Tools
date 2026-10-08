@@ -10,7 +10,7 @@ which also holds the generated HTTP functions.
 | Project | Hosts |
 | --- | --- |
 | `Ark.MediatorFramework.Sample.Core.Functions.Api` | The generated HTTP functions (`FunctionsInDependencies`) and the Api participant as a producer that enqueues through the outbox |
-| `Ark.MediatorFramework.Sample.Core.Functions.Processor` | The Service Bus trigger of the print worker (`ark-mediator-sample`): processes print and review requests and publishes `BookPrintCompleted` |
+| `Ark.MediatorFramework.Sample.Core.Functions.Processor` | The Service Bus trigger of the print worker (`ark-mediator-sample`): processes print, review and bulk book import requests and publishes `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Functions.Notifications` | The Service Bus trigger of the notification subscriber of `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Functions.Audit` | The Service Bus trigger of the audit subscriber of `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor` | A console app running the single `MessagingOutboxProcessor`, which dispatches committed envelopes. Functions never poll the outbox |

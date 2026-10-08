@@ -58,4 +58,26 @@ public sealed class RebusTopologyTests
 
         await WebRebusTestHosts.WaitUntilAsync(() => network.GetCount("error") > 0).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// A bulk import bigger than the DataBus threshold travels as a claim check and the worker creates every book.
+    /// </summary>
+    [TestMethod]
+    public async Task OversizedBulkImportTravelsThroughTheDataBus()
+    {
+        var network = new InMemNetwork();
+        var subscribers = new InMemorySubscriberStore();
+        var dataStore = new InMemDataStore();
+        var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
+        await using var api = await WebRebusTestHosts.ApiAsync(network, subscribers, dataStore, factory).ConfigureAwait(false);
+        await using var worker = await WebRebusTestHosts.WorkerAsync(network, subscribers, dataStore, factory).ConfigureAwait(false);
+        var author = "Bulk " + Guid.NewGuid().ToString("N");
+
+        await api.SendAsync(WebRebusTestHosts.NewOversizedBulkImport(author)).ConfigureAwait(false);
+
+        await WebRebusTestHosts.WaitUntilAsync(async () =>
+                await WebRebusTestHosts.CountBooksAsync(factory, author).ConfigureAwait(false) == WebRebusTestHosts.BulkImportSize)
+            .ConfigureAwait(false);
+        dataStore.AttachmentIds.Should().ContainSingle("the body travels as one claim check, not inline");
+    }
 }

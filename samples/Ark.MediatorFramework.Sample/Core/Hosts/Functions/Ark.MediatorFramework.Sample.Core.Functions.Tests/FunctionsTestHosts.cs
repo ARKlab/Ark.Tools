@@ -5,14 +5,12 @@ extern alias Processor;
 
 using Ark.MediatorFramework.Sample.Core.Functions.Hosting;
 using Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor;
+using Ark.Tools.MediatorFramework;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Solid;
 
-using Azure.Messaging.ServiceBus;
-
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
-using NodaTime;
 
 using System.Reflection;
 using System.Security.Claims;
@@ -21,9 +19,20 @@ using ProcessorFunctions = Processor::Ark.Tools.MediatorFramework.AzureFunctions
 
 namespace Ark.MediatorFramework.Sample.Core.Functions.Tests;
 
-/// <summary>Composes the Functions processes as their <c>Program.cs</c> do, over a real Service Bus client.</summary>
+/// <summary>Composes the Functions processes as their <c>Program.cs</c> do.</summary>
 internal static class FunctionsTestHosts
 {
+    /// <summary>The number of books in <see cref="NewOversizedBulkImport"/>.</summary>
+    public const int BulkImportSize = 1_000;
+
+    // Composition only: the namespace is not contacted; tests deliver messages to the trigger directly.
+    private static readonly IConfiguration _triggerConfiguration = new ConfigurationBuilder()
+        .AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["AzureServiceBus:ConnectionString"] = "sample.servicebus.windows.net",
+        })
+        .Build();
+
     /// <summary>The queue the Processor app's generated trigger binds to.</summary>
     /// <returns>The worker queue name.</returns>
     public static string WorkerQueueName()
@@ -32,11 +41,13 @@ internal static class FunctionsTestHosts
     }
 
     /// <summary>Starts the Api app's producer with an authenticated user holding every scope.</summary>
-    /// <param name="client">The Service Bus client.</param>
+    /// <param name="transport">Selects the transport.</param>
+    /// <param name="dataBus">Selects the claim-check DataBus.</param>
     /// <param name="store">The application store, whose outbox the producer commits to.</param>
     /// <returns>The started Api process.</returns>
     public static async Task<FunctionsTestProcess> StartApiProducerAsync(
-        ServiceBusClient client,
+        Action<MessagingTransportBuilder> transport,
+        Action<MessagingDataBusBuilder> dataBus,
         InMemorySampleDataContextFactory store)
     {
         var container = FunctionsHosting.CreateContainer(new ApplicationOptions { DataContextFactory = store });
@@ -44,28 +55,41 @@ internal static class FunctionsTestHosts
         services.AddLogging();
         // Registered before AddArkAzureFunctions, whose TryAdd would otherwise read the HTTP user.
         services.AddSingleton<IContextProvider<ClaimsPrincipal>>(new AllScopesUser());
-        // The in-memory DataBus is enough: the test runs every process in one.
-        FunctionsHosting.AddApiProducer(
-            services,
-            container,
-            transport => transport.UseServiceBus(client),
-            static dataBus => dataBus.UseInMemory(lifetime: Duration.FromHours(2)));
+        FunctionsHosting.AddApiProducer(services, container, transport, dataBus);
         return await FunctionsTestProcess.StartAsync(services, container).ConfigureAwait(false);
     }
 
+    /// <summary>Composes the Processor app's Service Bus trigger; the test delivers messages to it.</summary>
+    /// <param name="dataBus">The claim-check DataBus shared with the producer.</param>
+    /// <param name="store">The application store.</param>
+    /// <returns>The composed Processor process.</returns>
+    public static FunctionsTestProcess ComposeWorkerTrigger(
+        IMessagingDataBus dataBus,
+        InMemorySampleDataContextFactory store)
+    {
+        var container = FunctionsHosting.CreateContainer(new ApplicationOptions { DataContextFactory = store });
+        var services = new ServiceCollection();
+        services.AddLogging();
+        FunctionsHosting.AddMessagingTrigger(
+            services,
+            _triggerConfiguration,
+            ProcessorFunctions.Manifest,
+            container,
+            builder => builder.Use(dataBus));
+        return FunctionsTestProcess.Compose(services, container);
+    }
+
     /// <summary>Starts the outbox processor over the same store.</summary>
-    /// <param name="client">The Service Bus client.</param>
+    /// <param name="transport">The transport the outbox processor dispatches to.</param>
     /// <param name="store">The application store whose outbox is drained.</param>
     /// <returns>The started outbox processor process.</returns>
     public static async Task<FunctionsTestProcess> StartOutboxProcessorAsync(
-        ServiceBusClient client,
+        IMessagingTransport transport,
         InMemorySampleDataContextFactory store)
     {
         var services = new ServiceCollection();
         services.AddLogging();
-#pragma warning disable CA2000 // The test owns the Service Bus client the transport wraps.
-        OutboxProcessorComposition.AddOutboxProcessor(services, new ServiceBusMessagingTransport(client), store);
-#pragma warning restore CA2000
+        OutboxProcessorComposition.AddOutboxProcessor(services, transport, store);
         return await FunctionsTestProcess.StartAsync(services, container: null).ConfigureAwait(false);
     }
 
@@ -79,6 +103,34 @@ internal static class FunctionsTestHosts
             Author = "Herbert",
             Genre = Book.V1.Genre.Fiction,
         });
+    }
+
+    /// <summary>Creates a bulk import whose serialized body exceeds the Service Bus message limit.</summary>
+    /// <param name="author">The author shared by every imported book, used to find them.</param>
+    /// <returns>The bulk request.</returns>
+    public static Book_BulkCreateRequest.V1 NewOversizedBulkImport(string author)
+    {
+        // About 1,000 x 200 bytes of titles: well above the 256 KB Service Bus message limit.
+        return new Book_BulkCreateRequest.V1(Enumerable.Range(0, BulkImportSize)
+            .Select(index => new Book.V1.Create
+            {
+                Title = index.ToString("D4", CultureInfo.InvariantCulture) + new string('t', 196),
+                Author = author,
+                Genre = Book.V1.Genre.Fiction,
+            })
+            .ToArray());
+    }
+
+    /// <summary>Counts the stored books written by an author.</summary>
+    /// <param name="store">The application store.</param>
+    /// <param name="author">The author.</param>
+    /// <returns>The number of matching books.</returns>
+    public static async Task<long> CountBooksAsync(InMemorySampleDataContextFactory store, string author)
+    {
+        var context = await store.CreateAsync().ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
+        var page = await context.ReadBooksAsync(new Book_SearchQuery.V1 { Author = author, Limit = 1 }).ConfigureAwait(false);
+        return page.Count;
     }
 
     private sealed class AllScopesUser : IContextProvider<ClaimsPrincipal>

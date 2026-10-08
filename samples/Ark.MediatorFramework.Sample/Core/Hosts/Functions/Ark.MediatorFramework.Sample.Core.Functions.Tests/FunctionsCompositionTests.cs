@@ -34,12 +34,11 @@ namespace Ark.MediatorFramework.Sample.Core.Functions.Tests;
 [TestClass]
 public sealed class FunctionsCompositionTests
 {
-    // Composition only: neither value is contacted because no hosted service is started.
+    // Composition only: the namespace is not contacted because no hosted service is started.
     private static readonly IConfiguration _configuration = new ConfigurationBuilder()
         .AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["AzureServiceBus:ConnectionString"] = "sample.servicebus.windows.net",
-            ["ConnectionStrings:DataBus"] = "UseDevelopmentStorage=true",
         })
         .Build();
 
@@ -90,7 +89,7 @@ public sealed class FunctionsCompositionTests
         var services = new ServiceCollection();
         services.AddLogging();
 
-        FunctionsHosting.AddMessagingTrigger(services, _configuration, manifest, container);
+        FunctionsHosting.AddMessagingTrigger(services, _configuration, manifest, container, static dataBus => dataBus.Use(new InMemoryMessagingDataBus(SystemClock.Instance, Duration.FromHours(2))));
         await using var provider = services.BuildServiceProvider();
 
         provider.GetRequiredService<MessagingTriggeredHostMarker>().Should().NotBeNull();
@@ -112,7 +111,8 @@ public sealed class FunctionsCompositionTests
 
         var services = new ServiceCollection();
         services.AddLogging();
-        FunctionsHosting.AddMessagingTrigger(services, _configuration, ProcessorFunctions.Manifest, container);
+        FunctionsHosting.AddMessagingTrigger(
+            services, _configuration, ProcessorFunctions.Manifest, container, static dataBus => dataBus.Use(new InMemoryMessagingDataBus(SystemClock.Instance, Duration.FromHours(2))));
         await using var provider = services.BuildServiceProvider();
         _ = provider.GetServices<IHostedService>();
         var processor = provider.GetRequiredService<ICommandProcessor>();

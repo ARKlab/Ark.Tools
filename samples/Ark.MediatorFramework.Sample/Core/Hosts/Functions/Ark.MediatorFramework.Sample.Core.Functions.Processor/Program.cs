@@ -48,7 +48,8 @@ try
         builder.Services,
         builder.Configuration,
         ArkGeneratedMessagingFunctions.Manifest,
-        container);
+        container,
+        dataBus => dataBus.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration)));
     builder.Services.AddArkHealthChecks();
 
     await builder.Build().RunAsync().ConfigureAwait(false);

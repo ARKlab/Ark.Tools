@@ -86,11 +86,16 @@ public static class FunctionsHosting
     /// <param name="configuration">The app configuration.</param>
     /// <param name="manifest">The app's generated messaging manifest.</param>
     /// <param name="container">The application container.</param>
+    /// <param name="dataBus">
+    /// Selects the claim-check DataBus: Azure Blob Storage from <see cref="DataBusOptions"/> in production, shared
+    /// with the other apps; an in-memory instance shared by every process in tests.
+    /// </param>
     public static void AddMessagingTrigger(
         IServiceCollection services,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
-        Container container)
+        Container container,
+        Action<MessagingFunctionsDataBusBuilder> dataBus)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -105,7 +110,7 @@ public static class FunctionsHosting
             manifest,
             messaging => messaging
                 .UseTransport(static transport => transport.UseServiceBus())
-                .UseDataBus(dataBus => dataBus.UseAzureBlob(DataBusOptions(configuration)))
+                .UseDataBus(dataBus)
                 .UseOutbox(static outbox => outbox.UseEnqueue()));
         services.AddArkAzureFunctionsSimpleInjectorBridge(container);
     }
@@ -146,6 +151,8 @@ public static class FunctionsHosting
         ArgumentNullException.ThrowIfNull(services);
         services.Configure<JsonSerializerOptions>(static options =>
         {
+            // The Ark defaults (camelCase, EvolvableEnum and NodaTime converters) match the application contracts.
+            options.ConfigureArkDefaults();
             options.RespectNullableAnnotations = true;
             options.RespectRequiredConstructorParameters = true;
             options.TypeInfoResolver = ApplicationJsonSerializerContext.Default;

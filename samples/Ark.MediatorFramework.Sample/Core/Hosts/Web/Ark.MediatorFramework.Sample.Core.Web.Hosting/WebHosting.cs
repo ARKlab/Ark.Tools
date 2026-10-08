@@ -66,6 +66,8 @@ public static class WebHosting
         ArgumentNullException.ThrowIfNull(container);
         services.Configure<JsonSerializerOptions>(static options =>
         {
+            // The Ark defaults (camelCase, EvolvableEnum and NodaTime converters) match the application contracts.
+            options.ConfigureArkDefaults();
             options.RespectNullableAnnotations = true;
             options.RespectRequiredConstructorParameters = true;
             options.TypeInfoResolver = ApplicationJsonSerializerContext.Default;

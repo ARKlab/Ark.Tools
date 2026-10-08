@@ -60,6 +60,7 @@ PARTICIPANT Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagi
   identity: ark-mediator-sample
   processes:
     - books/book-review.create
+    - books/book.bulk-create
     - books_process_book_print_process
   publishes:
     - books/book-print.completed

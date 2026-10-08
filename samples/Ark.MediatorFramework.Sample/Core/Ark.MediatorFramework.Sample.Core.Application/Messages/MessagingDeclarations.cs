@@ -9,10 +9,18 @@ namespace Ark.MediatorFramework.Sample.Core.Application.Messages;
     DefaultSerializer = SerializationProtocol.Json)]
 public sealed partial class SampleMessagingApiParticipant;
 
-/// <summary>Declares the print worker: processes background work and publishes completed prints.</summary>
+/// <summary>
+/// Declares the print worker: processes background work, including bulk book imports, and publishes completed
+/// prints.
+/// </summary>
 [MessagingParticipant(
     Identity = "ark-mediator-sample",
-    Processes = new[] { typeof(ProcessBookPrintProcessRequest), typeof(CreateBookReviewRequest.V1) },
+    Processes = new[]
+    {
+        typeof(ProcessBookPrintProcessRequest),
+        typeof(CreateBookReviewRequest.V1),
+        typeof(Book_BulkCreateRequest.V1),
+    },
     Publishes = new[] { typeof(BookPrintCompleted) },
     Serializers = new[] { SerializationProtocol.Json },
     DefaultSerializer = SerializationProtocol.Json,

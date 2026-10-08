@@ -23,6 +23,9 @@ namespace Ark.MediatorFramework.Sample.Core.WebRebus.Tests;
 /// <summary>Composes each WebRebus process as its <c>Program.cs</c> does, over in-memory Rebus.</summary>
 internal static class WebRebusTestHosts
 {
+    /// <summary>The number of books in <see cref="NewOversizedBulkImport"/>.</summary>
+    public const int BulkImportSize = 1_000;
+
     /// <summary>Starts the api process: a one-way client with a settable user.</summary>
     public static async Task<RebusTestProcess> ApiAsync(
         InMemNetwork network,
@@ -96,12 +99,47 @@ internal static class WebRebusTestHosts
         });
     }
 
+    /// <summary>Creates a bulk import whose serialized body exceeds the DataBus threshold.</summary>
+    /// <param name="author">The author shared by every imported book, used to find them.</param>
+    /// <returns>The bulk request.</returns>
+    public static Book_BulkCreateRequest.V1 NewOversizedBulkImport(string author)
+    {
+        // About 1,000 x 200 bytes of titles: well above the 190 KB threshold.
+        return new Book_BulkCreateRequest.V1(Enumerable.Range(0, BulkImportSize)
+            .Select(index => new Book.V1.Create
+            {
+                Title = index.ToString("D4", CultureInfo.InvariantCulture) + new string('t', 196),
+                Author = author,
+                Genre = Book.V1.Genre.Fiction,
+            })
+            .ToArray());
+    }
+
+    /// <summary>Counts the stored books written by an author.</summary>
+    /// <param name="factory">The shared application store.</param>
+    /// <param name="author">The author.</param>
+    /// <returns>The number of matching books.</returns>
+    public static async Task<long> CountBooksAsync(InMemorySampleDataContextFactory factory, string author)
+    {
+        var context = await factory.CreateAsync().ConfigureAwait(false);
+        await using var __ctx = context.ConfigureAwait(false);
+        var page = await context.ReadBooksAsync(new Book_SearchQuery.V1 { Author = author, Limit = 1 }).ConfigureAwait(false);
+        return page.Count;
+    }
+
     /// <summary>Polls every 50 ms until the condition holds.</summary>
     /// <exception cref="TimeoutException">The condition did not hold within 5 seconds.</exception>
     public static async Task WaitUntilAsync(Func<bool> condition)
     {
+        await WaitUntilAsync(() => Task.FromResult(condition())).ConfigureAwait(false);
+    }
+
+    /// <summary>Polls every 50 ms until the asynchronous condition holds.</summary>
+    /// <exception cref="TimeoutException">The condition did not hold within 5 seconds.</exception>
+    public static async Task WaitUntilAsync(Func<Task<bool>> condition)
+    {
         var deadline = DateTime.UtcNow.AddSeconds(5);
-        while (!condition())
+        while (!await condition().ConfigureAwait(false))
         {
             if (DateTime.UtcNow > deadline)
                 throw new TimeoutException("The condition did not hold within 5 seconds.");

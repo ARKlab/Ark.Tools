@@ -9,7 +9,7 @@ process. The processes share only `Ark.MediatorFramework.Sample.Core.Web.Hosting
 | Project | Hosts |
 | --- | --- |
 | `Ark.MediatorFramework.Sample.Core.Web.WebInterface` | HTTP (generated Minimal API endpoints, OpenAPI, Scalar), gRPC, MCP, and the Api participant as a producer that enqueues through the outbox |
-| `Ark.MediatorFramework.Sample.Core.Web.Processor` | The print worker (`ark-mediator-sample`): processes print and review requests and publishes `BookPrintCompleted` |
+| `Ark.MediatorFramework.Sample.Core.Web.Processor` | The print worker (`ark-mediator-sample`): processes print, review and bulk book import requests and publishes `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor` | The notification subscriber of `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Web.AuditProcessor` | The audit subscriber of `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor` | The single `MessagingOutboxProcessor`, which dispatches committed envelopes |

@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.MediatorFramework;
+using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Solid;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -17,11 +19,11 @@ internal sealed class FunctionsTestProcess : IAsyncDisposable
     private readonly IReadOnlyList<IHostedService> _hosted;
     private readonly Container? _container;
 
-    private FunctionsTestProcess(ServiceProvider services, Container? container)
+    private FunctionsTestProcess(ServiceProvider services, Container? container, bool startHostedServices)
     {
         _services = services;
         _container = container;
-        _hosted = services.GetServices<IHostedService>().ToArray();
+        _hosted = startHostedServices ? services.GetServices<IHostedService>().ToArray() : [];
     }
 
     /// <summary>Builds the service provider and starts its hosted services.</summary>
@@ -30,9 +32,24 @@ internal sealed class FunctionsTestProcess : IAsyncDisposable
     /// <returns>The started process.</returns>
     public static async Task<FunctionsTestProcess> StartAsync(IServiceCollection services, Container? container)
     {
-        var process = new FunctionsTestProcess(services.BuildServiceProvider(), container);
+        var process = new FunctionsTestProcess(services.BuildServiceProvider(), container, startHostedServices: true);
         foreach (var hosted in process._hosted)
             await hosted.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        return process;
+    }
+
+    /// <summary>
+    /// Builds the service provider and resolves its hosted services without starting them: starting would provision
+    /// Service Bus resources. Resolving is what initializes the SimpleInjector bridge, as the Functions host does.
+    /// The test delivers messages with <see cref="DeliverAsync"/>.
+    /// </summary>
+    /// <param name="services">The composed service collection.</param>
+    /// <param name="container">The application container, disposed with the process.</param>
+    /// <returns>The composed process.</returns>
+    public static FunctionsTestProcess Compose(IServiceCollection services, Container container)
+    {
+        var process = new FunctionsTestProcess(services.BuildServiceProvider(), container, startHostedServices: false);
+        _ = process._services.GetServices<IHostedService>();
         return process;
     }
 
@@ -45,6 +62,18 @@ internal sealed class FunctionsTestProcess : IAsyncDisposable
         where TRequest : IRequest<TResponse>
     {
         return await _services.GetRequiredService<IRequestProcessor>().ExecuteAsync(request).ConfigureAwait(false);
+    }
+
+    /// <summary>Gets the process bus, as the generated HTTP functions and handlers use it.</summary>
+    public IBus Bus => _services.GetRequiredService<IBus>();
+
+    /// <summary>Dispatches one delivery, as the generated Service Bus trigger does for a received message.</summary>
+    /// <param name="delivery">The locked delivery.</param>
+    /// <returns>A task that completes after dispatch and settlement.</returns>
+    public async Task DeliverAsync(IMessagingLockedDelivery delivery)
+    {
+        await _services.GetRequiredService<MessagingDispatcher>().OnDeliveryAsync(delivery, CancellationToken.None)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
