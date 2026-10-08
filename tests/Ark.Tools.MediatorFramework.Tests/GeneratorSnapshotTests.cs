@@ -1129,6 +1129,67 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorRejectsRouteAndQueryTypesThatCannotBeConvertedFromAString()
+    {
+        // ArkTypeConverter converts a single string, so no array, collection or complex object binds; a query string
+        // collection receives every value instead.
+        const string source =
+            """
+            using System;
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/books/{codes}")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                [HttpRoute] public string[] Codes { get; init; } = [];
+                [HttpQuery] public List<int> Ids { get; init; } = [];
+                [HttpQuery] public int[] Years { get; init; } = [];
+                [HttpQuery] public Filter? Filter { get; init; }
+                [HttpQuery] public Guid? Owner { get; init; }
+            }
+            [HttpEndpoint("POST", "/books")]
+            public sealed record CreateBooks : IRequest<string>
+            {
+                [HttpQuery] public Dictionary<string, string> Labels { get; init; } = [];
+                public List<int> Pages { get; init; } = [];
+            }
+            [HttpEndpoint("GET", "/authors")]
+            public sealed record ListAuthors : IQuery<string>
+            {
+                [HttpQuery] public IEnumerable<string> Sort { get; init; } = [];
+                [HttpQuery] public string[] Names { get; init; } = [];
+                [HttpQuery] public List<string> Tags { get; init; } = [];
+                [HttpQuery] public int Skip { get; init; }
+            }
+            """;
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Codes", "Ids", "Years", "Filter", "Labels");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
+            .GetMessage(CultureInfo.InvariantCulture)
+            .Should().Be("HTTP endpoint 'ListBooks' binds property 'Ids' from the route or query string, but its type 'System.Collections.Generic.List<int>' cannot be converted from a string");
+        result.Generated.Should().NotContain("global::ListBooks");
+        result.Generated.Should().NotContain("global::CreateBooks");
+        result.Generated.Should().Contain(
+            "body = body with { Sort = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Sort)) };");
+        result.Generated.Should().Contain(
+            "body = body with { Names = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Names)) };");
+        result.Generated.Should().Contain(
+            "body = body with { Tags = new global::System.Collections.Generic.List<string>(global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Tags))) };");
+        result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>(_qs_Skip");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorReportsReferencedDroppedPropertyAtTheHost()
     {
         var contracts = _createMetadataReference(

@@ -42,6 +42,8 @@ internal enum HandlerKind
 /// <param name="IsETag">Whether the property carries the request ETag.</param>
 /// <param name="IsAttachment">Whether the property is a single attachment.</param>
 /// <param name="IsAttachmentCollection">Whether the property is an attachment collection.</param>
+/// <param name="IsStringCollection">Whether the property type is a string array or implements <c>IEnumerable&lt;string&gt;</c>.</param>
+/// <param name="IsNotConvertible">Whether no type converter converts a single string to the property type: an array, a collection or a complex object.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,
@@ -55,6 +57,8 @@ internal readonly record struct PropertySpec(
     bool IsETag,
     bool IsAttachment,
     bool IsAttachmentCollection,
+    bool IsStringCollection,
+    bool IsNotConvertible,
     LocationSpec? Location);
 
 /// <summary>A symbol-free description of an HTTP endpoint contract.</summary>
@@ -315,6 +319,8 @@ internal static class AzureFunctionsEndpointParser
                     isETag,
                     isAttachment,
                     isAttachmentCollection,
+                    HttpStringBinding.IsStringCollection(p.Type),
+                    HttpStringBinding.IsCollection(p.Type) || HttpStringBinding.IsComplexOrComplexCollection(p.Type),
                     LocationSpec._from(p));
             })
             .ToImmutableArray();

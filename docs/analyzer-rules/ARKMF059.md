@@ -86,8 +86,16 @@ call does not hide it at the others.
 A generated `GET`, `HEAD` or `DELETE` function binds only route properties and
 `[HttpQuery]` properties, for requests, queries and commands alike. The rule
 reports every other settable property, other than an `[ETag]` property, which
-would otherwise be silently ignored. Route and `[HttpQuery]` values are
-converted with `ArkTypeConverter` at runtime.
+would otherwise be silently ignored.
+
+For every verb, a route or `[HttpQuery]` value is converted from a single
+string with `ArkTypeConverter` at runtime, and an `[HttpQuery]` string
+collection, such as `string[]`, `List<string>` or `IEnumerable<string>`,
+receives every value of the query parameter. The rule reports a route or
+`[HttpQuery]` property whose type is any other array or collection, or a
+complex object: no type converter converts a single string to it. Unlike the
+Minimal API generator, the Azure Functions generator does not bind arrays such
+as `int[]`.
 
 The diagnostic is reported at the property. When the contract is in a
 referenced assembly, it is reported at the `[assembly: HttpHost]` attribute

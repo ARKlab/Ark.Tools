@@ -78,8 +78,16 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private static readonly DiagnosticDescriptor _propertyNotBindableWithoutBody = new(
         "ARKMF059",
-        "Property cannot be bound without a request body",
+        "Property cannot be bound from the request",
         "HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
+    private static readonly DiagnosticDescriptor _propertyNotConvertibleFromString = new(
+        "ARKMF059",
+        "Property cannot be bound from the request",
+        "HTTP endpoint '{0}' binds property '{1}' from the route or query string, but its type '{2}' cannot be converted from a string",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
         true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
@@ -279,23 +287,35 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     }
 
     // A GET, HEAD or DELETE function binds only route and [HttpQuery] properties: report any other client
-    // property instead of silently dropping it.
+    // property instead of silently dropping it. For every verb, a route or query value is converted from a single
+    // string with ArkTypeConverter, which converts no array, collection or complex object; only a query string
+    // collection, which receives every value, is accepted among them.
     private static bool _reportUnboundProperties(SourceProductionContext context, in EndpointSpec endpoint, Location hostLocation)
     {
-        if (endpoint.Verb is not ("GET" or "HEAD" or "DELETE"))
-            return false;
-
+        var noBody = endpoint.Verb is "GET" or "HEAD" or "DELETE";
         var reported = false;
-        foreach (var property in endpoint.Properties.Where(static property =>
-            !property.IsRoute && !property.IsQuery && !property.IsServerSet && !property.IsETag))
+        foreach (var property in endpoint.Properties.Where(static property => !property.IsServerSet))
         {
+            var bound = property.IsRoute || property.IsQuery;
+            if (bound
+                ? !property.IsNotConvertible || (!property.IsRoute && property.IsStringCollection)
+                : !noBody || property.IsETag)
+                continue;
+
             var location = property.Location ?? endpoint.Location;
-            context.ReportDiagnostic(Diagnostic.Create(
-                _propertyNotBindableWithoutBody,
-                location is null ? hostLocation : LocationSpec._toLocation(location),
-                endpoint.TypeName,
-                endpoint.Verb,
-                property.Name));
+            context.ReportDiagnostic(bound
+                ? Diagnostic.Create(
+                    _propertyNotConvertibleFromString,
+                    location is null ? hostLocation : LocationSpec._toLocation(location),
+                    endpoint.TypeName,
+                    property.Name,
+                    property.TypeFullName.Replace("global::", string.Empty))
+                : Diagnostic.Create(
+                    _propertyNotBindableWithoutBody,
+                    location is null ? hostLocation : LocationSpec._toLocation(location),
+                    endpoint.TypeName,
+                    endpoint.Verb,
+                    property.Name));
             reported = true;
         }
 
@@ -441,6 +461,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 _emitPropertyAssignment(source, endpoint, "            ", prop.Name,
                     "((string?)_qs_" + prop.Name + ")!");
             }
+            else if (prop.IsStringCollection)
+            {
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, _stringCollection(prop, "_qs_" + prop.Name));
+            }
             else
             {
                 var varName = "_query_" + prop.Name;
@@ -511,6 +535,26 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("            return global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.FromException(_exception);");
         source.AppendLine("        }");
         source.AppendLine("    }");
+    }
+
+    // Mirrors the string collection shapes the Minimal API generator binds from every value of a query parameter.
+    private static string _stringCollection(PropertySpec property, string values)
+    {
+        var array = "global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(" + values + "))";
+        return property.TypeFullName switch
+        {
+            "global::Microsoft.Extensions.Primitives.StringValues" => values,
+            "global::System.Collections.Generic.List<string>"
+                or "global::System.Collections.Generic.IList<string>"
+                or "global::System.Collections.Generic.ICollection<string>"
+                => "new global::System.Collections.Generic.List<string>(" + array + ")",
+            "global::System.Collections.Generic.HashSet<string>"
+                or "global::System.Collections.Generic.ISet<string>"
+                => "new global::System.Collections.Generic.HashSet<string>(" + array + ")",
+            "global::System.Collections.Immutable.ImmutableArray<string>"
+                => "global::System.Collections.Immutable.ImmutableArray.Create(" + array + ")",
+            _ => array,
+        };
     }
 
     private static void _emitPropertyAssignment(StringBuilder source, EndpointSpec endpoint, string indent, string propertyName, string value)
