@@ -9,26 +9,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- CompositionRootTests validates the sample host startup with TestServer. -->
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="Ark.Tools.Rebus" />
-    <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
     <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\appsettings.json"
-          CopyToOutputDirectory="PreserveNewest"
-          Link="appsettings.json" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.AzureFunctions\Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
     <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.AuditFunctions\Ark.MediatorFramework.Sample.AuditFunctions.csproj">
       <Aliases>AuditFunctions</Aliases>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.OutboxProcessor\Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
     <ProjectReference Include="..\..\Core\Ark.MediatorFramework.Sample.Core.API\Ark.MediatorFramework.Sample.Core.API.csproj" />
-    <ProjectReference Include="..\..\src\Ark.MediatorFramework.Sample.WebInterface\Ark.MediatorFramework.Sample.WebInterface.csproj" />
   </ItemGroup>
 
 </Project>

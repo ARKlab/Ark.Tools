@@ -30,14 +30,14 @@
             // Use IntelliSense to find out which attributes exist for C# debugging
             // Use hover for the description of the existing attributes
             // For further information visit https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md.
-            "name": "Ark.MediatorFramework.Sample.WebInterface",
+            "name": "Ark.MediatorFramework.Sample.Core.Web.WebInterface",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/bin/Debug/net10.0/Ark.MediatorFramework.Sample.WebInterface.dll",
+            "program": "${workspaceFolder}/samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/bin/Debug/net10.0/Ark.MediatorFramework.Sample.Core.Web.WebInterface.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface",
+            "cwd": "${workspaceFolder}/samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface",
             "stopAtEntry": false,
             // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
             "serverReadyAction": {

@@ -3,9 +3,6 @@
 
 global using Ark.Tools.MediatorFramework;
 
-global using Ark.MediatorFramework.Sample.Core.API;
-global using Ark.MediatorFramework.Sample.Core.API.Authorization;
-global using Ark.MediatorFramework.Sample.Core.Application.DAL;
 global using Ark.MediatorFramework.Sample.Core.Application.Host;
 global using Ark.MediatorFramework.Sample.Core.Application.Messages;
 global using Ark.MediatorFramework.Sample.Core.Application.Services;

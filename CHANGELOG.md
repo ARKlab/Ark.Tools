@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.Sdk` copies `appsettings*.json`, `reqnroll*.json` and `testconfig.json` to the output with `CopyToOutputDirectory=IfDifferent` instead of `Always`. An edited output copy is still restored, but unchanged files are no longer copied on every build, so no-op builds and the Visual Studio up-to-date check can skip the project. Requires MSBuild 17.13 or later.
 - `EvolvableEnum` conversions (`FromValue`, the implicit and explicit operators, and `Value`) no longer allocate, and writing names to JSON and Dapper parameters allocates less.
 - The MediatorFramework source generators (Minimal API, gRPC, Rebus, MCP, messaging network and Azure Functions) reuse their previous results when code in other files changes, so editing projects that use them is faster in the IDE. The generated code is unchanged.
+- **Breaking:** exposing a contract through gRPC whose request, response or stream item is not a protobuf contract (for example `IAsyncEnumerable<int>`) is now a build error (`ARKMF058`). Such a method used to be generated and then skipped at startup with only a warning. A closed generic contract such as `Page<Book>` is also an error, because it cannot be exported to `.proto`; use a non-generic contract type.
 - **Breaking:** the `MessagingDispatch` delegate and the `IMessagingPipelineProcessor.ProcessIncomingAsync` terminal also receive the scoped `IRequestProcessor`, so messaging hosts must register `IRequestProcessor` (`AddArkSolidProcessors` does).
 
 ### Fixed
@@ -30,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The API-surface snapshot records the fields of contracts marked only with `[Message]` or `[Event]`, so renaming or removing a field of such a message fails the API-surface gate again. To accept the new entries, build with `-p:EmitCompilerGeneratedFiles=true`, review the snapshot in the generated `ArkApiSurface.g.cs` under `obj/`, and copy it over `ArkApiSurface.txt`. `ArkApiSurface.current.txt` is not refreshed while ARKAPI002 fails the build.
 - `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.
 - Disposing a service provider after the messaging outbox processor has started no longer throws `ObjectDisposedException`.
+- Exported gRPC `.proto` files import only the files they use, so clients that treat warnings as errors no longer fail on unused imports.
 - Messaging participants that process or subscribe to several contracts now compile.
 - Generated messaging stream dispatch compiles in projects without implicit usings.
 - Undispatchable messaging contracts are reported at build time: an event (declared, published, or subscribed) that is not an `ICommand<TSelf>`, including a request (`ARKMSG018`), and a processed contract that is neither a command nor a request (`ARKMSG027`).

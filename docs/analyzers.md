@@ -66,6 +66,7 @@ Every Ark.Tools diagnostic has a dedicated page with its severity, rule-specific
 - [ARKMF055](analyzer-rules/ARKMF055.md)
 - [ARKMF056](analyzer-rules/ARKMF056.md)
 - [ARKMF057](analyzer-rules/ARKMF057.md)
+- [ARKMF058](analyzer-rules/ARKMF058.md)
 - [ARKMSG001](analyzer-rules/ARKMSG001.md)
 - [ARKMSG002](analyzer-rules/ARKMSG002.md)
 - [ARKMSG003](analyzer-rules/ARKMSG003.md)
@@ -149,6 +150,7 @@ attribute location:
 | ARKMF030 | Error | Azure Functions endpoint uses unsupported MessagePack |
 | ARKMF031 | Error | Azure Functions route is duplicated |
 | ARKMF032 | Error | Azure Functions name is duplicated |
+| ARKMF058 | Error | gRPC contract has a request, response or stream item that is not a protobuf contract |
 | ARKAPI001 | Error | API surface baseline is missing |
 | ARKAPI002 | Error | API surface contract changed |
 | ARKAPI003 | Error | Multiple API surface baselines were found |

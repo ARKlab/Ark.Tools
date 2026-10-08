@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.AzureFunctions;
-using Ark.MediatorFramework.Sample.WebInterface;
 
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
@@ -93,8 +92,8 @@ public sealed class AzureFunctionsRebusTests
         await using var sender = new Container();
         ApplicationComposition.Register(sender, useSqlStore: false);
         sender.RegisterInstance<IContextProvider<ClaimsPrincipal>>(new EmptyContextProvider());
-        var rebusRequirements = SampleRebusHost.GetRequirements();
-        SampleRebusHost.Register(
+        var rebusRequirements = AzureFunctionsRebusHost.GetRequirements();
+        AzureFunctionsRebusHost.Register(
             (serviceType, implementationType) => sender.Collection.Append(serviceType, implementationType));
         sender.RegisterSingleton<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>(() =>
             new Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus(
@@ -108,7 +107,7 @@ public sealed class AzureFunctionsRebusTests
         ApplicationComposition.RegisterOutboundRebus(
             sender,
             transport => transport.UseDrainableInMemoryTransportAsOneWayClient(network),
-            SampleRebusHost.ConfigureRouting);
+            AzureFunctionsRebusHost.ConfigureRouting);
 
         var received = new TaskCompletionSource<ProcessBookPrintProcessRequest>(
             TaskCreationOptions.RunContinuationsAsynchronously);
