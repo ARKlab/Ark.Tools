@@ -12,7 +12,6 @@ namespace Ark.MediatorFramework.Sample.Core.Application.Messages;
     {
         "ark_mediator_framework_sample_application_messages_process_book_print_process_request",
     })]
-[RebusMessage(OwnerQueue = "ark-mediator-sample")]
 public sealed record ProcessBookPrintProcessRequest :
     ICommand<ProcessBookPrintProcessRequest>
 {

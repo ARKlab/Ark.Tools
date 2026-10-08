@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 namespace Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 
 /// <summary>
-/// Source-generated JSON metadata for application-owned Rebus messages and their
+/// Source-generated JSON metadata for application-owned messages and their
 /// public API payloads.
 /// </summary>
 [JsonSourceGenerationOptions(
@@ -26,8 +26,6 @@ namespace Ark.MediatorFramework.Sample.Core.Application.JsonContext;
     })]
 [JsonSerializable(typeof(ProcessBookPrintProcessRequest))]
 [JsonSerializable(typeof(BookPrintCompleted))]
-[JsonSerializable(typeof(FailingRebusRequest))]
-[JsonSerializable(typeof(DeadLetterAck))]
 [JsonSerializable(typeof(BookPrintProcessResponse))]
 [JsonSerializable(typeof(CancelBookPrintProcessRequest.V1), TypeInfoPropertyName = "CancelBookPrintProcessRequestV1")]
 [JsonSerializable(typeof(CreateBookReviewRequest.V1), TypeInfoPropertyName = "CreateBookReviewRequestV1")]

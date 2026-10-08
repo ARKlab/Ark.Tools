@@ -881,7 +881,6 @@
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Solid.Authorization": "[1.0.0, )",
@@ -897,11 +896,9 @@
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Outbox": "[1.0.0, )",
-          "Ark.Tools.Outbox.Rebus": "[1.0.0, )",
           "Ark.Tools.Outbox.SqlServer": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Solid.Authorization": "[1.0.0, )",
@@ -911,6 +908,17 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "MessagePack": "[3.1.11, )",
           "Polly": "[8.8.0, )"
+        }
+      },
+      "ark.mediatorframework.sample.core.webrebus.hosting": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.MediatorFramework.Sample.Core.Application": "[6.6.6, )",
+          "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
+          "Ark.Tools.Outbox.Rebus": "[1.0.0, )",
+          "Ark.Tools.Rebus": "[1.0.0, )",
+          "Ark.Tools.Solid.Authorization": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )"
         }
       },
       "ark.tools.aspnetcore.problemdetails": {

@@ -18,8 +18,6 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector" />
     <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
-    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
-    <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.Compliance" />
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />

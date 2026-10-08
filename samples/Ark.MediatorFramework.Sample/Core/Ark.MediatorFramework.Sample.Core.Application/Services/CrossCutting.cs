@@ -19,7 +19,7 @@ public sealed class AuditCounter
 
 /// <summary>
 /// SimpleInjector decorator applied to every <see cref="IRequestHandler{TRequest, TResponse}"/>.
-/// Because both the Minimal API endpoint and the Rebus wrapper resolve the decorated handler,
+/// Because every transport endpoint and message handler resolves the decorated handler,
 /// this cross-cutting concern applies transport-agnostically.
 /// </summary>
 public sealed class AuditRequestDecorator<TRequest, TResponse> : IRequestHandler<TRequest, TResponse>

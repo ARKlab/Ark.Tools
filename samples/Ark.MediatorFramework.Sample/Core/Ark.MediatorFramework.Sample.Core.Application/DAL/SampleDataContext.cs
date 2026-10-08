@@ -110,7 +110,7 @@ public string ConnectionString { get; }
     public System.Data.IsolationLevel? IsolationLevel => System.Data.IsolationLevel.ReadCommitted;
 }
 
-/// <summary>Transactional SQL context for Books and Rebus outbox messages.</summary>
+/// <summary>Transactional SQL context for Books and outbox messages.</summary>
 public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<SampleDataContext>, ISampleDataContext
 {
     /// <inheritdoc />

@@ -6,8 +6,6 @@ using Ark.MediatorFramework.Sample.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
 using Ark.Tools.MediatorFramework.Messaging;
-using Ark.Tools.Rebus;
-using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
 using Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 using Ark.Tools.Solid.SimpleInjector;
@@ -15,24 +13,16 @@ using Ark.Tools.Solid.SimpleInjector;
 using AwesomeAssertions;
 
 using Microsoft.Extensions.Configuration;
-using Rebus.Activation;
-using Rebus.Config;
-using Rebus.Handlers;
-using Rebus.Serialization.Json;
-using Rebus.Transport.InMem;
 using NodaTime;
-using System.Text.Json;
 using System.Buffers;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SimpleInjector;
 
-using System.Security.Claims;
-
 namespace Ark.MediatorFramework.Sample.Tests;
 
-/// <summary>Verifies outbound-only Rebus composition without starting a receiver in the sender.</summary>
+/// <summary>Verifies the native Functions composition registers no Rebus bus.</summary>
 [TestClass]
 public sealed class AzureFunctionsRebusTests
 {
@@ -48,94 +38,6 @@ public sealed class AzureFunctionsRebusTests
         Assert.IsNotNull(
             container.GetRegistration<ICommandHandler<MessagingFailed<ProcessBookPrintProcessRequest>>>(
                 throwOnFailure: false));
-    }
-
-    /// <summary>Rejects a Function host without its required outbound bus configuration.</summary>
-    [TestMethod]
-    public void MissingOutboundBusConfigurationFailsClearly()
-    {
-        var exception = Assert.Throws<InvalidOperationException>(
-            static () => AzureFunctionsRebusComposition.BuildContainer(null));
-
-        StringAssert.Contains(
-            exception.Message,
-            "Azure Service Bus configuration is required",
-            StringComparison.Ordinal);
-    }
-
-    /// <summary>
-    /// Adds the optional outbound bus without removing the native application
-    /// handlers or registering a Rebus receiver.
-    /// </summary>
-    [TestMethod]
-    public async Task OptionalOutboundCompositionPreservesNativeComposition()
-    {
-        await using var container = AzureFunctionsNativeComposition.BuildContainer();
-
-        AzureFunctionsRebusComposition.ConfigureOutbound(
-            container,
-            "sb://sample.servicebus.windows.net/");
-
-        Assert.IsNotNull(container.GetRegistration<Rebus.Bus.IBus>(throwOnFailure: false));
-        Assert.IsNotNull(container.GetRegistration<ICommandHandler<ProcessBookPrintProcessRequest>>(
-            throwOnFailure: false));
-        Assert.IsNull(
-            container.GetRegistration<IHandleMessages<ProcessBookPrintProcessRequest>>(
-                throwOnFailure: false));
-    }
-
-    /// <summary>Routes and delivers a typed message to an independently hosted receiver.</summary>
-    [TestMethod]
-    public async Task OutboundCompositionRoutesToOwnerQueue()
-    {
-        var network = new InMemNetwork();
-        await using var sender = new Container();
-        ApplicationComposition.Register(sender, useSqlStore: false);
-        sender.RegisterInstance<IContextProvider<ClaimsPrincipal>>(new EmptyContextProvider());
-        var rebusRequirements = AzureFunctionsRebusHost.GetRequirements();
-        AzureFunctionsRebusHost.Register(
-            (serviceType, implementationType) => sender.Collection.Append(serviceType, implementationType));
-        sender.RegisterSingleton<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>(() =>
-            new Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus(
-                sender.GetInstance<global::Rebus.Bus.IBus>(),
-                rebusRequirements.Identity,
-                rebusRequirements.PublishedEventTypes));
-        sender.RegisterSingleton<Ark.Tools.MediatorFramework.IBus>(
-            () => sender.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
-        sender.RegisterSingleton<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(
-            () => sender.GetInstance<Ark.Tools.MediatorFramework.Rebus.RebusMessagingBus>());
-        ApplicationComposition.RegisterOutboundRebus(
-            sender,
-            transport => transport.UseDrainableInMemoryTransportAsOneWayClient(network),
-            AzureFunctionsRebusHost.ConfigureRouting);
-
-        var received = new TaskCompletionSource<ProcessBookPrintProcessRequest>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        using var activator = new BuiltinHandlerActivator();
-        activator.Handle<ProcessBookPrintProcessRequest>(message =>
-        {
-            received.SetResult(message);
-            return Task.CompletedTask;
-        });
-        using var receiver = Configure.With(activator)
-            .Transport(transport => transport.UseInMemoryTransport(network, "ark-mediator-sample"))
-            .Serialization(static serialization => serialization.UseSystemTextJson(
-                new JsonSerializerOptions
-                {
-                    RespectNullableAnnotations = true,
-                    RespectRequiredConstructorParameters = true
-                }.ConfigureArkDefaults()))
-            .Start();
-
-        sender.Verify();
-        sender.StartBus();
-        await sender.GetInstance<Rebus.Bus.IBus>().Send(new ProcessBookPrintProcessRequest
-        {
-            Id = Guid.NewGuid(),
-        }).ConfigureAwait(false);
-
-        var message = await received.Task.WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-        Assert.AreNotEqual(Guid.Empty, message.Id);
     }
 
     /// <summary>Consumes the generated desired-resource manifest through startup reconciliation.</summary>
@@ -208,11 +110,6 @@ public sealed class AzureFunctionsRebusTests
         recorder.Observations[0].OuterScopeId.Should().Be(recorder.Observations[0].InnerScopeId);
         recorder.Observations[1].OuterScopeId.Should().Be(recorder.Observations[1].InnerScopeId);
         recorder.Observations[0].OuterScopeId.Should().NotBe(recorder.Observations[1].OuterScopeId);
-    }
-
-    private sealed class EmptyContextProvider : IContextProvider<ClaimsPrincipal>
-    {
-        public ClaimsPrincipal Current => new(new ClaimsIdentity());
     }
 
     private sealed class BridgeScopeMarker

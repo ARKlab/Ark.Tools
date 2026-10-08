@@ -1,13 +1,8 @@
 ﻿/*
 CONTRACT BookPrintCompleted -> BookPrintCompleted [group=Ark]
 CONTRACT BookPrintCompleted.BookId : Guid
-CONTRACT DeadLetterAck
-CONTRACT FailingRebusRequest -> DeadLetterAck [group=Ark]
-CONTRACT FailingRebusRequest.Reason : string default="boom"
 CONTRACT ProcessBookPrintProcessRequest -> ProcessBookPrintProcessRequest [group=Ark]
 CONTRACT ProcessBookPrintProcessRequest.Id : Guid
-REBUS FailingRebusRequest -> queue:ark-mediator-sample
-REBUS ProcessBookPrintProcessRequest -> queue:ark-mediator-sample
 EVENT Ark.MediatorFramework.Sample.Core.Application.Messages.BookPrintCompleted
   name: books/book-print.completed
   former: -

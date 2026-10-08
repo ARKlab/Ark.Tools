@@ -19,10 +19,18 @@
     <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/Ark.MediatorFramework.Sample.Core.Web.Tests.csproj" />
     <File Path="Core/Hosts/Web/README.md" />
   </Folder>
+  <Folder Name="/Core/Hosts/WebRebus/">
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Ark.MediatorFramework.Sample.Core.WebRebus.Processor.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Tests/Ark.MediatorFramework.Sample.Core.WebRebus.Tests.csproj" />
+    <File Path="Core/Hosts/WebRebus/README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Ark.MediatorFramework.Sample.AuditFunctions/Ark.MediatorFramework.Sample.AuditFunctions.csproj" />
     <Project Path="src/Ark.MediatorFramework.Sample.Functions/Ark.MediatorFramework.Sample.Functions.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
     <Project Path="src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
   </Folder>
   <Folder Name="/test/">

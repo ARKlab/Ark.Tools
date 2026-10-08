@@ -47,20 +47,6 @@ public static class Program
                 useSqlStore: !string.IsNullOrWhiteSpace(sqlConnectionString),
                 connectionString: sqlConnectionString);
 #pragma warning restore CA2000
-            if (bool.TryParse(
-                    builder.Configuration["AzureServiceBus:EnableOutboundRebus"],
-                    out var enableOutboundRebus)
-                && enableOutboundRebus)
-            {
-                var outboundServiceBusConfiguration =
-                    builder.Configuration["AzureServiceBus:ConnectionString"];
-                if (string.IsNullOrWhiteSpace(outboundServiceBusConfiguration))
-                    outboundServiceBusConfiguration =
-                        builder.Configuration["AzureServiceBus:fullyQualifiedNamespace"];
-                AzureFunctionsRebusComposition.ConfigureOutbound(
-                    applicationContainer,
-                    outboundServiceBusConfiguration);
-            }
             builder.Services.AddArkAzureFunctions();
             builder.Services.AddArkSolidProcessors(applicationContainer);
             builder.Services.ConfigureArkMessagingFunctions(
