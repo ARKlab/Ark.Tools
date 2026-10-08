@@ -40,12 +40,15 @@ try
         ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
     var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")
         ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
+    var dataBus = builder.Configuration.GetConnectionString("DataBus")
+        ?? throw new InvalidOperationException("ConnectionStrings:DataBus is required.");
     await using var container = RebusHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
     container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
     ApplicationComposition.RegisterAuditSubscriber(container, new LoggingBookPrintAuditSink());
     RebusHosting.Configure<AuditRebusHost>(
         container,
         t => t.UseAzureServiceBus(serviceBus, SampleMessagingAuditParticipant.Identity),
+        d => d.StoreInBlobStorage(dataBus, RebusHosting.DataBusContainerName),
         startOutboxProcessor: false);
     using var host = builder.Build();
     container.Verify();

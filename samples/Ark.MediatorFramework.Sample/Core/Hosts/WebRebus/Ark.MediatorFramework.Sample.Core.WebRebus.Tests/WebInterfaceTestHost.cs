@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.IdentityModel.Tokens;
 
+using Rebus.DataBus.InMem;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -46,6 +47,7 @@ internal sealed class WebInterfaceTestHost : IAsyncDisposable
         RebusHosting.Configure<ApiRebusHost>(
             container,
             t => t.UseDrainableInMemoryTransportAsOneWayClient(network),
+            static d => d.StoreInMemory(new InMemDataStore()),
             startOutboxProcessor: false);
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {

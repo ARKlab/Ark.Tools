@@ -27,8 +27,12 @@ covered by the tests.
 
 ## DataBus
 
-WebRebus configures no claim-check DataBus: no bus contract of this variant
-carries an attachment, so nothing needs one.
+Every process configures the Rebus claim-check DataBus in `RebusHosting`. A
+message whose body exceeds `RebusHosting.BigMessageThresholdBytes` (190 KB: the
+256 KB Service Bus limit minus 64 KB of headers and a 2 KB margin) is stored in
+Azure Blob Storage, in the `rebus-databus` container, and travels as a claim
+check. The receiver restores the body before its handler runs. All processes
+must share the same storage account.
 
 ## Outbox
 
@@ -47,6 +51,7 @@ and Service Bus emulator are in each project's `appsettings.Development.json`.
 | --- | --- | --- |
 | `ConnectionStrings:Sample` | all | SQL Server database of the sample |
 | `ConnectionStrings:ServiceBus` | all | Service Bus connection string |
+| `ConnectionStrings:DataBus` | all | Azure Blob Storage for the claim-check DataBus. `UseDevelopmentStorage=true` for Azurite |
 | `EntraId:*` | WebInterface | Bearer authentication and the OpenAPI OAuth flow |
 | `KeyVault:Uri` | all | Optional Key Vault that supplies the settings above |
 

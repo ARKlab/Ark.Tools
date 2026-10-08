@@ -11,6 +11,8 @@ using Ark.Tools.Rebus;
 using Ark.Tools.Solid.Authorization;
 
 using Rebus.Config;
+using Rebus.DataBus;
+using Rebus.DataBus.ClaimCheck;
 using Rebus.Handlers;
 using Rebus.Routing;
 using Rebus.Serialization.Json;
@@ -26,6 +28,15 @@ namespace Ark.MediatorFramework.Sample.Core.WebRebus.Hosting;
 /// <summary>Rebus composition shared by every process of the WebRebus variant.</summary>
 public static class RebusHosting
 {
+    /// <summary>The Azure Blob Storage container of the Rebus claim-check DataBus.</summary>
+    public const string DataBusContainerName = "rebus-databus";
+
+    /// <summary>
+    /// The body size above which Rebus sends a message as a DataBus claim check: 256 KB (the Service Bus
+    /// message limit) minus 64 KB of headers and a 2 KB margin.
+    /// </summary>
+    public const int BigMessageThresholdBytes = (256 - 64 - 2) * 1024;
+
     /// <summary>Creates the application container for one process.</summary>
     /// <param name="options">The application options.</param>
     /// <returns>The populated, unverified container.</returns>
@@ -43,12 +54,17 @@ public static class RebusHosting
     /// <typeparam name="THost">The generated Rebus host bound to the process participant.</typeparam>
     /// <param name="container">The application container.</param>
     /// <param name="transport">Selects the Rebus transport.</param>
+    /// <param name="dataBusStorage">
+    /// Selects the claim-check DataBus storage, shared by every process of the variant: Azure Blob Storage in
+    /// production (<see cref="DataBusContainerName"/>), in-memory in tests.
+    /// </param>
     /// <param name="startOutboxProcessor">Whether this process drains the Rebus outbox.</param>
     /// <param name="configureOptions">Optional extra Rebus options, used by tests.</param>
     /// <param name="configureTest">Optional extra Rebus configuration (in-memory subscriptions, timeouts), used by tests.</param>
     public static void Configure<THost>(
         Container container,
         Action<StandardConfigurer<ITransport>> transport,
+        Action<StandardConfigurer<IDataBusStorage>> dataBusStorage,
         bool startOutboxProcessor,
         Action<OptionsConfigurer>? configureOptions = null,
         Action<RebusConfigurer>? configureTest = null)
@@ -56,6 +72,7 @@ public static class RebusHosting
     {
         ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(transport);
+        ArgumentNullException.ThrowIfNull(dataBusStorage);
         var requirements = THost.GetRequirements();
         THost.Register((serviceType, implementationType) => container.Collection.Append(serviceType, implementationType));
         container.RegisterDecorator(typeof(IHandleMessages<>), typeof(RebusScopeDecorator<>));
@@ -71,6 +88,11 @@ public static class RebusHosting
             {
                 transport(t);
                 _configureOutbox(t, container, startOutboxProcessor);
+            });
+            cfg.DataBus(d =>
+            {
+                dataBusStorage(d);
+                d.SendBigMessagesAsAttachments(BigMessageThresholdBytes);
             });
             _configureCommon(cfg, container, THost.ConfigureRouting, options =>
             {

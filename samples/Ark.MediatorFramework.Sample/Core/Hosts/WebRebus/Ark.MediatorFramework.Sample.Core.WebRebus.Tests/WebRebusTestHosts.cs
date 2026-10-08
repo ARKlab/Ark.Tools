@@ -11,6 +11,7 @@ using Ark.Tools.Rebus;
 using Ark.Tools.Rebus.Tests;
 using Ark.Tools.Solid;
 
+using Rebus.DataBus.InMem;
 using Rebus.Transport.InMem;
 
 using SimpleInjector;
@@ -26,6 +27,7 @@ internal static class WebRebusTestHosts
     public static async Task<RebusTestProcess> ApiAsync(
         InMemNetwork network,
         InMemorySubscriberStore subscribers,
+        InMemDataStore dataStore,
         InMemorySampleDataContextFactory factory)
     {
         var container = RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory });
@@ -34,6 +36,7 @@ internal static class WebRebusTestHosts
         RebusHosting.Configure<ApiRebusHost>(
             container,
             t => t.UseDrainableInMemoryTransportAsOneWayClient(network),
+            d => d.StoreInMemory(dataStore),
             startOutboxProcessor: false,
             configureTest: cfg => cfg.Subscriptions(s => s.StoreInMemory(subscribers)));
         return await _startAsync<ApiRebusHost>(container, principal).ConfigureAwait(false);
@@ -43,11 +46,12 @@ internal static class WebRebusTestHosts
     public static async Task<RebusTestProcess> WorkerAsync(
         InMemNetwork network,
         InMemorySubscriberStore subscribers,
+        InMemDataStore dataStore,
         InMemorySampleDataContextFactory factory)
     {
         var container = RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory });
         return await _receiverAsync<WorkerRebusHost>(
-            container, network, subscribers, SampleMessagingParticipant.Identity, startOutboxProcessor: true)
+            container, network, subscribers, dataStore, SampleMessagingParticipant.Identity, startOutboxProcessor: true)
             .ConfigureAwait(false);
     }
 
@@ -55,13 +59,14 @@ internal static class WebRebusTestHosts
     public static async Task<RebusTestProcess> NotificationAsync(
         InMemNetwork network,
         InMemorySubscriberStore subscribers,
+        InMemDataStore dataStore,
         InMemorySampleDataContextFactory factory,
         IBookPrintNotificationSink sink)
     {
         var container = RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory });
         ApplicationComposition.RegisterNotificationSubscriber(container, sink);
         return await _receiverAsync<NotificationRebusHost>(
-            container, network, subscribers, SampleMessagingNotificationParticipant.Identity, startOutboxProcessor: false)
+            container, network, subscribers, dataStore, SampleMessagingNotificationParticipant.Identity, startOutboxProcessor: false)
             .ConfigureAwait(false);
     }
 
@@ -69,13 +74,14 @@ internal static class WebRebusTestHosts
     public static async Task<RebusTestProcess> AuditAsync(
         InMemNetwork network,
         InMemorySubscriberStore subscribers,
+        InMemDataStore dataStore,
         InMemorySampleDataContextFactory factory,
         IBookPrintAuditSink sink)
     {
         var container = RebusHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory });
         ApplicationComposition.RegisterAuditSubscriber(container, sink);
         return await _receiverAsync<AuditRebusHost>(
-            container, network, subscribers, SampleMessagingAuditParticipant.Identity, startOutboxProcessor: false)
+            container, network, subscribers, dataStore, SampleMessagingAuditParticipant.Identity, startOutboxProcessor: false)
             .ConfigureAwait(false);
     }
 
@@ -107,6 +113,7 @@ internal static class WebRebusTestHosts
         Container container,
         InMemNetwork network,
         InMemorySubscriberStore subscribers,
+        InMemDataStore dataStore,
         string queue,
         bool startOutboxProcessor)
         where THost : IArkRebusHost
@@ -116,6 +123,7 @@ internal static class WebRebusTestHosts
             container,
             // The shared subscriber store replaces the per-transport one, as Azure Service Bus topics do in production.
             t => t.UseInMemoryTransport(network, queue, registerSubscriptionStorage: false),
+            d => d.StoreInMemory(dataStore),
             startOutboxProcessor,
             static options => options.AddInProcessMessageInspector(),
             cfg =>

@@ -232,6 +232,20 @@ outbox processor ownership remain explicit host configuration. Validate
 `ArkRebusParticipantRequirements` before startup when compression or DataBus is
 required.
 
+The Rebus DataBus offloads message bodies that are too big for the transport;
+it is not only for attachments. Configure it in every process that sends or
+receives, with one shared storage, and send big messages as claim checks:
+
+```csharp
+config.DataBus(d =>
+{
+    d.StoreInBlobStorage(dataBusConnectionString, "rebus-databus");
+    d.SendBigMessagesAsAttachments((256 - 64 - 2) * 1024); // Service Bus limit minus headers and a margin
+});
+```
+
+The WebRebus sample variant configures it this way in `RebusHosting`.
+
 Rebus and native Mediator Framework messaging are mutually exclusive whole-
 network topology modes. They share application contracts, handlers, `IBus`, and
 `MessagingFailed<T>`. Separate compositions may reuse the same network and

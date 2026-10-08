@@ -5,6 +5,7 @@ using Ark.Tools.Outbox;
 
 using AwesomeAssertions;
 
+using Rebus.DataBus.InMem;
 using Rebus.Transport.InMem;
 
 namespace Ark.MediatorFramework.Sample.Core.WebRebus.Tests;
@@ -19,13 +20,14 @@ public sealed class RebusTopologyTests
     {
         var network = new InMemNetwork();
         var subscribers = new InMemorySubscriberStore();
+        var dataStore = new InMemDataStore();
         var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
         var notifications = new RecordingSink();
         var audits = new RecordingSink();
-        await using var api = await WebRebusTestHosts.ApiAsync(network, subscribers, factory).ConfigureAwait(false);
-        await using var worker = await WebRebusTestHosts.WorkerAsync(network, subscribers, factory).ConfigureAwait(false);
-        await using var notification = await WebRebusTestHosts.NotificationAsync(network, subscribers, factory, notifications).ConfigureAwait(false);
-        await using var audit = await WebRebusTestHosts.AuditAsync(network, subscribers, factory, audits).ConfigureAwait(false);
+        await using var api = await WebRebusTestHosts.ApiAsync(network, subscribers, dataStore, factory).ConfigureAwait(false);
+        await using var worker = await WebRebusTestHosts.WorkerAsync(network, subscribers, dataStore, factory).ConfigureAwait(false);
+        await using var notification = await WebRebusTestHosts.NotificationAsync(network, subscribers, dataStore, factory, notifications).ConfigureAwait(false);
+        await using var audit = await WebRebusTestHosts.AuditAsync(network, subscribers, dataStore, factory, audits).ConfigureAwait(false);
 
         var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(WebRebusTestHosts.NewBook())
             .ConfigureAwait(false);
@@ -43,9 +45,10 @@ public sealed class RebusTopologyTests
     {
         var network = new InMemNetwork();
         var subscribers = new InMemorySubscriberStore();
+        var dataStore = new InMemDataStore();
         var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
-        await using var api = await WebRebusTestHosts.ApiAsync(network, subscribers, factory).ConfigureAwait(false);
-        await using var worker = await WebRebusTestHosts.WorkerAsync(network, subscribers, factory).ConfigureAwait(false);
+        await using var api = await WebRebusTestHosts.ApiAsync(network, subscribers, dataStore, factory).ConfigureAwait(false);
+        await using var worker = await WebRebusTestHosts.WorkerAsync(network, subscribers, dataStore, factory).ConfigureAwait(false);
         var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(WebRebusTestHosts.NewBook())
             .ConfigureAwait(false);
 
