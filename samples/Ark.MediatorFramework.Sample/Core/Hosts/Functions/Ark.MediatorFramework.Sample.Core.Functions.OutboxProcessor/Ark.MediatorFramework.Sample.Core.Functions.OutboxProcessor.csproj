@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
+    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
     <PackageReference Include="Ark.Tools.Outbox" />

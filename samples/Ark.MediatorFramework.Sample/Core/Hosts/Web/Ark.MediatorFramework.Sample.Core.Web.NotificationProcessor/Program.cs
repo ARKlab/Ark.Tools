@@ -8,6 +8,7 @@ using Ark.MediatorFramework.Sample.Core.Web.Hosting;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
 
+using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,10 @@ using NLog.Extensions.Logging;
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
+    // Before reading connection strings, so that Key Vault can supply them.
+    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
+        builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
     NLogConfigurer.For("Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor")
         .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration)
         .Apply();

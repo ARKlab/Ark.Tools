@@ -1420,7 +1420,9 @@
         "dependencies": {
           "Ark.MediatorFramework.Sample.Core.WebRebus.Hosting": "[6.6.6, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
-          "Ark.Tools.NLog.Configuration": "[1.0.0, )"
+          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
+          "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.2, )",
+          "Azure.Identity": "[1.21.0, )"
         }
       },
       "ark.mediatorframework.sample.core.webrebus.hosting": {
@@ -1439,7 +1441,9 @@
         "dependencies": {
           "Ark.MediatorFramework.Sample.Core.WebRebus.Hosting": "[6.6.6, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
-          "Ark.Tools.NLog.Configuration": "[1.0.0, )"
+          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
+          "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.2, )",
+          "Azure.Identity": "[1.21.0, )"
         }
       },
       "ark.mediatorframework.sample.core.webrebus.processor": {
@@ -1447,7 +1451,9 @@
         "dependencies": {
           "Ark.MediatorFramework.Sample.Core.WebRebus.Hosting": "[6.6.6, )",
           "Ark.Tools.MediatorFramework.Rebus": "[1.0.0, )",
-          "Ark.Tools.NLog.Configuration": "[1.0.0, )"
+          "Ark.Tools.NLog.Configuration": "[1.0.0, )",
+          "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.2, )",
+          "Azure.Identity": "[1.21.0, )"
         }
       },
       "ark.mediatorframework.sample.core.webrebus.webinterface": {

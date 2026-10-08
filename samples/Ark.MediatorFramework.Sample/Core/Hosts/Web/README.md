@@ -34,6 +34,7 @@ are in each project's `appsettings.Development.json`.
 | `ConnectionStrings:ServiceBusAdministration` | all except OutboxProcessor | Service Bus administration. Optional: defaults to `ConnectionStrings:ServiceBus`. The local emulator serves it on port 5300 |
 | `ConnectionStrings:DataBus` | all except OutboxProcessor | Azure Blob Storage for the claim-check DataBus. Each process creates the `amf1-databus` container if it is missing |
 | `EntraId:*` | WebInterface | Bearer authentication and the OpenAPI OAuth flow |
+| `KeyVault:Uri` | all | Optional Key Vault that supplies the settings above |
 
 ## Run locally
 

@@ -36,9 +36,10 @@ examples hold the values for the local emulators. Every app uses the same keys:
 | `ConnectionStrings__Sample` | SQL Server database of the sample |
 | `ConnectionStrings__DataBus` | Azure Blob Storage for the claim-check DataBus. `UseDevelopmentStorage=true` for Azurite. Each app creates the `amf1-databus` container if it is missing |
 | `ApplicationInsights__ConnectionString` | Optional telemetry |
+| `KeyVault__Uri` | Optional Key Vault that supplies the settings the worker reads. The Functions host reads `AzureWebJobsStorage` and the trigger connection itself, so those stay app settings or Key Vault references |
 
-The OutboxProcessor is not a Functions app. It reads `ConnectionStrings:Sample`
-and `ConnectionStrings:ServiceBus` from `appsettings.json`; development values for
+The OutboxProcessor is not a Functions app. It reads `ConnectionStrings:Sample`,
+`ConnectionStrings:ServiceBus` and the optional `KeyVault:Uri` from `appsettings.json`; development values for
 the local emulators are in its `appsettings.Development.json`.
 
 ## Run locally

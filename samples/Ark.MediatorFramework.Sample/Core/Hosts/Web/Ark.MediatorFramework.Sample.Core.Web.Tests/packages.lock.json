@@ -1555,7 +1555,9 @@
           "Ark.MediatorFramework.Sample.Core.Application": "[6.6.6, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",
-          "Ark.Tools.Outbox": "[1.0.0, )"
+          "Ark.Tools.Outbox": "[1.0.0, )",
+          "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.2, )",
+          "Azure.Identity": "[1.21.0, )"
         }
       },
       "ark.mediatorframework.sample.core.web.webinterface": {

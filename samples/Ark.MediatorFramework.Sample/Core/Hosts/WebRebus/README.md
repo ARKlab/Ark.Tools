@@ -48,7 +48,7 @@ and Service Bus emulator are in each project's `appsettings.Development.json`.
 | `ConnectionStrings:Sample` | all | SQL Server database of the sample |
 | `ConnectionStrings:ServiceBus` | all | Service Bus connection string |
 | `EntraId:*` | WebInterface | Bearer authentication and the OpenAPI OAuth flow |
-| `KeyVault:Uri` | WebInterface | Optional Key Vault that supplies the settings above |
+| `KeyVault:Uri` | all | Optional Key Vault that supplies the settings above |
 
 ## Run locally
 

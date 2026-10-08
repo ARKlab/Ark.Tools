@@ -10,6 +10,8 @@ using Ark.Tools.NLog;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 
+using Azure.Identity;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,6 +26,10 @@ using System.Security.Claims;
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
+    // Before reading connection strings, so that Key Vault can supply them.
+    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
+        builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
     NLogConfigurer.For("Ark.MediatorFramework.Sample.Core.WebRebus.Processor")
         .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration)
         .Apply();
