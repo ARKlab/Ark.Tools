@@ -72,7 +72,7 @@ public static class AuthenticationEx
             })
             .AddJwtBearer(AuthConstants.AzureAdSchema, options =>
             {
-                var section = configuration.GetSection(AuthConstants.AzureB2CConfigSection);
+                var section = configuration.GetSection(AuthConstants.EntraIdConfigSection);
                 var tenantId = section["TenantId"];
                 var audience = section["ClientId"];
                 options.TokenValidationParameters = _tokenValidator();
