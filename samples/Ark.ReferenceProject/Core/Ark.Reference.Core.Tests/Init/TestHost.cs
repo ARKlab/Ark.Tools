@@ -106,7 +106,8 @@ public sealed class TestHost : IDisposable
                         return c.errorMessages == 0 && (c.inqueue + c.inprocess + def + c.outbox) == 0;
                     }
                 ) // if true, go again
-                .WaitAndRetryAsync(1, static i => TimeSpan.FromMilliseconds(100))
+                // Rebus can briefly report no work between outbox dequeue and message dispatch: confirm idle over 5 samples
+                .WaitAndRetryAsync(4, static i => TimeSpan.FromMilliseconds(100))
                 .WrapAsync(
                     Policy
                         .HandleResult<(int inqueue, int inprocess, int deferred, int outbox, int errorMessages)>(
