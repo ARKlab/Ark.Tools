@@ -272,6 +272,10 @@ HTTP/gRPC/Functions tests assert:
 - generated OpenAPI and `.proto` output;
 - readiness and startup failure behavior.
 
+To wait for in-memory messaging to drain, poll
+`InMemoryMessagingTransport.GetPendingCount(queue)`, which returns the number of
+unsettled deliveries for a queue, until it reaches zero instead of sleeping.
+
 This prevents an application scenario from duplicating framework tests. The
 sample's `CompositionRootTests`, gRPC client tests, and Functions boundary tests
 own those transport concerns.

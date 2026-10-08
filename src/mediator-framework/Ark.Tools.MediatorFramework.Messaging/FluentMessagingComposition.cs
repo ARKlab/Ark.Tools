@@ -178,10 +178,14 @@ public sealed class MessagingCompositionBuilder<TNetwork>
 public sealed class MessagingTransportBuilder
 {
     private readonly Action<IMessagingTransport> _select;
+    private readonly Action<IMessagingTransport> _selectOwned;
 
-    internal MessagingTransportBuilder(Action<IMessagingTransport> select)
+    internal MessagingTransportBuilder(
+        Action<IMessagingTransport> select,
+        Action<IMessagingTransport> selectOwned)
     {
         _select = select;
+        _selectOwned = selectOwned;
     }
 
     /// <summary>Uses an in-memory transport.</summary>
@@ -193,13 +197,20 @@ public sealed class MessagingTransportBuilder
     }
 
     /// <summary>Uses a supplied transport.</summary>
-    /// <param name="transport">The transport.</param>
+    /// <param name="transport">The transport. The caller keeps ownership and disposes it.</param>
     /// <returns>This builder.</returns>
     public MessagingTransportBuilder Use(IMessagingTransport transport)
     {
         ArgumentNullException.ThrowIfNull(transport);
         _select(transport);
         return this;
+    }
+
+    /// <summary>Uses a transport the composition creates, so the service provider disposes it.</summary>
+    /// <param name="transport">The transport.</param>
+    internal void _useOwned(IMessagingTransport transport)
+    {
+        _selectOwned(transport);
     }
 }
 
@@ -317,6 +328,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     private readonly MessagingNetworkOptions _network;
     private readonly IMessagingContractRegistry _registry;
     private IMessagingTransport? _transport;
+    private bool _ownsTransport;
     private IMessagingDataBus? _dataBus;
     private IReadOnlyList<Type> _outgoingSteps = Array.Empty<Type>();
     private IReadOnlyList<Type> _incomingSteps = Array.Empty<Type>();
@@ -359,7 +371,13 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         Action<MessagingTransportBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
-        configure(new MessagingTransportBuilder(transport => UseTransport(transport)));
+        configure(new MessagingTransportBuilder(
+            transport => UseTransport(transport),
+            transport =>
+            {
+                UseTransport(transport);
+                _ownsTransport = true;
+            }));
         return this;
     }
 
@@ -564,6 +582,10 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
             dataBus,
             _outgoingSteps,
             _resourceManagement);
+        // The provider disposes what a factory returns, never a registered instance. An owned transport
+        // that is never resolved never opened a connection either.
+        if (_ownsTransport)
+            _services.Replace(ServiceDescriptor.Singleton<IMessagingTransport>(_ => transport));
         if (_messagePack)
             _services._addMessagePackMessagingCodec();
         if (_protobuf)

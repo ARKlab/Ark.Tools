@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Mediator Framework
-- **Diagnostic message:** `Event contract '{0}' must implement ICommand<TSelf>; a request is a message, not an event`
+- **Diagnostic message:** `Event contract '{0}' must implement ICommand<TSelf> (requests and queries cannot be events)`
 
 ## What it checks
 

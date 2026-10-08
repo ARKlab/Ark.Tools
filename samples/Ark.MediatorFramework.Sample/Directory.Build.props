@@ -7,7 +7,6 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Version>6.6.6</Version>
-    <ArkExportProtoDir>$(MSBuildThisFileDirectory)Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/proto</ArkExportProtoDir>
   </PropertyGroup>
 
 

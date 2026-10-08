@@ -9,7 +9,7 @@ process. The processes share only `Ark.MediatorFramework.Sample.Core.Web.Hosting
 | Project | Hosts |
 | --- | --- |
 | `Ark.MediatorFramework.Sample.Core.Web.WebInterface` | HTTP (generated Minimal API endpoints, OpenAPI, Scalar), gRPC, MCP, and the Api participant as a producer that enqueues through the outbox |
-| `Ark.MediatorFramework.Sample.Core.Web.Processor` | The print worker (`ark-mediator-sample`): processes print and review requests and publishes `BookPrintCompleted` |
+| `Ark.MediatorFramework.Sample.Core.Web.Processor` | The print worker (`ark-mediator-sample`): processes print, review and bulk book import requests and publishes `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor` | The notification subscriber of `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Web.AuditProcessor` | The audit subscriber of `BookPrintCompleted` |
 | `Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor` | The single `MessagingOutboxProcessor`, which dispatches committed envelopes |
@@ -21,6 +21,17 @@ over in-memory messaging.
 
 Under `CreateIfMissing`, each producer and receiver creates its own queues,
 topics, and subscriptions on Service Bus when it starts.
+
+## DataBus
+
+Every messaging process except the OutboxProcessor uses the claim-check DataBus
+from `WebHosting.CreateDataBus`. When a serialized message does not fit the
+transport's inline limit (256 KB on Service Bus, minus its headers), the sender
+stores the body in Azure Blob Storage, in the `amf1-databus` container, and
+sends a claim check. The receiver restores the body before its handler runs.
+All processes must share the same storage account. A bulk book import
+(`Book_BulkCreateRequest.V1`) sent to the worker is the example covered by
+`BulkImportDataBusTests`.
 
 ## Configuration
 
@@ -34,6 +45,7 @@ are in each project's `appsettings.Development.json`.
 | `ConnectionStrings:ServiceBusAdministration` | all except OutboxProcessor | Service Bus administration. Optional: defaults to `ConnectionStrings:ServiceBus`. The local emulator serves it on port 5300 |
 | `ConnectionStrings:DataBus` | all except OutboxProcessor | Azure Blob Storage for the claim-check DataBus. Each process creates the `amf1-databus` container if it is missing |
 | `EntraId:*` | WebInterface | Bearer authentication and the OpenAPI OAuth flow |
+| `KeyVault:Uri` | all | Optional Key Vault that supplies the settings above |
 
 ## Run locally
 

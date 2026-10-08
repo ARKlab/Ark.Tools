@@ -13,7 +13,7 @@ access and the request fits a route/query/body envelope.
 | Constructor `template` / `Template` | required `string` | Route template | You want route placeholders such as `{id}` or `{version}` | Generated path appears exactly from this template |
 | `SuccessStatusCode` | `0` | Success status for a non-null result | The default `200 OK` is wrong, for example create = `201` | Successful HTTP response uses your code |
 | `NullResultStatusCode` | `0` | Success-path status when the handler returns `null` | A `null` result is a documented outcome | Queries default to `404`; requests default to `204` |
-| `AcceptsMessagePack` | `false` | Whether HTTP MessagePack negotiation is enabled | The same contract must support JSON and `application/x-msgpack` | Request/response can negotiate MessagePack |
+| `AcceptsMessagePack` | `false` | Whether HTTP MessagePack negotiation is enabled | The same contract must support JSON and `application/x-msgpack` | Request/response can negotiate MessagePack; `GET` and `DELETE` negotiate only the response and never read a body ([ARKMF059](../analyzer-rules/ARKMF059.md)) |
 | `AllowAnonymous` | `false` | HTTP opt-out from the host's default auth requirement | The route is intentionally public | Generated route carries anonymous metadata |
 | `RequireAntiforgery` | `false` | Multipart antiforgery validation | Cookie-authenticated browser forms must post files safely | Missing/invalid antiforgery token rejects the upload |
 | `MaxRequestBodySizeBytes` | `0` | Multipart request body size limit | Uploads need a per-endpoint size ceiling | Oversized request is rejected before handler dispatch |

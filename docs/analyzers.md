@@ -67,6 +67,7 @@ Every Ark.Tools diagnostic has a dedicated page with its severity, rule-specific
 - [ARKMF056](analyzer-rules/ARKMF056.md)
 - [ARKMF057](analyzer-rules/ARKMF057.md)
 - [ARKMF058](analyzer-rules/ARKMF058.md)
+- [ARKMF059](analyzer-rules/ARKMF059.md)
 - [ARKMSG001](analyzer-rules/ARKMSG001.md)
 - [ARKMSG002](analyzer-rules/ARKMSG002.md)
 - [ARKMSG003](analyzer-rules/ARKMSG003.md)
@@ -92,6 +93,7 @@ Every Ark.Tools diagnostic has a dedicated page with its severity, rule-specific
 - [ARKMSG025](analyzer-rules/ARKMSG025.md)
 - [ARKMSG026](analyzer-rules/ARKMSG026.md)
 - [ARKMSG027](analyzer-rules/ARKMSG027.md)
+- [ARKMSG028](analyzer-rules/ARKMSG028.md)
 - [ARKMSG029](analyzer-rules/ARKMSG029.md)
 - [ARKPII001](analyzer-rules/ARKPII001.md)
 - [ARKPII002](analyzer-rules/ARKPII002.md)
@@ -151,6 +153,7 @@ attribute location:
 | ARKMF031 | Error | Azure Functions route is duplicated |
 | ARKMF032 | Error | Azure Functions name is duplicated |
 | ARKMF058 | Error | gRPC contract has a request, response or stream item that is not a protobuf contract |
+| ARKMF059 | Error | HTTP `GET`, `HEAD` or `DELETE` property is not bound from the route or query string |
 | ARKAPI001 | Error | API surface baseline is missing |
 | ARKAPI002 | Error | API surface contract changed |
 | ARKAPI003 | Error | Multiple API surface baselines were found |

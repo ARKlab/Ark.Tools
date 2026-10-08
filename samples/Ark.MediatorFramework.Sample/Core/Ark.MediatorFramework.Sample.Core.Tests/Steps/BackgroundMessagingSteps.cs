@@ -62,17 +62,34 @@ public sealed class BackgroundMessagingSteps
         await _sampleContext.Application.SendAsync(request).ConfigureAwait(false);
     }
 
+    /// <summary>Sends a bulk book import through the api process bus.</summary>
+    /// <param name="table">The books to import.</param>
+    [When("I dispatch a bulk book import through the background bus with")]
+    public async Task DispatchBulkBookImport(Table table)
+    {
+        var request = new Book_BulkCreateRequest.V1(table.CreateSet<Book.V1.Create>().ToArray());
+        await _sampleContext.Application.SendAsync(request).ConfigureAwait(false);
+    }
+
     /// <summary>Asserts that the failed message was dead-lettered by its second-level handler, not rejected as unknown.</summary>
     [Then("the error queue contains the failed message")]
     public async Task ErrorQueueContainsFailedMessage()
     {
+        await ErrorQueueContainsFailedMessage("Background book review failed.").ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that the failed message was dead-lettered by its second-level handler with a description.</summary>
+    /// <param name="description">The dead-letter description, the second-level handler's rejection message.</param>
+    [Then("the error queue contains the failed message with description '(.*)'")]
+    public async Task ErrorQueueContainsFailedMessage(string description)
+    {
         await _background.WaitForIdleAsync(allowErrors: true).ConfigureAwait(false);
         _background.ErrorQueueCount.Should().BeGreaterThan(0);
         // A second-level fail-fast dead-letters with the exception type as reason and its message as description.
-        _background.DeadLetters.Should().AllSatisfy(static deadLetter =>
+        _background.DeadLetters.Should().AllSatisfy(deadLetter =>
         {
             deadLetter.Reason.Should().Be(typeof(MessagingFailFastException).FullName);
-            deadLetter.Description.Should().Be("Background book review failed.");
+            deadLetter.Description.Should().Be(description);
         });
     }
 }

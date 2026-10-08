@@ -765,21 +765,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/V1"
-              }
-            },
-            "application/x-msgpack": {
-              "schema": {
-                "$ref": "#/components/schemas/V1"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -801,9 +786,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Not Found"
           },
           "400": {
             "description": "Bad Request",

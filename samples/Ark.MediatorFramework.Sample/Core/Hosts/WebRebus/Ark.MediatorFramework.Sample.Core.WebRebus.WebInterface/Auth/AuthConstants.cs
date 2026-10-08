@@ -17,6 +17,9 @@ public static class AuthConstants
     /// <summary>Gets the Azure AD B2C configuration section.</summary>
     public const string AzureB2CConfigSection = "AzureAdB2C";
 
+    /// <summary>Gets the Entra ID configuration section.</summary>
+    public const string EntraIdConfigSection = "EntraId";
+
     /// <summary>Gets the integration-test audience.</summary>
     public const string IntegrationTestsAudience = "API";
 

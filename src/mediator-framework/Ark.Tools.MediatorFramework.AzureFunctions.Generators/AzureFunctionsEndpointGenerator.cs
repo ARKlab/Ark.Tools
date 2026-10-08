@@ -76,6 +76,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF049.md");
 
+    private static readonly DiagnosticDescriptor _propertyNotBindableWithoutBody = new(
+        "ARKMF059",
+        "Property cannot be bound without a request body",
+        "HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -200,6 +208,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 if (!_isSelected(candidate, host))
                     continue;
 
+                if (_reportUnboundProperties(context, candidate, hostLocation))
+                    continue;
+
                 endpoints.Add(candidate with { Prefix = host.Prefix });
             }
         }
@@ -265,6 +276,30 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         _emitHealthCheckFunction(source);
         source.AppendLine("}");
         context.AddSource("ArkGeneratedFunctions.g.cs", source._toGeneratedSource());
+    }
+
+    // A GET, HEAD or DELETE function binds only route and [HttpQuery] properties: report any other client
+    // property instead of silently dropping it.
+    private static bool _reportUnboundProperties(SourceProductionContext context, in EndpointSpec endpoint, Location hostLocation)
+    {
+        if (endpoint.Verb is not ("GET" or "HEAD" or "DELETE"))
+            return false;
+
+        var reported = false;
+        foreach (var property in endpoint.Properties.Where(static property =>
+            !property.IsRoute && !property.IsQuery && !property.IsServerSet && !property.IsETag))
+        {
+            var location = property.Location ?? endpoint.Location;
+            context.ReportDiagnostic(Diagnostic.Create(
+                _propertyNotBindableWithoutBody,
+                location is null ? hostLocation : LocationSpec._toLocation(location),
+                endpoint.TypeName,
+                endpoint.Verb,
+                property.Name));
+            reported = true;
+        }
+
+        return reported;
     }
 
     private static bool _isSelected(in EndpointSpec endpoint, in HostSpec host)

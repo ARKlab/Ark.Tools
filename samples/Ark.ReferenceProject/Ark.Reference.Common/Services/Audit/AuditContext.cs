@@ -58,7 +58,7 @@ public class AuditContext<TAuditKind>
                     {(query.AuditKinds?.Length > 0 ? "AND [Kind] IN @AuditKinds" : "")}
                     {(query.FromDateTime != null ? "AND [SysStartTime] >= @FromDateTime" : "")}
                     {(query.ToDateTime != null ? "AND [SysStartTime] <= @ToDateTime" : "")}
-                ORDER BY [SysStartTime] DESC
+                ORDER BY [SysStartTime] DESC, [AuditId] DESC
                 OFFSET @Skip ROWS FETCH NEXT @Limit ROWS ONLY
 
                 SELECT COUNT(*)
@@ -108,15 +108,15 @@ public class AuditContext<TAuditKind>
     {
         if (_currentAudit == null)
         {
-            _currentAudit = new AuditDto<TAuditKind>
+            var audit = new AuditDto<TAuditKind>
             {
-                AuditId = Guid.NewGuid(),
                 UserId = userId,
                 Kind = kind,
                 Info = infoMessage
             };
 
-            await _insertAudit(CurrentAudit, ctk).ConfigureAwait(false);
+            audit.AuditId = await _insertAudit(audit, ctk).ConfigureAwait(false);
+            _currentAudit = audit;
         }
         else if (userId != CurrentAudit.UserId)
         {
@@ -126,13 +126,12 @@ public class AuditContext<TAuditKind>
         return CurrentAudit;
     }
 
-    private Task _insertAudit(AuditDto<TAuditKind> dto, CancellationToken ctk = default)
+    private async Task<Guid> _insertAudit(AuditDto<TAuditKind> dto, CancellationToken ctk = default)
     {
         _logger.Trace(CultureInfo.InvariantCulture, "CreateAudit called");
 
         var parameters = new
         {
-            dto.AuditId,
             dto.UserId,
             Kind = dto.Kind.ToString(),
             dto.Info,
@@ -141,21 +140,24 @@ public class AuditContext<TAuditKind>
         var cmd = new CommandDefinition($@"
             INSERT INTO [{_schemaAudit}].[{_tableAudit}]
             (
-                  [AuditId]
-                , [UserId]
+                  [UserId]
                 , [Kind]
                 , [Info]
             )
+            -- AuditId comes from the NEWSEQUENTIALID() default so it is monotonic and breaks SysStartTime ties
+            -- (consecutive transactions can share the same begin time)
+            OUTPUT INSERTED.[AuditId]
             VALUES
             (
-                  @AuditId
-                , @UserId
+                  @UserId
                 , @Kind
                 , @Info
             )
             ", parameters, transaction: _dbTransaction, cancellationToken: ctk);
 
+        var auditId = await _dbConnection.QuerySingleAsync<Guid>(cmd).ConfigureAwait(false);
+
         _logger.Trace(CultureInfo.InvariantCulture, "CreateAudit ended");
-        return _dbConnection.ExecuteAsync(cmd);
+        return auditId;
     }
 }

@@ -70,4 +70,12 @@ EVOLVABLE-ENUM ReadingActivityKind.Finished=3
 EVOLVABLE-ENUM ReadingActivityKind.NOT_SET=0
 EVOLVABLE-ENUM ReadingActivityKind.Progressed=2
 EVOLVABLE-ENUM ReadingActivityKind.Started=1
+MESSAGE Ark.MediatorFramework.Sample.Core.API.Book_BulkCreateRequest.V1
+  name: books/book.bulk-create
+  former: -
+END
+MESSAGE Ark.MediatorFramework.Sample.Core.API.CreateBookReviewRequest.V1
+  name: books/book-review.create
+  former: -
+END
 */

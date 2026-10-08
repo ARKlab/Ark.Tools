@@ -4,9 +4,11 @@
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.Web.Hosting;
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
 
+using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 
 using Microsoft.Extensions.Configuration;
@@ -19,11 +21,16 @@ using NLog.Extensions.Logging;
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
+    // Before reading connection strings, so that Key Vault can supply them.
+    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
+        builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
     NLogConfigurer.For("Ark.MediatorFramework.Sample.Core.Web.Processor")
         .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration)
         .Apply();
     builder.Logging.ClearProviders();
     builder.Logging.AddNLog();
+    builder.Services.AddArkRedaction();
     var sql = builder.Configuration.GetConnectionString("Sample")
         ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
     var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")

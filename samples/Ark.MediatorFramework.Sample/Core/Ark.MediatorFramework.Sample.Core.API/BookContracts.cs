@@ -109,6 +109,7 @@ public static class Book_BulkCreateRequest
 {
     /// <summary>Version one of the bulk book creation request.</summary>
     [HttpEndpoint("POST", "/api/v{version}/books/bulk")]
+    [Message(Name = "books/book.bulk-create")]
     [RequireScopePolicy(ApplicationScopes.BookWrite)]
     public sealed record V1(
         [property: HttpBody] IReadOnlyList<Book.V1.Create> Data) :

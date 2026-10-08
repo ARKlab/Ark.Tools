@@ -98,10 +98,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Retry policy for participant '{0}' must have MaximumDeliveryCount >= {1}", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _invalidEventShape = _rule(
         "ARKMSG018", "Invalid event contract",
-        "Event contract '{0}' must implement ICommand<TSelf>; a request is a message, not an event", DiagnosticSeverity.Error);
+        "Event contract '{0}' must implement ICommand<TSelf> (requests and queries cannot be events)", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _undispatchableMessage = _rule(
         "ARKMSG027", "Processed contract cannot be dispatched",
         "Participant '{0}' processes '{1}', which implements neither ICommand<TSelf> nor IRequest<TSelf, TResponse>", DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _duplicateParticipantContract = _rule(
+        "ARKMSG028", "Participant lists a contract more than once",
+        "Participant '{0}' lists '{1}' more than once in {2}", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _nonNormalizedName = _rule(
         "ARKMSG019", "Non-normalized contract name",
         "Contract '{0}' has explicit name or alias '{1}', which is not a valid logical name", DiagnosticSeverity.Error);
@@ -294,13 +297,18 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             if (participant.Publishes.Count > 0 || participant.Subscribes.Count > 0)
                 _requireCapability(context, network, participant, "PubSub", _pubSub);
 
-            foreach (var contract in participant.Processes)
+            _reportDuplicates(context, participant, participant.Processes, "Processes");
+            _reportDuplicates(context, participant, participant.Publishes, "Publishes");
+            _reportDuplicates(context, participant, participant.Subscribes, "Subscribes");
+
+            // Distinct, so a duplicate entry is reported once as ARKMSG028 rather than as a second owner.
+            foreach (var contract in participant.Processes.Distinct())
             {
                 _add(processors, contract, participant);
                 if (!contract.IsSelfCommand && contract.RequestResponseTypeName is null)
-                    _report(context, _undispatchableMessage, contract, participant.Identity, contract.DisplayName);
+                    _report(context, _undispatchableMessage, participant.Symbol, participant.Identity, contract.DisplayName);
             }
-            foreach (var contract in participant.Publishes)
+            foreach (var contract in participant.Publishes.Distinct())
                 _add(publishers, contract, participant);
         }
 
@@ -1369,6 +1377,16 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
     }
 
+    private static void _reportDuplicates(
+        GenerationSink context,
+        Participant participant,
+        EquatableArray<ContractSpec> contracts,
+        string listName)
+    {
+        foreach (var duplicate in contracts.GroupBy(static contract => contract).Where(static group => group.Count() > 1))
+            _report(context, _duplicateParticipantContract, participant.Symbol, participant.Identity, duplicate.Key.DisplayName, listName);
+    }
+
     private static void _add(
         IDictionary<ContractSpec, List<Participant>> map,
         ContractSpec contract,
@@ -1487,6 +1505,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             "ARKMSG017" => _invalidRetry,
             "ARKMSG018" => _invalidEventShape,
             "ARKMSG027" => _undispatchableMessage,
+            "ARKMSG028" => _duplicateParticipantContract,
             "ARKMSG019" => _nonNormalizedName,
             "ARKMSG020" => _duplicateName,
             "ARKMSG021" => _duplicateAlias,

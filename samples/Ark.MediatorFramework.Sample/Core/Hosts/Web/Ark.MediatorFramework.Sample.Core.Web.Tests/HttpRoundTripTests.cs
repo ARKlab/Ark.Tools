@@ -3,6 +3,9 @@
 
 using AwesomeAssertions;
 
+using MessagePack;
+using MessagePack.Resolvers;
+
 using System.Net;
 using System.Net.Mime;
 using System.Text.Json;
@@ -54,6 +57,60 @@ public sealed class HttpRoundTripTests
         reviews.RootElement.EnumerateArray()
             .Select(static item => item.GetProperty("text").GetString())
             .Should().Equal("A desert classic");
+    }
+
+    /// <summary>Describes a Book edition over HTTP, requesting and answering in MessagePack.</summary>
+    [TestMethod]
+    public async Task DescribeBookEditionRoundTripsOverMessagePack()
+    {
+        await using var host = await WebInterfaceTestHost.StartAsync().ConfigureAwait(false);
+        var ctk = host.App.Lifetime.ApplicationStopping;
+        using var client = host.CreateClient(ApplicationScopes.BookRead);
+        var options = MessagePackSerializerOptions.Standard.WithResolver(
+            CompositeResolver.Create(
+                MessagePack.NodaTime.NodatimeResolver.Instance,
+                DynamicEnumAsStringResolver.Instance,
+                StandardResolver.Instance));
+
+        using var body = new ByteArrayContent(MessagePackSerializer.Serialize(
+            new DescribeBookEditionRequest.V1 { Edition = new PrintBookEdition { Format = "Paperback", PageCount = 320 } },
+            options,
+            ctk));
+        body.Headers.ContentType = new("application/x-msgpack");
+        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri("/api/v1/books/editions/describe", UriKind.Relative))
+        {
+            Content = body,
+        };
+        request.Headers.Accept.ParseAdd("application/x-msgpack");
+
+        using var response = await client.SendAsync(request, ctk).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/x-msgpack");
+        var description = MessagePackSerializer.Deserialize<BookEditionDescription>(
+            await response.Content.ReadAsByteArrayAsync(ctk).ConfigureAwait(false),
+            options,
+            ctk);
+        description.Description.Should().Be("Paperback print edition with 320 pages");
+    }
+
+    /// <summary>Streams Book items over HTTP and reads them back in order.</summary>
+    [TestMethod]
+    public async Task StreamBooksReturnsItemsInOrder()
+    {
+        await using var host = await WebInterfaceTestHost.StartAsync().ConfigureAwait(false);
+        var ctk = host.App.Lifetime.ApplicationStopping;
+        using var client = host.CreateClient(ApplicationScopes.BookRead);
+
+        using var response = await client.GetAsync(
+            new Uri("/api/v1/books/stream?Count=3&DelayMilliseconds=0", UriKind.Relative),
+            ctk).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK, await response.Content.ReadAsStringAsync(ctk).ConfigureAwait(false));
+        using var items = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ctk).ConfigureAwait(false));
+        items.RootElement.EnumerateArray()
+            .Select(static item => item.GetProperty("index").GetInt32())
+            .Should().Equal(0, 1, 2);
     }
 
     private static StringContent _json(string body)

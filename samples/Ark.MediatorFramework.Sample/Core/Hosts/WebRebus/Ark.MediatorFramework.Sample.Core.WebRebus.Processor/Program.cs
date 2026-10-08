@@ -5,10 +5,13 @@ using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.WebRebus.Hosting;
 using Ark.MediatorFramework.Sample.Core.WebRebus.Processor;
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.NLog;
 using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
+
+using Azure.Identity;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -24,21 +27,29 @@ using System.Security.Claims;
 try
 {
     var builder = Host.CreateApplicationBuilder(args);
+    // Before reading connection strings, so that Key Vault can supply them.
+    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
+        builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
     NLogConfigurer.For("Ark.MediatorFramework.Sample.Core.WebRebus.Processor")
         .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration)
         .Apply();
     builder.Logging.ClearProviders();
     builder.Logging.AddNLog();
+    builder.Services.AddArkRedaction();
     var sql = builder.Configuration.GetConnectionString("Sample")
         ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
     var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")
         ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
+    var dataBus = builder.Configuration.GetConnectionString("DataBus")
+        ?? throw new InvalidOperationException("ConnectionStrings:DataBus is required.");
     await using var container = RebusHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
     container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
     // The worker is the only process that drains the shared outbox table.
     RebusHosting.Configure<WorkerRebusHost>(
         container,
         t => t.UseAzureServiceBus(serviceBus, SampleMessagingParticipant.Identity),
+        d => d.StoreInBlobStorage(dataBus, RebusHosting.DataBusContainerName),
         startOutboxProcessor: true);
     using var host = builder.Build();
     container.Verify();

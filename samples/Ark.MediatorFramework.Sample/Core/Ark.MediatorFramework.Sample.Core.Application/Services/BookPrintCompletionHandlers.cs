@@ -3,6 +3,8 @@
 
 using Ark.Tools.Solid;
 
+using NLog;
+
 namespace Ark.MediatorFramework.Sample.Core.Application.Services;
 
 /// <summary>Records user-facing book print notifications.</summary>
@@ -39,6 +41,32 @@ public sealed class NoOpBookPrintAuditSink : IBookPrintAuditSink
     /// <inheritdoc />
     public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
     {
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+}
+
+/// <summary>Logs book print notifications, so a deployed subscriber shows that pub/sub works.</summary>
+public sealed class LoggingBookPrintNotificationSink : IBookPrintNotificationSink
+{
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+    /// <inheritdoc />
+    public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
+    {
+        _logger.Info(CultureInfo.InvariantCulture, "Book print notification recorded for book {BookId}", bookId);
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+}
+
+/// <summary>Logs book print audit entries, so a deployed subscriber shows that pub/sub works.</summary>
+public sealed class LoggingBookPrintAuditSink : IBookPrintAuditSink
+{
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
+    /// <inheritdoc />
+    public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
+    {
+        _logger.Info(CultureInfo.InvariantCulture, "Book print audit recorded for book {BookId}", bookId);
         await Task.CompletedTask.ConfigureAwait(false);
     }
 }

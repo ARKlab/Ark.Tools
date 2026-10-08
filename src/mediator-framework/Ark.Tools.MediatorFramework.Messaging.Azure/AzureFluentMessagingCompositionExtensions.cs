@@ -11,7 +11,10 @@ public static class AzureFluentMessagingCompositionExtensions
 {
     /// <summary>Uses Azure Service Bus.</summary>
     /// <param name="builder">The transport builder.</param>
-    /// <param name="client">The configured Service Bus client.</param>
+    /// <param name="client">
+    /// The configured Service Bus client. The composition owns it: the service provider disposes the
+    /// transport, and with it the client, when the provider is disposed.
+    /// </param>
     /// <param name="configure">
     /// Optional entity-shaping options. The declared lock duration is what the renewer plans
     /// against, so declaring it here keeps provisioning and processing reading the same number.
@@ -28,7 +31,7 @@ public static class AzureFluentMessagingCompositionExtensions
         configure?.Invoke(options);
         options.Validate();
 #pragma warning disable CA2000 // Ownership is transferred to the composition service provider.
-        builder.Use(new ServiceBusMessagingTransport(client, lockDuration: options.LockDuration));
+        builder._useOwned(new ServiceBusMessagingTransport(client, lockDuration: options.LockDuration));
 #pragma warning restore CA2000
         return builder;
     }

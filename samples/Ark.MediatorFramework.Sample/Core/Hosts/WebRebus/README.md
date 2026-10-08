@@ -12,7 +12,7 @@ and retry options of the process participant, and the Rebus outbox.
 | Project | Hosts | Rebus endpoint |
 | --- | --- | --- |
 | `Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface` | HTTP (generated Minimal API endpoints, OpenAPI, Scalar) and the Api participant | One-way client: sends, receives nothing |
-| `Ark.MediatorFramework.Sample.Core.WebRebus.Processor` | The print worker: processes print and review requests and publishes `BookPrintCompleted` | Queue `ark-mediator-sample` |
+| `Ark.MediatorFramework.Sample.Core.WebRebus.Processor` | The print worker: processes print, review and bulk book import requests and publishes `BookPrintCompleted` | Queue `ark-mediator-sample` |
 | `Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor` | The notification subscriber of `BookPrintCompleted` | Queue `sample-messaging-notification` |
 | `Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor` | The audit subscriber of `BookPrintCompleted` | Queue `sample-messaging-audit` |
 
@@ -24,6 +24,17 @@ Service Bus.
 A request that exhausts its retries moves to the Rebus `error` queue. A
 background review sent without the `books.reviews.write` scope is the example
 covered by the tests.
+
+## DataBus
+
+Every process configures the Rebus claim-check DataBus in `RebusHosting`. A
+message whose body exceeds `RebusHosting.BigMessageThresholdBytes` (190 KB: the
+256 KB Service Bus limit minus 64 KB of headers and a 2 KB margin) is stored in
+Azure Blob Storage, in the `rebus-databus` container, and travels as a claim
+check. The receiver restores the body before its handler runs. All processes
+must share the same storage account. A bulk book import
+(`Book_BulkCreateRequest.V1`) sent to the worker is the example covered by the
+tests.
 
 ## Outbox
 
@@ -42,8 +53,9 @@ and Service Bus emulator are in each project's `appsettings.Development.json`.
 | --- | --- | --- |
 | `ConnectionStrings:Sample` | all | SQL Server database of the sample |
 | `ConnectionStrings:ServiceBus` | all | Service Bus connection string |
+| `ConnectionStrings:DataBus` | all | Azure Blob Storage for the claim-check DataBus. `UseDevelopmentStorage=true` for Azurite |
 | `EntraId:*` | WebInterface | Bearer authentication and the OpenAPI OAuth flow |
-| `KeyVault:Uri` | WebInterface | Optional Key Vault that supplies the settings above |
+| `KeyVault:Uri` | all | Optional Key Vault that supplies the settings above |
 
 ## Run locally
 

@@ -83,6 +83,53 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorReusesEmittedSourceOnHostFileWhitespaceEdit()
+    {
+        var contracts = _createReference(
+            "MinimalApiHostContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace MinimalApiHostContracts;
+            public sealed class Marker { }
+            [HttpEndpoint("GET", "/referenced")]
+            public sealed class GetReferenced : IQuery<string> { }
+            """);
+        const string host = """
+            public static class Host
+            {
+                public static void Map() => MapArkEndpointsFromAssembly<MinimalApiHostContracts.Marker>();
+            }
+            """;
+        var hostTree = CSharpSyntaxTree.ParseText(host, path: "Host.cs");
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [hostTree],
+            _getReferences().Append(contracts),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ArkMinimalApiEndpointGenerator().AsSourceGenerator()],
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        driver = driver.RunGenerators(compilation);
+        var original = _describeOutput(driver);
+        original.Should().Contain("global::MinimalApiHostContracts.GetReferenced");
+
+        // Shifts the mapping call, so its location changes while its meaning does not.
+        compilation = compilation.ReplaceSyntaxTree(
+            hostTree,
+            CSharpSyntaxTree.ParseText("\n\n" + host, path: "Host.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        _getStepReasons(driver, "MinimalApiMappingParser").Should().Contain(IncrementalStepRunReason.Modified);
+        _getStepReasons(driver, "MinimalApiEmissionInput").Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached
+                || reason == IncrementalStepRunReason.Unchanged);
+        _describeOutput(driver).Should().Be(original);
+    }
+
+    [TestMethod]
     public void GrpcGeneratorReusesCachedOutputOnUnrelatedEdit()
     {
         var contracts = _createReference(

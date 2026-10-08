@@ -6,11 +6,12 @@
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- SimpleInjector-composed host: Microsoft telemetry is only a transitive reference. -->
-    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ark.Tools.Compliance" />
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
+    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Web.Hosting\Ark.MediatorFramework.Sample.Core.Web.Hosting.csproj" />
   </ItemGroup>

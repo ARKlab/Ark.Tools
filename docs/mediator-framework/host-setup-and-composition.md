@@ -45,6 +45,11 @@ services.ConfigureArkMessaging(
 });
 ```
 
+`UseServiceBus(client)` hands the client to the composition: the service
+provider disposes the transport, and with it the client, when the provider is
+disposed. A transport passed with `Use(transport)` or `UseTransport(transport)`
+stays owned by the caller, who disposes it.
+
 A transport that does not manage its own resources needs an explicit seam when
 the network uses `CreateIfMissing`. With it, Producers provision their topics,
 and Receivers also their identity queue and forwarding subscriptions:

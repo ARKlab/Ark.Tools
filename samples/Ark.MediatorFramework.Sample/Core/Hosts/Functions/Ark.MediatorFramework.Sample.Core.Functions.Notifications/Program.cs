@@ -10,6 +10,8 @@ using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
 using Ark.Tools.NLog;
 
+using Azure.Identity;
+
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -21,6 +23,10 @@ using NLog.Extensions.Logging;
 try
 {
     var builder = FunctionsApplication.CreateBuilder(args);
+    // Before reading connection strings, so that Key Vault can supply them.
+    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
+        builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
     NLogConfigurer.For("Ark.MediatorFramework.Sample.Core.Functions.Notifications")
         .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration, async: false)
         .Apply();
@@ -39,12 +45,13 @@ try
         SqlConnectionString = builder.Configuration.GetConnectionString("Sample")
             ?? throw new InvalidOperationException("ConnectionStrings:Sample is required."),
     });
-    ApplicationComposition.RegisterNotificationSubscriber(container, new NoOpBookPrintNotificationSink());
+    ApplicationComposition.RegisterNotificationSubscriber(container, new LoggingBookPrintNotificationSink());
     FunctionsHosting.AddMessagingTrigger(
         builder.Services,
         builder.Configuration,
         ArkGeneratedMessagingFunctions.Manifest,
-        container);
+        container,
+        dataBus => dataBus.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration)));
     builder.Services.AddArkHealthChecks();
 
     await builder.Build().RunAsync().ConfigureAwait(false);

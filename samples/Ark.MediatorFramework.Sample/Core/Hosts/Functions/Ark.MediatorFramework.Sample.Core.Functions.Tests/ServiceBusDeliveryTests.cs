@@ -9,6 +9,8 @@ using AwesomeAssertions;
 using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 
+using NodaTime;
+
 namespace Ark.MediatorFramework.Sample.Core.Functions.Tests;
 
 /// <summary>Delivers an Api message to the worker queue on the Service Bus emulator.</summary>
@@ -30,8 +32,15 @@ public sealed class ServiceBusDeliveryTests
         {
             await using var client = new ServiceBusClient(ServiceBusEmulator.DataPlaneConnectionString);
             var store = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
-            await using var api = await FunctionsTestHosts.StartApiProducerAsync(client, store).ConfigureAwait(false);
-            await using var outbox = await FunctionsTestHosts.StartOutboxProcessorAsync(client, store).ConfigureAwait(false);
+            // The in-memory DataBus is enough: the test runs every process in one.
+            await using var api = await FunctionsTestHosts.StartApiProducerAsync(
+                transport => transport.UseServiceBus(client),
+                static dataBus => dataBus.UseInMemory(lifetime: Duration.FromHours(2)),
+                store).ConfigureAwait(false);
+#pragma warning disable CA2000 // The test owns the Service Bus client the transport wraps.
+            await using var outbox = await FunctionsTestHosts.StartOutboxProcessorAsync(
+                new ServiceBusMessagingTransport(client), store).ConfigureAwait(false);
+#pragma warning restore CA2000
 
             var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(FunctionsTestHosts.NewBook())
                 .ConfigureAwait(false);

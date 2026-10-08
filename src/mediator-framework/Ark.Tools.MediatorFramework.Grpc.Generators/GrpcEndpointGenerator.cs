@@ -788,14 +788,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Append(Literal(compilation.ProtoNamespace))
                     .AppendLine(";");
                 content.AppendLine();
-                // Well-known imports are inserted once the used types are known: protoc warns on unused imports.
+                // Well-known and NodaTime imports are inserted once the emitted field types are known: protoc warns
+                // on unused imports, and a reachable member may not be emitted (a request's [ServerSet] member).
                 var wellKnownImportsAt = content.Length;
                 var usedTypes = new HashSet<string>(StringComparer.Ordinal);
-                if (reachable.Any(type => contractLookup.ByType.TryGetValue(type, out var contract)
-                    && contract.Members.Items.Any(member => IsArkNodaTimePeriod(member.Type))))
-                {
-                    content.AppendLine("import \"ark/nodatime.proto\";");
-                }
                 // Download chunks are declared locally; only uploads use ark.mediator.UploadDocumentChunk.
                 if (active.Any(item => item.AttachmentRequest != AttachmentRequestKind.None))
                     content.AppendLine("import \"ark/mediator.proto\";");
@@ -865,6 +861,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                     wellKnownImports.AppendLine("import \"google/type/datetime.proto\";");
                 if (usedTypes.Contains("google.protobuf.Empty"))
                     wellKnownImports.AppendLine("import \"google/protobuf/empty.proto\";");
+                if (usedTypes.Contains("ark.nodatime.Period"))
+                    wellKnownImports.AppendLine("import \"ark/nodatime.proto\";");
                 content.Insert(wellKnownImportsAt, wellKnownImports.ToString());
 
                 var fileName = Identifier(group.Key) + ".proto";
@@ -1160,16 +1158,6 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             var separator = value.LastIndexOf('.');
             return separator < 0 ? value : value[(separator + 1)..];
-        }
-
-        private static bool IsArkNodaTimePeriod(string typeName)
-        {
-            if (typeName.EndsWith("[]", StringComparison.Ordinal))
-                return IsArkNodaTimePeriod(typeName[..^2]);
-            if (typeName.StartsWith("global::System.Nullable<", StringComparison.Ordinal)
-                && typeName.EndsWith(">", StringComparison.Ordinal))
-                return IsArkNodaTimePeriod(typeName["global::System.Nullable<".Length..^1]);
-            return string.Equals(typeName, "global::NodaTime.Period", StringComparison.Ordinal);
         }
 
         // Detects Ark.Tools.Core.EvolvableEnum by name/arity/namespace (no compile-time

@@ -55,7 +55,7 @@ public sealed class MessagingParticipantDescriptor
     /// <param name="handlerServiceTypes">The generated consumed-contract handler service types.</param>
     /// <param name="publishedTopics">The generated participant-owned topic resources.</param>
     /// <param name="subscribedTopics">The generated topic resources of the events the participant subscribes to.</param>
-    /// <param name="knownNetworkTopics">The generated names of every event topic in the network.</param>
+    /// <param name="knownNetworkTopics">The generated names of every event topic in the network; defaults to the published and subscribed topic names.</param>
     public MessagingParticipantDescriptor(
         Type participantType,
         MessagingNetworkOptions network,
@@ -101,7 +101,8 @@ public sealed class MessagingParticipantDescriptor
         SubscribedTopics = new ReadOnlyCollection<MessagingTopicResource>(
             (subscribedTopics ?? Array.Empty<MessagingTopicResource>()).ToArray());
         KnownNetworkTopics = new ReadOnlyCollection<string>(
-            (knownNetworkTopics ?? Array.Empty<string>()).ToArray());
+            (knownNetworkTopics ?? PublishedTopics.Concat(SubscribedTopics).Select(static t => t.Name).Distinct(StringComparer.Ordinal))
+            .ToArray());
     }
 
     /// <summary>Gets the participant declaration type.</summary>

@@ -10,6 +10,7 @@ using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
 
+using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 
 using Microsoft.AspNetCore.Authorization;
@@ -26,6 +27,10 @@ using NLog.Extensions.Logging;
 try
 {
     var builder = FunctionsApplication.CreateBuilder(args);
+    // Before reading connection strings, so that Key Vault can supply them.
+    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+    if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))
+        builder.Configuration.AddAzureKeyVault(uri, new DefaultAzureCredential());
     NLogConfigurer.For("Ark.MediatorFramework.Sample.Core.Functions.Api")
         .WithDefaultTargetsAndRulesFromConfiguration(builder.Configuration, async: false)
         .Apply();

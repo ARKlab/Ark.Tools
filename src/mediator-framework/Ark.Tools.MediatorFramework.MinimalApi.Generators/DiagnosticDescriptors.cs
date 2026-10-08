@@ -30,4 +30,8 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor DuplicateETagProperty = new(
         "ARKMF018", "Duplicate ETag property", "HTTP endpoint '{0}' has more than one property marked with [ETag]",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF018.md");
+
+    public static readonly DiagnosticDescriptor PropertyNotBindableWithoutBody = new(
+        "ARKMF059", "Property cannot be bound without a request body", "HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
 }

@@ -1080,6 +1080,84 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorRejectsPropertiesItWouldSilentlyDrop()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed record GetBooks : IQuery<string>
+            {
+                public int Id { get; init; }
+                [HttpQuery] public int Skip { get; init; }
+                public string? Author { get; init; }
+                [ServerSet] public string? UserId { get; set; }
+                [ETag] public string? Version { get; init; }
+                public string Display => "books";
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : ICommand<DeleteBook>
+            {
+                public int Id { get; init; }
+                public bool Force { get; init; }
+            }
+            [HttpEndpoint("HEAD", "/books/{id}")]
+            public sealed record BookExists : IQuery<string>
+            {
+                public int Id { get; init; }
+                public string? Edition { get; init; }
+            }
+            [HttpEndpoint("POST", "/books")]
+            public sealed record CreateBook : IRequest<string>
+            {
+                public string Title { get; init; } = string.Empty;
+            }
+            """;
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Author", "Force", "Edition");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().NotContain("global::GetBooks");
+        result.Generated.Should().NotContain("global::DeleteBook");
+        result.Generated.Should().NotContain("global::BookExists");
+        result.Generated.Should().Contain("global::CreateBook");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorReportsReferencedDroppedPropertyAtTheHost()
+    {
+        var contracts = _createMetadataReference(
+            "Contracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                [HttpQuery] public int Skip { get; init; }
+                public int Limit { get; init; }
+            }
+            """);
+        const string source =
+            """
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            """;
+
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source, [], contracts);
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF059").Subject;
+        diagnostic.GetMessage(CultureInfo.InvariantCulture).Should().Contain("'Limit'");
+        source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length)
+            .Should().Contain("HttpHost(typeof(ContractMarker)");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorEnforcesMaxRequestBodySize()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
@@ -2823,6 +2901,234 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorNeverReadsABodyForMessagePackGet()
+    {
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using System;
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public readonly struct Day
+            {
+                public int Value { get; }
+            }
+            [HttpEndpoint("GET", "/books/{id}", AcceptsMessagePack = true)]
+            public sealed record GetBook : IQuery<string>
+            {
+                [HttpRoute] public Guid Id { get; init; }
+                [HttpQuery] public string[] Tags { get; init; } = [];
+                [HttpQuery] public Day? Since { get; init; }
+            }
+            [HttpEndpoint("GET", "/books", AcceptsMessagePack = true)]
+            public sealed record StreamBooks : IQuery<IAsyncEnumerable<string>>
+            {
+                public int Count { get; init; }
+                public int[] Ids { get; init; } = [];
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().NotContain("ReadRequestAsync");
+        result.Generated.Should().NotContain(".Accepts<");
+        result.Generated.Should().NotContain("ValidateMessagePackContracts");
+        result.Generated.Should().Contain("var request = new global::GetBook {");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::StreamBooks request,");
+        result.Generated.Should().Contain("ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken, 200, 404)");
+        result.Generated.Should().Contain("WriteStreamingResponseAsync<string>");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsGetPropertiesThatNeedABody()
+    {
+        const string source =
+            """
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public Filter? Filter { get; init; }
+                public IReadOnlyList<Filter> Filters { get; init; } = [];
+                [ServerSet] public Filter? Owner { get; set; }
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : IRequest<string>
+            {
+                [HttpRoute] public int Id { get; init; }
+                [HttpBody] public string Reason { get; init; } = string.Empty;
+                public IArkAttachment? Proof { get; init; }
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Filter", "Filters", "Reason", "Proof");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().NotContain("global::ListBooks");
+        result.Generated.Should().NotContain("global::DeleteBook");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsHeadAsUnsupportedVerbOnly()
+    {
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            [HttpEndpoint("HEAD", "/books")]
+            public sealed record BookExists : IQuery<string>
+            {
+                public Filter? Filter { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF010");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMF059");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsGetPropertiesThatWouldBeSilentlyDropped()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/books/{id}/reviews")]
+            public sealed record ListReviews : IQuery<string>
+            {
+                public int Id { get; init; }
+                [HttpQuery] public int Skip { get; init; }
+                public int Limit { get; init; }
+                [ServerSet] public string? UserId { get; set; }
+                [ETag] public string? Version { get; init; }
+                public string Display => "reviews";
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : IRequest<string>
+            {
+                public int Id { get; init; }
+                public string Reason { get; init; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public int Skip { get; init; }
+                public int Limit { get; init; }
+            }
+            [HttpEndpoint("DELETE", "/books/{id}/cache")]
+            public sealed record ClearBookCache : ICommand<ClearBookCache>
+            {
+                public int Id { get; init; }
+                public bool Force { get; init; }
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Limit", "Reason");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("global::ListBooks");
+        result.Generated.Should().Contain("global::ClearBookCache");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsAsParametersPropertiesThatAspNetInfersAsBody()
+    {
+        // Mirrors ASP.NET Minimal API: an [AsParameters] property it cannot bind from a string is inferred as a
+        // body, and a GET or DELETE endpoint then throws at startup.
+        const string source =
+            """
+            using System;
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using NodaTime;
+            public readonly struct BookCode
+            {
+                public static bool TryParse(string? value, out BookCode result) { result = default; return true; }
+            }
+            public readonly struct Shelf : IParsable<Shelf>
+            {
+                static Shelf IParsable<Shelf>.Parse(string s, IFormatProvider? provider) => default;
+                static bool IParsable<Shelf>.TryParse(string? s, IFormatProvider? provider, out Shelf result) { result = default; return true; }
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public List<string> Tags { get; init; } = [];
+                public IEnumerable<string> Authors { get; init; } = [];
+                public Dictionary<string, string> Filters { get; init; } = [];
+                public LocalDate Since { get; init; }
+                public string[] Isbns { get; init; } = [];
+                public BookCode Code { get; init; }
+                public Shelf? Shelf { get; init; }
+                public Guid? Publisher { get; init; }
+                public DayOfWeek[] Days { get; init; } = [];
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBooks : ICommand<DeleteBooks>
+            {
+                public int Id { get; init; }
+                public IReadOnlyList<int> Ids { get; init; } = [];
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            source, [], MetadataReference.CreateFromFile(typeof(NodaTime.LocalDate).Assembly.Location));
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Tags", "Authors", "Filters", "Since", "Ids");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsReferencedGetContractAtTheHostCall()
+    {
+        var contracts = _createMetadataReference(
+            "Contracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Marker;
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public Filter? Filter { get; init; }
+            }
+            """);
+        const string source =
+            """
+            public static class Host
+            {
+                public static void Map() => MapArkEndpointsFromAssembly<Marker>();
+            }
+            """;
+
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source, [], contracts);
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF059").Subject;
+        diagnostic.Location.IsInSource.Should().BeTrue();
+        source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length)
+            .Should().Be("MapArkEndpointsFromAssembly<Marker>()");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorEmitsNegotiationOnlyForOptedInEndpoints()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
@@ -3131,6 +3437,41 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().NotContain("tenant_id");
+    }
+
+    [TestMethod]
+    [DataRow("[ServerSet]", false)]
+    [DataRow("", true)]
+    public void GrpcGeneratorImportsNodaTimeProtoOnlyForEmittedPeriodFields(string elapsedAttribute, bool imported)
+    {
+        var generated = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string UserId { get; set; } = string.Empty;
+                {{elapsedAttribute}}
+                [ProtoMember(2)]
+                public NodaTime.Period? Elapsed { get; set; }
+            }
+
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """,
+            [],
+            MetadataReference.CreateFromFile(typeof(NodaTime.Period).Assembly.Location)).Generated;
+
+        generated.Contains("import \\\"ark/nodatime.proto\\\";", StringComparison.Ordinal).Should().Be(imported);
+        generated.Contains("ark.nodatime.Period elapsed = 2;", StringComparison.Ordinal).Should().Be(imported);
     }
 
     [TestMethod]
@@ -4170,7 +4511,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().Contain(static diagnostic =>
             diagnostic.Id == "ARKMSG018"
-            && diagnostic.GetMessage().Contains("must implement ICommand<TSelf>"));
+            && diagnostic.GetMessage().Contains("must implement ICommand<TSelf> (requests and queries cannot be events)"));
     }
 
     [TestMethod]
@@ -4199,7 +4540,7 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MessagingNetworkGeneratorRejectsUndispatchableProcessedContract()
     {
-        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+        const string source =
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
@@ -4214,9 +4555,52 @@ public sealed class GeneratorSnapshotTests
                 Members = new[] { typeof(LookupParticipant) },
                 Requires = MessagingCapabilities.SendReceive)]
             public sealed partial class BookMessagingNetwork { }
-            """);
+            """;
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(source);
 
-        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG027");
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMSG027").Subject;
+        source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length)
+            .Should().Be("LookupParticipant");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsDuplicateParticipantContracts()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.print_book")]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [Event(Name = "books.book_printed")]
+            public sealed class BookPrinted : ICommand<BookPrinted> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook), typeof(PrintBook) },
+                Publishes = new[] { typeof(BookPrinted), typeof(BookPrinted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingParticipant(
+                Subscribes = new[] { typeof(BookPrinted), typeof(BookPrinted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class AuditParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant), typeof(AuditParticipant) },
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """;
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMSG028").ToArray();
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)).Should().BeEquivalentTo(
+            "Participant 'printing' lists 'PrintBook' more than once in Processes",
+            "Participant 'printing' lists 'BookPrinted' more than once in Publishes",
+            "Participant 'audit' lists 'BookPrinted' more than once in Subscribes");
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("PrintingParticipant", "PrintingParticipant", "AuditParticipant");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMSG005" || diagnostic.Id == "ARKMSG006");
     }
 
     [TestMethod]

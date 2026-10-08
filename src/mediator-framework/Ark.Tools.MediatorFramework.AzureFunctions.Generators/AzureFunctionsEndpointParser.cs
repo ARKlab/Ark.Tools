@@ -42,6 +42,7 @@ internal enum HandlerKind
 /// <param name="IsETag">Whether the property carries the request ETag.</param>
 /// <param name="IsAttachment">Whether the property is a single attachment.</param>
 /// <param name="IsAttachmentCollection">Whether the property is an attachment collection.</param>
+/// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,
     string TypeFullName,
@@ -53,7 +54,8 @@ internal readonly record struct PropertySpec(
     bool IsString,
     bool IsETag,
     bool IsAttachment,
-    bool IsAttachmentCollection);
+    bool IsAttachmentCollection,
+    LocationSpec? Location);
 
 /// <summary>A symbol-free description of an HTTP endpoint contract.</summary>
 /// <param name="TypeName">The flattened contract type name.</param>
@@ -312,7 +314,8 @@ internal static class AzureFunctionsEndpointParser
                     isString,
                     isETag,
                     isAttachment,
-                    isAttachmentCollection);
+                    isAttachmentCollection,
+                    LocationSpec._from(p));
             })
             .ToImmutableArray();
         var responseETagProperty = responseSymbol is null

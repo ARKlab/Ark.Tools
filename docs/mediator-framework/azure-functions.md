@@ -33,7 +33,7 @@ Select the public API assembly at assembly level:
 
 ```csharp
 [assembly: HttpHost(
-    typeof(Ark.MediatorFramework.Sample.API.RefreshGreetingCommand),
+    typeof(Ark.MediatorFramework.Sample.Core.API.Book_CreateRequest.V1),
     "/api/v{version}")]
 ```
 
@@ -502,6 +502,10 @@ Other handler or pipeline errors are abandoned and retried. A second-level
 handler runs inline once at delivery `N` in its own scope; missing or fail-fast
 second-level handlers are dead-lettered, while other second-level failures are
 abandoned so normal `T` processing resumes.
+
+A second-level handler that gives up on a message can dead-letter it explicitly by
+throwing `MessagingFailFastException` with `MessagingFailFastReason.HandlerRejected`,
+instead of returning it to retries.
 
 Abandon visibility is transport-specific: InMemory uses the configured
 `RetryDelay`, Storage Queue uses its visibility timeout, and Service Bus

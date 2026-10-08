@@ -73,6 +73,38 @@ public sealed class MessagingRequestDispatchTests
         transport.GetDeadLetters(_queue).Should().BeEmpty();
     }
 
+    /// <summary>A receiving host without <see cref="IRequestProcessor"/> fails startup instead of failing every delivery.</summary>
+    [TestMethod]
+    public async Task ReceiverWithoutRequestProcessorFailsStartup()
+    {
+        var network = new MessagingNetworkOptions(
+            typeof(RequestNetwork),
+            new MessagingNetworkAttribute
+            {
+                Members = new[] { typeof(RequestReceiverParticipant) },
+                Requires = MessagingCapabilities.SendReceive,
+                MaximumSchedulingDelay = TimeSpan.Zero,
+            });
+        var services = new ServiceCollection();
+        services.Configure<JsonSerializerOptions>(
+            static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+        services.AddScoped<ICommandProcessor, UnusedCommandProcessor>();
+        services.ConfigureArkMessaging(
+            network,
+            new RequestRegistry(network.NetworkIdentity),
+            static builder => builder.Receiver<RequestReceiverParticipant>(static receiver => receiver
+                .UseTransport(new InMemoryMessagingTransport())
+                .UseInMemoryDataBus()));
+        await using var provider = services.BuildServiceProvider();
+        var validator = provider.GetServices<IHostedService>()
+            .Single(static s => s.GetType().Name == "MessagingParticipantStartupValidator");
+
+        var act = async () => await validator.StartAsync(CancellationToken.None).ConfigureAwait(false);
+
+        (await act.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(false))
+            .WithMessage("*IRequestProcessor must be registered*");
+    }
+
     /// <summary>A request contract sent as a message.</summary>
     public sealed record ReviewRequest : IRequest<ReviewRequest, string>
     {

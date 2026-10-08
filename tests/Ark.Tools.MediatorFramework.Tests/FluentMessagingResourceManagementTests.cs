@@ -10,17 +10,45 @@ using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
+using Azure.Messaging.ServiceBus;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
-/// <summary>Verifies resource provisioning of fluent native messaging hosts.</summary>
+/// <summary>Verifies resource provisioning and transport ownership of fluent native messaging hosts.</summary>
 [TestClass]
 public sealed class FluentMessagingResourceManagementTests
 {
     private const string _printedTopic = TestPublisher.Identity + "-tests.printed";
     private const string _loopedTopic = TestLoopback.Identity + "-tests.looped";
+    private const string _serviceBusConnection = "Endpoint=sb://ownership.servicebus.windows.net/;SharedAccessKeyName=test;SharedAccessKey=test";
+
+    /// <summary>The Service Bus transport that <c>UseServiceBus</c> creates is disposed, with its client, by the provider.</summary>
+    [TestMethod]
+    public async Task ServiceBusTransportCreatedByTheBuilderIsDisposedWithTheProvider()
+    {
+#pragma warning disable CA2000 // The composition owns the client; disposing it is the behavior under test.
+        var client = new ServiceBusClient(_serviceBusConnection);
+#pragma warning restore CA2000
+
+        await _resolveTransportAndDisposeAsync(transport => transport.UseServiceBus(client)).ConfigureAwait(false);
+
+        client.IsClosed.Should().BeTrue();
+    }
+
+    /// <summary>A transport the caller supplies stays owned by the caller.</summary>
+    [TestMethod]
+    public async Task SuppliedTransportIsNotDisposedWithTheProvider()
+    {
+        await using var client = new ServiceBusClient(_serviceBusConnection);
+        await using var supplied = new ServiceBusMessagingTransport(client);
+
+        await _resolveTransportAndDisposeAsync(transport => transport.Use(supplied)).ConfigureAwait(false);
+
+        client.IsClosed.Should().BeFalse();
+    }
 
     /// <summary>A publisher over a transport without management cannot be composed under CreateIfMissing.</summary>
     [TestMethod]
@@ -123,11 +151,51 @@ public sealed class FluentMessagingResourceManagementTests
             s.Topic == _loopedTopic && s.Name == TestLoopback.Identity);
     }
 
+    /// <summary>A descriptor without explicit known topics treats its published and subscribed topics as known.</summary>
+    [TestMethod]
+    public void DescriptorDefaultsKnownNetworkTopicsToPublishedAndSubscribedTopics()
+    {
+        var options = TestNetwork.CreateOptions();
+        var descriptor = new MessagingParticipantDescriptor(
+            typeof(TestLoopback),
+            options,
+            TestNetwork.Registry,
+            TestLoopback.Identity,
+            new[] { SerializationProtocol.Json },
+            MessagingDefaultRetryPolicy.Instance,
+            CompressionAlgorithm.None,
+            0,
+            receives: false,
+            dispatch: null,
+            dispatchFailed: null,
+            publishedTopics: [new MessagingTopicResource(_loopedTopic, TestLoopback.Identity)],
+            subscribedTopics:
+            [
+                new MessagingTopicResource(_loopedTopic, TestLoopback.Identity),
+                new MessagingTopicResource(_printedTopic, TestPublisher.Identity),
+            ]);
+
+        descriptor.KnownNetworkTopics.Should().Equal(_loopedTopic, _printedTopic);
+    }
+
+    private static async Task _resolveTransportAndDisposeAsync(Action<MessagingTransportBuilder> transport)
+    {
+        var services = new ServiceCollection();
+        services.ConfigureArkMessaging<TestNetwork>(b => b.Producer<TestPublisher>(p => p
+            .UseTransport(transport)
+            .UseInMemoryDataBus()
+            .UseResourceManagement(new RecordingTransportManagement())));
+        var provider = services.BuildServiceProvider();
+        await using (provider.ConfigureAwait(false))
+            provider.GetRequiredService<IMessagingTransport>().Should().BeOfType<ServiceBusMessagingTransport>();
+    }
+
     private static async Task _runAsync(Action<MessagingCompositionBuilder<TestNetwork>> configure)
     {
         var services = new ServiceCollection();
         services.Configure<JsonSerializerOptions>(
             static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+        services.AddScoped<IRequestProcessor, UnusedRequestProcessor>();
         services.ConfigureArkMessaging(configure);
         var provider = services.BuildServiceProvider();
         await using (provider.ConfigureAwait(false))
@@ -275,6 +343,28 @@ public sealed class FluentMessagingResourceManagementTests
                 receives: true,
                 [new MessagingTopicResource(_loopedTopic, Identity)],
                 [new MessagingTopicResource(_loopedTopic, Identity)]);
+        }
+    }
+
+    private sealed class UnusedRequestProcessor : IRequestProcessor
+    {
+        [Obsolete("Test seam.", error: true)]
+        public TResponse Execute<TResponse>(IRequest<TResponse> request)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<TResponse> ExecuteAsync<TRequest, TResponse>(
+            IRequest<TRequest, TResponse> request,
+            CancellationToken ctk = default)
+            where TRequest : class, IRequest<TRequest, TResponse>
+        {
+            throw new NotSupportedException();
         }
     }
 
