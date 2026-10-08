@@ -2049,9 +2049,13 @@ If `ServiceBusMessagingTransport` is not `IAsyncDisposable`, replace
 
 - [ ] **Step 4: Processors**
 
-Create three console projects (`Microsoft.NET.Sdk`, `OutputType Exe`,
-`NoWarn ARKPII013` as the old `RebusProcessor`), each referencing
-`…Core.Web.Hosting` and `Ark.Tools.NLog.Configuration`. `Program.cs` of
+Create three console projects (`Microsoft.NET.Sdk`, `OutputType Exe`), each
+referencing `…Core.Web.Hosting`, `Ark.Tools.NLog.Configuration` and
+`Ark.Tools.Compliance`. Do not carry over the old `RebusProcessor`'s
+`NoWarn ARKPII013`: every generic-host process (these three, every outbox
+processor, and the WebRebus and Functions processors) calls
+`builder.Services.AddArkRedaction();` right after `ConfigureNLog`, so
+classified telemetry is redacted. `Program.cs` of
 `…Core.Web.Processor`:
 
 ```csharp
@@ -2061,12 +2065,14 @@ Create three console projects (`Microsoft.NET.Sdk`, `OutputType Exe`,
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.Web.Hosting;
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
 
 using Azure.Messaging.ServiceBus;
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using NLog;
@@ -2077,6 +2083,7 @@ try
 {
     var builder = Host.CreateApplicationBuilder(args);
     builder.ConfigureNLog("Ark.MediatorFramework.Sample.Core.Web.Processor");
+    builder.Services.AddArkRedaction();
     var sql = builder.Configuration.GetConnectionString("Sample")
         ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
     var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")
