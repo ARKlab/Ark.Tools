@@ -199,6 +199,18 @@ Feature: Books
                 | 0    | 10    |
             Then the book review list has 0 results
 
+        Scenario: Reject an invalid bulk book import through the background bus
+            Given I am an authenticated user
+            When I dispatch a bulk book import through the background bus with
+                | Title | Author       | Genre   |
+                | Dune  | Bulk Herbert | Fiction |
+                |       | Bulk Herbert | Fiction |
+            Then the error queue contains the failed message with description 'Background bulk book import failed.'
+            When I search books by
+                | Author       | Skip | Limit |
+                | Bulk Herbert | 0    | 25    |
+            Then the book search has 0 results
+
         Scenario: Repeating a book review with the same identifier creates it once
             Given I create a book with
                 | Title | Author  | Genre   |

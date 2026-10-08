@@ -101,6 +101,7 @@ public static class FunctionsHosting
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(dataBus);
         _configureMessagingJson(services);
         AddUserContext(services, container);
         services.AddArkAzureFunctions();

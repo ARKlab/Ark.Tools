@@ -21,6 +21,17 @@ Each trigger app declares one `MessagingFunctionsHost`. The trigger apps do not 
 app and an Api → outbox processor → worker queue delivery on the Service Bus
 emulator.
 
+## DataBus
+
+The Api app and every trigger app use the claim-check DataBus configured from
+`FunctionsHosting.DataBusOptions`. When a serialized message does not fit the
+transport's inline limit (256 KB on Service Bus, minus its headers), the sender
+stores the body in Azure Blob Storage, in the `amf1-databus` container, and
+sends a claim check. The trigger restores the body before its handler runs.
+All apps must share the same storage account. A bulk book import
+(`Book_BulkCreateRequest.V1`) sent to the Processor app is the example covered
+by `BulkImportDataBusTests`.
+
 ## Configuration
 
 Each Functions app reads its settings from `local.settings.json`. Copy

@@ -17,6 +17,7 @@ using Rebus.Transport.InMem;
 using SimpleInjector;
 
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace Ark.MediatorFramework.Sample.Core.WebRebus.Tests;
 
@@ -24,7 +25,7 @@ namespace Ark.MediatorFramework.Sample.Core.WebRebus.Tests;
 internal static class WebRebusTestHosts
 {
     /// <summary>The number of books in <see cref="NewOversizedBulkImport"/>.</summary>
-    public const int BulkImportSize = 1_000;
+    public const int BulkImportSize = 2_000;
 
     /// <summary>Starts the api process: a one-way client with a settable user.</summary>
     public static async Task<RebusTestProcess> ApiAsync(
@@ -104,11 +105,12 @@ internal static class WebRebusTestHosts
     /// <returns>The bulk request.</returns>
     public static Book_BulkCreateRequest.V1 NewOversizedBulkImport(string author)
     {
-        // About 1,000 x 200 bytes of titles: well above the 190 KB threshold.
+        // About 2,000 x 200 bytes of random Base64 titles, which compress poorly: the payload stays above the
+        // offload threshold even if messaging compression is enabled.
         return new Book_BulkCreateRequest.V1(Enumerable.Range(0, BulkImportSize)
-            .Select(index => new Book.V1.Create
+            .Select(_ => new Book.V1.Create
             {
-                Title = index.ToString("D4", CultureInfo.InvariantCulture) + new string('t', 196),
+                Title = Convert.ToBase64String(RandomNumberGenerator.GetBytes(150)),
                 Author = author,
                 Genre = Book.V1.Genre.Fiction,
             })

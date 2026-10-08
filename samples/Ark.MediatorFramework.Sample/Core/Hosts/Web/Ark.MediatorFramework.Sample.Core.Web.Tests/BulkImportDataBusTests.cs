@@ -19,6 +19,7 @@ using SimpleInjector;
 
 using System.Reflection;
 using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace Ark.MediatorFramework.Sample.Core.Web.Tests;
 
@@ -26,7 +27,7 @@ namespace Ark.MediatorFramework.Sample.Core.Web.Tests;
 [TestClass]
 public sealed class BulkImportDataBusTests
 {
-    private const int _bulkImportSize = 1_000;
+    private const int _bulkImportSize = 2_000;
 
     /// <summary>
     /// A bulk import bigger than the transport inline limit travels as a DataBus claim check and the worker creates
@@ -80,11 +81,12 @@ public sealed class BulkImportDataBusTests
 
     private static Book_BulkCreateRequest.V1 _newOversizedBulkImport(string author)
     {
-        // About 1,000 x 200 bytes of titles: well above the 256 KB Service Bus message limit.
+        // About 2,000 x 200 bytes of random Base64 titles, which compress poorly: the payload stays above the
+        // offload threshold even if messaging compression is enabled.
         return new Book_BulkCreateRequest.V1(Enumerable.Range(0, _bulkImportSize)
-            .Select(index => new Book.V1.Create
+            .Select(_ => new Book.V1.Create
             {
-                Title = index.ToString("D4", CultureInfo.InvariantCulture) + new string('t', 196),
+                Title = Convert.ToBase64String(RandomNumberGenerator.GetBytes(150)),
                 Author = author,
                 Genre = Book.V1.Genre.Fiction,
             })

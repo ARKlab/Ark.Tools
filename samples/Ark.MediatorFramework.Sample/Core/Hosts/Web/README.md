@@ -22,6 +22,17 @@ over in-memory messaging.
 Under `CreateIfMissing`, each producer and receiver creates its own queues,
 topics, and subscriptions on Service Bus when it starts.
 
+## DataBus
+
+Every messaging process except the OutboxProcessor uses the claim-check DataBus
+from `WebHosting.CreateDataBus`. When a serialized message does not fit the
+transport's inline limit (256 KB on Service Bus, minus its headers), the sender
+stores the body in Azure Blob Storage, in the `amf1-databus` container, and
+sends a claim check. The receiver restores the body before its handler runs.
+All processes must share the same storage account. A bulk book import
+(`Book_BulkCreateRequest.V1`) sent to the worker is the example covered by
+`BulkImportDataBusTests`.
+
 ## Configuration
 
 Every process reads the same keys. Development values for the local emulators
