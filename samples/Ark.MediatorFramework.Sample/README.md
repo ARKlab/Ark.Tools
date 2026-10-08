@@ -1,103 +1,65 @@
 # Ark.MediatorFramework.Sample
 
-This is the executable sample for Ark.Tools Mediator Framework. It is intentionally
-small enough to read, but broad enough to show how one transport-neutral
-application can be exposed through Minimal API, gRPC, Azure Functions, MessagePack,
-and Rebus.
+This is the executable sample for Ark.Tools Mediator Framework. It is a product
+monorepo with one service, `Core`, whose transport-neutral application is hosted
+three different ways. It is intentionally small enough to read, but broad enough
+to show Minimal API, gRPC, MCP, Azure Functions, MessagePack, native Ark
+messaging, and Rebus.
 
 The sample is not a framework test fixture. It is a reference application with
 real composition roots, a SQL database project, an in-memory profile, source
-generated JSON, generated transport endpoints, and Reqnroll behavior tests.
+generated JSON, generated transport endpoints, and Reqnroll behavior tests. The
+design is in
+[`sample-hosting-variants.md`](../../docs/design/mediator-framework/sample-hosting-variants.md).
 
 ## What the sample proves
 
-- A contract and handler stay independent of HTTP, gRPC, and Rebus.
-- Public contracts live in the API assembly; application-only Rebus messages do
-  not leak into the public API.
+- A contract and handler stay independent of HTTP, gRPC, Azure Functions, and
+  Rebus: the API and Application projects reference no host package, and the
+  same application tests run for every variant.
+- Public contracts live in the API assembly; application-only messages do not
+  leak into the public API.
 - The same handler pipeline applies validation, authorization, auditing, and
   optimistic-concurrency retry regardless of the caller.
 - JSON uses source-generated metadata and Ark.Tools defaults.
-- Rebus uses the application JSON context, an outbox, NLog integration, scoped
-  message handling, retries, and dead-letter behavior.
-- A separate processor can receive work while the web host remains responsible
-  for HTTP/gRPC.
-- Native messaging can commit validated envelopes with application state and
-  drain them from a dedicated always-running outbox host.
+- Every messaging participant runs in its own process, with its own queue, and
+  commits its messages through a transactional outbox.
 - The sample supports SQL Server and an explicit in-memory test profile.
 - The framework generates HTTP endpoints, gRPC services, exported `.proto` files,
-  OpenAPI documents, and messaging routing/handlers from contract plus
-  network/participant ownership declarations.
-- MCP is a planned release-gate integration: the WebInterface host must expose
-  source-generated MCP tools through the official
-  `ModelContextProtocol.AspNetCore` 2.2.0 SDK without adding MCP references to
-  the API or application assemblies.
+  OpenAPI documents, MCP tools, and messaging routing/handlers from contracts
+  plus network/participant ownership declarations.
 
-## Architecture
-
-```text
-                        +-----------------------------+
-                        | Ark.MediatorFramework.Sample |
-                        +-----------------------------+
-                          |                         |
-                    public API                application internals
-                          |                         |
-             +------------+------------+       +----+-------------------+
-             |                         |       |                        |
-        WebInterface              API assembly  Application assembly   Database
-        Minimal API/gRPC           contracts     handlers/services/DAL  SQL project
-             |                         |       |                        |
-             +-------------+---------+       +----+-------------------+
-                           |                      |
-                    generated endpoints      Rebus/native processors
-```
-
-The application layer is composed first. Each host adds only its transport and
-process concerns:
-
-1. `Application.Host.ApplicationComposition` registers handlers, validators,
-   decorators, persistence, source-generated Rebus JSON, and common Rebus
-   behavior.
-2. `WebInterface` adds ASP.NET Core authentication, JSON/MessagePack, OpenAPI,
-   gRPC, generated endpoint mapping, and the API-side bus.
-3. `RebusProcessor` owns the receive queue, generated Rebus handlers, retries,
-   and the outbox processor.
-4. `AzureFunctions` is the native notification subscriber and HTTP host. It
-   consumes its participant queue through a generated Service Bus trigger.
-5. `OutboxProcessor` owns native SQL outbox polling and raw-envelope dispatch;
-   it is never hosted by Azure Functions.
-
-## Projects and folders
+## Monorepo shape
 
 ```text
 Ark.MediatorFramework.Sample/
-├── Ark.MediatorFramework.Sample.slnx
-├── Ark.MediatorFramework.Sample.yml
-├── Ark.MediatorFramework.Sample.buildStage.yml
-├── Ark.MediatorFramework.Sample.deployStage.yml
-├── src/
-│   ├── Ark.MediatorFramework.Sample.Core.API/
-│   │   ├── Authorization/       # public scopes and policy attributes
-│   │   ├── JsonContext/          # public API JSON source-generation context
-│   │   └── *Contracts.cs         # public request, query, response, and DTO types
-│   ├── Ark.MediatorFramework.Sample.Core.Application/
-│   │   ├── Authorization/       # application authorization handler
-│   │   ├── DAL/                  # SQL and in-memory data contexts
-│   │   ├── Handlers/             # request, query, command, and message handlers
-│   │   ├── Handlers/Validators/  # FluentValidation validators
-│   │   ├── Host/                 # ApplicationComposition
-│   │   ├── JsonContext/           # application/Rebus JSON source-generation context
-│   │   ├── Messages/             # internal Rebus contracts
-│   │   └── Services/             # decorators and application services
-│   ├── Ark.MediatorFramework.Sample.Core.Database/
-│   ├── Ark.MediatorFramework.Sample.AuditFunctions/ # independent audit subscriber
-│   ├── Ark.MediatorFramework.Sample.OutboxProcessor/
-│   ├── Ark.MediatorFramework.Sample.RebusProcessor/
-│   ├── Ark.MediatorFramework.Sample.AzureFunctions/
-│   └── Ark.MediatorFramework.Sample.WebInterface/
-└── test/
-    ├── Ark.MediatorFramework.Sample.GrpcClient/
-    └── Ark.MediatorFramework.Sample.Tests/
+├── Ark.MediatorFramework.Sample.slnx                 # one solution for every variant
+├── Ark.MediatorFramework.Sample.Core.Web.yml         # one pipeline per variant
+├── Ark.MediatorFramework.Sample.Core.Web.buildStage.yml
+├── Ark.MediatorFramework.Sample.Core.Web.deployStage.yml
+├── Ark.MediatorFramework.Sample.Core.WebRebus.yml    (+ .buildStage.yml, .deployStage.yml)
+├── Ark.MediatorFramework.Sample.Core.Functions.yml   (+ .buildStage.yml, .deployStage.yml)
+├── Directory.Build.props / .targets, Directory.Packages.props, global.json
+├── docker-compose.yml
+└── Core/                                             # the main service
+    ├── Ark.MediatorFramework.Sample.Core.API/        # public contracts
+    ├── Ark.MediatorFramework.Sample.Core.Application/ # handlers, DAL, messages, composition
+    ├── Ark.MediatorFramework.Sample.Core.Database/   # SQL project (DACPAC)
+    ├── Ark.MediatorFramework.Sample.Core.Tests/      # Reqnroll application tests
+    └── Hosts/
+        ├── Web/        # Minimal API + gRPC + MCP + native messaging
+        ├── WebRebus/   # Minimal API + Rebus
+        └── Functions/  # Azure Functions HTTP + native messaging triggers
 ```
+
+- `Core` is the main service. A second service is added as a sibling folder with
+  the same layer projects and its own `Hosts/`.
+- Code shared between services goes into `Ark.MediatorFramework.Sample.Common/`
+  at the root. That project is not created until a second service needs it.
+- Host projects are named `Ark.MediatorFramework.Sample.Core.<Variant>.<Role>`
+  and each variant has its own `Hosting` library shared by its processes only.
+  Nothing is shared across variants.
+- `Core` plus one `Hosts/<Variant>/` is a complete application.
 
 ### Assembly boundary
 
@@ -106,9 +68,36 @@ consumers. It contains public contracts such as `Book_CreateRequest`, `GetAudits
 and `DescribeBookEditionRequest`.
 
 `Ark.MediatorFramework.Sample.Core.Application` contains behavior and internal
-workflow messages such as `ProcessBookPrintProcessRequest` and
-`FailingRebusRequest`. A client can depend on the API without receiving the
-worker's topology or dead-letter demonstration types.
+workflow messages such as `ProcessBookPrintProcessRequest`. A client can depend
+on the API without receiving the worker's topology.
+
+## Host variants
+
+| Variant | Hosts | Messaging | Details |
+| --- | --- | --- | --- |
+| `Web` | ASP.NET Core Minimal API, gRPC, MCP | Native Ark messaging on Azure Service Bus, with a separate `OutboxProcessor` | [`Core/Hosts/Web`](Core/Hosts/Web/README.md) |
+| `WebRebus` | ASP.NET Core Minimal API | Rebus on Azure Service Bus with the Rebus outbox | [`Core/Hosts/WebRebus`](Core/Hosts/WebRebus/README.md) |
+| `Functions` | Azure Functions (isolated worker) HTTP and Service Bus triggers | Native Ark messaging, with a separate `OutboxProcessor` console app | [`Core/Hosts/Functions`](Core/Hosts/Functions/README.md) |
+
+The network keeps four participants. Each runs in its own process in every
+variant, and a variant never mixes Rebus and native messaging.
+
+| Participant | Role | `Web` | `WebRebus` | `Functions` |
+| --- | --- | --- | --- | --- |
+| Api | Sends `ProcessBookPrintProcessRequest` and `CreateBookReviewRequest` | `WebInterface` | `WebInterface` (one-way client) | `Api` |
+| Print worker (`ark-mediator-sample`) | Processes the sent messages; publishes `BookPrintCompleted` | `Processor` | `Processor` | `Processor` |
+| Notification subscriber | Records the notification | `NotificationProcessor` | `NotificationProcessor` | `Notifications` |
+| Audit subscriber | Records the print audit effect | `AuditProcessor` | `AuditProcessor` | `Audit` |
+| Outbox drain | Dispatches committed envelopes | `OutboxProcessor` | Rebus outbox processor inside `Processor` | `OutboxProcessor` |
+
+`BookPrintCompleted` is declared once in the Application assembly. The print
+worker owns its topic; the notification and audit subscribers each receive an
+independent copy through a forwarding subscription on their own queue
+(`sample-messaging-notification`, `sample-messaging-audit`). The logical topic
+is `ark-mediator-sample-books/book-print.completed`; native Service Bus maps it
+to a provider entity name. Rebus and native headers, persisted envelopes, and
+serializers are incompatible, so the declaration types are reusable generator
+input, not a bridge.
 
 ## Domain entities and operations
 
@@ -118,7 +107,7 @@ worker's topology or dead-letter demonstration types.
 - Upload and download book covers with metadata and content validation.
 - Use `EvolvableEnum<Book.V1.Genre>` for forward-compatible categories.
 - Start a background book-print process.
-- Read process status while the Rebus worker updates it.
+- Read process status while the print worker updates it.
 - Cancel pending or running print processes and reject terminal-state cancellation.
 - Demonstrate a business-rule violation when a print process is already active.
 - Stream bounded Book items with cancellation-aware HTTP JSON and gRPC endpoints.
@@ -139,41 +128,38 @@ and a safe sort allow-list.
 
 ### Prerequisites
 
-- .NET SDK 10.0.100 from `global.json`.
-- Docker Desktop for the SQL profile.
+- .NET SDK from `global.json`.
+- Docker for the SQL profile and the local emulators.
 - Azure Functions Core Tools only when running the Functions host.
 
-Build the nested solution:
+Build the solution:
 
 ```bash
 dotnet build samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.slnx
 ```
 
-Run the web host:
+Start the dependencies, then follow the README of the variant you want to run:
 
 ```bash
-dotnet run \
-  --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface
+docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d sqlserver servicebus azurite
 ```
 
-The web host exposes generated routes under `/api/v1`, OpenAPI at
-`/openapi/v1.json` and `/openapi/v2.json`, Scalar at `/scalar/v1`, and gRPC
-reflection when configured.
+The `Web` WebInterface exposes generated routes under `/api/v1`, OpenAPI at
+`/openapi/v1.json` and `/openapi/v2.json`, Scalar at `/scalar/v1`, gRPC, and an
+authenticated MCP endpoint at `/mcp/v1`. See the
+[MCP user guide](../../docs/mediator-framework/mcp.md) and the
+[MCP design](../../docs/design/mediator-framework/mcp-design.md).
 
-The MCP release gate extends this host with an authenticated `/mcp` endpoint.
-It must expose a generated query, mutation, and the existing cover
-upload/download operations, and test them through the official SDK client.
-See the [MCP user guide](../../docs/mediator-framework/mcp.md) and the
-[MCP design](../../docs/design/mediator-framework/mcp-design.md) for the required
-composition and attachment/error assertions.
+Production Service Bus setup belongs in external configuration. Never commit
+credentials or `local.settings.json`.
 
 ## Persistence profiles
 
 The default integration profile uses SQL Server and the sample DACPAC:
 
 ```bash
-docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d db
-dotnet test samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
+docker compose -f samples/Ark.MediatorFramework.Sample/docker-compose.yml up -d sqlserver
+dotnet test samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Tests
 ```
 
 Set `ARK_SAMPLE_SQL_CONNECTION` when the local SQL connection is not the Docker
@@ -185,12 +171,12 @@ Use the explicit in-memory profile when SQL is not available:
 
 ```bash
 ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
-  samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests
+  samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Tests
 ```
 
 The in-memory profile still exercises the application handlers, decorators,
-outbox, Rebus transport, and scenario-owned test composition. It does not silently
-replace the SQL profile; choose it explicitly.
+outbox, the in-memory messaging transport, and scenario-owned test composition.
+It does not silently replace the SQL profile; choose it explicitly.
 
 ### Concurrency
 
@@ -201,165 +187,37 @@ row locking instead: SQL reads request `UPDLOCK, HOLDLOCK` through
 `forUpdate: true` on `ReadBookPrintProcessAsync`, while the in-memory context
 keeps the same atomic transition rules under its shared lock.
 
-## Rebus topology
+## Tests
 
-Rebus mode is one complete topology:
+Every variant runs the same application tests plus its own host tests:
 
-- **API sender:** the web or compatibility Functions composition uses one-way
-  Rebus transport when it only enqueues work.
-- **Processor receiver:** `RebusProcessorComposition` registers generated message
-  handlers, starts the input queue, enables the outbox processor, and applies
-  retry/dead-letter settings.
+| Project | Covers |
+| --- | --- |
+| `Core/Ark.MediatorFramework.Sample.Core.Tests` | Reqnroll application scenarios on native in-memory messaging, SQL and in-memory persistence, outbox and concurrency tests. Identical for every variant |
+| `Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests` | HTTP, gRPC, MCP, OpenAPI, serialization, streaming, and composition of every process |
+| `Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Tests` | Rebus topology, the error queue, and the composition roots |
+| `Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests` | Composition of every Functions app and a delivery test on the Service Bus emulator |
 
-```text
-WebInterface / compatibility Functions
-        |
-        | Rebus headers + Rebus serialization/outbox
-        v
-ark-mediator-sample queue
-        |
-        v
-RebusProcessor ----> Rebus error queue
-```
-
-Common configuration in `ApplicationComposition` includes:
-
-- source-generated `ApplicationJsonSerializerContext`;
-- `UseSystemTextJson` with Ark defaults;
-- `logging.NLog()`;
-- user-context propagation;
-- generated routing;
-- outbox registration.
-
-Run the standalone in-memory processor:
+Run the shared tests and one variant's tests:
 
 ```bash
-dotnet run \
-  --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor
+dotnet test samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Tests
+dotnet test samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests
 ```
 
-An `InMemNetwork` cannot cross process boundaries. Run the bounded sample tests
-to compose its matching sender and receiver together:
+The Functions delivery test needs the Service Bus emulator from
+`docker-compose.yml` and reads `ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING`; the
+Functions README lists the settings.
 
-```bash
-ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
-  Ark.Tools.slnx --configuration Debug --minimum-expected-tests 1
-```
+Application scenarios assert business results, state, typed exceptions, and
+eventual effects. They do not assert URLs, status codes, JSON, OpenAPI, or
+generated transport wrappers. Those belong to focused host-boundary tests.
 
-### Functions logging
+Follow the test-project setup in
+[`docs/mediator-framework/testing.md`](../../docs/mediator-framework/testing.md)
+and keep application and framework boundary tests separate.
 
-Both isolated-worker entry points configure `Ark.Tools.NLog` before the host is
-built. They use the synchronous console target so Azure Functions Core Tools
-captures startup and invocation output, clear the default providers, and add
-one NLog provider with message templates and named properties preserved. This
-avoids duplicate application events while keeping structured logging intact.
-
-`ArkApplicationInsightsTelemetry` reads the Application Insights connection
-string from Functions configuration (`ApplicationInsights:ConnectionString` or
-`APPLICATIONINSIGHTS_CONNECTION_STRING`); it is never stored in source. For
-Core Tools, replace the empty `ApplicationInsights__ConnectionString` value in
-the copied `local.settings.json` only when sending telemetry to Azure Monitor. In
-Azure, configure the same setting as an application setting or use the
-standard `APPLICATIONINSIGHTS_CONNECTION_STRING` setting. Leave it empty for
-local console-only diagnostics.
-
-The WebInterface and RebusProcessor keep their existing Rebus outbox
-registrations. Rebus and native outbox adapters are alternative topology modes;
-do not point their processors at the same outbox rows.
-
-## Native AMF topology
-
-`BookPrintCompleted` is declared once in the Application assembly. Its logical
-topic is `ark-mediator-sample-books/book-print.completed`; Service Bus
-maps it to the native topic below. The print worker participant (`ark-mediator-sample`) owns its topic; the Azure Functions host records
-notification effects; and the separate AuditFunctions host records audit
-effects. The topic forwards independent copies to the
-`sample-messaging-notification` and `sample-messaging-audit` queues.
-
-Environments provisioned before this change hold the old topic
-`sample-messaging-publisher-books/book-print.completed`; delete it or leave it orphaned.
-
-The flow:
-
-```text
-native publisher / native SQL outbox
-        |
-        | amf1-* headers + native envelope
-        v
-ark-mediator-sample-books-book-print.completed-6c781d065b678ff1b867ba3b86d5c8a5481c888ba0a4b1064a7d093107cbe40f topic
-        |
-        +---- forwarding subscription ----> sample-messaging-notification
-        |                                      |
-        |                                      v
-        |                                 AzureFunctions
-        |
-        +---- forwarding subscription ----> sample-messaging-audit
-                                               |
-                                               v
-                                          AuditFunctions
-```
-
-The executable three-participant proof composes the publisher and both
-subscribers on the same InMemory transport:
-
-```bash
-ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
-  Ark.Tools.slnx --configuration Debug --minimum-expected-tests 1
-```
-
-For a Service Bus deployment, configure a native Service Bus publisher, create
-the publisher topic, both identity queues, and the two forwarding subscriptions,
-then copy local settings, replace the Service Bus placeholder, and start each
-subscriber:
-
-```bash
-cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
-cp local.settings.json.example local.settings.json
-func start --port 7071
-```
-
-```bash
-cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
-cp local.settings.json.example local.settings.json
-func start --port 7072
-```
-
-Start the native SQL outbox processor as a separate always-running process:
-
-```bash
-ARK_SAMPLE_SQL_CONNECTION='...' \
-ARK_SAMPLE_SERVICEBUS_CONNECTION='...' \
-dotnet run \
-  --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.OutboxProcessor
-```
-
-Native senders call fluent `UseOutbox`; this only enables transactional enqueue.
-`Ark.MediatorFramework.Sample.OutboxProcessor` registers
-the single `MessagingOutboxProcessor` hosted service under the reserved
-`outbox-processor` identity. Successful broker acceptance commits deletion of a
-peek-locked batch. Failures roll the SQL transaction back so the batch remains
-retryable. The original sender identity, message ID, serialized payload,
-compression, and claim-check headers remain unchanged. Neither Functions host
-runs a Rebus worker or an outbox processor.
-
-The declaration types are reusable generator input, not a bridge. Do not combine
-a Rebus publisher with native subscribers, or a native publisher with a Rebus
-processor, on one active network. Rebus and AMF headers and persisted envelopes
-are incompatible; select one mode for every participant in the network.
-
-Production Service Bus setup belongs in external configuration. The Functions
-host accepts a Service Bus connection string locally and uses
-`DefaultAzureCredential` for a namespace in managed environments. Do not commit
-credentials or `local.settings.json`.
-
-The optional outbound Rebus client is disabled by default. Set
-`AzureServiceBus__EnableOutboundRebus` to `true` only when the external
-`AzureServiceBus__ConnectionString` or
-`AzureServiceBus__fullyQualifiedNamespace` setting is intended for outbound
-Rebus sends. Namespaces use `DefaultAzureCredential`. It is one-way only: the
-Function host does not register Rebus handlers, an input queue, subscriptions,
-or a worker. Keep Rebus messages and native AMF messages on their respective
-topologies; this switch does not make the transports interoperable.
+## DataBus
 
 For claim-check payloads, the sample can select the production Azure Blob provider
 with `UseAzureBlobDataBus` without changing message contracts:
@@ -414,13 +272,13 @@ for this sample is:
 
 ## Throughput tuning walkthrough
 
-`SampleHost` registers the operational metric tier unconditionally and the
+The Web variant's `SampleHost` registers the operational metric tier unconditionally and the
 advanced tier only when `Messaging:AdvancedMetrics` is `true`, so a tuning run
 is a configuration change and a restart:
 
 ```bash
 Messaging__AdvancedMetrics=true dotnet run \
-  --project samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface
+  --project samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface
 ```
 
 Exporting the histograms with usable buckets needs explicit views; the defaults
@@ -460,72 +318,45 @@ Pin the observed value with `AdaptiveConcurrency = false` and
 advanced tier back off. The operational tier is enough to keep the result
 under watch.
 
-## Azure Functions
-
-The isolated-worker project exposes the same public API contract set through the
-generated HTTP host. It uses the in-memory profile when no
-`ConnectionStrings__Sample` value is configured; configure that value for the
-shared SQL profile in a deployed environment. It intentionally excludes
-MessagePack contracts because the Functions binding does not provide that
-formatter. Its production entry point uses native Service Bus messaging. An
-explicit `AzureServiceBus__EnableOutboundRebus=true` setting can additionally
-register the outbound-only Rebus client used by HTTP-to-Rebus compatibility
-deployments; this does not replace native messaging or start a Rebus receiver.
-
-The production Functions host remains bound to Service Bus. The focused
-`MessagingBusSampleTests` fixture separately composes the Book messaging
-participant with `StorageQueueMessagingTransport` over Azurite and verifies
-scheduled send, receive, and poison-queue movement without changing the
-production topology. Start the repository Azurite service before running this
-fixture.
-
-```bash
-docker compose \
-  -f samples/Ark.MediatorFramework.Sample/docker-compose.yml \
-  up -d azurite
-ARK_SAMPLE_INMEMORY_TESTS=1 dotnet test \
-  Ark.Tools.slnx --configuration Debug --minimum-expected-tests 1
-```
-
-Read the complete hosting walkthrough in
-[`docs/mediator-framework/azure-functions.md`](../../docs/mediator-framework/azure-functions.md).
-
-## Tests
-
-`Ark.MediatorFramework.Sample.Tests` contains:
-
-- Reqnroll application scenarios for books and synchronous commands;
-- direct contract dispatch through scenario-owned application contexts;
-- SQL and in-memory persistence coverage;
-- Rebus retry, outbox, and dead-letter tests;
-- HTTP, gRPC, authorization, streaming, concurrency, and startup tests.
-
-Application scenarios assert business results, state, typed exceptions, and
-eventual effects. They do not assert URLs, status codes, JSON, OpenAPI, or
-generated transport wrappers. Those belong to focused host-boundary tests.
-
-Follow the test-project setup in
-[`docs/mediator-framework/testing.md`](../../docs/mediator-framework/testing.md)
-and keep application and framework boundary tests separate.
-
 ## CI/CD examples
 
-The Azure DevOps samples mirror the ReferenceProject pattern:
+The Azure DevOps samples mirror the ReferenceProject pattern, one pipeline per
+variant:
 
-- `Ark.MediatorFramework.Sample.yml` triggers build/test on `master`, `develop`,
-  and pull requests.
-- `Ark.MediatorFramework.Sample.buildStage.yml` restores locked packages, starts
-  SQL Server, builds/tests, publishes the web host, Functions host, independent
-  Rebus processor, and DACPAC into one pipeline artifact.
-- `Ark.MediatorFramework.Sample.deployStage.yml` deploys the published web and
-  Functions hosts after the service connection and target names are configured.
-  It exposes the processor and DACPAC artifacts for the environment-specific
-  worker/database deployment step; choose the approved WebJob, Container Apps,
-  VM, or SQL deployment task for the target environment before enabling it.
+| Pipeline | Tests | Publishes |
+| --- | --- | --- |
+| `Ark.MediatorFramework.Sample.Core.Web.yml` | `Core.Tests`, `Core.Web.Tests` | WebInterface, Processor, NotificationProcessor, AuditProcessor, OutboxProcessor, DACPAC |
+| `Ark.MediatorFramework.Sample.Core.WebRebus.yml` | `Core.Tests`, `Core.WebRebus.Tests` | WebInterface, Processor, NotificationProcessor, AuditProcessor, DACPAC |
+| `Ark.MediatorFramework.Sample.Core.Functions.yml` | `Core.Tests`, `Core.Functions.Tests` (with the Service Bus emulator) | Api, Processor, Notifications, Audit, OutboxProcessor, DACPAC |
+
+Each pipeline triggers on `master`, `develop`, and pull requests that touch
+`Core`, its own variant, the shared sample-root files, or its own pipeline
+files. Its `buildStage.yml` restores locked packages, starts SQL Server, builds
+the solution, runs the tests, and publishes one pipeline artifact. Its
+`deployStage.yml` deploys the web or Function apps after the service connection
+and target names are configured, and exposes the other host and DACPAC artifacts
+for the environment-specific worker and database deployment step; choose the
+approved WebJob, Container Apps, VM, or SQL deployment task before enabling it.
 
 Deployment is disabled by default through `enableDeployment: 'false'`. Enable it
 only after configuring the Azure DevOps environment, service connection, app
 names, identity, and application settings.
+
+## Using as a template (eject)
+
+To use a variant as the start of your own product:
+
+1. Copy `samples/Ark.MediatorFramework.Sample` outside the Ark.Tools repository.
+   Keep `Core/` and the one `Hosts/<Variant>/` you want; remove the other
+   variants from the solution, together with their pipelines.
+2. In `Directory.Packages.props`, change the Ark.Tools package versions from
+   `999.9.9` to a released version.
+3. Remove the imports of the parent `Directory.Build.props` (marked
+   `Remove this on eject`) and `Directory.Build.targets`.
+4. Rename the projects and namespaces from `Ark.MediatorFramework.Sample` to your
+   product name, and adjust the pipeline files.
+5. Run `dotnet restore`, `dotnet build`, start the dependencies with
+   `docker compose up -d`, and run `dotnet test`.
 
 ## Guide map
 

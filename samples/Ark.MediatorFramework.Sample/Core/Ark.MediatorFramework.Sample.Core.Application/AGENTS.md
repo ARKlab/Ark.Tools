@@ -11,14 +11,17 @@ Framework transports.
 - Singleton domain services contain reusable business rules and side-effects.
 - Domain services publish messages and call external systems through adapters.
 - External adapters have mock/stub implementations and scenario binding drivers.
-- SQL, Rebus, blob storage, and the local outbox are service-owned persistence;
+- SQL, blob storage, and the local outbox are service-owned persistence;
   they are contexts/DALs, not external adapters.
 - Do not add a `Store` interface or class. The Store pattern hides transaction
   boundaries and is explicitly rejected.
 
 Keep application-owned contracts transport-neutral. Public requests, queries,
-responses, and DTOs belong in the sibling API project; Rebus-only workflow
-messages belong under `Messages/`. Namespace versioned models and operation
+responses, and DTOs belong in the sibling API project; internal workflow
+messages belong under `Messages/`. This project and the API project reference no
+host package (Rebus, Azure Functions, or ASP.NET Core): a host is added as a
+variant under `Core/Hosts/<Variant>/` with a `Hosting` library and one project
+per participant, never inside Application. Namespace versioned models and operation
 contracts with static classes, use `Input`/`Create`/`Update`/`Output`
 inheritance, and compose model payloads into request envelopes.
 

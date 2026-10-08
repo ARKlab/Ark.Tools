@@ -21,7 +21,7 @@ public sealed record ComposeGreetingResponse
     public required string Status { get; init; }
 }
 ```
-Source: [`BookPrintProcessContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookPrintProcessContracts.cs)
+Source: [`BookPrintProcessContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookPrintProcessContracts.cs)
 
 The handler persists a pending workflow and sends a second contract:
 
@@ -38,7 +38,7 @@ return new ComposeGreetingResponse
     Status = "queued",
 };
 ```
-Source: [`CreateBookPrintProcessHandler.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Handlers/Book/CreateBookPrintProcessHandler.cs)
+Source: [`CreateBookPrintProcessHandler.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Handlers/Book/CreateBookPrintProcessHandler.cs)
 
 ## 2. Put the background contract in Application
 
@@ -55,7 +55,7 @@ public sealed record CompleteGreetingCompositionRequest :
     public required string Name { get; init; }
 }
 ```
-Source: [`ProcessBookPrintProcessRequest.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Messages/ProcessBookPrintProcessRequest.cs)
+Source: [`ProcessBookPrintProcessRequest.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Messages/ProcessBookPrintProcessRequest.cs)
 
 The processing participant owns the queue:
 
@@ -68,7 +68,7 @@ public sealed partial class GreetingProcessorParticipant;
 [MessagingNetwork(Members = new[] { typeof(GreetingProcessorParticipant) })]
 public static partial class GreetingNetwork;
 ```
-Source: [`MessagingDeclarations.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Messages/MessagingDeclarations.cs)
+Source: [`MessagingDeclarations.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Messages/MessagingDeclarations.cs)
 
 For participant-bound Rebus hosts, the participant declaration is the ownership
 source of truth. `[RebusMessage]` remains only for the legacy assembly-scan path;
@@ -89,11 +89,12 @@ participants.
 The sample follows this boundary:
 
 - public requests and DTOs:
-  [`API/`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API);
+  [`API/`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API);
 - internal messages:
-  [`Application/Messages/`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Messages);
+  [`Application/Messages/`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Messages);
 - processor composition:
-  [`RebusProcessorComposition.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs).
+  [`Processor/Program.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Program.cs) and the shared
+  [`RebusHosting.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/RebusHosting.cs).
 
 ## 3. Implement the same application handler
 
@@ -114,7 +115,7 @@ public sealed class CompleteGreetingCompositionHandler :
     }
 }
 ```
-Source: [`ProcessBookPrintProcessHandler.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Handlers/Book/ProcessBookPrintProcessHandler.cs)
+Source: [`ProcessBookPrintProcessHandler.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Handlers/Book/ProcessBookPrintProcessHandler.cs)
 
 The generated Rebus wrapper resolves this handler in a message scope. The
 handler does not know whether the sender is HTTP, Functions, or another worker.
@@ -123,60 +124,45 @@ reuses the active message scope.
 
 ## 4. Configure a receiver
 
-Declare the generated host in its own file:
+Declare the generated host in the processor project (the sample puts it at the
+bottom of `Program.cs`):
 
 ```csharp
 [ArkRebusHost(typeof(GreetingProcessorParticipant))]
 public sealed partial class GreetingRebusHost;
 ```
-Source: [`RebusProcessorComposition.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs)
+Source: [`Program.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Program.cs)
 
 Then compose it in `Program.cs`:
 
 ```csharp
-var container = new Container();
-container.Options.DefaultScopedLifestyle = new AsyncScopedLifestyle();
-ApplicationComposition.Register(container, useSqlStore: true);
-container.RegisterAuthorization();
-container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
+await using var container = RebusHosting.CreateContainer(
+    new ApplicationOptions { SqlConnectionString = sql });
+container.RegisterSingleton<
+    IContextProvider<ClaimsPrincipal>,
+    RebusPrincipalContextWithFallbackProvider>();
 
-var requirements = GreetingRebusHost.GetRequirements();
-GreetingRebusHost.Register(
-    (serviceType, implementationType) =>
-        container.Collection.Append(serviceType, implementationType));
-container.RegisterDecorator(
-    typeof(IHandleMessages<>),
-    typeof(RebusScopeDecorator<>));
+// The worker is the only process that drains the shared outbox table.
+RebusHosting.Configure<GreetingRebusHost>(
+    container,
+    transport => transport.UseAzureServiceBus(
+        serviceBus,
+        GreetingProcessorParticipant.Identity),
+    startOutboxProcessor: true);
 
-container.ConfigureRebus(config =>
-{
-    config.Transport(transport =>
-    {
-        transport.UseAzureServiceBus(
-            connectionString,
-            requirements.InputQueueName!);
-        ApplicationComposition.ConfigureRebusOutbox(
-            transport,
-            container,
-            startProcessor: true);
-    });
-    ApplicationComposition.ConfigureRebusCommon(
-        config,
-        container,
-        GreetingRebusHost.ConfigureRouting,
-        GreetingRebusHost.ConfigureOptions);
-});
-
+using var host = builder.Build();
+container.Verify();
+container.StartBus();
 await GreetingRebusHost
-    .SubscribeAsync(
-        container.GetInstance<Rebus.Bus.IBus>(),
-        cancellationToken)
+    .SubscribeAsync(container.GetInstance<Rebus.Bus.IBus>())
     .ConfigureAwait(false);
+await host.RunAsync().ConfigureAwait(false);
 ```
-Source: [`RebusProcessorComposition.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs)
+Source: [`Program.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Program.cs)
 
-`GreetingRebusHost.Register(...)` keeps the generated `IHandleMessages<T>`
-registrations in the application container by default. The current generator API
+`RebusHosting.Configure<THost>` calls the generated `Register(...)`, which keeps
+the generated `IHandleMessages<T>` registrations in the application container by
+default; it also applies the generated routing and retry options. The current generator API
 does not require Microsoft DI here; if a DI registration overload is added in
 the future, it remains opt-in rather than a replacement for SimpleInjector
 composition.
@@ -190,16 +176,15 @@ An outbound-only host must not register receivers, workers, subscriptions, or
 an outbox processor:
 
 ```csharp
-ApplicationComposition.RegisterOutboundRebus(
+RebusHosting.Configure<GreetingRebusHost>(
     container,
-    transport => transport.UseAzureServiceBusAsOneWayClient(
-        serviceBusConnectionString,
-        new DefaultAzureCredential()),
-    GreetingRebusHost.ConfigureRouting);
+    transport => transport.UseAzureServiceBusAsOneWayClient(serviceBus),
+    startOutboxProcessor: false);
 ```
-Source: [`AzureFunctionsRebusComposition.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions/AzureFunctionsRebusComposition.cs)
+Source: [`Program.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface/Program.cs)
 
-Azure Functions uses this pattern. The processor is a separate deployment.
+The WebRebus WebInterface uses this pattern. It enlists its sends in the outbox, and the
+Processor, a separate deployment, drains it.
 
 ## 6. Use source-generated JSON and NLog
 
@@ -216,7 +201,7 @@ config.Serialization(serializer =>
     serializer.UseSystemTextJson(rebusOptions);
 });
 ```
-Source: [`RebusProcessorComposition.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs)
+Source: [`RebusHosting.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/RebusHosting.cs)
 
 Include every internal message and nested public payload in
 `ApplicationJsonSerializerContext`. Rebus serialization must not depend on the
@@ -225,9 +210,9 @@ web host's private JSON context.
 ## 7. Configure retries and failure behavior
 
 ```csharp
-GreetingRebusHost.ConfigureOptions(options);
+THost.ConfigureOptions(options);
 ```
-Source: [`RebusProcessorComposition.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/RebusProcessorComposition.cs)
+Source: [`RebusHosting.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/RebusHosting.cs)
 
 Decide what is transient and what is final. Test:
 

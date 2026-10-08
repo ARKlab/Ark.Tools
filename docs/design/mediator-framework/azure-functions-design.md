@@ -271,11 +271,13 @@ a long-running competing consumer. HTTP handlers may send commands/events throug
 
 ## Sample and testing specification
 
-Add `Ark.MediatorFramework.Sample.AzureFunctions` beside `WebInterface`. It
-references the same Application package and demonstrates the same versioned
-greeting, validation, authorization, ProblemDetails, ETag, single/multi-file
-upload, download, streaming and outbound Rebus workflow. It contains `host.json`
-with an empty route prefix and JSON-only HTTP configuration.
+The `Core/Hosts/Functions` variant of `samples/Ark.MediatorFramework.Sample`
+(see [`sample-hosting-variants.md`](sample-hosting-variants.md)) sits beside the
+`Web` and `WebRebus` variants. It references the same Application project and
+demonstrates the same versioned greeting, validation, authorization,
+ProblemDetails, ETag, single/multi-file upload, download, streaming and native
+messaging workflow. Its Api app contains `host.json` with an empty route prefix
+and JSON-only HTTP configuration.
 
 Testing has three layers:
 

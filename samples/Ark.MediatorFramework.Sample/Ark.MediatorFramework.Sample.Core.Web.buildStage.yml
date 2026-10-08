@@ -1,0 +1,125 @@
+parameters:
+  - name: name
+    type: string
+  - name: dependsOn
+    type: string
+    default: ''
+  - name: workingDirectory
+    type: string
+  - name: vmImageName
+    type: string
+  - name: buildConfiguration
+    type: string
+
+stages:
+  - stage: ${{ parameters.name }}
+    displayName: ${{ parameters.name }}
+    dependsOn: ${{ parameters.dependsOn }}
+    variables:
+      solutionPath: '${{ parameters.workingDirectory }}/Ark.MediatorFramework.Sample.slnx'
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+    jobs:
+      - job: BuildAndTest
+        displayName: Build and test mediator sample (Web)
+        timeoutInMinutes: 60
+        pool:
+          vmImage: ${{ parameters.vmImageName }}
+        services:
+          sqlserver: sqlserver
+        steps:
+          - task: UseDotNet@2
+            displayName: Use sample SDK
+            inputs:
+              useGlobalJson: true
+              workingDirectory: ${{ parameters.workingDirectory }}
+
+          # Azure DevOps does not wait for service container health.
+          # The container name is generated, so find it by image.
+          - script: |
+              sqlId=$(docker ps --filter ancestor=mcr.microsoft.com/mssql/server:2025-latest -q)
+              [ -n "$sqlId" ] || { echo 'SQL Server service container not found'; exit 1; }
+              timeout 120s bash -c 'until docker exec "$0" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "IntegrationTestsDbPassword85!" -C -Q "SELECT 1" > /dev/null 2>&1; do sleep 2; done' "$sqlId"
+            displayName: Wait for SQL Server
+
+          - task: DotNetCoreCLI@2
+            displayName: Restore sample
+            inputs:
+              command: restore
+              projects: $(solutionPath)
+              restoreArguments: --locked-mode
+
+          - task: DotNetCoreCLI@2
+            displayName: Build sample
+            inputs:
+              command: build
+              projects: $(solutionPath)
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: Test Core and Web
+            inputs:
+              command: test
+              projects: |
+                ${{ parameters.workingDirectory }}/Core/Ark.MediatorFramework.Sample.Core.Tests/Ark.MediatorFramework.Sample.Core.Tests.csproj
+                ${{ parameters.workingDirectory }}/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/Ark.MediatorFramework.Sample.Core.Web.Tests.csproj
+              arguments: '--configuration $(buildConfiguration) --no-build --no-restore --report-trx'
+              publishTestResults: true
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish WebInterface
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/Ark.MediatorFramework.Sample.Core.Web.WebInterface.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/WebInterface'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish Processor
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Processor/Ark.MediatorFramework.Sample.Core.Web.Processor.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/Processor'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish NotificationProcessor
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor/Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/NotificationProcessor'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish AuditProcessor
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.AuditProcessor/Ark.MediatorFramework.Sample.Core.Web.AuditProcessor.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/AuditProcessor'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish OutboxProcessor
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/OutboxProcessor'
+
+          - task: CopyFiles@2
+            displayName: Stage database package
+            inputs:
+              SourceFolder: '${{ parameters.workingDirectory }}/Core/Ark.MediatorFramework.Sample.Core.Database/bin/$(buildConfiguration)'
+              Contents: '**/*.dacpac'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/database'
+              flattenFolders: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish deployable Web hosts
+            inputs:
+              targetPath: $(Build.ArtifactStagingDirectory)
+              artifact: mediator-framework-sample-web

@@ -1,0 +1,51 @@
+parameters:
+  - name: name
+    type: string
+  - name: dependsOn
+    type: string
+  - name: vmImageName
+    type: string
+  - name: environmentName
+    type: string
+  - name: azureServiceConnection
+    type: string
+  - name: webAppName
+    type: string
+
+stages:
+  - stage: ${{ parameters.name }}
+    displayName: ${{ parameters.name }}
+    dependsOn: ${{ parameters.dependsOn }}
+    condition: succeeded()
+    jobs:
+      - deployment: DeployHosts
+        displayName: Deploy sample Web hosts
+        environment: ${{ parameters.environmentName }}
+        pool:
+          vmImage: ${{ parameters.vmImageName }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: mediator-framework-sample-web
+
+                # The remaining hosts are published as independent artifacts because
+                # their hosting target is environment-specific (WebJob, Container
+                # Apps, VM, or another worker host). Deploy each with that target's
+                # approved task before enabling this stage in a real environment.
+                - script: |
+                    echo "Processor: $(Pipeline.Workspace)/mediator-framework-sample-web/Processor"
+                    echo "NotificationProcessor: $(Pipeline.Workspace)/mediator-framework-sample-web/NotificationProcessor"
+                    echo "AuditProcessor: $(Pipeline.Workspace)/mediator-framework-sample-web/AuditProcessor"
+                    echo "OutboxProcessor: $(Pipeline.Workspace)/mediator-framework-sample-web/OutboxProcessor"
+                    echo "Database DACPAC: $(Pipeline.Workspace)/mediator-framework-sample-web/database"
+                  displayName: Inspect remaining host and database artifacts
+
+                - task: AzureWebApp@1
+                  displayName: Deploy WebInterface
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    appType: webAppLinux
+                    appName: ${{ parameters.webAppName }}
+                    package: '$(Pipeline.Workspace)/mediator-framework-sample-web/WebInterface'

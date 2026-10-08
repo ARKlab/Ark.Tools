@@ -4,6 +4,23 @@ This sample is the executable application-pattern example for the Mediator
 Framework. Follow the repository `AGENTS.md` and the framework guidance under
 `docs/mediator-framework/`.
 
+## Layout
+
+- The sample is one `Core` service (`Core/`) hosted by the variants under
+  `Core/Hosts/` (`Web`, `WebRebus`, `Functions`). See
+  [`README.md`](README.md) and
+  `docs/design/mediator-framework/sample-hosting-variants.md`.
+- `Core.API` and `Core.Application` reference no host package: no Rebus, Azure
+  Functions, or ASP.NET Core host. Host concerns belong in a variant.
+- Add a host by creating `Core/Hosts/<Variant>/` with a
+  `Ark.MediatorFramework.Sample.Core.<Variant>.Hosting` library and one project
+  per messaging participant. Share nothing across variants, add a pipeline trio
+  (`Ark.MediatorFramework.Sample.Core.<Variant>.yml`, `.buildStage.yml`,
+  `.deployStage.yml`) and register the projects in the root
+  `Ark.MediatorFramework.Sample.slnx`.
+- Run each participant in its own process. Rebus and native messaging are never
+  mixed within a variant.
+
 ## Application architecture
 
 - Keep contracts transport-neutral and follow
@@ -20,8 +37,9 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
 - Context factories and DAL contexts expose fine-grained, composable ORM
   operations. The in-memory profile must use an in-memory context factory with
   the same context interface as SQL, including the composable in-memory outbox.
-- Configure Rebus with the outbox in every profile. Handlers always enlist the
-  current context's outbox; do not branch on SQL versus in-memory storage.
+- Every host configures its messaging outbox in every profile. Handlers always
+  enlist the current context's outbox; do not branch on SQL versus in-memory
+  storage.
 - Singleton domain services own reusable business logic and side-effects.
 - External adapters own calls to systems outside this service. Each adapter
   must have a mock/stub implementation and a test binding driver.
@@ -51,8 +69,8 @@ Conventional Commits, and `async`/`await` in asynchronous methods.
 
 ## OpenTelemetry diagnostics
 
-`SampleHost` registers the custom application source in addition to
-the Ark ASP.NET Core/Rebus instrumentation. Azure Monitor is conditional: the
+The Web variant's `SampleHost` registers the custom application source in
+addition to the Ark ASP.NET Core instrumentation. Azure Monitor is conditional: the
 shared setup calls `UseAzureMonitor` only when an Application Insights
 connection string is configured. Leave that setting empty for local runs.
 
@@ -63,7 +81,7 @@ measurements during integration tests without configuring an exporter:
 rm -rf /tmp/ark-mediator-otel
 ARK_OTEL_FILE_DIRECTORY=/tmp/ark-mediator-otel \
 ARK_SAMPLE_INMEMORY_TESTS=1 \
-dotnet test test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj
+dotnet test Core/Ark.MediatorFramework.Sample.Core.Tests/Ark.MediatorFramework.Sample.Core.Tests.csproj
 ```
 
 The collector appends JSON Lines to `otel-spans.jsonl` and
@@ -73,6 +91,6 @@ value, and tags. It is intentionally process-local and exporter-free.
 
 The sample application source is `ark.mediator.sample.application`.
 `ark.mediator.sample.book_print_process` is a custom Consumer span tagged with
-the process ID and final status. Rebus and HTTP/SQL instrumentation remain available alongside this custom
+the process ID and final status. HTTP and SQL instrumentation remain available alongside this custom
 signal, so the JSONL output can be used to diagnose handler execution and
 persistence boundaries.
