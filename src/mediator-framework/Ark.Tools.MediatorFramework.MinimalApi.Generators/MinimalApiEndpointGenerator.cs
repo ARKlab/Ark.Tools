@@ -540,14 +540,17 @@ namespace Ark.Tools.MediatorFramework.Generators
             }
             if (verb is "GET" or "HEAD" or "DELETE")
             {
-                // Once a property is route or query bound, the endpoint binds only those properties: any other
-                // settable property would be silently dropped. Commands always bind the whole contract.
-                var unbound = kind != HandlerKind.Command && properties.Any(property => property.IsRoute || property.IsQuery)
-                    ? new HashSet<string>(
-                        properties.Where(property => !property.IsRoute && !property.IsQuery && !property.IsETag && property.HasPublicSetter)
-                            .Select(property => property.Name),
-                        StringComparer.Ordinal)
-                    : new HashSet<string>(StringComparer.Ordinal);
+                // Once a request or query has a route or query property, the endpoint binds only those properties:
+                // any other settable property would be silently dropped. Otherwise, and always for commands, it binds
+                // the contract with [AsParameters], where ASP.NET infers a body for every property it cannot bind
+                // from a string and the endpoint fails at startup.
+                var asParameters = kind == HandlerKind.Command || !properties.Any(property => property.IsRoute || property.IsQuery);
+                var unbound = new HashSet<string>(
+                    properties.Where(property => !property.IsRoute
+                            && property.HasPublicSetter
+                            && (asParameters || (!property.IsQuery && !property.IsETag)))
+                        .Select(property => property.Name),
+                    StringComparer.Ordinal);
                 foreach (var property in AllProperties(type)
                     .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                     .Where(property => !HasAttribute(property, serverSetAttr))
@@ -555,7 +558,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         || IsAttachmentType(property.Type, attachmentType)
                         || IsPotentialAttachmentCollection(property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
                         || IsComplexOrComplexCollection(property.Type, enumerableType)
-                        || unbound.Contains(property.Name)))
+                        || (unbound.Contains(property.Name) && (!asParameters || !IsStringBindable(property.Type)))))
                 {
                     diagnostics.Add(new DiagnosticInfo(
                         DiagnosticDescriptors.PropertyNotBindableWithoutBody,
@@ -1234,6 +1237,22 @@ namespace Ark.Tools.MediatorFramework.Generators
                 && AllProperties(named).Any(property => !property.IsStatic
                     && property.DeclaredAccessibility == Accessibility.Public
                     && property.SetMethod is { DeclaredAccessibility: Accessibility.Public });
+        }
+
+        // Mirrors the types ASP.NET Minimal API binds from a route or query string: primitives, enums, Uri,
+        // StringValues, types with a static TryParse or IParsable<T>, their nullable forms, and arrays of them.
+        private static bool IsStringBindable(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol array)
+                return array.ElementType is not IArrayTypeSymbol && IsStringBindable(array.ElementType);
+
+            var targetType = type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
+                ? nullable.TypeArguments[0]
+                : type;
+            return !RequiresTypeConverterBinding(targetType)
+                || targetType.AllInterfaces.Any(candidate =>
+                    candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
+                    && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], targetType));
         }
 
         private static bool HasTypeConverterAttribute(ITypeSymbol type)

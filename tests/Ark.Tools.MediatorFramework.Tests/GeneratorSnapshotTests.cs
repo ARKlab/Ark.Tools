@@ -1080,6 +1080,77 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorRejectsPropertiesItWouldSilentlyDrop()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed record GetBooks : IQuery<string>
+            {
+                public int Id { get; init; }
+                [HttpQuery] public int Skip { get; init; }
+                public string? Author { get; init; }
+                [ServerSet] public string? UserId { get; set; }
+                [ETag] public string? Version { get; init; }
+                public string Display => "books";
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : ICommand<DeleteBook>
+            {
+                public int Id { get; init; }
+                public bool Force { get; init; }
+            }
+            [HttpEndpoint("POST", "/books")]
+            public sealed record CreateBook : IRequest<string>
+            {
+                public string Title { get; init; } = string.Empty;
+            }
+            """;
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Author", "Force");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().NotContain("global::GetBooks");
+        result.Generated.Should().NotContain("global::DeleteBook");
+        result.Generated.Should().Contain("global::CreateBook");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorReportsReferencedDroppedPropertyAtTheHost()
+    {
+        var contracts = _createMetadataReference(
+            "Contracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                [HttpQuery] public int Skip { get; init; }
+                public int Limit { get; init; }
+            }
+            """);
+        const string source =
+            """
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            """;
+
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source, [], contracts);
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF059").Subject;
+        diagnostic.GetMessage(CultureInfo.InvariantCulture).Should().Contain("'Limit'");
+        source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length)
+            .Should().Contain("HttpHost(typeof(ContractMarker)");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorEnforcesMaxRequestBodySize()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
@@ -2941,6 +3012,56 @@ public sealed class GeneratorSnapshotTests
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().Contain("global::ListBooks");
         result.Generated.Should().Contain("global::ClearBookCache");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsAsParametersPropertiesThatAspNetInfersAsBody()
+    {
+        // Mirrors ASP.NET Minimal API: an [AsParameters] property it cannot bind from a string is inferred as a
+        // body, and a GET or DELETE endpoint then throws at startup.
+        const string source =
+            """
+            using System;
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using NodaTime;
+            public readonly struct BookCode
+            {
+                public static bool TryParse(string? value, out BookCode result) { result = default; return true; }
+            }
+            public readonly struct Shelf : IParsable<Shelf>
+            {
+                static Shelf IParsable<Shelf>.Parse(string s, IFormatProvider? provider) => default;
+                static bool IParsable<Shelf>.TryParse(string? s, IFormatProvider? provider, out Shelf result) { result = default; return true; }
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public List<string> Tags { get; init; } = [];
+                public IEnumerable<string> Authors { get; init; } = [];
+                public Dictionary<string, string> Filters { get; init; } = [];
+                public LocalDate Since { get; init; }
+                public string[] Isbns { get; init; } = [];
+                public BookCode Code { get; init; }
+                public Shelf? Shelf { get; init; }
+                public Guid? Publisher { get; init; }
+                public DayOfWeek[] Days { get; init; } = [];
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBooks : ICommand<DeleteBooks>
+            {
+                public int Id { get; init; }
+                public IReadOnlyList<int> Ids { get; init; } = [];
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            source, [], MetadataReference.CreateFromFile(typeof(NodaTime.LocalDate).Assembly.Location));
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Tags", "Authors", "Filters", "Since", "Ids");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
     }
 
     [TestMethod]
