@@ -47,7 +47,8 @@ public static class WebHosting
     /// <param name="transport">The messaging transport.</param>
     /// <param name="dataBus">The claim-check DataBus.</param>
     /// <param name="resourceManagement">
-    /// Provisions the participant's published topics (<c>CreateIfMissing</c>). Production passes
+    /// Provisions the participant's published topics and, for a receiver, its queue and subscriptions
+    /// (<c>CreateIfMissing</c>). Production passes
     /// <c>ServiceBusTransportManagement</c>; tests pass <see langword="null"/> because the in-memory
     /// transport manages its own resources.
     /// </param>
