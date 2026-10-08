@@ -2847,6 +2847,76 @@ git commit -m "docs(samples): document mediator sample hosting variants" -m "Ass
 
 ---
 
+### Task 11: Host-free contract attributes
+
+Tasks 1–9 leave `Core.API` referencing `Ark.Tools.MediatorFramework.MinimalApi`
+and `Ark.Tools.MediatorFramework.Grpc`, and `Core.Application` referencing
+`Ark.Tools.MediatorFramework.Grpc`. Both packages carry the ASP.NET Core
+framework reference, so D8 ("no ASP.NET Core package") holds only for direct
+references. The contract-level attributes those projects need belong in the
+host-free base package. The final-review fixes in between ship as their own
+stacked PR (ARKlab/Ark.Tools#1047) and are not a plan task.
+
+**Decision:** move the attributes into `Ark.Tools.MediatorFramework`. Its
+dependencies are `Ark.Tools.Outbox`, `Ark.Tools.Solid` and `protobuf-net`, so it
+is host-free. No new Abstractions package is needed.
+
+**Files:**
+- Move: contract-level attribute types from
+  `src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/` and
+  `src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/` into
+  `src/mediator-framework/Ark.Tools.MediatorFramework/`.
+  `GrpcServiceAttribute` and `GrpcMethodAttribute` (in `GrpcAttributes.cs`)
+  already use the namespace `Ark.Tools.MediatorFramework`. Audit both packages
+  for any other type a contracts project must reference. Host-level types stay:
+  `ArkGenerate*ForAssemblyAttribute`, host attributes, runtime helpers.
+- Add: `[assembly: TypeForwardedTo(...)]` in each source assembly for every
+  moved type.
+- Modify: `Core.API` and `Core.Application` csproj files: drop the
+  `MinimalApi` and `Grpc` package references. Regenerate their
+  `packages.lock.json`.
+- Modify: `ArkApiSurface.txt` of the affected framework packages and sample
+  projects.
+- Modify: `CHANGELOG.md`, `docs/mediator-framework/` package guidance, and the
+  sample `AGENTS.md` and README dependency notes.
+
+**Interfaces:**
+- Consumes: the generators match attributes by metadata name
+  (`Ark.Tools.MediatorFramework.GrpcMethodAttribute`, …). Namespaces stay
+  unchanged, so generators need no change. Verify that each generator still
+  finds the attributes when they come from the base assembly.
+- Produces: contract projects reference only `Ark.Tools.MediatorFramework`, plus
+  serializer packages such as MessagePack and protobuf-net, to declare HTTP,
+  gRPC and MCP exposure.
+
+- [ ] **Step 1: Audit.** List every public type in `MinimalApi` and `Grpc` that
+  `Core.API` or `Core.Application` uses. Remove both references from the two
+  projects and build: the errors are the list. Record it in the task report.
+- [ ] **Step 2: Move.** Move each type to the base package, keeping its
+  namespace. Add `TypeForwardedTo` in the old assembly. Keep the XML docs.
+- [ ] **Step 3: Drop the references.** `Core.API` and `Core.Application` reference no
+  package that carries `Microsoft.AspNetCore.App`. Check with
+  `dotnet list <project> package --include-transitive`: no
+  `Ark.Tools.MediatorFramework.MinimalApi`, `.Grpc` or `Microsoft.AspNetCore.*`.
+- [ ] **Step 4: Verify the generators.** Build the sample and inspect the
+  emitted Minimal API, gRPC and MCP code and `Books.proto`. They must be
+  unchanged from the Task 10 head; `git diff` of the generated files is empty.
+- [ ] **Step 5: Accept the API surface and release notes.** Update the `ArkApiSurface.txt` files
+  that change. Add a `### Changed` CHANGELOG entry: the attributes moved to
+  `Ark.Tools.MediatorFramework` and are type-forwarded, so existing references
+  keep compiling and binding.
+- [ ] **Step 6: Test.** Run `dotnet build Ark.Tools.slnx` (0 warnings), the
+  MediatorFramework generator and hosting tests, and the four sample test
+  projects with `ARK_SAMPLE_INMEMORY_TESTS=1`.
+- [ ] **Step 7: Commit.**
+
+```bash
+git commit -m "refactor(MediatorFramework): move contract attributes to base package" -m "Assisted-by: Claude"
+git commit -m "build(samples): drop host packages from core api and application" -m "Assisted-by: Claude"
+```
+
+---
+
 ## Self-review against the spec
 
 | Spec item | Task |
@@ -2859,7 +2929,7 @@ git commit -m "docs(samples): document mediator sample hosting variants" -m "Ass
 | D6 four participants, one process each | 4 (tests), 6, 7, 8 |
 | D7 worker publishes `BookPrintCompleted` | 5 |
 | Service Bus publisher provisioning outside Functions (framework gap) | 5b |
-| D8 API/Application free of host packages | 7 (Rebus), 8 (legacy overload) |
+| D8 API/Application free of host packages | 7 (Rebus), 8 (legacy overload), 11 (attribute split) |
 | D9 host-neutral application tests | 4 |
 | D10 configuration-driven composition, no test flags | 3, 6–8 |
 | D11 retire old layout | 8 |
