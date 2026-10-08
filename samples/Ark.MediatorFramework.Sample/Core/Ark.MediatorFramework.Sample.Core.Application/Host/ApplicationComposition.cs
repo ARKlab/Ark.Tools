@@ -128,10 +128,43 @@ public static class ApplicationComposition
         });
     }
 
+    /// <summary>Registers the shared application graph.</summary>
+    /// <param name="container">The application container.</param>
+    /// <param name="options">The persistence, clock, and external adapter choices.</param>
+    public static void Register(Container container, ApplicationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(options);
+        _registerShared(container, options);
+    }
+
+    /// <summary>Registers the notification subscriber's completed-print handler.</summary>
+    /// <param name="container">The notification process container.</param>
+    /// <param name="sink">The notification sink.</param>
+    public static void RegisterNotificationSubscriber(Container container, IBookPrintNotificationSink sink)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(sink);
+        container.RegisterInstance(sink);
+        container.Register<ICommandHandler<BookPrintCompleted>, BookPrintNotificationHandler>();
+    }
+
+    /// <summary>Registers the audit subscriber's completed-print handler.</summary>
+    /// <param name="container">The audit process container.</param>
+    /// <param name="sink">The audit sink.</param>
+    public static void RegisterAuditSubscriber(Container container, IBookPrintAuditSink sink)
+    {
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(sink);
+        container.RegisterInstance(sink);
+        container.Register<ICommandHandler<BookPrintCompleted>, BookPrintAuditHandler>();
+    }
+
     /// <summary>Registers the pure domain graph into the given container.</summary>
+    /// <remarks>Temporary: removed when the legacy hosts are deleted.</remarks>
     /// <param name="container">The SimpleInjector container to register into.</param>
     /// <param name="useSqlStore">Whether to use the SQL-backed context.</param>
-    /// <param name="connectionString">Optional SQL Server connection string.</param>
+    /// <param name="connectionString">SQL Server connection string; required when <paramref name="useSqlStore"/> is set and no context factory is given.</param>
     /// <param name="clock">Optional clock override used by tests.</param>
     /// <param name="dataContextFactory">Optional context factory shared with another host container.</param>
     /// <param name="printCompletedNotificationService">Optional external print-completion notification service.</param>
@@ -152,61 +185,54 @@ public static class ApplicationComposition
         IBookPrintAuditSink? bookPrintAuditSink = null)
     {
         ArgumentNullException.ThrowIfNull(container);
+        _registerShared(container, new ApplicationOptions
+        {
+            SqlConnectionString = dataContextFactory is null && useSqlStore
+                ? connectionString ?? throw new InvalidOperationException("A SQL connection string is required.")
+                : null,
+            DataContextFactory = dataContextFactory
+                ?? (useSqlStore ? null : new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory())),
+            Clock = clock ?? SystemClock.Instance,
+            PrintCompletedNotificationService = printCompletedNotificationService
+                ?? new NoOpPrintCompletedNotificationService(),
+        });
+        container.RegisterInstance(bookPrintNotificationSink ?? new NoOpBookPrintNotificationSink());
+        container.RegisterInstance(bookPrintAuditSink ?? new NoOpBookPrintAuditSink());
+        if (registerBookPrintNotificationHandler)
+            container.Register<ICommandHandler<BookPrintCompleted>, BookPrintNotificationHandler>();
+    }
+
+    private static void _registerShared(Container container, ApplicationOptions options)
+    {
         container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
         container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
         container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
 
-        if (dataContextFactory is not null)
+        if ((options.DataContextFactory is null) == string.IsNullOrWhiteSpace(options.SqlConnectionString))
+            throw new InvalidOperationException(
+                "Set exactly one of ApplicationOptions.SqlConnectionString or ApplicationOptions.DataContextFactory.");
+
+        if (options.DataContextFactory is not null)
         {
-            container.RegisterInstance(dataContextFactory);
-            container.RegisterInstance<IOutboxAsyncContextFactory>(dataContextFactory);
+            container.RegisterInstance(options.DataContextFactory);
+            container.RegisterInstance<IOutboxAsyncContextFactory>(options.DataContextFactory);
         }
-        else if (useSqlStore)
+        else
         {
             // Register SQL Server mappings for LocalDate, LocalDateTime, and OffsetDateTime.
             NodaTimeDapperSqlServer.Setup();
             EvolvableEnumDapper.Register<Book.V1.Genre>();
             EvolvableEnumDapper.Register<BookPrintProcessStatus>();
             EvolvableEnumDapper.Register<ReadingActivityKind>();
-            var localConnectionString = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder
-            {
-               DataSource = "localhost,1433",
-               InitialCatalog = "Ark.MediatorFramework.Sample",
-               UserID = "sa",
-               Password = string.Concat("Integration", "Tests", "Db", "Password", 85, '!'),
-               TrustServerCertificate = true,
-               Encrypt = false,
-            }.ConnectionString;
-            var config = new SampleDataContextConfig(connectionString ?? localConnectionString);
-            container.RegisterInstance(config);
+            container.RegisterInstance(new SampleDataContextConfig(options.SqlConnectionString!));
             container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
             container.RegisterSingleton<SampleDataContextFactory>();
             container.RegisterSingleton<IOutboxAsyncContextFactory, SampleDataContextFactory>();
             container.RegisterSingleton<ISampleDataContextFactory, SampleDataContextFactory>();
         }
-        else
-        {
-            container.RegisterSingleton(static () => new InMemoryOutboxContextFactory());
-            container.RegisterSingleton<IOutboxAsyncContextFactory>(
-                () => container.GetInstance<InMemoryOutboxContextFactory>());
-            container.RegisterSingleton<InMemorySampleDataContextFactory>();
-            container.RegisterSingleton<ISampleDataContextFactory>(
-                () => container.GetInstance<InMemorySampleDataContextFactory>());
-        }
         container.RegisterSingleton<DocumentStore>();
-        if (bookPrintNotificationSink is not null)
-            container.RegisterInstance(bookPrintNotificationSink);
-        else
-            container.RegisterSingleton<IBookPrintNotificationSink, NoOpBookPrintNotificationSink>();
-        if (bookPrintAuditSink is not null)
-            container.RegisterInstance(bookPrintAuditSink);
-        else
-            container.RegisterSingleton<IBookPrintAuditSink, NoOpBookPrintAuditSink>();
-        if (printCompletedNotificationService is not null)
-            container.RegisterInstance(printCompletedNotificationService);
-        else
-            container.RegisterSingleton<IPrintCompletedNotificationService, NoOpPrintCompletedNotificationService>();
-        container.RegisterSingleton(() => clock ?? SystemClock.Instance);
+        container.RegisterInstance(options.PrintCompletedNotificationService);
+        container.RegisterInstance(options.Clock);
         container.RegisterSingleton<AuditCounter>();
 
         var applicationAssembly = typeof(ApplicationComposition).Assembly;
@@ -241,8 +267,6 @@ public static class ApplicationComposition
         container.Register<IQueryHandler<DownloadBookCoverQuery.V1, IArkAttachment>, DownloadBookCoverHandler>();
         container.Register<IRequestHandler<FailingRebusRequest, DeadLetterAck>, FailingRebusRequestHandler>();
         container.Register<ICommandHandler<MessagingFailed<BookPrintCompleted>>, BookPrintCompletedFailureHandler>();
-        if (registerBookPrintNotificationHandler)
-            container.Register<ICommandHandler<BookPrintCompleted>, BookPrintNotificationHandler>();
 
         // Cross-cutting concern applied transport-agnostically.
         container.RegisterDecorator(typeof(IRequestHandler<,>), typeof(AuditRequestDecorator<,>));
