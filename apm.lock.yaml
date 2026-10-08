@@ -1,5 +1,5 @@
 lockfile_version: '1'
-apm_version: 0.31.0
+apm_version: 0.33.0
 dependencies:
 - repo_url: _local/ark-csharp
   name: ark-csharp
@@ -111,9 +111,9 @@ dependencies:
   materialization_repo_url: DietrichGebert/ponytail
   name: ponytail
   host: github.com
-  resolved_commit: 08e952d7a8057a57ce561ff1330d093fd92eec67
-  resolved_ref: v4.13.0
-  version: 08e952d
+  resolved_commit: 9cc65d03aa2da1db7121b912d03596409ee340b8
+  resolved_ref: v5.1.0
+  version: 9cc65d0
   package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/ponytail
@@ -142,20 +142,20 @@ dependencies:
   - .claude/skills/ponytail/SKILL.md
   - .github/hooks/ponytail-copilot-hooks.json
   deployed_file_hashes:
-    .agents/skills/ponytail-audit/SKILL.md: sha256:38c209f3b56c8c8291bd00cf91da1ee9048ddafb1b5e7f838c1e1b81822e4023
-    .agents/skills/ponytail-debt/SKILL.md: sha256:d3611761039bdb2955e31856834feeec6ed5483a3fc64576e9a166f949a131d1
-    .agents/skills/ponytail-gain/SKILL.md: sha256:b85750bbceb37095c7bc59e77a05ffd428ac92f0e570e99bc789e295d8734640
-    .agents/skills/ponytail-help/SKILL.md: sha256:dd07abd59ef4acdfc308c193e22b8c526fd99dc1c9a48d710f5ecd5c58b8580c
-    .agents/skills/ponytail-review/SKILL.md: sha256:4b29656469baa5df3513a1557197ec8053162c6a54c166c871c57061e37a8ebb
-    .agents/skills/ponytail/SKILL.md: sha256:1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2
-    .claude/skills/ponytail-audit/SKILL.md: sha256:38c209f3b56c8c8291bd00cf91da1ee9048ddafb1b5e7f838c1e1b81822e4023
-    .claude/skills/ponytail-debt/SKILL.md: sha256:d3611761039bdb2955e31856834feeec6ed5483a3fc64576e9a166f949a131d1
-    .claude/skills/ponytail-gain/SKILL.md: sha256:b85750bbceb37095c7bc59e77a05ffd428ac92f0e570e99bc789e295d8734640
-    .claude/skills/ponytail-help/SKILL.md: sha256:dd07abd59ef4acdfc308c193e22b8c526fd99dc1c9a48d710f5ecd5c58b8580c
-    .claude/skills/ponytail-review/SKILL.md: sha256:4b29656469baa5df3513a1557197ec8053162c6a54c166c871c57061e37a8ebb
-    .claude/skills/ponytail/SKILL.md: sha256:1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2
+    .agents/skills/ponytail-audit/SKILL.md: sha256:2b3223a02c386d1263e1b08343cb8eb3a53e444cdafb1d79e26c8ec2a8fcad28
+    .agents/skills/ponytail-debt/SKILL.md: sha256:63168f0e1475affb1211bc004261aa51a037f79e484571aae484bf27fe4d17c2
+    .agents/skills/ponytail-gain/SKILL.md: sha256:60e05eaf65e8e404c8975a944eda9d3ed4ae3345478b3550b0e74570982c187e
+    .agents/skills/ponytail-help/SKILL.md: sha256:2927276bc9c10221ce8bcf80adb798db130cd70eb33a95db91ab3a0d105f5109
+    .agents/skills/ponytail-review/SKILL.md: sha256:33fe4ebe22a460924e5d4a261e223df22e409cc94ab76182bee9fb91a3ef022e
+    .agents/skills/ponytail/SKILL.md: sha256:ba68ff26239c3c3b05b2a9a47ee0d9a6b93a69639a2555ec87a5d44bffaf2f0c
+    .claude/skills/ponytail-audit/SKILL.md: sha256:2b3223a02c386d1263e1b08343cb8eb3a53e444cdafb1d79e26c8ec2a8fcad28
+    .claude/skills/ponytail-debt/SKILL.md: sha256:63168f0e1475affb1211bc004261aa51a037f79e484571aae484bf27fe4d17c2
+    .claude/skills/ponytail-gain/SKILL.md: sha256:60e05eaf65e8e404c8975a944eda9d3ed4ae3345478b3550b0e74570982c187e
+    .claude/skills/ponytail-help/SKILL.md: sha256:2927276bc9c10221ce8bcf80adb798db130cd70eb33a95db91ab3a0d105f5109
+    .claude/skills/ponytail-review/SKILL.md: sha256:33fe4ebe22a460924e5d4a261e223df22e409cc94ab76182bee9fb91a3ef022e
+    .claude/skills/ponytail/SKILL.md: sha256:ba68ff26239c3c3b05b2a9a47ee0d9a6b93a69639a2555ec87a5d44bffaf2f0c
     .github/hooks/ponytail-copilot-hooks.json: sha256:22aa9893d29232932296a1678bc838074157a4a2e193f477e052fe49321dc3b1
-  content_hash: sha256:6c9747b181968b8a3f83e2ba22a52d8558fd6c7ac02b0e77ae0e8fe66ad0adb4
+  content_hash: sha256:3133b97b1d13e831e316574c3dc9634c219ee209b075874813dc2d25492130fb
   is_dev: true
 - repo_url: dotnet/skills
   name: dotnet
@@ -1995,7 +1995,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:38c209f3b56c8c8291bd00cf91da1ee9048ddafb1b5e7f838c1e1b81822e4023
+  content_hash: sha256:2b3223a02c386d1263e1b08343cb8eb3a53e444cdafb1d79e26c8ec2a8fcad28
 - kind: project-relative
   target: claude
   value: .claude/skills/ponytail-debt
@@ -2013,7 +2013,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:d3611761039bdb2955e31856834feeec6ed5483a3fc64576e9a166f949a131d1
+  content_hash: sha256:63168f0e1475affb1211bc004261aa51a037f79e484571aae484bf27fe4d17c2
 - kind: project-relative
   target: claude
   value: .claude/skills/ponytail-gain
@@ -2031,7 +2031,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:b85750bbceb37095c7bc59e77a05ffd428ac92f0e570e99bc789e295d8734640
+  content_hash: sha256:60e05eaf65e8e404c8975a944eda9d3ed4ae3345478b3550b0e74570982c187e
 - kind: project-relative
   target: claude
   value: .claude/skills/ponytail-help
@@ -2049,7 +2049,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:dd07abd59ef4acdfc308c193e22b8c526fd99dc1c9a48d710f5ecd5c58b8580c
+  content_hash: sha256:2927276bc9c10221ce8bcf80adb798db130cd70eb33a95db91ab3a0d105f5109
 - kind: project-relative
   target: claude
   value: .claude/skills/ponytail-review
@@ -2067,7 +2067,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:4b29656469baa5df3513a1557197ec8053162c6a54c166c871c57061e37a8ebb
+  content_hash: sha256:33fe4ebe22a460924e5d4a261e223df22e409cc94ab76182bee9fb91a3ef022e
 - kind: project-relative
   target: claude
   value: .claude/skills/ponytail/SKILL.md
@@ -2076,7 +2076,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2
+  content_hash: sha256:ba68ff26239c3c3b05b2a9a47ee0d9a6b93a69639a2555ec87a5d44bffaf2f0c
 - kind: project-relative
   target: claude
   value: .claude/skills/property-patterns
@@ -3723,7 +3723,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:38c209f3b56c8c8291bd00cf91da1ee9048ddafb1b5e7f838c1e1b81822e4023
+  content_hash: sha256:2b3223a02c386d1263e1b08343cb8eb3a53e444cdafb1d79e26c8ec2a8fcad28
 - kind: project-relative
   target: copilot
   value: .agents/skills/ponytail-debt
@@ -3741,7 +3741,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:d3611761039bdb2955e31856834feeec6ed5483a3fc64576e9a166f949a131d1
+  content_hash: sha256:63168f0e1475affb1211bc004261aa51a037f79e484571aae484bf27fe4d17c2
 - kind: project-relative
   target: copilot
   value: .agents/skills/ponytail-gain
@@ -3759,7 +3759,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:b85750bbceb37095c7bc59e77a05ffd428ac92f0e570e99bc789e295d8734640
+  content_hash: sha256:60e05eaf65e8e404c8975a944eda9d3ed4ae3345478b3550b0e74570982c187e
 - kind: project-relative
   target: copilot
   value: .agents/skills/ponytail-help
@@ -3777,7 +3777,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:dd07abd59ef4acdfc308c193e22b8c526fd99dc1c9a48d710f5ecd5c58b8580c
+  content_hash: sha256:2927276bc9c10221ce8bcf80adb798db130cd70eb33a95db91ab3a0d105f5109
 - kind: project-relative
   target: copilot
   value: .agents/skills/ponytail-review
@@ -3795,7 +3795,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:4b29656469baa5df3513a1557197ec8053162c6a54c166c871c57061e37a8ebb
+  content_hash: sha256:33fe4ebe22a460924e5d4a261e223df22e409cc94ab76182bee9fb91a3ef022e
 - kind: project-relative
   target: copilot
   value: .agents/skills/ponytail/SKILL.md
@@ -3804,7 +3804,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2
+  content_hash: sha256:ba68ff26239c3c3b05b2a9a47ee0d9a6b93a69639a2555ec87a5d44bffaf2f0c
 - kind: project-relative
   target: copilot
   value: .agents/skills/property-patterns

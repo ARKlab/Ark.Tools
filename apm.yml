@@ -19,7 +19,7 @@ devDependencies:
     - dotnet/skills/plugins/dotnet-diag#main
     - dotnet/skills/plugins/dotnet-msbuild#main
     - obra/superpowers#main
-    - DietrichGebert/ponytail#v4.13.0
+    - DietrichGebert/ponytail#v5.1.0
     - ./agents-plugins/ark-csharp
   mcp:
     - name: microsoftdocs
