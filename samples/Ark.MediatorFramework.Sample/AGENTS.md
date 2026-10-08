@@ -11,7 +11,9 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
   [`README.md`](README.md) and
   `docs/design/mediator-framework/sample-hosting-variants.md`.
 - `Core.API` and `Core.Application` reference no host package: no Rebus, Azure
-  Functions, or ASP.NET Core host. Host concerns belong in a variant.
+  Functions, or ASP.NET Core host, and no transport package such as
+  `Ark.Tools.MediatorFramework.MinimalApi` or `.Grpc`. Contract attributes come
+  from `Ark.Tools.MediatorFramework`. Host concerns belong in a variant.
 - Add a host by creating `Core/Hosts/<Variant>/` with a
   `Ark.MediatorFramework.Sample.Core.<Variant>.Hosting` library and one project
   per messaging participant. Share nothing across variants, add a pipeline trio
