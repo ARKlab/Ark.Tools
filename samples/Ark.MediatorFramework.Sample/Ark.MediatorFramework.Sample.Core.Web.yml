@@ -8,8 +8,8 @@ trigger:
       - master
   paths:
     include:
-      - samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.*
-      - samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/*
+      - samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.*/**
+      - samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/**
       - samples/Ark.MediatorFramework.Sample/Directory.Build.props
       - samples/Ark.MediatorFramework.Sample/Directory.Build.targets
       - samples/Ark.MediatorFramework.Sample/Directory.Packages.props
@@ -29,8 +29,8 @@ pr:
   drafts: false
   paths:
     include:
-      - samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.*
-      - samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/*
+      - samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.*/**
+      - samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/**
       - samples/Ark.MediatorFramework.Sample/Directory.Build.props
       - samples/Ark.MediatorFramework.Sample/Directory.Build.targets
       - samples/Ark.MediatorFramework.Sample/Directory.Packages.props
