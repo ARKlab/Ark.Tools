@@ -50,7 +50,9 @@ straightforward to test without an HTTP server, gRPC context, or message bus.
 Use records for small immutable messages. Make every client-controlled member
 explicit; use `[ServerSet]` rather than accepting server-owned values. When a
 contract crosses gRPC, add `[ProtoContract]` and a unique `[ProtoMember(n)]` to
-every serialized member:
+every serialized member. The request, the response and each streamed item must be
+protobuf contracts; a scalar such as `IAsyncEnumerable<int>` fails the build with
+[ARKMF058](../analyzer-rules/ARKMF058.md):
 
 ```csharp
 [ProtoContract]

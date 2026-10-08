@@ -136,10 +136,12 @@ public sealed class GeneratorSnapshotTests
             using ProtoBuf;
             [GrpcMethod("GetStream")]
             [ProtoContract]
-            public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
+            public sealed class GetStream : IQuery<IAsyncEnumerable<StreamItem>> { }
+            [ProtoContract]
+            public sealed class StreamItem { }
             """);
-        grpc.Should().Contain("IAsyncEnumerable<string> GetStreamAsync");
-        grpc.Should().Contain("returns (stream string)");
+        grpc.Should().Contain("IAsyncEnumerable<global::StreamItem> GetStreamAsync");
+        grpc.Should().Contain("returns (stream StreamItem)");
     }
 
     [TestMethod]
@@ -1531,7 +1533,9 @@ public sealed class GeneratorSnapshotTests
             [GrpcService("Documentation")]
             [GrpcMethod("GetDocumented")]
             [ProtoContract]
-            public sealed class GetDocumented : IQuery<GetDocumented, string> { }
+            public sealed class GetDocumented : IQuery<GetDocumented, DocumentedResponse> { }
+            [ProtoContract]
+            public sealed class DocumentedResponse { }
             """,
             []);
         grpcDriver.RunGeneratorsAndUpdateCompilation(grpcCompilation, out var generatedGrpcCompilation, out _);
@@ -1654,7 +1658,9 @@ public sealed class GeneratorSnapshotTests
             [GrpcService("Documentation")]
             [GrpcMethod("GetInherited")]
             [ProtoContract]
-            public sealed class GetInherited : DocumentedBase, IQuery<string> { }
+            public sealed class GetInherited : DocumentedBase, IQuery<InheritedResponse> { }
+            [ProtoContract]
+            public sealed class InheritedResponse { }
             """);
 
         grpc.Should().Contain("// The inherited String identifier.");
@@ -1715,8 +1721,12 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
+            using ProtoBuf;
             [GrpcMethod("Valid")]
-            public sealed class ValidGrpcEndpoint : IQuery<string> { }
+            [ProtoContract]
+            public sealed class ValidGrpcEndpoint : IQuery<ValidGrpcResponse> { }
+            [ProtoContract]
+            public sealed class ValidGrpcResponse { }
             public sealed class InvalidGrpcTarget
             {
                 [GrpcMethod("Invalid")]
@@ -2560,18 +2570,23 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
+            using ProtoBuf;
             [GrpcService("Greetings")]
             [Versioning(Introduced = 1, Retired = 2)]
             [GrpcMethod("GetGreeting")]
-            public sealed class GetGreeting : IQuery<string>
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
             {
             }
             [GrpcService("Greetings")]
             [Versioning(Introduced = 2)]
             [GrpcMethod("CreateGreeting")]
-            public sealed class CreateGreeting : IRequest<string>
+            [ProtoContract]
+            public sealed class CreateGreeting : IRequest<Greeting>
             {
             }
+            [ProtoContract]
+            public sealed class Greeting { }
             """);
 
         generated.Should().Contain("interface IGreetingsV1GrpcService");
@@ -2590,11 +2605,15 @@ public sealed class GeneratorSnapshotTests
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
+            using ProtoBuf;
             [ApiGroup("Greetings")]
             [GrpcMethod("GetGreeting")]
-            public sealed class GetGreeting : IQuery<string>
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
             {
             }
+            [ProtoContract]
+            public sealed class Greeting { }
             """);
 
         generated.Should().Contain("IGreetingsV1GrpcService");
@@ -2904,27 +2923,20 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void GrpcGeneratorExportsOnlyBindableMethodsToProto()
+    [DataRow("GetGreeting : IQuery<Greeting>", "", "request", "GetGreeting")]
+    [DataRow("GetGreeting : IQuery<string>", "[ProtoContract]", "response", "string")]
+    [DataRow("GetGreeting : IQuery<System.Collections.Generic.IAsyncEnumerable<int>>", "[ProtoContract]", "stream element", "int")]
+    public void GrpcGeneratorReportsUnbindableContract(string declaration, string requestAttribute, string part, string typeName)
     {
-        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
-            """
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            $$"""
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             using ProtoBuf;
             [GrpcService("Greetings")]
             [GrpcMethod("GetGreeting")]
-            [ProtoContract]
-            public sealed class GetGreeting : IQuery<Greeting>
-            {
-                [ProtoMember(1)]
-                public string Name { get; set; } = string.Empty;
-            }
-            [GrpcService("Greetings")]
-            [GrpcMethod("DownloadGreeting")]
-            public sealed class DownloadGreeting : IQuery<IArkAttachment>
-            {
-                public System.Guid Id { get; set; }
-            }
+            {{requestAttribute}}
+            public sealed class {{declaration}} { }
             [ProtoContract]
             public sealed class Greeting
             {
@@ -2933,10 +2945,84 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("rpc GetGreeting(GetGreeting) returns (Greeting);");
-        generated.Should().NotContain("rpc DownloadGreeting");
-        generated.Should().NotContain("(bytes)");
-        generated.Should().NotContain("message DownloadDocumentChunk");
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF058").Subject;
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Should().Be(
+            $"gRPC contract 'GetGreeting' cannot be bound: its {part} type '{typeName}' is not a protobuf contract");
+        diagnostic.Location.IsInSource.Should().BeTrue();
+        result.Generated.Should().NotContain("GetGreetingAsync");
+        result.Generated.Should().NotContain("rpc GetGreeting");
+        result.Generated.Should().NotContain("GreetingsV1GrpcService");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorEmitsBindableContractWithoutDiagnostic()
+    {
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcService("Greetings")]
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting> { }
+            [GrpcService("Greetings")]
+            [GrpcMethod("StreamGreetings")]
+            [ProtoContract]
+            public sealed class StreamGreetings : IQuery<IAsyncEnumerable<Greeting>> { }
+            [GrpcService("Greetings")]
+            [GrpcMethod("DownloadGreeting")]
+            [ProtoContract]
+            public sealed class DownloadGreeting : IQuery<IArkAttachment> { }
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("ValueTask<global::Greeting> GetGreetingAsync");
+        result.Generated.Should().Contain("IAsyncEnumerable<global::Greeting> StreamGreetingsAsync");
+        result.Generated.Should().Contain("DownloadDocumentChunk> DownloadGreetingAsync");
+        result.Generated.Should().Contain("rpc GetGreeting(GetGreeting) returns (Greeting);");
+        result.Generated.Should().Contain("rpc StreamGreetings(StreamGreetings) returns (stream Greeting);");
+        result.Generated.Should().Contain("rpc DownloadGreeting(DownloadGreeting) returns (stream DownloadDocumentChunk);");
+        // Download chunks are declared in the file; protoc warns on the unused upload import.
+        result.Generated.Should().NotContain("import \\\"ark/mediator.proto\\\";");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorReportsUnbindableReferencedContractAtMappingCall()
+    {
+        var contracts = _createMetadataReference(
+            "GrpcUnbindableContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            namespace GrpcUnbindableContracts;
+            public sealed class Marker { }
+            [GrpcMethod("GetReferenced")]
+            [ProtoContract]
+            public sealed class GetReferenced : IQuery<string> { }
+            """);
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            MapArkGrpcServicesFromAssembly<GrpcUnbindableContracts.Marker>();
+            """;
+
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(source, [], contracts);
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF058").Subject;
+        diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Should().Contain("GrpcUnbindableContracts.GetReferenced");
+        diagnostic.Location.IsInSource.Should().BeTrue();
+        source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length)
+            .Should().Be("MapArkGrpcServicesFromAssembly<GrpcUnbindableContracts.Marker>()");
+        result.Generated.Should().NotContain("GetReferencedAsync");
     }
 
     [TestMethod]
