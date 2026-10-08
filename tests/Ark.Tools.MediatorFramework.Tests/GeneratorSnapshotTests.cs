@@ -2956,6 +2956,41 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    [DataRow("IQuery<Page<Greeting>>", "response", "Page<Greeting>")]
+    [DataRow("IQuery<System.Collections.Generic.IAsyncEnumerable<Page<Greeting>>>", "stream element", "Page<Greeting>")]
+    public void GrpcGeneratorReportsGenericContractAsUnbindable(string handler, string part, string typeName)
+    {
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcService("Greetings")]
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : {{handler}} { }
+            [ProtoContract]
+            public sealed class Page<T>
+            {
+                [ProtoMember(1)]
+                public T[] Items { get; set; } = [];
+            }
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """);
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF058").Subject;
+        diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Should().Be(
+            $"gRPC contract 'GetGreeting' cannot be bound: its {part} type '{typeName}' is a generic protobuf contract, which cannot be exported to .proto; use a non-generic contract type");
+        result.Generated.Should().NotContain("GetGreetingAsync");
+        result.Generated.Should().NotContain("rpc GetGreeting");
+    }
+
+    [TestMethod]
     public void GrpcGeneratorEmitsBindableContractWithoutDiagnostic()
     {
         var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(

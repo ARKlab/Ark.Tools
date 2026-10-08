@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Mediator Framework
-- **Diagnostic message:** `gRPC contract '{0}' cannot be bound: its {1} type '{2}' is not a protobuf contract`
+- **Diagnostic message:** `gRPC contract '{0}' cannot be bound: its {1} type '{2}' {3}`
 
 ## What it checks
 
@@ -16,6 +16,12 @@ protobuf-net binds a method only when every message is a protobuf contract type:
 A command response (`google.protobuf.Empty`) is always bindable. Scalars and other
 types without `[ProtoContract]`, such as `string` or `int`, are not messages, so a
 response or stream item like `IAsyncEnumerable<int>` is not bindable.
+
+A closed generic contract, such as `Page<Book>` where `Page<T>` has
+`[ProtoContract]`, is also reported. protobuf-net can serve it, but the generator
+cannot export it to `.proto`, so the served and exported services would disagree.
+The message then says the type is a generic protobuf contract; use a non-generic
+contract type, for example `BookPage`.
 
 The generator emits no server code and no `.proto` entry for the contract. The
 diagnostic is reported at the `[GrpcMethod]` attribute when the contract is in

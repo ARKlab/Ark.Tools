@@ -12,6 +12,6 @@ internal static class DiagnosticDescriptors
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF011.md");
 
     public static readonly DiagnosticDescriptor UnbindableGrpcContract = new(
-        "ARKMF058", "gRPC contract is not bindable", "gRPC contract '{0}' cannot be bound: its {1} type '{2}' is not a protobuf contract",
+        "ARKMF058", "gRPC contract is not bindable", "gRPC contract '{0}' cannot be bound: its {1} type '{2}' {3}",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF058.md");
 }
