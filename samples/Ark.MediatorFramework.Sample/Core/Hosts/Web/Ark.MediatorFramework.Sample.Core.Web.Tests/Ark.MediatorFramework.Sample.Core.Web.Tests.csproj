@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The hosted tests run the WebInterface on TestServer. -->
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="Ark.Tools.AspNetCore.ApplicationInsights" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- OpenApiDocumentTests reads the snapshot and writes the received document next to it. -->
+    <AssemblyMetadata Include="SnapshotDirectory" Value="$(MSBuildProjectDirectory)/Snapshots" />
+    <None Include="..\Ark.MediatorFramework.Sample.Core.Web.WebInterface\appsettings.json"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="appsettings.json" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Web.Hosting\Ark.MediatorFramework.Sample.Core.Web.Hosting.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Web.WebInterface\Ark.MediatorFramework.Sample.Core.Web.WebInterface.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor\Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Web.GrpcClient\Ark.MediatorFramework.Sample.Core.Web.GrpcClient.csproj" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.API\Ark.MediatorFramework.Sample.Core.API.csproj" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
+  </ItemGroup>
+
+</Project>

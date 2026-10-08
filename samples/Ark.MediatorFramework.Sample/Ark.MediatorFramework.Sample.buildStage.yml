@@ -65,7 +65,7 @@ stages:
             inputs:
               command: publish
               publishWebProjects: false
-              projects: '${{ parameters.workingDirectory }}/src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj'
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/Ark.MediatorFramework.Sample.Core.Web.WebInterface.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/web'
 
           - task: DotNetCoreCLI@2
