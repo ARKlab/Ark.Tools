@@ -129,6 +129,13 @@ composition requires exactly one Producer or Receiver.
 | Audit subscriber | Records the print audit effect | `Web.AuditProcessor` | `WebRebus.AuditProcessor` | `Functions.Audit` |
 | Outbox drain | Dispatches committed envelopes | `Web.OutboxProcessor` (`MessagingOutboxProcessor`) | Rebus outbox processor in `WebRebus.Processor` only (the Api enlists; subscribers send nothing) | `Functions.OutboxProcessor` (`MessagingOutboxProcessor`) |
 
+`CreateBookReviewRequest` is both an HTTP request and a bus message on
+purpose: the sample demonstrates that a request listed in `Processes` is
+dispatched over the bus with its response discarded. New contracts should
+still separate immediate requests from background messages, as
+[the contract design workflow](../../mediator-framework/contract-design-workflow.md)
+recommends.
+
 Application changes:
 
 - `Publishes = [BookPrintCompleted]` moves from the Api participant to the
