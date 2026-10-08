@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- SimpleInjector-composed host: Microsoft telemetry is only a transitive reference. -->
+    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Direct reference: the sample applies the Rebus host generator only to direct references. -->
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
+    <PackageReference Include="Ark.Tools.NLog.Configuration" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.WebRebus.Hosting\Ark.MediatorFramework.Sample.Core.WebRebus.Hosting.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -142,8 +142,13 @@
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.GrpcClient/Ark.MediatorFramework.Sample.Core.Web.GrpcClient.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/Ark.MediatorFramework.Sample.Core.Web.Tests.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Ark.MediatorFramework.Sample.Core.WebRebus.Processor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Tests/Ark.MediatorFramework.Sample.Core.WebRebus.Tests.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions/Ark.MediatorFramework.Sample.AuditFunctions.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Functions/Ark.MediatorFramework.Sample.Functions.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj" />

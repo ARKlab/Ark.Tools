@@ -2,23 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-      <!-- SimpleInjector-composed host without an IServiceCollection: Microsoft telemetry
-         is only a transitive reference and redaction cannot be registered here. -->
-    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
-    <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
-    <PackageReference Include="Ark.Tools.Outbox" />
+    <PackageReference Include="Ark.Tools.Outbox.Rebus" />
     <PackageReference Include="Ark.Tools.Rebus" />
     <PackageReference Include="Ark.Tools.Solid.Authorization" />
     <PackageReference Include="Ark.Tools.SystemTextJson" />
-    <ProjectReference Include="..\..\Core\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
   </ItemGroup>
 
 </Project>

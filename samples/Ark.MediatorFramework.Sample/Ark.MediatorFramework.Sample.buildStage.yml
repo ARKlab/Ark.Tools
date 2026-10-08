@@ -77,11 +77,11 @@ stages:
               arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/functions'
 
           - task: DotNetCoreCLI@2
-            displayName: Publish Rebus processor
+            displayName: Publish WebRebus processor
             inputs:
               command: publish
               publishWebProjects: false
-              projects: '${{ parameters.workingDirectory }}/src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj'
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Ark.MediatorFramework.Sample.Core.WebRebus.Processor.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/processor'
 
           - task: CopyFiles@2
