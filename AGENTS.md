@@ -326,7 +326,7 @@ Host.CreateDefaultBuilder(args)
 ## Source Generators
 
 - All projects emit generated code to the intermediate output folder: `obj/$(Configuration)/$(TargetFramework)/generated/<GeneratorAssembly>/<GeneratorName>/`
-- **When developing or changing a Generator**: after building, ALWAYS inspect the emitted `.g.cs` files in the consuming samples/tests projects (e.g., `samples/Ark.MediatorFramework.Sample/src/*/obj/Debug/net10.0/generated/`) to verify the generated code is correct and compilable
+- **When developing or changing a Generator**: after building, ALWAYS inspect the emitted `.g.cs` files in the consuming samples/tests projects (e.g., `samples/Ark.MediatorFramework.Sample/Core/**/obj/Debug/net10.0/generated/`) to verify the generated code is correct and compilable
 
 ## Project Structure
 
