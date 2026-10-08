@@ -6,15 +6,17 @@
 
 ## What it checks
 
-A `GET`, `HEAD` or `DELETE` endpoint never reads the request body, including
-when `AcceptsMessagePack = true` (MessagePack then applies to the response
-only). Every property of the contract must therefore be bound from the route
+A `GET` or `DELETE` endpoint, and a `HEAD` Azure Functions function, never
+reads the request body, including when `AcceptsMessagePack = true` (MessagePack
+then applies to the response only). Every property of the contract must therefore be bound from the route
 or the query string. Properties marked `[ServerSet]` are filled by the server
 and are not checked.
 
 ### Minimal API generator
 
-The rule reports a property when:
+The rule checks `GET` and `DELETE` endpoints. The Minimal API generator does
+not map `HEAD` and reports it as an unsupported verb (`ARKMF010`). The rule
+reports a property when:
 
 - it is marked `[HttpBody]`;
 - it is an `IArkAttachment` or a collection of attachments;

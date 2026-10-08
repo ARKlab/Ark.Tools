@@ -562,7 +562,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 if (!properties.Any(property => string.Equals(property.Name, routeName, StringComparison.OrdinalIgnoreCase)))
                     diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.MissingRouteProperty, type.Name, GetLocation(http), routeName));
             }
-            if (verb is "GET" or "HEAD" or "DELETE")
+            if (verb is "GET" or "DELETE")
             {
                 // Once a request or query has a route or query property, the endpoint binds only those properties:
                 // any other settable property would be silently dropped. Otherwise, and always for commands, it binds

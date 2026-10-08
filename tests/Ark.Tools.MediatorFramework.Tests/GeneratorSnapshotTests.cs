@@ -1104,6 +1104,12 @@ public sealed class GeneratorSnapshotTests
                 public int Id { get; init; }
                 public bool Force { get; init; }
             }
+            [HttpEndpoint("HEAD", "/books/{id}")]
+            public sealed record BookExists : IQuery<string>
+            {
+                public int Id { get; init; }
+                public string? Edition { get; init; }
+            }
             [HttpEndpoint("POST", "/books")]
             public sealed record CreateBook : IRequest<string>
             {
@@ -1114,10 +1120,11 @@ public sealed class GeneratorSnapshotTests
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Author", "Force");
+            .Should().BeEquivalentTo("Author", "Force", "Edition");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().NotContain("global::GetBooks");
         result.Generated.Should().NotContain("global::DeleteBook");
+        result.Generated.Should().NotContain("global::BookExists");
         result.Generated.Should().Contain("global::CreateBook");
     }
 
@@ -2966,6 +2973,28 @@ public sealed class GeneratorSnapshotTests
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().NotContain("global::ListBooks");
         result.Generated.Should().NotContain("global::DeleteBook");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsHeadAsUnsupportedVerbOnly()
+    {
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            [HttpEndpoint("HEAD", "/books")]
+            public sealed record BookExists : IQuery<string>
+            {
+                public Filter? Filter { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF010");
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMF059");
     }
 
     [TestMethod]
