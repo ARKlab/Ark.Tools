@@ -3857,6 +3857,62 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorEmitsSubscribedAndKnownNetworkTopicsInDescriptor()
+    {
+        var (driver, compilation) = _runGeneratorDriver<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Event(Name = "books.printed")]
+            public sealed class BookPrinted : ICommand<BookPrinted> { }
+            [Event(Name = "books.archived")]
+            public sealed class BookArchived : ICommand<BookArchived> { }
+            [MessagingParticipant(
+                Identity = "printer",
+                Publishes = new[] { typeof(BookPrinted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrinterParticipant { }
+            [MessagingParticipant(
+                Identity = "archiver",
+                Publishes = new[] { typeof(BookArchived) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class ArchiverParticipant { }
+            [MessagingParticipant(
+                Identity = "notifier",
+                Subscribes = new[] { typeof(BookPrinted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class NotifierParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrinterParticipant), typeof(NotifierParticipant), typeof(ArchiverParticipant) },
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """,
+            []);
+
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+        var notifier = driver.GetRunResult().Results
+            .SelectMany(static result => result.GeneratedSources)
+            .Single(static source => source.HintName.StartsWith("NotifierParticipant_", StringComparison.Ordinal))
+            .SourceText.ToString();
+
+        generatedCompilation.GetDiagnostics().Should().NotContain(
+            static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        notifier.Should().Contain(
+            "new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource(\"printer-books.printed\", \"printer\"),");
+        notifier.Should().Contain(
+            """
+                        new string[]
+                        {
+                            "archiver-books.archived",
+                            "printer-books.printed",
+                        });
+            """.ReplaceLineEndings("\n"));
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorRejectsRequestSubscription()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(

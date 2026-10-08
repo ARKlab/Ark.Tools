@@ -23,8 +23,8 @@ public static class InMemoryMessagingHarness
 
     /// <summary>Creates queues, the completed-print topic, and both subscriptions.</summary>
     /// <remarks>
-    /// Receivers do not provision their own resources yet (the framework reconciles only published topics),
-    /// so the harness creates them up front.
+    /// Receivers also provision these resources when they start; the harness creates them up front so the
+    /// topology exists before any participant starts.
     /// </remarks>
     /// <param name="transport">The shared in-memory transport.</param>
     /// <param name="ctk">The cancellation token.</param>

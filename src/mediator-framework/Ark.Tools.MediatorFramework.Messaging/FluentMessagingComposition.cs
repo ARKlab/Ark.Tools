@@ -328,6 +328,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     private bool _outboxEnqueue;
     private bool _outgoingPipelineSelected;
     private bool _incomingPipelineSelected;
+    private IMessagingTransportManagement? _resourceManagement;
 
     protected MessagingModeBuilder(
         IServiceCollection services,
@@ -490,6 +491,23 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return this;
     }
 
+    /// <summary>Uses an explicit resource-management seam for <c>CreateIfMissing</c> provisioning.</summary>
+    /// <remarks>
+    /// Needed when the transport does not implement <see cref="IMessagingTransportManagement"/> itself,
+    /// for example <c>ServiceBusMessagingTransport</c> with <c>ServiceBusTransportManagement</c>.
+    /// </remarks>
+    /// <param name="management">The resource-management seam.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseResourceManagement(
+        IMessagingTransportManagement management)
+    {
+        ArgumentNullException.ThrowIfNull(management);
+        _resourceManagement = _resourceManagement is null
+            ? management
+            : throw new InvalidOperationException("A resource management seam is already selected.");
+        return this;
+    }
+
     /// <summary>Enables outbox enlistment without hosting a processor.</summary>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseOutbox()
@@ -544,7 +562,8 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
             participant,
             transport,
             dataBus,
-            _outgoingSteps);
+            _outgoingSteps,
+            _resourceManagement);
         if (_messagePack)
             _services._addMessagePackMessagingCodec();
         if (_protobuf)
