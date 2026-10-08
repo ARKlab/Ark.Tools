@@ -4333,6 +4333,46 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MessagingNetworkGeneratorRejectsDuplicateParticipantContracts()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.print_book")]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [Event(Name = "books.book_printed")]
+            public sealed class BookPrinted : ICommand<BookPrinted> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook), typeof(PrintBook) },
+                Publishes = new[] { typeof(BookPrinted), typeof(BookPrinted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingParticipant(
+                Subscribes = new[] { typeof(BookPrinted), typeof(BookPrinted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class AuditParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant), typeof(AuditParticipant) },
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """;
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMSG028").ToArray();
+        diagnostics.Select(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)).Should().BeEquivalentTo(
+            "Participant 'printing' lists 'PrintBook' more than once in Processes",
+            "Participant 'printing' lists 'BookPrinted' more than once in Publishes",
+            "Participant 'audit' lists 'BookPrinted' more than once in Subscribes");
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("PrintingParticipant", "PrintingParticipant", "AuditParticipant");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMSG005" || diagnostic.Id == "ARKMSG006");
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorRejectsMissingEffectiveMessagePackShape()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(

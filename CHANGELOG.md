@@ -40,4 +40,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - An `[ArkRebusHost]` over a participant that subscribes to events now compiles: the generated `SubscribeAsync` called a Rebus `BusExtensions` class that does not exist.
 - Generated messaging stream dispatch compiles in projects without implicit usings.
 - Undispatchable messaging contracts are reported at build time: an event (declared, published, or subscribed) that is not an `ICommand<TSelf>`, including a request (`ARKMSG018`), and a processed contract that is neither a command nor a request (`ARKMSG027`).
+- A messaging participant that lists the same contract twice in `Processes`, `Publishes` or `Subscribes` is reported at build time (`ARKMSG028`) instead of failing at startup.
 - Generated Minimal API `GET` and `DELETE` endpoints with `AcceptsMessagePack = true` no longer read the request body, so a plain `GET` without content no longer fails. They bind from the route and query string and negotiate MessagePack for the response only, and OpenAPI no longer lists a request body for them.
