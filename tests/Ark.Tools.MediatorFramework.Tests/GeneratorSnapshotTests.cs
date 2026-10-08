@@ -3034,8 +3034,36 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DeleteBook");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::GetMe");
         result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListShelves request,");
-        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year };");
+        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default };");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DownloadExport");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorKeepsEveryAssignmentWhenItBindsServerSetContractsExplicitly()
+    {
+        // A positional record keeps its non-constructor properties in an object initializer, and a download record
+        // resets its server-set properties, including a required one, which would otherwise not compile.
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/books")]
+            public sealed record SearchBooks(string Term) : IQuery<string>
+            {
+                public int Page { get; init; }
+                [ServerSet] public string? Owner { get; init; }
+            }
+            [HttpEndpoint("GET", "/exports")]
+            public sealed record DownloadExport : IQuery<IArkAttachment>
+            {
+                public int Year { get; init; }
+                [ServerSet] public required string RequestedBy { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("var request = new global::SearchBooks(Term) { Page = Page, Owner = default };");
+        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default };");
     }
 
     [TestMethod]

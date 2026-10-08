@@ -1358,7 +1358,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("            {");
             if (!asParameters)
             {
-                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + BindingValue(property)));
+                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + BindingValue(property))
+                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
                 sb.AppendLine("                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
             }
             EmitServerSetAssignments(sb, endpoint, "request");
@@ -1551,7 +1552,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (endpoint.ConstructorParameters.IsEmpty)
                 return "new " + endpoint.TypeFullName + " { " + assignments + " }";
 
-            var values = assignments
+            var parsed = assignments
                 .Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(assignment =>
                 {
@@ -1561,11 +1562,19 @@ namespace Ark.Tools.MediatorFramework.Generators
                         : (Name: assignment[..separator], Value: assignment[(separator + 3)..]);
                 })
                 .Where(assignment => assignment.Name.Length > 0)
-                .ToDictionary(assignment => assignment.Name, assignment => assignment.Value, StringComparer.OrdinalIgnoreCase);
+                .ToArray();
+            var values = parsed.ToDictionary(assignment => assignment.Name, assignment => assignment.Value, StringComparer.OrdinalIgnoreCase);
+            var parameters = new HashSet<string>(endpoint.ConstructorParameters, StringComparer.OrdinalIgnoreCase);
+            // Properties that are not constructor parameters keep their assignment in an object initializer.
+            var initializers = parsed
+                .Where(assignment => !parameters.Contains(assignment.Name))
+                .Select(assignment => assignment.Name + " = " + assignment.Value)
+                .ToArray();
             return "new " + endpoint.TypeFullName + "("
                 + string.Join(", ", endpoint.ConstructorParameters.Select(parameter =>
                     values.TryGetValue(parameter, out var value) ? value : "default!"))
-                + ")";
+                + ")"
+                + (initializers.Length == 0 ? string.Empty : " { " + string.Join(", ", initializers) + " }");
         }
 
         private enum HandlerKind
