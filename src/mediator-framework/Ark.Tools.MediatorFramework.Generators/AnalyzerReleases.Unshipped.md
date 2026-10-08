@@ -30,3 +30,4 @@ ARKMSG023 | Ark.Tools.MediatorFramework | Error | Messaging declaring type must 
 ARKMSG025 | Ark.Tools.MediatorFramework | Error | MessagePack contract shape is missing
 ARKMSG026 | Ark.Tools.MediatorFramework | Error | Google.Protobuf contract shape is missing
 ARKMF021 | Ark.Tools.MediatorFramework | Error | Contract has multiple Solid kinds
+ARKMSG029 | Ark.Tools.MediatorFramework | Warning | Default messaging contract name is version-only
