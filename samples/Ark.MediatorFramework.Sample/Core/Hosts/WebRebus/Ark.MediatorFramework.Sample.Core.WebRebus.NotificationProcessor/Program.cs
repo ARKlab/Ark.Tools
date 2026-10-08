@@ -6,6 +6,7 @@ using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.Application.Services;
 using Ark.MediatorFramework.Sample.Core.WebRebus.Hosting;
 using Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor;
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.NLog;
 using Ark.Tools.Rebus;
@@ -36,6 +37,7 @@ try
         .Apply();
     builder.Logging.ClearProviders();
     builder.Logging.AddNLog();
+    builder.Services.AddArkRedaction();
     var sql = builder.Configuration.GetConnectionString("Sample")
         ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
     var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")

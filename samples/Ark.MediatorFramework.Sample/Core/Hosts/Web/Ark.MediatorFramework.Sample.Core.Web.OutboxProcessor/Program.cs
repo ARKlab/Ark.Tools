@@ -3,6 +3,7 @@
 
 using Ark.MediatorFramework.Sample.Core.Application.DAL;
 using Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor;
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
 using Ark.Tools.Sql.SqlServer;
@@ -29,6 +30,7 @@ try
         .Apply();
     builder.Logging.ClearProviders();
     builder.Logging.AddNLog();
+    builder.Services.AddArkRedaction();
     var sql = builder.Configuration.GetConnectionString("Sample")
         ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
     var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")
