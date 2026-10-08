@@ -33,7 +33,7 @@ Select the public API assembly at assembly level:
 
 ```csharp
 [assembly: HttpHost(
-    typeof(Ark.MediatorFramework.Sample.API.RefreshGreetingCommand),
+    typeof(Ark.MediatorFramework.Sample.Core.API.Book_CreateRequest.V1),
     "/api/v{version}")]
 ```
 
