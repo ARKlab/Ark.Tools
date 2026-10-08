@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Core;
+using Ark.Tools.Core.BusinessRuleViolation;
 using Ark.Tools.Solid;
 
 using NodaTime;
@@ -39,15 +40,26 @@ public sealed class CreateBookReviewHandler : IRequestHandler<CreateBookReviewRe
         await using var __ctx = context.ConfigureAwait(false);
         _ = await context.ReadBookAsync(request.BookId, ctk: ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Book '{request.BookId}' was not found.");
+        var reviewId = request.ReviewId ?? Guid.NewGuid();
+        var existing = await context.ReadBookReviewAsync(reviewId, ctk).ConfigureAwait(false);
+        if (existing is not null)
+        {
+            return existing.BookId == request.BookId
+                ? existing
+                : throw new BusinessRuleViolationException(new BookReviewIdConflictViolation(reviewId));
+        }
+
         var review = new BookReview
         {
-            Id = Guid.NewGuid(),
+            Id = reviewId,
             BookId = request.BookId,
             UserId = userId,
             Rating = request.Rating,
             Text = request.Text,
             CreatedAt = _clock.GetCurrentInstant(),
         };
+        // The insert is the first write: a concurrent duplicate fails here before it has any side effect.
+        await context.SaveBookReviewAsync(review, ctk).ConfigureAwait(false);
         await context.WriteAuditAsync(new AuditEntry
         {
             Id = Guid.NewGuid(),
@@ -57,7 +69,6 @@ public sealed class CreateBookReviewHandler : IRequestHandler<CreateBookReviewRe
             Operation = nameof(CreateBookReviewRequest),
             Timestamp = review.CreatedAt,
         }, ctk).ConfigureAwait(false);
-        await context.SaveBookReviewAsync(review, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return review;
     }

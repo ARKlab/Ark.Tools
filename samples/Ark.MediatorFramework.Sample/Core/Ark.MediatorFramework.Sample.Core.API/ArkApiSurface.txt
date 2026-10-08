@@ -14,6 +14,7 @@ CONTRACT Book_BulkCreateRequest.V1.Data : IReadOnlyList<Book.V1.Create>
 CONTRACT CreateBookReviewRequest.V1 -> BookReview [group=Ark] [http=POST /api/v{version}/books/{bookId}/reviews] [version=1+]
 CONTRACT CreateBookReviewRequest.V1.BookId : Guid
 CONTRACT CreateBookReviewRequest.V1.Rating : int
+CONTRACT CreateBookReviewRequest.V1.ReviewId : Guid?
 CONTRACT CreateBookReviewRequest.V1.Text : string default=string.Empty
 CONTRACT DescribeBookEditionRequest.V1 -> BookEditionDescription [group=Ark] [grpc-group=Books] [http=POST /api/v{version}/books/editions/describe] [version=1+] [grpc=DescribeBookEdition] [grpc-version=1+]
 CONTRACT DescribeBookEditionRequest.V1.Edition.Kind : BookEditionKind

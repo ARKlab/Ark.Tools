@@ -124,6 +124,11 @@ worker's topology or dead-letter demonstration types.
 - Stream bounded Book items with cancellation-aware HTTP JSON and gRPC endpoints.
 - Describe printed and digital Book editions through JSON, protobuf, and MessagePack.
 
+Book reviews are idempotent when the sender supplies `CreateBookReviewRequest.V1.ReviewId`.
+Every bus sender sets it, so a redelivered message returns the stored review and writes
+nothing; reusing the identifier for another book is a business-rule violation. The plain
+HTTP call without `ReviewId` generates one and is not idempotent.
+
 ### Auditing
 
 Every decorated request writes an audit record in the same application-owned

@@ -199,6 +199,54 @@ Feature: Books
                 | 0    | 10    |
             Then the book review list has 0 results
 
+        Scenario: Repeating a book review with the same identifier creates it once
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            When I create a book review with
+                | ReviewId                             | Rating | Text            |
+                | 5d1f3c1e-8a59-4f39-9d55-0c6a0f7b2a11 | 5      | Excellent book! |
+            And I create a book review with
+                | ReviewId                             | Rating | Text            |
+                | 5d1f3c1e-8a59-4f39-9d55-0c6a0f7b2a11 | 5      | Excellent book! |
+            Then the book review was created
+            And the last two book reviews have the same identifier
+            When I list book reviews with
+                | Skip | Limit |
+                | 0    | 10    |
+            Then the book review list has 1 results
+            And the audit log has 1 entries for the book review
+
+        Scenario: Redelivering a background book review creates it once
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I am an authenticated user
+            When I dispatch the same book review for the current book through the background bus twice with
+                | Rating | Text            |
+                | 5      | Excellent book! |
+            And I wait for the background bus to be idle and the outbox to be empty
+            When I list book reviews with
+                | Skip | Limit |
+                | 0    | 10    |
+            Then the book review list has 1 results
+            And the audit log has 1 entries for the book review
+
+        Scenario: Reject a review identifier that belongs to another book
+            Given I create a book with
+                | Title | Author  | Genre   |
+                | Dune  | Herbert | Fiction |
+            And I create a book review with
+                | ReviewId                             | Rating | Text            |
+                | 7c2e4b10-3d6a-4c8e-b1f2-9a0d5e6f7a22 | 5      | Excellent book! |
+            And I create a book with
+                | Title       | Author | Genre   |
+                | Neuromancer | Gibson | Fiction |
+            When I create a book review with
+                | ReviewId                             | Rating | Text   |
+                | 7c2e4b10-3d6a-4c8e-b1f2-9a0d5e6f7a22 | 4      | Second |
+            Then the book request fails with a business rule violation
+
     Rule: Reading activity uses repository time and bounded retrieval
 
         Scenario: Record and retrieve reading activity

@@ -42,7 +42,23 @@ public sealed class BackgroundMessagingSteps
         var request = table.CreateInstance<CreateBookReviewRequest.V1>() with
         {
             BookId = _books.Current.Id,
+            ReviewId = Guid.NewGuid(),
         };
+        await _sampleContext.Application.SendAsync(request).ConfigureAwait(false);
+    }
+
+    /// <summary>Sends one book review twice through the api process bus, as a redelivery would.</summary>
+    /// <param name="table">The review data.</param>
+    [When("I dispatch the same book review for the current book through the background bus twice with")]
+    public async Task DispatchSameBookReviewTwice(Table table)
+    {
+        var request = table.CreateInstance<CreateBookReviewRequest.V1>() with
+        {
+            BookId = _books.Current.Id,
+            ReviewId = Guid.NewGuid(),
+        };
+        _books.CurrentReviewId = request.ReviewId;
+        await _sampleContext.Application.SendAsync(request).ConfigureAwait(false);
         await _sampleContext.Application.SendAsync(request).ConfigureAwait(false);
     }
 

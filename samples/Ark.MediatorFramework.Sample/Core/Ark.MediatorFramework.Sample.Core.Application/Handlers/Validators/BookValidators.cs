@@ -141,6 +141,7 @@ public sealed class CreateBookReviewRequestValidator : AbstractValidator<CreateB
     public CreateBookReviewRequestValidator()
     {
         RuleFor(static request => request.BookId).NotEmpty();
+        RuleFor(static request => request.ReviewId).NotEqual(Guid.Empty).When(static request => request.ReviewId.HasValue);
         RuleFor(static request => request.Rating).InclusiveBetween(1, 5);
         RuleFor(static request => request.Text).NotEmpty().MaximumLength(2000);
     }
