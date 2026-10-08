@@ -75,7 +75,9 @@ The repository has two separate APM flows:
 - **Development:** [apm.yml](apm.yml) and [apm.lock.yaml](apm.lock.yaml)
   declare and pin development dependencies. Installed Copilot and Claude
   skills, agents, hooks, MCP and LSP configuration are committed, so every
-  harness and cloud session has them at startup without running APM.
+  harness and cloud session has them at startup. Some agents link into the
+  ignored `apm_modules/`; run `apm install` after cloning to restore it (cloud
+  setup does this automatically).
 - **Publication:** [agents-plugins/ark-csharp](agents-plugins/ark-csharp/)
   contains the authored `apm.yml` and `.apm/` assets.
   [agents-plugins/published/ark-csharp](agents-plugins/published/ark-csharp/)
