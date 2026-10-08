@@ -8,7 +8,8 @@ using NodaTime;
 namespace Ark.MediatorFramework.Sample.Core.Application.Host;
 
 /// <summary>Inputs for <see cref="ApplicationComposition.Register(SimpleInjector.Container, ApplicationOptions)"/>.</summary>
-public sealed record ApplicationOptions
+/// <remarks>A class rather than a record, so no generated <c>ToString</c> prints the connection string.</remarks>
+public sealed class ApplicationOptions
 {
     /// <summary>Gets the SQL Server connection string. Set exactly one of this or <see cref="DataContextFactory"/>.</summary>
     [InfrastructureSecret]
