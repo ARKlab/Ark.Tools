@@ -25,6 +25,11 @@ A request that exhausts its retries moves to the Rebus `error` queue. A
 background review sent without the `books.reviews.write` scope is the example
 covered by the tests.
 
+## DataBus
+
+WebRebus configures no claim-check DataBus: no bus contract of this variant
+carries an attachment, so nothing needs one.
+
 ## Outbox
 
 Every process configures the Rebus outbox on the shared SQL `Outbox` table, so a
