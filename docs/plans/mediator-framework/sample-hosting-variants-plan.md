@@ -333,6 +333,7 @@ the current overload until they are deleted (Tasks 5–7).
 
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.Tools.Outbox;
+using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
@@ -2010,7 +2011,7 @@ Edits:
   `IContextProvider<ClaimsPrincipal>` as `AspNetCoreUserContextProvider` over the
   forwarded `IHttpContextAccessor`, and call
   `WebHosting.BridgeBus(container, () => serviceProvider)`.
-- `SampleHost.Configure(WebApplicationBuilder builder, Container container, IMessagingTransport transport, IMessagingDataBus dataBus)`.
+- `SampleHost.Configure(WebApplicationBuilder builder, Container container, IMessagingTransport transport, IMessagingDataBus dataBus, IMessagingTransportManagement? resourceManagement)`.
 - csproj: drop `Ark.Tools.MediatorFramework.Rebus`, `Ark.Tools.Rebus`, the
   `RebusProcessor` project reference; reference `…Core.Web.Hosting`.
 - `Program.cs`:
@@ -2853,22 +2854,23 @@ git commit -m "docs(samples): document mediator sample hosting variants" -m "Ass
 
 ### Final-review follow-ups (ARKlab/Ark.Tools#1047)
 
-The final-review PR is not a plan task, but it delivers spec requirements the
-tasks above left open:
+The final-review PR is not a numbered task. It is the executable step for these
+spec requirements, which the tasks above left open; tick each item when its
+commit lands on that PR:
 
-- Every variant offloads oversized messages through its claim-check DataBus.
+- [ ] Every variant offloads oversized messages through its claim-check DataBus.
   WebRebus configures the Rebus DataBus in every process, following
   ReferenceProject `ApiHost`: `StoreInBlobStorage` from
   `ConnectionStrings:DataBus` and
   `SendBigMessagesAsAttachments((256 - 64 - 2) * 1024)`. The native variants
   use `IMessagingDataBus`.
-- Each variant has a test that sends a message above the threshold and asserts
+- [ ] Each variant has a test that sends a message above the threshold and asserts
   that the payload arrives whole and its body went through the DataBus.
-- Generated GET, HEAD and DELETE endpoints bind from route and query only.
-  ARKMF059/060 reject contracts that would need a body.
-- ARKMSG028 reports duplicate participant topic entries at build time.
-- The processor hosts load Key Vault configuration.
-- `CreateBookReviewRequest.V1` gets the explicit wire name
+- [ ] Generated GET, HEAD and DELETE endpoints bind from route and query only.
+  ARKMF059 rejects contracts that would need a body.
+- [ ] ARKMSG028 reports duplicate participant topic entries at build time.
+- [ ] The processor hosts load Key Vault configuration.
+- [ ] `CreateBookReviewRequest.V1` gets the explicit wire name
   `books/book-review.create`.
 
 ### Task 11: Host-free contract attributes
