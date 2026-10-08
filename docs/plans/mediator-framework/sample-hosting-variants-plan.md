@@ -2525,6 +2525,8 @@ git commit -m "feat(samples): add web rebus host variant" -m "Assisted-by: Claud
 - Delete: `S/src/` (now only old `AzureFunctions`, `AuditFunctions`, `Functions`), `S/test/` (old test project), `S/Ark.MediatorFramework.Sample.yml`, `.buildStage.yml`, `.deployStage.yml` (replaced in Task 9)
 - Modify: `C/…Core.Application/Host/ApplicationComposition.cs` (delete the temporary legacy `Register` overload)
 - Modify: `src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/Ark.Tools.MediatorFramework.Messaging.csproj` (remove `InternalsVisibleTo Include="Ark.MediatorFramework.Sample.Tests"`)
+- Modify (framework, own commit in Step 3): `src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions/MessagingFunctionsServiceCollectionExtensions.cs`, `src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions/MessagingFunctionsHostAttribute.cs` (XML docs for the new key), `docs/mediator-framework/azure-functions.md`, `CHANGELOG.md`
+- Test (framework): `tests/Ark.Tools.MediatorFramework.Tests/MessagingFunctionsCompositionTests.cs`
 - Modify: `.vscode/settings.json` (`azureFunctions.projectSubpath` → `samples\\Ark.MediatorFramework.Sample\\Core\\Hosts\\Functions\\Ark.MediatorFramework.Sample.Core.Functions.Api`)
 
 **Interfaces:**
@@ -2615,10 +2617,31 @@ Provisioning against the emulator needs the administration endpoint (port
 `ServiceBusAdministrationClient` from the optional
 `<ConnectionConfigurationKey>:administrationConnectionString` setting
 (`AzureServiceBus:ConnectionString:administrationConnectionString`) and falls
-back to the data-plane connection when it is absent. Add this seam to
-`Ark.Tools.MediatorFramework.AzureFunctions` with a composition test that
-asserts the administration client uses the separate connection, plus a
-CHANGELOG `Added` line. The trigger apps' development settings set both keys.
+back to the data-plane connection when it is absent. The trigger apps'
+development settings set both keys.
+
+Land the seam as its own framework commit before the sample work:
+
+1. In `MessagingFunctionsCompositionTests`, add a test that configures both
+   `AzureServiceBus:ConnectionString` and
+   `AzureServiceBus:ConnectionString:administrationConnectionString` and asserts
+   the resolved administration connection is the second one; add a test that
+   without the second key it falls back to the first.
+2. Run `dotnet test --project tests/Ark.Tools.MediatorFramework.Tests` filtered to
+   `MessagingFunctionsCompositionTests`. Expected: the new tests fail.
+3. In `MessagingFunctionsServiceCollectionExtensions`, read the key and build
+   `ServiceBusAdministrationClient` from it when set; document the key in
+   `MessagingFunctionsHostAttribute` and `docs/mediator-framework/azure-functions.md`;
+   add a CHANGELOG `Unreleased` line.
+4. Re-run the tests. Expected: pass. `dotnet build Ark.Tools.slnx`: 0 warnings.
+5. Commit:
+
+```bash
+git add src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions \
+  tests/Ark.Tools.MediatorFramework.Tests/MessagingFunctionsCompositionTests.cs \
+  docs/mediator-framework/azure-functions.md CHANGELOG.md
+git commit -m "fix(MediatorFramework): add functions service bus admin connection" -m "Assisted-by: Claude"
+```
 
 - [ ] **Step 4: Api app**
 
