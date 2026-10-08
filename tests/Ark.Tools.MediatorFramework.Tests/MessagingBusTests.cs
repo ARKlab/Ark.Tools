@@ -281,7 +281,7 @@ public sealed partial class MessagingBusTests
         public Task ProcessIncomingAsync(
             IReadOnlyList<Type> orderedStepTypes,
             MessagingIncomingContext context,
-            Func<ICommandProcessor, CancellationToken, Task> terminal,
+            Func<ICommandProcessor, IRequestProcessor, CancellationToken, Task> terminal,
             CancellationToken cancellationToken)
         {
             throw new NotSupportedException();

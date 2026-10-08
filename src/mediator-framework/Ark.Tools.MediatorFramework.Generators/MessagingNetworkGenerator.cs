@@ -36,6 +36,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _participantDescriptor = "Ark.Tools.MediatorFramework.Messaging.MessagingParticipantDescriptor";
     private const string _contractRegistry = "Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry";
     private const string _commandProcessor = "Ark.Tools.Solid.ICommandProcessor";
+    private const string _requestProcessor = "Ark.Tools.Solid.IRequestProcessor";
     private const string _failFastException = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastException";
     private const string _failFastReason = "Ark.Tools.MediatorFramework.Messaging.MessagingFailFastReason";
     private const string _failedMessage = "Ark.Tools.MediatorFramework.MessagingFailed`1";
@@ -97,7 +98,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Retry policy for participant '{0}' must have MaximumDeliveryCount >= {1}", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _invalidEventShape = _rule(
         "ARKMSG018", "Invalid event contract",
-        "Event contract '{0}' must implement ICommand<TSelf> or IRequest<TSelf, TResponse>", DiagnosticSeverity.Error);
+        "Event contract '{0}' must implement ICommand<TSelf>; a request is a message, not an event", DiagnosticSeverity.Error);
+    private static readonly DiagnosticDescriptor _undispatchableMessage = _rule(
+        "ARKMSG027", "Processed contract cannot be dispatched",
+        "Participant '{0}' processes '{1}', which implements neither ICommand<TSelf> nor IRequest<TSelf, TResponse>", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _nonNormalizedName = _rule(
         "ARKMSG019", "Non-normalized contract name",
         "Contract '{0}' has explicit name or alias '{1}', which is not a valid logical name", DiagnosticSeverity.Error);
@@ -280,7 +284,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 _requireCapability(context, network, participant, "PubSub", _pubSub);
 
             foreach (var contract in participant.Processes)
+            {
                 _add(processors, contract, participant);
+                if (!contract.IsSelfCommand && contract.RequestResponseTypeName is null)
+                    _report(context, _undispatchableMessage, contract, participant.Identity, contract.DisplayName);
+            }
             foreach (var contract in participant.Publishes)
                 _add(publishers, contract, participant);
         }
@@ -331,7 +339,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             var hasPublisher = publishers.ContainsKey(contract);
             if (contract.HasMessage && contract.HasEvent)
                 _report(context, _dualContract, contract, contract.DisplayName);
-            if (contract.HasEvent && !contract.IsEventShape)
+            // An event (declared, published, or subscribed) must be a command; a request is a message, never an event.
+            var isEvent = contract.HasEvent
+                || hasPublisher
+                || participants.Any(participant => participant.Subscribes.Contains(contract));
+            if (isEvent && !contract.IsSelfCommand)
                 _report(context, _invalidEventShape, contract, contract.DisplayName);
             if (!hasProcessor && !hasPublisher)
                 _report(context, _unwiredContract, contract, contract.ContractName, network.Name);
@@ -433,13 +445,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var processes = _types(attribute, "Processes");
         var publishes = _types(attribute, "Publishes");
         var subscribes = _types(attribute, "Subscribes");
-        var commandInterface = compilation.GetTypeByMetadataName(_commandInterface);
         return new Participant(
             _readType(symbol),
             identity,
-            _readContracts(processes, commandInterface),
-            _readContracts(publishes, commandInterface),
-            _readContracts(subscribes, commandInterface),
+            _readContracts(processes),
+            _readContracts(publishes),
+            _readContracts(subscribes),
             serializers,
             _enum(attribute, "DefaultSerializer"),
             compression,
@@ -449,8 +460,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             retry,
             _readContracts(
                 processes.Concat(publishes).Concat(subscribes)
-                    .Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>(),
-                commandInterface));
+                    .Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>()));
     }
 
     private static TypeSpec _readType(INamedTypeSymbol symbol)
@@ -468,14 +478,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             LocationSpec._from(symbol.Locations.FirstOrDefault()));
     }
 
-    private static EquatableArray<ContractSpec> _readContracts(
-        IEnumerable<INamedTypeSymbol> contracts,
-        INamedTypeSymbol? commandInterface)
+    private static EquatableArray<ContractSpec> _readContracts(IEnumerable<INamedTypeSymbol> contracts)
     {
         return contracts
-            .Select(contract =>
+            .Select(static contract =>
             {
                 var attributes = _contractAttributes(contract);
+                var request = _selfInterface(contract, _requestInterfaceName);
                 return new ContractSpec(
                     _readType(contract),
                     _contractName(contract),
@@ -487,8 +496,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     attributes.Name is null
                         && (attributes.Message is not null || attributes.Event is not null)
                         && _isBareVersion(contract.Name),
-                    _isEventShape(contract),
-                    commandInterface is not null && _implementsCommand(contract, commandInterface),
+                    _selfInterface(contract, _commandInterfaceName) is not null,
+                    request?.TypeArguments[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     MessagingContractTopologyValidator._hasMessagePackAttribute(contract),
                     MessagingContractTopologyValidator._hasGoogleProtobufShape(contract));
             })
@@ -499,6 +508,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     {
         var canEmitBinder = compilation.GetTypeByMetadataName(_payloadReader) is not null
             && compilation.GetTypeByMetadataName(_commandProcessor) is not null
+            && compilation.GetTypeByMetadataName(_requestProcessor) is not null
             && compilation.GetTypeByMetadataName(_failFastException) is not null
             && compilation.GetTypeByMetadataName(_failFastReason) is not null
             && compilation.GetTypeByMetadataName(_commandInterface) is not null;
@@ -603,19 +613,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         return name.Length > 1 && name[0] == 'V' && name.Skip(1).All(static character => character is >= '0' and <= '9');
     }
 
-    private static bool _isEventShape(INamedTypeSymbol symbol)
+    /// <summary>Finds <c>ICommand&lt;TSelf&gt;</c> or <c>IRequest&lt;TSelf, TResponse&gt;</c> closed over the symbol itself.</summary>
+    private static INamedTypeSymbol? _selfInterface(INamedTypeSymbol symbol, string interfaceMetadataName)
     {
-        return symbol.AllInterfaces.Any(@interface =>
-        {
-            if (@interface.OriginalDefinition.ContainingNamespace.ToDisplayString() != _requestNamespace)
-                return false;
-
-            var metadataName = @interface.OriginalDefinition.MetadataName;
-            var isCommand = metadataName == _commandInterfaceName && @interface.TypeArguments.Length == 1;
-            var isRequest = metadataName == _requestInterfaceName && @interface.TypeArguments.Length == 2;
-            return (isCommand || isRequest)
-                && SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], symbol);
-        });
+        return symbol.AllInterfaces.FirstOrDefault(@interface =>
+            @interface.OriginalDefinition.ContainingNamespace.ToDisplayString() == _requestNamespace
+            && @interface.OriginalDefinition.MetadataName == interfaceMetadataName
+            && SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], symbol));
     }
 
     private static string _contractName(INamedTypeSymbol symbol)
@@ -1031,7 +1035,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var contracts = participant.Processes
             .Concat(participant.Subscribes)
             .Distinct()
-            .Where(contract => !canEmitBinder || contract.ImplementsCommand)
+            .Where(static contract => contract.IsSelfCommand || contract.RequestResponseTypeName is not null)
             .OrderBy(static contract => contract.DisplayName, StringComparer.Ordinal)
             .ToArray();
 
@@ -1044,6 +1048,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .AppendLine("        string logicalName,")
                 .AppendLine("        global::Ark.Tools.MediatorFramework.Messaging.IMessagingPayloadReader payload,")
                 .AppendLine("        global::Ark.Tools.Solid.ICommandProcessor processor,")
+                .AppendLine("        global::Ark.Tools.Solid.IRequestProcessor requestProcessor,")
                 .AppendLine("        global::System.Threading.CancellationToken ctk)")
                 .AppendLine("    {")
                 .AppendLine("        switch (logicalName)")
@@ -1055,9 +1060,15 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .Distinct(StringComparer.Ordinal);
                 foreach (var wireName in names)
                     source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
-                source.Append("                var message = await payload.DeserializeAsync<").Append(contract.TypeName).AppendLine(">(ctk).ConfigureAwait(false);")
-                    .Append("                await processor.ExecuteAsync<").Append(contract.TypeName).AppendLine(">(message, ctk).ConfigureAwait(false);")
-                    .AppendLine("                break;");
+                source.AppendLine("            {")
+                    .Append("                var message = await payload.DeserializeAsync<").Append(contract.TypeName).AppendLine(">(ctk).ConfigureAwait(false);");
+                if (contract.RequestResponseTypeName is null)
+                    source.Append("                await processor.ExecuteAsync<").Append(contract.TypeName).AppendLine(">(message, ctk).ConfigureAwait(false);");
+                else
+                    source.Append("                await requestProcessor.ExecuteAsync<").Append(contract.TypeName).Append(", ")
+                        .Append(contract.RequestResponseTypeName).AppendLine(">(message, ctk).ConfigureAwait(false);");
+                source.AppendLine("                break;")
+                    .AppendLine("            }");
             }
 
             source.AppendLine("            default:")
@@ -1077,12 +1088,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .AppendLine("        global::System.IO.Stream payload,")
                     .AppendLine("        global::Ark.Tools.MediatorFramework.Messaging.IMessagingCodec codec,")
                     .AppendLine("        global::Ark.Tools.Solid.ICommandProcessor processor,")
+                    .AppendLine("        global::Ark.Tools.Solid.IRequestProcessor requestProcessor,")
                     .AppendLine("        global::System.Threading.CancellationToken ctk)")
                     .AppendLine("    {")
                     .AppendLine("        var reader = new global::Ark.Tools.MediatorFramework.Messaging.MessagingStreamPayloadReader(payload, codec);")
-                    .AppendLine("        await using (reader.ConfigureAwait(false))")
+                    .AppendLine("        await using (global::System.Threading.Tasks.TaskAsyncEnumerableExtensions.ConfigureAwait(reader, false))")
                     .AppendLine("        {")
-                    .AppendLine("            await DispatchAsync(logicalName, reader, processor, ctk).ConfigureAwait(false);")
+                    .AppendLine("            await DispatchAsync(logicalName, reader, processor, requestProcessor, ctk).ConfigureAwait(false);")
                     .AppendLine("        }")
                     .AppendLine("    }");
             }
@@ -1109,12 +1121,14 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                         .Distinct(StringComparer.Ordinal);
                     foreach (var wireName in names)
                         source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
-                    source.Append("                var message = await payload.DeserializeAsync<").Append(contract.TypeName).AppendLine(">(ctk).ConfigureAwait(false);")
+                    source.AppendLine("            {")
+                        .Append("                var message = await payload.DeserializeAsync<").Append(contract.TypeName).AppendLine(">(ctk).ConfigureAwait(false);")
                         .Append("                var failed = new global::Ark.Tools.MediatorFramework.MessagingFailed<")
                         .Append(contract.TypeName).AppendLine(">(message, deliveryCount, new[] { error });")
                         .Append("                await processor.ExecuteAsync<global::Ark.Tools.MediatorFramework.MessagingFailed<")
                         .Append(contract.TypeName).AppendLine(">>(failed, ctk).ConfigureAwait(false);")
-                        .AppendLine("                return;");
+                        .AppendLine("                return;")
+                        .AppendLine("            }");
                 }
 
                 source.AppendLine("            default:")
@@ -1171,8 +1185,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .AppendLine("            {");
                 foreach (var contract in contracts)
                 {
-                    source.Append("                typeof(global::Ark.Tools.Solid.ICommandHandler<")
-                        .Append(contract.TypeName).AppendLine(">),");
+                    if (contract.RequestResponseTypeName is null)
+                        source.Append("                typeof(global::Ark.Tools.Solid.ICommandHandler<")
+                            .Append(contract.TypeName).AppendLine(">),");
+                    else
+                        source.Append("                typeof(global::Ark.Tools.Solid.IRequestHandler<")
+                            .Append(contract.TypeName).Append(", ")
+                            .Append(contract.RequestResponseTypeName).AppendLine(">),");
                     if (participant.Retry?.SecondLevelRetriesEnabled == true)
                     {
                         source.Append("                typeof(global::Ark.Tools.Solid.ICommandHandler<global::Ark.Tools.MediatorFramework.MessagingFailed<")
@@ -1229,12 +1248,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         return symbol.ContainingType is null
             && symbol.Arity == 0
             && isPartial;
-    }
-
-    private static bool _implementsCommand(INamedTypeSymbol contract, INamedTypeSymbol commandInterface)
-    {
-        return contract.AllInterfaces.Any(@interface =>
-            SymbolEqualityComparer.Default.Equals(@interface.OriginalDefinition, commandInterface));
     }
 
     private static string _typeName(INamedTypeSymbol symbol)
@@ -1436,6 +1449,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             "ARKMSG015" => _reservedIdentity,
             "ARKMSG017" => _invalidRetry,
             "ARKMSG018" => _invalidEventShape,
+            "ARKMSG027" => _undispatchableMessage,
             "ARKMSG019" => _nonNormalizedName,
             "ARKMSG020" => _duplicateName,
             "ARKMSG021" => _duplicateAlias,
@@ -1512,8 +1526,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         string? ExplicitName,
         EquatableArray<string> FormerNames,
         bool HasVersionOnlyDefaultName,
-        bool IsEventShape,
-        bool ImplementsCommand,
+        bool IsSelfCommand,
+        string? RequestResponseTypeName,
         bool HasMessagePackAttribute,
         bool HasGoogleProtobufShape)
     {

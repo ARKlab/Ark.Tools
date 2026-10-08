@@ -10,13 +10,15 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Dispatches one generated participant contract.</summary>
 /// <param name="logicalName">The logical contract name.</param>
 /// <param name="payload">The prepared payload reader.</param>
-/// <param name="processor">The scoped command processor.</param>
+/// <param name="processor">The scoped command processor, used for command contracts.</param>
+/// <param name="requestProcessor">The scoped request processor, used for request contracts sent as messages.</param>
 /// <param name="ctk">The cancellation token.</param>
 /// <returns>A task that completes after dispatch.</returns>
 public delegate Task MessagingDispatch(
     string logicalName,
     IMessagingPayloadReader payload,
     ICommandProcessor processor,
+    IRequestProcessor requestProcessor,
     CancellationToken ctk);
 
 /// <summary>Dispatches one generated participant second-level failure.</summary>

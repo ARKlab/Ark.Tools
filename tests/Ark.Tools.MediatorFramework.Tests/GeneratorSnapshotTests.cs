@@ -3753,11 +3753,9 @@ public sealed class GeneratorSnapshotTests
             public sealed class PrintBook : ICommand<PrintBook> { }
             [Event(Name = "books.print_completed")]
             public sealed class PrintCompleted : ICommand<PrintCompleted> { }
-            [Event(Name = "books.print_completed_request")]
-            public sealed class PrintCompletedRequest : IRequest<PrintCompletedRequest, string> { }
             [MessagingParticipant(
                 Processes = new[] { typeof(PrintBook) },
-                Publishes = new[] { typeof(PrintCompleted), typeof(PrintCompletedRequest) },
+                Publishes = new[] { typeof(PrintCompleted) },
                 Serializers = new[] { SerializationProtocol.Json },
                 DefaultSerializer = SerializationProtocol.Json,
                 Compression = CompressionAlgorithm.Gzip,
@@ -3808,6 +3806,153 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("Type.GetType");
         result.Generated.Should().NotContain("Activator.");
         result.Generated.Should().NotContain("MakeGenericType");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorCompilesParticipantProcessingCommandAndRequest()
+    {
+        var (driver, compilation) = _runGeneratorDriver<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.print_book")]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [Message(Name = "books.review_book")]
+            public sealed class ReviewBook : IRequest<ReviewBook, string> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook), typeof(ReviewBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json,
+                Retry = typeof(BookRetryPolicy))]
+            public sealed partial class BookParticipant { }
+            public sealed class BookRetryPolicy : IMessagingRetryPolicy
+            {
+                public int MaximumDeliveryCount => 2;
+                public bool SecondLevelRetriesEnabled => true;
+                public System.TimeSpan MaximumHandlerDuration => System.TimeSpan.FromMinutes(1);
+                public System.TimeSpan RetryDelay => System.TimeSpan.Zero;
+            }
+            [MessagingNetwork(
+                Members = new[] { typeof(BookParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public sealed partial class BookMessagingNetwork { }
+            """,
+            []);
+
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+        var generated = string.Join(
+            Environment.NewLine,
+            driver.GetRunResult().Results
+                .SelectMany(static result => result.GeneratedSources)
+                .Select(static source => source.SourceText.ToString()));
+
+        generatedCompilation.GetDiagnostics().Should().NotContain(
+            static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        generated.Should().Contain(
+            "await requestProcessor.ExecuteAsync<global::ReviewBook, string>(message, ctk).ConfigureAwait(false);");
+        generated.Should().Contain("await processor.ExecuteAsync<global::PrintBook>(message, ctk).ConfigureAwait(false);");
+        generated.Should().Contain("typeof(global::Ark.Tools.Solid.IRequestHandler<global::ReviewBook, string>)");
+        generated.Should().Contain(
+            "typeof(global::Ark.Tools.Solid.ICommandHandler<global::Ark.Tools.MediatorFramework.MessagingFailed<global::ReviewBook>>)");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsRequestSubscription()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.review_book")]
+            public sealed class ReviewBook : IRequest<ReviewBook, string> { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(ReviewBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PublishingParticipant { }
+            [MessagingParticipant(
+                Subscribes = new[] { typeof(ReviewBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class SubscribingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PublishingParticipant), typeof(SubscribingParticipant) },
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG018");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsRequestEvent()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Event(Name = "books.review_completed")]
+            public sealed class ReviewCompleted : IRequest<ReviewCompleted, string> { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(ReviewCompleted) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PublishingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PublishingParticipant) },
+                Requires = MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(static diagnostic =>
+            diagnostic.Id == "ARKMSG018"
+            && diagnostic.GetMessage().Contains("must implement ICommand<TSelf>"));
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsPublishedNonCommandWithoutEventAttribute()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.lookup_book")]
+            public sealed class LookupBook : IQuery<string> { }
+            [MessagingParticipant(
+                Publishes = new[] { typeof(LookupBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PublishingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PublishingParticipant) },
+                Requires = MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG018");
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorRejectsUndispatchableProcessedContract()
+    {
+        var result = _runGeneratorResult<MessagingNetworkGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.lookup_book")]
+            public sealed class LookupBook : IQuery<string> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(LookupBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class LookupParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(LookupParticipant) },
+                Requires = MessagingCapabilities.SendReceive)]
+            public sealed partial class BookMessagingNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG027");
     }
 
     [TestMethod]
@@ -3992,7 +4137,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().Contain(static diagnostic =>
             diagnostic.Id == "ARKMSG018"
-            && diagnostic.GetMessage().Contains("ICommand<TSelf> or IRequest<TSelf, TResponse>"));
+            && diagnostic.GetMessage().Contains("must implement ICommand<TSelf>"));
     }
 
     [TestMethod]

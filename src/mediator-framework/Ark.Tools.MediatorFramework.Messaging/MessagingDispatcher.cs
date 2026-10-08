@@ -19,7 +19,7 @@ public sealed class MessagingDispatcher
     private readonly MessagingPayloadReceiver _payloadReceiver;
     private readonly IMessagingRetryPolicy _retryPolicy;
     private readonly IMessagingPipelineProcessor _pipelineProcessor;
-    private readonly Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> _dispatch;
+    private readonly Func<string, IMessagingPayloadReader, ICommandProcessor, IRequestProcessor, CancellationToken, Task> _dispatch;
     private readonly Func<
         string,
         IMessagingPayloadReader,
@@ -47,7 +47,7 @@ public sealed class MessagingDispatcher
         MessagingPayloadReceiver payloadReceiver,
         IMessagingRetryPolicy retryPolicy,
         IMessagingPipelineProcessor pipelineProcessor,
-        Func<string, IMessagingPayloadReader, ICommandProcessor, CancellationToken, Task> dispatch,
+        Func<string, IMessagingPayloadReader, ICommandProcessor, IRequestProcessor, CancellationToken, Task> dispatch,
         Func<
             string,
             IMessagingPayloadReader,
@@ -198,7 +198,8 @@ public sealed class MessagingDispatcher
                     await _pipelineProcessor.ProcessIncomingAsync(
                         _incomingStepTypes,
                         context,
-                        (processor, pipelineToken) => _dispatch(logicalName, payload, processor, pipelineToken),
+                        (processor, requestProcessor, pipelineToken) =>
+                            _dispatch(logicalName, payload, processor, requestProcessor, pipelineToken),
                         stageToken).ConfigureAwait(false);
                 },
                 _retryPolicy.MaximumHandlerDuration,
@@ -260,7 +261,7 @@ public sealed class MessagingDispatcher
                     await _pipelineProcessor.ProcessIncomingAsync(
                         Array.Empty<Type>(),
                         new MessagingIncomingContext(delivery.Headers, delivery.DeliveryCount, stageToken),
-                        (processor, pipelineToken) => _dispatchFailed(
+                        (processor, _, pipelineToken) => _dispatchFailed(
                             logicalName,
                             payload,
                             delivery.DeliveryCount,

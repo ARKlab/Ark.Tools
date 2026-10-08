@@ -154,6 +154,23 @@ public sealed partial class MessagingOutboxTests
             .ContainSingle(static service => service is MessagingOutboxProcessor);
     }
 
+    [TestMethod]
+    public async Task StartedProcessorSurvivesServiceProviderDisposal()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IMessagingTransport>(new RecordingTransport());
+        services.AddArkMessagingOutboxProcessor(new InMemoryOutboxContextFactory());
+        var provider = services.BuildServiceProvider();
+        var hosted = provider.GetServices<IHostedService>().Single();
+        await hosted.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        await hosted.StopAsync(CancellationToken.None).ConfigureAwait(false);
+
+        // The processor is registered as itself and as a hosted service, so the provider disposes it twice.
+        var dispose = async () => await provider.DisposeAsync().ConfigureAwait(false);
+
+        await dispose.Should().NotThrowAsync().ConfigureAwait(false);
+    }
+
     private static MessagingBus _createBus(
         IMessagingTransport transport,
         string participantIdentity = "sender")

@@ -242,8 +242,12 @@ public sealed class GeneratorIncrementalityTests
             public sealed class PrintCompleted : ICommand<PrintCompleted> { }
             [Event(Name = "books.lost")]
             public sealed class BookLost : ICommand<BookLost> { }
+            [Message(Name = "books.review_book")]
+            public sealed class ReviewBook : IRequest<ReviewBook, string> { }
+            [Message(Name = "books.lookup_book")]
+            public sealed class LookupBook : IQuery<string> { }
             [MessagingParticipant(
-                Processes = new[] { typeof(PrintBook) },
+                Processes = new[] { typeof(PrintBook), typeof(ReviewBook), typeof(LookupBook) },
                 Publishes = new[] { typeof(PrintCompleted) },
                 Serializers = new[] { SerializationProtocol.Json },
                 DefaultSerializer = SerializationProtocol.Json,
@@ -268,7 +272,15 @@ public sealed class GeneratorIncrementalityTests
             [],
             cachedSteps: ["MessagingNetworkSpecs", "MessagingNetworkOutput"],
             unchangedSteps: ["MessagingNetworkParser", "MessagingParticipantParser"],
-            expectedOutput: ["sealed partial class BookMessagingNetwork", "CompressionAlgorithm.Gzip", "DispatchAsync", "ARKMSG008"]);
+            expectedOutput:
+            [
+                "sealed partial class BookMessagingNetwork",
+                "CompressionAlgorithm.Gzip",
+                "DispatchAsync",
+                "requestProcessor.ExecuteAsync<global::ReviewBook, string>",
+                "ARKMSG008",
+                "ARKMSG027",
+            ]);
     }
 
     [TestMethod]
