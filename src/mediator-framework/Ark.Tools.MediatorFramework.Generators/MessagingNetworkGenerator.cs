@@ -203,6 +203,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .ToArray();
         var participantNetworks = new Dictionary<TypeSpec, List<Network>>();
         var allContracts = new Dictionary<ContractSpec, HashSet<TypeSpec>>();
+        // A participant belonging to several networks is reported; its descriptor uses the first one.
+        var networkMembers = new Dictionary<TypeSpec, List<Participant>>();
 
         foreach (var network in networks)
         {
@@ -236,6 +238,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             }
 
             _validateNetwork(context, network, participants);
+            foreach (var participant in participants)
+            {
+                if (!networkMembers.ContainsKey(participant.Symbol))
+                    networkMembers.Add(participant.Symbol, participants);
+            }
         }
 
         foreach (var membership in participantNetworks.Where(static pair => pair.Value.Count > 1))
@@ -251,7 +258,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         foreach (var participant in participantSpecs
             .OrderBy(static participant => participant.Symbol.DisplayName, StringComparer.Ordinal))
         {
-            _emitParticipant(context, participant, facts);
+            _emitParticipant(
+                context,
+                participant,
+                networkMembers.TryGetValue(participant.Symbol, out var members) ? members : new List<Participant>(),
+                facts);
         }
     }
 
@@ -983,6 +994,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static void _emitParticipant(
         GenerationSink context,
         Participant participant,
+        IReadOnlyList<Participant> networkMembers,
         CompilationFacts facts)
     {
         if (!_validateDeclaringType(context, participant.Symbol, "MessagingParticipant"))
@@ -1213,6 +1225,31 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 source.Append("                new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource(\"")
                     .Append(_escape(participant.Identity + "-" + contract.ContractName))
                     .Append("\", \"").Append(_escape(participant.Identity)).AppendLine("\"),");
+            }
+            // Subscribed topics are named and owned by the single publisher; other cases already report a diagnostic.
+            source.AppendLine("            },")
+                .AppendLine("            new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource[]")
+                .AppendLine("            {");
+            foreach (var contract in participant.Subscribes)
+            {
+                var publishers = networkMembers
+                    .Where(member => member.Publishes.Contains(contract))
+                    .ToArray();
+                if (publishers.Length != 1)
+                    continue;
+                source.Append("                new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource(\"")
+                    .Append(_escape(publishers[0].Identity + "-" + contract.ContractName))
+                    .Append("\", \"").Append(_escape(publishers[0].Identity)).AppendLine("\"),");
+            }
+            source.AppendLine("            },")
+                .AppendLine("            new string[]")
+                .AppendLine("            {");
+            foreach (var topic in networkMembers
+                .SelectMany(static member => member.Publishes.Select(contract => member.Identity + "-" + contract.ContractName))
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(static topic => topic, StringComparer.Ordinal))
+            {
+                source.Append("                \"").Append(_escape(topic)).AppendLine("\",");
             }
             source.AppendLine("            });");
             source.AppendLine("    }");

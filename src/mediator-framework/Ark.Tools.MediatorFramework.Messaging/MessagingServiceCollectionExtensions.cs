@@ -239,23 +239,45 @@ public static class MessagingServiceCollectionExtensions
     /// <param name="transport">The selected runtime transport.</param>
     /// <param name="dataBus">The shared network DataBus.</param>
     /// <param name="outgoingStepTypes">Optional host-local outgoing pipeline steps.</param>
+    /// <param name="management">
+    /// Optional resource-management seam; defaults to the transport when it implements
+    /// <see cref="IMessagingTransportManagement"/>.
+    /// </param>
     /// <returns>The same service collection.</returns>
+    /// <remarks>
+    /// Under <see cref="MessagingResourceLifecycle.CreateIfMissing"/> the participant provisions its published and
+    /// subscribed topics and, when it receives, its identity queue and forwarding subscriptions.
+    /// </remarks>
     internal static IServiceCollection _addArkMessagingParticipant(
         this IServiceCollection services,
         MessagingParticipantDescriptor participant,
         IMessagingTransport transport,
         IMessagingDataBus dataBus,
-        IReadOnlyList<Type>? outgoingStepTypes = null)
+        IReadOnlyList<Type>? outgoingStepTypes = null,
+        IMessagingTransportManagement? management = null)
     {
+        var hasResources = participant.PublishedTopics.Count > 0 || participant.Receives;
+        // Same count the Azure Functions generator emits: doubled when second-level retries are on.
+        var maximumDeliveryCount = checked(participant.RetryPolicy.MaximumDeliveryCount
+            * (participant.RetryPolicy.SecondLevelRetriesEnabled ? 2 : 1));
+        // A participant may publish and subscribe to the same event: the manifest rejects duplicate topics.
+        var topics = participant.PublishedTopics.Concat(participant.SubscribedTopics)
+            .DistinctBy(static topic => topic.Name, StringComparer.Ordinal)
+            .ToArray();
         var resources = participant.Network.ResourceLifecycle == MessagingResourceLifecycle.CreateIfMissing
-            && participant.PublishedTopics.Count > 0
+            && hasResources
                 ? new MessagingResourceManifest(
                     participant.Identity,
-                    identityQueue: null,
-                    participant.RetryPolicy.MaximumDeliveryCount,
-                    participant.PublishedTopics,
-                    Array.Empty<MessagingSubscriptionResource>(),
-                    participant.PublishedTopics.Select(static topic => topic.Name),
+                    participant.Receives ? participant.Identity : null,
+                    maximumDeliveryCount,
+                    topics,
+                    participant.SubscribedTopics.Select(topic => new MessagingSubscriptionResource(
+                        topic.Name,
+                        participant.Identity,
+                        participant.Identity,
+                        maximumDeliveryCount,
+                        participant.Identity)),
+                    participant.KnownNetworkTopics,
                     participant.Network.ResourceLifecycle)
                 : null;
         return services._addArkMessagingParticipant(
@@ -263,7 +285,7 @@ public static class MessagingServiceCollectionExtensions
             transport,
             dataBus,
             resources,
-            transport as IMessagingTransportManagement,
+            management ?? transport as IMessagingTransportManagement,
             outgoingStepTypes);
     }
 

@@ -54,6 +54,8 @@ public sealed class MessagingParticipantDescriptor
     /// <param name="dispatchFailed">The generated second-level failure binder.</param>
     /// <param name="handlerServiceTypes">The generated consumed-contract handler service types.</param>
     /// <param name="publishedTopics">The generated participant-owned topic resources.</param>
+    /// <param name="subscribedTopics">The generated topic resources of the events the participant subscribes to.</param>
+    /// <param name="knownNetworkTopics">The generated names of every event topic in the network.</param>
     public MessagingParticipantDescriptor(
         Type participantType,
         MessagingNetworkOptions network,
@@ -67,7 +69,9 @@ public sealed class MessagingParticipantDescriptor
         MessagingDispatch? dispatch,
         MessagingFailedDispatch? dispatchFailed,
         IEnumerable<Type>? handlerServiceTypes = null,
-        IEnumerable<MessagingTopicResource>? publishedTopics = null)
+        IEnumerable<MessagingTopicResource>? publishedTopics = null,
+        IEnumerable<MessagingTopicResource>? subscribedTopics = null,
+        IEnumerable<string>? knownNetworkTopics = null)
     {
         ParticipantType = participantType ?? throw new ArgumentNullException(nameof(participantType));
         Network = network ?? throw new ArgumentNullException(nameof(network));
@@ -94,6 +98,10 @@ public sealed class MessagingParticipantDescriptor
             (handlerServiceTypes ?? Array.Empty<Type>()).ToArray());
         PublishedTopics = new ReadOnlyCollection<MessagingTopicResource>(
             (publishedTopics ?? Array.Empty<MessagingTopicResource>()).ToArray());
+        SubscribedTopics = new ReadOnlyCollection<MessagingTopicResource>(
+            (subscribedTopics ?? Array.Empty<MessagingTopicResource>()).ToArray());
+        KnownNetworkTopics = new ReadOnlyCollection<string>(
+            (knownNetworkTopics ?? Array.Empty<string>()).ToArray());
     }
 
     /// <summary>Gets the participant declaration type.</summary>
@@ -134,6 +142,14 @@ public sealed class MessagingParticipantDescriptor
 
     /// <summary>Gets the generated participant-owned topic resources.</summary>
     public IReadOnlyList<MessagingTopicResource> PublishedTopics { get; }
+
+    /// <summary>Gets the generated topic resources of the events the participant subscribes to.</summary>
+    /// <remarks>Each topic is named and owned by the event publisher, as in <see cref="PublishedTopics"/>.</remarks>
+    public IReadOnlyList<MessagingTopicResource> SubscribedTopics { get; }
+
+    /// <summary>Gets the generated names of every event topic in the network.</summary>
+    /// <remarks>Resource reconciliation lists these topics to delete stale subscriptions owned by the participant.</remarks>
+    public IReadOnlyList<string> KnownNetworkTopics { get; }
 
     /// <summary>Creates the participant payload sender over the shared DataBus.</summary>
     /// <param name="dataBus">The shared network DataBus.</param>

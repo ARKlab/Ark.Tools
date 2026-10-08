@@ -45,6 +45,15 @@ services.ConfigureArkMessaging(
 });
 ```
 
+A transport that does not manage its own resources needs an explicit seam when
+the network uses `CreateIfMissing`. With it, Producers provision their topics,
+and Receivers also their identity queue and forwarding subscriptions:
+
+```csharp
+.UseTransport(transport => transport.UseServiceBus(client))
+.UseResourceManagement(new ServiceBusTransportManagement(administrationClient))
+```
+
 Use `Receiver<TParticipant>(container, ...)` for a custom receive host. Azure
 Functions hosts use `ConfigureArkMessagingFunctions` and select either Service
 Bus or Storage Queue. Generated network, participant, and Functions metadata are
