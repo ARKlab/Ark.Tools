@@ -3094,6 +3094,137 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorRejectsRouteAndQueryTypesThatCannotBeConvertedFromAString()
+    {
+        // Mirrors ASP.NET Minimal API: an explicit route or query parameter whose type is an array of a type without
+        // TryParse fails at startup, and a collection or a complex object read through ArkTypeConverterValue fails
+        // every request that carries it.
+        const string source =
+            """
+            using System;
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Microsoft.Extensions.Primitives;
+            using NodaTime;
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            public readonly struct Day
+            {
+                public int Value { get; }
+            }
+            public readonly struct Shelf : IParsable<Shelf>
+            {
+                static Shelf IParsable<Shelf>.Parse(string s, IFormatProvider? provider) => default;
+                static bool IParsable<Shelf>.TryParse(string? s, IFormatProvider? provider, out Shelf result) { result = default; return true; }
+            }
+            [HttpEndpoint("GET", "/books/{codes}")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                [HttpRoute] public Day[] Codes { get; init; } = [];
+                [HttpQuery] public List<int> Ids { get; init; } = [];
+                [HttpQuery] public Dictionary<string, string> Labels { get; init; } = [];
+                [HttpQuery] public Day[] Days { get; init; } = [];
+                [HttpQuery] public Filter? Filter { get; init; }
+                [HttpQuery] public int[] Years { get; init; } = [];
+                [HttpQuery] public string[] Isbns { get; init; } = [];
+                [HttpQuery] public IEnumerable<string> Sort { get; init; } = [];
+                [HttpQuery] public List<string> Tags { get; init; } = [];
+                [HttpQuery] public StringValues Authors { get; init; }
+                [HttpQuery] public Day? Since { get; init; }
+                [HttpQuery] public Instant? From { get; init; }
+                [HttpQuery] public Shelf? Shelf { get; init; }
+                [HttpQuery] public DayOfWeek[] WeekDays { get; init; } = [];
+            }
+            [HttpEndpoint("POST", "/books/{id}")]
+            public sealed record UpdateBooks : IRequest<string>
+            {
+                [HttpRoute] public Guid Id { get; init; }
+                [HttpQuery] public HashSet<Guid> Related { get; init; } = [];
+                [HttpQuery] public Guid[] Copies { get; init; } = [];
+                public List<int> Pages { get; init; } = [];
+            }
+            [HttpEndpoint("PUT", "/books/{id}/shelves")]
+            public sealed record ShelveBook : ICommand<ShelveBook>
+            {
+                [HttpRoute] public Guid Id { get; init; }
+                [HttpQuery] public Filter? Target { get; init; }
+                [HttpQuery] public Day? On { get; init; }
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            source,
+            [],
+            MetadataReference.CreateFromFile(typeof(NodaTime.LocalDate).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(Microsoft.Extensions.Primitives.StringValues).Assembly.Location));
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Codes", "Ids", "Labels", "Days", "Filter", "Related", "Target");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
+            .GetMessage(CultureInfo.InvariantCulture)
+            .Should().Be("HTTP endpoint 'ListBooks' binds property 'Ids' from the route or query string, but its type 'System.Collections.Generic.List<int>' cannot be converted from a string");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsExplicitParsableQueryValuesWithoutAWrapper()
+    {
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using System;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public readonly struct Shelf : IParsable<Shelf>
+            {
+                static Shelf IParsable<Shelf>.Parse(string s, IFormatProvider? provider) => default;
+                static bool IParsable<Shelf>.TryParse(string? s, IFormatProvider? provider, out Shelf result) { result = default; return true; }
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                [HttpQuery] public Shelf? Shelf { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Shelf\")] global::Shelf? Shelf");
+        result.Generated.Should().NotContain("ArkTypeConverterValue<global::Shelf");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsAsParametersRoutePropertiesThatAspNetInfersAsBody()
+    {
+        // A GET or DELETE command binds with [AsParameters]: ASP.NET infers a body for a route property it cannot
+        // bind from a string, and the endpoint fails at startup.
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using NodaTime;
+            [HttpEndpoint("DELETE", "/days/{day}")]
+            public sealed record ClearDay : ICommand<ClearDay>
+            {
+                public LocalDate Day { get; init; }
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : ICommand<DeleteBook>
+            {
+                public int Id { get; init; }
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            source, [], MetadataReference.CreateFromFile(typeof(NodaTime.LocalDate).Assembly.Location));
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF059").Subject;
+        source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length).Should().Be("Day");
+        result.Generated.Should().Contain("global::DeleteBook");
+        result.Generated.Should().NotContain("global::ClearDay");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorReportsReferencedGetContractAtTheHostCall()
     {
         var contracts = _createMetadataReference(

@@ -1,10 +1,16 @@
-# ARKMF059: Property cannot be bound without a request body
+# ARKMF059: Property cannot be bound from the request
 
 - **Severity:** Error
 - **Component:** Mediator Framework
-- **Diagnostic message:** `HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]`
+- **Diagnostic messages:**
+  - `HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]`
+  - `HTTP endpoint '{0}' binds property '{1}' from the route or query string, but its type '{2}' cannot be converted from a string`
 
 ## What it checks
+
+The rule reports a contract property that the generated endpoint cannot bind from
+the request. The second message is used for a route or `[HttpQuery]` property,
+the first for any other property.
 
 A `GET` or `DELETE` endpoint, and a `HEAD` Azure Functions function, never
 reads the request body, including when `AcceptsMessagePack = true` (MessagePack
@@ -31,7 +37,8 @@ reports a property when:
 - ASP.NET Core would infer it as a body. When a request or query has no route
   or `[HttpQuery]` property, and always for commands, the endpoint binds the
   contract with `[AsParameters]`. ASP.NET Core Minimal API then binds a
-  property from the route or query string only when its type is:
+  property, route properties included, from the route or query string only
+  when its type is:
   - a primitive, `string`, an enum, `Guid`, `DateTime`, `DateTimeOffset`,
     `TimeSpan`, `DateOnly`, `TimeOnly` or `Uri`, or `Nullable<T>` of one of
     these;
@@ -44,7 +51,30 @@ reports a property when:
   dictionaries, structs without `TryParse` and NodaTime types such as
   `LocalDate` and `Instant`, is inferred as a body and the endpoint throws
   `InvalidOperationException: Body was inferred but the method does not allow
-  inferred body parameters` at startup. A route-bound property is accepted.
+  inferred body parameters` at startup.
+
+For every verb, the endpoint binds a route or `[HttpQuery]` property
+explicitly, unless it binds the contract with `[AsParameters]` as described
+above. An explicit route or query value is read as follows:
+
+- a type from the list above is bound by ASP.NET Core;
+- a string collection, such as `string[]`, `List<string>`, `IEnumerable<string>`
+  or `IReadOnlyList<string>`, receives every value of the query parameter;
+- any other single value is converted with its `TypeConverter` at runtime, so a
+  converter registered with `TypeDescriptor`, such as the Ark.Tools NodaTime
+  converters, is used.
+
+The rule reports the property when its type is:
+
+- an array of a type without `TryParse`, which ASP.NET Core rejects at startup
+  (`must have a valid TryParse method to support converting from a string`);
+- a collection, such as `List<int>`, `HashSet<Guid>` or a dictionary, without a
+  `[TypeConverter]` attribute, or a complex object. No `TypeConverter` converts a
+  string to them, so every request that carries the value fails with `400`.
+
+A single value whose type has neither `TryParse` nor a `TypeConverter` registered
+at runtime also fails every request that carries it. The generator cannot see
+runtime registrations, so it does not report this case.
 
 The diagnostic is reported at the property. When the contract is in a
 referenced assembly, it is reported at every `MapArkEndpoints` or
@@ -112,6 +142,19 @@ public sealed record ListReviews : IQuery<ListReviews, IReadOnlyList<Review>>
 }
 ```
 
+A route or query type that cannot be converted from a string:
+
+```csharp
+[HttpEndpoint("POST", "/api/v{version}/books/{bookId}/copies")]
+public sealed record AddCopies : IRequest<AddCopies, int>
+{
+    public Guid BookId { get; init; }
+
+    [HttpQuery]
+    public List<int> Shelves { get; init; } = []; // ARKMF059: use int[]
+}
+```
+
 A type ASP.NET Core infers as a body:
 
 ```csharp
@@ -126,8 +169,8 @@ public sealed record ListBooks : IQuery<ListBooks, IReadOnlyList<Book>>
 
 ## Suppression and configuration
 
-Do not suppress this rule: the endpoint would fail at startup or silently
-ignore the property.
+Do not suppress this rule: the endpoint would fail at startup, fail every
+request that carries the property, or silently ignore it.
 
 ## Source
 

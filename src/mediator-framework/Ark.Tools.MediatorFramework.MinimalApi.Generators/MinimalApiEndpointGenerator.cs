@@ -537,8 +537,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                         property.NullableAnnotation == NullableAnnotation.Annotated
                             || property.Type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
                         property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
-                        IsStringCollection(property.Type, enumerableType),
-                        !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type),
+                        HttpStringBinding.IsStringCollection(property.Type),
+                        !HttpStringBinding.IsStringCollection(property.Type) && !HttpStringBinding.IsStringBindable(property.Type),
                         IsAttachmentCollection(property.Type, attachmentType, enumerableType, listType, readOnlyListType, readOnlyCollectionType),
                         IsAttachmentArray(property.Type, attachmentType),
                         httpBodyAttr is not null && HasAttribute(property, httpBodyAttr));
@@ -566,35 +566,50 @@ namespace Ark.Tools.MediatorFramework.Generators
                 if (!properties.Any(property => string.Equals(property.Name, routeName, StringComparison.OrdinalIgnoreCase)))
                     diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.MissingRouteProperty, type.Name, GetLocation(http), routeName));
             }
-            if (verb is "GET" or "DELETE")
+            // Once a GET or DELETE request or query has a route or query property, the endpoint binds only those
+            // properties: any other settable property would be silently dropped. Otherwise, and always for commands,
+            // it binds the contract with [AsParameters], where ASP.NET infers a body for every property, route
+            // properties included, that it cannot bind from a string, and the endpoint fails at startup. Every
+            // other route or query property, for every verb, is bound explicitly.
+            var noBody = verb is "GET" or "DELETE";
+            var asParameters = noBody && (kind == HandlerKind.Command || !properties.Any(property => property.IsRoute || property.IsQuery));
+            var unbound = new HashSet<string>(
+                properties.Where(property => noBody
+                        && property.HasPublicSetter
+                        && (asParameters || (!property.IsRoute && !property.IsQuery && !property.IsETag)))
+                    .Select(property => property.Name),
+                StringComparer.Ordinal);
+            var routeOrQuery = new HashSet<string>(
+                properties.Where(property => property.IsRoute || property.IsQuery).Select(property => property.Name),
+                StringComparer.Ordinal);
+            foreach (var property in AllProperties(type)
+                .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
+                .Where(property => !HasAttribute(property, serverSetAttr)))
             {
-                // Once a request or query has a route or query property, the endpoint binds only those properties:
-                // any other settable property would be silently dropped. Otherwise, and always for commands, it binds
-                // the contract with [AsParameters], where ASP.NET infers a body for every property it cannot bind
-                // from a string and the endpoint fails at startup.
-                var asParameters = kind == HandlerKind.Command || !properties.Any(property => property.IsRoute || property.IsQuery);
-                var unbound = new HashSet<string>(
-                    properties.Where(property => !property.IsRoute
-                            && property.HasPublicSetter
-                            && (asParameters || (!property.IsQuery && !property.IsETag)))
-                        .Select(property => property.Name),
-                    StringComparer.Ordinal);
-                foreach (var property in AllProperties(type)
-                    .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
-                    .Where(property => !HasAttribute(property, serverSetAttr))
-                    .Where(property => HasAttribute(property, httpBodyAttr)
+                var needsBody = noBody
+                    && (HasAttribute(property, httpBodyAttr)
                         || IsAttachmentType(property.Type, attachmentType)
                         || IsPotentialAttachmentCollection(property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
-                        || IsComplexOrComplexCollection(property.Type, enumerableType)
-                        || (unbound.Contains(property.Name) && (!asParameters || !IsStringBindable(property.Type)))))
-                {
-                    diagnostics.Add(new DiagnosticInfo(
+                        || HttpStringBinding.IsComplexOrComplexCollection(property.Type)
+                        || (unbound.Contains(property.Name) && (!asParameters || !HttpStringBinding.IsStringBindable(property.Type))));
+                var notConvertible = !asParameters && routeOrQuery.Contains(property.Name) && !CanBindExplicitly(property.Type);
+                if (!needsBody && !notConvertible)
+                    continue;
+
+                var location = property.Locations.FirstOrDefault(static location => location.IsInSource) ?? GetLocation(http);
+                diagnostics.Add(routeOrQuery.Contains(property.Name)
+                    ? new DiagnosticInfo(
+                        DiagnosticDescriptors.PropertyNotConvertibleFromString,
+                        type.Name,
+                        location,
+                        property.Name,
+                        property.Type.ToDisplayString())
+                    : new DiagnosticInfo(
                         DiagnosticDescriptors.PropertyNotBindableWithoutBody,
                         type.Name,
-                        property.Locations.FirstOrDefault(static location => location.IsInSource) ?? GetLocation(http),
+                        location,
                         verb,
                         property.Name));
-                }
             }
             var bodyBinding = verb is not ("GET" or "DELETE");
             var hasInvalidBodyShape = bodyBinding && (!type.IsRecord || properties.Any(property => !property.HasPublicSetter));
@@ -1186,18 +1201,6 @@ namespace Ark.Tools.MediatorFramework.Generators
             };
         }
 
-        private static bool IsStringCollection(ITypeSymbol type, INamedTypeSymbol? enumerableType)
-        {
-            return (type is IArrayTypeSymbol array && array.ElementType.SpecialType == SpecialType.System_String)
-                || (enumerableType is not null
-                    && ((type is INamedTypeSymbol named
-                        && SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, enumerableType)
-                        && named.TypeArguments[0].SpecialType == SpecialType.System_String)
-                        || type.AllInterfaces.Any(iface =>
-                            SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, enumerableType)
-                            && iface.TypeArguments[0].SpecialType == SpecialType.System_String)));
-        }
-
         private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
         {
             for (var current = type; current is not null; current = current.BaseType)
@@ -1205,85 +1208,16 @@ namespace Ark.Tools.MediatorFramework.Generators
                     yield return property;
         }
 
-        private static bool RequiresTypeConverterBinding(ITypeSymbol type)
-        {
-            if (type is IArrayTypeSymbol)
-                return false;
-
-            var targetType = type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
-                ? nullable.TypeArguments[0]
-                : type;
-            if (targetType.SpecialType == SpecialType.System_String
-                || targetType.TypeKind == TypeKind.Enum
-                || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
-                return false;
-
-            return !targetType.GetMembers("TryParse")
-                .OfType<IMethodSymbol>()
-                .Any(method => method.IsStatic
-                    && method.DeclaredAccessibility == Accessibility.Public
-                    && method.ReturnType.SpecialType == SpecialType.System_Boolean
-                    && method.Parameters.Length is 2 or 3
-                    && method.Parameters[0].Type.SpecialType == SpecialType.System_String
-                    && (method.Parameters.Length == 2
-                        || method.Parameters[1].Type.ToDisplayString() == "System.IFormatProvider")
-                    && method.Parameters[^1].RefKind == RefKind.Out
-                    && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, targetType));
-        }
-
-        // A complex object is a data shape with public settable or init properties and no string conversion
-        // visible at compile time (static TryParse or [TypeConverter]). Converters registered at runtime through
-        // TypeDescriptor, such as the NodaTime ones, target types without settable properties, so they pass.
-        private static bool IsComplexOrComplexCollection(ITypeSymbol type, INamedTypeSymbol? enumerableType)
-        {
-            if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
-                type = nullable.TypeArguments[0];
-            if (type.SpecialType != SpecialType.None || type.TypeKind == TypeKind.Enum)
-                return false;
-
-            var element = type is IArrayTypeSymbol array
-                ? array.ElementType
-                : (type as INamedTypeSymbol)?.AllInterfaces.Append((INamedTypeSymbol)type)
-                    .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(candidate.OriginalDefinition, enumerableType))
-                    ?.TypeArguments[0];
-            if (element is not null)
-                return IsComplexOrComplexCollection(element, null);
-
-            return RequiresTypeConverterBinding(type)
-                && !HasTypeConverterAttribute(type)
-                && type is INamedTypeSymbol named
-                && AllProperties(named).Any(property => !property.IsStatic
-                    && property.DeclaredAccessibility == Accessibility.Public
-                    && property.SetMethod is { DeclaredAccessibility: Accessibility.Public });
-        }
-
-        // Mirrors the types ASP.NET Minimal API binds from a route or query string: primitives, enums, Uri,
-        // StringValues, types with a static TryParse or IParsable<T>, their nullable forms, and arrays of them.
-        private static bool IsStringBindable(ITypeSymbol type)
-        {
-            if (type is IArrayTypeSymbol array)
-                return array.ElementType is not IArrayTypeSymbol && IsStringBindable(array.ElementType);
-
-            var targetType = type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
-                ? nullable.TypeArguments[0]
-                : type;
-            return !RequiresTypeConverterBinding(targetType)
-                || targetType.AllInterfaces.Any(candidate =>
-                    candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
-                    && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], targetType));
-        }
-
-        private static bool HasTypeConverterAttribute(ITypeSymbol type)
-        {
-            for (var current = type; current is not null; current = current.BaseType)
-            {
-                if (current.GetAttributes().Any(attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == "System.ComponentModel.TypeConverterAttribute"))
-                    return true;
-            }
-
-            return false;
-        }
+        // An explicit route or query parameter binds a string-bindable type natively, a string collection through
+        // string[], and any other single value through its TypeConverter at runtime (ArkTypeConverterValue). ASP.NET
+        // rejects an array of any other type at startup, and no TypeConverter converts a string to a collection or a
+        // complex object, so every request that carries the value fails.
+        private static bool CanBindExplicitly(ITypeSymbol type)
+            => HttpStringBinding.IsStringBindable(type)
+                || HttpStringBinding.IsStringCollection(type)
+                || (!HttpStringBinding.IsComplexOrComplexCollection(type)
+                    && (!HttpStringBinding.IsCollection(type)
+                        || (type is not IArrayTypeSymbol && HttpStringBinding.HasTypeConverterAttribute(type))));
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
         {
