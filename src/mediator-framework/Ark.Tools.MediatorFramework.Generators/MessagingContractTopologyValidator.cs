@@ -29,35 +29,41 @@ public static class MessagingContractTopologyValidator
         DiagnosticSeverity.Error,
         isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMSG026.md");
 
+    internal static DiagnosticDescriptor? _missingShape(
+        int protocol,
+        bool hasMessagePackAttribute,
+        bool hasGoogleProtobufShape)
+    {
+        if (protocol == _messagePackProtocol && !hasMessagePackAttribute)
+            return _missingMessagePackShape;
+        if (protocol == _protobufProtocol && !hasGoogleProtobufShape)
+            return _missingProtobufShape;
+        return null;
+    }
+
     internal static void _validate(
         Action<DiagnosticDescriptor, Location, object[]> report,
         INamedTypeSymbol contract,
         INamedTypeSymbol owner,
         int protocol)
     {
-        if (protocol == _messagePackProtocol && !_hasMessagePackAttribute(contract))
+        var descriptor = _missingShape(protocol, _hasMessagePackAttribute(contract), _hasGoogleProtobufShape(contract));
+        if (descriptor is not null)
         {
             report(
-                _missingMessagePackShape,
-                contract.Locations.FirstOrDefault() ?? Location.None,
-                new object[] { contract.ToDisplayString(), owner.ToDisplayString() });
-        }
-        else if (protocol == _protobufProtocol && !_hasGoogleProtobufShape(contract))
-        {
-            report(
-                _missingProtobufShape,
+                descriptor,
                 contract.Locations.FirstOrDefault() ?? Location.None,
                 new object[] { contract.ToDisplayString(), owner.ToDisplayString() });
         }
     }
 
-    private static bool _hasMessagePackAttribute(INamedTypeSymbol contract)
+    internal static bool _hasMessagePackAttribute(INamedTypeSymbol contract)
     {
         return contract.GetAttributes().Any(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == "MessagePack.MessagePackObjectAttribute");
     }
 
-    private static bool _hasGoogleProtobufShape(INamedTypeSymbol contract)
+    internal static bool _hasGoogleProtobufShape(INamedTypeSymbol contract)
     {
         var hasMessageInterface = contract.AllInterfaces.Any(_isGoogleProtobufMessage);
         var hasTypedMessageInterface = contract.AllInterfaces.Any(@interface =>

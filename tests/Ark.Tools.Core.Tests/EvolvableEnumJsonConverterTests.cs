@@ -22,6 +22,24 @@ public class EvolvableEnumJsonConverterTests
         Archived = 2,
     }
 
+    private enum ByteStatus : byte
+    {
+        NOT_SET = 0,
+        Active = 1,
+    }
+
+    private enum SByteStatus : sbyte
+    {
+        Negative = -5,
+        NOT_SET = 0,
+    }
+
+    private enum ULongStatus : ulong
+    {
+        NOT_SET = 0,
+        Large = ulong.MaxValue,
+    }
+
     private static JsonSerializerOptions _createDefaultOptions() => new JsonSerializerOptions
     {
         RespectNullableAnnotations = true,
@@ -183,6 +201,34 @@ public class EvolvableEnumJsonConverterTests
 
         // Assert
         act.Should().Throw<EvolvableEnumConversionException>();
+    }
+
+    /// <summary>Numbers round-trip for non-int backing types, including the extremes of each range.</summary>
+    [TestMethod]
+    public void IntegerFormat_ShouldRoundtripNumbersForEveryBackingType()
+    {
+        var options = _createIntegerOptions();
+
+        JsonSerializer.Deserialize<EvolvableEnum<ByteStatus, byte>[]>("[1,255]", options)!
+            .Select(static v => v.ToNumber()).Should().Equal((byte)1, (byte)255);
+        JsonSerializer.Deserialize<EvolvableEnum<SByteStatus, sbyte>[]>("[-5,-128,127]", options)!
+            .Select(static v => v.ToNumber()).Should().Equal((sbyte)-5, sbyte.MinValue, sbyte.MaxValue);
+        JsonSerializer.Deserialize<EvolvableEnum<ULongStatus, ulong>[]>("[18446744073709551615]", options)!
+            .Single().ToNumber().Should().Be(ulong.MaxValue);
+        JsonSerializer.Serialize(EvolvableEnum<SByteStatus, sbyte>.FromNumber(-5), options).Should().Be("-5");
+    }
+
+    /// <summary>A number outside the backing type's range is rejected rather than truncated.</summary>
+    [TestMethod]
+    public void IntegerFormat_ShouldRejectNumbersOutsideTheBackingRange()
+    {
+        var options = _createIntegerOptions();
+
+        var tooLarge = () => JsonSerializer.Deserialize<EvolvableEnum<ByteStatus, byte>>("256", options);
+        var tooSmall = () => JsonSerializer.Deserialize<EvolvableEnum<SByteStatus, sbyte>>("-129", options);
+
+        tooLarge.Should().Throw<OverflowException>();
+        tooSmall.Should().Throw<OverflowException>();
     }
 
     /// <summary>Verifies that the default (NOT_SET) value serializes as its declared name.</summary>

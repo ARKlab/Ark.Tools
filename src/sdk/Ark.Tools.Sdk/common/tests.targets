@@ -34,13 +34,13 @@
 
   <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
     <None Include="$(MSBuildProjectDirectory)/reqnroll*.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>IfDifferent</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsTestConfig)' != 'false'">
     <None Update="$(MSBuildProjectDirectory)/testconfig.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>IfDifferent</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

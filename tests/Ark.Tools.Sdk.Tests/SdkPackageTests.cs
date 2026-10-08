@@ -871,12 +871,12 @@ public sealed class SdkPackageTests
         Assert.IsNotNull(appsettingsEnvironment);
         Assert.IsNotNull(reqnroll);
         Assert.IsNotNull(testConfig);
-        Assert.AreEqual("Always", appsettingsBase!["CopyToOutputDirectory"]);
+        Assert.AreEqual("IfDifferent", appsettingsBase!["CopyToOutputDirectory"]);
         Assert.AreEqual("Always", appsettingsBase["CopyToPublishDirectory"]);
-        Assert.AreEqual("Always", appsettingsEnvironment!["CopyToOutputDirectory"]);
+        Assert.AreEqual("IfDifferent", appsettingsEnvironment!["CopyToOutputDirectory"]);
         Assert.AreEqual("Never", appsettingsEnvironment["CopyToPublishDirectory"]);
-        Assert.AreEqual("Always", reqnroll!["CopyToOutputDirectory"]);
-        Assert.AreEqual("Always", testConfig!["CopyToOutputDirectory"]);
+        Assert.AreEqual("IfDifferent", reqnroll!["CopyToOutputDirectory"]);
+        Assert.AreEqual("IfDifferent", testConfig!["CopyToOutputDirectory"]);
         Assert.AreEqual(1, noneFileNames.Count(file => string.Equals(file, "appsettings.json", StringComparison.Ordinal)));
         Assert.AreEqual(1, noneFileNames.Count(file => string.Equals(file, "appsettings.Development.json", StringComparison.Ordinal)));
         CollectionAssert.Contains(noneFileNames, "reqnroll.json");
@@ -1118,6 +1118,46 @@ public sealed class ConsumerTests
             "dotnet",
             $"test \"{Path.Join(testRoot, "Consumer.Tests.csproj")}\" --no-restore",
             _createSdkEnvironment(scenarioRoot));
+    }
+
+    /// <summary>
+    /// Ensures SDK content is copied only when the output differs: an unchanged file is not copied
+    /// again, and an edited output copy is restored by the next build.
+    /// </summary>
+    [TestMethod]
+    public async Task SdkContentCopiesOnlyWhenTheOutputDiffers()
+    {
+        var fixtureRoot = Path.Join(_root, "artifacts", "sdk-content-copy");
+        _prepareSdkFixture(fixtureRoot);
+        var projectRoot = await _createSdkScenarioAsync(
+            fixtureRoot,
+            _feed,
+            "consumer",
+            "Consumer.csproj",
+            _createSdkCSharpProject()).ConfigureAwait(false);
+        var source = Path.Join(projectRoot, "appsettings.json");
+        await File.WriteAllTextAsync(source, "{\"Source\":true}\n").ConfigureAwait(false);
+        var project = Path.Join(projectRoot, "Consumer.csproj");
+        var environment = _createSdkEnvironment(fixtureRoot);
+        await _runAsync(
+            "dotnet",
+            $"build \"{project}\" -p:RestoreConfigFile=\"{Path.Join(projectRoot, "NuGet.Config")}\"",
+            environment).ConfigureAwait(false);
+        var output = Path.Join(projectRoot, "bin", "Debug", "net10.0", "appsettings.json");
+
+        // File timestamps cannot tell: the copy keeps the source's last-write time. The Copy task log can.
+        var noOpLog = await _runAsync("dotnet", $"build \"{project}\" --no-restore -v:n", environment).ConfigureAwait(false);
+        Assert.IsFalse(
+            noOpLog.Split('\n').Any(static line => line.Contains("Copying file from", StringComparison.Ordinal)
+                && line.Contains("appsettings.json", StringComparison.Ordinal)),
+            "An unchanged file must not be copied again.");
+
+        await File.WriteAllTextAsync(output, "{\"Edited\":true}\n").ConfigureAwait(false);
+        await _runAsync("dotnet", $"build \"{project}\" --no-restore", environment).ConfigureAwait(false);
+        Assert.AreEqual(
+            await File.ReadAllTextAsync(source).ConfigureAwait(false),
+            await File.ReadAllTextAsync(output).ConfigureAwait(false),
+            "An edited output copy must be restored from the source.");
     }
 
 #if false

@@ -51,7 +51,7 @@ value unless stated otherwise.
 | Tooling packages | SDK-enabled projects | Polyfill, SBOM, analyzers, and private exact versions |
 | Packaging | Packable non-test projects | Package validation, symbols, `.snupkg` symbols |
 | Test execution | Detected test projects | MTP extensions, executable output, empty-run protection, test diagnostics |
-| Content | Test and application projects | `appsettings*.json`, `reqnroll*.json`, and `testconfig.json` output/publish metadata |
+| Content | Test and application projects | `appsettings*.json`, `reqnroll*.json`, and `testconfig.json` output/publish metadata. They copy to the output with `IfDifferent` (MSBuild 17.13+): only when the source and the output copy differ, so no-op builds stay up to date. |
 | IDE and source control | Supported .NET SDK projects | Visual Studio acceleration and the Copilot SourceLink workaround |
 
 The focused references are the [MTP profile](mtp.md) and the adoption guidance

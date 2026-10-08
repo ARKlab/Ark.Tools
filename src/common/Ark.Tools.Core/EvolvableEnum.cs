@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Collections.Frozen;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
 namespace Ark.Tools.Core;
@@ -226,7 +227,8 @@ public readonly struct EvolvableEnum<
     public bool HasNumericValue => _unknownName is null;
 
     /// <summary>Gets the declared enum value, or <see langword="null"/> for an unknown value.</summary>
-    public TEnum? Value => IsDefined ? (TEnum)Enum.ToObject(typeof(TEnum), _number) : null;
+    // The static constructor guarantees TBacking is the enum's exact underlying type, so the bits are identical.
+    public TEnum? Value => IsDefined ? Unsafe.BitCast<TBacking, TEnum>(_number) : null;
 
     /// <summary>Gets the known or preserved unknown symbolic name.</summary>
     public string? Name => _unknownName ?? _getName(_number);
@@ -241,7 +243,7 @@ public readonly struct EvolvableEnum<
 
     /// <summary>Wraps a strict enum value.</summary>
     public static EvolvableEnum<TEnum, TBacking> FromValue(TEnum value)
-        => new((TBacking)Convert.ChangeType(value, typeof(TBacking), CultureInfo.InvariantCulture));
+        => new(Unsafe.BitCast<TEnum, TBacking>(value));
 
     /// <summary>Wraps a numeric value using the enum's exact backing type.</summary>
     public static EvolvableEnum<TEnum, TBacking> FromNumber(TBacking number) => new(number);

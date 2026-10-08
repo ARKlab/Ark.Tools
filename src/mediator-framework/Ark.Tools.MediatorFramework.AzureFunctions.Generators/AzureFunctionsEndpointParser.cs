@@ -138,6 +138,13 @@ internal readonly record struct HostSpec(
     EquatableArray<HostSelectionSpec> InvalidSelections,
     EquatableArray<EndpointSpec> MetadataEndpoints);
 
+/// <summary>The endpoints declared by a referenced host contract assembly.</summary>
+/// <param name="AssemblyName">The contract assembly name.</param>
+/// <param name="Endpoints">The endpoints declared by the assembly.</param>
+internal readonly record struct AssemblyEndpointsSpec(
+    string AssemblyName,
+    EquatableArray<EndpointSpec> Endpoints);
+
 /// <summary>Parses Azure Functions HTTP hosts and endpoints into symbol-free specifications.</summary>
 internal static class AzureFunctionsEndpointParser
 {
@@ -186,9 +193,30 @@ internal static class AzureFunctionsEndpointParser
                 markerIsInSource,
                 LocationSpec._from(host.ApplicationSyntaxReference),
                 _invalidSelections(included, excluded, markerAssembly),
-                markerIsInSource
-                    ? EquatableArray<EndpointSpec>.Empty
-                    : _readMetadataEndpoints(markerAssembly, cancellationToken)));
+                EquatableArray<EndpointSpec>.Empty));
+        }
+
+        return builder.ToImmutable();
+    }
+
+    /// <summary>Reads the endpoints declared by referenced host contract assemblies.</summary>
+    /// <param name="compilation">A compilation exposing the referenced assemblies.</param>
+    /// <param name="assemblyNames">The referenced contract assembly names.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The endpoints declared by each referenced contract assembly.</returns>
+    public static ImmutableArray<AssemblyEndpointsSpec> _readReferencedEndpoints(
+        Compilation compilation,
+        ImmutableArray<string> assemblyNames,
+        CancellationToken cancellationToken)
+    {
+        var builder = ImmutableArray.CreateBuilder<AssemblyEndpointsSpec>(assemblyNames.Length);
+        foreach (var assemblyName in assemblyNames)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var assembly = compilation.SourceModule.ReferencedAssemblySymbols.FirstOrDefault(candidate =>
+                string.Equals(candidate.Name, assemblyName, StringComparison.Ordinal));
+            if (assembly is not null)
+                builder.Add(new AssemblyEndpointsSpec(assemblyName, _readMetadataEndpoints(assembly, cancellationToken)));
         }
 
         return builder.ToImmutable();

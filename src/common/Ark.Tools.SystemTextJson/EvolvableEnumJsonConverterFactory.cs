@@ -167,10 +167,10 @@ internal static class EvolvableEnumJsonConverter
         return names.ToFrozenDictionary(StringComparer.Ordinal);
     }
 
-    private static void _writeName(
+    private static void _writeName<TValue>(
         Utf8JsonWriter writer,
         string? name,
-        object value,
+        TValue value,
         FrozenDictionary<string, JsonEncodedText> encodedNames)
     {
         if (name is null)
@@ -189,19 +189,20 @@ internal static class EvolvableEnumJsonConverter
     private static TBacking _readNumber<TBacking>(ref Utf8JsonReader reader)
         where TBacking : struct, IBinaryInteger<TBacking>
     {
-        object value = Type.GetTypeCode(typeof(TBacking)) switch
+        // TBacking is exactly the type selected by its TypeCode, so CreateTruncating is an identity
+        // conversion that avoids boxing; the checked casts keep the range validation.
+        return Type.GetTypeCode(typeof(TBacking)) switch
         {
-            TypeCode.SByte => checked((sbyte)reader.GetInt32()),
-            TypeCode.Byte => checked((byte)reader.GetUInt32()),
-            TypeCode.Int16 => checked((short)reader.GetInt32()),
-            TypeCode.UInt16 => checked((ushort)reader.GetUInt32()),
-            TypeCode.Int32 => reader.GetInt32(),
-            TypeCode.UInt32 => reader.GetUInt32(),
-            TypeCode.Int64 => reader.GetInt64(),
-            TypeCode.UInt64 => reader.GetUInt64(),
+            TypeCode.SByte => TBacking.CreateTruncating(checked((sbyte)reader.GetInt32())),
+            TypeCode.Byte => TBacking.CreateTruncating(checked((byte)reader.GetUInt32())),
+            TypeCode.Int16 => TBacking.CreateTruncating(checked((short)reader.GetInt32())),
+            TypeCode.UInt16 => TBacking.CreateTruncating(checked((ushort)reader.GetUInt32())),
+            TypeCode.Int32 => TBacking.CreateTruncating(reader.GetInt32()),
+            TypeCode.UInt32 => TBacking.CreateTruncating(reader.GetUInt32()),
+            TypeCode.Int64 => TBacking.CreateTruncating(reader.GetInt64()),
+            TypeCode.UInt64 => TBacking.CreateTruncating(reader.GetUInt64()),
             _ => throw new NotSupportedException($"Unsupported evolvable enum backing type {typeof(TBacking)}."),
         };
-        return (TBacking)value;
     }
 
     private static void _writeNumber<TBacking>(Utf8JsonWriter writer, TBacking value)

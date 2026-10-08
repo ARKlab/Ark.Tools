@@ -49,19 +49,20 @@ internal static class EvolvableEnumMessagePackNumber
     public static TBacking Read<TBacking>(ref MessagePackReader reader)
         where TBacking : struct, IBinaryInteger<TBacking>
     {
-        object value = Type.GetTypeCode(typeof(TBacking)) switch
+        // TBacking is exactly the type selected by its TypeCode, so CreateTruncating is an identity
+        // conversion that avoids boxing.
+        return Type.GetTypeCode(typeof(TBacking)) switch
         {
-            TypeCode.SByte => reader.ReadSByte(),
-            TypeCode.Byte => reader.ReadByte(),
-            TypeCode.Int16 => reader.ReadInt16(),
-            TypeCode.UInt16 => reader.ReadUInt16(),
-            TypeCode.Int32 => reader.ReadInt32(),
-            TypeCode.UInt32 => reader.ReadUInt32(),
-            TypeCode.Int64 => reader.ReadInt64(),
-            TypeCode.UInt64 => reader.ReadUInt64(),
+            TypeCode.SByte => TBacking.CreateTruncating(reader.ReadSByte()),
+            TypeCode.Byte => TBacking.CreateTruncating(reader.ReadByte()),
+            TypeCode.Int16 => TBacking.CreateTruncating(reader.ReadInt16()),
+            TypeCode.UInt16 => TBacking.CreateTruncating(reader.ReadUInt16()),
+            TypeCode.Int32 => TBacking.CreateTruncating(reader.ReadInt32()),
+            TypeCode.UInt32 => TBacking.CreateTruncating(reader.ReadUInt32()),
+            TypeCode.Int64 => TBacking.CreateTruncating(reader.ReadInt64()),
+            TypeCode.UInt64 => TBacking.CreateTruncating(reader.ReadUInt64()),
             _ => throw new NotSupportedException($"Unsupported evolvable enum backing type {typeof(TBacking)}."),
         };
-        return (TBacking)value;
     }
 
     public static void Write<TBacking>(ref MessagePackWriter writer, TBacking value)

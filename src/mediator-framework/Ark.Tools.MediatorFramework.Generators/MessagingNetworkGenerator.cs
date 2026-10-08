@@ -42,6 +42,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _exceptionInfo = "Ark.Tools.MediatorFramework.MessagingExceptionInfo";
     private const string _specStage = "MessagingNetworkSpecs";
     private const string _outputStage = "MessagingNetworkOutput";
+    private const string _networkStage = "MessagingNetworkParser";
+    private const string _participantStage = "MessagingParticipantParser";
     private const int _sendReceive = 1;
     private const int _pubSub = 2;
 
@@ -121,33 +123,45 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        // Symbols are read inside the transforms and projected into equatable specs, so validation and
+        // emission rerun only when a network, participant, contract or referenced runtime type changes.
         var networks = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 _networkAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
-            .Collect();
+                static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol symbol
+                    ? _readNetwork(symbol, attributeContext.SemanticModel.Compilation)
+                    : (Network?)null)
+            .WithTrackingName(_networkStage)
+            .Where(static network => network is not null)
+            .Select(static (network, _) => network!.Value)
+            .Collect()
+            .Select(static (values, _) => new EquatableArray<Network>(values));
         var participants = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 _participantAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, _) => attributeContext.TargetSymbol as INamedTypeSymbol)
-            .Where(static type => type is not null)
-            .Select(static (type, _) => type!)
-            .Collect();
+                static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol symbol
+                    ? _readParticipant(symbol, attributeContext.SemanticModel.Compilation)
+                    : null)
+            .WithTrackingName(_participantStage)
+            .Where(static participant => participant is not null)
+            .Select(static (participant, _) => participant!.Value)
+            .Collect()
+            .Select(static (values, _) => new EquatableArray<Participant>(values));
+        var compilationFacts = context.CompilationProvider
+            .Select(static (compilation, _) => _readCompilationFacts(compilation));
 
-        var specs = networks.Combine(participants).Combine(context.CompilationProvider)
+        var specs = networks.Combine(participants).Combine(compilationFacts)
             .Select(static (input, cancellationToken) =>
             {
-                var ((networkSymbols, participantSymbols), compilation) = input;
+                var ((networkSpecs, participantSpecs), facts) = input;
                 var sink = new GenerationSink(cancellationToken);
                 _emit(
                     sink,
-                    networkSymbols.Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>(),
-                    participantSymbols.Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>(),
-                    compilation);
+                    networkSpecs.Distinct(),
+                    participantSpecs.Distinct(),
+                    facts);
                 return sink._toSpec();
             })
             .WithTrackingName(_specStage);
@@ -171,45 +185,44 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static void _emit(
         GenerationSink context,
-        IEnumerable<INamedTypeSymbol> symbols,
-        IEnumerable<INamedTypeSymbol> participantSymbols,
-        Compilation compilation)
+        IEnumerable<Network> networkSpecs,
+        IEnumerable<Participant> participantSpecs,
+        CompilationFacts facts)
     {
         context.CancellationToken.ThrowIfCancellationRequested();
-        var networks = symbols
-            .Select(_readNetwork)
-            .OrderBy(static network => network.Symbol.ToDisplayString(), StringComparer.Ordinal)
+        var networks = networkSpecs
+            .OrderBy(static network => network.Symbol.DisplayName, StringComparer.Ordinal)
             .ToArray();
-        var participantNetworks = new Dictionary<INamedTypeSymbol, List<Network>>(SymbolEqualityComparer.Default);
-        var allContracts = new Dictionary<INamedTypeSymbol, HashSet<INamedTypeSymbol>>(SymbolEqualityComparer.Default);
+        var participantNetworks = new Dictionary<TypeSpec, List<Network>>();
+        var allContracts = new Dictionary<ContractSpec, HashSet<TypeSpec>>();
 
         foreach (var network in networks)
         {
-            var seen = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            var seen = new HashSet<TypeSpec>();
             var participants = new List<Participant>();
-            foreach (var member in network.MemberSymbols)
+            foreach (var member in network.Members)
             {
-                if (!seen.Add(member))
+                if (!seen.Add(member.Symbol))
                 {
-                    _report(context, _duplicateMember, network.Symbol, network.Name, member.ToDisplayString());
+                    _report(context, _duplicateMember, network.Symbol, network.Name, member.Symbol.DisplayName);
                     continue;
                 }
 
-                var participant = _readParticipant(member);
+                var participant = member.Participant;
                 if (participant is null)
                 {
-                    _report(context, _missingParticipant, network.Symbol, network.Name, member.ToDisplayString());
+                    _report(context, _missingParticipant, network.Symbol, network.Name, member.Symbol.DisplayName);
                     continue;
                 }
 
                 participants.Add(participant.Value);
-                if (!participantNetworks.TryGetValue(member, out var memberships))
-                    participantNetworks.Add(member, memberships = new List<Network>());
+                if (!participantNetworks.TryGetValue(member.Symbol, out var memberships))
+                    participantNetworks.Add(member.Symbol, memberships = new List<Network>());
                 memberships.Add(network);
                 foreach (var contract in participant.Value.Contracts)
                 {
                     if (!allContracts.TryGetValue(contract, out var declarations))
-                        allContracts.Add(contract, declarations = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default));
+                        allContracts.Add(contract, declarations = new HashSet<TypeSpec>());
                     declarations.Add(network.Symbol);
                 }
             }
@@ -218,21 +231,19 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         foreach (var membership in participantNetworks.Where(static pair => pair.Value.Count > 1))
-            _report(context, _multipleNetworks, membership.Key, membership.Key.ToDisplayString());
+            _report(context, _multipleNetworks, membership.Key, membership.Key.DisplayName);
         foreach (var contract in allContracts.Where(static pair => pair.Value.Count > 1))
-            _report(context, _crossNetworkContract, contract.Key, contract.Key.ToDisplayString());
+            _report(context, _crossNetworkContract, contract.Key, contract.Key.DisplayName);
 
         _validateContractNames(context, allContracts.Keys);
         _emitMetadata(context, networks);
         foreach (var network in networks)
-            _emitNetwork(context, network, compilation);
+            _emitNetwork(context, network, facts);
 
-        foreach (var participant in participantSymbols
-            .OrderBy(static symbol => symbol.ToDisplayString(), StringComparer.Ordinal))
+        foreach (var participant in participantSpecs
+            .OrderBy(static participant => participant.Symbol.DisplayName, StringComparer.Ordinal))
         {
-            var model = _readParticipant(participant);
-            if (model is not null)
-                _emitParticipant(context, model.Value, compilation);
+            _emitParticipant(context, participant, facts);
         }
     }
 
@@ -242,26 +253,26 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         IReadOnlyList<Participant> participants)
     {
         var identities = new HashSet<string>(StringComparer.Ordinal);
-        var processors = new Dictionary<INamedTypeSymbol, List<Participant>>(SymbolEqualityComparer.Default);
-        var publishers = new Dictionary<INamedTypeSymbol, List<Participant>>(SymbolEqualityComparer.Default);
+        var processors = new Dictionary<ContractSpec, List<Participant>>();
+        var publishers = new Dictionary<ContractSpec, List<Participant>>();
 
         foreach (var participant in participants)
         {
             if (!identities.Add(participant.Identity))
                 _report(context, _duplicateIdentity, participant.Symbol, network.Name, participant.Identity);
             if (!_isLogicalName(participant.Identity))
-                _report(context, _invalidIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
+                _report(context, _invalidIdentity, participant.Symbol, participant.Symbol.DisplayName, participant.Identity);
             if (participant.Identity == "outbox-processor" || participant.Identity.EndsWith("-poison", StringComparison.Ordinal))
-                _report(context, _reservedIdentity, participant.Symbol, participant.Symbol.ToDisplayString(), participant.Identity);
-            if (participant.Contracts.Length > 0 && !participant.Serializers.Contains(participant.DefaultSerializer))
+                _report(context, _reservedIdentity, participant.Symbol, participant.Symbol.DisplayName, participant.Identity);
+            if (participant.Contracts.Count > 0 && !participant.Serializers.Contains(participant.DefaultSerializer))
                 _report(context, _defaultSerializer, participant.Symbol, participant.Identity, participant.DefaultSerializer);
             if (participant.Retry is not null
                 && participant.Retry.Value.MaximumDeliveryCount < (participant.Retry.Value.SecondLevelRetriesEnabled ? 2 : 1))
                 _report(context, _invalidRetry, participant.Symbol, participant.Identity, participant.Retry.Value.SecondLevelRetriesEnabled ? 2 : 1);
 
-            if (participant.Processes.Length > 0 || participant.Subscribes.Length > 0)
+            if (participant.Processes.Count > 0 || participant.Subscribes.Count > 0)
                 _requireCapability(context, network, participant, "SendReceive", _sendReceive);
-            if (participant.Publishes.Length > 0 || participant.Subscribes.Length > 0)
+            if (participant.Publishes.Count > 0 || participant.Subscribes.Count > 0)
                 _requireCapability(context, network, participant, "PubSub", _pubSub);
 
             foreach (var contract in participant.Processes)
@@ -271,29 +282,19 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         foreach (var processor in processors)
-            MessagingContractTopologyValidator._validate(
-                (descriptor, location, arguments) =>
-                    context._report(descriptor, location, arguments),
-                processor.Key,
-                processor.Value[0].Symbol,
-                processor.Value[0].DefaultSerializer);
+            _validateTopology(context, processor.Key, processor.Value[0].Symbol, processor.Value[0].DefaultSerializer);
         foreach (var publisher in publishers)
-            MessagingContractTopologyValidator._validate(
-                (descriptor, location, arguments) =>
-                    context._report(descriptor, location, arguments),
-                publisher.Key,
-                publisher.Value[0].Symbol,
-                publisher.Value[0].DefaultSerializer);
+            _validateTopology(context, publisher.Key, publisher.Value[0].Symbol, publisher.Value[0].DefaultSerializer);
 
         foreach (var processor in processors)
         {
             if (processor.Value.Count > 1)
-                _report(context, _multipleProcessor, processor.Key, _contractName(processor.Key), network.Name);
+                _report(context, _multipleProcessor, processor.Key, processor.Key.ContractName, network.Name);
         }
         foreach (var publisher in publishers)
         {
             if (publisher.Value.Count > 1)
-                _report(context, _multiplePublisher, publisher.Key, _contractName(publisher.Key), network.Name);
+                _report(context, _multiplePublisher, publisher.Key, publisher.Key.ContractName, network.Name);
         }
 
         foreach (var participant in participants)
@@ -302,7 +303,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             {
                 if (!publishers.TryGetValue(subscription, out var eventPublishers))
                 {
-                    _report(context, _unsatisfiableSubscription, participant.Symbol, participant.Identity, _contractName(subscription), network.Name);
+                    _report(context, _unsatisfiableSubscription, participant.Symbol, participant.Identity, subscription.ContractName, network.Name);
                     continue;
                 }
                 if (eventPublishers.Count != 1)
@@ -314,25 +315,37 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                         participant.Symbol,
                         participant.Identity,
                         eventPublishers[0].Identity,
-                        _contractName(subscription),
+                        subscription.ContractName,
                         _protocolName(eventPublishers[0].DefaultSerializer));
             }
         }
 
         foreach (var contract in participants.SelectMany(static participant => participant.Contracts)
-            .Distinct(SymbolEqualityComparer.Default)
-            .Cast<INamedTypeSymbol>())
+            .Distinct())
         {
             var hasProcessor = processors.ContainsKey(contract);
             var hasPublisher = publishers.ContainsKey(contract);
-            var attribute = _contractAttributes(contract);
-            if (attribute.Message is not null && attribute.Event is not null)
-                _report(context, _dualContract, contract, contract.ToDisplayString());
-            if (attribute.Event is not null && !_isEventShape(contract))
-                _report(context, _invalidEventShape, contract, contract.ToDisplayString());
+            if (contract.HasMessage && contract.HasEvent)
+                _report(context, _dualContract, contract, contract.DisplayName);
+            if (contract.HasEvent && !contract.IsEventShape)
+                _report(context, _invalidEventShape, contract, contract.DisplayName);
             if (!hasProcessor && !hasPublisher)
-                _report(context, _unwiredContract, contract, _contractName(contract), network.Name);
+                _report(context, _unwiredContract, contract, contract.ContractName, network.Name);
         }
+    }
+
+    private static void _validateTopology(
+        GenerationSink context,
+        ContractSpec contract,
+        TypeSpec owner,
+        int protocol)
+    {
+        var descriptor = MessagingContractTopologyValidator._missingShape(
+            protocol,
+            contract.HasMessagePackAttribute,
+            contract.HasGoogleProtobufShape);
+        if (descriptor is not null)
+            context._report(descriptor, contract.Location, contract.DisplayName, owner.DisplayName);
     }
 
     private static void _requireCapability(
@@ -348,22 +361,21 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static void _validateContractNames(
         GenerationSink context,
-        IEnumerable<INamedTypeSymbol> contracts)
+        IEnumerable<ContractSpec> contracts)
     {
-        var currentNames = new Dictionary<string, INamedTypeSymbol>(StringComparer.Ordinal);
-        var aliases = new Dictionary<string, INamedTypeSymbol>(StringComparer.Ordinal);
-        foreach (var contract in contracts.OrderBy(static symbol => symbol.ToDisplayString(), StringComparer.Ordinal))
+        var currentNames = new Dictionary<string, ContractSpec>(StringComparer.Ordinal);
+        var aliases = new Dictionary<string, ContractSpec>(StringComparer.Ordinal);
+        foreach (var contract in contracts.OrderBy(static contract => contract.DisplayName, StringComparer.Ordinal))
         {
-            var attributes = _contractAttributes(contract);
-            var current = attributes.Message is not null || attributes.Event is not null
-                ? attributes.Name ?? _defaultContractName(contract)
-                : _contractName(contract);
-            if (attributes.Name is not null && !_isNormalized(attributes.Name))
-                _report(context, _nonNormalizedName, contract, contract.ToDisplayString(), attributes.Name);
-            foreach (var alias in attributes.FormerNames)
+            var current = contract.HasMessage || contract.HasEvent
+                ? contract.ExplicitName ?? contract.DefaultContractName
+                : contract.ContractName;
+            if (contract.ExplicitName is not null && !_isNormalized(contract.ExplicitName))
+                _report(context, _nonNormalizedName, contract, contract.DisplayName, contract.ExplicitName);
+            foreach (var alias in contract.FormerNames)
             {
                 if (!_isNormalized(alias))
-                    _report(context, _nonNormalizedName, contract, contract.ToDisplayString(), alias);
+                    _report(context, _nonNormalizedName, contract, contract.DisplayName, alias);
                 if (!aliases.TryAdd(alias, contract))
                     _report(context, _duplicateAlias, contract, alias);
             }
@@ -378,15 +390,17 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
     }
 
-    private static Network _readNetwork(INamedTypeSymbol symbol)
+    private static Network _readNetwork(INamedTypeSymbol symbol, Compilation compilation)
     {
         var attribute = symbol.GetAttributes().First(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _networkAttribute);
         var members = _types(attribute, "Members");
         return new Network(
-            symbol,
+            _readType(symbol),
             symbol.ToDisplayString(),
-            members,
+            members
+                .Select(member => new NetworkMember(_readType(member), _readParticipant(member, compilation)))
+                .ToImmutableArray(),
             _enum(attribute, "Requires"),
             _optionalInt(attribute, "MaximumDecompressedPayloadBytes"),
             _optionalInt(attribute, "DataBusMaximumAttachmentBytes"),
@@ -394,7 +408,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _optionalInt(attribute, "ResourceLifecycle"));
     }
 
-    private static Participant? _readParticipant(INamedTypeSymbol symbol)
+    private static Participant? _readParticipant(INamedTypeSymbol symbol, Compilation compilation)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
@@ -413,20 +427,87 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var processes = _types(attribute, "Processes");
         var publishes = _types(attribute, "Publishes");
         var subscribes = _types(attribute, "Subscribes");
+        var commandInterface = compilation.GetTypeByMetadataName(_commandInterface);
         return new Participant(
-            symbol,
+            _readType(symbol),
             identity,
-            processes,
-            publishes,
-            subscribes,
+            _readContracts(processes, commandInterface),
+            _readContracts(publishes, commandInterface),
+            _readContracts(subscribes, commandInterface),
             serializers,
             _enum(attribute, "DefaultSerializer"),
             compression,
+            _compressionName(compilation, compression),
             compressionMinimumSizeBytes,
-            retryType,
+            retryType is null ? null : _typeName(retryType),
             retry,
-            processes.Concat(publishes).Concat(subscribes)
-                .Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>().ToImmutableArray());
+            _readContracts(
+                processes.Concat(publishes).Concat(subscribes)
+                    .Distinct(SymbolEqualityComparer.Default).Cast<INamedTypeSymbol>(),
+                commandInterface));
+    }
+
+    private static TypeSpec _readType(INamedTypeSymbol symbol)
+    {
+        return new TypeSpec(
+            (symbol.ContainingAssembly?.Name ?? string.Empty) + "|" + _typeName(symbol),
+            symbol.ToDisplayString(),
+            _typeName(symbol),
+            symbol.Name,
+            symbol.ContainingNamespace is { IsGlobalNamespace: false } containingNamespace
+                ? containingNamespace.ToDisplayString()
+                : null,
+            _accessibility(symbol),
+            _isValidDeclaringType(symbol),
+            LocationSpec._from(symbol.Locations.FirstOrDefault()));
+    }
+
+    private static EquatableArray<ContractSpec> _readContracts(
+        IEnumerable<INamedTypeSymbol> contracts,
+        INamedTypeSymbol? commandInterface)
+    {
+        return contracts
+            .Select(contract =>
+            {
+                var attributes = _contractAttributes(contract);
+                return new ContractSpec(
+                    _readType(contract),
+                    _contractName(contract),
+                    _defaultContractName(contract),
+                    attributes.Message is not null,
+                    attributes.Event is not null,
+                    attributes.Name,
+                    attributes.FormerNames,
+                    _isEventShape(contract),
+                    commandInterface is not null && _implementsCommand(contract, commandInterface),
+                    MessagingContractTopologyValidator._hasMessagePackAttribute(contract),
+                    MessagingContractTopologyValidator._hasGoogleProtobufShape(contract));
+            })
+            .ToImmutableArray();
+    }
+
+    private static CompilationFacts _readCompilationFacts(Compilation compilation)
+    {
+        var canEmitBinder = compilation.GetTypeByMetadataName(_payloadReader) is not null
+            && compilation.GetTypeByMetadataName(_commandProcessor) is not null
+            && compilation.GetTypeByMetadataName(_failFastException) is not null
+            && compilation.GetTypeByMetadataName(_failFastReason) is not null
+            && compilation.GetTypeByMetadataName(_commandInterface) is not null;
+        return new CompilationFacts(
+            compilation.GetTypeByMetadataName(_networkOptions) is not null,
+            compilation.GetTypeByMetadataName(_contractRegistry) is not null,
+            canEmitBinder,
+            canEmitBinder
+                && compilation.GetTypeByMetadataName(_streamPayloadReader) is not null
+                && compilation.GetTypeByMetadataName(_codec) is not null,
+            canEmitBinder
+                && compilation.GetTypeByMetadataName(_failedMessage) is not null
+                && compilation.GetTypeByMetadataName(_exceptionInfo) is not null,
+            compilation.GetTypeByMetadataName(_payloadSender) is not null
+                && compilation.GetTypeByMetadataName(_dataBus) is not null
+                && compilation.GetTypeByMetadataName(_networkOptions) is not null,
+            compilation.GetTypeByMetadataName(_participantDescriptor) is not null
+                && compilation.GetTypeByMetadataName(_contractRegistry) is not null);
     }
 
     private static RetryPolicy? _readRetry(INamedTypeSymbol retryType)
@@ -602,29 +683,28 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static void _emitNetwork(
         GenerationSink context,
         Network network,
-        Compilation compilation)
+        CompilationFacts facts)
     {
         if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork"))
             return;
 
-        var participants = network.MemberSymbols
-            .Select(_readParticipant)
+        var participants = network.Members
+            .Select(static member => member.Participant)
             .Where(static participant => participant is not null)
             .Select(static participant => participant!.Value)
             .ToArray();
         var processors = participants
             .SelectMany(static participant => participant.Processes.Select(contract => (contract, participant)))
-            .GroupBy(static item => item.contract, SymbolEqualityComparer.Default)
-            .ToDictionary(static group => group.Key, static group => group.First().participant, SymbolEqualityComparer.Default);
+            .GroupBy(static item => item.contract)
+            .ToDictionary(static group => group.Key, static group => group.First().participant);
         var publishers = participants
             .SelectMany(static participant => participant.Publishes.Select(contract => (contract, participant)))
-            .GroupBy(static item => item.contract, SymbolEqualityComparer.Default)
-            .ToDictionary(static group => group.Key, static group => group.First().participant, SymbolEqualityComparer.Default);
+            .GroupBy(static item => item.contract)
+            .ToDictionary(static group => group.Key, static group => group.First().participant);
         var contracts = processors.Keys
             .Concat(publishers.Keys)
-            .Distinct(SymbolEqualityComparer.Default)
-            .Cast<INamedTypeSymbol>()
-            .OrderBy(static contract => contract.ToDisplayString(), StringComparer.Ordinal)
+            .Distinct()
+            .OrderBy(static contract => contract.DisplayName, StringComparer.Ordinal)
             .ToArray();
         var name = network.Symbol.Name;
         var source = new StringBuilder()
@@ -632,14 +712,14 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("using global::System;")
             .AppendLine("using global::System.Collections.Generic;")
             .AppendLine("using global::System.Collections.Frozen;");
-        if (!network.Symbol.ContainingNamespace.IsGlobalNamespace)
+        if (network.Symbol.Namespace is not null)
         {
-            source.Append("namespace ").Append(network.Symbol.ContainingNamespace.ToDisplayString()).AppendLine(";")
+            source.Append("namespace ").Append(network.Symbol.Namespace).AppendLine(";")
                 .AppendLine();
         }
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(network.Symbol)).Append(" sealed partial class ").Append(name)
+            .Append(network.Symbol.Accessibility).Append(" sealed partial class ").Append(name)
             .Append(" : global::Ark.Tools.MediatorFramework.Messaging.IMessagingNetwork<").Append(name).AppendLine(">")
             .AppendLine("{");
         source
@@ -648,7 +728,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .Append("    public static string NetworkIdentity => \"").Append(_escape(network.Name)).AppendLine("\";")
             .AppendLine();
 
-        if (compilation.GetTypeByMetadataName(_networkOptions) is not null)
+        if (facts.HasNetworkOptions)
         {
             source
                 .AppendLine("    /// <summary>Creates the resolved options for this messaging network.</summary>")
@@ -662,8 +742,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .AppendLine("            {")
                 .AppendLine("                Members = new global::System.Type[]");
             source.AppendLine("                {");
-            foreach (var member in network.MemberSymbols)
-                source.Append("                    typeof(").Append(_typeName(member)).AppendLine("),");
+            foreach (var member in network.Members)
+                source.Append("                    typeof(").Append(member.Symbol.TypeName).AppendLine("),");
             source.AppendLine("                },")
                 .Append("                Requires = (global::Ark.Tools.MediatorFramework.MessagingCapabilities)")
                 .Append(network.Requires.ToString(CultureInfo.InvariantCulture)).AppendLine(",")
@@ -695,8 +775,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         {
             var destination = processors.TryGetValue(contract, out var processor)
                 ? processor.Identity
-                : publishers[contract].Identity + "-" + _contractName(contract);
-            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
+                : publishers[contract].Identity + "-" + contract.ContractName;
+            source.Append("            [typeof(").Append(contract.TypeName).Append(")] = \"")
                 .Append(_escape(destination)).AppendLine("\",");
         }
 
@@ -706,10 +786,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    private static readonly FrozenDictionary<Type, string> _processors =")
             .AppendLine("        new Dictionary<Type, string>")
             .AppendLine("        {");
-        foreach (var contract in processors.Keys.Cast<INamedTypeSymbol>()
-            .OrderBy(static contract => contract.ToDisplayString(), StringComparer.Ordinal))
+        foreach (var contract in processors.Keys
+            .OrderBy(static contract => contract.DisplayName, StringComparer.Ordinal))
         {
-            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
+            source.Append("            [typeof(").Append(contract.TypeName).Append(")] = \"")
                .Append(_escape(processors[contract].Identity)).AppendLine("\",");
         }
 
@@ -719,10 +799,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    private static readonly FrozenDictionary<Type, string> _publishers =")
             .AppendLine("        new Dictionary<Type, string>")
             .AppendLine("        {");
-        foreach (var contract in publishers.Keys.Cast<INamedTypeSymbol>()
-            .OrderBy(static contract => contract.ToDisplayString(), StringComparer.Ordinal))
+        foreach (var contract in publishers.Keys
+            .OrderBy(static contract => contract.DisplayName, StringComparer.Ordinal))
         {
-            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
+            source.Append("            [typeof(").Append(contract.TypeName).Append(")] = \"")
                .Append(_escape(publishers[contract].Identity)).AppendLine("\",");
         }
 
@@ -737,7 +817,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             var owner = processors.TryGetValue(contract, out var processor)
                 ? processor
                 : publishers[contract];
-            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = global::Ark.Tools.MediatorFramework.SerializationProtocol.")
+            source.Append("            [typeof(").Append(contract.TypeName).Append(")] = global::Ark.Tools.MediatorFramework.SerializationProtocol.")
                 .Append(_protocolName(owner.DefaultSerializer)).AppendLine(",");
         }
 
@@ -749,8 +829,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("        {");
         foreach (var contract in contracts)
         {
-            source.Append("            [typeof(").Append(_typeName(contract)).Append(")] = \"")
-                .Append(_escape(_contractName(contract))).AppendLine("\",");
+            source.Append("            [typeof(").Append(contract.TypeName).Append(")] = \"")
+                .Append(_escape(contract.ContractName)).AppendLine("\",");
         }
 
         source.AppendLine("        }.ToFrozenDictionary();")
@@ -855,7 +935,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("        throw new global::Ark.Tools.MediatorFramework.MessagingContractNotInNetworkException(contractType, NetworkIdentity);")
             .AppendLine("    }");
 
-        if (compilation.GetTypeByMetadataName(_contractRegistry) is not null)
+        if (facts.HasContractRegistry)
         {
             source.AppendLine()
                 .AppendLine("    private sealed class GeneratedRegistry : global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry")
@@ -877,48 +957,36 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("}");
 
         context.AddSource(
-            _safeIdentifier(network.Symbol.ToDisplayString()) + "_" + _stableHash(network.Symbol.ToDisplayString()) + ".Registry.g.cs",
+            _safeIdentifier(network.Symbol.DisplayName) + "_" + _stableHash(network.Symbol.DisplayName) + ".Registry.g.cs",
             source.ToString());
     }
 
     private static void _emitParticipant(
         GenerationSink context,
         Participant participant,
-        Compilation compilation)
+        CompilationFacts facts)
     {
         if (!_validateDeclaringType(context, participant.Symbol, "MessagingParticipant"))
             return;
 
         var source = new StringBuilder()
             .AppendLine("// <auto-generated />");
-        if (!participant.Symbol.ContainingNamespace.IsGlobalNamespace)
+        if (participant.Symbol.Namespace is not null)
         {
-            source.Append("namespace ").Append(participant.Symbol.ContainingNamespace.ToDisplayString()).AppendLine(";")
+            source.Append("namespace ").Append(participant.Symbol.Namespace).AppendLine(";")
                 .AppendLine();
         }
 
-        var commandInterface = compilation.GetTypeByMetadataName(_commandInterface);
-        var canEmitBinder = compilation.GetTypeByMetadataName(_payloadReader) is not null
-            && compilation.GetTypeByMetadataName(_commandProcessor) is not null
-            && compilation.GetTypeByMetadataName(_failFastException) is not null
-            && compilation.GetTypeByMetadataName(_failFastReason) is not null
-            && commandInterface is not null;
-        var canEmitStreamBinder = canEmitBinder
-            && compilation.GetTypeByMetadataName(_streamPayloadReader) is not null
-            && compilation.GetTypeByMetadataName(_codec) is not null;
-        var canEmitFailedBinder = canEmitBinder
-            && compilation.GetTypeByMetadataName(_failedMessage) is not null
-            && compilation.GetTypeByMetadataName(_exceptionInfo) is not null;
-        var canEmitPayloadSender = compilation.GetTypeByMetadataName(_payloadSender) is not null
-            && compilation.GetTypeByMetadataName(_dataBus) is not null
-            && compilation.GetTypeByMetadataName(_networkOptions) is not null;
-        var canEmitDescriptor = compilation.GetTypeByMetadataName(_participantDescriptor) is not null
-            && compilation.GetTypeByMetadataName(_contractRegistry) is not null;
+        var canEmitBinder = facts.CanEmitBinder;
+        var canEmitStreamBinder = facts.CanEmitStreamBinder;
+        var canEmitFailedBinder = facts.CanEmitFailedBinder;
+        var canEmitPayloadSender = facts.CanEmitPayloadSender;
+        var canEmitDescriptor = facts.CanEmitDescriptor;
 
         source.AppendLine("[global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
-            .Append(_accessibility(participant.Symbol)).Append(" partial class ").Append(participant.Symbol.Name)
+            .Append(participant.Symbol.Accessibility).Append(" partial class ").Append(participant.Symbol.Name)
             .Append(" : global::Ark.Tools.MediatorFramework.Messaging.IMessagingParticipant<")
-            .Append(_typeName(participant.Symbol)).AppendLine(">")
+            .Append(participant.Symbol.TypeName).AppendLine(">")
             .AppendLine("{")
             .AppendLine("    /// <summary>Gets the resolved identity of this messaging participant.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
@@ -926,7 +994,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <summary>Gets the sender-side compression algorithm.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const global::Ark.Tools.MediatorFramework.CompressionAlgorithm Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.")
-            .Append(_compressionName(compilation, participant.Compression)).AppendLine(";")
+            .Append(participant.CompressionName).AppendLine(";")
             .AppendLine("    /// <summary>Gets the minimum payload size eligible for compression.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const int CompressionMinimumSizeBytes = ")
@@ -947,10 +1015,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
         var contracts = participant.Processes
             .Concat(participant.Subscribes)
-            .Distinct(SymbolEqualityComparer.Default)
-            .Cast<INamedTypeSymbol>()
-            .Where(contract => !canEmitBinder || _implementsCommand(contract, commandInterface!))
-            .OrderBy(static contract => contract.ToDisplayString(), StringComparer.Ordinal)
+            .Distinct()
+            .Where(contract => !canEmitBinder || contract.ImplementsCommand)
+            .OrderBy(static contract => contract.DisplayName, StringComparer.Ordinal)
             .ToArray();
 
         if (canEmitBinder && contracts.Length > 0)
@@ -968,13 +1035,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .AppendLine("        {");
             foreach (var contract in contracts)
             {
-                var names = new[] { _contractName(contract) }
-                    .Concat(_contractAttributes(contract).FormerNames)
+                var names = new[] { contract.ContractName }
+                    .Concat(contract.FormerNames)
                     .Distinct(StringComparer.Ordinal);
                 foreach (var wireName in names)
                     source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
-                source.Append("                var message = await payload.DeserializeAsync<").Append(_typeName(contract)).AppendLine(">(ctk).ConfigureAwait(false);")
-                    .Append("                await processor.ExecuteAsync<").Append(_typeName(contract)).AppendLine(">(message, ctk).ConfigureAwait(false);")
+                source.Append("                var message = await payload.DeserializeAsync<").Append(contract.TypeName).AppendLine(">(ctk).ConfigureAwait(false);")
+                    .Append("                await processor.ExecuteAsync<").Append(contract.TypeName).AppendLine(">(message, ctk).ConfigureAwait(false);")
                     .AppendLine("                break;");
             }
 
@@ -1022,16 +1089,16 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .AppendLine("        {");
                 foreach (var contract in contracts)
                 {
-                    var names = new[] { _contractName(contract) }
-                        .Concat(_contractAttributes(contract).FormerNames)
+                    var names = new[] { contract.ContractName }
+                        .Concat(contract.FormerNames)
                         .Distinct(StringComparer.Ordinal);
                     foreach (var wireName in names)
                         source.Append("            case \"").Append(_escape(wireName)).AppendLine("\":");
-                    source.Append("                var message = await payload.DeserializeAsync<").Append(_typeName(contract)).AppendLine(">(ctk).ConfigureAwait(false);")
+                    source.Append("                var message = await payload.DeserializeAsync<").Append(contract.TypeName).AppendLine(">(ctk).ConfigureAwait(false);")
                         .Append("                var failed = new global::Ark.Tools.MediatorFramework.MessagingFailed<")
-                        .Append(_typeName(contract)).AppendLine(">(message, deliveryCount, new[] { error });")
+                        .Append(contract.TypeName).AppendLine(">(message, deliveryCount, new[] { error });")
                         .Append("                await processor.ExecuteAsync<global::Ark.Tools.MediatorFramework.MessagingFailed<")
-                        .Append(_typeName(contract)).AppendLine(">>(failed, ctk).ConfigureAwait(false);")
+                        .Append(contract.TypeName).AppendLine(">>(failed, ctk).ConfigureAwait(false);")
                         .AppendLine("                return;");
                 }
 
@@ -1057,7 +1124,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .AppendLine("        global::Ark.Tools.MediatorFramework.Messaging.IMessagingContractRegistry registry)")
                 .AppendLine("    {")
                 .AppendLine("        return new global::Ark.Tools.MediatorFramework.Messaging.MessagingParticipantDescriptor(")
-                .Append("            typeof(").Append(_typeName(participant.Symbol)).AppendLine("),")
+                .Append("            typeof(").Append(participant.Symbol.TypeName).AppendLine("),")
                 .AppendLine("            network,")
                 .AppendLine("            registry,")
                 .AppendLine("            Identity,")
@@ -1070,9 +1137,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             }
             source.AppendLine("            },")
                 .Append("            ")
-                .Append(participant.RetryType is null
+                .Append(participant.RetryTypeName is null
                     ? "global::Ark.Tools.MediatorFramework.Messaging.MessagingDefaultRetryPolicy.Instance"
-                    : "new " + _typeName(participant.RetryType) + "()")
+                    : "new " + participant.RetryTypeName + "()")
                 .AppendLine(",")
                 .AppendLine("            Compression,")
                 .AppendLine("            CompressionMinimumSizeBytes,")
@@ -1090,11 +1157,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 foreach (var contract in contracts)
                 {
                     source.Append("                typeof(global::Ark.Tools.Solid.ICommandHandler<")
-                        .Append(_typeName(contract)).AppendLine(">),");
+                        .Append(contract.TypeName).AppendLine(">),");
                     if (participant.Retry?.SecondLevelRetriesEnabled == true)
                     {
                         source.Append("                typeof(global::Ark.Tools.Solid.ICommandHandler<global::Ark.Tools.MediatorFramework.MessagingFailed<")
-                            .Append(_typeName(contract)).AppendLine(">>),");
+                            .Append(contract.TypeName).AppendLine(">>),");
                     }
                 }
                 source.AppendLine("            },");
@@ -1110,7 +1177,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             foreach (var contract in participant.Publishes)
             {
                 source.Append("                new global::Ark.Tools.MediatorFramework.Messaging.MessagingTopicResource(\"")
-                    .Append(_escape(participant.Identity + "-" + _contractName(contract)))
+                    .Append(_escape(participant.Identity + "-" + contract.ContractName))
                     .Append("\", \"").Append(_escape(participant.Identity)).AppendLine("\"),");
             }
             source.AppendLine("            });");
@@ -1119,14 +1186,24 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
         source.AppendLine("}");
         context.AddSource(
-            _safeIdentifier(participant.Symbol.ToDisplayString()) + "_" + _stableHash(participant.Symbol.ToDisplayString()) + ".Participant.g.cs",
+            _safeIdentifier(participant.Symbol.DisplayName) + "_" + _stableHash(participant.Symbol.DisplayName) + ".Participant.g.cs",
             source.ToString());
     }
 
     private static bool _validateDeclaringType(
         GenerationSink context,
-        INamedTypeSymbol symbol,
+        TypeSpec symbol,
         string attributeName)
+    {
+        if (!symbol.IsValidDeclaringType)
+        {
+            _report(context, _nonPartialDeclaringType, symbol, symbol.DisplayName, attributeName);
+            return false;
+        }
+        return true;
+    }
+
+    private static bool _isValidDeclaringType(INamedTypeSymbol symbol)
     {
 #pragma warning disable MA0040, MA0045
         var isPartial = symbol.DeclaringSyntaxReferences
@@ -1134,14 +1211,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.TypeDeclarationSyntax>()
             .Any(static declaration => declaration.Modifiers.Any(static modifier => modifier.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PartialKeyword)));
 #pragma warning restore MA0040, MA0045
-        if (symbol.ContainingType is not null
-            || symbol.Arity != 0
-            || !isPartial)
-        {
-            _report(context, _nonPartialDeclaringType, symbol, symbol.ToDisplayString(), attributeName);
-            return false;
-        }
-        return true;
+        return symbol.ContainingType is null
+            && symbol.Arity == 0
+            && isPartial;
     }
 
     private static bool _implementsCommand(INamedTypeSymbol contract, INamedTypeSymbol commandInterface)
@@ -1195,13 +1267,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("namespace Ark.Tools.MediatorFramework.Generated;");
         foreach (var network in networks)
         {
-            var displayName = network.Symbol.ToDisplayString();
+            var displayName = network.Symbol.DisplayName;
             var name = _safeIdentifier(displayName) + "_" + _stableHash(displayName) + "MessagingDescriptor";
             source.Append("internal static class ").Append(name).AppendLine()
                 .AppendLine("{")
                 .Append("    internal const string Network = \"").Append(_escape(network.Name)).AppendLine("\";")
                 .Append("    internal static readonly string[] Members = new string[] { ")
-                .Append(string.Join(", ", network.MemberSymbols.Select(static member => "\"" + _escape(member.ToDisplayString()) + "\"")))
+                .Append(string.Join(", ", network.Members.Select(static member => "\"" + _escape(member.Symbol.DisplayName) + "\"")))
                 .AppendLine(" };")
                 .AppendLine("}");
         }
@@ -1233,8 +1305,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static void _add(
-        IDictionary<INamedTypeSymbol, List<Participant>> map,
-        INamedTypeSymbol contract,
+        IDictionary<ContractSpec, List<Participant>> map,
+        ContractSpec contract,
         Participant participant)
     {
         if (!map.TryGetValue(contract, out var values))
@@ -1245,10 +1317,19 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static void _report(
         GenerationSink context,
         DiagnosticDescriptor descriptor,
-        ISymbol symbol,
+        TypeSpec symbol,
         params object[] arguments)
     {
-        context._report(descriptor, symbol.Locations.FirstOrDefault() ?? Location.None, arguments);
+        context._report(descriptor, symbol.Location, arguments);
+    }
+
+    private static void _report(
+        GenerationSink context,
+        DiagnosticDescriptor descriptor,
+        ContractSpec contract,
+        params object[] arguments)
+    {
+        context._report(descriptor, contract.Location, arguments);
     }
 
     private static ImmutableArray<INamedTypeSymbol> _types(AttributeData attribute, string name)
@@ -1370,11 +1451,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 source.Replace("\r\n", "\n").Replace('\r', '\n')));
         }
 
-        public void _report(DiagnosticDescriptor descriptor, Location location, params object[] arguments)
+        public void _report(DiagnosticDescriptor descriptor, LocationSpec? location, params object[] arguments)
         {
             _diagnostics.Add(new DiagnosticSpec(
                 descriptor.Id,
-                LocationSpec._from(location),
+                location,
                 arguments.Select(static argument =>
                         Convert.ToString(argument, CultureInfo.InvariantCulture) ?? string.Empty)
                     .ToImmutableArray()));
@@ -1394,91 +1475,74 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private readonly record struct GeneratedSourceSpec(string HintName, string Source);
 
-    private readonly struct Network
-    {
-        public Network(
-            INamedTypeSymbol symbol,
-            string name,
-            ImmutableArray<INamedTypeSymbol> memberSymbols,
-            int requires,
-            int? maximumDecompressedPayloadBytes,
-            int? dataBusMaximumAttachmentBytes,
-            int? maximumSchedulingDelaySeconds,
-            int? resourceLifecycle)
-        {
-            Symbol = symbol;
-            Name = name;
-            MemberSymbols = memberSymbols;
-            Requires = requires;
-            MaximumDecompressedPayloadBytes = maximumDecompressedPayloadBytes;
-            DataBusMaximumAttachmentBytes = dataBusMaximumAttachmentBytes;
-            MaximumSchedulingDelaySeconds = maximumSchedulingDelaySeconds;
-            ResourceLifecycle = resourceLifecycle;
-        }
+    /// <summary>The symbol facts of a network, participant or contract type.</summary>
+    private sealed record TypeSpec(
+        string Key,
+        string DisplayName,
+        string TypeName,
+        string Name,
+        string? Namespace,
+        string Accessibility,
+        bool IsValidDeclaringType,
+        LocationSpec? Location);
 
-        public INamedTypeSymbol Symbol { get; }
-        public string Name { get; }
-        public ImmutableArray<INamedTypeSymbol> MemberSymbols { get; }
-        public int Requires { get; }
-        public int? MaximumDecompressedPayloadBytes { get; }
-        public int? DataBusMaximumAttachmentBytes { get; }
-        public int? MaximumSchedulingDelaySeconds { get; }
-        public int? ResourceLifecycle { get; }
+    /// <summary>The symbol facts of a messaging contract.</summary>
+    private sealed record ContractSpec(
+        TypeSpec Symbol,
+        string ContractName,
+        string DefaultContractName,
+        bool HasMessage,
+        bool HasEvent,
+        string? ExplicitName,
+        EquatableArray<string> FormerNames,
+        bool IsEventShape,
+        bool ImplementsCommand,
+        bool HasMessagePackAttribute,
+        bool HasGoogleProtobufShape)
+    {
+        public string DisplayName => Symbol.DisplayName;
+
+        public string TypeName => Symbol.TypeName;
+
+        public LocationSpec? Location => Symbol.Location;
     }
 
-    private readonly struct Participant
-    {
-        public Participant(
-            INamedTypeSymbol symbol,
-            string identity,
-            ImmutableArray<INamedTypeSymbol> processes,
-            ImmutableArray<INamedTypeSymbol> publishes,
-            ImmutableArray<INamedTypeSymbol> subscribes,
-            ImmutableArray<int> serializers,
-            int defaultSerializer,
-            int compression,
-            int compressionMinimumSizeBytes,
-            INamedTypeSymbol? retryType,
-            RetryPolicy? retry,
-            ImmutableArray<INamedTypeSymbol> contracts)
-        {
-            Symbol = symbol;
-            Identity = identity;
-            Processes = processes;
-            Publishes = publishes;
-            Subscribes = subscribes;
-            Serializers = serializers;
-            DefaultSerializer = defaultSerializer;
-            Compression = compression;
-            CompressionMinimumSizeBytes = compressionMinimumSizeBytes;
-            RetryType = retryType;
-            Retry = retry;
-            Contracts = contracts;
-        }
+    /// <summary>The runtime types available to the compilation that gate optional generated members.</summary>
+    private readonly record struct CompilationFacts(
+        bool HasNetworkOptions,
+        bool HasContractRegistry,
+        bool CanEmitBinder,
+        bool CanEmitStreamBinder,
+        bool CanEmitFailedBinder,
+        bool CanEmitPayloadSender,
+        bool CanEmitDescriptor);
 
-        public INamedTypeSymbol Symbol { get; }
-        public string Identity { get; }
-        public ImmutableArray<INamedTypeSymbol> Processes { get; }
-        public ImmutableArray<INamedTypeSymbol> Publishes { get; }
-        public ImmutableArray<INamedTypeSymbol> Subscribes { get; }
-        public ImmutableArray<int> Serializers { get; }
-        public int DefaultSerializer { get; }
-        public int Compression { get; }
-        public int CompressionMinimumSizeBytes { get; }
-        public INamedTypeSymbol? RetryType { get; }
-        public RetryPolicy? Retry { get; }
-        public ImmutableArray<INamedTypeSymbol> Contracts { get; }
-    }
+    private readonly record struct NetworkMember(TypeSpec Symbol, Participant? Participant);
 
-    private readonly struct RetryPolicy
-    {
-        public RetryPolicy(int maximumDeliveryCount, bool secondLevelRetriesEnabled)
-        {
-            MaximumDeliveryCount = maximumDeliveryCount;
-            SecondLevelRetriesEnabled = secondLevelRetriesEnabled;
-        }
+    private readonly record struct Network(
+        TypeSpec Symbol,
+        string Name,
+        EquatableArray<NetworkMember> Members,
+        int Requires,
+        int? MaximumDecompressedPayloadBytes,
+        int? DataBusMaximumAttachmentBytes,
+        int? MaximumSchedulingDelaySeconds,
+        int? ResourceLifecycle);
 
-        public int MaximumDeliveryCount { get; }
-        public bool SecondLevelRetriesEnabled { get; }
-    }
+    private readonly record struct Participant(
+        TypeSpec Symbol,
+        string Identity,
+        EquatableArray<ContractSpec> Processes,
+        EquatableArray<ContractSpec> Publishes,
+        EquatableArray<ContractSpec> Subscribes,
+        EquatableArray<int> Serializers,
+        int DefaultSerializer,
+        int Compression,
+        string CompressionName,
+        int CompressionMinimumSizeBytes,
+        string? RetryTypeName,
+        RetryPolicy? Retry,
+        EquatableArray<ContractSpec> Contracts);
+
+    private readonly record struct RetryPolicy(int MaximumDeliveryCount, bool SecondLevelRetriesEnabled);
 }

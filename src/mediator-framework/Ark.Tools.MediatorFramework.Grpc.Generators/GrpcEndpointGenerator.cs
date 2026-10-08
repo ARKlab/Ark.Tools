@@ -36,6 +36,10 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string MappingParserTrackingName = "GrpcMappingParser";
         private const string EndpointParserTrackingName = "GrpcEndpointParser";
         private const string ModelTrackingName = "GrpcModel";
+        private const string ReferencedEndpointsTrackingName = "GrpcReferencedEndpoints";
+        private const string ProtoContractParserTrackingName = "GrpcProtoContractParser";
+        private const string ReferencedProtoContractsTrackingName = "GrpcReferencedProtoContracts";
+        private const string ProtoContractAttribute = "ProtoBuf.ProtoContractAttribute";
         private const string OutputTrackingName = "GrpcOutput";
         private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
         private static readonly string[] _collectionPrefixes =
@@ -71,20 +75,40 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value)
                 .WithTrackingName(ModelTrackingName);
-            var referencedEndpoints = context.CompilationProvider
+            // Referenced-assembly scans read metadata symbols only, so they rerun when references change.
+            var referenceScope = context.CompilationProvider
+                .WithComparer(MetadataReferencesComparer.Instance);
+            var referencedEndpoints = referenceScope
                 .Combine(endpointAssemblies)
-                .SelectMany(static (pair, cancellationToken) =>
-                    GetReferencedEndpoints(pair.Left, pair.Right.Items, cancellationToken));
-            var compilationModel = context.CompilationProvider
-                .Select(static (compilation, cancellationToken) =>
-                    GetCompilationModel(compilation, cancellationToken));
+                .Select(static (pair, cancellationToken) => new ImmutableEquatableArray<EndpointModel>(
+                    GetReferencedEndpoints(pair.Left, pair.Right.Items, cancellationToken)))
+                .WithTrackingName(ReferencedEndpointsTrackingName);
+            var sourceProtoContracts = context.SyntaxProvider.ForAttributeWithMetadataName(
+                    ProtoContractAttribute,
+                    static (node, _) => node is BaseTypeDeclarationSyntax,
+                    static (attributeContext, _) => ExtractSourceProtoContract(attributeContext))
+                .WithTrackingName(ProtoContractParserTrackingName)
+                .Where(static contract => contract is not null)
+                .Select(static (contract, _) => contract!)
+                .Collect()
+                .Select(static (contracts, _) => new ImmutableEquatableArray<ProtoContractModel>(contracts));
+            var referencedProtoContracts = referenceScope
+                .Select(static (compilation, cancellationToken) => new ImmutableEquatableArray<ProtoContractModel>(
+                    GetReferencedProtoContracts(compilation, cancellationToken)))
+                .WithTrackingName(ReferencedProtoContractsTrackingName);
+            var compilationModel = sourceProtoContracts
+                .Combine(referencedProtoContracts)
+                .Combine(context.CompilationProvider.Select(static (compilation, _) => GetProtoNamespace(compilation)))
+                .Select(static (pair, _) => new CompilationModel(
+                    pair.Right,
+                    new ImmutableEquatableArray<ProtoContractModel>(
+                        pair.Left.Left.Items.AddRange(pair.Left.Right.Items))));
             var collectedMappings = endpointMappings.Collect()
                 .Select(static (mappings, _) => new ImmutableEquatableArray<AssemblyMapping>(mappings));
 
             var output = sourceEndpoints.Collect()
                 .Select(static (endpoints, _) => new ImmutableEquatableArray<EndpointModel>(endpoints))
-                .Combine(referencedEndpoints.Collect()
-                    .Select(static (endpoints, _) => new ImmutableEquatableArray<EndpointModel>(endpoints)))
+                .Combine(referencedEndpoints)
                 .Combine(collectedMappings)
                 .Combine(compilationModel)
                 .Select(static (pair, cancellationToken) => BuildOutput(
@@ -449,16 +473,6 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static Location GetLocation(AttributeData attribute)
             => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
-
-        private static CompilationModel GetCompilationModel(
-            Compilation compilation,
-            CancellationToken cancellationToken)
-        {
-            return new CompilationModel(
-                GetProtoNamespace(compilation),
-                new ImmutableEquatableArray<ProtoContractModel>(
-                    GetProtoContracts(compilation, cancellationToken)));
-        }
 
         private static GrpcOutput BuildOutput(
             ImmutableArray<EndpointModel> items,
@@ -853,16 +867,27 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine();
         }
 
-        private static ImmutableArray<ProtoContractModel> GetProtoContracts(
+        private static ProtoContractModel? ExtractSourceProtoContract(GeneratorAttributeSyntaxContext context)
+        {
+            var protoAttribute = context.SemanticModel.Compilation.GetTypeByMetadataName(ProtoContractAttribute);
+            if (protoAttribute is null || context.TargetSymbol is not INamedTypeSymbol type)
+                return null;
+
+            var protoContract = type.GetAttributes().FirstOrDefault(attribute =>
+                SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute));
+            return protoContract is null ? null : CreateProtoContract(type, protoContract);
+        }
+
+        private static ImmutableArray<ProtoContractModel> GetReferencedProtoContracts(
             Compilation compilation,
             CancellationToken cancellationToken)
         {
-            var protoAttribute = compilation.GetTypeByMetadataName("ProtoBuf.ProtoContractAttribute");
+            var protoAttribute = compilation.GetTypeByMetadataName(ProtoContractAttribute);
             if (protoAttribute is null)
                 return ImmutableArray<ProtoContractModel>.Empty;
 
             var result = ImmutableArray.CreateBuilder<ProtoContractModel>();
-            foreach (var assembly in _relevantAssemblies(compilation, protoAttribute.ContainingAssembly))
+            foreach (var assembly in _referencedAssemblies(compilation, protoAttribute.ContainingAssembly))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 foreach (var type in _allTypes(assembly.GlobalNamespace)
@@ -872,53 +897,58 @@ namespace Ark.Tools.MediatorFramework.Generators
                     cancellationToken.ThrowIfCancellationRequested();
                     var protoContract = type.GetAttributes().First(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute));
-                    var members = AllProperties(type)
-                        .Select(property => new
-                        {
-                            Property = property,
-                            Attribute = property.GetAttributes().FirstOrDefault(attribute =>
-                                attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoMemberAttribute"),
-                        })
-                        .Where(item => item.Attribute is not null)
-                        .Select(item => new ProtoMemberModel(
-                            item.Property.Name,
-                            item.Property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                            XmlDocumentation.Summary(item.Property),
-                            item.Attribute!.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
-                            IsRepeatedProtoType(item.Property.Type),
-                        item.Property.GetAttributes().Any(attribute =>
-                            attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute),
-                        item.Property.Type is INamedTypeSymbol evolvableEnum && IsEvolvableEnum(evolvableEnum)
-                            ? EvolvableEnumProtoType(evolvableEnum)
-                            : null))
-                        .Where(member => member.Number > 0)
-                        .ToImmutableArray();
-
-                    var includes = type.GetAttributes()
-                        .Where(attribute => attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoIncludeAttribute")
-                        .Select(attribute => new
-                        {
-                            Type = attribute.ConstructorArguments.ElementAtOrDefault(1).Value as INamedTypeSymbol,
-                            Number = attribute.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
-                        })
-                        .Where(include => include.Type is not null && include.Number > 0)
-                        .Select(include => new ProtoIncludeModel(
-                            include.Type!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                            include.Number))
-                        .ToImmutableArray();
-
-                    var name = protoContract.NamedArguments
-                        .FirstOrDefault(argument => argument.Key == "Name")
-                        .Value.Value as string;
-                    result.Add(new ProtoContractModel(
-                        type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        string.IsNullOrWhiteSpace(name) ? GeneratedName(type) : name!,
-                        XmlDocumentation.Summary(type),
-                        new ImmutableEquatableArray<ProtoMemberModel>(members),
-                        new ImmutableEquatableArray<ProtoIncludeModel>(includes)));
+                    result.Add(CreateProtoContract(type, protoContract));
                 }
             }
             return result.ToImmutable();
+        }
+
+        private static ProtoContractModel CreateProtoContract(INamedTypeSymbol type, AttributeData protoContract)
+        {
+            var members = AllProperties(type)
+                .Select(property => new
+                {
+                    Property = property,
+                    Attribute = property.GetAttributes().FirstOrDefault(attribute =>
+                        attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoMemberAttribute"),
+                })
+                .Where(item => item.Attribute is not null)
+                .Select(item => new ProtoMemberModel(
+                    item.Property.Name,
+                    item.Property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    XmlDocumentation.Summary(item.Property),
+                    item.Attribute!.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
+                    IsRepeatedProtoType(item.Property.Type),
+                item.Property.GetAttributes().Any(attribute =>
+                    attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute),
+                item.Property.Type is INamedTypeSymbol evolvableEnum && IsEvolvableEnum(evolvableEnum)
+                    ? EvolvableEnumProtoType(evolvableEnum)
+                    : null))
+                .Where(member => member.Number > 0)
+                .ToImmutableArray();
+
+            var includes = type.GetAttributes()
+                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoIncludeAttribute")
+                .Select(attribute => new
+                {
+                    Type = attribute.ConstructorArguments.ElementAtOrDefault(1).Value as INamedTypeSymbol,
+                    Number = attribute.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
+                })
+                .Where(include => include.Type is not null && include.Number > 0)
+                .Select(include => new ProtoIncludeModel(
+                    include.Type!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    include.Number))
+                .ToImmutableArray();
+
+            var name = protoContract.NamedArguments
+                .FirstOrDefault(argument => argument.Key == "Name")
+                .Value.Value as string;
+            return new ProtoContractModel(
+                type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                string.IsNullOrWhiteSpace(name) ? GeneratedName(type) : name!,
+                XmlDocumentation.Summary(type),
+                new ImmutableEquatableArray<ProtoMemberModel>(members),
+                new ImmutableEquatableArray<ProtoIncludeModel>(includes));
         }
 
         private static void AddReachable(
