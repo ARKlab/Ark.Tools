@@ -36,7 +36,7 @@ try
         ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
     await using var container = RebusHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
     container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
-    ApplicationComposition.RegisterAuditSubscriber(container, new NoOpBookPrintAuditSink());
+    ApplicationComposition.RegisterAuditSubscriber(container, new LoggingBookPrintAuditSink());
     RebusHosting.Configure<AuditRebusHost>(
         container,
         t => t.UseAzureServiceBus(serviceBus, SampleMessagingAuditParticipant.Identity),

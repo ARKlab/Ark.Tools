@@ -39,7 +39,7 @@ try
         SqlConnectionString = builder.Configuration.GetConnectionString("Sample")
             ?? throw new InvalidOperationException("ConnectionStrings:Sample is required."),
     });
-    ApplicationComposition.RegisterAuditSubscriber(container, new NoOpBookPrintAuditSink());
+    ApplicationComposition.RegisterAuditSubscriber(container, new LoggingBookPrintAuditSink());
     FunctionsHosting.AddMessagingTrigger(
         builder.Services,
         builder.Configuration,

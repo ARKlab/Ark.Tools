@@ -33,7 +33,7 @@ try
 #pragma warning disable CA2000 // The transport owns and disposes the Service Bus client.
     await using var transport = new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus));
 #pragma warning restore CA2000
-    ApplicationComposition.RegisterNotificationSubscriber(container, new NoOpBookPrintNotificationSink());
+    ApplicationComposition.RegisterNotificationSubscriber(container, new LoggingBookPrintNotificationSink());
     WebHosting.AddParticipant<SampleMessagingNotificationParticipant>(
         builder.Services, container, transport, WebHosting.CreateDataBus(builder.Configuration),
         WebHosting.CreateResourceManagement(builder.Configuration), receiver: true);
