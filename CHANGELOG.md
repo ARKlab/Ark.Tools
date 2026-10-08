@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `InMemoryMessagingTransport.GetPendingCount` reports unsettled deliveries per queue, so tests can wait for in-memory messaging to drain.
 - Native messaging processes request contracts (`IRequest<TSelf, TResponse>`) listed in a participant's `Processes`: the request handler runs and the response is discarded.
 - `MessagingFailFastReason.HandlerRejected` lets a second-level handler dead-letter a message it gives up on, instead of returning it to retries.
-- Fluent native messaging composition accepts an explicit resource-management seam (UseResourceManagement) and provisions a receiver's queue, topics and forwarding subscriptions, so Service Bus hosts outside Azure Functions can self-provision under CreateIfMissing.
+- Fluent native messaging composition accepts an explicit resource-management seam (`UseResourceManagement`) and provisions a receiver's queue, topics and forwarding subscriptions, so Service Bus hosts outside Azure Functions can self-provision under `CreateIfMissing`.
 
 ### Changed
 
@@ -25,7 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The MediatorFramework source generators (Minimal API, gRPC, Rebus, MCP, messaging network and Azure Functions) reuse their previous results when code in other files changes, so editing projects that use them is faster in the IDE. The generated code is unchanged.
 - **Breaking:** exposing a contract through gRPC whose request, response or stream item is not a protobuf contract (for example `IAsyncEnumerable<int>`) is now a build error (`ARKMF058`). Such a method used to be generated and then skipped at startup with only a warning. A closed generic contract such as `Page<Book>` is also an error, because it cannot be exported to `.proto`; use a non-generic contract type.
 - **Breaking:** under `CreateIfMissing`, a fluent messaging receiver on a transport without built-in resource management (Service Bus) must call `UseResourceManagement` or set the network to `External`; otherwise composition fails.
-- **Breaking:** the `MessagingDispatch` delegate and the `IMessagingPipelineProcessor.ProcessIncomingAsync` terminal also receive the scoped `IRequestProcessor`, so messaging hosts must register `IRequestProcessor` (`AddArkSolidProcessors` does); a receiving host without it fails at startup.
+- **Breaking:** the `MessagingDispatch` delegate, the type of the `dispatch` parameter of the public `MessagingDispatcher` constructor, and the `IMessagingPipelineProcessor.ProcessIncomingAsync` terminal also receive the scoped `IRequestProcessor`, so messaging hosts must register `IRequestProcessor` (`AddArkSolidProcessors` does); a receiving host without it fails at startup.
+- **Breaking:** `MessagingParticipantDescriptor` gained constructor parameters, so code compiled against the previous constructor must be rebuilt.
 
 ### Fixed
 
