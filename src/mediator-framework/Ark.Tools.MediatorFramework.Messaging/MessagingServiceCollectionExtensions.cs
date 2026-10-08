@@ -7,6 +7,7 @@ using MessagePack;
 using MessagePack.Resolvers;
 
 using Ark.Tools.Outbox;
+using Ark.Tools.Solid;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -451,13 +452,16 @@ internal sealed class MessagingParticipantStartupValidator : IHostedService
 {
     private readonly MessagingParticipantDescriptor _participant;
     private readonly IMessagingCodecRegistry _codecs;
+    private readonly IServiceProvider _serviceProvider;
 
     public MessagingParticipantStartupValidator(
         MessagingParticipantDescriptor participant,
-        IMessagingCodecRegistry codecs)
+        IMessagingCodecRegistry codecs,
+        IServiceProvider serviceProvider)
     {
         _participant = participant;
         _codecs = codecs;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -467,7 +471,15 @@ internal sealed class MessagingParticipantStartupValidator : IHostedService
             _codecs,
             _participant.Serializers,
             _participant.Identity);
-        await Task.CompletedTask.ConfigureAwait(false);
+        if (_participant.Receives)
+        {
+            // The pipeline resolves IRequestProcessor on every delivery; fail here instead of dead-lettering each message.
+            var scope = _serviceProvider.CreateAsyncScope();
+            await using var _scope = scope.ConfigureAwait(false);
+            if (scope.ServiceProvider.GetService<IRequestProcessor>() is null)
+                throw new InvalidOperationException(
+                    $"Messaging participant '{_participant.Identity}' receives messages, so a scoped IRequestProcessor must be registered (AddArkSolidProcessors registers it).");
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)

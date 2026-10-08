@@ -306,6 +306,28 @@ public sealed class FluentMessagingResourceManagementTests
         }
     }
 
+    private sealed class UnusedRequestProcessor : IRequestProcessor
+    {
+        [Obsolete("Test seam.", error: true)]
+        public TResponse Execute<TResponse>(IRequest<TResponse> request)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task<TResponse> ExecuteAsync<TRequest, TResponse>(
+            IRequest<TRequest, TResponse> request,
+            CancellationToken ctk = default)
+            where TRequest : class, IRequest<TRequest, TResponse>
+        {
+            throw new NotSupportedException();
+        }
+    }
+
     private sealed class SecondLevelRetryPolicy : IMessagingRetryPolicy
     {
         public int MaximumDeliveryCount => 3;
