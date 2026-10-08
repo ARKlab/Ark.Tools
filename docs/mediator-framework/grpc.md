@@ -30,6 +30,10 @@ Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample
 Every protobuf member needs a stable number. Never reuse a number after a client
 has shipped. Add a new number or introduce a new API version.
 
+`[GrpcMethod]` and `[GrpcService]` ship in `Ark.Tools.MediatorFramework`, so the
+contracts project references that package and `protobuf-net` only. Reference
+`Ark.Tools.MediatorFramework.Grpc` from the host that serves the methods.
+
 ## 2. Register the gRPC runtime
 
 ```csharp
