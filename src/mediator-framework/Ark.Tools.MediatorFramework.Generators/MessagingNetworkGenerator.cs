@@ -98,7 +98,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         "Retry policy for participant '{0}' must have MaximumDeliveryCount >= {1}", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _invalidEventShape = _rule(
         "ARKMSG018", "Invalid event contract",
-        "Event contract '{0}' must implement ICommand<TSelf>; a request is a message, not an event", DiagnosticSeverity.Error);
+        "Event contract '{0}' must implement ICommand<TSelf> (requests and queries cannot be events)", DiagnosticSeverity.Error);
     private static readonly DiagnosticDescriptor _undispatchableMessage = _rule(
         "ARKMSG027", "Processed contract cannot be dispatched",
         "Participant '{0}' processes '{1}', which implements neither ICommand<TSelf> nor IRequest<TSelf, TResponse>", DiagnosticSeverity.Error);

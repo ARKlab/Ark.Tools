@@ -4170,7 +4170,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().Contain(static diagnostic =>
             diagnostic.Id == "ARKMSG018"
-            && diagnostic.GetMessage().Contains("must implement ICommand<TSelf>"));
+            && diagnostic.GetMessage().Contains("must implement ICommand<TSelf> (requests and queries cannot be events)"));
     }
 
     [TestMethod]
