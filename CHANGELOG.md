@@ -21,4 +21,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The API-surface snapshot records the fields of contracts marked only with `[Message]` or `[Event]`, so renaming or removing a field of such a message fails the API-surface gate again. To accept the new entries, build with `-p:EmitCompilerGeneratedFiles=true`, review the snapshot in the generated `ArkApiSurface.g.cs` under `obj/`, and copy it over `ArkApiSurface.txt`. `ArkApiSurface.current.txt` is not refreshed while ARKAPI002 fails the build.
 - `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.

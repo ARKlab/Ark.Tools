@@ -1,4 +1,6 @@
 ﻿/*
+CONTRACT BookPrintCompleted -> BookPrintCompleted [group=Ark]
+CONTRACT BookPrintCompleted.BookId : Guid
 CONTRACT DeadLetterAck
 CONTRACT FailingRebusRequest -> DeadLetterAck [group=Ark]
 CONTRACT FailingRebusRequest.Reason : string default="boom"
