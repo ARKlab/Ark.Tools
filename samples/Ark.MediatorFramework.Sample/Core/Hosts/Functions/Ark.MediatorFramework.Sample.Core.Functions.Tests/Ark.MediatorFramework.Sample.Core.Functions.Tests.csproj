@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Hosting\Ark.MediatorFramework.Sample.Core.Functions.Hosting.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor\Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor.csproj" />
+    <!-- Each trigger app generates its own ArkGeneratedMessagingFunctions: aliases keep them apart. -->
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Processor\Ark.MediatorFramework.Sample.Core.Functions.Processor.csproj" Aliases="Processor" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Notifications\Ark.MediatorFramework.Sample.Core.Functions.Notifications.csproj" Aliases="Notifications" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Audit\Ark.MediatorFramework.Sample.Core.Functions.Audit.csproj" Aliases="Audit" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.API\Ark.MediatorFramework.Sample.Core.API.csproj" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
+  </ItemGroup>
+
+</Project>

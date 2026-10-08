@@ -331,7 +331,10 @@ The connection setting can contain a connection string or a fully qualified
 namespace for `DefaultAzureCredential`. It can instead use standard
 identity-based Functions settings beneath the configured prefix:
 `fullyQualifiedNamespace` and the optional user-assigned-identity `clientId`
-(environment variables use `__` separators). Startup validates the participant,
+(environment variables use `__` separators). For Service Bus, the optional
+`administrationConnectionString` child gives resource provisioning its own
+connection string, for example the local emulator's administration endpoint on
+port 5300; without it, provisioning uses the main connection. Startup validates the participant,
 network, transport capabilities, serializers, consumed-message handlers, and
 trigger binding before registering the bus and dispatcher. A receive-capable
 Functions participant cannot select InMemory, because its receive pump is a

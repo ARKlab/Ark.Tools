@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AzureServiceBus__ConnectionString": "Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
+    "ConnectionStrings__Sample": "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;Password=IntegrationTestsDbPassword85!;TrustServerCertificate=True;Encrypt=False",
+    "ConnectionStrings__DataBus": "UseDevelopmentStorage=true",
+    "ApplicationInsights__ConnectionString": ""
+  }
+}

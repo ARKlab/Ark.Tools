@@ -25,6 +25,9 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [TestClass]
 public sealed class MessagingFunctionsCompositionTests
 {
+    private const string _dataPlaneConnection = "Endpoint=sb://composition.servicebus.windows.net/;SharedAccessKeyName=test;SharedAccessKey=test";
+    private const string _administrationConnection = "Endpoint=sb://composition.servicebus.windows.net:5300/;SharedAccessKeyName=test;SharedAccessKey=test";
+
     /// <summary>Verifies generated Functions metadata composes through the fluent entry point.</summary>
     [TestMethod]
     public async Task FluentFunctionsCompositionUsesManifestAndRegistersOutbox()
@@ -329,6 +332,55 @@ public sealed class MessagingFunctionsCompositionTests
         action.Should().Throw<InvalidOperationException>()
             .WithMessage("*ICommandHandler*CompositionConsumedMessage*not registered*");
         services.Should().BeEmpty();
+    }
+
+    /// <summary>Verifies the administration child setting overrides the data-plane connection for provisioning.</summary>
+    [TestMethod]
+    public void ServiceBusAdministrationUsesTheAdministrationConnectionStringWhenSet()
+    {
+        var configuration = _configuration(new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["CompositionConnection"] = _dataPlaneConnection,
+            ["CompositionConnection:administrationConnectionString"] = _administrationConnection,
+        });
+
+        MessagingFunctionsServiceCollectionExtensions
+            ._serviceBusAdministrationConnectionString(configuration, "CompositionConnection")
+            .Should().Be(_administrationConnection);
+    }
+
+    /// <summary>Verifies provisioning falls back to the data-plane connection string.</summary>
+    [TestMethod]
+    public void ServiceBusAdministrationFallsBackToTheConnectionString()
+    {
+        var configuration = _configuration(new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["CompositionConnection"] = _dataPlaneConnection,
+        });
+
+        MessagingFunctionsServiceCollectionExtensions
+            ._serviceBusAdministrationConnectionString(configuration, "CompositionConnection")
+            .Should().Be(_dataPlaneConnection);
+    }
+
+    /// <summary>Verifies an identity-based connection keeps administering with the token credential.</summary>
+    [TestMethod]
+    public void ServiceBusAdministrationUsesTheCredentialForIdentityBasedConnections()
+    {
+        var configuration = _configuration(new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["CompositionConnection:fullyQualifiedNamespace"] = "composition.servicebus.windows.net",
+            ["CompositionConnection:clientId"] = Guid.NewGuid().ToString(),
+        });
+
+        MessagingFunctionsServiceCollectionExtensions
+            ._serviceBusAdministrationConnectionString(configuration, "CompositionConnection")
+            .Should().BeNull();
+    }
+
+    private static IConfiguration _configuration(Dictionary<string, string?> values)
+    {
+        return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
     }
 
     private static InMemoryMessagingDataBus _dataBus()
