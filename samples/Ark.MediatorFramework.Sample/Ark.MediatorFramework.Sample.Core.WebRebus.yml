@@ -1,0 +1,69 @@
+name: $(SourceBranchName)_$(date:yyyyMMdd)$(rev:.r)
+
+# WebRebus variant: ASP.NET Core Minimal API with Rebus on Azure Service Bus.
+trigger:
+  branches:
+    include:
+      - develop
+      - master
+  paths:
+    include:
+      - samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.*
+      - samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/*
+      - samples/Ark.MediatorFramework.Sample/Directory.Build.props
+      - samples/Ark.MediatorFramework.Sample/Directory.Build.targets
+      - samples/Ark.MediatorFramework.Sample/Directory.Packages.props
+      - samples/Ark.MediatorFramework.Sample/global.json
+      - samples/Ark.MediatorFramework.Sample/.globalconfig
+      - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.slnx
+      - samples/Ark.MediatorFramework.Sample/docker-compose.yml
+      - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.Core.WebRebus.yml
+      - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.Core.WebRebus.buildStage.yml
+      - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.Core.WebRebus.deployStage.yml
+
+pr:
+  branches:
+    include:
+      - develop
+      - master
+  drafts: false
+  paths:
+    include:
+      - samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.*
+      - samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/*
+      - samples/Ark.MediatorFramework.Sample/Directory.Build.props
+      - samples/Ark.MediatorFramework.Sample/Directory.Build.targets
+      - samples/Ark.MediatorFramework.Sample/Directory.Packages.props
+      - samples/Ark.MediatorFramework.Sample/global.json
+      - samples/Ark.MediatorFramework.Sample/.globalconfig
+      - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.slnx
+      - samples/Ark.MediatorFramework.Sample/docker-compose.yml
+      - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.Core.WebRebus.yml
+      - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.Core.WebRebus.buildStage.yml
+      - samples/Ark.MediatorFramework.Sample/Ark.MediatorFramework.Sample.Core.WebRebus.deployStage.yml
+
+variables:
+  workingDirectory: '$(Build.SourcesDirectory)/samples/Ark.MediatorFramework.Sample'
+  vmImageName: 'ubuntu-22.04'
+  buildConfiguration: 'Release'
+  enableDeployment: 'false'
+
+stages:
+  - template: Ark.MediatorFramework.Sample.Core.WebRebus.buildStage.yml
+    parameters:
+      name: Build_Stage
+      workingDirectory: ${{ variables.workingDirectory }}
+      vmImageName: ${{ variables.vmImageName }}
+      buildConfiguration: ${{ variables.buildConfiguration }}
+
+  # Enable only after configuring the Azure service connection, environment,
+  # and app names in this pipeline.
+  - ${{ if eq(variables.enableDeployment, 'true') }}:
+      - template: Ark.MediatorFramework.Sample.Core.WebRebus.deployStage.yml
+        parameters:
+          name: Deploy_Stage
+          dependsOn: Build_Stage
+          vmImageName: ${{ variables.vmImageName }}
+          environmentName: Ark-MediatorFramework-Sample-WebRebus
+          azureServiceConnection: Ark-MediatorFramework-Sample
+          webAppName: replace-with-web-app-name

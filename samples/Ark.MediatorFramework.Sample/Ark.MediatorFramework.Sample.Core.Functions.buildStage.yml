@@ -1,0 +1,147 @@
+parameters:
+  - name: name
+    type: string
+  - name: dependsOn
+    type: string
+    default: ''
+  - name: workingDirectory
+    type: string
+  - name: vmImageName
+    type: string
+  - name: buildConfiguration
+    type: string
+
+stages:
+  - stage: ${{ parameters.name }}
+    displayName: ${{ parameters.name }}
+    dependsOn: ${{ parameters.dependsOn }}
+    variables:
+      solutionPath: '${{ parameters.workingDirectory }}/Ark.MediatorFramework.Sample.slnx'
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+    jobs:
+      - job: BuildAndTest
+        displayName: Build and test mediator sample (Functions)
+        timeoutInMinutes: 60
+        pool:
+          vmImage: ${{ parameters.vmImageName }}
+        steps:
+          - task: UseDotNet@2
+            displayName: Use sample SDK
+            inputs:
+              useGlobalJson: true
+              workingDirectory: ${{ parameters.workingDirectory }}
+
+          # Same SQL Server image and settings as .github/workflows/ci.yml.
+          - script: |
+              docker network create sample-net
+              docker run -d --name sqlserver --network sample-net -p 1433:1433 \
+                -e ACCEPT_EULA=Y \
+                -e MSSQL_SA_PASSWORD='IntegrationTestsDbPassword85!' \
+                -e MSSQL_COLLATION=Latin1_General_CI_AS_KS \
+                mcr.microsoft.com/mssql/server:2025-latest
+              timeout 120s bash -c 'until docker exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "IntegrationTestsDbPassword85!" -C -Q "SELECT 1" > /dev/null 2>&1; do sleep 2; done'
+            displayName: Start SQL Server
+
+          # Same Service Bus emulator image and environment as .github/workflows/ci.yml,
+          # pointed at the SQL container; readiness sequence of .github/workflows/publish_nuget.yml.
+          - script: |
+              docker run -d --name servicebus --network sample-net -p 5672:5672 -p 5300:5300 \
+                -e ACCEPT_EULA=Y \
+                -e SQL_SERVER=sqlserver \
+                -e MSSQL_SA_PASSWORD='IntegrationTestsDbPassword85!' \
+                -e EMULATOR_HTTP_PORT=5300 \
+                -e SQL_WAIT_INTERVAL=90 \
+                mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+              timeout 300s bash -c '
+                until bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5300" 2>/dev/null \
+                  && bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5672" 2>/dev/null; do
+                  sleep 2
+                done
+                sleep 5
+              '
+            displayName: Start Service Bus emulator
+
+          - task: DotNetCoreCLI@2
+            displayName: Restore sample
+            inputs:
+              command: restore
+              projects: $(solutionPath)
+              restoreArguments: --locked-mode
+
+          - task: DotNetCoreCLI@2
+            displayName: Build sample
+            inputs:
+              command: build
+              projects: $(solutionPath)
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: Test Core and Functions
+            env:
+              ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING: 'Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;'
+            inputs:
+              command: test
+              projects: |
+                ${{ parameters.workingDirectory }}/Core/Ark.MediatorFramework.Sample.Core.Tests/Ark.MediatorFramework.Sample.Core.Tests.csproj
+                ${{ parameters.workingDirectory }}/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests/Ark.MediatorFramework.Sample.Core.Functions.Tests.csproj
+              arguments: '--configuration $(buildConfiguration) --no-build --no-restore --report-trx'
+              publishTestResults: true
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish Api
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Api/Ark.MediatorFramework.Sample.Core.Functions.Api.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/Api'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish Processor
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Processor/Ark.MediatorFramework.Sample.Core.Functions.Processor.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/Processor'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish Notifications
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Notifications/Ark.MediatorFramework.Sample.Core.Functions.Notifications.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/Notifications'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish Audit
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Audit/Ark.MediatorFramework.Sample.Core.Functions.Audit.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/Audit'
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish OutboxProcessor
+            inputs:
+              command: publish
+              publishWebProjects: false
+              zipAfterPublish: false
+              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/OutboxProcessor'
+
+          - task: CopyFiles@2
+            displayName: Stage database package
+            inputs:
+              SourceFolder: '${{ parameters.workingDirectory }}/Core/Ark.MediatorFramework.Sample.Core.Database/bin/$(buildConfiguration)'
+              Contents: '**/*.dacpac'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/database'
+              flattenFolders: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish deployable Functions hosts
+            inputs:
+              targetPath: $(Build.ArtifactStagingDirectory)
+              artifact: mediator-framework-sample-functions
