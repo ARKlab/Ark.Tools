@@ -37,7 +37,7 @@ services.ConfigureArkMessaging(
     SampleMessagingNetwork.Registry,
     messaging =>
 {
-    messaging.Producer<SampleMessagingPublisherParticipant>(producer => producer
+    messaging.Producer<SampleMessagingApiParticipant>(producer => producer
         .UseTransport(transport => transport.UseServiceBus(client))
         .UseDataBus(dataBus => dataBus.UseInMemory())
         .UseSerialization(serialization => serialization.UseMessagePack())

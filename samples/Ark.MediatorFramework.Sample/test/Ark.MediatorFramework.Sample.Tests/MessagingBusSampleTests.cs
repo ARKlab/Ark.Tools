@@ -162,7 +162,7 @@ public sealed class MessagingBusSampleTests
             .ConfigureAwait(false);
         await transport.EnsureTopicAsync(
                 topic,
-                SampleMessagingPublisherParticipant.Identity,
+                SampleMessagingParticipant.Identity,
                 default)
             .ConfigureAwait(false);
         await transport.EnsureSubscriptionAsync(
@@ -201,8 +201,8 @@ public sealed class MessagingBusSampleTests
             network,
             SampleMessagingNetwork.Registry,
             new MessagingCodecRegistry([codec]),
-            SampleMessagingPublisherParticipant.CreatePayloadSender(dataBus, network),
-            SampleMessagingPublisherParticipant.Identity);
+            SampleMessagingParticipant.CreatePayloadSender(dataBus, network),
+            SampleMessagingParticipant.Identity);
         notificationContainer.RegisterInstance<Ark.Tools.MediatorFramework.IBus>(bus);
         notificationContainer.RegisterInstance<Ark.Tools.MediatorFramework.IBusOutboxEnlistment>(bus);
         auditContainer.RegisterInstance<Ark.Tools.MediatorFramework.IBus>(bus);
@@ -279,7 +279,7 @@ public sealed class MessagingBusSampleTests
             {
                 Members =
                 [
-                    typeof(SampleMessagingPublisherParticipant),
+                    typeof(SampleMessagingApiParticipant),
                     typeof(SampleMessagingParticipant),
                     typeof(SampleMessagingNotificationParticipant),
                     typeof(SampleMessagingAuditParticipant),

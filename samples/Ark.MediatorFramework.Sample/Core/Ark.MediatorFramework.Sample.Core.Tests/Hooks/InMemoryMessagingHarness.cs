@@ -35,7 +35,7 @@ public static class InMemoryMessagingHarness
         foreach (var queue in Queues)
             await transport.EnsureQueueAsync(queue, maximumDeliveryCount, queue, ctk).ConfigureAwait(false);
         var topic = SampleMessagingNetwork.Registry.GetDestination<BookPrintCompleted>();
-        await transport.EnsureTopicAsync(topic, SampleMessagingPublisherParticipant.Identity, ctk).ConfigureAwait(false);
+        await transport.EnsureTopicAsync(topic, SampleMessagingParticipant.Identity, ctk).ConfigureAwait(false);
         foreach (var subscriber in new[] { SampleMessagingNotificationParticipant.Identity, SampleMessagingAuditParticipant.Identity })
         {
             await transport.EnsureSubscriptionAsync(

@@ -110,7 +110,7 @@ public sealed class BookPrintingProcessSteps
     public async Task ResumeCurrentBookPrintProcess()
     {
         Current.Should().NotBeNull();
-        Current = await _context.DispatchRequestAsync<ResumeBookPrintProcessRequest, BookPrintProcessResponse>(
+        Current = await _context.DispatchWorkerRequestAsync<ResumeBookPrintProcessRequest, BookPrintProcessResponse>(
             new ResumeBookPrintProcessRequest { Id = Current!.Id }).ConfigureAwait(false);
     }
 
@@ -168,6 +168,24 @@ public sealed class BookPrintingProcessSteps
     {
         Current.Should().NotBeNull();
         _sampleContext.Application.VerifyPrintCompletionNotification(Current!);
+    }
+
+    /// <summary>Simulates at-least-once redelivery of the worker message.</summary>
+    [When("the current book print process message is delivered again")]
+    public async Task CurrentProcessMessageIsDeliveredAgain()
+    {
+        var process = Current ?? throw new InvalidOperationException("No current book print process.");
+        await _sampleContext.Application.SendAsync(new ProcessBookPrintProcessRequest { Id = process.Id })
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts that both subscribers received the completed-print event.</summary>
+    [Then("the completed print of the current book was notified and audited")]
+    public void CompletedPrintWasNotifiedAndAudited()
+    {
+        var bookId = _books.Current.Id;
+        _sampleContext.Application.Notifications.BookIds.Should().ContainSingle().Which.Should().Be(bookId);
+        _sampleContext.Application.Audits.BookIds.Should().ContainSingle().Which.Should().Be(bookId);
     }
 
     /// <summary>Asserts the typed duplicate-print-process business-rule violation.</summary>

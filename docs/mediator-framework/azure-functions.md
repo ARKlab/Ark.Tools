@@ -583,18 +583,18 @@ lifecycle cleanup eventually removes.
 ### Three-participant Book sample
 
 The `Ark.MediatorFramework.Sample` solution demonstrates one publisher and two
-independent subscribers over the same contract assembly. The Web participant
+independent subscribers over the same contract assembly. The print worker participant
 declaration owns the `BookPrintCompleted` event topic, `AzureFunctions` owns the
 `sample-messaging-notification` notification queue, and `AuditFunctions` owns
 the `sample-messaging-audit` audit queue. The generated event topic is
-`sample-messaging-publisher-books/book-print.completed` logically. Each
+`ark-mediator-sample-books/book-print.completed` logically. Each
 subscriber has a forwarding subscription named after its participant identity;
 neither Functions host starts a Rebus receiver or an outbox processor.
 
 The sample event's logical topic is
-`sample-messaging-publisher-books/book-print.completed`. Service Bus maps that
+`ark-mediator-sample-books/book-print.completed`. Service Bus maps that
 logical value to
-`sample-messaging-publisher-books-book-print.completed-d320f7b71a7f80da8b35e92355395b14c45c7763a520b5aec672ad65d77b26aa`;
+`ark-mediator-sample-books-book-print.completed-6c781d065b678ff1b867ba3b86d5c8a5481c888ba0a4b1064a7d093107cbe40f`;
 the participant queues and subscription names remain `ark-mediator-sample`,
 `sample-messaging-notification`, and `sample-messaging-audit` because they
 already fit the provider grammar. The `amf1-msg-type` header remains the

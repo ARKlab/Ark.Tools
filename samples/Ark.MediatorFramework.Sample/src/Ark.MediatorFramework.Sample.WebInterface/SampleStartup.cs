@@ -193,7 +193,7 @@ public sealed class SampleStartup
             messagingNetwork,
             Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingNetwork.Registry,
             static messaging => messaging.Producer<
-                    Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingPublisherParticipant>(
+                    Ark.MediatorFramework.Sample.Core.Application.Messages.SampleMessagingApiParticipant>(
                     static producer => producer
                         .UseTransport(static transport => transport.UseInMemory())
                         .UseDataBus(static dataBus => dataBus.UseInMemory(
