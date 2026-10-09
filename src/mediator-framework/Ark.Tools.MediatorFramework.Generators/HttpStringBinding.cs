@@ -54,6 +54,21 @@ internal static class HttpStringBinding
             && method.Parameters[^1].RefKind == RefKind.Out;
     }
 
+    /// <summary>
+    /// Gets the <c>TryParse</c> methods declared on the type or inherited from its base types, which ASP.NET Core
+    /// also accepts.
+    /// </summary>
+    /// <param name="type">The candidate type.</param>
+    /// <returns>The <c>TryParse</c> methods of the type hierarchy.</returns>
+    public static IEnumerable<IMethodSymbol> TryParseMethods(ITypeSymbol type)
+    {
+        for (var current = type; current is not null; current = current.BaseType)
+        {
+            foreach (var method in current.GetMembers("TryParse").OfType<IMethodSymbol>())
+                yield return method;
+        }
+    }
+
     /// <summary>Gets whether the parameter is a by-value <c>IFormatProvider</c>, nullable or not.</summary>
     /// <param name="parameter">The candidate parameter.</param>
     /// <returns><see langword="true"/> for a by-value <c>IFormatProvider</c> parameter.</returns>
@@ -79,8 +94,7 @@ internal static class HttpStringBinding
             || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
             return false;
 
-        return !targetType.GetMembers("TryParse")
-            .OfType<IMethodSymbol>()
+        return !TryParseMethods(targetType)
             .Any(method => IsTryParseShape(method)
                 && (method.Parameters.Length == 2 || IsFormatProviderParameter(method.Parameters[1]))
                 && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, targetType));

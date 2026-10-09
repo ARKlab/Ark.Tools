@@ -518,8 +518,7 @@ internal static class AzureFunctionsEndpointParser
         if (type.ToDisplayString() == "System.Uri")
             return ConversionKind.Uri;
 
-        var tryParse = type.GetMembers("TryParse")
-            .OfType<IMethodSymbol>()
+        var tryParse = HttpStringBinding.TryParseMethods(type)
             .Where(method => HttpStringBinding.IsTryParseShape(method)
                 && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, type))
             .ToArray();

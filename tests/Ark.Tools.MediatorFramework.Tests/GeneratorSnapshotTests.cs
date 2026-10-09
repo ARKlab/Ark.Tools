@@ -1156,6 +1156,11 @@ public sealed class GeneratorSnapshotTests
                 public static bool TryParse(ref string value, out RefCode result) { result = default; return true; }
                 public static bool TryParse<TArg>(string value, out RefCode result) { result = default; return true; }
             }
+            public class CodeBase<T> where T : CodeBase<T>, new()
+            {
+                public static bool TryParse(string? value, out T result) { result = new T(); return value is not null; }
+            }
+            public sealed class AisleCode : CodeBase<AisleCode> { }
             public readonly struct ShelfCode : IParsable<ShelfCode>
             {
                 public static bool TryParse(string? value, out ShelfCode result) { result = default; return true; }
@@ -1197,6 +1202,7 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public DateTimeOffset At { get; init; }
                 [HttpQuery] public DateOnly Day { get; init; }
                 [HttpQuery] public ShelfCode Shelf { get; init; }
+                [HttpQuery] public AisleCode[] Aisles { get; init; } = [];
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
@@ -1230,6 +1236,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("global::System.DateOnly.TryParse(_raw_Day, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces, out var _value_Day)");
         // An explicit IParsable<T> implementation wins over a public TryParse(string, out T), as in Minimal API.
         result.Generated.Should().Contain("!global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<global::ShelfCode>(_raw_Shelf, out var _value_Shelf)");
+        // A TryParse inherited from a base type is called, as ASP.NET Core does.
+        result.Generated.Should().Contain("!global::AisleCode.TryParse(_raw_Aisles, out var _value_Aisles)");
         // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
         result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
         // An empty single value is parsed and fails, while an empty nullable array element is null, as in Minimal API.
