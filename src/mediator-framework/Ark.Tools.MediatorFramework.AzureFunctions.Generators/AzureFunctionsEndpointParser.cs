@@ -72,7 +72,8 @@ internal enum ConversionKind
 /// <param name="ArrayElementTypeFullName">The fully qualified element type of an array, other than <c>string[]</c>, bound from every value of a query parameter; otherwise <see langword="null"/>.</param>
 /// <param name="Conversion">How one value converts to the property type, or to the array element type.</param>
 /// <param name="ConversionTypeFullName">The fully qualified type one value converts to: the property or element type without <c>Nullable&lt;T&gt;</c>.</param>
-/// <param name="IsNullableTarget">Whether the property or element type accepts <see langword="null"/>, so an empty value leaves it unset.</param>
+/// <param name="ParserTypeFullName">The fully qualified type that declares the <c>TryParse</c> method to call, which can be a base type; otherwise the conversion type.</param>
+/// <param name="IsNullableTarget">Whether the property or element type accepts <see langword="null"/>, so an empty array element is <see langword="null"/>.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,
@@ -91,6 +92,7 @@ internal readonly record struct PropertySpec(
     string? ArrayElementTypeFullName,
     ConversionKind Conversion,
     string ConversionTypeFullName,
+    string ParserTypeFullName,
     bool IsNullableTarget,
     LocationSpec? Location);
 
@@ -365,6 +367,7 @@ internal static class AzureFunctionsEndpointParser
                     element is null ? null : element.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     _conversionKind(conversionType),
                     _withoutNullable(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    _parserType(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     conversionType.NullableAnnotation == NullableAnnotation.Annotated
                         || conversionType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
                     LocationSpec._from(p));
@@ -518,12 +521,8 @@ internal static class AzureFunctionsEndpointParser
         if (type.ToDisplayString() == "System.Uri")
             return ConversionKind.Uri;
 
-        var tryParse = HttpStringBinding.TryParseMethods(type)
-            .Where(method => HttpStringBinding.IsTryParseShape(method)
-                && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, type))
-            .ToArray();
-        if (tryParse.Any(static method => method.Parameters.Length == 3
-            && HttpStringBinding.IsFormatProviderParameter(method.Parameters[1])))
+        var tryParse = _tryParseMethods(type);
+        if (tryParse.Any(_hasFormatProvider))
             return ConversionKind.TryParseWithProvider;
         // As in Minimal API, an explicit IParsable<T> implementation wins over a public TryParse(string, out T).
         if (type.AllInterfaces.Any(candidate => candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
@@ -532,6 +531,29 @@ internal static class AzureFunctionsEndpointParser
         if (tryParse.Any(static method => method.Parameters.Length == 2))
             return ConversionKind.TryParse;
         return ConversionKind.TypeConverter;
+    }
+
+    // The type declaring the TryParse to call: the most derived declaration, as ASP.NET Core finds it, called on
+    // its declaring type so an overload declared on a derived type cannot hide it.
+    private static ITypeSymbol _parserType(ITypeSymbol type)
+    {
+        type = _withoutNullable(type);
+        var tryParse = _tryParseMethods(type);
+        var method = tryParse.FirstOrDefault(_hasFormatProvider) ?? tryParse.FirstOrDefault(static method => method.Parameters.Length == 2);
+        return method?.ContainingType ?? type;
+    }
+
+    private static IMethodSymbol[] _tryParseMethods(ITypeSymbol type)
+    {
+        return HttpStringBinding.TryParseMethods(type)
+            .Where(method => HttpStringBinding.IsTryParseShape(method)
+                && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, type))
+            .ToArray();
+    }
+
+    private static bool _hasFormatProvider(IMethodSymbol method)
+    {
+        return method.Parameters.Length == 3 && HttpStringBinding.IsFormatProviderParameter(method.Parameters[1]);
     }
 
     private static ITypeSymbol _withoutNullable(ITypeSymbol type)

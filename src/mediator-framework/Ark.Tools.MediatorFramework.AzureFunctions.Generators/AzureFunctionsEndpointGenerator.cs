@@ -558,8 +558,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     }
 
     // Converts _raw_<Name> with the same strategy Minimal API picks for the type, and returns 400 when it fails. An
-    // empty value sets a nullable property to null and leaves a nullable array element unset. The converted value
-    // goes to the array element target, or to the property when target is null.
+    // empty element of a nullable array stays null; an empty single value is parsed like any other. The converted
+    // value goes to the array element target, or to the property when target is null.
     private static void _emitConversion(StringBuilder source, in EndpointSpec endpoint, string indent, in PropertySpec prop, string valueDescription, string? target)
     {
         var raw = "_raw_" + prop.Name;
@@ -595,8 +595,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         {
             ConversionKind.Enum => "global::System.Enum.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
             ConversionKind.Uri => "global::System.Uri.TryCreate(" + raw + ", global::System.UriKind.RelativeOrAbsolute, out var " + value + ")",
-            ConversionKind.TryParseWithProvider => type + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, " + _dateTimeStyles(type) + "out var " + value + ")",
-            ConversionKind.TryParse => type + ".TryParse(" + raw + ", out var " + value + ")",
+            ConversionKind.TryParseWithProvider => prop.ParserTypeFullName + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, " + _dateTimeStyles(type) + "out var " + value + ")",
+            ConversionKind.TryParse => prop.ParserTypeFullName + ".TryParse(" + raw + ", out var " + value + ")",
             ConversionKind.Parsable => "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
             _ => "global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<" + type + ">(" + raw + ", out var " + value + ")",
         };

@@ -1160,7 +1160,10 @@ public sealed class GeneratorSnapshotTests
             {
                 public static bool TryParse(string? value, out T result) { result = new T(); return value is not null; }
             }
-            public sealed class AisleCode : CodeBase<AisleCode> { }
+            public sealed class AisleCode : CodeBase<AisleCode>
+            {
+                public static bool TryParse(ReadOnlySpan<char> value, out AisleCode result) { result = new AisleCode(); return false; }
+            }
             public readonly struct ShelfCode : IParsable<ShelfCode>
             {
                 public static bool TryParse(string? value, out ShelfCode result) { result = default; return true; }
@@ -1244,7 +1247,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::System.DayOfWeek>.TryParse(_raw_MaybeKind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_MaybeKind)");
         result.Generated.Should().Contain("var _query_Kinds = new global::Ark.Tools.Core.EvolvableEnum<global::System.DayOfWeek>[_qs_Kinds.Count];");
         // A TryParse inherited from a base type is called, as ASP.NET Core does.
-        result.Generated.Should().Contain("!global::AisleCode.TryParse(_raw_Aisles, out var _value_Aisles)");
+        // It is called on its declaring type, so an overload declared on the derived type cannot hide it.
+        result.Generated.Should().Contain("!global::CodeBase<global::AisleCode>.TryParse(_raw_Aisles, out var _value_Aisles)");
         // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
         result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
         // An empty single value is parsed and fails, while an empty nullable array element is null, as in Minimal API.
