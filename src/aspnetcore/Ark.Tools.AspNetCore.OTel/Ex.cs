@@ -77,11 +77,14 @@ public static class Ex
             .ConfigureResource(static resource => resource.AddArkTelemetryResource())
             .WithTracing(tracing => tracing
                 .ConfigureServices(services =>
-                    _configureAdaptiveSampler(services, configuration, configureAdaptiveSampler))
+                {
+                    _configureAdaptiveSampler(services, configuration, configureAdaptiveSampler);
+                    services.AddSingleton(sp => new ArkAdaptiveSampler(
+                        sp.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
+                        failedTraceRegistry));
+                })
                 .AddProcessor(new ArkPreFilterProcessor())
-                .SetSampler(services => new ArkAdaptiveSampler(
-                    services.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
-                    failedTraceRegistry))
+                .SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>())
                 .AddSource(OpenTelemetryStep.ActivitySourceName)
                 .AddSource(_mediatorMessagingInstrumentationName)
                 .AddHttpClientInstrumentation()
@@ -103,9 +106,9 @@ public static class Ex
                 })
                 .AddSource("Azure.Messaging.ServiceBus")
                 .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
+                .AddProcessor(new WebApi4xxAsSuccessProcessor())
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
-                .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction)
-                .AddProcessor(new WebApi4xxAsSuccessProcessor()))
+                .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction))
             .WithMetrics(static metrics => metrics
                 .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
                 .AddMeter(_mediatorMessagingInstrumentationName)
@@ -154,7 +157,13 @@ public static class Ex
             configuration);
 
         if (!string.IsNullOrWhiteSpace(connectionString))
+        {
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
+
+            // UseAzureMonitor sets its own sampler; set Ark's again so the later registration wins.
+            builder.WithTracing(static tracing =>
+                tracing.SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>()));
+        }
 
         return services;
     }
