@@ -258,8 +258,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     public async Task<UserInfo> GetUserInfoAsync(
         [Secret] string accessToken, CancellationToken cancellationToken = default)
     {
-        var expiresIn = _expiresIn(accessToken);
-        return await _getOrCreateAsync(_getKey(accessToken), ct => _inner.GetUserInfoAsync(accessToken, ct), _ => expiresIn, cancellationToken).ConfigureAwait(false);
+        return await _getOrCreateAsync(_getKey(accessToken), ct => _inner.GetUserInfoAsync(accessToken, ct), _ => _expiresIn(accessToken), cancellationToken).ConfigureAwait(false);
     }
 
     private static string _getKey(
