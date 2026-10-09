@@ -161,14 +161,7 @@ public static class ReflectionHelper
         else if (type == typeof(decimal)) { return "decimal"; }
         else
         {
-            if (fullName && type.FullName is not null)
-            {
-                return type.FullName;
-            }
-            else
-            {
-                return type.Name;
-            }
+            return fullName && type.FullName is not null ? type.FullName : type.Name;
         }
     }
 

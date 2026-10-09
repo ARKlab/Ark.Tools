@@ -29,10 +29,9 @@ public abstract class AbstractSqlAsyncContextFactory<TContext, TTag> : IAsyncCon
             if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync(ctk).ConfigureAwait(false);
 
-            if (il is not null)
-                transaction = await connection.BeginTransactionAsync(il.Value, ctk).ConfigureAwait(false);
-            else
-                transaction = await connection.BeginTransactionAsync(ctk).ConfigureAwait(false);
+            transaction = il is not null
+                ? await connection.BeginTransactionAsync(il.Value, ctk).ConfigureAwait(false)
+                : await connection.BeginTransactionAsync(ctk).ConfigureAwait(false);
 
             return CreateContext(transaction);
         }

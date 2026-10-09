@@ -103,10 +103,7 @@ public class SlackTarget : TargetWithContext
 
     private static string _getSlackColorFromLogLevel(LogLevel level)
     {
-        if (_logLevelSlackColorMap.TryGetValue(level, out var color))
-            return color;
-        else
-            return "#cccccc";
+        return _logLevelSlackColorMap.TryGetValue(level, out var color) ? color : "#cccccc";
     }
 
     private static readonly FrozenDictionary<LogLevel, string> _logLevelSlackColorMap = new Dictionary<LogLevel, string>

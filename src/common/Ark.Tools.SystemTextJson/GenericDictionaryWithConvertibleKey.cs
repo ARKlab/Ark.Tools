@@ -59,11 +59,10 @@ public sealed class GenericDictionaryWithConvertibleKey : JsonConverterFactory
             var keyType = args[0];
             var elementType = args[1];
 
-            if (actualTypeToConvert == typeToConvert)
-                converterType = typeof(DictionaryConverter<,>)
-                    .MakeGenericType(keyType, elementType);
-            else
-                converterType = typeof(IDictionaryBaseConverter<,,>)
+            converterType = actualTypeToConvert == typeToConvert
+                ? typeof(DictionaryConverter<,>)
+                    .MakeGenericType(keyType, elementType)
+                : typeof(IDictionaryBaseConverter<,,>)
                     .MakeGenericType(typeToConvert, keyType, elementType);
         }
         else if ((actualTypeToConvert = typeToConvert.GetCompatibleGenericInterface(typeof(IReadOnlyDictionary<,>))) != null)

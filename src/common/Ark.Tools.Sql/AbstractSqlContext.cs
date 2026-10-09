@@ -32,11 +32,8 @@ public abstract class AbstractSqlContext<TTag> : ISqlContext<TTag>
 
         lock (_lock)
         {
-            if (_connection.State != ConnectionState.Open)
-            {
-                if (_connection.State == ConnectionState.Closed)
-                    _connection.Open();
-            }
+            if (_connection.State == ConnectionState.Closed)
+                _connection.Open();
             if (_transaction == null)
                 _transaction = _connection.BeginTransaction(_isolationLevel);
         }

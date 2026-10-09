@@ -24,10 +24,9 @@ public class MessagePackMediaTypeFormatter : MediaTypeFormatter
     {
         SupportedMediaTypes.Add(DefaultMediaType);
 
-        if (resolver == null)
-            _options = MessagePackSerializer.DefaultOptions;
-        else
-            _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
+        _options = resolver == null
+            ? MessagePackSerializer.DefaultOptions
+            : MessagePackSerializer.DefaultOptions.WithResolver(resolver);
     }
 
     public override bool CanReadType(Type type)

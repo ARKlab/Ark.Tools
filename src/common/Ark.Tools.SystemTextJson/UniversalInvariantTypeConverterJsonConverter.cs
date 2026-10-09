@@ -60,10 +60,7 @@ public sealed class UniversalInvariantTypeConverterJsonConverter : JsonConverter
         public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             var text = reader.GetString();
-            if (text == null)
-                return default;
-            else
-                return (T?)_typeConverter.ConvertFromInvariantString(text);
+            return text == null ? default : (T?)_typeConverter.ConvertFromInvariantString(text);
         }
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)

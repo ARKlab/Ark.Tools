@@ -66,12 +66,10 @@ public sealed class ArkPreFilterProcessor : BaseProcessor<Activity>
         var messagingSystem = activity.GetTagItem("messaging.system") as string;
 
         if (messagingSystem != null &&
-            messagingSystem.Equals("servicebus", StringComparison.OrdinalIgnoreCase))
-        {
-            if (messagingOperation != null &&
-                messagingOperation.Equals("receive", StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
+            messagingSystem.Equals("servicebus", StringComparison.OrdinalIgnoreCase) &&
+            messagingOperation != null &&
+            messagingOperation.Equals("receive", StringComparison.OrdinalIgnoreCase))
+            return true;
 
         // Legacy: span name like "ServiceBusReceiver.Receive" or "Receive"
         if (displayName != null)

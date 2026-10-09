@@ -15,10 +15,9 @@ public static unsafe class StringExtensions
         for (int i = 0; i < 256; i++)
         {
             string s = i.ToString("X2", CultureInfo.InvariantCulture);
-            if (BitConverter.IsLittleEndian)
-                result[i] = s[0] + ((uint)s[1] << 16);
-            else
-                result[i] = s[1] + ((uint)s[0] << 16);
+            result[i] = BitConverter.IsLittleEndian
+                ? s[0] + ((uint)s[1] << 16)
+                : s[1] + ((uint)s[0] << 16);
         }
         return result;
     }
@@ -143,8 +142,7 @@ static class SqlLikeStringUtilities
                     {
                         patternIndex++;
                     }
-                    if (patternIndex >= pattern.Length) p = '\0';
-                    else p = pattern[patternIndex];
+                    p = patternIndex >= pattern.Length ? '\0' : pattern[patternIndex];
                 }
                 else if (p == '_')
                 {

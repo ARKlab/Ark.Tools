@@ -46,10 +46,7 @@ public class OffsetDateTimeNullableComparer : IComparer<OffsetDateTime?>, IEqual
 
     public int GetHashCode(OffsetDateTime? obj)
     {
-        if (obj.HasValue)
-            return OffsetDateTime.Comparer.Instant.GetHashCode(obj.Value);
-        else
-            return 0;
+        return obj.HasValue ? OffsetDateTime.Comparer.Instant.GetHashCode(obj.Value) : 0;
     }
 
 
