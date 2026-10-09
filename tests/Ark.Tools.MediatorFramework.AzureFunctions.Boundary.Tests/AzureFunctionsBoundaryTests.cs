@@ -607,6 +607,7 @@ public sealed partial class AzureFunctionsBoundaryTests
                 }
                 catch (HttpRequestException)
                 {
+                    // Host not listening yet: keep polling until the deadline
                 }
 
                 await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
