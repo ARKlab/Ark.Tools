@@ -89,7 +89,10 @@ public class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
         {
             try { operation?.Dispose(); }
 #pragma warning disable ERP022
-            catch { }
+            catch
+            {
+                // Ignore telemetry errors so message processing is unaffected.
+            }
 #pragma warning restore ERP022
         }
     }
