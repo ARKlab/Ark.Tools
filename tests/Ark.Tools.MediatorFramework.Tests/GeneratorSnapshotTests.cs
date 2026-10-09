@@ -3245,6 +3245,23 @@ public sealed class GeneratorSnapshotTests
                 public string Term { get; } = term;
                 [ServerSet] public string? Owner { get; set; }
             }
+            [HttpEndpoint("GET", "/editions")]
+            public sealed class ListEditions : IQuery<string>
+            {
+                public ListEditions() { }
+                public ListEditions(int value) { Value = value; }
+                public int Value { get; set; }
+                [ServerSet] public string? Owner { get; set; }
+            }
+            [HttpEndpoint("GET", "/printings")]
+            public sealed class ListPrintings : IQuery<string>
+            {
+                public ListPrintings(string value, int count) { Count = count; }
+                public ListPrintings(int value) { Value = value; }
+                public int Value { get; set; }
+                public int Count { get; set; }
+                [ServerSet] public string? Owner { get; set; }
+            }
             """);
 
         result.Diagnostics.Should().BeEmpty();
@@ -3254,6 +3271,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("request.Tenant = default!;");
         result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Term\")] string Term,");
         result.Generated.Should().Contain("var request = new global::ListAuthors(Term) { Owner = default! };");
+        // As ASP.NET Core [AsParameters] does, a parameterless constructor wins over parameterized ones, and a
+        // constructor is used only when its parameters match properties by name and type.
+        result.Generated.Should().Contain("var request = new global::ListEditions { Value = Value, Owner = default! };");
+        result.Generated.Should().Contain("var request = new global::ListPrintings(Value) { Count = Count, Owner = default! };");
         result.Generated.Should().Contain("var request = new global::ListTenantBooks { Skip = Skip, Tenant = default! };");
         result.Generated.Should().Contain("var request = new global::DeleteTenantBook { Id = Id, Tenant = default! };");
         result.Generated.Should().NotContain("Tenant = Tenant");

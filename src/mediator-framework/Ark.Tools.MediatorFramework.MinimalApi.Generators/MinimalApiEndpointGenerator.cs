@@ -715,10 +715,18 @@ namespace Ark.Tools.MediatorFramework.Generators
             INamedTypeSymbol type,
             ImmutableArray<PropertyModel> properties)
         {
-            var propertyNames = properties.Select(property => property.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var constructor = type.InstanceConstructors
+            var constructors = type.InstanceConstructors
                 .Where(constructor => constructor.DeclaredAccessibility == Accessibility.Public)
-.Where(constructor => constructor.Parameters.Length > 0 && constructor.Parameters.All(parameter => propertyNames.Contains(parameter.Name))).OrderByDescending(constructor => constructor.Parameters.Length)
+                .ToArray();
+            // As ASP.NET Core [AsParameters] does, a parameterless constructor wins when there are several, and a
+            // constructor parameter must match a property by name and type.
+            if (constructors.Length > 1 && constructors.Any(constructor => constructor.Parameters.Length == 0))
+                return ImmutableArray<string>.Empty;
+            var constructor = constructors
+                .Where(constructor => constructor.Parameters.Length > 0 && constructor.Parameters.All(parameter => properties.Any(property =>
+                    string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)
+                    && property.TypeFullName == parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))))
+                .OrderByDescending(constructor => constructor.Parameters.Length)
                 .FirstOrDefault();
             return constructor is null
                 ? ImmutableArray<string>.Empty
