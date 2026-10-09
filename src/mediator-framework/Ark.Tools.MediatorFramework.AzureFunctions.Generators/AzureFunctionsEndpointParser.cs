@@ -30,6 +30,31 @@ internal enum HandlerKind
     Command
 }
 
+/// <summary>How a route or query string value converts to a property value, mirroring Minimal API binding.</summary>
+internal enum ConversionKind
+{
+    /// <summary>The value is a string.</summary>
+    String = 0,
+
+    /// <summary><c>Enum.TryParse</c>, ignoring case.</summary>
+    Enum = 1,
+
+    /// <summary><c>Uri.TryCreate</c>.</summary>
+    Uri = 2,
+
+    /// <summary>A public static <c>TryParse(string, IFormatProvider, out T)</c>, called with the invariant culture.</summary>
+    TryParseWithProvider = 3,
+
+    /// <summary>A public static <c>TryParse(string, out T)</c>.</summary>
+    TryParse = 4,
+
+    /// <summary>An explicit <c>IParsable&lt;T&gt;</c> implementation, called with the invariant culture.</summary>
+    Parsable = 5,
+
+    /// <summary>The type converter <c>TypeDescriptor.GetConverter</c> returns.</summary>
+    TypeConverter = 6,
+}
+
 /// <summary>A symbol-free description of a bindable endpoint property.</summary>
 /// <param name="Name">The property name.</param>
 /// <param name="TypeFullName">The fully qualified property type.</param>
@@ -43,8 +68,11 @@ internal enum HandlerKind
 /// <param name="IsAttachment">Whether the property is a single attachment.</param>
 /// <param name="IsAttachmentCollection">Whether the property is an attachment collection.</param>
 /// <param name="IsStringCollection">Whether the property type is one of the supported string collection shapes that receive every value of a query parameter.</param>
-/// <param name="IsNotConvertible">Whether no type converter converts a single string to the property type: an array, a collection or a complex object.</param>
-/// <param name="ArrayElementTypeFullName">The fully qualified element type of an array, other than <c>string[]</c>, whose elements have a built-in type converter, as Minimal API binds them from every value of a query parameter; otherwise <see langword="null"/>.</param>
+/// <param name="IsNotConvertible">Whether the property cannot bind from its route value or query string, by the rules Minimal API applies.</param>
+/// <param name="ArrayElementTypeFullName">The fully qualified element type of an array, other than <c>string[]</c>, bound from every value of a query parameter; otherwise <see langword="null"/>.</param>
+/// <param name="Conversion">How one value converts to the property type, or to the array element type.</param>
+/// <param name="ConversionTypeFullName">The fully qualified type one value converts to: the property or element type without <c>Nullable&lt;T&gt;</c>.</param>
+/// <param name="IsNullableTarget">Whether the property or element type accepts <see langword="null"/>, so an empty value leaves it unset.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,
@@ -61,6 +89,9 @@ internal readonly record struct PropertySpec(
     bool IsStringCollection,
     bool IsNotConvertible,
     string? ArrayElementTypeFullName,
+    ConversionKind Conversion,
+    string ConversionTypeFullName,
+    bool IsNullableTarget,
     LocationSpec? Location);
 
 /// <summary>A symbol-free description of an HTTP endpoint contract.</summary>
@@ -309,6 +340,14 @@ internal static class AzureFunctionsEndpointParser
                     && collection.AllInterfaces.Any(static item => item.ToDisplayString().StartsWith("System.Collections.Generic.IEnumerable<", StringComparison.Ordinal))
                     && collection.TypeArguments.Length == 1
                     && collection.TypeArguments[0].ToDisplayString() == _arkAttachment;
+                // An array of string-bindable elements, other than string[], binds from every value of a query
+                // parameter, one element per value, as Minimal API binds it natively.
+                var element = p.Type is IArrayTypeSymbol { Rank: 1 } array
+                    && array.ElementType.SpecialType != SpecialType.System_String
+                    && HttpStringBinding.IsStringBindable(p.Type)
+                    ? array.ElementType
+                    : null;
+                var conversionType = element ?? p.Type;
                 return new PropertySpec(
                     p.Name,
                     p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -322,10 +361,12 @@ internal static class AzureFunctionsEndpointParser
                     isAttachment,
                     isAttachmentCollection,
                     HttpStringBinding.IsStringCollection(p.Type),
-                    HttpStringBinding.IsCollection(p.Type) || HttpStringBinding.IsComplexOrComplexCollection(p.Type),
-                    p.Type is IArrayTypeSymbol { Rank: 1 } array && _hasBuiltInConverter(array.ElementType)
-                        ? array.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        : null,
+                    isRoute ? !HttpStringBinding.CanBindFromRoute(p.Type) : !HttpStringBinding.CanBindExplicitly(p.Type),
+                    element is null ? null : element.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    _conversionKind(conversionType),
+                    _withoutNullable(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    conversionType.NullableAnnotation == NullableAnnotation.Annotated
+                        || conversionType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
                     LocationSpec._from(p));
             })
             .ToImmutableArray();
@@ -465,19 +506,44 @@ internal static class AzureFunctionsEndpointParser
         }
     }
 
-    // ArkTypeConverter converts through TypeDescriptor, so an array element binds only when its type, or the type
-    // wrapped by Nullable<T>, has a built-in converter; a custom TryParse type usually has none.
-    private static bool _hasBuiltInConverter(ITypeSymbol type)
+    // Mirrors the order in which Minimal API picks a parser: strings, enums and Uri first, then a public static
+    // TryParse (preferring the IFormatProvider overload), then IParsable<T>, and the type converter otherwise.
+    private static ConversionKind _conversionKind(ITypeSymbol type)
     {
-        if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
-            type = nullable.TypeArguments[0];
-        return type.TypeKind == TypeKind.Enum
-            || type.SpecialType is SpecialType.System_Boolean or SpecialType.System_Char
-                or SpecialType.System_SByte or SpecialType.System_Byte or SpecialType.System_Int16 or SpecialType.System_UInt16
-                or SpecialType.System_Int32 or SpecialType.System_UInt32 or SpecialType.System_Int64 or SpecialType.System_UInt64
-                or SpecialType.System_Decimal or SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_DateTime
-            || type.ToDisplayString() is "System.Guid" or "System.DateTimeOffset" or "System.TimeSpan"
-                or "System.DateOnly" or "System.TimeOnly" or "System.Uri";
+        type = _withoutNullable(type);
+        if (type.SpecialType == SpecialType.System_String)
+            return ConversionKind.String;
+        if (type.TypeKind == TypeKind.Enum)
+            return ConversionKind.Enum;
+        if (type.ToDisplayString() == "System.Uri")
+            return ConversionKind.Uri;
+
+        var tryParse = type.GetMembers("TryParse")
+            .OfType<IMethodSymbol>()
+            .Where(method => method.IsStatic
+                && method.DeclaredAccessibility == Accessibility.Public
+                && method.ReturnType.SpecialType == SpecialType.System_Boolean
+                && method.Parameters.Length is 2 or 3
+                && method.Parameters[0].Type.SpecialType == SpecialType.System_String
+                && method.Parameters[^1].RefKind == RefKind.Out
+                && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, type))
+            .ToArray();
+        if (tryParse.Any(static method => method.Parameters.Length == 3
+            && method.Parameters[1].Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString() == "System.IFormatProvider"))
+            return ConversionKind.TryParseWithProvider;
+        if (tryParse.Any(static method => method.Parameters.Length == 2))
+            return ConversionKind.TryParse;
+        if (type.AllInterfaces.Any(candidate => candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
+            && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], type)))
+            return ConversionKind.Parsable;
+        return ConversionKind.TypeConverter;
+    }
+
+    private static ITypeSymbol _withoutNullable(ITypeSymbol type)
+    {
+        return type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
+            ? nullable.TypeArguments[0]
+            : type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
     }
 
     private static IEnumerable<IPropertySymbol> _allProperties(INamedTypeSymbol type)

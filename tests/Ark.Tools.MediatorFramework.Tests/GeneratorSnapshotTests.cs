@@ -641,7 +641,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void AzureFunctionsGeneratorEmitsRouteBindingWithTryConvertSafe()
+    public void AzureFunctionsGeneratorEmitsRouteBindingWithTryParse()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
@@ -656,8 +656,9 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>");
-        result.Generated.Should().NotContain("ArkTypeConverter.TryConvert<int>");
+        result.Generated.Should().Contain("var _raw_Id = request.RouteValues[\"Id\"]?.ToString();");
+        result.Generated.Should().Contain("if (_raw_Id is null || !int.TryParse(_raw_Id, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Id))");
+        result.Generated.Should().NotContain("ArkTypeConverter");
         result.Generated.Should().Contain("BINDING_FAILURE");
         result.Generated.Should().NotContain("InvokeQueryAsync");
     }
@@ -775,7 +776,7 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : IRequest<Update, string>;
             """);
         azure.Generated.Should().Contain("new global::Update(_bodyNullable, default!)");
-        azure.Generated.Should().Contain("body = body with { Id = _route_Id };");
+        azure.Generated.Should().Contain("body = body with { Id = _value_Id };");
     }
 
     [TestMethod]
@@ -823,7 +824,7 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : BaseRequest, IRequest<Update, string>;
             """);
         azure.Generated.Should().Contain("Audit");
-        azure.Generated.Should().Contain("body = body with { Id = _route_Id };");
+        azure.Generated.Should().Contain("body = body with { Id = _value_Id };");
     }
 
     [TestMethod]
@@ -1131,8 +1132,8 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorRejectsRouteAndQueryTypesThatCannotBeConvertedFromAString()
     {
-        // ArkTypeConverter converts a single string, so no collection or complex object binds; a query string
-        // collection or an array of convertible elements receives every value instead.
+        // Functions applies the Minimal API rules: no collection or complex object binds from a string, while a query
+        // string collection or an array of parseable elements receives every value.
         const string source =
             """
             using System;
@@ -1153,7 +1154,6 @@ public sealed class GeneratorSnapshotTests
             public sealed record ListBooks : IQuery<string>
             {
                 [HttpRoute] public string[] Codes { get; init; } = [];
-                [HttpQuery] public BookCode[] BookCodes { get; init; } = [];
                 [HttpQuery] public List<int> Ids { get; init; } = [];
                 [HttpQuery] public Filter? Filter { get; init; }
                 [HttpQuery] public Guid? Owner { get; init; }
@@ -1176,13 +1176,15 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public int Skip { get; init; }
                 [HttpQuery] public int[] Years { get; init; } = [];
                 [HttpQuery] public Guid?[] Owners { get; init; } = [];
+                [HttpQuery] public BookCode[] BookCodes { get; init; } = [];
+                [HttpQuery] public DayOfWeek[] Days { get; init; } = [];
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Codes", "BookCodes", "Ids", "Filter", "Pending", "Keys", "Stack", "Labels");
+            .Should().BeEquivalentTo("Codes", "Ids", "Filter", "Pending", "Keys", "Stack", "Labels");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
             .GetMessage(CultureInfo.InvariantCulture)
@@ -1195,10 +1197,14 @@ public sealed class GeneratorSnapshotTests
             "body = body with { Names = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Names)) };");
         result.Generated.Should().Contain(
             "body = body with { Tags = new global::System.Collections.Generic.List<string>(global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Tags))) };");
-        result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>(_qs_Skip");
+        result.Generated.Should().Contain("if (_raw_Skip is null || !int.TryParse(_raw_Skip, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Skip))");
         result.Generated.Should().Contain("var _query_Years = new int[_qs_Years.Count];");
-        result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>(_qs_Years[_i_Years], out _query_Years[_i_Years])");
+        result.Generated.Should().Contain("var _raw_Years = _qs_Years[_i_Years];");
+        result.Generated.Should().Contain("_query_Years[_i_Years] = _value_Years;");
         result.Generated.Should().Contain("var _query_Owners = new global::System.Guid?[_qs_Owners.Count];");
+        result.Generated.Should().Contain("if (!string.IsNullOrEmpty(_raw_Owners))");
+        result.Generated.Should().Contain("!global::BookCode.TryParse(_raw_BookCodes, out var _value_BookCodes)");
+        result.Generated.Should().Contain("!global::System.Enum.TryParse<global::System.DayOfWeek>(_raw_Days, true, out var _value_Days)");
     }
 
     [TestMethod]
@@ -2862,7 +2868,7 @@ public sealed class GeneratorSnapshotTests
         minimalApi.Generated.Should().Contain("var request = body with { Id = Id, Notify = Notify };");
         functions.Diagnostics.Should().BeEmpty();
         functions.Generated.Should().Contain("request.Query.TryGetValue(\"Notify\", out var _qs_Notify)");
-        functions.Generated.Should().Contain("body = body with { Notify = _query_Notify };");
+        functions.Generated.Should().Contain("body = body with { Notify = _value_Notify };");
     }
 
     [TestMethod]

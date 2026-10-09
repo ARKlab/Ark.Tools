@@ -95,6 +95,33 @@ internal static class HttpStringBinding
         "System.Collections.Immutable.ImmutableArray<T>",
     ];
 
+    /// <summary>
+    /// Gets whether an explicit route or query value binds to the type: a string-bindable type natively, a string
+    /// collection from every value, and any other single value through its <c>TypeConverter</c> at runtime. An array
+    /// of any other type has no element parser, and no <c>TypeConverter</c> converts a string to a collection or a
+    /// complex object, so every request that carries the value would fail.
+    /// </summary>
+    /// <param name="type">The property type.</param>
+    /// <returns><see langword="true"/> when the value binds.</returns>
+    public static bool CanBindExplicitly(ITypeSymbol type)
+    {
+        if (IsStringBindable(type) || IsStringCollection(type))
+            return true;
+        if (IsComplexOrComplexCollection(type))
+            return false;
+
+        return !IsCollection(type) || (type is not IArrayTypeSymbol && HasTypeConverterAttribute(type));
+    }
+
+    /// <summary>
+    /// Gets whether a route value binds to the type: a route segment is a single value, so arrays and collections,
+    /// string collections included, never bind from it.
+    /// </summary>
+    /// <param name="type">The property type.</param>
+    /// <returns><see langword="true"/> when the value binds.</returns>
+    public static bool CanBindFromRoute(ITypeSymbol type)
+        => !IsCollection(type) && !IsStringCollection(type) && CanBindExplicitly(type);
+
     /// <summary>Gets whether the type, or the type wrapped by <c>Nullable&lt;T&gt;</c>, is an array or a collection.</summary>
     /// <param name="type">The property type.</param>
     /// <returns><see langword="true"/> for an array or a type implementing <c>IEnumerable</c>, other than <c>string</c>.</returns>

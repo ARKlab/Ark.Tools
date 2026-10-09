@@ -599,11 +599,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 var droppedOrInferredBody = unbound.Contains(property.Name)
                     && (!asParameters || !HttpStringBinding.IsStringBindable(property.Type));
                 var needsBody = noBody && (bodyShaped || droppedOrInferredBody);
-                // ASP.NET binds arrays from the query string or headers only, never from a route segment.
-                var routeCollection = routes.Contains(property.Name)
-                    && (HttpStringBinding.IsCollection(property.Type) || HttpStringBinding.IsStringCollection(property.Type));
-                var notConvertible = routeCollection
-                    || (!asParameters && routeOrQuery.Contains(property.Name) && !CanBindExplicitly(property.Type));
+                var notConvertible = (routes.Contains(property.Name) && !HttpStringBinding.CanBindFromRoute(property.Type))
+                    || (!asParameters && routeOrQuery.Contains(property.Name) && !HttpStringBinding.CanBindExplicitly(property.Type));
                 if (!needsBody && !notConvertible)
                     continue;
 
@@ -1230,21 +1227,6 @@ namespace Ark.Tools.MediatorFramework.Generators
             for (var current = type; current is not null; current = current.BaseType)
                 foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
                     yield return property;
-        }
-
-        // An explicit route or query parameter binds a string-bindable type natively, a string collection through
-        // string[], and any other single value through its TypeConverter at runtime (ArkTypeConverterValue). ASP.NET
-        // rejects an array of any other type at startup, and no TypeConverter converts a string to a collection or a
-        // complex object, so every request that carries the value fails.
-        private static bool CanBindExplicitly(ITypeSymbol type)
-        {
-            if (HttpStringBinding.IsStringBindable(type) || HttpStringBinding.IsStringCollection(type))
-                return true;
-            if (HttpStringBinding.IsComplexOrComplexCollection(type))
-                return false;
-
-            return !HttpStringBinding.IsCollection(type)
-                || (type is not IArrayTypeSymbol && HttpStringBinding.HasTypeConverterAttribute(type));
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)

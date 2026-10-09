@@ -287,9 +287,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     }
 
     // A GET, HEAD or DELETE function binds only route and [HttpQuery] properties: report any other client
-    // property instead of silently dropping it. For every verb, a route or query value is converted from a single
-    // string with ArkTypeConverter, which converts no array, collection or complex object; only a query string
-    // collection or an array of convertible elements, which receive every value, is accepted among them.
+    // property instead of silently dropping it. For every verb, a route or query property must bind by the rules
+    // Minimal API applies (HttpStringBinding), so a contract binds the same way on both hosts.
     private static bool _reportUnboundProperties(SourceProductionContext context, in EndpointSpec endpoint, Location hostLocation)
     {
         var noBody = endpoint.Verb is "GET" or "HEAD" or "DELETE";
@@ -297,9 +296,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         foreach (var property in endpoint.Properties.Where(static property => !property.IsServerSet))
         {
             var bound = property.IsRoute || property.IsQuery;
-            var queryCollection = !property.IsRoute && (property.IsStringCollection || property.ArrayElementTypeFullName is not null);
             if (bound
-                ? !property.IsNotConvertible || queryCollection
+                ? !property.IsNotConvertible
                 : !noBody || property.IsETag)
                 continue;
 
@@ -445,10 +443,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             }
             else
             {
-                var varName = "_route_" + prop.Name;
-                source.Append("        if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(request.RouteValues[").Append(_literal(prop.BindingName)).Append("]?.ToString(), out var ").Append(varName).AppendLine("))");
-                source.Append("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Route value '").Append(prop.BindingName).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
-                _emitPropertyAssignment(source, endpoint, "        ", prop.Name, varName);
+                source.Append("        var _raw_").Append(prop.Name).Append(" = request.RouteValues[").Append(_literal(prop.BindingName)).AppendLine("]?.ToString();");
+                _emitConversion(source, endpoint, "        ", prop, "Route value '" + prop.BindingName + "'", target: null);
             }
         }
 
@@ -474,17 +470,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 source.Append("            var ").Append(varName).Append(" = new ").Append(element).Append("[_qs_").Append(prop.Name).AppendLine(".Count];");
                 source.Append("            for (var ").Append(index).Append(" = 0; ").Append(index).Append(" < _qs_").Append(prop.Name).Append(".Count; ").Append(index).AppendLine("++)");
                 source.AppendLine("            {");
-                source.Append("                if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(element).Append(">(_qs_").Append(prop.Name).Append('[').Append(index).Append("], out ").Append(varName).Append('[').Append(index).AppendLine("]))");
-                source.Append("                    return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '").Append(prop.Name).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+                source.Append("                var _raw_").Append(prop.Name).Append(" = _qs_").Append(prop.Name).Append('[').Append(index).AppendLine("];");
+                _emitConversion(source, endpoint, "                ", prop, "Query value '" + prop.Name + "'", target: varName + "[" + index + "]");
                 source.AppendLine("            }");
                 _emitPropertyAssignment(source, endpoint, "            ", prop.Name, varName);
             }
             else
             {
-                var varName = "_query_" + prop.Name;
-                source.Append("            if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(_qs_").Append(prop.Name).Append(", out var ").Append(varName).AppendLine("))");
-                source.Append("                return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '").Append(prop.Name).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
-                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, varName);
+                source.Append("            var _raw_").Append(prop.Name).Append(" = (string?)_qs_").Append(prop.Name).AppendLine(";");
+                _emitConversion(source, endpoint, "            ", prop, "Query value '" + prop.Name + "'", target: null);
             }
             source.AppendLine("        }");
         }
@@ -549,6 +543,47 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("            return global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.FromException(_exception);");
         source.AppendLine("        }");
         source.AppendLine("    }");
+    }
+
+    // Converts _raw_<Name> with the same strategy Minimal API picks for the type, and returns 400 when it fails. An
+    // empty value leaves a nullable target unset. The converted value goes to the array element target, or to the
+    // property when target is null.
+    private static void _emitConversion(StringBuilder source, in EndpointSpec endpoint, string indent, in PropertySpec prop, string valueDescription, string? target)
+    {
+        var raw = "_raw_" + prop.Name;
+        var value = "_value_" + prop.Name;
+        var bodyIndent = indent;
+        if (prop.IsNullableTarget)
+        {
+            source.Append(indent).Append("if (!string.IsNullOrEmpty(").Append(raw).AppendLine("))");
+            source.Append(indent).AppendLine("{");
+            bodyIndent = indent + "    ";
+        }
+
+        source.Append(bodyIndent).Append("if (").Append(raw).Append(" is null || !").Append(_conversionCall(prop, raw, value)).AppendLine(")");
+        source.Append(bodyIndent).Append("    return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"")
+            .Append(valueDescription).Append(" could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+        if (target is null)
+            _emitPropertyAssignment(source, endpoint, bodyIndent, prop.Name, value);
+        else
+            source.Append(bodyIndent).Append(target).Append(" = ").Append(value).AppendLine(";");
+
+        if (prop.IsNullableTarget)
+            source.Append(indent).AppendLine("}");
+    }
+
+    private static string _conversionCall(in PropertySpec prop, string raw, string value)
+    {
+        var type = prop.ConversionTypeFullName;
+        return prop.Conversion switch
+        {
+            ConversionKind.Enum => "global::System.Enum.TryParse<" + type + ">(" + raw + ", true, out var " + value + ")",
+            ConversionKind.Uri => "global::System.Uri.TryCreate(" + raw + ", global::System.UriKind.RelativeOrAbsolute, out var " + value + ")",
+            ConversionKind.TryParseWithProvider => type + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, out var " + value + ")",
+            ConversionKind.TryParse => type + ".TryParse(" + raw + ", out var " + value + ")",
+            ConversionKind.Parsable => "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
+            _ => "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryConvert<" + type + ">(" + raw + ", out var " + value + ")",
+        };
     }
 
     // Mirrors the string collection shapes the Minimal API generator binds from every value of a query parameter.

@@ -100,20 +100,25 @@ A generated `GET`, `HEAD` or `DELETE` function binds only route properties and
 reports every other settable property, other than an `[ETag]` property, which
 would otherwise be silently ignored.
 
-For every verb, a route or `[HttpQuery]` value is converted from a single
-string with `ArkTypeConverter` at runtime, and an `[HttpQuery]` string
-collection of a supported shape (the same shapes as the Minimal API generator),
-such as `string[]`, `List<string>` or `IEnumerable<string>`, receives every
-value of the query parameter. Like the Minimal API generator, it also binds an
-`[HttpQuery]` array of a type with a built-in converter, such as `int[]`,
-`Guid[]`, `DateTimeOffset[]` or an enum array, converting each value of the
-query parameter to one element; a value that does not convert fails the request
-with `400`. An array of a custom type, such as one with only a static
-`TryParse`, is reported, because the values are converted through
-`TypeDescriptor`. The rule
-reports a route or `[HttpQuery]` property whose type is any other array or
-collection, or a complex object: no type converter converts a single string to
-it. A route property is never an array or a collection.
+For every verb, a route or `[HttpQuery]` property binds by the same rules as
+an explicit Minimal API route or query value, so the rule reports the same
+properties on both hosts. The generated function converts each value with the
+strategy Minimal API uses for the type:
+
+- an enum with `Enum.TryParse`, ignoring case, and a `Uri` with `Uri.TryCreate`;
+- a type with a public static `TryParse`, such as `int`, `Guid`, `DateTime` or
+  your own type, by calling it, with the invariant culture when it accepts an
+  `IFormatProvider`;
+- a type that implements `IParsable<T>` explicitly, through `IParsable<T>`;
+- any other single value through the converter `TypeDescriptor.GetConverter`
+  returns, so a converter added with `TypeDescriptor.AddAttributes`, such as the
+  Ark.Tools NodaTime converters, is used.
+
+An `[HttpQuery]` string collection of a supported shape receives every value of
+the query parameter, and an `[HttpQuery]` array of a parseable type, such as
+`int[]`, `Guid[]` or an enum array, converts each value to one element. A value
+that does not convert fails the request with `400`; an empty value leaves a
+nullable property unset.
 
 The diagnostic is reported at the property. When the contract is in a
 referenced assembly, it is reported at the `[assembly: HttpHost]` attribute
