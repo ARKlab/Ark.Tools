@@ -65,9 +65,7 @@ public sealed class StreamNumbersQueryHandler : IQueryHandler<StreamNumbersQuery
     private static async IAsyncEnumerable<int> _streamAsync()
     {
         yield return 0;
-#pragma warning disable VSTHRD003 // Test coordination: the release task is completed by another request.
         await StreamCoordinator.Released.ConfigureAwait(false);
-#pragma warning restore VSTHRD003
         yield return 1;
         yield return 2;
     }

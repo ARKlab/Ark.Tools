@@ -288,7 +288,6 @@ public sealed class MessagingDispatcher
         {
             throw;
         }
-#pragma warning disable ERP022 // Second-level failures intentionally map to normal retry.
         catch (Exception exception)
         {
             var failureInfo = MessagingExceptionInfo.From(exception);
@@ -300,7 +299,6 @@ public sealed class MessagingDispatcher
                 failureInfo.Message);
             return (MessagingSettlementDecision.Abandon, null);
         }
-#pragma warning restore ERP022
     }
 
     private static async Task _invokeStageAsync(

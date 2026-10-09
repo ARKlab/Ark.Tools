@@ -5,7 +5,6 @@ using Ark.Tools.Solid;
 
 namespace Ark.Reference.Core.Application.Handlers.Queries;
 
-#pragma warning disable MA0182 // Handler is discovered by the mediator registration generator.
 internal sealed class Audit_GetUsersQueryHandler : IQueryHandler<Audit_GetUsersQuery.V1, IEnumerable<string>>
 {
     private readonly ICoreDataContextFactory _dataContext;
@@ -14,7 +13,6 @@ internal sealed class Audit_GetUsersQueryHandler : IQueryHandler<Audit_GetUsersQ
     {
         _dataContext = dataContext;
     }
-    #pragma warning restore MA0182
 
     public async Task<IEnumerable<string>> ExecuteAsync(Audit_GetUsersQuery.V1 query, CancellationToken ctk = default)
     {

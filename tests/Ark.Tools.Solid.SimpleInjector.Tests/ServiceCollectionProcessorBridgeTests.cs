@@ -358,12 +358,10 @@ public sealed class ServiceCollectionProcessorBridgeTests
         public Guid ProcessorInstanceId { get; }
 
         [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
-#pragma warning disable CS0618 // Type or member is obsolete
         public TResponse Execute<TResponse>(IRequest<TResponse> request)
         {
             throw new NotSupportedException("Synchronous execution is not supported. Use ExecuteAsync instead.");
         }
-#pragma warning restore CS0618 // Type or member is obsolete
 
         public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
         {

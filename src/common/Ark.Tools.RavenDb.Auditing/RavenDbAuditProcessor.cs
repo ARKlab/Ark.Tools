@@ -81,7 +81,6 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
                 }
             }
             catch (TaskCanceledException) { throw; }
-#pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional retry logic
             catch (Exception exception)
             {
                 if (retryCount > 10)
@@ -89,7 +88,6 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
 
                 // retry
             }
-#pragma warning restore ERP022
         }
 
     }

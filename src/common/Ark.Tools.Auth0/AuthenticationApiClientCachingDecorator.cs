@@ -71,14 +71,12 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     private static TimeSpan _expiresIn(
         [Secret] string accessToken)
     {
-#pragma warning disable CS0618 // Type or member is obsolete
         var decode = new JwtBuilder()
                             .DoNotVerifySignature()
                             .WithAlgorithm(new HMACSHA256Algorithm())
                             .WithJsonSerializer(new SystemTextSerializer())
                             .Decode<Token>(accessToken);
 
-#pragma warning restore CS0618 // Type or member is obsolete
 
         var res = DateTimeOffset.FromUnixTimeSeconds(decode.Exp) - DateTimeOffset.UtcNow;
         return res;

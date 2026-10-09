@@ -99,9 +99,7 @@ internal sealed class TestMessagePump : IAsyncDisposable
         await _cts.CancelAsync().ConfigureAwait(false);
         try
         {
-#pragma warning disable VSTHRD003 // The loop is intentionally started on the thread pool.
             await _loop.ConfigureAwait(false);
-#pragma warning restore VSTHRD003
         }
         catch (OperationCanceledException)
         {

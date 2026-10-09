@@ -267,9 +267,7 @@ public sealed class MessagingFunctionsCompositionTests
         var services = new ServiceCollection();
         services.Configure<JsonSerializerOptions>(
             static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
-#pragma warning disable CA2000 // The service provider owns the registered transport.
         var transport = _serviceBus();
-#pragma warning restore CA2000
         services.AddArkMessagingFunctionsHost(
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus),
             transport,

@@ -60,7 +60,6 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
             if ("Basic".Equals(authHeader.Scheme,
                                  StringComparison.OrdinalIgnoreCase))
             {
-#pragma warning disable CA1031 // Do not catch general exception types
                 try
                 {
                     string parameter = Encoding.UTF8.GetString(
@@ -106,7 +105,6 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
                     _logger.LogTrace(ex, "Basic authentication failed");
 #pragma warning restore CA1848
                 }
-#pragma warning restore CA1031 // Do not catch general exception types
             }
         }
 

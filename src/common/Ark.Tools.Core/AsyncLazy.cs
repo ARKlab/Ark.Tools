@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 
 namespace Ark.Tools.Core;
 
-#pragma warning disable VSTHRD003 // Avoid awaiting or returning a Task representing work that was not started within your context
 
 /// <summary>
 /// Provides support for asynchronous lazy initialization. This type is fully threadsafe.

@@ -299,16 +299,12 @@ public sealed partial class MessagingOutboxTests
 
         public async Task<SentEnvelope> WaitForSendAsync()
         {
-#pragma warning disable VSTHRD003 // The test completion source represents the processor dispatch.
             return await _sent.Task.ConfigureAwait(false);
-#pragma warning restore VSTHRD003
         }
 
         public async Task WaitForAttemptAsync()
         {
-#pragma warning disable VSTHRD003 // The test completion source represents the processor attempt.
             await _attempted.Task.ConfigureAwait(false);
-#pragma warning restore VSTHRD003
         }
     }
 

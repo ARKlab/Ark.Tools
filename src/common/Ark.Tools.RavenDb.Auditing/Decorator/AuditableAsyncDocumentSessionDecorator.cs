@@ -39,9 +39,7 @@ public sealed class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSessi
     public void Delete<T>(T entity) where T : notnull
     {
         if (_ensureAndCreateAudit())
-#pragma warning disable VSTHRD002 // Sync wrapper within sync method context
             _inner.StoreAsync(_audit).GetAwaiter().GetResult();
-#pragma warning restore VSTHRD002
 
         _setAuditIdOnEntity(entity);
 

@@ -41,9 +41,7 @@ public abstract class SingletonBackgroundService : BackgroundService
     private readonly IDistributedLock _lock;
     private bool _hasWarnedForHandleLoss;
 #pragma warning disable IDE1006 // Naming Styles
-#pragma warning disable CA1707 // Identifiers should not contain underscores
     protected ILogger<SingletonBackgroundService> _logger { get; private set; }
-#pragma warning restore CA1707 // Identifiers should not contain underscores
 #pragma warning restore IDE1006 // Naming Styles
 
     /// <summary>

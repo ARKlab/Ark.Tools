@@ -143,7 +143,6 @@ public readonly struct EvolvableEnum<
     private static readonly TBacking _numberToNameArrayMaximum;
 
     [SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "Runtime validation remains required when analyzers are disabled.")]
-    [SuppressMessage("Performance", "CA1810:Initialize reference type static fields inline", Justification = "Lookup creation follows generic argument validation.")]
     [SuppressMessage("Usage", "CA2207:Initialize value type static fields inline", Justification = "Lookup creation follows generic argument validation.")]
     static EvolvableEnum()
     {

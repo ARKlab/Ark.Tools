@@ -4,7 +4,6 @@
 namespace Ark.Tools.Core.BusinessRuleViolation;
 
 [Serializable]
-[SuppressMessage("Design", "RCS1194:Implement exception constructors.", Justification = "Created from BusinessRuleViolation")]
 [SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Created from BusinessRuleViolation")]
 public sealed class BusinessRuleViolationException : Exception
 {

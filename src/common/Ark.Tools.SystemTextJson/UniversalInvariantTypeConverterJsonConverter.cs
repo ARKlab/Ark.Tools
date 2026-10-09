@@ -46,7 +46,6 @@ public sealed class UniversalInvariantTypeConverterJsonConverter : JsonConverter
         // TypeConverter bridge (options-level converters otherwise take precedence in STJ).
         && typeToConvert.GetCustomAttribute<JsonConverterAttribute>() == null;
 
-    [SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated via reflection in CreateConverter method")]
     private sealed class TypeConverterJsonConverter<T> : JsonConverter<T>
     {
         private readonly TypeConverter _typeConverter;

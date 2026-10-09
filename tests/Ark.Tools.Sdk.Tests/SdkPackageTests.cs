@@ -322,7 +322,6 @@ public sealed class SdkPackageTests
         await File.WriteAllTextAsync(
             Path.Join(scenarioRoot, "Consumer.cs"),
             """
-            #pragma warning disable CS1591, CA1050, MA0047
             using Microsoft.Extensions.Logging;
             using Ark.Tools.Compliance;
 

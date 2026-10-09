@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-#pragma warning disable MA0004, MA0045, VSTHRD002 // Synchronous adapters preserve focused legacy test setup.
+#pragma warning disable MA0004, MA0045 // Synchronous adapters preserve focused legacy test setup.
 
 using System.Buffers;
 using System.IO.Pipelines;

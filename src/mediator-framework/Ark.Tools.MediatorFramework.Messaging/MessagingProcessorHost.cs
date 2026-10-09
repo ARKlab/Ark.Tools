@@ -318,9 +318,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 await _abandonUnbufferedAsync(batch, received).ConfigureAwait(false);
                 throw;
             }
-#pragma warning disable CA1031 // A broker failure must cool down, not kill the loop.
             catch (Exception exception)
-#pragma warning restore CA1031
             {
                 failed = true;
                 if (exception is MessagingThrottledException)
@@ -619,7 +617,6 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 _releaseCredit(1);
                 return false;
             }
-#pragma warning disable CA1031, ERP022 // A worker must survive a settlement or broker failure.
             catch (Exception exception)
             {
                 settleFailure = exception;
@@ -631,7 +628,6 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                     _queue);
                 await _settleQuietlyAsync(delivery).ConfigureAwait(false);
             }
-#pragma warning restore CA1031, ERP022
 
             if (settleFailure is MessagingThrottledException)
             {
@@ -703,7 +699,6 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
         {
             await delivery.AbandonAsync(CancellationToken.None).ConfigureAwait(false);
         }
-#pragma warning disable CA1031, ERP022 // The lock may already be lost; there is nothing left to do.
         catch (Exception exception)
         {
             // Debug, not warning: losing the lock before abandoning it is the expected outcome of a
@@ -715,16 +710,13 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
                 "Abandoning delivery {deliveryId} failed; the lock will expire instead.",
                 delivery.DeliveryId);
         }
-#pragma warning restore CA1031, ERP022
     }
 
     private static async Task<bool> _waitAsync(Task task, TimeSpan timeout, CancellationToken ctk)
     {
         try
         {
-#pragma warning disable VSTHRD003 // The workers are intentionally started on the thread pool.
             await task.WaitAsync(timeout, ctk).ConfigureAwait(false);
-#pragma warning restore VSTHRD003
             return true;
         }
         catch (TimeoutException)
@@ -744,9 +736,7 @@ public sealed class MessagingProcessorHost : IHostedService, IAsyncDisposable
 
         try
         {
-#pragma warning disable VSTHRD003 // The loop is intentionally started on the thread pool.
             await task.ConfigureAwait(false);
-#pragma warning restore VSTHRD003
         }
         catch (OperationCanceledException)
         {
