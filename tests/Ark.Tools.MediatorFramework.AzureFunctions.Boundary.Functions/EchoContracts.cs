@@ -7,6 +7,16 @@ using FluentValidation;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 
+/// <summary>Days known to the echo contracts.</summary>
+public enum EchoDay
+{
+    /// <summary>No day was set.</summary>
+    NOT_SET = 0,
+
+    /// <summary>Monday.</summary>
+    Monday = 1,
+}
+
 /// <summary>Response returned by the echo contracts.</summary>
 public sealed record EchoResponse
 {
@@ -18,6 +28,12 @@ public sealed record EchoResponse
 
     /// <summary>Gets the echoed count.</summary>
     public int Count { get; init; }
+
+    /// <summary>Gets the echoed scores.</summary>
+    public IReadOnlyList<int> Scores { get; init; } = [];
+
+    /// <summary>Gets the echoed day name.</summary>
+    public string Day { get; init; } = string.Empty;
 }
 
 /// <summary>Query exercising route and query binding with validation.</summary>
@@ -34,6 +50,14 @@ public sealed record EchoQuery : IQuery<EchoQuery, EchoResponse>
     /// <summary>Gets the count, validated to be within 1-100.</summary>
     [HttpQuery]
     public int Count { get; init; } = 1;
+
+    /// <summary>Gets the scores, bound from every value of the query parameter.</summary>
+    [HttpQuery]
+    public int[] Scores { get; init; } = [];
+
+    /// <summary>Gets the day, an evolvable enum that also accepts names it does not know.</summary>
+    [HttpQuery]
+    public Ark.Tools.Core.EvolvableEnum<EchoDay>? Day { get; init; }
 }
 
 /// <summary>Request exercising JSON body binding on a record contract.</summary>
@@ -77,7 +101,7 @@ public sealed class EchoQueryHandler : IQueryHandler<EchoQuery, EchoResponse>
     public async Task<EchoResponse> ExecuteAsync(EchoQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await Task.FromResult(new EchoResponse { Id = query.Id, Message = query.Message ?? string.Empty, Count = query.Count }).ConfigureAwait(false);
+        return await Task.FromResult(new EchoResponse { Id = query.Id, Message = query.Message ?? string.Empty, Count = query.Count, Scores = query.Scores, Day = query.Day?.ToString() ?? string.Empty }).ConfigureAwait(false);
     }
 }
 

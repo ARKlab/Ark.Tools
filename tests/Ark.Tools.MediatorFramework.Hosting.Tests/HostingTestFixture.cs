@@ -409,6 +409,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
         container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
         container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
+        container.Register<IQueryHandler<HostingOwnedQuery, HostingResponse>, HostingOwnedQueryHandler>();
         container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
         if (includeRebusHandlers)
         {
@@ -677,6 +678,18 @@ internal sealed class HostingQueryHandler : IQueryHandler<HostingQuery, HostingR
         {
             Message = $"{query.Id}:{query.Value}",
             ServerStamp = "hosting-server",
+        };
+    }
+}
+
+internal sealed class HostingOwnedQueryHandler : IQueryHandler<HostingOwnedQuery, HostingResponse>
+{
+    public async Task<HostingResponse> ExecuteAsync(HostingOwnedQuery query, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        return new HostingResponse
+        {
+            Message = query.Owner is null ? query.Value ?? string.Empty : "owner-bound",
         };
     }
 }

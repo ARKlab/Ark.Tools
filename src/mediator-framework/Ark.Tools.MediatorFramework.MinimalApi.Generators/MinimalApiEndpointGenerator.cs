@@ -147,15 +147,19 @@ namespace Ark.Tools.MediatorFramework.Generators
                     spc.ReportDiagnostic(Diagnostic.Create(VersionPrefixMissingToken, mapping.InvalidVersionPrefixLocation));
             }
 
-            // A contract from a referenced assembly has no source location: report at the host call that discovers it.
+            // A contract from a referenced assembly has no source location: report at every host call that discovers
+            // it, so suppressing the diagnostic at one call does not hide it at the others.
             foreach (var endpoint in referencedEndpoints.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal))
             {
                 spc.CancellationToken.ThrowIfCancellationRequested();
+                var locations = mappings
+                    .Where(mapping => mapping.Location is not null && mapping.AssemblyNames.Values.Contains(endpoint.AssemblyName))
+                    .Select(static mapping => mapping.Location!)
+                    .ToArray();
                 foreach (var diagnostic in endpoint.Diagnostics.Where(static diagnostic => !diagnostic.Location.IsInSource))
                 {
-                    var location = mappings.FirstOrDefault(mapping => mapping.AssemblyNames.Values.Contains(endpoint.AssemblyName)).Location
-                        ?? diagnostic.Location;
-                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, location, diagnostic.Arguments.Cast<object>().ToArray()));
+                    foreach (var location in locations.Length == 0 ? new[] { diagnostic.Location } : locations)
+                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, location, diagnostic.Arguments.Cast<object>().ToArray()));
                 }
             }
         }
@@ -533,8 +537,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                         property.NullableAnnotation == NullableAnnotation.Annotated
                             || property.Type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
                         property.SetMethod is not null && property.SetMethod.DeclaredAccessibility == Accessibility.Public,
-                        IsStringCollection(property.Type, enumerableType),
-                        !IsStringCollection(property.Type, enumerableType) && RequiresTypeConverterBinding(property.Type),
+                        HttpStringBinding.IsStringCollection(property.Type),
+                        !HttpStringBinding.IsStringCollection(property.Type) && !HttpStringBinding.IsStringBindable(property.Type),
                         IsAttachmentCollection(property.Type, attachmentType, enumerableType, listType, readOnlyListType, readOnlyCollectionType),
                         IsAttachmentArray(property.Type, attachmentType),
                         httpBodyAttr is not null && HasAttribute(property, httpBodyAttr));
@@ -562,35 +566,64 @@ namespace Ark.Tools.MediatorFramework.Generators
                 if (!properties.Any(property => string.Equals(property.Name, routeName, StringComparison.OrdinalIgnoreCase)))
                     diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.MissingRouteProperty, type.Name, GetLocation(http), routeName));
             }
-            if (verb is "GET" or "DELETE")
+            // Once a GET or DELETE request or query has a route or query property, the endpoint binds only those
+            // properties: any other settable property would be silently dropped. Otherwise, and always for commands,
+            // it binds the contract with [AsParameters], where ASP.NET infers a body for every property, route
+            // properties included, that it cannot bind from a string, and the endpoint fails at startup. Every
+            // other route or query property, for every verb, is bound explicitly.
+            var noBody = verb is "GET" or "DELETE";
+            var asParameters = noBody && (kind == HandlerKind.Command || !properties.Any(property => property.IsRoute || property.IsQuery));
+            // A client property is bound through its setter or, like [AsParameters] does, through the constructor.
+            var constructorParameters = ConstructorParameters(type, properties);
+            var constructorBound = new HashSet<string>(constructorParameters, StringComparer.OrdinalIgnoreCase);
+            bool IsClientBindable(PropertyModel property) => property.HasPublicSetter || constructorBound.Contains(property.Name);
+            bool IsBoundExplicitly(PropertyModel property) => property.IsRoute || property.IsQuery || property.IsETag;
+            var unbound = new HashSet<string>(
+                properties.Where(property => noBody && IsClientBindable(property) && (asParameters || !IsBoundExplicitly(property)))
+                    .Select(property => property.Name),
+                StringComparer.Ordinal);
+            var routeOrQuery = new HashSet<string>(
+                properties.Where(property => property.IsRoute || property.IsQuery).Select(property => property.Name),
+                StringComparer.Ordinal);
+            var routes = new HashSet<string>(
+                properties.Where(property => property.IsRoute).Select(property => property.Name),
+                StringComparer.Ordinal);
+            foreach (var property in AllProperties(type)
+                .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
+                .Where(property => !HasAttribute(property, serverSetAttr)))
             {
-                // Once a request or query has a route or query property, the endpoint binds only those properties:
-                // any other settable property would be silently dropped. Otherwise, and always for commands, it binds
-                // the contract with [AsParameters], where ASP.NET infers a body for every property it cannot bind
-                // from a string and the endpoint fails at startup.
-                var asParameters = kind == HandlerKind.Command || !properties.Any(property => property.IsRoute || property.IsQuery);
-                var unbound = new HashSet<string>(
-                    properties.Where(property => !property.IsRoute
-                            && property.HasPublicSetter
-                            && (asParameters || (!property.IsQuery && !property.IsETag)))
-                        .Select(property => property.Name),
-                    StringComparer.Ordinal);
-                foreach (var property in AllProperties(type)
-                    .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
-                    .Where(property => !HasAttribute(property, serverSetAttr))
-                    .Where(property => HasAttribute(property, httpBodyAttr)
-                        || IsAttachmentType(property.Type, attachmentType)
-                        || IsPotentialAttachmentCollection(property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
-                        || IsComplexOrComplexCollection(property.Type, enumerableType)
-                        || (unbound.Contains(property.Name) && (!asParameters || !IsStringBindable(property.Type)))))
-                {
-                    diagnostics.Add(new DiagnosticInfo(
+                var bodyShaped = HasAttribute(property, httpBodyAttr)
+                    || IsAttachmentType(property.Type, attachmentType)
+                    || IsPotentialAttachmentCollection(property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))
+                    || HttpStringBinding.IsComplexOrComplexCollection(property.Type);
+                var droppedOrInferredBody = unbound.Contains(property.Name)
+                    && (!asParameters || !HttpStringBinding.IsStringBindable(property.Type));
+                var needsBody = noBody && (bodyShaped || droppedOrInferredBody);
+                var notConvertible = (routes.Contains(property.Name) && !HttpStringBinding.CanBindFromRoute(property.Type))
+                    || (!asParameters && routeOrQuery.Contains(property.Name) && !HttpStringBinding.CanBindExplicitly(property.Type));
+                // The generated object initializer could not assign it.
+                var notSettable = routeOrQuery.Contains(property.Name)
+                    && property.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
+                    && !constructorBound.Contains(property.Name);
+                if (!needsBody && !notConvertible && !notSettable)
+                    continue;
+
+                var location = property.Locations.FirstOrDefault(static location => location.IsInSource) ?? GetLocation(http);
+                diagnostics.Add(notSettable
+                    ? new DiagnosticInfo(DiagnosticDescriptors.PropertyNotSettable, type.Name, location, property.Name)
+                    : routeOrQuery.Contains(property.Name)
+                    ? new DiagnosticInfo(
+                        DiagnosticDescriptors.PropertyNotConvertibleFromString,
+                        type.Name,
+                        location,
+                        property.Name,
+                        property.Type.ToDisplayString())
+                    : new DiagnosticInfo(
                         DiagnosticDescriptors.PropertyNotBindableWithoutBody,
                         type.Name,
-                        property.Locations.FirstOrDefault(static location => location.IsInSource) ?? GetLocation(http),
+                        location,
                         verb,
                         property.Name));
-                }
             }
             var bodyBinding = verb is not ("GET" or "DELETE");
             var hasInvalidBodyShape = bodyBinding && (!type.IsRecord || properties.Any(property => !property.HasPublicSetter));
@@ -602,6 +635,16 @@ namespace Ark.Tools.MediatorFramework.Generators
             foreach (var property in properties.Where(property => IsPotentialAttachmentCollection(property.TypeFullName))
                 .Where(property => !property.IsAttachmentCollection))
                 diagnostics.Add(new DiagnosticInfo(UnsupportedAttachmentCollection, type.Name, GetLocation(http), property.Name));
+
+            // [AsParameters] would expose server-set properties to ASP.NET binding, which then reads them from the
+            // query string, or fails at startup when it cannot bind their type from a string. Bind the client
+            // properties explicitly instead, as [AsParameters] would: the check above already holds them to its rules.
+            var boundProperties = asParameters && properties.Any(static property => property.IsServerSet)
+                ? properties.Select(property => !property.IsRoute && !property.IsServerSet && !property.IsETag && IsClientBindable(property)
+                        ? property with { IsQuery = true }
+                        : property)
+                    .ToImmutableArray()
+                : properties;
 
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -625,12 +668,12 @@ namespace Ark.Tools.MediatorFramework.Generators
                 maxFileCount,
                 maxStreamedItems,
                 allowedContentTypes,
-                properties,
+                boundProperties,
                 bodyProperties.Length == 0 ? null : bodyProperties[0].Name,
                 etagProperties.Length == 0 ? null : etagProperties[0].Name,
                 responseETagProperties.Length == 0 ? null : responseETagProperties[0].Name,
                 type.IsRecord,
-                ConstructorParameters(type, properties),
+                constructorParameters,
                 properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
                     .Select(property => property.Name)
                     .ToImmutableArray(),
@@ -672,10 +715,18 @@ namespace Ark.Tools.MediatorFramework.Generators
             INamedTypeSymbol type,
             ImmutableArray<PropertyModel> properties)
         {
-            var propertyNames = properties.Select(property => property.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var constructor = type.InstanceConstructors
+            var constructors = type.InstanceConstructors
                 .Where(constructor => constructor.DeclaredAccessibility == Accessibility.Public)
-.Where(constructor => constructor.Parameters.Length > 0 && constructor.Parameters.All(parameter => propertyNames.Contains(parameter.Name))).OrderByDescending(constructor => constructor.Parameters.Length)
+                .ToArray();
+            // As ASP.NET Core [AsParameters] does, a parameterless constructor wins when there are several, and a
+            // constructor parameter must match a property by name and type.
+            if (constructors.Length > 1 && constructors.Any(constructor => constructor.Parameters.Length == 0))
+                return ImmutableArray<string>.Empty;
+            var constructor = constructors
+                .Where(constructor => constructor.Parameters.Length > 0 && constructor.Parameters.All(parameter => properties.Any(property =>
+                    string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)
+                    && property.TypeFullName == parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat))))
+                .OrderByDescending(constructor => constructor.Parameters.Length)
                 .FirstOrDefault();
             return constructor is null
                 ? ImmutableArray<string>.Empty
@@ -896,9 +947,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                         ? "[global::Microsoft.AspNetCore.Http.AsParameters] "
                         : string.Empty;
                     var bodyVerb = e.Verb != "GET" && e.Verb != "DELETE";
-                    var explicitBindings = (e.Properties.Any(property => property.IsRoute || property.IsQuery)
-                        || e.BodyProperty is not null)
-                        && (bodyVerb || e.Verb == "GET" || e.Verb == "DELETE");
+                    var explicitBindings = e.Properties.Any(property => property.IsRoute || property.IsQuery)
+                        || e.BodyProperty is not null
+                        || BindsServerSetExplicitly(e);
 
                     foreach (var version in ActiveVersions(e, maxVersion))
                     {
@@ -959,12 +1010,12 @@ namespace Ark.Tools.MediatorFramework.Generators
                             {
                                 var assignments = string.Join(", ", e.Properties
                                     .Where(property => property.IsRoute || property.IsQuery)
-                                    .Select(property => property.IsServerSet ? property.Name + " = default" : property.Name + " = " + BindingValue(property))
+                                    .Select(property => property.IsServerSet ? property.Name + " = default!" : property.Name + " = " + BindingValue(property))
                                     .Concat(e.BodyProperty is null ? System.Linq.Enumerable.Empty<string>() : new[] { e.BodyProperty + " = body" })
                                     .Concat(e.ServerSetProperties.Where(property =>
                                         !e.Properties.Any(candidate =>
                                             candidate.Name == property && (candidate.IsRoute || candidate.IsQuery)))
-                                        .Select(property => property + " = default")));
+                                        .Select(property => property + " = default!")));
                                 sb.AppendLine(e.BodyProperty is null
                                     ? "                var request = body with { " + assignments + " };"
                                     : "                var request = " + ConstructEnvelope(e, assignments) + ";");
@@ -972,11 +1023,12 @@ namespace Ark.Tools.MediatorFramework.Generators
                             else
                             {
                                 if (e.IsRecord && e.ServerSetProperties.Count > 0)
-                                    sb.AppendLine("                var request = body with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default")) + " };");
+                                    sb.AppendLine("                var request = body with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default!")) + " };");
                                 else
                                     sb.AppendLine("                var request = body;");
                             }
-                            EmitServerSetAssignments(sb, e, "request");
+                            if (!explicitBindings)
+                                EmitServerSetAssignments(sb, e, "request");
                             EmitETagAssignment(sb, e);
                             sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
                             sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
@@ -1020,10 +1072,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                         if (explicitBindings)
                         {
                             var assignments = string.Join(", ", e.Properties
-                                .Where(property => property.IsRoute || property.IsQuery)
+                                .Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet)
                                 .Select(property => property.Name + " = " + BindingValue(property))
                                 .Concat(e.BodyProperty is null ? System.Linq.Enumerable.Empty<string>() : new[] { e.BodyProperty + " = body" })
-                                .Concat(e.ServerSetProperties.Select(property => property + " = default")));
+                                .Concat(e.ServerSetProperties.Select(property => property + " = default!")));
                             if (bodyVerb)
                                 sb.AppendLine(e.BodyProperty is null
                                     ? "                var request = body with { " + assignments + " };"
@@ -1033,9 +1085,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                         }
                         else if (e.IsRecord && e.ServerSetProperties.Count > 0)
                         {
-                            sb.AppendLine("                request = request with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default")) + " };");
+                            sb.AppendLine("                request = request with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default!")) + " };");
                         }
-                        EmitServerSetAssignments(sb, e, "request");
+                        // An explicitly constructed request already resets its server-set properties in its initializer.
+                        if (!explicitBindings)
+                            EmitServerSetAssignments(sb, e, "request");
                         EmitETagAssignment(sb, e);
                         sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
                         sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
@@ -1135,7 +1189,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ? "string[]"
                 : property.TypeFullName switch
                 {
-                    _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
+                    // The fully qualified name drops the nullable annotation of a reference type: an absent value then
+                    // binds null instead of failing as a required parameter.
+                    _ when property.IsNullable && !property.TypeFullName.EndsWith("?", StringComparison.Ordinal) => property.TypeFullName + "?",
                     _ => property.TypeFullName,
                 };
         }
@@ -1182,103 +1238,11 @@ namespace Ark.Tools.MediatorFramework.Generators
             };
         }
 
-        private static bool IsStringCollection(ITypeSymbol type, INamedTypeSymbol? enumerableType)
-        {
-            return (type is IArrayTypeSymbol array && array.ElementType.SpecialType == SpecialType.System_String)
-                || (enumerableType is not null
-                    && ((type is INamedTypeSymbol named
-                        && SymbolEqualityComparer.Default.Equals(named.OriginalDefinition, enumerableType)
-                        && named.TypeArguments[0].SpecialType == SpecialType.System_String)
-                        || type.AllInterfaces.Any(iface =>
-                            SymbolEqualityComparer.Default.Equals(iface.OriginalDefinition, enumerableType)
-                            && iface.TypeArguments[0].SpecialType == SpecialType.System_String)));
-        }
-
         private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
         {
             for (var current = type; current is not null; current = current.BaseType)
                 foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
                     yield return property;
-        }
-
-        private static bool RequiresTypeConverterBinding(ITypeSymbol type)
-        {
-            if (type is IArrayTypeSymbol)
-                return false;
-
-            var targetType = type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
-                ? nullable.TypeArguments[0]
-                : type;
-            if (targetType.SpecialType == SpecialType.System_String
-                || targetType.TypeKind == TypeKind.Enum
-                || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
-                return false;
-
-            return !targetType.GetMembers("TryParse")
-                .OfType<IMethodSymbol>()
-                .Any(method => method.IsStatic
-                    && method.DeclaredAccessibility == Accessibility.Public
-                    && method.ReturnType.SpecialType == SpecialType.System_Boolean
-                    && method.Parameters.Length is 2 or 3
-                    && method.Parameters[0].Type.SpecialType == SpecialType.System_String
-                    && (method.Parameters.Length == 2
-                        || method.Parameters[1].Type.ToDisplayString() == "System.IFormatProvider")
-                    && method.Parameters[^1].RefKind == RefKind.Out
-                    && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, targetType));
-        }
-
-        // A complex object is a data shape with public settable or init properties and no string conversion
-        // visible at compile time (static TryParse or [TypeConverter]). Converters registered at runtime through
-        // TypeDescriptor, such as the NodaTime ones, target types without settable properties, so they pass.
-        private static bool IsComplexOrComplexCollection(ITypeSymbol type, INamedTypeSymbol? enumerableType)
-        {
-            if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
-                type = nullable.TypeArguments[0];
-            if (type.SpecialType != SpecialType.None || type.TypeKind == TypeKind.Enum)
-                return false;
-
-            var element = type is IArrayTypeSymbol array
-                ? array.ElementType
-                : (type as INamedTypeSymbol)?.AllInterfaces.Append((INamedTypeSymbol)type)
-                    .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(candidate.OriginalDefinition, enumerableType))
-                    ?.TypeArguments[0];
-            if (element is not null)
-                return IsComplexOrComplexCollection(element, null);
-
-            return RequiresTypeConverterBinding(type)
-                && !HasTypeConverterAttribute(type)
-                && type is INamedTypeSymbol named
-                && AllProperties(named).Any(property => !property.IsStatic
-                    && property.DeclaredAccessibility == Accessibility.Public
-                    && property.SetMethod is { DeclaredAccessibility: Accessibility.Public });
-        }
-
-        // Mirrors the types ASP.NET Minimal API binds from a route or query string: primitives, enums, Uri,
-        // StringValues, types with a static TryParse or IParsable<T>, their nullable forms, and arrays of them.
-        private static bool IsStringBindable(ITypeSymbol type)
-        {
-            if (type is IArrayTypeSymbol array)
-                return array.ElementType is not IArrayTypeSymbol && IsStringBindable(array.ElementType);
-
-            var targetType = type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
-                ? nullable.TypeArguments[0]
-                : type;
-            return !RequiresTypeConverterBinding(targetType)
-                || targetType.AllInterfaces.Any(candidate =>
-                    candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
-                    && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], targetType));
-        }
-
-        private static bool HasTypeConverterAttribute(ITypeSymbol type)
-        {
-            for (var current = type; current is not null; current = current.BaseType)
-            {
-                if (current.GetAttributes().Any(attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == "System.ComponentModel.TypeConverterAttribute"))
-                    return true;
-            }
-
-            return false;
         }
 
         private static void EmitServerSetAssignments(StringBuilder sb, EndpointModel endpoint, string variable)
@@ -1287,7 +1251,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 return;
 
             foreach (var property in endpoint.ServerSetProperties)
-                sb.Append("                ").Append(variable).Append('.').Append(property).AppendLine(" = default;");
+                sb.Append("                ").Append(variable).Append('.').Append(property).AppendLine(" = default!;");
         }
 
         private static void EmitETagAssignment(StringBuilder sb, EndpointModel endpoint)
@@ -1401,17 +1365,22 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
             }
 
-            if (bindings.Length == 0)
+            var asParameters = bindings.Length == 0 && !BindsServerSetExplicitly(endpoint);
+            if (asParameters)
                 sb.AppendLine("                [global::Microsoft.AspNetCore.Http.AsParameters] " + endpoint.TypeFullName + " request,");
             sb.AppendLine("                global::Microsoft.AspNetCore.Http.HttpContext httpContext,");
             sb.AppendLine("                global::System.Threading.CancellationToken cancellationToken) =>");
             sb.AppendLine("            {");
-            if (bindings.Length > 0)
+            if (!asParameters)
             {
-                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + BindingValue(property)));
-                sb.AppendLine("                var request = new " + endpoint.TypeFullName + " { " + assignments + " };");
+                var assignments = string.Join(", ", bindings.Select(property => property.Name + " = " + BindingValue(property))
+                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default!")));
+                sb.AppendLine("                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
             }
-            EmitServerSetAssignments(sb, endpoint, "request");
+            else
+            {
+                EmitServerSetAssignments(sb, endpoint, "request");
+            }
             EmitETagAssignment(sb, endpoint);
             sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
             sb.AppendLine("                var result = await processor.ExecuteAsync<" + endpoint.TypeFullName + ", " + endpoint.Response + ">(request, cancellationToken).ConfigureAwait(false);");
@@ -1431,7 +1400,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             int maxVersion)
         {
             var bodyVerb = endpoint.Verb != "GET" && endpoint.Verb != "DELETE";
-            var explicitBindings = bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery);
+            var explicitBindings = (bodyVerb && endpoint.Properties.Any(property => property.IsRoute || property.IsQuery))
+                || BindsServerSetExplicitly(endpoint);
             sb.Append("            group.").Append(map).Append("(").Append(templateExpression).AppendLine(", static async (");
             if (explicitBindings)
             {
@@ -1444,7 +1414,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                         .Append(BindingType(property)).Append(' ').Append(property.Name).AppendLine(",");
                 }
 
-                sb.AppendLine("                " + endpoint.TypeFullName + " body,");
+                if (bodyVerb)
+                    sb.AppendLine("                " + endpoint.TypeFullName + " body,");
             }
             else
             {
@@ -1457,16 +1428,19 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (explicitBindings)
             {
                 var assignments = string.Join(", ", endpoint.Properties
-                    .Where(property => property.IsRoute || property.IsQuery)
+                    .Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet)
                     .Select(property => property.Name + " = " + BindingValue(property))
-                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default")));
-                sb.AppendLine("                var request = body with { " + assignments + " };");
+                    .Concat(endpoint.ServerSetProperties.Select(property => property + " = default!")));
+                sb.AppendLine(bodyVerb
+                    ? "                var request = body with { " + assignments + " };"
+                    : "                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
             }
             else if (endpoint.IsRecord && endpoint.ServerSetProperties.Count > 0)
             {
-                sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default")) + " };");
+                sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default!")) + " };");
             }
-            EmitServerSetAssignments(sb, endpoint, "request");
+            if (!explicitBindings)
+                EmitServerSetAssignments(sb, endpoint, "request");
             sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(httpContext.RequestServices);");
             sb.AppendLine("                await processor.ExecuteAsync<" + endpoint.TypeFullName + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
@@ -1474,6 +1448,11 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.Append(".Produces(204)");
             sb.Append(AuthorizationMetadata(endpoint)).AppendLine(";");
         }
+
+        // A GET or DELETE contract with server-set properties binds its client properties explicitly, never with
+        // [AsParameters], so ASP.NET never sees the server-set properties.
+        private static bool BindsServerSetExplicitly(EndpointModel endpoint)
+            => endpoint.Verb is "GET" or "DELETE" && endpoint.Properties.Any(static property => property.IsServerSet);
 
         private static string MultipartMetadata(EndpointModel endpoint)
         {
@@ -1592,7 +1571,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (endpoint.ConstructorParameters.IsEmpty)
                 return "new " + endpoint.TypeFullName + " { " + assignments + " }";
 
-            var values = assignments
+            var parsed = assignments
                 .Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(assignment =>
                 {
@@ -1602,11 +1581,19 @@ namespace Ark.Tools.MediatorFramework.Generators
                         : (Name: assignment[..separator], Value: assignment[(separator + 3)..]);
                 })
                 .Where(assignment => assignment.Name.Length > 0)
-                .ToDictionary(assignment => assignment.Name, assignment => assignment.Value, StringComparer.OrdinalIgnoreCase);
+                .ToArray();
+            var values = parsed.ToDictionary(assignment => assignment.Name, assignment => assignment.Value, StringComparer.OrdinalIgnoreCase);
+            var parameters = new HashSet<string>(endpoint.ConstructorParameters, StringComparer.OrdinalIgnoreCase);
+            // Properties that are not constructor parameters keep their assignment in an object initializer.
+            var initializers = parsed
+                .Where(assignment => !parameters.Contains(assignment.Name))
+                .Select(assignment => assignment.Name + " = " + assignment.Value)
+                .ToArray();
             return "new " + endpoint.TypeFullName + "("
                 + string.Join(", ", endpoint.ConstructorParameters.Select(parameter =>
                     values.TryGetValue(parameter, out var value) ? value : "default!"))
-                + ")";
+                + ")"
+                + (initializers.Length == 0 ? string.Empty : " { " + string.Join(", ", initializers) + " }");
         }
 
         private enum HandlerKind
@@ -1843,7 +1830,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public bool IsString { get; }
             public bool IsRoute { get; }
             public string BindingName { get; }
-            public bool IsQuery { get; }
+            public bool IsQuery { get; init; }
             public bool IsServerSet { get; }
             public bool IsETag { get; }
             public bool IsNullable { get; }

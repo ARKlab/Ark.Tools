@@ -5,6 +5,7 @@ using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Core;
 using Ark.Tools.Dapper;
+using Ark.Tools.Nodatime;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
 using Ark.Tools.Outbox;
@@ -58,6 +59,10 @@ public static class ApplicationComposition
         container.RegisterSingleton<IRequestProcessor, SimpleInjectorRequestProcessor>();
         container.RegisterSingleton<IQueryProcessor, SimpleInjectorQueryProcessor>();
         container.RegisterSingleton<ICommandProcessor, SimpleInjectorCommandProcessor>();
+
+        // Route and query values such as the audit Instant filter convert through the registered NodaTime converters
+        // in every data mode, not only when the SQL Dapper mappings are set up.
+        NodaTimeConverter.Register();
 
         if ((options.DataContextFactory is null) == string.IsNullOrWhiteSpace(options.SqlConnectionString))
             throw new InvalidOperationException(

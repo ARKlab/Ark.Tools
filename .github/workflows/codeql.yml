@@ -23,6 +23,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'tests/**'
+  merge_group:
   schedule:
     - cron: '19 23 * * 5'
 
