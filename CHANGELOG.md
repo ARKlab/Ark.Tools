@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **Breaking:** Minimal API (`ArkTypeConverterValue<T>`) and Azure Functions resolve the type converter of a route or query value with the trim-safe `TypeDescriptor.GetConverterFromRegisteredType`. A type bound through its `[TypeConverter]` must be registered with `TypeDescriptor.RegisterType<T>()` at startup, before its converter is added; for NodaTime types call `NodaTimeConverter.Register()`. Binding an unregistered type throws `InvalidOperationException`.
+- **Breaking:** Minimal API (`ArkTypeConverterValue<T>`) and Azure Functions resolve the type converter of a route or query value with the trim-safe `TypeDescriptor.GetConverterFromRegisteredType`. A type bound through its `[TypeConverter]` must be registered with `TypeDescriptor.RegisterType<T>()` at startup, before the type is first looked up or its converter is added; for NodaTime types call `NodaTimeConverter.Register()`. Binding an unregistered type throws `InvalidOperationException`.
 - `ArkTypeConverter.TryConvertSafe` throws `InvalidOperationException` naming the missing registration when the target type is not registered, instead of a `TypeInitializationException`.
 - Lower per-call overhead on hot paths: root-span sampling in `ArkAdaptiveSampler`, SQL span filtering and query labels, ResourceWatcher activity tags, polymorphic JSON reads, `ToObject<T>` on `JsonElement` and `JsonDocument`, polymorphic `DataTable` shredding, the MVC ETag filter, Minimal API ETag and MessagePack negotiation, Storage Queue header decoding, gRPC business-rule errors, and authorization logging when Trace is off.
 - The compliance analyzers do less work per operation, which shortens builds of projects that enable them.
@@ -37,7 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- `NodaTimeConverter.Register()` (`Ark.Tools.Nodatime`) registers each NodaTime type with `TypeDescriptor.RegisterType` before adding its converter, so trim-safe `TypeDescriptor.GetConverterFromRegisteredType` lookups find the converters: HTTP route and query binding, the Dapper `OffsetDateTime` handler and JSON dictionary keys. Converters added before the type was registered were not found.
+- `NodaTimeConverter.Register()` (`Ark.Tools.Nodatime`) makes the NodaTime converters visible to trim-safe `TypeDescriptor.GetConverterFromRegisteredType` lookups, even when a NodaTime type was looked up through `TypeDescriptor` before: HTTP route and query binding, the Dapper `OffsetDateTime` handler and JSON dictionary keys. These lookups used to fail with `InvalidOperationException`.
 - The API-surface snapshot records the fields of contracts marked only with `[Message]` or `[Event]`, so renaming or removing a field of such a message fails the API-surface gate again. To accept the new entries, build with `-p:EmitCompilerGeneratedFiles=true`, review the snapshot in the generated `ArkApiSurface.g.cs` under `obj/`, and copy it over `ArkApiSurface.txt`. `ArkApiSurface.current.txt` is not refreshed while ARKAPI002 fails the build.
 - Azure Functions Service Bus hosts read an optional `<connection key>:administrationConnectionString` setting for resource provisioning, so trigger apps can provision against the local Service Bus emulator, which serves administration on a separate port.
 - `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.

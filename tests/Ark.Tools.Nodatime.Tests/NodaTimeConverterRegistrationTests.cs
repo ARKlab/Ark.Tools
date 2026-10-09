@@ -15,6 +15,18 @@ namespace Ark.Tools.Nodatime.Tests;
 [TestClass]
 public class NodaTimeConverterRegistrationTests
 {
+    /// <summary>
+    /// Looks the NodaTime types up before any test registers them, as other code may at startup:
+    /// <see cref="TypeDescriptor.RegisterType{T}"/> is ignored for a type already looked up.
+    /// </summary>
+    /// <param name="context">The test context.</param>
+    [AssemblyInitialize]
+    public static void LookUpBeforeRegistration(TestContext context)
+    {
+        _ = TypeDescriptor.GetConverter(typeof(LocalDate));
+        _ = TypeDescriptor.GetConverter(typeof(LocalDate?));
+    }
+
     [TestMethod]
     public void RegisteredTypesResolveTheNodaTimeConverters()
     {

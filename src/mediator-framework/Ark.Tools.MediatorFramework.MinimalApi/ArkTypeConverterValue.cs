@@ -43,7 +43,7 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
     /// <remarks>
     /// The converter is resolved trim-safely with <see cref="TypeDescriptor.GetConverterFromRegisteredType(Type)"/>, so
     /// the type must be a primitive, an enum, or registered with <see cref="TypeDescriptor.RegisterType{T}"/> before
-    /// its converter is added; for NodaTime types call <c>Ark.Tools.Nodatime.NodaTimeConverter.Register()</c>. An
+    /// it is first looked up or its converter is added; for NodaTime types call <c>Ark.Tools.Nodatime.NodaTimeConverter.Register()</c>. An
     /// unregistered type throws <see cref="InvalidOperationException"/>.
     /// </remarks>
     /// <param name="value">The value to convert.</param>
@@ -96,7 +96,7 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
             catch (InvalidOperationException exception)
             {
                 throw new InvalidOperationException(
-                    string.Create(CultureInfo.InvariantCulture, $"No type converter is registered for '{type}'. Call TypeDescriptor.RegisterType<T>() for it at startup, before adding its converter with TypeDescriptor.AddAttributes; for NodaTime types call Ark.Tools.Nodatime.NodaTimeConverter.Register()."),
+                    string.Create(CultureInfo.InvariantCulture, $"No type converter is registered for '{type}'. Call TypeDescriptor.RegisterType<T>() for it at startup, before the type is first looked up through TypeDescriptor or its converter is added with TypeDescriptor.AddAttributes; for NodaTime types call Ark.Tools.Nodatime.NodaTimeConverter.Register()."),
                     exception);
             }
         }

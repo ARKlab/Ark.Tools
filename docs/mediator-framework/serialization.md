@@ -191,13 +191,15 @@ For NodaTime:
   `NodaTimeConverter.Register()` from `Ark.Tools.Nodatime`, called once at
   startup. The hosts resolve type converters trim-safely with
   `TypeDescriptor.GetConverterFromRegisteredType`, which only sees registered
-  types; `Register()` registers each NodaTime type before adding its converter.
+  types; `Register()` registers each NodaTime converter so that it is found
+  even if the type was looked up before.
   The Dapper and JSON dictionary-key support resolve NodaTime converters the
   same way.
 
 Your own type bound through a `[TypeConverter]` follows the same rule: call
-`TypeDescriptor.RegisterType<T>()` at startup, before adding a converter with
-`TypeDescriptor.AddAttributes`. Binding an unregistered type throws
+`TypeDescriptor.RegisterType<T>()` at startup, before the type is first looked
+up through `TypeDescriptor` or a converter is added with
+`TypeDescriptor.AddAttributes`; a later registration is ignored. Binding an unregistered type throws
 `InvalidOperationException`. A type with a static `TryParse` or `IParsable<T>`
 needs no registration.
 

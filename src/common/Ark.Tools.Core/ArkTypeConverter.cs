@@ -63,8 +63,8 @@ public static class ArkTypeConverter
     /// not perform reflection-based discovery.
     /// </para>
     /// <para>
-    /// Register a type at application start before adding its converter with <c>TypeDescriptor.AddAttributes</c>:
-    /// a converter added before the type is registered is not found. For NodaTime types call
+    /// Register a type at application start, before the type is first looked up through <c>TypeDescriptor</c> or its
+    /// converter is added with <c>TypeDescriptor.AddAttributes</c>: a later registration is ignored. For NodaTime types call
     /// <c>Ark.Tools.Nodatime.NodaTimeConverter.Register()</c>. Converting to an unregistered type throws
     /// <see cref="InvalidOperationException"/>.
     /// </para>
@@ -166,7 +166,7 @@ public static class ArkTypeConverter
             {
                 // Report the missing registration on every conversion instead of failing the type initializer.
                 var message = string.Create(CultureInfo.InvariantCulture,
-                    $"No type converter is registered for '{underlying}'. Call TypeDescriptor.RegisterType<T>() for it at startup, before adding its converter with TypeDescriptor.AddAttributes; for NodaTime types call Ark.Tools.Nodatime.NodaTimeConverter.Register().");
+                    $"No type converter is registered for '{underlying}'. Call TypeDescriptor.RegisterType<T>() for it at startup, before the type is first looked up through TypeDescriptor or its converter is added with TypeDescriptor.AddAttributes; for NodaTime types call Ark.Tools.Nodatime.NodaTimeConverter.Register().");
                 return _ => throw new InvalidOperationException(message, exception);
             }
 
