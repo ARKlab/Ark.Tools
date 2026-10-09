@@ -46,3 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Undispatchable messaging contracts are reported at build time: an event (declared, published, or subscribed) that is not an `ICommand<TSelf>`, including a request (`ARKMSG018`), and a processed contract that is neither a command nor a request (`ARKMSG027`).
 - A messaging participant that lists the same contract twice in `Processes`, `Publishes` or `Subscribes` is reported at build time (`ARKMSG028`) instead of failing at startup.
 - Generated Minimal API `GET` and `DELETE` endpoints with `AcceptsMessagePack = true` no longer read the request body, so a plain `GET` without content no longer fails. They bind from the route and query string and negotiate MessagePack for the response only, and OpenAPI no longer lists a request body for them. These endpoints now apply the response `[ETag]` handling of plain endpoints, so `If-None-Match` can return `304 Not Modified`, and startup no longer validates a MessagePack formatter for their request types.
+
+### Security
+
+- `[PolicyAuthorize]` is enforced again on queries, requests and commands that implement only `IQuery<TResult>`, `IRequest<TResponse>` or `ICommand`. Since the self-referencing interfaces were introduced, `RegisterAuthorization` and `RegisterAuthorizationDecorator` silently skipped these contracts, so their handlers ran without the policy check. Upgrade if any contract with `[PolicyAuthorize]` does not implement `IQuery<TSelf, TResult>`, `IRequest<TSelf, TResponse>` or `ICommand<TSelf>`.

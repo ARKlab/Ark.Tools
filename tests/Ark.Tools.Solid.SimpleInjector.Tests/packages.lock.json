@@ -468,6 +468,13 @@
         "resolved": "9.0.18",
         "contentHash": "pxuHw/tQXaHMRXEaKzzgpoGO8VeTPIzHbnp0KclXp6js5wPHn7VaqSCa8yRTAsZDcZ2XuIEnXGM2MbRDJFLBog=="
       },
+      "ark.tools.authorization": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
+          "Ark.Tools.NLog": "[1.0.0, )"
+        }
+      },
       "ark.tools.compliance": {
         "type": "Project",
         "dependencies": {
@@ -536,6 +543,13 @@
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )"
+        }
+      },
+      "ark.tools.solid.authorization": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Authorization": "[1.0.0, )",
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )"
         }
       },
       "ark.tools.solid.simpleinjector": {

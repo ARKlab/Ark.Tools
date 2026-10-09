@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Solid.Authorization/Ark.Tools.Solid.Authorization.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.Analyzers/Ark.Tools.Solid.Analyzers.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
