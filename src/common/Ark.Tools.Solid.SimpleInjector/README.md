@@ -19,8 +19,8 @@ The same applies to `IRequest<TSelf, TResponse>` and `ICommand<TSelf>`. The `ARK
 analyzer (shipped with the Ark.Tools.Solid package) reports a warning for types still using
 the legacy single-generic interfaces and offers a code fix to migrate them.
 
-The self-referencing interfaces only affect dispatch performance: the `Ark.Tools.Solid.Authorization`
-(`[PolicyAuthorize]`) and `Ark.Tools.Solid.FluentValidaton` decorators apply to both contract styles.
+The self-referencing interfaces only affect processor dispatch performance: every Ark.Tools handler
+decorator (authorization, validation, exception logging and profiling) applies to both contract styles.
 
 ## Microsoft dependency injection bridge
 
