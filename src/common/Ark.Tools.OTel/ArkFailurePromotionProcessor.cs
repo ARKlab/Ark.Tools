@@ -124,14 +124,20 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
                 return true;
         }
 
-        // HTTP response status code >= 400.
+        // Status codes are a fallback for instrumentation that does not set the span status.
+        // An explicit Ok status is the application's decision and is not overridden.
+        if (activity.Status == ActivityStatusCode.Ok)
+            return false;
+
+        // HTTP response status code >= 500. HTTP 4xx follows the span status, so a processor
+        // that clears the error status marks an expected 4xx outcome.
         var statusCodeTag = activity.GetTagItem("http.response.status_code");
-        if (statusCodeTag is int httpCode && httpCode >= 400)
+        if (statusCodeTag is int httpCode && httpCode >= 500)
             return true;
 
         if (statusCodeTag is string httpCodeStr
             && int.TryParse(httpCodeStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var parsedCode)
-            && parsedCode >= 400)
+            && parsedCode >= 500)
             return true;
 
         // gRPC status codes (0 = OK).

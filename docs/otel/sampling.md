@@ -21,7 +21,8 @@ record-only data that can still be promoted when troubleshooting needs it.
 | Local unsampled parent | Record only |
 | Remote unsampled parent | Record only |
 | Failed span or exception | Promote to sampled |
-| HTTP 4xx response | Success; do not promote |
+| HTTP 4xx response without error status | Success; do not promote |
+| HTTP 4xx response with error status | Promote to sampled |
 
 `RecordOnly` is deliberate. It preserves the activity long enough for the completion
 processor to inspect status, exception events, and response codes.
@@ -40,8 +41,10 @@ At completion, `ArkFailurePromotionProcessor`:
 Siblings that ended before the failure was observed cannot be recovered. This is the
 intentional boundary that avoids retaining every operation indefinitely.
 
-HTTP 4xx responses are expected API outcomes. `WebApi4xxAsSuccessProcessor` must run before
-failure promotion and clear the error status for 400-499 responses.
+HTTP 4xx codes are not failures by themselves: a 4xx span is promoted only when its status is
+`Error`. `WebApi4xxAsSuccessProcessor` runs before failure promotion and clears the error status
+for 400-499 server responses. An application processor registered before the Ark setup can clear
+the status of expected client errors, such as Azure Storage 404 or 409, in the same way.
 
 ## Root rate control
 
