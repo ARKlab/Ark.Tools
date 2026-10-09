@@ -29,12 +29,12 @@ jobs:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
+        # Boot check only: tests wait for the Service Bus emulator, which needs SQL Server ready.
         options: >-
-          --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P IntegrationTestsDbPassword85! -C -Q 'SELECT 1' || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-          --health-start-period=30s
+          --health-cmd="bash -c 'echo > /dev/tcp/127.0.0.1/1433'"
+          --health-interval=2s
+          --health-timeout=2s
+          --health-retries=60
       servicebus:
         image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
         ports:
@@ -56,10 +56,9 @@ jobs:
           AZURITE_SKIP_API_VERSION_CHECK: 'true'
         options: >-
           --health-cmd="node -e \"require('net').connect(10000, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))\""
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=30
-          --health-start-period=10s
+          --health-interval=2s
+          --health-timeout=2s
+          --health-retries=60
 
     steps:
     - name: 'Checkout'
