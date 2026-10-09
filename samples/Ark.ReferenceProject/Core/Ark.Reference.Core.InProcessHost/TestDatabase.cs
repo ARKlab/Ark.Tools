@@ -26,8 +26,7 @@ public static class TestDatabase
         var conn = new SqlConnection(ConnectionString);
         await using var _ = conn.ConfigureAwait(false);
         await conn.OpenAsync().ConfigureAwait(false);
-        var cmd = new SqlCommand("IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn);
-        await using var _cmd = cmd.ConfigureAwait(false);
+        using var cmd = new SqlCommand("IF (db_id(N'Logs') IS NULL) BEGIN CREATE DATABASE [Logs] END;", conn);
         await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
     }
 }

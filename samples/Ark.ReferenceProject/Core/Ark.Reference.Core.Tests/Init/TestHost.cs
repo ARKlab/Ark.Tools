@@ -66,13 +66,11 @@ public sealed class TestHost : IDisposable
         {
             _afterScenarioAssertionScope?.Dispose();
         }
-#pragma warning disable ERP022 // Intentional cleanup - exceptions ignored
-        catch
+        finally
         {
+            _afterScenarioAssertionScope = null;
+            _scenarioContext = null;
         }
-#pragma warning restore ERP022
-        _afterScenarioAssertionScope = null;
-        _scenarioContext = null;
     }
 
     [Then("I wait background bus to idle and outbox to be empty")]
@@ -214,11 +212,10 @@ public sealed class TestHost : IDisposable
         {
             LogManager.Flush(TimeSpan.FromSeconds(2));
         }
-#pragma warning disable ERP022 // Intentional cleanup - exceptions ignored
-        catch
+        catch (NLogRuntimeException exception)
         {
+            LogManager.GetCurrentClassLogger().Error(exception, CultureInfo.InvariantCulture, "Failed to flush logs after scenario.");
         }
-#pragma warning restore ERP022
     }
 
     [AfterTestRun]
@@ -232,14 +229,6 @@ public sealed class TestHost : IDisposable
 
     public void Dispose()
     {
-        try
-        {
-            _afterScenarioAssertionScope?.Dispose();
-        }
-#pragma warning disable ERP022 // Intentional cleanup - exceptions ignored
-        catch
-        {
-        }
-#pragma warning restore ERP022
+        _afterScenarioAssertionScope?.Dispose();
     }
 }

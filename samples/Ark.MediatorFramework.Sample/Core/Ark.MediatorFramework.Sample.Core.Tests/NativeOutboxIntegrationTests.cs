@@ -27,7 +27,7 @@ public sealed class NativeOutboxIntegrationTests
         var factory = _sqlFactory();
         var committedAuditId = Guid.NewGuid();
         var committed = await factory.CreateAsync().ConfigureAwait(false);
-        await using (var _ = committed.ConfigureAwait(false))
+        await using (committed.ConfigureAwait(false))
         {
             await committed.WriteAuditAsync(_audit(committedAuditId)).ConfigureAwait(false);
             await committed.SendAsync([_message(1)]).ConfigureAwait(false);
@@ -38,7 +38,7 @@ public sealed class NativeOutboxIntegrationTests
         (await _countAsync("Outbox").ConfigureAwait(false)).Should().Be(1);
 
         var rolledBack = await factory.CreateAsync().ConfigureAwait(false);
-        await using (var _ = rolledBack.ConfigureAwait(false))
+        await using (rolledBack.ConfigureAwait(false))
         {
             await rolledBack.WriteAuditAsync(_audit(Guid.NewGuid())).ConfigureAwait(false);
             await rolledBack.SendAsync([_message(2)]).ConfigureAwait(false);
@@ -56,7 +56,7 @@ public sealed class NativeOutboxIntegrationTests
         await DatabaseHooks.ResetDatabaseAsync().ConfigureAwait(false);
         var factory = _sqlFactory();
         var seed = await factory.CreateAsync().ConfigureAwait(false);
-        await using (var __seed = seed.ConfigureAwait(false))
+        await using (seed.ConfigureAwait(false))
         {
             await seed.SendAsync([_message(1), _message(2)]).ConfigureAwait(false);
             await seed.CommitAsync().ConfigureAwait(false);
@@ -109,11 +109,9 @@ public sealed class NativeOutboxIntegrationTests
 
     private static async Task<int> _countAsync(string table)
     {
-        var connection = new SqlConnection(DatabaseHooks.ConnectionString);
-        await using var __connection = connection.ConfigureAwait(false);
+        await using var connection = new SqlConnection(DatabaseHooks.ConnectionString);
         await connection.OpenAsync().ConfigureAwait(false);
-        var command = connection.CreateCommand();
-        await using var __command = command.ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
 #pragma warning disable CA2100 // The table name is selected from this fixed allow-list.
         command.CommandText = table switch
         {

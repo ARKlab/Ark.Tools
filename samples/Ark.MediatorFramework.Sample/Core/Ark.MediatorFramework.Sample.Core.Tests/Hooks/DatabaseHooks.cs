@@ -67,11 +67,9 @@ public sealed class DatabaseHooks
         if (!_sqlEnabled())
             return;
 
-        var connection = new SqlConnection(ConnectionString);
-        await using var __ctx = connection.ConfigureAwait(false);
+        await using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync().ConfigureAwait(false);
-        var command = connection.CreateCommand();
-        await using var __command = command.ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
         command.CommandText = "[ops].[ResetFull_OnlyForTesting]";
         command.CommandType = System.Data.CommandType.StoredProcedure;
         var parameter = command.Parameters.Add("@areYouReallySure", System.Data.SqlDbType.Bit);

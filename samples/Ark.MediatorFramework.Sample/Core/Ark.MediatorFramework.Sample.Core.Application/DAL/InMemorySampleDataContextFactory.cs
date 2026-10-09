@@ -89,12 +89,17 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         {
             ArgumentNullException.ThrowIfNull(query);
             _validateAuditSorts(query.Sort ?? []);
-            var filtered = _owner._audits.Where(record =>
-                (query.UserId is null || record.UserId == query.UserId)
-                && (query.EntityType is null || record.EntityType == query.EntityType)
-                && (query.Identifier is null || record.Identifier == query.Identifier)
-                && (query.FromTimestamp is null || record.Timestamp >= query.FromTimestamp.Value)
-                && (query.ToTimestamp is null || record.Timestamp <= query.ToTimestamp.Value));
+            var filtered = _owner._audits.AsEnumerable();
+            if (query.UserId is not null)
+                filtered = filtered.Where(record => record.UserId == query.UserId);
+            if (query.EntityType is not null)
+                filtered = filtered.Where(record => record.EntityType == query.EntityType);
+            if (query.Identifier is not null)
+                filtered = filtered.Where(record => record.Identifier == query.Identifier);
+            if (query.FromTimestamp is not null)
+                filtered = filtered.Where(record => record.Timestamp >= query.FromTimestamp.Value);
+            if (query.ToTimestamp is not null)
+                filtered = filtered.Where(record => record.Timestamp <= query.ToTimestamp.Value);
             var sorts = query.Sort ?? [];
             var ordered = sorts.Any()
                 ? filtered.OrderBy(string.Join(", ", sorts))
@@ -185,11 +190,13 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             CancellationToken ctk = default)
         {
             ArgumentNullException.ThrowIfNull(query);
-            var matching = _owner._books.Values
-                .Where(book =>
-                    (query.Title is null || string.Equals(book.Title, query.Title, StringComparison.Ordinal))
-                    && (query.Author is null || string.Equals(book.Author, query.Author, StringComparison.Ordinal))
-                    && (query.Genre is null || book.Genre == query.Genre));
+            var matching = _owner._books.Values.AsEnumerable();
+            if (query.Title is not null)
+                matching = matching.Where(book => string.Equals(book.Title, query.Title, StringComparison.Ordinal));
+            if (query.Author is not null)
+                matching = matching.Where(book => string.Equals(book.Author, query.Author, StringComparison.Ordinal));
+            if (query.Genre is not null)
+                matching = matching.Where(book => book.Genre == query.Genre);
             var sorts = query.Sort?.Where(static sort => !string.IsNullOrWhiteSpace(sort)).ToArray() ?? [];
             var ordered = sorts.Length == 0
                 ? matching.OrderBy(static book => book.Id)
@@ -379,10 +386,12 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             EvolvableEnum<BookPrintProcessStatus> current,
             EvolvableEnum<BookPrintProcessStatus> next)
         {
-            return (next == BookPrintProcessStatus.Running && current == BookPrintProcessStatus.Pending)
-                || (next == BookPrintProcessStatus.Completed && current == BookPrintProcessStatus.Running)
-                || (next == BookPrintProcessStatus.Error
-                    && (current == BookPrintProcessStatus.Running || current == BookPrintProcessStatus.Completed));
+            if (next == BookPrintProcessStatus.Running && current == BookPrintProcessStatus.Pending)
+                return true;
+            if (next == BookPrintProcessStatus.Completed && current == BookPrintProcessStatus.Running)
+                return true;
+            return next == BookPrintProcessStatus.Error
+                && (current == BookPrintProcessStatus.Running || current == BookPrintProcessStatus.Completed);
         }
     }
 }

@@ -65,7 +65,7 @@ public class EnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
         {
             _convertTheStringToAnEnum(value, enumType);
         }
-        catch (Exception exception)
+        catch (InvalidOperationException exception)
         {
             throw new InvalidOperationException($"No enum with value {value} found", exception);
         }

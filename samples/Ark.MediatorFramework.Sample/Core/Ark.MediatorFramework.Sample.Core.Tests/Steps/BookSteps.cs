@@ -534,7 +534,27 @@ public sealed class BookSteps
             await action().ConfigureAwait(false);
             return null;
         }
-        catch (Exception exception)
+        catch (FluentValidation.ValidationException exception)
+        {
+            return exception;
+        }
+        catch (EntityTagMismatchException exception)
+        {
+            return exception;
+        }
+        catch (PolicyAuthorizationException exception)
+        {
+            return exception;
+        }
+        catch (EntityNotFoundException exception)
+        {
+            return exception;
+        }
+        catch (BusinessRuleViolationException exception)
+        {
+            return exception;
+        }
+        catch (ArgumentOutOfRangeException exception)
         {
 #pragma warning disable ERP022 // Reqnroll needs the exception for the later assertion.
             return exception;

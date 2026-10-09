@@ -70,7 +70,7 @@ public sealed class BookPrintingProcessSteps
         {
             await Task.WhenAll(requests).ConfigureAwait(false);
         }
-        catch (Exception exception)
+        catch (BusinessRuleViolationException exception)
         {
             _exception = exception;
             var successfulRequests = requests.Where(static task => task.Status == TaskStatus.RanToCompletion).ToArray();
@@ -203,7 +203,7 @@ public sealed class BookPrintingProcessSteps
             await action().ConfigureAwait(false);
             return null;
         }
-        catch (Exception exception)
+        catch (BusinessRuleViolationException exception)
         {
 #pragma warning disable ERP022 // Reqnroll needs the exception for a later typed assertion.
             return exception;
