@@ -1164,6 +1164,7 @@ public sealed class GeneratorSnapshotTests
             {
                 public static bool TryParse(ReadOnlySpan<char> value, out AisleCode result) { result = new AisleCode(); return false; }
             }
+            public enum Shade { NOT_SET = 0, Light = 1 }
             public readonly struct ShelfCode : IParsable<ShelfCode>
             {
                 public static bool TryParse(string? value, out ShelfCode result) { result = default; return true; }
@@ -1206,9 +1207,9 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public DateOnly Day { get; init; }
                 [HttpQuery] public ShelfCode Shelf { get; init; }
                 [HttpQuery] public AisleCode[] Aisles { get; init; } = [];
-                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<DayOfWeek> Kind { get; init; }
-                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<DayOfWeek>? MaybeKind { get; init; }
-                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<DayOfWeek>[] Kinds { get; init; } = [];
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<Shade> Kind { get; init; }
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<Shade>? MaybeKind { get; init; }
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<Shade>[] Kinds { get; init; } = [];
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
@@ -1243,9 +1244,9 @@ public sealed class GeneratorSnapshotTests
         // An explicit IParsable<T> implementation wins over a public TryParse(string, out T), as in Minimal API.
         result.Generated.Should().Contain("!global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<global::ShelfCode>(_raw_Shelf, out var _value_Shelf)");
         // An EvolvableEnum binds through its own TryParse, alone, nullable or in an array, as on Minimal API.
-        result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::System.DayOfWeek>.TryParse(_raw_Kind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Kind)");
-        result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::System.DayOfWeek>.TryParse(_raw_MaybeKind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_MaybeKind)");
-        result.Generated.Should().Contain("var _query_Kinds = new global::Ark.Tools.Core.EvolvableEnum<global::System.DayOfWeek>[_qs_Kinds.Count];");
+        result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::Shade>.TryParse(_raw_Kind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Kind)");
+        result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::Shade>.TryParse(_raw_MaybeKind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_MaybeKind)");
+        result.Generated.Should().Contain("var _query_Kinds = new global::Ark.Tools.Core.EvolvableEnum<global::Shade>[_qs_Kinds.Count];");
         // A TryParse inherited from a base type is called, as ASP.NET Core does.
         // It is called on its declaring type, so an overload declared on the derived type cannot hide it.
         result.Generated.Should().Contain("!global::CodeBase<global::AisleCode>.TryParse(_raw_Aisles, out var _value_Aisles)");

@@ -7,6 +7,16 @@ using FluentValidation;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 
+/// <summary>Days known to the echo contracts.</summary>
+public enum EchoDay
+{
+    /// <summary>No day was set.</summary>
+    NOT_SET = 0,
+
+    /// <summary>Monday.</summary>
+    Monday = 1,
+}
+
 /// <summary>Response returned by the echo contracts.</summary>
 public sealed record EchoResponse
 {
@@ -47,7 +57,7 @@ public sealed record EchoQuery : IQuery<EchoQuery, EchoResponse>
 
     /// <summary>Gets the day, an evolvable enum that also accepts names it does not know.</summary>
     [HttpQuery]
-    public Ark.Tools.Core.EvolvableEnum<DayOfWeek> Day { get; init; }
+    public Ark.Tools.Core.EvolvableEnum<EchoDay> Day { get; init; }
 }
 
 /// <summary>Request exercising JSON body binding on a record contract.</summary>
