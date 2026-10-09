@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `NodaTimeConverter.Register()` (`Ark.Tools.Nodatime`) registers each NodaTime type with `TypeDescriptor.RegisterType` before adding its converter, so trim-safe `TypeDescriptor.GetConverterFromRegisteredType` lookups find the converters: HTTP route and query binding, the Dapper `OffsetDateTime` handler and JSON dictionary keys. Converters added before the type was registered were not found.
 - The API-surface snapshot records the fields of contracts marked only with `[Message]` or `[Event]`, so renaming or removing a field of such a message fails the API-surface gate again. To accept the new entries, build with `-p:EmitCompilerGeneratedFiles=true`, review the snapshot in the generated `ArkApiSurface.g.cs` under `obj/`, and copy it over `ArkApiSurface.txt`. `ArkApiSurface.current.txt` is not refreshed while ARKAPI002 fails the build.
 - Azure Functions Service Bus hosts read an optional `<connection key>:administrationConnectionString` setting for resource provisioning, so trigger apps can provision against the local Service Bus emulator, which serves administration on a separate port.
 - `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.
