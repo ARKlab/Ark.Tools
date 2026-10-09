@@ -141,16 +141,10 @@ public static partial class EnumerableExtensions
 
             Type delegateType = typeof(Func<,>).MakeGenericType(typeof(T), type);
             var lambda = Expression.Lambda(delegateType, expr, arg);
-            string methodName = String.Empty;
-
-            if (initial)
-            {
-                methodName = direction == SortDirection.Ascending ? "OrderBy" : "OrderByDescending";
-            }
-            else
-            {
-                methodName = direction == SortDirection.Ascending ? "ThenBy" : "ThenByDescending";
-            }
+            var ascending = direction == SortDirection.Ascending;
+            var methodName = initial
+                ? (ascending ? "OrderBy" : "OrderByDescending")
+                : (ascending ? "ThenBy" : "ThenByDescending");
 
             object? comparer = type == typeof(OffsetDateTime)
                 ? OffsetDateTime.Comparer.Instant
