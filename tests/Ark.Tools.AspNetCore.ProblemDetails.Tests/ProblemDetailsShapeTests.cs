@@ -141,7 +141,7 @@ public sealed class ProblemDetailsShapeTests
         {
             throw new InvalidOperationException("development exception detail");
         }
-        catch (Exception caught)
+        catch (InvalidOperationException caught)
         {
             exception = caught;
         }
