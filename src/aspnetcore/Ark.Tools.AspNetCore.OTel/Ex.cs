@@ -103,9 +103,9 @@ public static class Ex
                 })
                 .AddSource("Azure.Messaging.ServiceBus")
                 .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
+                .AddProcessor(new WebApi4xxAsSuccessProcessor())
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
-                .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction)
-                .AddProcessor(new WebApi4xxAsSuccessProcessor()))
+                .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction))
             .WithMetrics(static metrics => metrics
                 .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
                 .AddMeter(_mediatorMessagingInstrumentationName)

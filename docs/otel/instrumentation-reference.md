@@ -278,15 +278,32 @@ conditions is true:
 
 - `ActivityStatusCode.Error`
 - an event named `exception`
-- `http.response.status_code >= 400`
-- non-zero `rpc.grpc.status_code`
+- `http.response.status_code >= 500`, unless the status is `ActivityStatusCode.Ok`
+- non-zero `rpc.grpc.status_code`, unless the status is `ActivityStatusCode.Ok`
+
+HTTP 4xx codes alone are not failures: a 4xx span is promoted only when its
+status is `ActivityStatusCode.Error`. OpenTelemetry HTTP client
+instrumentation and Azure SDK client spans set that status for 4xx responses,
+so a processor that runs before promotion can clear it to mark an expected
+outcome, such as a 404 or 409 from Azure Storage. Azure SDK spans for a
+`RequestFailedException` carry the error status and `error.type`, but no
+`exception` event, so clearing the status is enough.
 
 The processor promotes the failing span and live local ancestors, registers the
 trace as failed, and promotes siblings or descendants that complete after the
 failure is observed. Siblings already completed cannot be recovered.
 
 `WebApi4xxAsSuccessProcessor` clears the error status for HTTP 400–499 server
-spans and must run before failure promotion when both are configured.
+spans. Ark registers it before `ArkFailurePromotionProcessor`.
+
+Processors run in registration order. To run your own processor before
+failure promotion, register it before calling the Ark setup:
+
+```csharp
+services.ConfigureOpenTelemetryTracerProvider(tracing =>
+    tracing.AddProcessor(new ExpectedStorageErrorsProcessor()));
+services.AddArkAzureMonitorOpenTelemetry(configuration);
+```
 
 ### Rate control
 

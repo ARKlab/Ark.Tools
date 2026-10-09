@@ -40,8 +40,10 @@ At completion, `ArkFailurePromotionProcessor`:
 Siblings that ended before the failure was observed cannot be recovered. This is the
 intentional boundary that avoids retaining every operation indefinitely.
 
-HTTP 4xx responses are expected API outcomes. `WebApi4xxAsSuccessProcessor` must run before
-failure promotion and clear the error status for 400-499 responses.
+HTTP 4xx codes are not failures by themselves: a 4xx span is promoted only when its status is
+`Error`. `WebApi4xxAsSuccessProcessor` runs before failure promotion and clears the error status
+for 400-499 server responses. An application processor registered before the Ark setup can clear
+the status of expected client errors, such as Azure Storage 404 or 409, in the same way.
 
 ## Root rate control
 
