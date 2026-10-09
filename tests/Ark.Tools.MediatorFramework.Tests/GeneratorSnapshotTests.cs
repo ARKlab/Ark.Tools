@@ -3290,12 +3290,24 @@ public sealed class GeneratorSnapshotTests
     {
         const string source =
             """
+            using System;
             using System.Collections.Generic;
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public sealed class Filter
             {
                 public string Name { get; set; } = string.Empty;
+            }
+            public sealed class ShelfFilter : IParsable<ShelfFilter>
+            {
+                public string Name { get; set; } = string.Empty;
+                static ShelfFilter IParsable<ShelfFilter>.Parse(string s, IFormatProvider? provider) => new() { Name = s };
+                static bool IParsable<ShelfFilter>.TryParse(string? s, IFormatProvider? provider, out ShelfFilter result) { result = new() { Name = s ?? string.Empty }; return s is not null; }
+            }
+            [HttpEndpoint("GET", "/shelves")]
+            public sealed record ListShelves : IQuery<string>
+            {
+                [HttpQuery] public ShelfFilter? Shelf { get; init; }
             }
             [HttpEndpoint("GET", "/books")]
             public sealed record ListBooks : IQuery<string>
@@ -3320,6 +3332,8 @@ public sealed class GeneratorSnapshotTests
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().NotContain("global::ListBooks");
         result.Generated.Should().NotContain("global::DeleteBook");
+        // A type with settable properties that implements IParsable<T>, even explicitly, binds from a string.
+        result.Generated.Should().Contain("global::ListShelves");
     }
 
     [TestMethod]

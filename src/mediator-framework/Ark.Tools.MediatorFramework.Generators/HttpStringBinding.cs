@@ -212,7 +212,7 @@ internal static class HttpStringBinding
                 return _isComplex(element, includeCollections: false);
         }
 
-        return RequiresTypeConverterBinding(type)
+        return !IsStringBindable(type)
             && !HasTypeConverterAttribute(type)
             && type is INamedTypeSymbol named
             && _allProperties(named).Any(static property => !property.IsStatic
