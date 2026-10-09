@@ -334,7 +334,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     {
         var hasBody = endpoint.Verb is "POST" or "PUT" or "PATCH";
         var routeProperties = endpoint.Properties.Where(static p => p.IsRoute && !p.IsServerSet).ToArray();
-        var queryProperties = endpoint.Properties.Where(static p => p.IsQuery && !p.IsServerSet).ToArray();
+        // As in Minimal API, a property bound from the route is never overwritten from the query string.
+        var queryProperties = endpoint.Properties.Where(static p => p.IsQuery && !p.IsRoute && !p.IsServerSet).ToArray();
         var serverSetProperties = endpoint.Properties.Where(static p => p.IsServerSet).ToArray();
         var attachment = endpoint.Properties.FirstOrDefault(static p => p.IsAttachment || p.IsAttachmentCollection);
         var hasAttachment = attachment.IsAttachment || attachment.IsAttachmentCollection;

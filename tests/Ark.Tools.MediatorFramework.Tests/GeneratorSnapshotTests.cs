@@ -1265,7 +1265,8 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorKeepsRouteAndQueryLocalsApart()
     {
-        // A property bound from both the route and the query string is converted twice; the locals must not collide.
+        // A property bound from both the route and the query string binds from the route only, as in Minimal API, so
+        // a query value cannot override the route identity and the generated locals cannot collide.
         const string source =
             """
             using Ark.Tools.MediatorFramework;
@@ -1282,7 +1283,8 @@ public sealed class GeneratorSnapshotTests
         driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
 
         string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
-            .Should().Contain("request.Query.TryGetValue(\"Id\", out var _qs_Id)");
+            .Should().Contain("var _raw_Id = request.RouteValues[\"Id\"]?.ToString();")
+            .And.NotContain("request.Query.TryGetValue(\"Id\", out var _qs_Id)");
         generatedCompilation.GetDiagnostics().Should().NotContain(static diagnostic => diagnostic.Id == "CS0128" || diagnostic.Id == "CS0136");
     }
 
