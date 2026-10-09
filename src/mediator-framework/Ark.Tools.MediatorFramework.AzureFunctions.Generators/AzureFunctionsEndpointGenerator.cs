@@ -559,17 +559,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     }
 
     // Converts _raw_<Name> with the same strategy Minimal API picks for the type, and returns 400 when it fails. An
-    // empty element of a nullable array stays null; an empty single value is parsed like any other. The converted
-    // value goes to the array element target, or to the property when target is null.
+    // empty value of a nullable type is null: it sets a nullable property to null, which also clears a value the body
+    // set, and leaves a nullable array element null. The converted value goes to the array element target, or to the
+    // property when target is null.
     private static void _emitConversion(StringBuilder source, in EndpointSpec endpoint, string indent, in PropertySpec prop, string valueDescription, string? target)
     {
         var raw = "_raw_" + prop.Name;
         var value = "_value_" + prop.Name;
         var bodyIndent = indent;
-        // As in Minimal API, an empty element of a nullable array is null, while an empty single value is parsed
-        // like any other and fails when its parser rejects it.
-        var emptyIsNull = prop.IsNullableTarget && target is not null;
-        if (emptyIsNull)
+        if (prop.IsNullableTarget)
         {
             source.Append(indent).Append("if (!string.IsNullOrEmpty(").Append(raw).AppendLine("))");
             source.Append(indent).AppendLine("{");
@@ -585,8 +583,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         else
             source.Append(bodyIndent).Append(target).Append(" = ").Append(value).AppendLine("!;");
 
-        if (emptyIsNull)
+        if (prop.IsNullableTarget)
+        {
             source.Append(indent).AppendLine("}");
+            if (target is null)
+            {
+                source.Append(indent).AppendLine("else");
+                _emitPropertyAssignment(source, endpoint, indent + "    ", prop.Name, "default");
+            }
+        }
     }
 
     private static string _conversionCall(in PropertySpec prop, string raw, string value)

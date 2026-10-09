@@ -73,7 +73,7 @@ internal enum ConversionKind
 /// <param name="Conversion">How one value converts to the property type, or to the array element type.</param>
 /// <param name="ConversionTypeFullName">The fully qualified type one value converts to: the property or element type without <c>Nullable&lt;T&gt;</c>.</param>
 /// <param name="ParserTypeFullName">The fully qualified type that declares the <c>TryParse</c> method to call, which can be a base type; otherwise the conversion type.</param>
-/// <param name="IsNullableTarget">Whether the property or element type accepts <see langword="null"/>, so an empty array element is <see langword="null"/>.</param>
+/// <param name="IsNullableTarget">Whether the property or element type accepts <see langword="null"/>, so an empty value is <see langword="null"/>.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,

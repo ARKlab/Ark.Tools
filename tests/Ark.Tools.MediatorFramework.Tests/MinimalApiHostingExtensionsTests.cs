@@ -142,11 +142,13 @@ public sealed class MinimalApiHostingExtensionsTests
         boundDate.Should().Be(new NodaTime.LocalDate(2026, 7, 24));
         boundValue.Should().BeNull();
 
-        // An empty value is parsed like any other and fails, as it does for a Guid? parameter.
+        // An empty value of a nullable type binds null.
+        boundValue = NodaTime.Instant.FromUtc(2000, 1, 1, 0, 0);
         using var emptyResponse = await client.GetAsync(
             new Uri("http://localhost/instant/2026-07-24?value="),
             app.Lifetime.ApplicationStopping);
-        emptyResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        emptyResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        boundValue.Should().BeNull();
 
         using var validResponse = await client.GetAsync(
             new Uri("http://localhost/instant/2026-07-25?value=2026-07-24T10:15:30Z"),

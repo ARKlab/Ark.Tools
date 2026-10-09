@@ -56,6 +56,13 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
         if (value is null)
             return false;
 
+        // An empty value of a Nullable<T> is null, as the nullable converters of Ark.Tools.Nodatime return.
+        if (value.Length == 0 && Nullable.GetUnderlyingType(typeof(T)) is not null)
+        {
+            result = new ArkTypeConverterValue<T>(default(T)!);
+            return true;
+        }
+
         var converter = TypeConverterCache.Converter;
         if (!TypeConverterCache.CanConvertFromString)
             return false;
