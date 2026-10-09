@@ -73,7 +73,7 @@ internal enum ConversionKind
 /// <param name="Conversion">How one value converts to the property type, or to the array element type.</param>
 /// <param name="ConversionTypeFullName">The fully qualified type one value converts to: the property or element type without <c>Nullable&lt;T&gt;</c>.</param>
 /// <param name="ParserTypeFullName">The fully qualified type that declares the <c>TryParse</c> method to call, which can be a base type; otherwise the conversion type.</param>
-/// <param name="IsNullableTarget">Whether the property or element type accepts <see langword="null"/>, so an empty array element, or an empty value bound through a type converter, is <see langword="null"/>.</param>
+/// <param name="IsNullableTarget">Whether the property or element type is a <c>Nullable&lt;T&gt;</c> or an annotated nullable reference type, so an empty array element, or an absent query value, is <see langword="null"/>.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,
@@ -369,9 +369,9 @@ internal static class AzureFunctionsEndpointParser
                     _conversionKind(conversionType),
                     _withoutNullable(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     _parserType(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                    // As in ASP.NET Core, a reference type outside a nullable context is optional too.
+                    // As the Minimal API generator, which emits a reference type outside a nullable context as non-nullable.
                     conversionType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T }
-                        || (conversionType.IsReferenceType && conversionType.NullableAnnotation != NullableAnnotation.NotAnnotated),
+                        || (conversionType.IsReferenceType && conversionType.NullableAnnotation == NullableAnnotation.Annotated),
                     LocationSpec._from(p));
             })
             .ToImmutableArray();

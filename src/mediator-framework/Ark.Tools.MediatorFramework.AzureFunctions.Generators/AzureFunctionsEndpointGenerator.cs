@@ -572,16 +572,19 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     }
 
     // Converts _raw_<Name> with the same strategy Minimal API picks for the type, and returns 400 when it fails. As in
-    // Minimal API, an empty element of a nullable array is null, an empty value of a nullable type bound through its
-    // type converter sets the property to null (clearing a value the body set), and any other empty single value is
-    // parsed like the rest. The converted value goes to the array element target, or to the property when target is
+    // Minimal API, an empty element of a nullable array is null, an empty value of a Nullable<T> bound through its type
+    // converter sets the property to null (clearing a value the body set), and any other empty single value is parsed
+    // like the rest. The converted value goes to the array element target, or to the property when target is
     // null.
     private static void _emitConversion(StringBuilder source, in EndpointSpec endpoint, string indent, in PropertySpec prop, string valueDescription, string? target)
     {
         var raw = "_raw_" + prop.Name;
         var value = "_value_" + prop.Name;
         var bodyIndent = indent;
-        var emptyIsNull = prop.IsNullableTarget && (target is not null || prop.Conversion == ConversionKind.TypeConverter);
+        // ArkTypeConverterValue<T> skips the converter on an empty value only for a Nullable<T>, the one scalar type
+        // whose name differs from its conversion type.
+        var emptyIsNull = prop.IsNullableTarget && (target is not null
+            || (prop.Conversion == ConversionKind.TypeConverter && prop.TypeFullName != prop.ConversionTypeFullName));
         if (emptyIsNull)
         {
             source.Append(indent).Append("if (!string.IsNullOrEmpty(").Append(raw).AppendLine("))");

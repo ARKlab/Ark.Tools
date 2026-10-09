@@ -1156,6 +1156,8 @@ public sealed class GeneratorSnapshotTests
                 public static bool TryParse(ref string value, out RefCode result) { result = default; return true; }
                 public static bool TryParse<TArg>(string value, out RefCode result) { result = default; return true; }
             }
+            [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.TypeConverter))]
+            public sealed class RefName { }
             public class CodeBase<T> where T : CodeBase<T>, new()
             {
                 public static bool TryParse(string? value, out T result) { result = new T(); return value is not null; }
@@ -1202,6 +1204,11 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public DayOfWeek[] Days { get; init; } = [];
                 [HttpQuery] public RefCode Ref { get; init; }
                 [HttpQuery] public RefCode? MaybeRef { get; init; }
+            #nullable enable
+                [HttpQuery] public RefName? MaybeName { get; init; }
+            #nullable disable
+                [HttpQuery] public string Title { get; init; } = "";
+            #nullable restore
                 [HttpQuery] public Microsoft.Extensions.Primitives.StringValues? Values { get; init; }
                 [HttpQuery] public Guid? Owner { get; init; }
                 [HttpQuery] public DateTime From { get; init; }
@@ -1268,6 +1275,11 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("if (!string.IsNullOrEmpty(_raw_Owner))");
         result.Generated.Should().Contain("if (!string.IsNullOrEmpty(_raw_MaybeRef))");
         result.Generated.Should().Contain("else" + Environment.NewLine + "                body = body with { MaybeRef = default };");
+        // Only a Nullable<T> skips its converter on an empty value: a nullable reference type runs it, as on Minimal API.
+        result.Generated.Should().Contain("if (_raw_MaybeName is null || !global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefName>(_raw_MaybeName, out var _value_MaybeName))");
+        result.Generated.Should().NotContain("if (!string.IsNullOrEmpty(_raw_MaybeName))");
+        // A reference type outside a nullable context is required, as the Minimal API generator emits it non-nullable.
+        result.Generated.Should().Contain("detail: \"Required query value 'Title' was not provided.\");");
         // An absent collection or array binds as empty, as Minimal API does.
         result.Generated.Should().Contain(
             "body = body with { Tags = new global::System.Collections.Generic.List<string>(global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(global::Microsoft.Extensions.Primitives.StringValues.Empty))) };");
