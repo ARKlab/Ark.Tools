@@ -18,7 +18,6 @@ namespace Ark.ResourceWatcher.Sample.Tests.Steps;
 /// Step definitions for BlobWorkerHost feature.
 /// </summary>
 [Binding]
-[SuppressMessage("Performance", "CA1848:Use the LoggerMessage delegates", Justification = "Test code")]
 public sealed class BlobWorkerHostSteps
 {
     private readonly BlobTestContext _context;

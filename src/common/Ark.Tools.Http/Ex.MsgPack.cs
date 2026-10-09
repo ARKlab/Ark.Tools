@@ -8,10 +8,8 @@ using MessagePack;
 namespace Ark.Tools.Http;
 
 
-[SuppressMessage("Design", "CA1068:CancellationToken parameters must come last", Justification = "Mimiking Flurl signatures")]
 public static partial class Ex
 {
-#pragma warning disable VSTHRD003 // Avoid awaiting or returning a Task representing work that was not started within your context
     public static async Task<T?> ReceiveMsgPack<T>(this Task<IFlurlResponse> response, IFormatterResolver formatterResolver)
     {
         var resp = await response.ConfigureAwait(false);
@@ -19,7 +17,6 @@ public static partial class Ex
 
         return await GetMsgPackAsync<T>(resp, formatterResolver).ConfigureAwait(false);
     }
-#pragma warning restore VSTHRD003
 
     public static async Task<T?> GetMsgPackAsync<T>(this IFlurlResponse response, IFormatterResolver formatterResolver)
     {

@@ -554,9 +554,7 @@ public sealed partial class AzureFunctionsBoundaryTests
             }
             catch
             {
-#pragma warning disable VSTHRD003
                 await host.DisposeAsync().ConfigureAwait(false);
-#pragma warning restore VSTHRD003
                 throw;
             }
         }
@@ -570,9 +568,7 @@ public sealed partial class AzureFunctionsBoundaryTests
             _process.CancelErrorRead();
             await _process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
             _logLines.Writer.TryComplete();
-#pragma warning disable VSTHRD003
             await _logPumpTask.ConfigureAwait(false);
-#pragma warning restore VSTHRD003
             await _log.DisposeAsync().ConfigureAwait(false);
             _process.Dispose();
         }

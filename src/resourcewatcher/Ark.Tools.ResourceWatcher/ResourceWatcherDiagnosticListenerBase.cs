@@ -26,9 +26,7 @@ public abstract class ResourceWatcherDiagnosticListenerBase : IObserver<Diagnost
 
     }
 
-#pragma warning disable CA1033 // Interface methods should be callable by child types
     void IObserver<DiagnosticListener>.OnNext(DiagnosticListener value)
-#pragma warning restore CA1033 // Interface methods should be callable by child types
     {
         if (value.Name == "Ark.Tools.ResourceWatcher")
         {

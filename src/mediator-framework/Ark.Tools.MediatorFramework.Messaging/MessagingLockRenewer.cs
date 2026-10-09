@@ -227,9 +227,7 @@ internal sealed class MessagingLockRenewer : IAsyncDisposable
             {
                 throw;
             }
-#pragma warning disable CA1031 // Any renewal failure means the lock is gone.
             catch (Exception exception)
-#pragma warning restore CA1031
             {
                 MessagingMetrics._recordLockRenewal(_renewer._lostTags);
                 _logger.Warn(

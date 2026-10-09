@@ -17,7 +17,6 @@ public class SlackTarget : TargetWithContext
     internal Func<object?, string?>? _valueRedactor;
     internal Layout? _exceptionLayout;
 
-    [SuppressMessage("Design", "CA1056:URI-like properties should not be strings", Justification = "NLog configuration limitation")]
     public string? WebHookUrl { get; set; }
 
     [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "CloseTarget() is called during Dispose() by NLog")]

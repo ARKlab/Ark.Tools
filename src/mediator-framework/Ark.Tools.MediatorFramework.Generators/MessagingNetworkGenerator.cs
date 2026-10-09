@@ -1284,12 +1284,12 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static bool _isValidDeclaringType(INamedTypeSymbol symbol)
     {
-#pragma warning disable MA0040, MA0045
+#pragma warning disable MA0045
         var isPartial = symbol.DeclaringSyntaxReferences
             .Select(static reference => reference.GetSyntax())
             .OfType<Microsoft.CodeAnalysis.CSharp.Syntax.TypeDeclarationSyntax>()
             .Any(static declaration => declaration.Modifiers.Any(static modifier => modifier.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PartialKeyword)));
-#pragma warning restore MA0040, MA0045
+#pragma warning restore MA0045
         return symbol.ContainingType is null
             && symbol.Arity == 0
             && isPartial;

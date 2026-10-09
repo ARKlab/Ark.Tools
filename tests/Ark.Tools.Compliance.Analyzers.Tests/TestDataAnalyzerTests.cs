@@ -17,8 +17,6 @@ using System.Text.RegularExpressions;
 
 namespace Ark.Tools.Compliance.Analyzers.Tests;
 
-#pragma warning disable ARKPII006 // Synthetic, intentionally non-reserved values exercise the fixture diagnostic.
-
 /// <summary>Verifies reserved fixture detection, feature locations, and compiler-validated replacements.</summary>
 [TestClass]
 public sealed class TestDataAnalyzerTests
@@ -108,9 +106,7 @@ public sealed class TestDataAnalyzerTests
     [TestMethod]
     public async Task PatternTimeoutReportsIncompleteScan()
     {
-        #pragma warning disable MA0110, MA0023 // The custom timeout regex is a deterministic test seam.
         var timeoutPattern = new Regex("(a+)+z", RegexOptions.ExplicitCapture, TimeSpan.FromTicks(1));
-        #pragma warning restore MA0110, MA0023
         var feature = "| " + new string('a', 20) + "b +12025552345 |";
 
         var diagnostics = await _analyzeFeatureAsync(

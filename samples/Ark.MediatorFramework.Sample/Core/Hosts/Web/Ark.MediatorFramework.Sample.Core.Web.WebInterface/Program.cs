@@ -39,9 +39,7 @@ catch (Exception ex)
         CultureInfo.InvariantCulture,
         "Unhandled startup or host failure: {Message}",
         ex.Message);
-#pragma warning disable RS0030 // Exception handler - console output for critical failures
     await Console.Error.WriteLineAsync(ex.ToString()).ConfigureAwait(false);
-#pragma warning restore RS0030
     Environment.ExitCode = 1;
 }
 finally

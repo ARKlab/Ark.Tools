@@ -70,9 +70,7 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
         await _stopping.CancelAsync().ConfigureAwait(false);
         if (_loop is not null)
         {
-#pragma warning disable VSTHRD003 // The processor loop is intentionally started on the thread pool.
             await _loop.ConfigureAwait(false);
-#pragma warning restore VSTHRD003
         }
         _stopping.Dispose();
     }

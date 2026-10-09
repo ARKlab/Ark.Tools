@@ -55,9 +55,7 @@ try
     FunctionsHosting.AddApiProducer(
         builder.Services,
         container,
-#pragma warning disable CA2000 // The composition service provider owns the transport and its client.
         transport => transport.UseServiceBus(new ServiceBusClient(serviceBusConnection)),
-#pragma warning restore CA2000
         dataBus => dataBus.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration)));
     builder.Services.AddArkHealthChecks();
     if (builder.Environment.IsEnvironment("IntegrationTests"))

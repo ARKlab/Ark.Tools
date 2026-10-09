@@ -8,7 +8,6 @@ namespace Ark.Tools.Core;
 /// missing. This is a deliberate, explicit failure: an evolvable enum never silently substitutes a
 /// default or corrupts data when it cannot honor the requested representation.
 /// </summary>
-[SuppressMessage("Design", "MA0049:Type name should not match namespace", Justification = "The exception name intentionally mirrors the value type it protects.")]
 public sealed class EvolvableEnumConversionException : InvalidOperationException
 {
     /// <summary>Initializes a new instance of the <see cref="EvolvableEnumConversionException"/> class.</summary>

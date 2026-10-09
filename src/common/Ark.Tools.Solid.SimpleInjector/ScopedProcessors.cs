@@ -10,13 +10,11 @@ namespace Ark.Tools.Solid.SimpleInjector;
 internal sealed class ScopeAwareRequestProcessor(Container container, Func<IRequestProcessor> getInnerProcessor) : IRequestProcessor
 {
     [DebuggerStepThrough]
-#pragma warning disable CS0618 // Type or member is obsolete
     [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     public TResponse Execute<TResponse>(IRequest<TResponse> request)
     {
         throw new NotSupportedException("Synchronous execution is not supported. Use ExecuteAsync instead.");
     }
-#pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
@@ -40,13 +38,11 @@ internal sealed class ScopeAwareRequestProcessor(Container container, Func<IRequ
 internal sealed class ScopeAwareQueryProcessor(Container container, Func<IQueryProcessor> getInnerProcessor) : IQueryProcessor
 {
     [DebuggerStepThrough]
-#pragma warning disable CS0618 // Type or member is obsolete
     [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     public TResult Execute<TResult>(IQuery<TResult> query)
     {
         throw new NotSupportedException("Synchronous execution is not supported. Use ExecuteAsync instead.");
     }
-#pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
@@ -70,13 +66,11 @@ internal sealed class ScopeAwareQueryProcessor(Container container, Func<IQueryP
 internal sealed class ScopeAwareCommandProcessor(Container container, Func<ICommandProcessor> getInnerProcessor) : ICommandProcessor
 {
     [DebuggerStepThrough]
-#pragma warning disable CS0618 // Type or member is obsolete
     [Obsolete("Use ExecuteAsync instead. Synchronous execution will be removed in a future version.", error: true)]
     public void Execute(ICommand command)
     {
         throw new NotSupportedException("Synchronous execution is not supported. Use ExecuteAsync instead.");
     }
-#pragma warning restore CS0618 // Type or member is obsolete
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]

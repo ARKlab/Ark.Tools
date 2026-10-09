@@ -71,9 +71,7 @@ public class AuditContext<TAuditKind>
                     {(query.ToDateTime != null ? "AND [SysStartTime] <= @ToDateTime" : "")}
             ",
         parameters, transaction: _dbTransaction, cancellationToken: ctk);
-#pragma warning disable MA0004 // Use Task.ConfigureAwait
         await using var q = await _dbConnection.QueryMultipleAsync(cmd).ConfigureAwait(false);
-#pragma warning restore MA0004 // Use Task.ConfigureAwait
 
         var retVal = await q.ReadAsync<AuditDto<TAuditKind>>().ConfigureAwait(false);
         var count = await q.ReadFirstAsync<int>().ConfigureAwait(false);

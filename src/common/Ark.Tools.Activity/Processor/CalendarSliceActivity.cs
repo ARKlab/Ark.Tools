@@ -4,7 +4,6 @@ using NLog;
 namespace Ark.Tools.Activity.Processor;
 
 
-[SuppressMessage("Usage", "CA2214:Do not call overridable methods in constructors", Justification = "Designed to be overridden")]
 public abstract class CalendarSliceActivity : ISliceActivity
 {
     private readonly Lazy<Dictionary<Resource, Dictionary<Slice, List<Slice>>>> _reverseMap;

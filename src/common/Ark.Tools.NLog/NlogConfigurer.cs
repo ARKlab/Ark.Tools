@@ -85,7 +85,6 @@ public static class NLogConfigurer
                     ;
     }
 
-    [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
     public record Config(
         [Secret] string? SQLConnectionString = null,
         string? SQLTableName = null,
@@ -157,7 +156,6 @@ public static class NLogConfigurer
     }
 
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Targets are Disposed by NLog")]
-    [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "By design")]
     public sealed class Configurer
     {
         internal readonly LoggingConfiguration _config = new();
@@ -253,7 +251,6 @@ public static class NLogConfigurer
         {
             logTableName = logTableName.Replace("[", string.Empty, StringComparison.Ordinal).Replace("]", string.Empty, StringComparison.Ordinal).Replace('.', '_');
 
-#pragma warning disable CA1031 // Do not catch general exception types
             try
             {
                 _ensureTableIsCreated(connectionString, logTableName);
@@ -263,7 +260,6 @@ public static class NLogConfigurer
                 InternalLogger.Fatal(ex, "Failed to setup Ark Database Target. Database logging is disabled");
                 // continue setup the Target: it's not going to work but NLog handles it gracefully
             }
-#pragma warning restore CA1031 // Do not catch general exception types
 
 
             var databaseTarget = new DatabaseTarget();
@@ -570,13 +566,11 @@ VALUES
                 .SetupSerialization(static builder => builder.UseComplianceRedaction());
         }
 
-        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "This layout factory must keep the compliance-aware instance hook for net10 builds.")]
         private Layout _createTextLineLayout()
         {
             return _createScannedLayout(Layout.FromString(TextLineLayout));
         }
 
-        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "This layout factory must keep the compliance-aware instance hook for net10 builds.")]
         private Layout _createMessageLayout()
         {
             return _createScannedLayout(Layout.FromMethod(
