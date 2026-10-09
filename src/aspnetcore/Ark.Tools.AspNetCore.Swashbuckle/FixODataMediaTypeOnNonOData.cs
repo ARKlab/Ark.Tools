@@ -50,15 +50,13 @@ public class FixODataMediaTypeOnNonOData : IOperationFilter
                     }
                 }
 
-            if (operation.RequestBody is not null)
-            {
-                if (operation.RequestBody.Content is not null)
-                    foreach (var contentType in operation.RequestBody.Content.Keys)
-                    {
-                        if (contentType.Contains("odata", StringComparison.OrdinalIgnoreCase))
-                            operation.RequestBody.Content.Remove(contentType);
-                    }
-            }
+            if (operation.RequestBody?.Content is not null)
+                foreach (var contentType in operation.RequestBody.Content.Keys)
+                {
+                    if (contentType.Contains("odata", StringComparison.OrdinalIgnoreCase))
+                        operation.RequestBody.Content.Remove(contentType);
+                }
+
         }
     }
 }
