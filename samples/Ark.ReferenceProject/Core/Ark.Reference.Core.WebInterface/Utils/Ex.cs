@@ -73,10 +73,9 @@ public static class Ex
 
                 var decoded = new JwtSecurityToken(token);
 
-                if (decoded.Issuer.StartsWith("https://login.microsoftonline.com/", StringComparison.Ordinal))
-                    return AuthConstants.AzureAdSchema;
-                else
-                    return AuthConstants.AzureAdB2CSchema;
+                return decoded.Issuer.StartsWith("https://login.microsoftonline.com/", StringComparison.Ordinal)
+                    ? AuthConstants.AzureAdSchema
+                    : AuthConstants.AzureAdB2CSchema;
             };
 
             o.ForwardDefault = AuthConstants.AzureAdB2CSchema;
