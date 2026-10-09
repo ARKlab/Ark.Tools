@@ -42,7 +42,7 @@ internal enum HandlerKind
 /// <param name="IsETag">Whether the property carries the request ETag.</param>
 /// <param name="IsAttachment">Whether the property is a single attachment.</param>
 /// <param name="IsAttachmentCollection">Whether the property is an attachment collection.</param>
-/// <param name="IsStringCollection">Whether the property type is a string array or implements <c>IEnumerable&lt;string&gt;</c>.</param>
+/// <param name="IsStringCollection">Whether the property type is one of the supported string collection shapes that receive every value of a query parameter.</param>
 /// <param name="IsNotConvertible">Whether no type converter converts a single string to the property type: an array, a collection or a complex object.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(

@@ -1155,6 +1155,7 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public Guid? Owner { get; init; }
                 [HttpQuery] public Queue<string> Pending { get; init; } = new();
                 [HttpQuery] public IReadOnlySet<string> Keys { get; init; } = new HashSet<string>();
+                [HttpQuery] public System.Collections.Stack? Stack { get; init; }
             }
             [HttpEndpoint("POST", "/books")]
             public sealed record CreateBooks : IRequest<string>
@@ -1175,7 +1176,7 @@ public sealed class GeneratorSnapshotTests
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Codes", "Ids", "Years", "Filter", "Pending", "Keys", "Labels");
+            .Should().BeEquivalentTo("Codes", "Ids", "Years", "Filter", "Pending", "Keys", "Stack", "Labels");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
             .GetMessage(CultureInfo.InvariantCulture)
@@ -3333,6 +3334,7 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public DayOfWeek[] WeekDays { get; init; } = [];
                 [HttpQuery] public Queue<string> Pending { get; init; } = new();
                 [HttpQuery] public IReadOnlySet<string> Keys { get; init; } = new HashSet<string>();
+                [HttpQuery] public System.Collections.Stack? Stack { get; init; }
             }
             [HttpEndpoint("POST", "/books/{id}")]
             public sealed record UpdateBooks : IRequest<string>
@@ -3358,7 +3360,7 @@ public sealed class GeneratorSnapshotTests
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Codes", "Ids", "Labels", "Days", "Filter", "Pending", "Keys", "Related", "Target");
+            .Should().BeEquivalentTo("Codes", "Ids", "Labels", "Days", "Filter", "Pending", "Keys", "Stack", "Related", "Target");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
             .GetMessage(CultureInfo.InvariantCulture)

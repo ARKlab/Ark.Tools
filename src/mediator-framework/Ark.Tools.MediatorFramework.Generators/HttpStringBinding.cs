@@ -97,13 +97,15 @@ internal static class HttpStringBinding
 
     /// <summary>Gets whether the type, or the type wrapped by <c>Nullable&lt;T&gt;</c>, is an array or a collection.</summary>
     /// <param name="type">The property type.</param>
-    /// <returns><see langword="true"/> for an array or a type implementing <c>IEnumerable&lt;T&gt;</c>, other than <c>string</c>.</returns>
+    /// <returns><see langword="true"/> for an array or a type implementing <c>IEnumerable</c>, other than <c>string</c>.</returns>
     public static bool IsCollection(ITypeSymbol type)
     {
         if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
             type = nullable.TypeArguments[0];
         return type.SpecialType != SpecialType.System_String
-            && (type is IArrayTypeSymbol || _enumerableInterfaces(type).Any());
+            && (type is IArrayTypeSymbol
+                || type.SpecialType == SpecialType.System_Collections_IEnumerable
+                || type.AllInterfaces.Any(static candidate => candidate.SpecialType == SpecialType.System_Collections_IEnumerable));
     }
 
     /// <summary>
