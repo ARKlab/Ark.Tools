@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Ark.Tools.Solid.Authorization;
 
 public class PolicyAuthorizeRequestDecorator<TRequest, TResult> : IRequestHandler<TRequest, TResult>
-    where TRequest : IRequest<TResult>
+    where TRequest : class, IRequest<TResult>
 {
     private readonly IAuthorizationService _authSvc;
     private readonly IContextProvider<ClaimsPrincipal> _currentUser;
