@@ -156,6 +156,38 @@ public sealed partial class AzureFunctionsBoundaryTests
 
     [TestMethod]
     [TestCategory("AzureFunctionsBoundary")]
+    public async Task RepeatedQueryValuesAreBoundIntoAnArray()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Scores=4&Scores=7", UriKind.Relative));
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
+
+        using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        using var json = System.Text.Json.JsonDocument.Parse(body);
+        var scores = json.RootElement.EnumerateObject()
+            .Single(static property => string.Equals(property.Name, "Scores", StringComparison.OrdinalIgnoreCase)).Value;
+        scores.EnumerateArray().Select(static score => score.GetInt32()).Should().Equal(4, 7);
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task MalformedArrayElementProducesProblemDetails()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Scores=4&Scores=x", UriKind.Relative));
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
+
+        using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        var body = await response.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        body.Should().Contain("BINDING_FAILURE").And.Contain("Scores");
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
     public async Task JsonBodyIsBoundIntoTheRecordContract()
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, new Uri("api/v1/echo", UriKind.Relative))

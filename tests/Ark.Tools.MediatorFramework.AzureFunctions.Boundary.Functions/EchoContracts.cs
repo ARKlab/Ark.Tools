@@ -18,6 +18,9 @@ public sealed record EchoResponse
 
     /// <summary>Gets the echoed count.</summary>
     public int Count { get; init; }
+
+    /// <summary>Gets the echoed scores.</summary>
+    public IReadOnlyList<int> Scores { get; init; } = [];
 }
 
 /// <summary>Query exercising route and query binding with validation.</summary>
@@ -81,7 +84,7 @@ public sealed class EchoQueryHandler : IQueryHandler<EchoQuery, EchoResponse>
     public async Task<EchoResponse> ExecuteAsync(EchoQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await Task.FromResult(new EchoResponse { Id = query.Id, Message = query.Message ?? string.Empty, Count = query.Count }).ConfigureAwait(false);
+        return await Task.FromResult(new EchoResponse { Id = query.Id, Message = query.Message ?? string.Empty, Count = query.Count, Scores = query.Scores }).ConfigureAwait(false);
     }
 }
 
