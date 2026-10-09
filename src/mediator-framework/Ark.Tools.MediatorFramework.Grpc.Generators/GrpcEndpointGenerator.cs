@@ -766,6 +766,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             var contracts = compilation.ProtoContracts.Items;
             var entries = new List<string>();
             var content = new StringBuilder();
+            var wellKnownImports = new StringBuilder();
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -854,7 +855,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     content.AppendLine();
                 }
 
-                var wellKnownImports = new StringBuilder();
+                wellKnownImports.Clear();
                 if (usedTypes.Contains("google.type.Date"))
                     wellKnownImports.AppendLine("import \"google/type/date.proto\";");
                 if (usedTypes.Contains("google.type.DateTime"))
