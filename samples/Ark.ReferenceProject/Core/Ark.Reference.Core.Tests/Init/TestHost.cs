@@ -43,7 +43,7 @@ public sealed class TestHost : IDisposable
     private AwesomeAssertions.Execution.AssertionScope? _afterScenarioAssertionScope;
 
     [BeforeScenario(Order = 0)]
-    public void Set(ScenarioContext ctx)
+    public static void Set(ScenarioContext ctx)
     {
         _scenarioContext = ctx;
         _telemetry._reset();
