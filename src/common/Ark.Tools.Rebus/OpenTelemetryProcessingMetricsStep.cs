@@ -68,6 +68,7 @@ public sealed class OpenTelemetryProcessingMetricsStep : IIncomingStep
 #pragma warning disable ERP022
             catch
             {
+                // Ignore telemetry errors so message processing is unaffected.
             }
 #pragma warning restore ERP022
         }
@@ -80,6 +81,7 @@ public sealed class OpenTelemetryProcessingMetricsStep : IIncomingStep
 #pragma warning disable ERP022
             catch
             {
+                // Ignore telemetry errors so message processing is unaffected.
             }
 #pragma warning restore ERP022
         }

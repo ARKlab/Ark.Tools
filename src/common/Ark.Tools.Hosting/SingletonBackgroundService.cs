@@ -118,7 +118,9 @@ public abstract class SingletonBackgroundService : BackgroundService
                         await RunAsync(ct.Token).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                    { }
+                    {
+                        // Lease lost or service stopping: RunAsync was cancelled as requested.
+                    }
                     catch (Exception e)
                     {
                         _logger.RunAsyncExited(e, ServiceName);
@@ -135,13 +137,18 @@ public abstract class SingletonBackgroundService : BackgroundService
                             await Task.Delay(Cooldown, ct.Token).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException) when (ct.IsCancellationRequested)
-                        { }
+                        {
+                            // Lease lost or service stopping: cooldown ends early.
+                        }
                     }
 
                     _logger.ReleasingLock(ServiceName, LockId);
                 }
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // Service stopping: the loop condition exits.
+            }
             catch (Exception e) // either the ExecuteAsync failed or the AcquireAsync failed or its disposal (strange)
             {
                 // We want to try as much as possible to keep this Service running on an instance.
@@ -156,7 +163,9 @@ public abstract class SingletonBackgroundService : BackgroundService
                         await Task.Delay(Cooldown, stoppingToken).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                    { }
+                    {
+                        // Service stopping: cooldown ends early.
+                    }
                 }
             }
         }

@@ -59,6 +59,7 @@ where startsWith(id(e), '{prefix}')
         }
         catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id", StringComparison.Ordinal))
         {
+            // The subscription already exists: nothing to create.
         }
 
         lock (_gate)
@@ -167,10 +168,9 @@ where startsWith(id(e), '{prefix}')
     {
         var handler = _handlerActivator.GetHandler<TAggregate, TEvent>(evt);
 
-        if (handler != null)
-            return handler.HandleAsync(evt, metadata, _tokenSource?.Token ?? default);
-        else
-            return Task.CompletedTask;
+        return handler != null
+            ? handler.HandleAsync(evt, metadata, _tokenSource?.Token ?? default)
+            : Task.CompletedTask;
     }
 
     sealed class FakeEvent : IAggregateEvent<TAggregate> { }
@@ -205,7 +205,10 @@ where startsWith(id(e), '{prefix}')
             if (runtask is not null)
                 await runtask.ConfigureAwait(false);
         }
-        catch (TaskCanceledException) { }
+        catch (TaskCanceledException)
+        {
+            // Expected when the worker task observes the cancellation requested above.
+        }
     }
 
     protected virtual void Dispose(bool disposing)
