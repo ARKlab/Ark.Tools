@@ -394,7 +394,9 @@ public sealed class SinkTaintAnalyzerTests
                 void Reviewed(Customer c) { new NLog.Logger().Info(c.Email); }
                 void Pragma(Customer c)
                 {
+            #pragma warning disable ARKPII002
                     new NLog.Logger().Info(c.Email);
+            #pragma warning restore ARKPII002
                 }
             }
             """).ConfigureAwait(false);

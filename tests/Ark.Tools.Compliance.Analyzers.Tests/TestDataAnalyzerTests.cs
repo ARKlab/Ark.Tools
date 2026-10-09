@@ -17,7 +17,6 @@ using System.Text.RegularExpressions;
 
 namespace Ark.Tools.Compliance.Analyzers.Tests;
 
-
 /// <summary>Verifies reserved fixture detection, feature locations, and compiler-validated replacements.</summary>
 [TestClass]
 public sealed class TestDataAnalyzerTests
