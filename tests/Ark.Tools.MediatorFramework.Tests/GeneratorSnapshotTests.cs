@@ -776,7 +776,7 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : IRequest<Update, string>;
             """);
         azure.Generated.Should().Contain("new global::Update(_bodyNullable, default!)");
-        azure.Generated.Should().Contain("body = body with { Id = _value_Id };");
+        azure.Generated.Should().Contain("body = body with { Id = _value_Id! };");
     }
 
     [TestMethod]
@@ -824,7 +824,7 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : BaseRequest, IRequest<Update, string>;
             """);
         azure.Generated.Should().Contain("Audit");
-        azure.Generated.Should().Contain("body = body with { Id = _value_Id };");
+        azure.Generated.Should().Contain("body = body with { Id = _value_Id! };");
     }
 
     [TestMethod]
@@ -1212,7 +1212,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("if (_raw_Skip is null || !int.TryParse(_raw_Skip, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Skip))");
         result.Generated.Should().Contain("var _query_Years = new int[_qs_Years.Count];");
         result.Generated.Should().Contain("var _raw_Years = _qs_Years[_i_Years];");
-        result.Generated.Should().Contain("_query_Years[_i_Years] = _value_Years;");
+        result.Generated.Should().Contain("_query_Years[_i_Years] = _value_Years!;");
         result.Generated.Should().Contain("var _query_Owners = new global::System.Guid?[_qs_Owners.Count];");
         result.Generated.Should().Contain("if (!string.IsNullOrEmpty(_raw_Owners))");
         result.Generated.Should().Contain("!global::BookCode.TryParse(_raw_BookCodes, out var _value_BookCodes)");
@@ -1253,6 +1253,37 @@ public sealed class GeneratorSnapshotTests
         string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
             .Should().Contain("request.Query.TryGetValue(\"Id\", out var _qs_Id)");
         generatedCompilation.GetDiagnostics().Should().NotContain(static diagnostic => diagnostic.Id == "CS0128" || diagnostic.Id == "CS0136");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorAcceptsNullableTryParseResults()
+    {
+        // A custom TryParse may declare its out parameter nullable without [NotNullWhen(true)]; the generated
+        // assignment after a successful parse must not raise a nullable warning under warnings-as-errors.
+        const string source =
+            """
+            #nullable enable
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            public sealed class Tag
+            {
+                public static bool TryParse(string? value, out Tag? result) { result = value is null ? null : new Tag(); return result is not null; }
+            }
+            [HttpEndpoint("GET", "/tags")]
+            public sealed record ListTags : IQuery<ListTags, string>
+            {
+                [HttpQuery] public Tag Label { get; init; } = new();
+                [HttpQuery] public Tag[] Labels { get; init; } = [];
+            }
+            """;
+        var (driver, compilation) = _runGeneratorDriver<AzureFunctionsEndpointGenerator>(source, []);
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+
+        string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
+            .Should().Contain("global::Tag.TryParse(_raw_Label, out var _value_Label)");
+        generatedCompilation.GetDiagnostics().Should().NotContain(static diagnostic => diagnostic.Id == "CS8601");
     }
 
     [TestMethod]
@@ -2916,7 +2947,7 @@ public sealed class GeneratorSnapshotTests
         minimalApi.Generated.Should().Contain("var request = body with { Id = Id, Notify = Notify };");
         functions.Diagnostics.Should().BeEmpty();
         functions.Generated.Should().Contain("request.Query.TryGetValue(\"Notify\", out var _qs_Notify)");
-        functions.Generated.Should().Contain("body = body with { Notify = _value_Notify };");
+        functions.Generated.Should().Contain("body = body with { Notify = _value_Notify! };");
     }
 
     [TestMethod]

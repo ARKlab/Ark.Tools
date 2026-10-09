@@ -575,10 +575,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.Append(bodyIndent).Append("if (").Append(raw).Append(" is null || !").Append(_conversionCall(prop, raw, value)).AppendLine(")");
         source.Append(bodyIndent).Append("    return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"")
             .Append(valueDescription).Append(" could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+        // A custom TryParse may declare its out parameter nullable without [NotNullWhen(true)]: it succeeded here.
         if (target is null)
-            _emitPropertyAssignment(source, endpoint, bodyIndent, prop.Name, value);
+            _emitPropertyAssignment(source, endpoint, bodyIndent, prop.Name, value + "!");
         else
-            source.Append(bodyIndent).Append(target).Append(" = ").Append(value).AppendLine(";");
+            source.Append(bodyIndent).Append(target).Append(" = ").Append(value).AppendLine("!;");
 
         if (prop.IsNullableTarget)
         {
