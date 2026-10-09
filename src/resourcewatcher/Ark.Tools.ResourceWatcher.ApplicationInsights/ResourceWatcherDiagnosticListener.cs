@@ -398,7 +398,10 @@ public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListen
         if (pc.NewState != default)
         {
             data.Properties.Add("RetryCount", pc.NewState.RetryCount.ToString(CultureInfo.InvariantCulture));
-            data.Properties.Add("RetrievedAt", pc.NewState.ToString());
+            if (pc.NewState.RetrievedAt is { } retrievedAt)
+            {
+                data.Properties.Add("RetrievedAt", InstantPattern.ExtendedIso.Format(retrievedAt));
+            }
             data.Properties.Add("CheckSum", pc.NewState.CheckSum);
             data.Properties.Add("Modified", LocalDateTimePattern.ExtendedIso.Format(pc.NewState.Modified));
 

@@ -10,11 +10,9 @@ public class TypedControllerFeatureProvider<TArea> : ControllerFeatureProvider w
 {
     protected override bool IsController(TypeInfo typeInfo)
     {
-        var ret = false;
-        if (!typeof(IArea<TArea>).GetTypeInfo().IsAssignableFrom(typeInfo)) ret = false;
-        else ret = base.IsController(typeInfo);
+        return typeof(IArea<TArea>).GetTypeInfo().IsAssignableFrom(typeInfo)
+            && base.IsController(typeInfo);
 
-        return ret;
     }
 }
 public interface IArea { }

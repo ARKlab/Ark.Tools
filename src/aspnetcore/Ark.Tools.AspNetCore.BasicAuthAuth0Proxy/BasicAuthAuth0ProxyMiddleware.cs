@@ -51,63 +51,58 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
     {
         System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;
 
-        if (System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Authorization"], out authHeader)
+        if ((System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Authorization"], out authHeader)
             || System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["WWW-Authenticate"], out authHeader)
-            || System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Proxy-Authenticate"], out authHeader)
-            )
+            || System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Proxy-Authenticate"], out authHeader))
+            && "Basic".Equals(authHeader.Scheme, StringComparison.OrdinalIgnoreCase))
         {
-
-            if ("Basic".Equals(authHeader.Scheme,
-                                 StringComparison.OrdinalIgnoreCase))
-            {
 #pragma warning disable CA1031 // Do not catch general exception types
-                try
+            try
+            {
+                string parameter = Encoding.UTF8.GetString(
+                                      Convert.FromBase64String(
+                                            authHeader.Parameter ?? string.Empty));
+
+                var span = parameter.AsSpan();
+                var colonIndex = span.IndexOf(':');
+
+                if (colonIndex > 0 && colonIndex < span.Length - 1)
                 {
-                    string parameter = Encoding.UTF8.GetString(
-                                          Convert.FromBase64String(
-                                                authHeader.Parameter ?? string.Empty));
+                    var usernameSpan = span[..colonIndex];
+                    var passwordSpan = span[(colonIndex + 1)..];
 
-                    var span = parameter.AsSpan();
-                    var colonIndex = span.IndexOf(':');
-
-                    if (colonIndex > 0 && colonIndex < span.Length - 1)
+                    if (!usernameSpan.IsWhiteSpace() && !passwordSpan.IsWhiteSpace())
                     {
-                        var usernameSpan = span[..colonIndex];
-                        var passwordSpan = span[(colonIndex + 1)..];
+                        string userName = usernameSpan.ToString();
+                        string password = passwordSpan.ToString();
 
-                        if (!usernameSpan.IsWhiteSpace() && !passwordSpan.IsWhiteSpace())
-                        {
-                            string userName = usernameSpan.ToString();
-                            string password = passwordSpan.ToString();
-
-                            var accessToken = await _policy.ExecuteAsync(async (ct) =>
+                        var accessToken = await _policy.ExecuteAsync(async (ct) =>
+                            {
+                                var result = await _auth0.GetTokenAsync(new ResourceOwnerTokenRequest()
                                 {
-                                    var result = await _auth0.GetTokenAsync(new ResourceOwnerTokenRequest()
-                                    {
-                                        Audience = _config.Audience,
-                                        ClientId = _config.ProxyClientId,
-                                        Username = userName,
-                                        Password = password,
-                                        ClientSecret = _config.ProxySecret,
-                                        Realm = _config.Realm!,
-                                        Scope = "openid profile email",
-                                    }, context.RequestAborted).ConfigureAwait(false);
-
-                                    return result.AccessToken;
+                                    Audience = _config.Audience,
+                                    ClientId = _config.ProxyClientId,
+                                    Username = userName,
+                                    Password = password,
+                                    ClientSecret = _config.ProxySecret,
+                                    Realm = _config.Realm!,
+                                    Scope = "openid profile email",
                                 }, context.RequestAborted).ConfigureAwait(false);
 
-                            context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
-                        }
+                                return result.AccessToken;
+                            }, context.RequestAborted).ConfigureAwait(false);
+
+                        context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
                     }
                 }
-                catch (Exception ex)
-                {
-#pragma warning disable CA1848 // Use LoggerMessage delegates - trace level doesn't need performance optimization
-                    _logger.LogTrace(ex, "Basic authentication failed");
-#pragma warning restore CA1848
-                }
-#pragma warning restore CA1031 // Do not catch general exception types
             }
+            catch (Exception ex)
+            {
+#pragma warning disable CA1848 // Use LoggerMessage delegates - trace level doesn't need performance optimization
+                _logger.LogTrace(ex, "Basic authentication failed");
+#pragma warning restore CA1848
+            }
+#pragma warning restore CA1031 // Do not catch general exception types
         }
 
         await _next(context).ConfigureAwait(false);

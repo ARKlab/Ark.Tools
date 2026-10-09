@@ -58,13 +58,12 @@ public class ArkProblemDetailsOptionsSetup
 
         options.OnBeforeWriteDetails = (ctx, details) =>
         {
-            if (_environment.IsProduction() && (details.Status >= 400 && details.Status < 500))
+            if (_environment.IsProduction() && (details.Status >= 400 && details.Status < 500)
+                && details.Extensions.ContainsKey(options.ExceptionDetailsPropertyName))
             {
-                if (details.Extensions.ContainsKey(options.ExceptionDetailsPropertyName))
-                {
-                    details.Extensions.Remove(options.ExceptionDetailsPropertyName);
-                }
+                details.Extensions.Remove(options.ExceptionDetailsPropertyName);
             }
+
 
             if (details is ArkProblemDetails apd)
             {

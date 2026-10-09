@@ -21,18 +21,12 @@ public class TestableStateProvider<TExtensions> : IStateProvider<TExtensions>
     /// </summary>
     public Task<IEnumerable<ResourceState<TExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
     {
-        IEnumerable<ResourceState<TExtensions>> res;
-
-        if (resourceIds == null)
-        {
-            res = _store.Values.Where(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal));
-        }
-        else
-        {
-            res = resourceIds
+        var res = resourceIds == null
+            ? _store.Values.Where(s => string.Equals(s.Tenant, tenant, StringComparison.Ordinal))
+            : resourceIds
                 .Where(r => _store.ContainsKey((tenant, r)))
                 .Select(r => _store[(tenant, r)]);
-        }
+
 
         return Task.FromResult(res.AsEnumerable());
     }

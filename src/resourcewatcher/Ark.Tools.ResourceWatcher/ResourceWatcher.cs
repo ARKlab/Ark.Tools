@@ -73,7 +73,9 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
             }
             catch (TaskCanceledException)
             {
+                // Expected when Stop() cancels the watcher loop: shutdown is not a failure.
             }
+
         }
         , _cts.Token).FailFastOnException();
     }
