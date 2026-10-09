@@ -72,7 +72,7 @@ public static class RavenDbStoreConfigurationExtensions
         var collection = AggregateHelper<TAggregate>.Name;
         var database = await store.Maintenance.Server.SendAsync(new GetDatabaseRecordOperation(store.Database)).ConfigureAwait(false);
         var revision = database.Revisions;
-        if ((revision.Collections.ContainsKey(collection) && revision.Collections[collection].Disabled == true)
+        if ((revision.Collections.TryGetValue(collection, out var collectionConfiguration) && collectionConfiguration.Disabled == true)
             || revision.Default.Disabled)
             return;
 
