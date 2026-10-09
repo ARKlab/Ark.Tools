@@ -1156,6 +1156,12 @@ public sealed class GeneratorSnapshotTests
                 public static bool TryParse(ref string value, out RefCode result) { result = default; return true; }
                 public static bool TryParse<TArg>(string value, out RefCode result) { result = default; return true; }
             }
+            public readonly struct ShelfCode : IParsable<ShelfCode>
+            {
+                public static bool TryParse(string? value, out ShelfCode result) { result = default; return true; }
+                static ShelfCode IParsable<ShelfCode>.Parse(string s, IFormatProvider? provider) => default;
+                static bool IParsable<ShelfCode>.TryParse(string? s, IFormatProvider? provider, out ShelfCode result) { result = default; return true; }
+            }
             [HttpEndpoint("GET", "/books/{codes}")]
             public sealed record ListBooks : IQuery<string>
             {
@@ -1190,6 +1196,7 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public DateTime From { get; init; }
                 [HttpQuery] public DateTimeOffset At { get; init; }
                 [HttpQuery] public DateOnly Day { get; init; }
+                [HttpQuery] public ShelfCode Shelf { get; init; }
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
@@ -1221,6 +1228,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("global::System.DateTime.TryParse(_raw_From, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces | global::System.Globalization.DateTimeStyles.AdjustToUniversal, out var _value_From)");
         result.Generated.Should().Contain("global::System.DateTimeOffset.TryParse(_raw_At, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces | global::System.Globalization.DateTimeStyles.AssumeUniversal, out var _value_At)");
         result.Generated.Should().Contain("global::System.DateOnly.TryParse(_raw_Day, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces, out var _value_Day)");
+        // An explicit IParsable<T> implementation wins over a public TryParse(string, out T), as in Minimal API.
+        result.Generated.Should().Contain("!global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<global::ShelfCode>(_raw_Shelf, out var _value_Shelf)");
         // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
         result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
         // An empty nullable value sets the property to null, as Minimal API does.

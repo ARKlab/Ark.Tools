@@ -526,11 +526,12 @@ internal static class AzureFunctionsEndpointParser
         if (tryParse.Any(static method => method.Parameters.Length == 3
             && HttpStringBinding.IsFormatProviderParameter(method.Parameters[1])))
             return ConversionKind.TryParseWithProvider;
-        if (tryParse.Any(static method => method.Parameters.Length == 2))
-            return ConversionKind.TryParse;
+        // As in Minimal API, an explicit IParsable<T> implementation wins over a public TryParse(string, out T).
         if (type.AllInterfaces.Any(candidate => candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
             && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], type)))
             return ConversionKind.Parsable;
+        if (tryParse.Any(static method => method.Parameters.Length == 2))
+            return ConversionKind.TryParse;
         return ConversionKind.TypeConverter;
     }
 
