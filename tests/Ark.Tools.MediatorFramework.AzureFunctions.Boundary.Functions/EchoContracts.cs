@@ -34,6 +34,10 @@ public sealed record EchoQuery : IQuery<EchoQuery, EchoResponse>
     /// <summary>Gets the count, validated to be within 1-100.</summary>
     [HttpQuery]
     public int Count { get; init; } = 1;
+
+    /// <summary>Gets the scores, bound from every value of the query parameter.</summary>
+    [HttpQuery]
+    public int[] Scores { get; init; } = [];
 }
 
 /// <summary>Request exercising JSON body binding on a record contract.</summary>

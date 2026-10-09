@@ -1131,8 +1131,8 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void AzureFunctionsGeneratorRejectsRouteAndQueryTypesThatCannotBeConvertedFromAString()
     {
-        // ArkTypeConverter converts a single string, so no array, collection or complex object binds; a query string
-        // collection receives every value instead.
+        // ArkTypeConverter converts a single string, so no collection or complex object binds; a query string
+        // collection or an array of convertible elements receives every value instead.
         const string source =
             """
             using System;
@@ -1150,7 +1150,6 @@ public sealed class GeneratorSnapshotTests
             {
                 [HttpRoute] public string[] Codes { get; init; } = [];
                 [HttpQuery] public List<int> Ids { get; init; } = [];
-                [HttpQuery] public int[] Years { get; init; } = [];
                 [HttpQuery] public Filter? Filter { get; init; }
                 [HttpQuery] public Guid? Owner { get; init; }
                 [HttpQuery] public Queue<string> Pending { get; init; } = new();
@@ -1170,13 +1169,15 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public string[] Names { get; init; } = [];
                 [HttpQuery] public List<string> Tags { get; init; } = [];
                 [HttpQuery] public int Skip { get; init; }
+                [HttpQuery] public int[] Years { get; init; } = [];
+                [HttpQuery] public Guid?[] Owners { get; init; } = [];
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Codes", "Ids", "Years", "Filter", "Pending", "Keys", "Stack", "Labels");
+            .Should().BeEquivalentTo("Codes", "Ids", "Filter", "Pending", "Keys", "Stack", "Labels");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
             .GetMessage(CultureInfo.InvariantCulture)
@@ -1190,6 +1191,9 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain(
             "body = body with { Tags = new global::System.Collections.Generic.List<string>(global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Tags))) };");
         result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>(_qs_Skip");
+        result.Generated.Should().Contain("var _query_Years = new int[_qs_Years.Count];");
+        result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>(_qs_Years[_i_Years], out _query_Years[_i_Years])");
+        result.Generated.Should().Contain("var _query_Owners = new global::System.Guid?[_qs_Owners.Count];");
     }
 
     [TestMethod]

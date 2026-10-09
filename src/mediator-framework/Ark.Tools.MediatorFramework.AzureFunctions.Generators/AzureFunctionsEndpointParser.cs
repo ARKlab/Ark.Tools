@@ -44,6 +44,7 @@ internal enum HandlerKind
 /// <param name="IsAttachmentCollection">Whether the property is an attachment collection.</param>
 /// <param name="IsStringCollection">Whether the property type is one of the supported string collection shapes that receive every value of a query parameter.</param>
 /// <param name="IsNotConvertible">Whether no type converter converts a single string to the property type: an array, a collection or a complex object.</param>
+/// <param name="ArrayElementTypeFullName">The fully qualified element type of an array, other than <c>string[]</c>, whose elements convert from a string, as Minimal API binds them from every value of a query parameter; otherwise <see langword="null"/>.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,
@@ -59,6 +60,7 @@ internal readonly record struct PropertySpec(
     bool IsAttachmentCollection,
     bool IsStringCollection,
     bool IsNotConvertible,
+    string? ArrayElementTypeFullName,
     LocationSpec? Location);
 
 /// <summary>A symbol-free description of an HTTP endpoint contract.</summary>
@@ -321,6 +323,11 @@ internal static class AzureFunctionsEndpointParser
                     isAttachmentCollection,
                     HttpStringBinding.IsStringCollection(p.Type),
                     HttpStringBinding.IsCollection(p.Type) || HttpStringBinding.IsComplexOrComplexCollection(p.Type),
+                    p.Type is IArrayTypeSymbol { Rank: 1 } array
+                        && array.ElementType.SpecialType != SpecialType.System_String
+                        && HttpStringBinding.IsStringBindable(p.Type)
+                        ? array.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                        : null,
                     LocationSpec._from(p));
             })
             .ToImmutableArray();

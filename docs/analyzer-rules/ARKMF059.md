@@ -104,11 +104,13 @@ For every verb, a route or `[HttpQuery]` value is converted from a single
 string with `ArkTypeConverter` at runtime, and an `[HttpQuery]` string
 collection of a supported shape (the same shapes as the Minimal API generator),
 such as `string[]`, `List<string>` or `IEnumerable<string>`, receives every
-value of the query parameter. The rule reports a route or
-`[HttpQuery]` property whose type is any other array or collection, or a
-complex object: no type converter converts a single string to it. Unlike the
-Minimal API generator, the Azure Functions generator does not bind arrays such
-as `int[]`.
+value of the query parameter. Like the Minimal API generator, it also binds an
+`[HttpQuery]` array whose elements convert from a string, such as `int[]`,
+`Guid[]` or an enum array, converting each value of the query parameter to one
+element; a value that does not convert fails the request with `400`. The rule
+reports a route or `[HttpQuery]` property whose type is any other array or
+collection, or a complex object: no type converter converts a single string to
+it. A route property is never an array or a collection.
 
 The diagnostic is reported at the property. When the contract is in a
 referenced assembly, it is reported at the `[assembly: HttpHost]` attribute
@@ -172,9 +174,7 @@ public sealed record AddCopies : IRequest<AddCopies, int>
     public Guid BookId { get; init; }
 
     [HttpQuery]
-    // ARKMF059: use int[] on Minimal API; Azure Functions binds no int[],
-    // so use string[] and parse the values in the handler
-    public List<int> Shelves { get; init; } = [];
+    public List<int> Shelves { get; init; } = []; // ARKMF059: use int[]
 }
 ```
 

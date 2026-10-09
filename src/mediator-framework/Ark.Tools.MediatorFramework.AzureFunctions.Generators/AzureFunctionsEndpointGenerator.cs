@@ -289,7 +289,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     // A GET, HEAD or DELETE function binds only route and [HttpQuery] properties: report any other client
     // property instead of silently dropping it. For every verb, a route or query value is converted from a single
     // string with ArkTypeConverter, which converts no array, collection or complex object; only a query string
-    // collection, which receives every value, is accepted among them.
+    // collection or an array of convertible elements, which receive every value, is accepted among them.
     private static bool _reportUnboundProperties(SourceProductionContext context, in EndpointSpec endpoint, Location hostLocation)
     {
         var noBody = endpoint.Verb is "GET" or "HEAD" or "DELETE";
@@ -297,8 +297,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         foreach (var property in endpoint.Properties.Where(static property => !property.IsServerSet))
         {
             var bound = property.IsRoute || property.IsQuery;
+            var queryCollection = !property.IsRoute && (property.IsStringCollection || property.ArrayElementTypeFullName is not null);
             if (bound
-                ? !property.IsNotConvertible || (!property.IsRoute && property.IsStringCollection)
+                ? !property.IsNotConvertible || queryCollection
                 : !noBody || property.IsETag)
                 continue;
 
@@ -464,6 +465,19 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             else if (prop.IsStringCollection)
             {
                 _emitPropertyAssignment(source, endpoint, "            ", prop.Name, _stringCollection(prop, "_qs_" + prop.Name));
+            }
+            else if (prop.ArrayElementTypeFullName is { } element)
+            {
+                // Mirrors Minimal API: every value of the query parameter converts to one array element.
+                var varName = "_query_" + prop.Name;
+                var index = "_i_" + prop.Name;
+                source.Append("            var ").Append(varName).Append(" = new ").Append(element).Append("[_qs_").Append(prop.Name).AppendLine(".Count];");
+                source.Append("            for (var ").Append(index).Append(" = 0; ").Append(index).Append(" < _qs_").Append(prop.Name).Append(".Count; ").Append(index).AppendLine("++)");
+                source.AppendLine("            {");
+                source.Append("                if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(element).Append(">(_qs_").Append(prop.Name).Append('[').Append(index).Append("], out ").Append(varName).Append('[').Append(index).AppendLine("]))");
+                source.Append("                    return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '").Append(prop.Name).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+                source.AppendLine("            }");
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, varName);
             }
             else
             {
