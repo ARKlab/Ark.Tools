@@ -22,7 +22,7 @@ public sealed class AzureFunctionsHttpTests
     public async Task ReadsAndSanitizesMultipartAttachment()
     {
         var context = new DefaultHttpContext();
-        var content = new MemoryStream("payload"u8.ToArray());
+        using var content = new MemoryStream("payload"u8.ToArray());
         var form = new FormFile(content, 0, content.Length, "file", "../unsafe.txt")
         {
             Headers = new HeaderDictionary(),

@@ -23,7 +23,10 @@ public class HostedService : BackgroundService
             {
                 await _do(stoppingToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // Shutdown requested: the loop condition ends the service.
+            }
             catch (Exception e)
             {
                 _logger.Error(e, CultureInfo.InvariantCulture, "Run failed");
@@ -33,7 +36,10 @@ public class HostedService : BackgroundService
             {
                 await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // Shutdown requested: the loop condition ends the service.
+            }
         }
 
     }

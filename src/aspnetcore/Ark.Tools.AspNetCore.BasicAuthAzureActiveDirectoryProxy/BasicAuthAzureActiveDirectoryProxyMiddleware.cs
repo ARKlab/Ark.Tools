@@ -53,68 +53,63 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     {
         System.Net.Http.Headers.AuthenticationHeaderValue? authHeader;
 
-        if (System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Authorization"], out authHeader)
+        if ((System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Authorization"], out authHeader)
             || System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["WWW-Authenticate"], out authHeader)
-            || System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Proxy-Authenticate"], out authHeader)
-            )
+            || System.Net.Http.Headers.AuthenticationHeaderValue.TryParse(context.Request.Headers["Proxy-Authenticate"], out authHeader))
+            && "Basic".Equals(authHeader.Scheme, StringComparison.OrdinalIgnoreCase))
         {
-
-            if ("Basic".Equals(authHeader.Scheme, StringComparison.OrdinalIgnoreCase))
+            try
             {
-                try
+                string parameter = Encoding.UTF8.GetString(
+                                      Convert.FromBase64String(
+                                            authHeader.Parameter ?? string.Empty));
+
+                var span = parameter.AsSpan();
+                var colonIndex = span.IndexOf(':');
+
+                if (colonIndex > 0 && colonIndex < span.Length - 1)
                 {
-                    string parameter = Encoding.UTF8.GetString(
-                                          Convert.FromBase64String(
-                                                authHeader.Parameter ?? string.Empty));
+                    var usernameSpan = span[..colonIndex];
+                    var passwordSpan = span[(colonIndex + 1)..];
 
-                    var span = parameter.AsSpan();
-                    var colonIndex = span.IndexOf(':');
-
-                    if (colonIndex > 0 && colonIndex < span.Length - 1)
+                    if (!usernameSpan.IsWhiteSpace() && !passwordSpan.IsWhiteSpace())
                     {
-                        var usernameSpan = span[..colonIndex];
-                        var passwordSpan = span[(colonIndex + 1)..];
+                        string username = usernameSpan.ToString();
+                        string password = passwordSpan.ToString();
 
-                        if (!usernameSpan.IsWhiteSpace() && !passwordSpan.IsWhiteSpace())
-                        {
-                            string username = usernameSpan.ToString();
-                            string password = passwordSpan.ToString();
+                        using var content = new FormUrlEncodedContent(
+                            [
+                                new KeyValuePair<string, string>("resource", _config.Resource ?? string.Empty),
+                            new KeyValuePair<string, string>("client_id", _config.ProxyClientId ?? string.Empty),
+                            new KeyValuePair<string, string>("grant_type", "password"),
+                            new KeyValuePair<string, string>("username", username),
+                            new KeyValuePair<string, string>("password", password),
+                            new KeyValuePair<string, string>("scope", "openid"),
+                            new KeyValuePair<string, string>("client_secret", _config.ProxyClientSecret ?? string.Empty),
+                        ]);
 
-                            using var content = new FormUrlEncodedContent(
-                                [
-                                    new KeyValuePair<string, string>("resource", _config.Resource ?? string.Empty),
-                                new KeyValuePair<string, string>("client_id", _config.ProxyClientId ?? string.Empty),
-                                new KeyValuePair<string, string>("grant_type", "password"),
-                                new KeyValuePair<string, string>("username", username),
-                                new KeyValuePair<string, string>("password", password),
-                                new KeyValuePair<string, string>("scope", "openid"),
-                                new KeyValuePair<string, string>("client_secret", _config.ProxyClientSecret ?? string.Empty),
-                            ]);
+                        var url = new Uri($"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token");
 
-                            var url = new Uri($"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token");
+                        var result = await _retry
+                            .ExecuteAsync(async ct =>
+                            {
+                                using var res = await _client.PostAsync(url, content, context.RequestAborted).ConfigureAwait(false);
+                                res.EnsureSuccessStatusCode();
 
-                            var result = await _retry
-                                .ExecuteAsync(async ct =>
-                                {
-                                    using var res = await _client.PostAsync(url, content, context.RequestAborted).ConfigureAwait(false);
-                                    res.EnsureSuccessStatusCode();
+                                var payload = await res.Content.ReadAsStringAsync(context.RequestAborted).ConfigureAwait(false);
+                                return JsonSerializer.Deserialize<OAuthResult>(payload);
+                            }, context.RequestAborted).ConfigureAwait(false);
 
-                                    var payload = await res.Content.ReadAsStringAsync(context.RequestAborted).ConfigureAwait(false);
-                                    return JsonSerializer.Deserialize<OAuthResult>(payload);
-                                }, context.RequestAborted).ConfigureAwait(false);
-
-                            context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";
-                        }
+                        context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";
                     }
                 }
-                catch (Exception ex)
-                {
-#pragma warning disable CA1848 // Use LoggerMessage delegates - trace level doesn't need performance optimization
-                    _logger.LogTrace(ex, "Basic authentication failed");
-#pragma warning restore CA1848
-                }
             }
-
+            catch (Exception ex)
+            {
+#pragma warning disable CA1848 // Use LoggerMessage delegates - trace level doesn't need performance optimization
+                _logger.LogTrace(ex, "Basic authentication failed");
+#pragma warning restore CA1848
+            }
         }
 
         await _next(context).ConfigureAwait(false);

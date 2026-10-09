@@ -68,6 +68,7 @@ public static class TestHost
 #pragma warning disable ERP022 // Exit point swallows an unobserved exception - intentional cleanup
         catch
         {
+            // Best-effort flush: a logging failure must not fail the scenario
         }
 #pragma warning restore ERP022
     }

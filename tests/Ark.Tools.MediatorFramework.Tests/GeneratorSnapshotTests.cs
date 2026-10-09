@@ -4456,7 +4456,7 @@ public sealed class GeneratorSnapshotTests
         var directory = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         var safeAssemblyName = Path.GetFileName(assemblyName);
-        var assemblyPath = Path.Combine(directory, safeAssemblyName + ".dll");
+        var assemblyPath = Path.Join(directory, safeAssemblyName + ".dll");
         await File.WriteAllBytesAsync(assemblyPath, _createMetadataImage(assemblyName, source)).ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.ChangeExtension(assemblyPath, ".xml"), xmlDocumentation).ConfigureAwait(false);
         return MetadataReference.CreateFromFile(assemblyPath);

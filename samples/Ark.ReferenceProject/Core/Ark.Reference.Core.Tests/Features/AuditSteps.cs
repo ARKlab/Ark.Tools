@@ -65,16 +65,11 @@ internal sealed class AuditSteps
 
         var expected = table.CreateInstance<Ping.V1.Output>();
 
-        Ping.V1.Output? res;
-        if (choice == "current")
-        {
-            res = changes?.Cur?.ToObject<AuditedEntityDto<Ping.V1.Output>>()?.Entity;
-        }
-        else
-        {
-            res = changes?.Pre?.ToObject<AuditedEntityDto<Ping.V1.Output>>()?.Entity;
-        }
+        var res = choice == "current"
+            ? changes?.Cur?.ToObject<AuditedEntityDto<Ping.V1.Output>>()?.Entity
+            : changes?.Pre?.ToObject<AuditedEntityDto<Ping.V1.Output>>()?.Entity;
 
+        res.Should().NotBeNull();
         res.Should().BeEquivalentTo(expected, static options => options
             .Excluding(static p => p.Id)
             .Excluding(static p => p.AuditId)

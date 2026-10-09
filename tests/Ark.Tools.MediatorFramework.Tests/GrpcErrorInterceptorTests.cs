@@ -108,7 +108,7 @@ public sealed class GrpcErrorInterceptorTests
         {
             throw new RpcException(new Status(StatusCode.Aborted, "aborted"));
         }
-        catch (Exception exception)
+        catch (RpcException exception)
         {
             sourceException = exception;
         }
@@ -199,7 +199,7 @@ internal static class GrpcErrorInterceptorTestExtensions
         {
             throw new InvalidOperationException("grpc exception detail");
         }
-        catch (Exception caught)
+        catch (InvalidOperationException caught)
         {
             exception = caught;
         }

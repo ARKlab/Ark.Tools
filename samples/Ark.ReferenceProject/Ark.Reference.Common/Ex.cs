@@ -26,10 +26,9 @@ public static partial class Ex
             user.FindAll(static x => x.Type == PermissionsConstants.PermissionKey).Select(static x => x.Value)
             ?? Enumerable.Empty<string>();
 
-        if (permissionClaim.Any(static a => a.Contains(PermissionsConstants.AdminGrant, StringComparison.Ordinal)))
-            return PermissionsConstants.PermissionsMap.Values;
-        else
-            return permissionClaim.Select(static x => PermissionsConstants.PermissionsMap[x]);
+        return permissionClaim.Any(static a => a.Contains(PermissionsConstants.AdminGrant, StringComparison.Ordinal))
+            ? PermissionsConstants.PermissionsMap.Values
+            : permissionClaim.Select(static x => PermissionsConstants.PermissionsMap[x]);
     }
 
     //***************************************************************************************************************
@@ -91,10 +90,9 @@ public static partial class Ex
 
     public static decimal? Round(this decimal? value, int roundDecimals)
     {
-        if (value.HasValue)
-            return Math.Round(value.Value, roundDecimals, MidpointRounding.AwayFromZero);
-        else
-            return null;
+        return value.HasValue
+            ? Math.Round(value.Value, roundDecimals, MidpointRounding.AwayFromZero)
+            : null;
     }
 
     /// <summary>

@@ -53,7 +53,10 @@ public static partial class Ex
                                     "Configuration cannot be modified after it has been built.",
                                     StringComparison.Ordinal))
                             {
+                                // The host already built its OpenTelemetry configuration, so the
+                                // ResourceWatcher source and meter can no longer be added: skip registration.
                             }
+
                         }));
             });
     }

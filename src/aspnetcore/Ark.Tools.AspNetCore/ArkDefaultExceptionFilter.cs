@@ -18,12 +18,10 @@ public sealed class ArkDefaultExceptionFilterAttribute : ExceptionFilterAttribut
 
     private static void _log(ExceptionContext context)
     {
-        Logger logger;
+        var logger = context.ActionDescriptor?.DisplayName != null
+            ? LogManager.GetLogger(context.ActionDescriptor.DisplayName)
+            : LogManager.GetCurrentClassLogger();
 
-        if (context.ActionDescriptor?.DisplayName != null)
-            logger = LogManager.GetLogger(context.ActionDescriptor.DisplayName);
-        else
-            logger = LogManager.GetCurrentClassLogger();
 
         Exception e = context.Exception;
         var requestUri = context.HttpContext?.Request?.Path ?? new PathString();
