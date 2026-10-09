@@ -23,8 +23,9 @@ internal static class HttpStringBinding
     /// <returns><see langword="true"/> when ASP.NET binds the type from a string.</returns>
     public static bool IsStringBindable(ITypeSymbol type)
     {
+        // ASP.NET binds only single-dimensional arrays from repeated values.
         if (type is IArrayTypeSymbol array)
-            return array.ElementType is not IArrayTypeSymbol && IsStringBindable(array.ElementType);
+            return array.Rank == 1 && array.ElementType is not IArrayTypeSymbol && IsStringBindable(array.ElementType);
 
         var targetType = type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
             ? nullable.TypeArguments[0]
@@ -33,6 +34,33 @@ internal static class HttpStringBinding
             || targetType.AllInterfaces.Any(candidate =>
                 candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
                 && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], targetType));
+    }
+
+    /// <summary>
+    /// Gets whether the method has the shape of a <c>TryParse</c> a host can call: public, static, non-generic,
+    /// returning <see langword="bool"/>, with a by-value <c>string</c> first parameter and an <c>out</c> last one.
+    /// </summary>
+    /// <param name="method">The candidate method.</param>
+    /// <returns><see langword="true"/> for a callable <c>TryParse</c> shape.</returns>
+    public static bool IsTryParseShape(IMethodSymbol method)
+    {
+        return method.IsStatic
+            && method.Arity == 0
+            && method.DeclaredAccessibility == Accessibility.Public
+            && method.ReturnType.SpecialType == SpecialType.System_Boolean
+            && method.Parameters.Length is 2 or 3
+            && method.Parameters[0].Type.SpecialType == SpecialType.System_String
+            && method.Parameters[0].RefKind == RefKind.None
+            && method.Parameters[^1].RefKind == RefKind.Out;
+    }
+
+    /// <summary>Gets whether the parameter is a by-value <c>IFormatProvider</c>, nullable or not.</summary>
+    /// <param name="parameter">The candidate parameter.</param>
+    /// <returns><see langword="true"/> for a by-value <c>IFormatProvider</c> parameter.</returns>
+    public static bool IsFormatProviderParameter(IParameterSymbol parameter)
+    {
+        return parameter.RefKind == RefKind.None
+            && parameter.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString() == "System.IFormatProvider";
     }
 
     /// <summary>Gets whether a single value of the type has no public static <c>TryParse(string, ...)</c>.</summary>
@@ -53,14 +81,8 @@ internal static class HttpStringBinding
 
         return !targetType.GetMembers("TryParse")
             .OfType<IMethodSymbol>()
-            .Any(method => method.IsStatic
-                && method.DeclaredAccessibility == Accessibility.Public
-                && method.ReturnType.SpecialType == SpecialType.System_Boolean
-                && method.Parameters.Length is 2 or 3
-                && method.Parameters[0].Type.SpecialType == SpecialType.System_String
-                && (method.Parameters.Length == 2
-                    || method.Parameters[1].Type.ToDisplayString() == "System.IFormatProvider")
-                && method.Parameters[^1].RefKind == RefKind.Out
+            .Any(method => IsTryParseShape(method)
+                && (method.Parameters.Length == 2 || IsFormatProviderParameter(method.Parameters[1]))
                 && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, targetType));
     }
 
@@ -75,7 +97,7 @@ internal static class HttpStringBinding
     public static bool IsStringCollection(ITypeSymbol type)
         => type switch
         {
-            IArrayTypeSymbol array => array.ElementType.SpecialType == SpecialType.System_String,
+            IArrayTypeSymbol array => array.Rank == 1 && array.ElementType.SpecialType == SpecialType.System_String,
             INamedTypeSymbol named when named.ToDisplayString() == "Microsoft.Extensions.Primitives.StringValues" => true,
             INamedTypeSymbol { TypeArguments.Length: 1 } named => named.TypeArguments[0].SpecialType == SpecialType.System_String
                 && _stringCollectionShapes.Contains(named.OriginalDefinition.ToDisplayString()),

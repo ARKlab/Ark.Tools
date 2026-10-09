@@ -520,16 +520,11 @@ internal static class AzureFunctionsEndpointParser
 
         var tryParse = type.GetMembers("TryParse")
             .OfType<IMethodSymbol>()
-            .Where(method => method.IsStatic
-                && method.DeclaredAccessibility == Accessibility.Public
-                && method.ReturnType.SpecialType == SpecialType.System_Boolean
-                && method.Parameters.Length is 2 or 3
-                && method.Parameters[0].Type.SpecialType == SpecialType.System_String
-                && method.Parameters[^1].RefKind == RefKind.Out
+            .Where(method => HttpStringBinding.IsTryParseShape(method)
                 && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, type))
             .ToArray();
         if (tryParse.Any(static method => method.Parameters.Length == 3
-            && method.Parameters[1].Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString() == "System.IFormatProvider"))
+            && HttpStringBinding.IsFormatProviderParameter(method.Parameters[1])))
             return ConversionKind.TryParseWithProvider;
         if (tryParse.Any(static method => method.Parameters.Length == 2))
             return ConversionKind.TryParse;
