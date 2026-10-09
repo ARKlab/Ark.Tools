@@ -3044,7 +3044,8 @@ public sealed class GeneratorSnapshotTests
     public void MinimalApiGeneratorKeepsEveryAssignmentWhenItBindsServerSetContractsExplicitly()
     {
         // A positional record keeps its non-constructor properties in an object initializer, and a download record
-        // resets its server-set properties, including a required one, which would otherwise not compile.
+        // resets its server-set properties, including a required one, which would otherwise not compile. A class
+        // resets an init-only server-set property in its initializer only.
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.Tools.MediatorFramework;
@@ -3061,11 +3062,19 @@ public sealed class GeneratorSnapshotTests
                 public int Year { get; init; }
                 [ServerSet] public required string RequestedBy { get; init; }
             }
+            [HttpEndpoint("GET", "/shelves/{id}")]
+            public sealed class GetShelf : IQuery<string>
+            {
+                [HttpRoute] public int Id { get; set; }
+                [ServerSet] public string Tenant { get; init; } = string.Empty;
+            }
             """);
 
         result.Diagnostics.Should().BeEmpty();
         result.Generated.Should().Contain("var request = new global::SearchBooks(Term) { Page = Page, Owner = default! };");
         result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
+        result.Generated.Should().Contain("var request = new global::GetShelf { Id = Id, Tenant = default! };");
+        result.Generated.Should().NotContain("request.Tenant = default!;");
     }
 
     [TestMethod]

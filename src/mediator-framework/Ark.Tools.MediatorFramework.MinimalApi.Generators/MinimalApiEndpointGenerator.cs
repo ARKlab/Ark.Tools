@@ -1006,7 +1006,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                                 else
                                     sb.AppendLine("                var request = body;");
                             }
-                            EmitServerSetAssignments(sb, e, "request");
+                            if (!explicitBindings)
+                                EmitServerSetAssignments(sb, e, "request");
                             EmitETagAssignment(sb, e);
                             sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
                             sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
@@ -1065,7 +1066,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                         {
                             sb.AppendLine("                request = request with { " + string.Join(", ", e.ServerSetProperties.Select(property => property + " = default!")) + " };");
                         }
-                        EmitServerSetAssignments(sb, e, "request");
+                        // An explicitly constructed request already resets its server-set properties in its initializer.
+                        if (!explicitBindings)
+                            EmitServerSetAssignments(sb, e, "request");
                         EmitETagAssignment(sb, e);
                         sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
                         sb.AppendLine("                var result = await processor.ExecuteAsync<" + e.TypeFullName + ", " + e.Response + ">(request, cancellationToken).ConfigureAwait(false);");
@@ -1366,7 +1369,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Concat(endpoint.ServerSetProperties.Select(property => property + " = default!")));
                 sb.AppendLine("                var request = " + ConstructEnvelope(endpoint, assignments) + ";");
             }
-            EmitServerSetAssignments(sb, endpoint, "request");
+            else
+            {
+                EmitServerSetAssignments(sb, endpoint, "request");
+            }
             EmitETagAssignment(sb, endpoint);
             sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<" + processorService + ">(httpContext.RequestServices);");
             sb.AppendLine("                var result = await processor.ExecuteAsync<" + endpoint.TypeFullName + ", " + endpoint.Response + ">(request, cancellationToken).ConfigureAwait(false);");
@@ -1425,7 +1431,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             {
                 sb.AppendLine("                request = request with { " + string.Join(", ", endpoint.ServerSetProperties.Select(property => property + " = default!")) + " };");
             }
-            EmitServerSetAssignments(sb, endpoint, "request");
+            if (!explicitBindings)
+                EmitServerSetAssignments(sb, endpoint, "request");
             sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(httpContext.RequestServices);");
             sb.AppendLine("                await processor.ExecuteAsync<" + endpoint.TypeFullName + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                return global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
