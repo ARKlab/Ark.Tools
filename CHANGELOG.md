@@ -6,10 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0-beta13] - 2026-10-09
+
 ### Added
 
 - Warning `ARKMSG029` for a `[Message]` or `[Event]` contract with no explicit name whose type name is only a version, such as a nested `V1`, because its default logical name (`ark.v1`) is meaningless on the wire and collides with other such contracts (`ARKMSG020`). Set `Name` on the attribute; the default naming rule is unchanged.
-- `ArkAdaptiveSampler` has a constructor that accepts a `TimeProvider`, so tests can control sampling time.
 - `ArkGenerateComplianceSqlStandalone` returns the generated `policy-*.compliance.sql` files, so database projects can collect them without passing global properties. See the updated database project example in the SQL policies guide.
 - `InMemoryMessagingTransport.GetPendingCount` reports unsettled deliveries per queue, so tests can wait for in-memory messaging to drain.
 - Native messaging processes request contracts (`IRequest<TSelf, TResponse>`) listed in a participant's `Processes`: the request handler runs and the response is discarded.
@@ -47,7 +48,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `AddArkAzureMonitorOpenTelemetry` keeps `ArkAdaptiveSampler` when an Application Insights connection string is configured. `UseAzureMonitor` used to replace it with its own sampler, so `ApplicationInsights:ArkAdaptiveSampler` settings and the noise pre-filter had no effect in production.
 - The API-surface snapshot records the fields of contracts marked only with `[Message]` or `[Event]`, so renaming or removing a field of such a message fails the API-surface gate again. To accept the new entries, build with `-p:EmitCompilerGeneratedFiles=true`, review the snapshot in the generated `ArkApiSurface.g.cs` under `obj/`, and copy it over `ArkApiSurface.txt`. `ArkApiSurface.current.txt` is not refreshed while ARKAPI002 fails the build.
 - Azure Functions Service Bus hosts read an optional `<connection key>:administrationConnectionString` setting for resource provisioning, so trigger apps can provision against the local Service Bus emulator, which serves administration on a separate port.
-- `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.
 - OpenTelemetry failure promotion no longer treats every HTTP 4xx span as a failure. A 4xx span is promoted only when its status is `Error`, so `WebApi4xxAsSuccessProcessor` (now registered before promotion) and application processors registered before the Ark setup can mark expected 4xx responses, such as Azure Storage 404 or 409, as successes. HTTP 5xx and gRPC error codes are still promoted unless the span status is `Ok`.
 - Disposing a service provider after the messaging outbox processor has started no longer throws `ObjectDisposedException`.
 - A Service Bus transport selected with `UseTransport(transport => transport.UseServiceBus(client))` is now disposed, together with its client, when the service provider is disposed. It used to stay open after host shutdown. A transport passed with `Use(transport)` or `UseTransport(transport)` is still owned by the caller.
@@ -69,3 +69,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - A Minimal API `GET` or `DELETE` endpoint that returns an `IArkAttachment`, for a record without route or `[HttpQuery]` properties, no longer lets a client set its `[ServerSet]` properties from the query string. The generated endpoint bound them and never reset them.
 - `[PolicyAuthorize]` is enforced again on queries, requests and commands that implement only `IQuery<TResult>`, `IRequest<TResponse>` or `ICommand`. Since the self-referencing interfaces were introduced, `RegisterAuthorization` and `RegisterAuthorizationDecorator` silently skipped these contracts, so their handlers ran without the policy check. Upgrade if any contract with `[PolicyAuthorize]` does not implement `IQuery<TSelf, TResult>`, `IRequest<TSelf, TResponse>` or `ICommand<TSelf>`.
+
+## [7.0.0-beta12] - 2026-10-07
+
+### Added
+
+- `ArkAdaptiveSampler` has a constructor that accepts a `TimeProvider`, so tests can control sampling time.
+
+### Fixed
+
+- `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.
