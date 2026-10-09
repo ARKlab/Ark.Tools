@@ -16,8 +16,9 @@ namespace Ark.Tools.Nodatime.Tests;
 public class NodaTimeConverterRegistrationTests
 {
     /// <summary>
-    /// Looks the NodaTime types up before any test registers them, as other code may at startup:
-    /// <see cref="TypeDescriptor.RegisterType{T}"/> is ignored for a type already looked up.
+    /// Looks the NodaTime types up before registering them, as other code may at startup:
+    /// <see cref="TypeDescriptor.RegisterType{T}"/> is ignored for a type already looked up. Registering here, before
+    /// any test runs, keeps the parallel converter tests from racing the registration.
     /// </summary>
     /// <param name="context">The test context.</param>
     [AssemblyInitialize]
@@ -25,6 +26,7 @@ public class NodaTimeConverterRegistrationTests
     {
         _ = TypeDescriptor.GetConverter(typeof(LocalDate));
         _ = TypeDescriptor.GetConverter(typeof(LocalDate?));
+        NodaTimeConverter.Register();
     }
 
     [TestMethod]
