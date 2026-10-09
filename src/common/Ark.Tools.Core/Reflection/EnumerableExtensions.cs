@@ -145,17 +145,11 @@ public static partial class EnumerableExtensions
 
             if (initial)
             {
-                if (direction == SortDirection.Ascending)
-                    methodName = "OrderBy";
-                else
-                    methodName = "OrderByDescending";
+                methodName = direction == SortDirection.Ascending ? "OrderBy" : "OrderByDescending";
             }
             else
             {
-                if (direction == SortDirection.Ascending)
-                    methodName = "ThenBy";
-                else
-                    methodName = "ThenByDescending";
+                methodName = direction == SortDirection.Ascending ? "ThenBy" : "ThenByDescending";
             }
 
             object? comparer = type == typeof(OffsetDateTime)

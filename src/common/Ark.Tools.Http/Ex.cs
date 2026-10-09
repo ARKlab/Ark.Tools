@@ -26,10 +26,9 @@ public static partial class Ex
             .WithAutoRedirect(true)
             .WithSettings(s =>
             {
-                if (!useNewtonsoftJson)
-                    s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
-                else
-                    s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
+                s.JsonSerializer = !useNewtonsoftJson
+                    ? new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions)
+                    : new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
             })
             ;
     }
@@ -45,10 +44,9 @@ public static partial class Ex
             .WithAutoRedirect(true)
             .WithSettings(s =>
             {
-                if (!useNewtonsoftJson)
-                    s.JsonSerializer = new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions);
-                else
-                    s.JsonSerializer = new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
+                s.JsonSerializer = !useNewtonsoftJson
+                    ? new DefaultJsonSerializer(ArkSerializerOptions.JsonOptions)
+                    : new Flurl.Http.Newtonsoft.NewtonsoftJsonSerializer(ArkDefaultJsonSerializerSettings.Instance);
             })
             ;
     }

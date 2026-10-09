@@ -87,10 +87,7 @@ public class EnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
 
     public bool CanCompare(object actualValue)
     {
-        if (actualValue == null)
-            return false;
-        else
-            return _isEnum(actualValue.GetType());
+        return actualValue != null && _isEnum(actualValue.GetType());
     }
 
     public bool Compare(string expectedValue, object actualValue)

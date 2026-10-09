@@ -34,16 +34,11 @@ public static partial class Ex
             {
                 o.ApplicationVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
 
-                if (hasValidConnectionString)
-                {
-                    o.ConnectionString = connectionString ?? $"InstrumentationKey={instrumentationKey}";
-                }
-                else
-                {
-                    // When no connection string is provided (e.g., in tests or local development),
-                    // use a dummy connection string to prevent SDK errors
-                    o.ConnectionString = "InstrumentationKey=00000000-0000-0000-0000-000000000000";
-                }
+                // When no connection string is provided (e.g., in tests or local development),
+                // use a dummy connection string to prevent SDK errors
+                o.ConnectionString = hasValidConnectionString
+                    ? connectionString ?? $"InstrumentationKey={instrumentationKey}"
+                    : "InstrumentationKey=00000000-0000-0000-0000-000000000000";
 
                 o.EnableDependencyTrackingTelemetryModule = true;
             });

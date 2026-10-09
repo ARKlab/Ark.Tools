@@ -24,10 +24,9 @@ public class LZ4MessagePackMediaTypeFormatter : MediaTypeFormatter
     {
         SupportedMediaTypes.Add(DefaultMediaType);
 
-        if (resolver == null)
-            _options = MessagePackSerializer.DefaultOptions;
-        else
-            _options = MessagePackSerializer.DefaultOptions.WithResolver(resolver);
+        _options = resolver == null
+            ? MessagePackSerializer.DefaultOptions
+            : MessagePackSerializer.DefaultOptions.WithResolver(resolver);
 
         _options = _options.WithCompression(MessagePackCompression.Lz4Block);
     }
