@@ -573,9 +573,12 @@ namespace Ark.Tools.MediatorFramework.Generators
             // other route or query property, for every verb, is bound explicitly.
             var noBody = verb is "GET" or "DELETE";
             var asParameters = noBody && (kind == HandlerKind.Command || !properties.Any(property => property.IsRoute || property.IsQuery));
+            // A client property is bound through its setter or, like [AsParameters] does, through the constructor.
+            var constructorParameters = ConstructorParameters(type, properties);
+            var constructorBound = new HashSet<string>(constructorParameters, StringComparer.OrdinalIgnoreCase);
             var unbound = new HashSet<string>(
                 properties.Where(property => noBody
-                        && property.HasPublicSetter
+                        && (property.HasPublicSetter || constructorBound.Contains(property.Name))
                         && (asParameters || (!property.IsRoute && !property.IsQuery && !property.IsETag)))
                     .Select(property => property.Name),
                 StringComparer.Ordinal);
@@ -627,7 +630,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             // query string, or fails at startup when it cannot bind their type from a string. Bind the client
             // properties explicitly instead, as [AsParameters] would: the check above already holds them to its rules.
             var boundProperties = asParameters && properties.Any(static property => property.IsServerSet)
-                ? properties.Select(static property => !property.IsRoute && !property.IsServerSet && property.HasPublicSetter
+                ? properties.Select(property => !property.IsRoute
+                        && !property.IsServerSet
+                        && (property.HasPublicSetter || constructorBound.Contains(property.Name))
                         ? property with { IsQuery = true }
                         : property)
                     .ToImmutableArray()
@@ -660,7 +665,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 etagProperties.Length == 0 ? null : etagProperties[0].Name,
                 responseETagProperties.Length == 0 ? null : responseETagProperties[0].Name,
                 type.IsRecord,
-                ConstructorParameters(type, properties),
+                constructorParameters,
                 properties.Where(property => property.IsServerSet && !property.HasPublicSetter)
                     .Select(property => property.Name)
                     .ToImmutableArray(),

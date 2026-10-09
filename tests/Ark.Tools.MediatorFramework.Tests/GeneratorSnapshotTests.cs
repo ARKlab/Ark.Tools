@@ -3046,7 +3046,7 @@ public sealed class GeneratorSnapshotTests
     {
         // A positional record keeps its non-constructor properties in an object initializer, and a download record
         // resets its server-set properties, including a required one, which would otherwise not compile. A class
-        // resets an init-only server-set property in its initializer only.
+        // resets an init-only server-set property in its initializer only, and a constructor-bound property stays bound.
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
             using Ark.Tools.MediatorFramework;
@@ -3069,6 +3069,12 @@ public sealed class GeneratorSnapshotTests
                 [HttpRoute] public int Id { get; set; }
                 [ServerSet] public string Tenant { get; init; } = string.Empty;
             }
+            [HttpEndpoint("GET", "/authors")]
+            public sealed class ListAuthors(string term) : IQuery<string>
+            {
+                public string Term { get; } = term;
+                [ServerSet] public string? Owner { get; set; }
+            }
             """);
 
         result.Diagnostics.Should().BeEmpty();
@@ -3076,6 +3082,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
         result.Generated.Should().Contain("var request = new global::GetShelf { Id = Id, Tenant = default! };");
         result.Generated.Should().NotContain("request.Tenant = default!;");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Term\")] string Term,");
+        result.Generated.Should().Contain("var request = new global::ListAuthors(Term) { Owner = default! };");
     }
 
     [TestMethod]
