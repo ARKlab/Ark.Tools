@@ -576,10 +576,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             // A client property is bound through its setter or, like [AsParameters] does, through the constructor.
             var constructorParameters = ConstructorParameters(type, properties);
             var constructorBound = new HashSet<string>(constructorParameters, StringComparer.OrdinalIgnoreCase);
+            bool IsClientBindable(PropertyModel property) => property.HasPublicSetter || constructorBound.Contains(property.Name);
+            bool IsBoundExplicitly(PropertyModel property) => property.IsRoute || property.IsQuery || property.IsETag;
             var unbound = new HashSet<string>(
-                properties.Where(property => noBody
-                        && (property.HasPublicSetter || constructorBound.Contains(property.Name))
-                        && (asParameters || (!property.IsRoute && !property.IsQuery && !property.IsETag)))
+                properties.Where(property => noBody && IsClientBindable(property) && (asParameters || !IsBoundExplicitly(property)))
                     .Select(property => property.Name),
                 StringComparer.Ordinal);
             var routeOrQuery = new HashSet<string>(
@@ -637,9 +637,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             // query string, or fails at startup when it cannot bind their type from a string. Bind the client
             // properties explicitly instead, as [AsParameters] would: the check above already holds them to its rules.
             var boundProperties = asParameters && properties.Any(static property => property.IsServerSet)
-                ? properties.Select(property => !property.IsRoute
-                        && !property.IsServerSet
-                        && (property.HasPublicSetter || constructorBound.Contains(property.Name))
+                ? properties.Select(property => !property.IsRoute && !property.IsServerSet && IsClientBindable(property)
                         ? property with { IsQuery = true }
                         : property)
                     .ToImmutableArray()
