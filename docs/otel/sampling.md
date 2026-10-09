@@ -21,7 +21,8 @@ record-only data that can still be promoted when troubleshooting needs it.
 | Local unsampled parent | Record only |
 | Remote unsampled parent | Record only |
 | Failed span or exception | Promote to sampled |
-| HTTP 4xx response | Success; do not promote |
+| HTTP 4xx response without error status | Success; do not promote |
+| HTTP 4xx response with error status | Promote to sampled |
 
 `RecordOnly` is deliberate. It preserves the activity long enough for the completion
 processor to inspect status, exception events, and response codes.

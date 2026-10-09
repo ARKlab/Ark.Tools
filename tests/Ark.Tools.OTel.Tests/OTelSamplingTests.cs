@@ -736,18 +736,20 @@ public class ArkFailurePromotionProcessorTests
     }
 
     /// <summary>
-    /// An explicit <see cref="ActivityStatusCode.Ok"/> status is final and is not overridden by a 5xx code.
+    /// An explicit <see cref="ActivityStatusCode.Ok"/> status is final and is not overridden by an HTTP 5xx or gRPC error code.
     /// </summary>
     [TestMethod]
-    public void FailurePromotion_Http500WithOkStatus_IsNotPromoted()
+    [DataRow("http.response.status_code", 503)]
+    [DataRow("rpc.grpc.status_code", 5)]
+    public void FailurePromotion_ErrorCodeWithOkStatus_IsNotPromoted(string codeTag, int code)
     {
         var registry = new FailedTraceRegistry();
         using var pipeline = _nearZeroPipeline(
-            nameof(FailurePromotion_Http500WithOkStatus_IsNotPromoted), registry);
+            $"{nameof(FailurePromotion_ErrorCodeWithOkStatus_IsNotPromoted)}.{codeTag}", registry);
 
         using var act = pipeline.StartRoot("GET /api/expected");
         act.Should().NotBeNull();
-        act!.SetTag("http.response.status_code", 503);
+        act!.SetTag(codeTag, code);
         act.SetStatus(ActivityStatusCode.Ok);
         act.Stop();
 
