@@ -168,10 +168,9 @@ where startsWith(id(e), '{prefix}')
     {
         var handler = _handlerActivator.GetHandler<TAggregate, TEvent>(evt);
 
-        if (handler != null)
-            return handler.HandleAsync(evt, metadata, _tokenSource?.Token ?? default);
-        else
-            return Task.CompletedTask;
+        return handler != null
+            ? handler.HandleAsync(evt, metadata, _tokenSource?.Token ?? default)
+            : Task.CompletedTask;
     }
 
     sealed class FakeEvent : IAggregateEvent<TAggregate> { }

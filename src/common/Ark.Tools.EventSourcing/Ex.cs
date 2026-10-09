@@ -79,14 +79,9 @@ public static class Ex
             {
                 return false;
             }
-            if (parent.IsGenericType && !parent.IsGenericTypeDefinition)
-            {
-                parent = parent.GetGenericTypeDefinition();
-            }
-            else
-            {
-                parent = extendType.BaseType;
-            }
+            parent = parent.IsGenericType && !parent.IsGenericTypeDefinition
+                ? parent.GetGenericTypeDefinition()
+                : extendType.BaseType;
         }
         return true;
     }
