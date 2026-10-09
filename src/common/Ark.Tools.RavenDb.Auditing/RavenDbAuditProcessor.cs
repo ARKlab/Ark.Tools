@@ -42,6 +42,7 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
             }
             catch (Exception e) when (e.Message.Contains("is already in use in a subscription with different Id", StringComparison.Ordinal))
             {
+                // The subscription already exists: nothing to create.
             }
         }
 
@@ -168,7 +169,10 @@ public sealed class RavenDbAuditProcessor : IHostedService, IDisposable
             }
             await Task.WhenAll(runtask).ConfigureAwait(false);
         }
-        catch (TaskCanceledException) { }
+        catch (TaskCanceledException)
+        {
+            // Expected when the worker task observes the cancellation requested above.
+        }
     }
 
     public void Dispose()
