@@ -33,14 +33,6 @@ stages:
               useGlobalJson: true
               workingDirectory: ${{ parameters.workingDirectory }}
 
-          # Azure DevOps does not wait for service container health.
-          # The container name is generated, so find it by image.
-          - script: |
-              sqlId=$(docker ps --filter ancestor=mcr.microsoft.com/mssql/server:2025-latest -q)
-              [ -n "$sqlId" ] || { echo 'SQL Server service container not found'; exit 1; }
-              timeout 120s bash -c 'until docker exec "$0" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "IntegrationTestsDbPassword85!" -C -Q "SELECT 1" > /dev/null 2>&1; do sleep 2; done' "$sqlId"
-            displayName: Wait for SQL Server
-
           - task: DotNetCoreCLI@2
             displayName: Restore sample
             inputs:
@@ -54,6 +46,14 @@ stages:
               command: build
               projects: $(solutionPath)
               arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          # Azure DevOps does not wait for service container health; SQL Server boots while the build runs.
+          # The container name is generated, so find it by image.
+          - script: |
+              sqlId=$(docker ps --filter ancestor=mcr.microsoft.com/mssql/server:2025-latest -q)
+              [ -n "$sqlId" ] || { echo 'SQL Server service container not found'; exit 1; }
+              timeout 120s bash -c 'until docker exec "$0" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "IntegrationTestsDbPassword85!" -C -Q "SELECT 1" > /dev/null 2>&1; do sleep 2; done' "$sqlId"
+            displayName: Wait for SQL Server
 
           - task: DotNetCoreCLI@2
             displayName: Test Core and Web

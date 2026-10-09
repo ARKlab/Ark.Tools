@@ -51,10 +51,9 @@ stages:
           - 10002:10002
           options: >-
             --health-cmd="node -e \"require('net').connect(10000, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))\""
-            --health-interval=10s
-            --health-timeout=5s
-            --health-retries=30
-            --health-start-period=10s
+            --health-interval=2s
+            --health-timeout=2s
+            --health-retries=60
         sqlserver:
           image: mcr.microsoft.com/mssql/server:2022-latest
           env:
