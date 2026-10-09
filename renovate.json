@@ -22,6 +22,16 @@
         "lockFileMaintenance"
       ],
       "prPriority": 10
+    },
+    {
+      "description": "SQL Server tags encode the cumulative update in the suffix (2025-CU9-ubuntu-24.04); compare CU and GDR numbers and keep the Ubuntu base",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "mcr.microsoft.com/mssql/server"
+      ],
+      "versioning": "regex:^(?<major>\\d+)-CU(?<minor>\\d+)(?:-GDR(?<patch>\\d+))?-(?<compatibility>ubuntu-[\\d.]+)$"
     }
   ],
   "customManagers": [

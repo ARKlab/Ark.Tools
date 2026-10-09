@@ -26,7 +26,7 @@ jobs:
     
     services:
       sqlserver:
-        image: mcr.microsoft.com/mssql/server:2025-latest
+        image: mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04@sha256:2b5b581621126574f3d1f75e78d3eebe8d05aedb59ad0cfdf9aa42cb0634d726
         ports:
           - 1433:1433
         env:
