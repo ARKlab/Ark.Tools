@@ -50,6 +50,23 @@ public class AuthenticationApiClientCachingDecoratorTests
     }
 
     [TestMethod]
+    public async Task GetTokenAsync_ConcurrentSameKey_CallsInnerOnce()
+    {
+        var gate = new TaskCompletionSource<AccessTokenResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var inner = new Mock<IAuthenticationApiClient>();
+        inner.Setup(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(gate.Task);
+        using var sut = new AuthenticationApiClientCachingDecorator(inner.Object);
+
+        var calls = Enumerable.Range(0, 5).Select(_ => sut.GetTokenAsync(_request)).ToList();
+        gate.SetResult(_tokenResponse(TimeSpan.FromHours(1)));
+        var results = await Task.WhenAll(calls);
+
+        results.Should().AllSatisfy(r => r.Should().BeSameAs(results[0]));
+        inner.Verify(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
     public async Task GetUserInfoAsync_ValidToken_IsCached()
     {
         var accessToken = _jwt(TimeSpan.FromHours(1));
