@@ -360,17 +360,10 @@ public static class DataTableExtensions
             if (!type.IsValueType)
                 return null;
 
-            foreach (var @interface in type.GetInterfaces())
-            {
-                if (@interface.IsGenericType
-                    && @interface.FullName?.StartsWith("Ark.Tools.Compliance.ISensitiveValue`1", StringComparison.Ordinal) == true
-                    && @interface.GetGenericArguments()[0] == type)
-                {
-                    return @interface;
-                }
-            }
-
-            return null;
+            return type.GetInterfaces().FirstOrDefault(@interface =>
+                @interface.IsGenericType
+                && @interface.FullName?.StartsWith("Ark.Tools.Compliance.ISensitiveValue`1", StringComparison.Ordinal) == true
+                && @interface.GetGenericArguments()[0] == type);
         }
 
         // Builds `value.Reveal(CompliancePurpose.Custom("ToDataTableArk", CompliancePurposeCategory.TechnicalFunctional))`
