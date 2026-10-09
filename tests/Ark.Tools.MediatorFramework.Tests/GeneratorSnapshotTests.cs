@@ -1287,6 +1287,38 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorRejectsRouteAndQueryPropertiesThatCannotBeSet()
+    {
+        // Functions sets every bound property after constructing the contract, so a route or query property without a
+        // public setter or init accessor, constructor-bound or not, would never receive its value.
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed class GetBook(int id) : IQuery<string>
+            {
+                public int Id { get; } = id;
+                [HttpQuery] public int Page { get; }
+                [HttpQuery] public int Size { get; init; }
+                [ServerSet] public string? Owner { get; }
+            }
+            """;
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Id", "Page");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Page'", StringComparison.Ordinal))
+            .GetMessage(CultureInfo.InvariantCulture)
+            .Should().Be("HTTP endpoint 'GetBook' binds property 'Page' from the route or query string, but the property has no public setter or init accessor, which Azure Functions needs to set it");
+        result.Generated.Should().NotContain("global::GetBook");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorKeepsRouteAndQueryLocalsApart()
     {
         // A property bound from both the route and the query string binds from the route only, as in Minimal API, so

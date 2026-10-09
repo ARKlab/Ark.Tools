@@ -92,6 +92,14 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
 
+    private static readonly DiagnosticDescriptor _propertyNotSettable = new(
+        "ARKMF059",
+        "Property cannot be bound from the request",
+        "HTTP endpoint '{0}' binds property '{1}' from the route or query string, but the property has no public setter or init accessor, which Azure Functions needs to set it",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -315,6 +323,17 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                     endpoint.TypeName,
                     endpoint.Verb,
                     property.Name));
+            reported = true;
+        }
+
+        foreach (var property in endpoint.UnsettableProperties)
+        {
+            var location = property.Location ?? endpoint.Location;
+            context.ReportDiagnostic(Diagnostic.Create(
+                _propertyNotSettable,
+                location is null ? hostLocation : LocationSpec._toLocation(location),
+                endpoint.TypeName,
+                property.Name));
             reported = true;
         }
 

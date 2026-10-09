@@ -124,6 +124,7 @@ internal readonly record struct PropertySpec(
 /// <param name="IsStreaming">Whether the response is streamed.</param>
 /// <param name="IsRecord">Whether the contract is a record.</param>
 /// <param name="ConstructorParameters">The constructor parameters used for binding.</param>
+/// <param name="UnsettableProperties">The route or query properties without a public setter or init accessor, which the function cannot set.</param>
 internal readonly record struct EndpointSpec(
     string TypeName,
     string FullyQualifiedType,
@@ -151,7 +152,13 @@ internal readonly record struct EndpointSpec(
     EquatableArray<string> AllowedContentTypes,
     bool IsStreaming,
     bool IsRecord,
-    EquatableArray<string> ConstructorParameters);
+    EquatableArray<string> ConstructorParameters,
+    EquatableArray<UnsettablePropertySpec> UnsettableProperties);
+
+/// <summary>A route or query property the function cannot set.</summary>
+/// <param name="Name">The property name.</param>
+/// <param name="Location">The property declaration location, when it is in source.</param>
+internal readonly record struct UnsettablePropertySpec(string Name, LocationSpec? Location);
 
 /// <summary>A contract selection that does not belong to the host contract assembly.</summary>
 /// <param name="TypeName">The selected type name.</param>
@@ -411,7 +418,16 @@ internal static class AzureFunctionsEndpointParser
             responseSymbol is { } responseNamed
                 && responseNamed.OriginalDefinition.ToDisplayString() == _asyncEnumerable,
             type.IsRecord,
-            _constructorParameters(type, properties));
+            _constructorParameters(type, properties),
+            // The function sets bound properties after constructing the contract, so it cannot bind these.
+            _allProperties(type)
+                .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic && !p.IsIndexer
+                    && p.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
+                    && !p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _serverSetAttribute)
+                    && (routeNames.Contains(p.Name) || p.GetAttributes().Any(static a =>
+                        a.AttributeClass?.ToDisplayString() is _httpRouteAttribute or _httpQueryAttribute)))
+                .Select(static p => new UnsettablePropertySpec(p.Name, LocationSpec._from(p)))
+                .ToImmutableArray());
     }
 
     private static EquatableArray<EndpointSpec> _readMetadataEndpoints(IAssemblySymbol assembly, CancellationToken cancellationToken)
