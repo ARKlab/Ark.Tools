@@ -1150,6 +1150,12 @@ public sealed class GeneratorSnapshotTests
             {
                 public static bool TryParse(string? value, out BookCode result) { result = default; return value is not null; }
             }
+            [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.TypeConverter))]
+            public readonly struct RefCode
+            {
+                public static bool TryParse(ref string value, out RefCode result) { result = default; return true; }
+                public static bool TryParse<TArg>(string value, out RefCode result) { result = default; return true; }
+            }
             [HttpEndpoint("GET", "/books/{codes}")]
             public sealed record ListBooks : IQuery<string>
             {
@@ -1160,6 +1166,7 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public Queue<string> Pending { get; init; } = new();
                 [HttpQuery] public IReadOnlySet<string> Keys { get; init; } = new HashSet<string>();
                 [HttpQuery] public System.Collections.Stack? Stack { get; init; }
+                [HttpQuery] public int[,] Grid { get; init; } = new int[0, 0];
             }
             [HttpEndpoint("POST", "/books")]
             public sealed record CreateBooks : IRequest<string>
@@ -1178,13 +1185,15 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public Guid?[] Owners { get; init; } = [];
                 [HttpQuery] public BookCode[] BookCodes { get; init; } = [];
                 [HttpQuery] public DayOfWeek[] Days { get; init; } = [];
+                [HttpQuery] public RefCode Ref { get; init; }
+                [HttpQuery] public Guid? Owner { get; init; }
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Codes", "Ids", "Filter", "Pending", "Keys", "Stack", "Labels");
+            .Should().BeEquivalentTo("Codes", "Ids", "Filter", "Pending", "Keys", "Stack", "Grid", "Labels");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
             .GetMessage(CultureInfo.InvariantCulture)
@@ -1205,6 +1214,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("if (!string.IsNullOrEmpty(_raw_Owners))");
         result.Generated.Should().Contain("!global::BookCode.TryParse(_raw_BookCodes, out var _value_BookCodes)");
         result.Generated.Should().Contain("!global::System.Enum.TryParse<global::System.DayOfWeek>(_raw_Days, true, out var _value_Days)");
+        // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
+        result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
+        // An empty nullable value sets the property to null, as Minimal API does.
+        result.Generated.Should().Contain("else" + Environment.NewLine + "                body = body with { Owner = default };");
     }
 
     [TestMethod]
@@ -3084,6 +3097,13 @@ public sealed class GeneratorSnapshotTests
                 [HttpRoute] public int Id { get; set; }
                 [ServerSet] public string Tenant { get; init; } = string.Empty;
             }
+            [HttpEndpoint("GET", "/versions")]
+            public sealed record ListVersions : IQuery<string>
+            {
+                public int Skip { get; init; }
+                [ETag] public string? Version { get; init; }
+                [ServerSet] public string? Owner { get; init; }
+            }
             [HttpEndpoint("GET", "/tenants/{tenant}/books")]
             public sealed record ListTenantBooks : IQuery<string>
             {
@@ -3114,6 +3134,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("var request = new global::ListTenantBooks { Skip = Skip, Tenant = default! };");
         result.Generated.Should().Contain("var request = new global::DeleteTenantBook { Id = Id, Tenant = default! };");
         result.Generated.Should().NotContain("Tenant = Tenant");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Skip\")] int Skip,");
+        result.Generated.Should().NotContain("FromQuery(Name = \"Version\")");
     }
 
     [TestMethod]
@@ -3373,6 +3395,7 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public Queue<string> Pending { get; init; } = new();
                 [HttpQuery] public IReadOnlySet<string> Keys { get; init; } = new HashSet<string>();
                 [HttpQuery] public System.Collections.Stack? Stack { get; init; }
+                [HttpQuery] public int[,] Grid { get; init; } = new int[0, 0];
             }
             [HttpEndpoint("POST", "/books/{id}")]
             public sealed record UpdateBooks : IRequest<string>
@@ -3408,11 +3431,36 @@ public sealed class GeneratorSnapshotTests
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Codes", "Ids", "Labels", "Days", "Filter", "Pending", "Keys", "Stack", "ShelfIds", "Labels", "Related", "Target");
+            .Should().BeEquivalentTo("Codes", "Ids", "Labels", "Days", "Filter", "Pending", "Keys", "Stack", "Grid", "ShelfIds", "Labels", "Related", "Target");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
             .GetMessage(CultureInfo.InvariantCulture)
             .Should().Be("HTTP endpoint 'ListBooks' binds property 'Ids' from the route or query string, but its type 'System.Collections.Generic.List<int>' cannot be converted from a string");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsUnconvertibleQueryPropertiesOfAsParametersCommands()
+    {
+        // A GET or DELETE command binds with [AsParameters], where ASP.NET infers a body for a [HttpQuery] property
+        // it cannot bind from a string and the endpoint fails at startup.
+        const string source =
+            """
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBooks : ICommand<DeleteBooks>
+            {
+                public int Id { get; init; }
+                [HttpQuery] public List<int> Copies { get; init; } = [];
+                [HttpQuery] public int[] Shelves { get; init; } = [];
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059")
+            .Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Copies");
     }
 
     [TestMethod]
