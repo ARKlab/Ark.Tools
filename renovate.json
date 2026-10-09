@@ -15,6 +15,15 @@
       "enabled": true
     }
   },
+  "packageRules": [
+    {
+      "description": "Process lock file maintenance before the slow NuGet branches so it is not starved by the 30 min job limit",
+      "matchUpdateTypes": [
+        "lockFileMaintenance"
+      ],
+      "prPriority": 10
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",
