@@ -173,6 +173,25 @@ public sealed partial class AzureFunctionsBoundaryTests
 
     [TestMethod]
     [TestCategory("AzureFunctionsBoundary")]
+    [DataRow("Monday")]
+    [DataRow("Someday")]
+    public async Task EvolvableEnumQueryValueIsBound(string day)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Day={day}", UriKind.Relative));
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
+
+        using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        using var json = System.Text.Json.JsonDocument.Parse(body);
+        json.RootElement.EnumerateObject()
+            .Single(static property => string.Equals(property.Name, "Day", StringComparison.OrdinalIgnoreCase)).Value
+            .GetString().Should().Be(day);
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
     public async Task MalformedArrayElementProducesProblemDetails()
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Scores=4&Scores=x", UriKind.Relative));

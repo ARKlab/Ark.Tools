@@ -1203,6 +1203,9 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public DateOnly Day { get; init; }
                 [HttpQuery] public ShelfCode Shelf { get; init; }
                 [HttpQuery] public AisleCode[] Aisles { get; init; } = [];
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<DayOfWeek> Kind { get; init; }
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<DayOfWeek>? MaybeKind { get; init; }
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<DayOfWeek>[] Kinds { get; init; } = [];
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
@@ -1236,6 +1239,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("global::System.DateOnly.TryParse(_raw_Day, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces, out var _value_Day)");
         // An explicit IParsable<T> implementation wins over a public TryParse(string, out T), as in Minimal API.
         result.Generated.Should().Contain("!global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<global::ShelfCode>(_raw_Shelf, out var _value_Shelf)");
+        // An EvolvableEnum binds through its own TryParse, alone, nullable or in an array, as on Minimal API.
+        result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::System.DayOfWeek>.TryParse(_raw_Kind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Kind)");
+        result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::System.DayOfWeek>.TryParse(_raw_MaybeKind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_MaybeKind)");
+        result.Generated.Should().Contain("var _query_Kinds = new global::Ark.Tools.Core.EvolvableEnum<global::System.DayOfWeek>[_qs_Kinds.Count];");
         // A TryParse inherited from a base type is called, as ASP.NET Core does.
         result.Generated.Should().Contain("!global::AisleCode.TryParse(_raw_Aisles, out var _value_Aisles)");
         // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
