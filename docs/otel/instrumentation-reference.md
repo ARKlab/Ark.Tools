@@ -257,6 +257,12 @@ the same sampler through `AddArkApplicationInsightsCustomizations`.
 The sampler and `ArkFailurePromotionProcessor` must share one
 `FailedTraceRegistry` for whole-operation failure promotion.
 
+`UseAzureMonitor` installs its own sampler. When a connection string is
+configured, `AddArkAzureMonitorOpenTelemetry` sets `ArkAdaptiveSampler` again
+after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
+`SamplingRatio` options have no effect. Configure sampling with
+`ApplicationInsights:ArkAdaptiveSampler` instead.
+
 ### Decision order
 
 | Condition | Decision |

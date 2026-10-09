@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.HealthChecks.OTel/Ark.Tools.AspNetCore.HealthChecks.OTel.csproj" />
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ark.Tools.AspNetCore.OTel.csproj" />
     <ProjectReference Include="../../src/resourcewatcher/Ark.Tools.ResourceWatcher/Ark.Tools.ResourceWatcher.csproj" />
   </ItemGroup>
 
