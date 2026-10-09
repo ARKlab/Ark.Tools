@@ -68,9 +68,11 @@ above. An explicit route or query value is read as follows:
   `IReadOnlyCollection`, `IReadOnlyList`, `ICollection`, `IList`, `List`,
   `ISet`, `HashSet` and `ImmutableArray` of `string`. Any other string
   collection, such as `Queue<string>` or `IReadOnlySet<string>`, is reported;
-- any other single value is converted with its `TypeConverter` at runtime, so a
-  converter registered with `TypeDescriptor`, such as the Ark.Tools NodaTime
-  converters, is used.
+- any other single value is converted at runtime with the type converter of a
+  type registered with `TypeDescriptor.RegisterType<T>()`, resolved trim-safely.
+  For NodaTime types call `NodaTimeConverter.Register()` from
+  `Ark.Tools.Nodatime` at startup; an unregistered type throws
+  `InvalidOperationException`.
 
 The rule reports the property when its type is:
 
@@ -110,9 +112,8 @@ strategy Minimal API uses for the type:
   your own type, by calling it, with the invariant culture when it accepts an
   `IFormatProvider`;
 - a type that implements `IParsable<T>` explicitly, through `IParsable<T>`;
-- any other single value through the converter `TypeDescriptor.GetConverter`
-  returns, so a converter added with `TypeDescriptor.AddAttributes`, such as the
-  Ark.Tools NodaTime converters, is used.
+- any other single value through the type converter of its registered type,
+  with the same registration rule as Minimal API.
 
 An `[HttpQuery]` string collection of a supported shape receives every value of
 the query parameter, and an `[HttpQuery]` array of a parseable type, such as

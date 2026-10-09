@@ -582,7 +582,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             ConversionKind.TryParseWithProvider => type + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, out var " + value + ")",
             ConversionKind.TryParse => type + ".TryParse(" + raw + ", out var " + value + ")",
             ConversionKind.Parsable => "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
-            _ => "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryConvert<" + type + ">(" + raw + ", out var " + value + ")",
+            _ => "global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<" + type + ">(" + raw + ", out var " + value + ")",
         };
     }
 

@@ -51,7 +51,7 @@ internal enum ConversionKind
     /// <summary>An explicit <c>IParsable&lt;T&gt;</c> implementation, called with the invariant culture.</summary>
     Parsable = 5,
 
-    /// <summary>The type converter <c>TypeDescriptor.GetConverter</c> returns.</summary>
+    /// <summary>The registered type converter, resolved trim-safely by <c>ArkTypeConverter.TryConvertSafe</c>.</summary>
     TypeConverter = 6,
 }
 
