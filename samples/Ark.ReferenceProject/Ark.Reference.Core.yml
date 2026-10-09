@@ -4,6 +4,8 @@ trigger:
     include:
     - develop
     - master
+    # GitHub merge queue pushes merge groups to these branches
+    - gh-readonly-queue/*
 pr:
   branches:
     include:
@@ -14,7 +16,7 @@ pr:
 variables:
   workingDirectory: '$(Build.SourcesDirectory)/samples/Ark.ReferenceProject'
   vmImageName: 'ubuntu-22.04'
-  ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/master') ) }}:
+  ${{ if or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['System.PullRequest.TargetBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/gh-readonly-queue/master/') ) }}:
     BuildConfiguration: 'Release'
   ${{ else }}:
     BuildConfiguration: 'Debug'
