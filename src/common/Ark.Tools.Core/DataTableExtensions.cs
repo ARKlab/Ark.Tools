@@ -270,8 +270,6 @@ public static class DataTableExtensions
             }
         }
 
-        [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
-            Justification = "DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives).")]
         private static void _initializeNewTable(DataTable table)
         {
             // Columns are added in the cached fields-then-properties sequential order.
@@ -279,13 +277,14 @@ public static class DataTableExtensions
             {
                 if (!table.Columns.Contains(column.Name))
                 {
+                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
+#pragma warning disable IL2072
                     table.Columns.Add(column.Name, column.ColumnType);
+#pragma warning restore IL2072
                 }
             }
         }
 
-        [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
-            Justification = "DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives).")]
         private static FrozenDictionary<string, int> _getOrdinalMap(DataTable table)
         {
             // For existing tables, build ordinal map and add missing columns
@@ -295,7 +294,10 @@ public static class DataTableExtensions
             {
                 if (!table.Columns.Contains(column.Name))
                 {
+                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
+#pragma warning disable IL2072
                     var dc = table.Columns.Add(column.Name, column.ColumnType);
+#pragma warning restore IL2072
                     ordinalMap.Add(column.Name, dc.Ordinal);
                 }
                 else

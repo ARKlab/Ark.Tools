@@ -212,7 +212,7 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
     private static RpcException _createRpcException(StatusCode statusCode, string message) =>
         new(new global::Grpc.Core.Status(statusCode, message));
 
-    [UnconditionalSuppressMessage(
+    [SuppressMessage(
         "Trimming",
         "IL2026",
         Justification = "The BusinessRuleViolation base type preserves public properties for the documented client-visible contract.")]
