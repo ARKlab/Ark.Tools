@@ -40,7 +40,7 @@ jobs:
           --health-retries=5
           --health-start-period=30s
       servicebus:
-        image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+        image: mcr.microsoft.com/azure-messaging/servicebus-emulator:2.0.1@sha256:5a96d893b245031740f7d46e0fe5ff282d24b78c4b7d761dd57590f3f010a9b3
         ports:
           - 5672:5672
           - 5300:5300
@@ -51,7 +51,7 @@ jobs:
           EMULATOR_HTTP_PORT: 5300
           SQL_WAIT_INTERVAL: 90
       azurite:
-        image: mcr.microsoft.com/azure-storage/azurite:latest
+        image: mcr.microsoft.com/azure-storage/azurite:3.37.0@sha256:830430c1da1a2d537e08f3e6764dd1f5ae00cf0346bcaf625b968ec3f0971fd5
         ports:
           - 10000:10000
           - 10001:10001
