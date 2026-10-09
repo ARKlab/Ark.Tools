@@ -3,6 +3,7 @@
 
 using System.Collections.Frozen;
 using System.Data;
+using System.Data.SqlTypes;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -364,12 +365,29 @@ public static class DataTableExtensions
                 _ when type == typeof(TimeSpan) => typeof(TimeSpan),
                 _ when type == typeof(Guid) => typeof(Guid),
                 _ when type == typeof(byte[]) => typeof(byte[]),
+                // SqlTypes are INullable: DataColumn reflects on their static Null member.
+                _ when type == typeof(SqlBinary) => typeof(SqlBinary),
+                _ when type == typeof(SqlBoolean) => typeof(SqlBoolean),
+                _ when type == typeof(SqlByte) => typeof(SqlByte),
+                _ when type == typeof(SqlBytes) => typeof(SqlBytes),
+                _ when type == typeof(SqlChars) => typeof(SqlChars),
+                _ when type == typeof(SqlDateTime) => typeof(SqlDateTime),
+                _ when type == typeof(SqlDecimal) => typeof(SqlDecimal),
+                _ when type == typeof(SqlDouble) => typeof(SqlDouble),
+                _ when type == typeof(SqlGuid) => typeof(SqlGuid),
+                _ when type == typeof(SqlInt16) => typeof(SqlInt16),
+                _ when type == typeof(SqlInt32) => typeof(SqlInt32),
+                _ when type == typeof(SqlInt64) => typeof(SqlInt64),
+                _ when type == typeof(SqlMoney) => typeof(SqlMoney),
+                _ when type == typeof(SqlSingle) => typeof(SqlSingle),
+                _ when type == typeof(SqlString) => typeof(SqlString),
+                _ when type == typeof(SqlXml) => typeof(SqlXml),
                 _ => null,
             };
         }
 
         [UnconditionalSuppressMessage("Trimming", "IL2068:UnrecognizedReflectionPattern",
-            Justification = "DataColumn stores other member types as opaque values and reflects on their public fields/properties only to find the static Null member of INullable types. A trimmed app that shreds a custom INullable member must preserve that member itself.")]
+            Justification = "DataColumn stores other member types as opaque values and reflects on their public fields/properties only to find the static Null member of INullable types. The System.Data.SqlTypes structs take the literal path above; a trimmed app that shreds a member of its own INullable type must preserve that type's Null member itself.")]
         [return: DynamicallyAccessedMembers(_columnTypeMembers)]
         private static Type _customColumnType(Type type)
         {
