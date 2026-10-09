@@ -33,7 +33,7 @@
     <PackageReference Include="Auth0.AuthenticationApi" />
     <PackageReference Include="Auth0.ManagementApi" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
-    <PackageReference Include="Polly" />
+    <PackageReference Include="Polly.Core" />
   </ItemGroup>
   
   <ItemGroup>

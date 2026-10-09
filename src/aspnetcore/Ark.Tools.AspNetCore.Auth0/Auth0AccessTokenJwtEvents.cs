@@ -10,6 +10,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
 using Polly;
+using Polly.Retry;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -29,6 +30,16 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
     private readonly string _authzApiUrl;
     private readonly string _domain;
     private readonly string _issuer;
+
+    private static readonly ResiliencePipeline<string> _pendingRetry = new ResiliencePipelineBuilder<string>()
+        .AddRetry(new RetryStrategyOptions<string>
+        {
+            ShouldHandle = new PredicateBuilder<string>().HandleResult("Pending"),
+            MaxRetryAttempts = int.MaxValue,
+            Delay = TimeSpan.FromMilliseconds(100),
+            BackoffType = DelayBackoffType.Constant,
+        })
+        .Build();
 
     public Auth0AccessTokenJwtEvents(string domain, string clientId, 
     [Secret]
@@ -169,8 +180,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
                 }
                 else if (res == "Pending") // wait for the cache to be populated
                 {
-                    res = await Policy.HandleResult<string>(static r => r == "Pending")
-                        .WaitAndRetryForeverAsync(static x => TimeSpan.FromMilliseconds(100)) // Actually cannot be greater than 5sec as key would expire returning null
+                    res = await _pendingRetry // Actually cannot be greater than 5sec as key would expire returning null
                         .ExecuteAsync(async ct => await cache.GetStringAsync(cacheKey, ct).ConfigureAwait(false) ?? string.Empty, ctk)
 .ConfigureAwait(false);
                 }

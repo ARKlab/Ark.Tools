@@ -359,11 +359,6 @@
           "System.CodeDom": "6.0.0"
         }
       },
-      "Polly.Core": {
-        "type": "Transitive",
-        "resolved": "8.8.0",
-        "contentHash": "TewV9uNFsoRFggoFbTAGFwsMYPuckA+wTIpQPyhLL9BANRPQRENz2S4bwATrB3HBOakN5oKLFIllPiDnVecmJg=="
-      },
       "Portable.System.DateTimeOnly": {
         "type": "Transitive",
         "resolved": "9.0.1",
@@ -535,7 +530,7 @@
           "Auth0.AuthenticationApi": "[7.49.0, )",
           "Auth0.ManagementApi": "[10.4.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.12, )",
-          "Polly": "[8.8.0, )"
+          "Polly.Core": "[8.8.0, )"
         }
       },
       "ark.tools.aspnetcore.commaseparatedparameters": {
@@ -1178,14 +1173,11 @@
           "NodaTime": "[3.0.0, 4.0.0)"
         }
       },
-      "Polly": {
+      "Polly.Core": {
         "type": "CentralTransitive",
         "requested": "[8.8.0, )",
         "resolved": "8.8.0",
-        "contentHash": "1/jm0wQA0hjcY8OcGx2HLzj4Tx33IpmEWWPUcekt07V7VO8suAUmeDRD7VM5wy9614pJMI2M0TB1pwKVflh4CQ==",
-        "dependencies": {
-          "Polly.Core": "8.8.0"
-        }
+        "contentHash": "TewV9uNFsoRFggoFbTAGFwsMYPuckA+wTIpQPyhLL9BANRPQRENz2S4bwATrB3HBOakN5oKLFIllPiDnVecmJg=="
       },
       "SimpleInjector": {
         "type": "CentralTransitive",

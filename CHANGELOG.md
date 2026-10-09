@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Breaking:** the `MessagingDispatch` delegate, the type of the `dispatch` parameter of the public `MessagingDispatcher` constructor, and the `IMessagingPipelineProcessor.ProcessIncomingAsync` terminal also receive the scoped `IRequestProcessor`, so messaging hosts must register `IRequestProcessor` (`AddArkSolidProcessors` does); a receiving host without it fails at startup.
 - **Breaking:** `MessagingParticipantDescriptor` gained constructor parameters, so code compiled against the previous constructor must be rebuilt.
 - **Breaking:** `[GrpcMethod]` and `[GrpcService]` moved from `Ark.Tools.MediatorFramework.Grpc` to `Ark.Tools.MediatorFramework`, with the namespace unchanged, so a contracts project no longer needs an ASP.NET Core package to declare gRPC exposure. Projects that reference the base package keep compiling; binaries built against the old assembly must be rebuilt.
+- `Ark.Tools.Auth0` no longer depends on the unmaintained `Polly.Caching.Memory` package. `AuthenticationApiClientCachingDecorator` caches tokens and user info in `Microsoft.Extensions.Caching.Memory` with the same expiration rules.
+- **Breaking:** Ark.Tools packages that retry with Polly now depend on `Polly.Core` (the Polly v8 resilience pipeline API) instead of `Polly`. If your code uses the legacy `Policy` API and got `Polly` through an Ark.Tools package, add a direct `Polly` package reference.
 
 ### Fixed
 

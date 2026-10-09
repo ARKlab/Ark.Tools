@@ -23,8 +23,7 @@
     <PackageReference Include="Auth0.AuthenticationApi" />
     <PackageReference Include="Auth0.ManagementApi" />
     <PackageReference Include="JWT" />
-    <PackageReference Include="Polly" />
-    <PackageReference Include="Polly.Caching.Memory" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj" />

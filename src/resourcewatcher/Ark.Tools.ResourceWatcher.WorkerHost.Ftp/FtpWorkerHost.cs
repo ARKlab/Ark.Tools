@@ -6,6 +6,7 @@ using Ark.Tools.FtpClient.Core;
 using NodaTime;
 
 using Polly;
+using Polly.Retry;
 
 using SimpleInjector;
 
@@ -62,6 +63,15 @@ public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata
         private readonly IFtpClientPool _ftpClient;
         private readonly IFtpParser<TPayload> _parser;
 
+        private static readonly ResiliencePipeline _retry = new ResiliencePipelineBuilder()
+            .AddRetry(new RetryStrategyOptions
+            {
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                MaxRetryAttempts = 3,
+                Delay = TimeSpan.Zero,
+            })
+            .Build();
+
         public FtpProvider(IFtpConfig config, IFtpClientPoolFactory ftpClientFactory, IFtpParser<TPayload> parser)
         {
             _config = config;
@@ -94,9 +104,7 @@ public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata
 
         public async Task<FtpFile<TPayload>?> GetResource(FtpMetadata metadata, IResourceTrackedState<FtpResourceExtensions>? lastState, CancellationToken ctk = default)
         {
-            var contents = await Policy
-                .Handle<Exception>()
-                .RetryAsync(3)
+            var contents = await _retry
                 .ExecuteAsync(async ct =>
                 {
                     using var cts1 = new CancellationTokenSource(_config.DownloadTimeout);
