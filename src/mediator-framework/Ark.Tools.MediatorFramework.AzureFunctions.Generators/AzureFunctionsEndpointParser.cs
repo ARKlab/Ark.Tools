@@ -44,7 +44,7 @@ internal enum HandlerKind
 /// <param name="IsAttachmentCollection">Whether the property is an attachment collection.</param>
 /// <param name="IsStringCollection">Whether the property type is one of the supported string collection shapes that receive every value of a query parameter.</param>
 /// <param name="IsNotConvertible">Whether no type converter converts a single string to the property type: an array, a collection or a complex object.</param>
-/// <param name="ArrayElementTypeFullName">The fully qualified element type of an array, other than <c>string[]</c>, whose elements convert from a string, as Minimal API binds them from every value of a query parameter; otherwise <see langword="null"/>.</param>
+/// <param name="ArrayElementTypeFullName">The fully qualified element type of an array, other than <c>string[]</c>, whose elements have a built-in type converter, as Minimal API binds them from every value of a query parameter; otherwise <see langword="null"/>.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,
@@ -323,9 +323,7 @@ internal static class AzureFunctionsEndpointParser
                     isAttachmentCollection,
                     HttpStringBinding.IsStringCollection(p.Type),
                     HttpStringBinding.IsCollection(p.Type) || HttpStringBinding.IsComplexOrComplexCollection(p.Type),
-                    p.Type is IArrayTypeSymbol { Rank: 1 } array
-                        && array.ElementType.SpecialType != SpecialType.System_String
-                        && HttpStringBinding.IsStringBindable(p.Type)
+                    p.Type is IArrayTypeSymbol { Rank: 1 } array && _hasBuiltInConverter(array.ElementType)
                         ? array.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                         : null,
                     LocationSpec._from(p));
@@ -465,6 +463,21 @@ internal static class AzureFunctionsEndpointParser
             foreach (var child in _allNestedTypes(nested))
                 yield return child;
         }
+    }
+
+    // ArkTypeConverter converts through TypeDescriptor, so an array element binds only when its type, or the type
+    // wrapped by Nullable<T>, has a built-in converter; a custom TryParse type usually has none.
+    private static bool _hasBuiltInConverter(ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
+            type = nullable.TypeArguments[0];
+        return type.TypeKind == TypeKind.Enum
+            || type.SpecialType is SpecialType.System_Boolean or SpecialType.System_Char
+                or SpecialType.System_SByte or SpecialType.System_Byte or SpecialType.System_Int16 or SpecialType.System_UInt16
+                or SpecialType.System_Int32 or SpecialType.System_UInt32 or SpecialType.System_Int64 or SpecialType.System_UInt64
+                or SpecialType.System_Decimal or SpecialType.System_Single or SpecialType.System_Double or SpecialType.System_DateTime
+            || type.ToDisplayString() is "System.Guid" or "System.DateTimeOffset" or "System.TimeSpan"
+                or "System.DateOnly" or "System.TimeOnly" or "System.Uri";
     }
 
     private static IEnumerable<IPropertySymbol> _allProperties(INamedTypeSymbol type)

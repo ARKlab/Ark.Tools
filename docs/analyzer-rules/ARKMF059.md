@@ -105,9 +105,12 @@ string with `ArkTypeConverter` at runtime, and an `[HttpQuery]` string
 collection of a supported shape (the same shapes as the Minimal API generator),
 such as `string[]`, `List<string>` or `IEnumerable<string>`, receives every
 value of the query parameter. Like the Minimal API generator, it also binds an
-`[HttpQuery]` array whose elements convert from a string, such as `int[]`,
-`Guid[]` or an enum array, converting each value of the query parameter to one
-element; a value that does not convert fails the request with `400`. The rule
+`[HttpQuery]` array of a type with a built-in converter, such as `int[]`,
+`Guid[]`, `DateTimeOffset[]` or an enum array, converting each value of the
+query parameter to one element; a value that does not convert fails the request
+with `400`. An array of a custom type, such as one with only a static
+`TryParse`, is reported, because the values are converted through
+`TypeDescriptor`. The rule
 reports a route or `[HttpQuery]` property whose type is any other array or
 collection, or a complex object: no type converter converts a single string to
 it. A route property is never an array or a collection.

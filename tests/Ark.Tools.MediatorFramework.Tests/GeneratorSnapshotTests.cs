@@ -1145,10 +1145,15 @@ public sealed class GeneratorSnapshotTests
             {
                 public string Name { get; set; } = string.Empty;
             }
+            public readonly struct BookCode
+            {
+                public static bool TryParse(string? value, out BookCode result) { result = default; return value is not null; }
+            }
             [HttpEndpoint("GET", "/books/{codes}")]
             public sealed record ListBooks : IQuery<string>
             {
                 [HttpRoute] public string[] Codes { get; init; } = [];
+                [HttpQuery] public BookCode[] BookCodes { get; init; } = [];
                 [HttpQuery] public List<int> Ids { get; init; } = [];
                 [HttpQuery] public Filter? Filter { get; init; }
                 [HttpQuery] public Guid? Owner { get; init; }
@@ -1177,7 +1182,7 @@ public sealed class GeneratorSnapshotTests
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Codes", "Ids", "Filter", "Pending", "Keys", "Stack", "Labels");
+            .Should().BeEquivalentTo("Codes", "BookCodes", "Ids", "Filter", "Pending", "Keys", "Stack", "Labels");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
             .GetMessage(CultureInfo.InvariantCulture)
