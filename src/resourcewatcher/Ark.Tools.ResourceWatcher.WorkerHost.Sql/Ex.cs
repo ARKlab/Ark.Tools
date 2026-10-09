@@ -74,7 +74,7 @@ public static class Ex
     /// <param name="host">The workerHost</param>
     /// <param name="connectionString">The SQL connectionString</param>
     /// <param name="skipInit">If true, skips calling EnsureTableAreCreated on startup. Default is false.</param>
-    public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, TExtensions>
+    public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TExtensions>
         (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host,
         [Secret] string connectionString, bool skipInit = false)
         where TFile : class, IResource<TMetadata, TExtensions>
@@ -91,7 +91,7 @@ public static class Ex
     /// <param name="host">The workerHost</param>
     /// <param name="config">The config</param>
     /// <param name="skipInit">If true, skips calling EnsureTableAreCreated on startup. Default is false.</param>
-    public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, TExtensions>
+    public static void UseSqlStateProvider<TFile, TMetadata, TQueryFilter, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TExtensions>
         (this WorkerHost<TFile, TMetadata, TQueryFilter, TExtensions> host, ISqlStateProviderConfig config, bool skipInit = false)
         where TFile : class, IResource<TMetadata, TExtensions>
         where TMetadata : class, IResourceMetadata<TExtensions>
