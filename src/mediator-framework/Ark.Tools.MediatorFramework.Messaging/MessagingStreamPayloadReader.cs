@@ -50,7 +50,7 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
         {
             throw;
         }
-        catch (Exception exception)
+        catch (Exception exception) when (exception is not OperationCanceledException || !ctk.IsCancellationRequested)
         {
             throw new MessagingFailFastException(
                 MessagingFailFastReason.MalformedPayload,

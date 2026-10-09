@@ -33,13 +33,11 @@ public sealed class OpenTelemetryIncomingStep : IMessagingIncomingStep
             foreach (var item in baggage.Split(',', StringSplitOptions.RemoveEmptyEntries))
             {
                 var separator = item.IndexOf('=', StringComparison.Ordinal);
-                if (separator > 0)
-                {
-                    if (_tryDecodeBaggageComponent(item[..separator].Trim(), out var key)
-                        && _tryDecodeBaggageComponent(item[(separator + 1)..].Trim(), out var value)
-                        && key.Length > 0)
-                        activity.AddBaggage(key, value);
-                }
+                if (separator > 0
+                    && _tryDecodeBaggageComponent(item[..separator].Trim(), out var key)
+                    && _tryDecodeBaggageComponent(item[(separator + 1)..].Trim(), out var value)
+                    && key.Length > 0)
+                    activity.AddBaggage(key, value);
             }
         }
         try
