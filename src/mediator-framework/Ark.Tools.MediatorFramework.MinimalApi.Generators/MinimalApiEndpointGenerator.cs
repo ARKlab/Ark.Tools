@@ -1189,7 +1189,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ? "string[]"
                 : property.TypeFullName switch
                 {
-                    _ when property.IsNullable && property.TypeFullName is ("string" or "global::System.String") => "string?",
+                    // The fully qualified name drops the nullable annotation of a reference type: an absent value then
+                    // binds null instead of failing as a required parameter.
+                    _ when property.IsNullable && !property.TypeFullName.EndsWith("?", StringComparison.Ordinal) => property.TypeFullName + "?",
                     _ => property.TypeFullName,
                 };
         }

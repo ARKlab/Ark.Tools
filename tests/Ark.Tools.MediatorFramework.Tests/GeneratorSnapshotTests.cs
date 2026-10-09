@@ -3384,8 +3384,9 @@ public sealed class GeneratorSnapshotTests
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().NotContain("global::ListBooks");
         result.Generated.Should().NotContain("global::DeleteBook");
-        // A type with settable properties that implements IParsable<T>, even explicitly, binds from a string.
-        result.Generated.Should().Contain("global::ListShelves");
+        // A type with settable properties that implements IParsable<T>, even explicitly, binds from a string, and a
+        // nullable reference stays optional.
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Shelf\")] global::ShelfFilter? Shelf,");
     }
 
     [TestMethod]
