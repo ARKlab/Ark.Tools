@@ -69,7 +69,7 @@ public sealed class TestHost : IDisposable
 #pragma warning disable ERP022 // Intentional cleanup - exceptions ignored
         catch
         {
-            // Best-effort teardown: a failure here must not prevent the remaining hooks from running.
+            // Disposing the scope throws when after-scenario assertions failed; that failure is suppressed here.
         }
 #pragma warning restore ERP022
         _afterScenarioAssertionScope = null;
@@ -241,7 +241,7 @@ public sealed class TestHost : IDisposable
 #pragma warning disable ERP022 // Intentional cleanup - exceptions ignored
         catch
         {
-            // Best-effort teardown: a failure here must not prevent the remaining hooks from running.
+            // Disposing the scope throws when after-scenario assertions failed; that failure is suppressed here.
         }
 #pragma warning restore ERP022
     }
