@@ -57,7 +57,7 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
             return false;
 
         var converter = TypeConverterCache.Converter;
-        if (!converter.CanConvertFrom(typeof(string)))
+        if (!TypeConverterCache.CanConvertFromString)
             return false;
 
         try
@@ -80,8 +80,16 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
     private static class TypeConverterCache
     {
         private static readonly Lazy<TypeConverter> _converter = new(_getConverter);
+        private static readonly Lazy<bool> _canConvertFromString = new(_getCanConvertFromString);
 
         public static TypeConverter Converter => _converter.Value;
+
+        public static bool CanConvertFromString => _canConvertFromString.Value;
+
+        private static bool _getCanConvertFromString()
+        {
+            return _converter.Value.CanConvertFrom(typeof(string));
+        }
 
         // Resolved on first use, so a type registered after the endpoints are mapped is still found. Lazy caches a
         // missing registration, which surfaces as the same InvalidOperationException on every conversion. A
