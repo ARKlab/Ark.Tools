@@ -58,11 +58,39 @@ public class AuthenticationApiClientCachingDecoratorTests
             .Returns(gate.Task);
         using var sut = new AuthenticationApiClientCachingDecorator(inner.Object);
 
-        var calls = Enumerable.Range(0, 20).Select(_ => Task.Run(() => sut.GetTokenAsync(_request))).ToList();
+        var started = 0;
+        var calls = Enumerable.Range(0, 20).Select(_ => Task.Run(() =>
+        {
+            var call = sut.GetTokenAsync(_request);
+            Interlocked.Increment(ref started);
+            return call;
+        })).ToList();
+        SpinWait.SpinUntil(() => Volatile.Read(ref started) == calls.Count, TimeSpan.FromSeconds(10)).Should().BeTrue();
         gate.SetResult(_tokenResponse(TimeSpan.FromHours(1)));
         var results = await Task.WhenAll(calls);
 
         results.Should().AllSatisfy(r => r.Should().BeSameAs(results[0]));
+        inner.Verify(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task GetTokenAsync_WaiterCancelled_DoesNotCancelOtherCallers()
+    {
+        var gate = new TaskCompletionSource<AccessTokenResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var inner = new Mock<IAuthenticationApiClient>();
+        inner.Setup(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(gate.Task);
+        using var sut = new AuthenticationApiClientCachingDecorator(inner.Object);
+        using var cts = new CancellationTokenSource();
+
+        var first = sut.GetTokenAsync(_request, cts.Token);
+        var second = sut.GetTokenAsync(_request, CancellationToken.None);
+        await cts.CancelAsync();
+        gate.SetResult(_tokenResponse(TimeSpan.FromHours(1)));
+
+        Func<Task> waitFirst = () => first;
+        await waitFirst.Should().ThrowAsync<OperationCanceledException>();
+        (await second).Should().NotBeNull();
         inner.Verify(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 

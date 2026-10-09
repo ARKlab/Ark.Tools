@@ -148,23 +148,23 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         var key = getKey(request);
 
         // Lazy: GetOrAdd may run the factory more than once on concurrent misses, but only the stored Lazy is ever started.
+        // The shared call is not bound to any caller's token; each caller applies its own token to its wait.
         var pending = _pendingTasks.GetOrAdd(
             key,
             static (k, state) => new Lazy<Task<AccessTokenResponse>>(async () => await state.Self._getOrCreateAsync(
                 k,
                 ct => state.GetTokenAsync(state.Request, ct),
                 _expiresIn,
-                state.CancellationToken).ConfigureAwait(false)),
+                CancellationToken.None).ConfigureAwait(false)),
             (
                 Self: this,
                 Request: request,
-                GetTokenAsync: getTokenAsync,
-                CancellationToken: cancellationToken
+                GetTokenAsync: getTokenAsync
             ));
 
         try
         {
-            return await pending.Value.ConfigureAwait(false);
+            return await pending.Value.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
