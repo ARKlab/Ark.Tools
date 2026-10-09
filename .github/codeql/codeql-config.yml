@@ -1,6 +1,8 @@
 paths-ignore:
   - 'docs/**'
   - 'tests/**'
+  # Test projects living next to the samples (e.g. *.Core.Tests)
+  - '**/*.Tests/**'
 
 threat-models: local
 
@@ -14,3 +16,5 @@ query-filters:
       id: cs/linq/missed-select
   - exclude:
       id: cs/simplifiable-boolean-expression
+  - exclude:
+      id: cs/complex-condition
