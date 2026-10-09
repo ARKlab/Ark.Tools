@@ -558,16 +558,18 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("    }");
     }
 
-    // Converts _raw_<Name> with the same strategy Minimal API picks for the type, and returns 400 when it fails. An
-    // empty value of a nullable type is null: it sets a nullable property to null, which also clears a value the body
-    // set, and leaves a nullable array element null. The converted value goes to the array element target, or to the
-    // property when target is null.
+    // Converts _raw_<Name> with the same strategy Minimal API picks for the type, and returns 400 when it fails. As in
+    // Minimal API, an empty element of a nullable array is null, an empty value of a nullable type bound through its
+    // type converter sets the property to null (clearing a value the body set), and any other empty single value is
+    // parsed like the rest. The converted value goes to the array element target, or to the property when target is
+    // null.
     private static void _emitConversion(StringBuilder source, in EndpointSpec endpoint, string indent, in PropertySpec prop, string valueDescription, string? target)
     {
         var raw = "_raw_" + prop.Name;
         var value = "_value_" + prop.Name;
         var bodyIndent = indent;
-        if (prop.IsNullableTarget)
+        var emptyIsNull = prop.IsNullableTarget && (target is not null || prop.Conversion == ConversionKind.TypeConverter);
+        if (emptyIsNull)
         {
             source.Append(indent).Append("if (!string.IsNullOrEmpty(").Append(raw).AppendLine("))");
             source.Append(indent).AppendLine("{");
@@ -583,7 +585,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         else
             source.Append(bodyIndent).Append(target).Append(" = ").Append(value).AppendLine("!;");
 
-        if (prop.IsNullableTarget)
+        if (emptyIsNull)
         {
             source.Append(indent).AppendLine("}");
             if (target is null)

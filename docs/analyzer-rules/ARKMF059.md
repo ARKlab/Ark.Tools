@@ -127,9 +127,11 @@ strategy Minimal API uses for the type:
 An `[HttpQuery]` string collection of a supported shape receives every value of
 the query parameter, and an `[HttpQuery]` array of a parseable type, such as
 `int[]`, `Guid[]` or an enum array, converts each value to one element. A value
-that does not convert fails the request with `400`. An empty value of a
-nullable type, such as `?Owner=` for a `Guid?` property, binds `null`, and an
-empty element of a nullable array is `null`.
+that does not convert fails the request with `400`. As in Minimal API, an empty
+element of a nullable array is `null`, an empty value of a nullable type bound
+through its type converter, such as `Instant?`, binds `null`, and any other
+empty single value is parsed like the rest, so `?Owner=` fails with `400` for a
+`Guid?` property.
 
 The diagnostic is reported at the property. When the contract is in a
 referenced assembly, it is reported at the `[assembly: HttpHost]` attribute
