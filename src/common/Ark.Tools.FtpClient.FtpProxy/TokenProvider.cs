@@ -8,6 +8,7 @@ using Auth0.AuthenticationApi.Models;
 using Microsoft.Identity.Client;
 
 using Polly;
+using Polly.Retry;
 
 using System.Security.Authentication;
 
@@ -22,6 +23,26 @@ internal sealed class TokenProvider
     private readonly IConfidentialClientApplication? _adal;
     private readonly IAuthenticationApiClient? _auth0;
     private readonly IFtpClientProxyConfig _config;
+
+    private static readonly ResiliencePipeline _auth0Retry = new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+            MaxRetryAttempts = 3,
+            Delay = TimeSpan.FromSeconds(3),
+            BackoffType = DelayBackoffType.Constant,
+        })
+        .Build();
+
+    private static readonly ResiliencePipeline _adalRetry = new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            ShouldHandle = new PredicateBuilder().Handle<MsalException>(static ex => ex.IsRetryable),
+            MaxRetryAttempts = 3,
+            Delay = TimeSpan.FromSeconds(3),
+            BackoffType = DelayBackoffType.Constant,
+        })
+        .Build();
 
     public TokenProvider(IFtpClientProxyConfig config)
     {
@@ -51,15 +72,13 @@ internal sealed class TokenProvider
         var auth0 = _auth0 ?? throw new InvalidOperationException("Auth0 client is not initialized");
         try
         {
-            var result = await Policy
-                .Handle<Exception>()
-                .WaitAndRetryAsync(3, static r => TimeSpan.FromSeconds(3))
-                .ExecuteAsync((ct) => auth0.GetTokenAsync(new ClientCredentialsTokenRequest
+            var result = await _auth0Retry
+                .ExecuteAsync(async ct => await auth0.GetTokenAsync(new ClientCredentialsTokenRequest
                 {
                     Audience = _config.ApiIdentifier,
                     ClientId = _config.ClientID,
                     ClientSecret = _config.ClientKey
-                }, ct), ctk)
+                }, ct).ConfigureAwait(false), ctk)
 .ConfigureAwait(false);
 
             return result.AccessToken;
@@ -76,10 +95,8 @@ internal sealed class TokenProvider
         var adal = _adal ?? throw new InvalidOperationException("ADAL client is not initialized");
         try
         {
-            result = await Policy
-                .Handle<MsalException>(static ex => ex.IsRetryable)
-                .WaitAndRetryAsync(3, static r => TimeSpan.FromSeconds(3))
-                .ExecuteAsync(c => adal.AcquireTokenForClient([_config.ApiIdentifier + "/.default"]).ExecuteAsync(c), ctk, false)
+            result = await _adalRetry
+                .ExecuteAsync(async c => await adal.AcquireTokenForClient([_config.ApiIdentifier + "/.default"]).ExecuteAsync(c).ConfigureAwait(false), ctk)
 .ConfigureAwait(false);
         }
         catch (Exception ex)

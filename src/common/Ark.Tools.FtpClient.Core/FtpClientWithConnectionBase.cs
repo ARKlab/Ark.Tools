@@ -3,6 +3,7 @@
 using NLog;
 
 using Polly;
+using Polly.Retry;
 
 namespace Ark.Tools.FtpClient.Core;
 
@@ -59,16 +60,20 @@ public abstract class FtpClientWithConnectionBase : FtpClientBase
 
             async Task ListFolderAsync(string path, CancellationToken ct)
             {
-                var retrier = Policy
-                    .Handle<Exception>()
-                    .WaitAndRetryAsync(
-                    [
-                        TimeSpan.FromSeconds(1),
-                        TimeSpan.FromSeconds(1),
-                    ], (ex, ts) =>
+                var retrier = new ResiliencePipelineBuilder()
+                    .AddRetry(new RetryStrategyOptions
                     {
-                        _logger.Warn(ex, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, ts);
-                    });
+                        ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                        MaxRetryAttempts = 2,
+                        Delay = TimeSpan.FromSeconds(1),
+                        BackoffType = DelayBackoffType.Constant,
+                        OnRetry = args =>
+                        {
+                            _logger.Warn(args.Outcome.Exception, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, args.RetryDelay);
+                            return default;
+                        },
+                    })
+                    .Build();
 
                 var list = await retrier.ExecuteAsync(async ct1 =>
                 {

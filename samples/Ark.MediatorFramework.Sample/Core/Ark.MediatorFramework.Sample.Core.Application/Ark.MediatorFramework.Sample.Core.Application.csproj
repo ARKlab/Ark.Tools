@@ -25,7 +25,7 @@
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
     <PackageReference Include="MessagePack" />
-    <PackageReference Include="Polly" />
+    <PackageReference Include="Polly.Core" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.API\Ark.MediatorFramework.Sample.Core.API.csproj" />
   </ItemGroup>
 

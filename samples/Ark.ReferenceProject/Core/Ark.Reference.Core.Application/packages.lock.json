@@ -763,11 +763,6 @@
           "NodaTime": "[3.0.0, 4.0.0)"
         }
       },
-      "Polly.Core": {
-        "type": "Transitive",
-        "resolved": "8.8.0",
-        "contentHash": "TewV9uNFsoRFggoFbTAGFwsMYPuckA+wTIpQPyhLL9BANRPQRENz2S4bwATrB3HBOakN5oKLFIllPiDnVecmJg=="
-      },
       "Rebus": {
         "type": "Transitive",
         "resolved": "8.9.5",
@@ -892,7 +887,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.2, )",
           "Azure.Storage.Blobs": "[12.30.1, )",
-          "Polly": "[8.8.0, )"
+          "Polly.Core": "[8.8.0, )"
         }
       },
       "ark.reference.core.api": {
@@ -1190,14 +1185,11 @@
           "System.IdentityModel.Tokens.Jwt": "8.23.0"
         }
       },
-      "Polly": {
+      "Polly.Core": {
         "type": "CentralTransitive",
         "requested": "[8.8.0, )",
         "resolved": "8.8.0",
-        "contentHash": "1/jm0wQA0hjcY8OcGx2HLzj4Tx33IpmEWWPUcekt07V7VO8suAUmeDRD7VM5wy9614pJMI2M0TB1pwKVflh4CQ==",
-        "dependencies": {
-          "Polly.Core": "8.8.0"
-        }
+        "contentHash": "TewV9uNFsoRFggoFbTAGFwsMYPuckA+wTIpQPyhLL9BANRPQRENz2S4bwATrB3HBOakN5oKLFIllPiDnVecmJg=="
       },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "CentralTransitive",

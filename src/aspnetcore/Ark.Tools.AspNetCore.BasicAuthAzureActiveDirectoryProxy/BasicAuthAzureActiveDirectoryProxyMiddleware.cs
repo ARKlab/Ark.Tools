@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 using Polly;
+using Polly.Retry;
 
 using System.Text.Json;
 
@@ -17,6 +18,15 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     private readonly BasicAuthAzureActiveDirectoryProxyConfig _config;
     private readonly HttpClient _client;
     private readonly ILogger<BasicAuthAzureActiveDirectoryProxyMiddleware> _logger;
+
+    private static readonly ResiliencePipeline _retry = new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+            MaxRetryAttempts = 2,
+            Delay = TimeSpan.Zero,
+        })
+        .Build();
 
     public BasicAuthAzureActiveDirectoryProxyMiddleware(RequestDelegate next, BasicAuthAzureActiveDirectoryProxyConfig config, ILogger<BasicAuthAzureActiveDirectoryProxyMiddleware> logger)
     {
@@ -84,9 +94,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
 
                             var url = new Uri($"https://login.microsoftonline.com/{_config.Tenant}/oauth2/token");
 
-                            var result = await Policy
-                                .Handle<Exception>()
-                                .RetryAsync(2)
+                            var result = await _retry
                                 .ExecuteAsync(async ct =>
                                 {
                                     using var res = await _client.PostAsync(url, content, context.RequestAborted).ConfigureAwait(false);
@@ -94,7 +102,7 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
 
                                     var payload = await res.Content.ReadAsStringAsync(context.RequestAborted).ConfigureAwait(false);
                                     return JsonSerializer.Deserialize<OAuthResult>(payload);
-                                }, context.RequestAborted, true).ConfigureAwait(false);
+                                }, context.RequestAborted).ConfigureAwait(false);
 
                             context.Request.Headers["Authorization"] = $"Bearer {result?.Access_Token}";
                         }

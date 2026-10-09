@@ -24,7 +24,7 @@
   <ItemGroup>
     <PackageReference Include="Auth0.AuthenticationApi" />
     <PackageReference Include="Microsoft.Identity.Client" />
-    <PackageReference Include="Polly.Caching.Memory" />
+    <PackageReference Include="Polly.Core" />
   </ItemGroup>
 
   <ItemGroup>

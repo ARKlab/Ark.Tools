@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 using Polly;
+using Polly.Retry;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy;
 
@@ -16,7 +17,7 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
 {
     private readonly RequestDelegate _next;
     private readonly BasicAuthAuth0ProxyConfig _config;
-    private readonly AsyncPolicy _policy;
+    private readonly ResiliencePipeline _policy;
     private readonly AuthenticationApiClientCachingDecorator _auth0;
     private readonly ILogger<BasicAuthAuth0ProxyMiddleware> _logger;
 
@@ -26,8 +27,15 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
         _config = config;
         _logger = logger;
 
-        _policy = Policy.Handle<Exception>()
-            .WaitAndRetryAsync(3, static r => TimeSpan.FromSeconds(r));
+        _policy = new ResiliencePipelineBuilder()
+            .AddRetry(new RetryStrategyOptions
+            {
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                MaxRetryAttempts = 3,
+                Delay = TimeSpan.FromSeconds(1),
+                BackoffType = DelayBackoffType.Linear,
+            })
+            .Build();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         _auth0 = new AuthenticationApiClientCachingDecorator(new AuthenticationApiClient($"{_config.Domain}"));
@@ -86,7 +94,7 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
                                     }, context.RequestAborted).ConfigureAwait(false);
 
                                     return result.AccessToken;
-                                }, context.RequestAborted, true).ConfigureAwait(false);
+                                }, context.RequestAborted).ConfigureAwait(false);
 
                             context.Request.Headers["Authorization"] = $@"Bearer {accessToken}";
                         }
