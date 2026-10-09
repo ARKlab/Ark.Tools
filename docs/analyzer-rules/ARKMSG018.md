@@ -2,11 +2,11 @@
 
 - **Severity:** Error
 - **Component:** Mediator Framework
-- **Diagnostic message:** `Event contract '{0}' must implement ICommand<TSelf> or IRequest<TSelf, TResponse>`
+- **Diagnostic message:** `Event contract '{0}' must implement ICommand<TSelf> (requests and queries cannot be events)`
 
 ## What it checks
 
-This Ark.Tools diagnostic identifies the condition described above and reports it at the relevant declaration, contract, or generated-code input. The diagnostic message includes the contextual symbol and the required correction where applicable.
+An event is a contract marked `[Event]`, listed in a participant's `Publishes`, or listed in a participant's `Subscribes`. It must implement `ICommand<TSelf>`. A request (`IRequest<TSelf, TResponse>`) is a valid message for `Processes`, but never an event: nobody receives its response.
 
 ## How to fix it
 

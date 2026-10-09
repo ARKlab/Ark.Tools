@@ -64,7 +64,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static mapping => mapping is not null)
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
-                .SelectMany(static (mapping, _) => mapping.AssemblyNames.Items)
+                .SelectMany(static (mapping, _) => mapping.Assemblies.Items.Select(static assembly => assembly.Name))
                 .Collect()
                 .Select(static (assemblies, _) => new ImmutableEquatableArray<string>(assemblies));
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -113,6 +113,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Combine(compilationModel)
                 .Select(static (pair, cancellationToken) => BuildOutput(
                     pair.Left.Left.Left.Items.AddRange(pair.Left.Left.Right.Items),
+                    pair.Left.Right,
                     pair.Right,
                     cancellationToken))
                 .WithTrackingName(OutputTrackingName);
@@ -155,10 +156,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                 && !IsGeneratedEndpointInvocation(invocation, methodName, context.SemanticModel, cancellationToken))
                 return null;
 
-            var assemblyNames = methodName == "MapArkGrpcServices"
-                ? GetContextAssemblyNames(context, genericName, cancellationToken)
-                : GetAssemblyMarkerName(context, genericName, cancellationToken);
-            return assemblyNames.IsDefaultOrEmpty ? null : new AssemblyMapping(assemblyNames);
+            var invocationLocation = LocationSpec.Create(invocation.GetLocation());
+            var assemblies = methodName == "MapArkGrpcServices"
+                ? GetContextAssemblies(context, genericName, invocationLocation, cancellationToken)
+                : GetAssemblyMarker(context, genericName, invocationLocation, cancellationToken);
+            return assemblies.IsDefaultOrEmpty ? null : new AssemblyMapping(assemblies);
         }
 
         private static bool IsAssemblyMappingCandidate(SyntaxNode node)
@@ -183,34 +185,44 @@ namespace Ark.Tools.MediatorFramework.Generators
                     : null;
         }
 
-        private static ImmutableArray<string> GetAssemblyMarkerName(
+        private static ImmutableArray<AssemblySource> GetAssemblyMarker(
             GeneratorSyntaxContext context,
             GenericNameSyntax genericName,
+            LocationSpec invocationLocation,
             CancellationToken cancellationToken)
         {
             return context.SemanticModel
                 .GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken)
                 .Type?.ContainingAssembly?.Name is { } assemblyName
-                ? ImmutableArray.Create(assemblyName)
-                : ImmutableArray<string>.Empty;
+                ? ImmutableArray.Create(new AssemblySource(assemblyName, invocationLocation))
+                : ImmutableArray<AssemblySource>.Empty;
         }
 
-        private static ImmutableArray<string> GetContextAssemblyNames(
+        private static ImmutableArray<AssemblySource> GetContextAssemblies(
             GeneratorSyntaxContext context,
             GenericNameSyntax genericName,
+            LocationSpec invocationLocation,
             CancellationToken cancellationToken)
         {
             if (context.SemanticModel.GetTypeInfo(genericName.TypeArgumentList.Arguments[0], cancellationToken).Type
                 is not INamedTypeSymbol contextType)
-                return ImmutableArray<string>.Empty;
+                return ImmutableArray<AssemblySource>.Empty;
 
-            return contextType.GetAttributes()
-                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkGenerateGrpcForAssemblyAttribute)
-                .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
-                .Where(static marker => marker?.ContainingAssembly?.Name is not null)
-                .Select(static marker => marker!.ContainingAssembly!.Name)
-                .Distinct(StringComparer.Ordinal)
-                .ToImmutableArray();
+            var result = ImmutableArray.CreateBuilder<AssemblySource>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var attribute in contextType.GetAttributes()
+                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkGenerateGrpcForAssemblyAttribute))
+            {
+                if ((attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)?.ContainingAssembly?.Name
+                    is not { } assemblyName || !seen.Add(assemblyName))
+                    continue;
+
+                // Report at the attribute that selects the assembly; fall back to the call when it is not in source.
+                var location = LocationSpec.Create(attribute.ApplicationSyntaxReference?.GetSyntax(cancellationToken).GetLocation());
+                result.Add(new AssemblySource(assemblyName, location == default ? invocationLocation : location));
+            }
+
+            return result.ToImmutable();
         }
 
         private static bool IsGeneratedEndpointInvocation(
@@ -339,6 +351,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             var kind = HandlerKind.None;
             var attachmentResponse = false;
             string? streamElement = null;
+            var genericMessage = false;
 
             foreach (var iface in type.AllInterfaces)
             {
@@ -348,7 +361,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                     kind = HandlerKind.Request;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
-                    streamElement = GetAsyncEnumerableElement(iface.TypeArguments[0], asyncEnumerableType);
+                    var element = GetAsyncEnumerableElement(iface.TypeArguments[0], asyncEnumerableType);
+                    streamElement = element?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    genericMessage = IsClosedGenericProtoContract(element ?? iface.TypeArguments[0]);
                     break;
                 }
 
@@ -357,7 +372,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                     kind = HandlerKind.Query;
                     response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                     attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
-                    streamElement = GetAsyncEnumerableElement(iface.TypeArguments[0], asyncEnumerableType);
+                    var element = GetAsyncEnumerableElement(iface.TypeArguments[0], asyncEnumerableType);
+                    streamElement = element?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    genericMessage = IsClosedGenericProtoContract(element ?? iface.TypeArguments[0]);
                     break;
                 }
 
@@ -372,8 +389,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (kind == HandlerKind.None || response is null)
                 return EndpointModel.Invalid(type, new DiagnosticInfo(
                     DiagnosticDescriptors.UnsupportedHandlerKind,
-                    type.Name,
-                    GetLocation(grpc)));
+                    LocationSpec.Create(GetLocation(grpc)),
+                    type.Name));
 
             var attachmentProperties = AllProperties(type)
 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic && (IsAttachmentType(property.Type, attachmentType) || IsAttachmentCollection(property.Type, attachmentType))).ToArray();
@@ -413,6 +430,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 streamElement,
                 attachmentRequest,
                 attachmentProperties.FirstOrDefault()?.Name,
+                genericMessage,
+                type.ContainingAssembly.Name,
+                LocationSpec.Create(GetLocation(grpc)),
                 ImmutableEquatableArray<DiagnosticInfo>.Empty);
         }
 
@@ -459,7 +479,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 "System.Collections.Generic.IReadOnlyCollection<T>";
         }
 
-        private static string? GetAsyncEnumerableElement(ITypeSymbol type, INamedTypeSymbol? asyncEnumerableType)
+        private static ITypeSymbol? GetAsyncEnumerableElement(ITypeSymbol type, INamedTypeSymbol? asyncEnumerableType)
         {
             if (asyncEnumerableType is null || type is not INamedTypeSymbol named)
                 return null;
@@ -468,14 +488,21 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .FirstOrDefault(candidate => SymbolEqualityComparer.Default.Equals(
                     candidate.OriginalDefinition,
                     asyncEnumerableType));
-            return match?.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            return match?.TypeArguments[0];
         }
+
+        // A constructed type whose definition is a [ProtoContract], such as Page<Book>. The proto export cannot name it.
+        private static bool IsClosedGenericProtoContract(ITypeSymbol type)
+            => type is INamedTypeSymbol named
+                && !SymbolEqualityComparer.Default.Equals(named, named.OriginalDefinition)
+                && named.OriginalDefinition.GetAttributes().Any(attribute => IsAttribute(attribute, ProtoContractAttribute));
 
         private static Location GetLocation(AttributeData attribute)
             => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;
 
         private static GrpcOutput BuildOutput(
             ImmutableArray<EndpointModel> items,
+            ImmutableEquatableArray<AssemblyMapping> mappings,
             CompilationModel compilation,
             CancellationToken cancellationToken)
         {
@@ -483,9 +510,35 @@ namespace Ark.Tools.MediatorFramework.Generators
                 return new GrpcOutput(null, ImmutableEquatableArray<DiagnosticInfo>.Empty);
 
             items = items.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
-            var diagnostics = new ImmutableEquatableArray<DiagnosticInfo>(
-                items.SelectMany(static item => item.Diagnostics.Items).ToImmutableArray());
-            items = items.Where(static item => item.IsValid).ToImmutableArray();
+            var diagnosticsBuilder = items.SelectMany(static item => item.Diagnostics.Items).ToList();
+            var contractLookup = CreateContractLookup(compilation);
+            var bindable = ImmutableArray.CreateBuilder<EndpointModel>();
+            foreach (var item in items.Where(static item => item.IsValid))
+            {
+                var unbindable = GetUnbindablePart(item, contractLookup);
+                if (unbindable is null)
+                {
+                    bindable.Add(item);
+                    continue;
+                }
+
+                // A referenced contract has no source location: report at the call or attribute that selected its assembly.
+                var location = item.Location != default
+                    ? item.Location
+                    : mappings.Items.SelectMany(static mapping => mapping.Assemblies.Items)
+                        .FirstOrDefault(assembly => string.Equals(assembly.Name, item.AssemblyName, StringComparison.Ordinal))
+                        .Location;
+                diagnosticsBuilder.Add(new DiagnosticInfo(
+                    DiagnosticDescriptors.UnbindableGrpcContract,
+                    location,
+                    DisplayName(item.TypeFullName),
+                    unbindable.Value.Part,
+                    DisplayName(unbindable.Value.TypeName),
+                    unbindable.Value.Reason));
+            }
+
+            var diagnostics = new ImmutableEquatableArray<DiagnosticInfo>(diagnosticsBuilder.ToImmutableArray());
+            items = bindable.ToImmutable();
 
             var sb = new StringBuilder();
             sb.AppendLine("// <auto-generated/>");
@@ -649,7 +702,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                missingHandlers.Add(contract + \" -> \" + handlerType);");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
-            EmitProtoAssets(sb, items, compilation, cancellationToken);
+            EmitProtoAssets(sb, items, compilation, contractLookup, cancellationToken);
             sb.AppendLine("}");
 
             return new GrpcOutput(sb.ToString(), diagnostics);
@@ -662,7 +715,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 context.ReportDiagnostic(Diagnostic.Create(
                     diagnostic.Descriptor,
                     diagnostic.Location.ToLocation(),
-                    diagnostic.TypeName));
+                    diagnostic.Arguments.Items.ToArray<object?>()));
             }
 
             if (output.Source is not null)
@@ -704,20 +757,13 @@ namespace Ark.Tools.MediatorFramework.Generators
             StringBuilder sb,
             ImmutableArray<EndpointModel> items,
             CompilationModel compilation,
+            ProtoContractLookup contractLookup,
             CancellationToken cancellationToken)
         {
             sb.AppendLine("    /// <summary>Source-generated protobuf assets for the discovered gRPC contracts.</summary>");
             sb.AppendLine("    public static class ArkGeneratedProtos");
             sb.AppendLine("    {");
             var contracts = compilation.ProtoContracts.Items;
-            var contractsByType = new Dictionary<string, ProtoContractModel>(StringComparer.Ordinal);
-            var contractsByName = new Dictionary<string, ProtoContractModel>(StringComparer.Ordinal);
-            foreach (var contract in contracts)
-            {
-                contractsByType.TryAdd(contract.TypeFullName, contract);
-                contractsByName.TryAdd(contract.Name, contract);
-            }
-            var contractLookup = new ProtoContractLookup(contractsByType, contractsByName);
             var entries = new List<string>();
             var content = new StringBuilder();
             foreach (var group in items.GroupBy(static item => item.ServiceGroup).OrderBy(static group => group.Key, StringComparer.Ordinal))
@@ -742,15 +788,12 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .Append(Literal(compilation.ProtoNamespace))
                     .AppendLine(";");
                 content.AppendLine();
-                content.AppendLine("import \"google/type/date.proto\";");
-                content.AppendLine("import \"google/type/datetime.proto\";");
-                content.AppendLine("import \"google/protobuf/empty.proto\";");
-                if (reachable.Any(type => contractLookup.ByType.TryGetValue(type, out var contract)
-                    && contract.Members.Items.Any(member => IsArkNodaTimePeriod(member.Type))))
-                {
-                    content.AppendLine("import \"ark/nodatime.proto\";");
-                }
-                if (active.Any(item => item.AttachmentResponse || item.AttachmentRequest != AttachmentRequestKind.None))
+                // Well-known and NodaTime imports are inserted once the emitted field types are known: protoc warns
+                // on unused imports, and a reachable member may not be emitted (a request's [ServerSet] member).
+                var wellKnownImportsAt = content.Length;
+                var usedTypes = new HashSet<string>(StringComparer.Ordinal);
+                // Download chunks are declared locally; only uploads use ark.mediator.UploadDocumentChunk.
+                if (active.Any(item => item.AttachmentRequest != AttachmentRequestKind.None))
                     content.AppendLine("import \"ark/mediator.proto\";");
                 content.AppendLine();
                 if (active.Any(item => item.AttachmentResponse))
@@ -772,7 +815,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 foreach (var contract in contracts
                     .Where(contract => reachable.Contains(contract.TypeFullName))
                     .OrderBy(static contract => contract.Name, StringComparer.Ordinal))
-                    EmitProtoMessage(content, contract, contractLookup, requestNames.Contains(contract.Name));
+                    EmitProtoMessage(content, contract, contractLookup, requestNames.Contains(contract.Name), usedTypes);
 
                 var maxVersion = active.Max(static x => Math.Max(
                     x.GrpcIntroducedIn,
@@ -789,28 +832,45 @@ namespace Ark.Tools.MediatorFramework.Generators
                     foreach (var item in versionItems)
                     {
                         WriteComment(content, item.Summary, "  ");
+                        var request = ProtoTypeName(item.TypeFullName, contractLookup);
+                        var response = ProtoTypeName(item.IsStreaming ? item.StreamElement! : item.Response, contractLookup);
                         content.Append("  rpc ").Append(item.GrpcMethod)
                             .Append(item.AttachmentRequest != AttachmentRequestKind.None
                                 ? "(stream ark.mediator.UploadDocumentChunk) returns "
-                                : "(" + ProtoTypeName(item.TypeFullName, contractLookup) + ") returns ");
+                                : "(" + request + ") returns ");
+                        if (item.AttachmentRequest == AttachmentRequestKind.None)
+                            usedTypes.Add(request);
                         if (item.AttachmentResponse)
                             content.Append("(stream DownloadDocumentChunk);");
                         else if (item.IsStreaming)
-                            content.Append("(stream ").Append(ProtoTypeName(item.StreamElement!, contractLookup)).Append(");");
+                            content.Append("(stream ").Append(response).Append(");");
                         else
-                            content.Append('(').Append(ProtoTypeName(item.Response, contractLookup)).Append(");");
+                            content.Append('(').Append(response).Append(");");
+                        if (!item.AttachmentResponse)
+                            usedTypes.Add(response);
                         content.AppendLine();
                     }
                     content.AppendLine("}");
                     content.AppendLine();
                 }
 
+                var wellKnownImports = new StringBuilder();
+                if (usedTypes.Contains("google.type.Date"))
+                    wellKnownImports.AppendLine("import \"google/type/date.proto\";");
+                if (usedTypes.Contains("google.type.DateTime"))
+                    wellKnownImports.AppendLine("import \"google/type/datetime.proto\";");
+                if (usedTypes.Contains("google.protobuf.Empty"))
+                    wellKnownImports.AppendLine("import \"google/protobuf/empty.proto\";");
+                if (usedTypes.Contains("ark.nodatime.Period"))
+                    wellKnownImports.AppendLine("import \"ark/nodatime.proto\";");
+                content.Insert(wellKnownImportsAt, wellKnownImports.ToString());
+
                 var fileName = Identifier(group.Key) + ".proto";
                 EmitProtoEntry(sb, fileName, content.ToString());
                 entries.Add("Get" + Identifier(Path.GetFileNameWithoutExtension(fileName)) + "()");
             }
 
-            sb.AppendLine("        public static (string FileName, string Content)[] GetFiles() => new[]");
+            sb.AppendLine("        public static (string FileName, string Content)[] GetFiles() => new (string FileName, string Content)[]");
             sb.AppendLine("        {");
             foreach (var entry in entries)
                 sb.Append("            ").Append(entry).AppendLine(",");
@@ -839,7 +899,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             StringBuilder sb,
             ProtoContractModel contract,
             ProtoContractLookup contractLookup,
-            bool isRequest)
+            bool isRequest,
+            ISet<string> usedTypes)
         {
             WriteComment(sb, contract.Summary);
             sb.Append("message ").Append(contract.Name).AppendLine(" {");
@@ -857,6 +918,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             {
                 WriteComment(sb, member.Description);
                 var type = member.PrecomputedProtoType ?? ProtoTypeName(member.Type, contractLookup);
+                usedTypes.Add(type);
                 sb.Append("  ");
                 if (member.IsRepeated)
                     sb.Append("repeated ");
@@ -972,20 +1034,24 @@ namespace Ark.Tools.MediatorFramework.Generators
         }
 
         private static string ProtoTypeName(string typeName, ProtoContractLookup contractLookup)
+            => ResolveProtoTypeName(typeName, contractLookup) ?? "bytes";
+
+        // Returns null for a type that is neither a mapped scalar nor a [ProtoContract].
+        private static string? ResolveProtoTypeName(string typeName, ProtoContractLookup contractLookup)
         {
             if (typeName.EndsWith("[]", StringComparison.Ordinal))
-                return ProtoTypeName(typeName[..^2], contractLookup);
+                return ResolveProtoTypeName(typeName[..^2], contractLookup);
 
             foreach (var collectionPrefix in _collectionPrefixes)
             {
                 if (typeName.StartsWith(collectionPrefix, StringComparison.Ordinal)
                     && typeName.EndsWith(">", StringComparison.Ordinal))
-                    return ProtoTypeName(typeName[collectionPrefix.Length..^1], contractLookup);
+                    return ResolveProtoTypeName(typeName[collectionPrefix.Length..^1], contractLookup);
             }
 
             if (typeName.StartsWith("global::System.Nullable<", StringComparison.Ordinal)
                 && typeName.EndsWith(">", StringComparison.Ordinal))
-                return ProtoTypeName(typeName["global::System.Nullable<".Length..^1], contractLookup);
+                return ResolveProtoTypeName(typeName["global::System.Nullable<".Length..^1], contractLookup);
 
             if (typeName.StartsWith("global::Ark.Tools.Core.EvolvableEnum<", StringComparison.Ordinal))
             {
@@ -1035,8 +1101,48 @@ namespace Ark.Tools.MediatorFramework.Generators
 
             return contractLookup.ByType.TryGetValue(typeName, out var contract)
                 ? contract.Name
-                : "bytes";
+                : null;
         }
+
+        private static ProtoContractLookup CreateContractLookup(CompilationModel compilation)
+        {
+            var contractsByType = new Dictionary<string, ProtoContractModel>(StringComparer.Ordinal);
+            var contractsByName = new Dictionary<string, ProtoContractModel>(StringComparer.Ordinal);
+            foreach (var contract in compilation.ProtoContracts.Items)
+            {
+                contractsByType.TryAdd(contract.TypeFullName, contract);
+                contractsByName.TryAdd(contract.Name, contract);
+            }
+            return new ProtoContractLookup(contractsByType, contractsByName);
+        }
+
+        // The single bindability rule for the server code and the proto export. protobuf-net code-first binds a
+        // method only when each message is a contract type (CanSerializeContractType): scalars, including scalar
+        // stream items, are not messages. Attachment requests and responses use the built-in chunk messages.
+        // A closed generic contract is rejected too: protobuf-net binds it, but the proto export cannot name it,
+        // so the served and exported services would disagree.
+        private static (string Part, string TypeName, string Reason)? GetUnbindablePart(EndpointModel item, ProtoContractLookup contractLookup)
+        {
+            if (item.AttachmentRequest == AttachmentRequestKind.None && !IsProtoMessage(item.TypeFullName, contractLookup))
+                return ("request", item.TypeFullName, NotProtoContractReason);
+            if (item.AttachmentResponse)
+                return null;
+            var (part, message) = item.IsStreaming ? ("stream element", item.StreamElement!) : ("response", item.Response);
+            if (IsProtoMessage(message, contractLookup))
+                return null;
+            return (part, message, item.MessageIsGenericContract ? GenericProtoContractReason : NotProtoContractReason);
+        }
+
+        private const string NotProtoContractReason = "is not a protobuf contract";
+        private const string GenericProtoContractReason =
+            "is a generic protobuf contract, which cannot be exported to .proto; use a non-generic contract type";
+
+        private static string DisplayName(string typeName)
+            => typeName.Replace("global::", string.Empty);
+
+        private static bool IsProtoMessage(string typeName, ProtoContractLookup contractLookup)
+            => contractLookup.ByType.ContainsKey(typeName)
+                || string.Equals(typeName, "global::Google.Protobuf.WellKnownTypes.Empty", StringComparison.Ordinal);
 
         private static bool IsRepeatedProtoType(ITypeSymbol type)
         {
@@ -1052,16 +1158,6 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             var separator = value.LastIndexOf('.');
             return separator < 0 ? value : value[(separator + 1)..];
-        }
-
-        private static bool IsArkNodaTimePeriod(string typeName)
-        {
-            if (typeName.EndsWith("[]", StringComparison.Ordinal))
-                return IsArkNodaTimePeriod(typeName[..^2]);
-            if (typeName.StartsWith("global::System.Nullable<", StringComparison.Ordinal)
-                && typeName.EndsWith(">", StringComparison.Ordinal))
-                return IsArkNodaTimePeriod(typeName["global::System.Nullable<".Length..^1]);
-            return string.Equals(typeName, "global::NodaTime.Period", StringComparison.Ordinal);
         }
 
         // Detects Ark.Tools.Core.EvolvableEnum by name/arity/namespace (no compile-time
@@ -1169,17 +1265,19 @@ namespace Ark.Tools.MediatorFramework.Generators
             Collection = 2,
         }
 
-        private readonly record struct AssemblyMapping(ImmutableEquatableArray<string> AssemblyNames)
+        private readonly record struct AssemblyMapping(ImmutableEquatableArray<AssemblySource> Assemblies)
         {
-            public AssemblyMapping(ImmutableArray<string> assemblyNames)
-                : this(new ImmutableEquatableArray<string>(assemblyNames))
+            public AssemblyMapping(ImmutableArray<AssemblySource> assemblies)
+                : this(new ImmutableEquatableArray<AssemblySource>(assemblies))
             {
             }
         }
 
+        private readonly record struct AssemblySource(string Name, LocationSpec Location);
+
         private readonly record struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, string? summary, string? remarks, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, string? streamElement, AttachmentRequestKind attachmentRequest, string? attachmentPropertyName, ImmutableEquatableArray<DiagnosticInfo> diagnostics)
+            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, string? summary, string? remarks, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, string? streamElement, AttachmentRequestKind attachmentRequest, string? attachmentPropertyName, bool messageIsGenericContract, string assemblyName, LocationSpec location, ImmutableEquatableArray<DiagnosticInfo> diagnostics)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -1195,6 +1293,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 StreamElement = streamElement;
                 AttachmentRequest = attachmentRequest;
                 AttachmentPropertyName = attachmentPropertyName;
+                MessageIsGenericContract = messageIsGenericContract;
+                AssemblyName = assemblyName;
+                Location = location;
                 Diagnostics = diagnostics;
                 IsValid = diagnostics.Items.IsEmpty;
             }
@@ -1203,6 +1304,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             {
                 TypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 TypeName = GeneratedName(type);
+                AssemblyName = type.ContainingAssembly.Name;
                 Diagnostics = new ImmutableEquatableArray<DiagnosticInfo>(ImmutableArray.Create(diagnostic));
                 IsValid = false;
                 GrpcMethod = string.Empty;
@@ -1234,22 +1336,25 @@ namespace Ark.Tools.MediatorFramework.Generators
             public AttachmentRequestKind AttachmentRequest { get; }
             public string? AttachmentPropertyName { get; }
             public bool IsStreaming => StreamElement is not null;
+            public bool MessageIsGenericContract { get; }
+            public string AssemblyName { get; }
+            public LocationSpec Location { get; }
             public ImmutableEquatableArray<DiagnosticInfo> Diagnostics { get; }
             public bool IsValid { get; }
         }
 
         private readonly record struct DiagnosticInfo
         {
-            public DiagnosticInfo(DiagnosticDescriptor descriptor, string typeName, Location location)
+            public DiagnosticInfo(DiagnosticDescriptor descriptor, LocationSpec location, params string[] arguments)
             {
                 Descriptor = descriptor;
-                TypeName = typeName;
-                Location = LocationSpec.Create(location);
+                Location = location;
+                Arguments = new ImmutableEquatableArray<string>(ImmutableArray.Create(arguments));
             }
 
             public DiagnosticDescriptor Descriptor { get; }
-            public string TypeName { get; }
             public LocationSpec Location { get; }
+            public ImmutableEquatableArray<string> Arguments { get; }
         }
 
         private static string GeneratedName(INamedTypeSymbol type)

@@ -20,6 +20,7 @@ public partial class CoreDataContext_Sql
 {
     private const string _schemaBook = "dbo";
     private const string _tableBook = "Book";
+    private const string _tableBookHistory = "BookHistory";
 
     public async Task<Book.V1.Output?> ReadBookByIdAsync(int id, CancellationToken ctk = default)
     {
@@ -248,6 +249,15 @@ public partial class CoreDataContext_Sql
 
         var cmd = new CommandDefinition(
             $@"
+                    -- FOR SYSTEM_TIME drops zero-duration versions (ValidFrom = ValidTo), which happen when two transactions
+                    -- share the same begin time: read current and history tables directly to keep the previous version
+                    WITH V AS (
+                        SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [AuditId], [SysStartTime], [SysEndTime]
+                        FROM [{_schemaBook}].[{_tableBook}]
+                        UNION ALL
+                        SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [AuditId], [SysStartTime], [SysEndTime]
+                        FROM [{_schemaBook}].[{_tableBookHistory}]
+                    )
                     SELECT 
                           F.[Id]
                         , F.[Title]
@@ -260,10 +270,10 @@ public partial class CoreDataContext_Sql
                         , F.[SysEndTime]
 
                     FROM 
-                        [{_schemaBook}].[{_tableBook}] FOR SYSTEM_TIME ALL F
+                        V F
 
                     INNER JOIN 
-                        [{_schemaBook}].[{_tableBook}] FOR SYSTEM_TIME ALL R
+                        V R
                         ON 1=1
                             AND F.[Id] = R.[Id]
 

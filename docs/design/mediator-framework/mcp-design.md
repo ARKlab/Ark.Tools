@@ -631,7 +631,7 @@ must be included in the same dependency change.
 
 The mediator sample is a mandatory integration gate, not a documentation-only
 example. Before the package is released, expand
-`samples/Ark.MediatorFramework.Sample` so its WebInterface host:
+`samples/Ark.MediatorFramework.Sample` so its `Core/Hosts/Web` host:
 
 - references the selected `ModelContextProtocol.AspNetCore` and Ark MCP package;
 - registers `AddMcpServer().WithHttpTransport()` and the generated

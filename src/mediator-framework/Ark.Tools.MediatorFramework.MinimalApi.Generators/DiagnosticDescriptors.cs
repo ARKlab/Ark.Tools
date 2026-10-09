@@ -30,4 +30,16 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor DuplicateETagProperty = new(
         "ARKMF018", "Duplicate ETag property", "HTTP endpoint '{0}' has more than one property marked with [ETag]",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF018.md");
+
+    public static readonly DiagnosticDescriptor PropertyNotBindableWithoutBody = new(
+        "ARKMF059", "Property cannot be bound from the request", "HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
+    public static readonly DiagnosticDescriptor PropertyNotConvertibleFromString = new(
+        "ARKMF059", "Property cannot be bound from the request", "HTTP endpoint '{0}' binds property '{1}' from the route or query string, but its type '{2}' cannot be converted from a string",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
+    public static readonly DiagnosticDescriptor PropertyNotSettable = new(
+        "ARKMF059", "Property cannot be bound from the request", "HTTP endpoint '{0}' binds property '{1}' from the route or query string, but the property has no public setter or init accessor and is not a constructor parameter",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
 }

@@ -21,6 +21,7 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
     private readonly IMessagingTransport _transport;
     private CancellationTokenSource? _stopping;
     private Task? _loop;
+    private int _disposed;
 
     /// <summary>Creates a native messaging outbox processor.</summary>
     /// <param name="contextFactory">The durable outbox context factory.</param>
@@ -61,17 +62,19 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        if (_stopping is not null)
+        // Idempotent: the processor is registered as itself and as a hosted service, so a provider disposes it twice.
+        // Assumes disposal is sequential and never concurrent with StartAsync/StopAsync, as hosts and providers call them.
+        if (Interlocked.Exchange(ref _disposed, 1) != 0 || _stopping is null)
+            return;
+
+        await _stopping.CancelAsync().ConfigureAwait(false);
+        if (_loop is not null)
         {
-            await _stopping.CancelAsync().ConfigureAwait(false);
-            if (_loop is not null)
-            {
 #pragma warning disable VSTHRD003 // The processor loop is intentionally started on the thread pool.
-                await _loop.ConfigureAwait(false);
+            await _loop.ConfigureAwait(false);
 #pragma warning restore VSTHRD003
-            }
-            _stopping.Dispose();
         }
+        _stopping.Dispose();
     }
 
     /// <inheritdoc />

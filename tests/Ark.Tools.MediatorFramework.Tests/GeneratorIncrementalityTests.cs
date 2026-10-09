@@ -83,6 +83,53 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorReusesEmittedSourceOnHostFileWhitespaceEdit()
+    {
+        var contracts = _createReference(
+            "MinimalApiHostContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace MinimalApiHostContracts;
+            public sealed class Marker { }
+            [HttpEndpoint("GET", "/referenced")]
+            public sealed class GetReferenced : IQuery<string> { }
+            """);
+        const string host = """
+            public static class Host
+            {
+                public static void Map() => MapArkEndpointsFromAssembly<MinimalApiHostContracts.Marker>();
+            }
+            """;
+        var hostTree = CSharpSyntaxTree.ParseText(host, path: "Host.cs");
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [hostTree],
+            _getReferences().Append(contracts),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ArkMinimalApiEndpointGenerator().AsSourceGenerator()],
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        driver = driver.RunGenerators(compilation);
+        var original = _describeOutput(driver);
+        original.Should().Contain("global::MinimalApiHostContracts.GetReferenced");
+
+        // Shifts the mapping call, so its location changes while its meaning does not.
+        compilation = compilation.ReplaceSyntaxTree(
+            hostTree,
+            CSharpSyntaxTree.ParseText("\n\n" + host, path: "Host.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        _getStepReasons(driver, "MinimalApiMappingParser").Should().Contain(IncrementalStepRunReason.Modified);
+        _getStepReasons(driver, "MinimalApiEmissionInput").Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached
+                || reason == IncrementalStepRunReason.Unchanged);
+        _describeOutput(driver).Should().Be(original);
+    }
+
+    [TestMethod]
     public void GrpcGeneratorReusesCachedOutputOnUnrelatedEdit()
     {
         var contracts = _createReference(
@@ -242,8 +289,12 @@ public sealed class GeneratorIncrementalityTests
             public sealed class PrintCompleted : ICommand<PrintCompleted> { }
             [Event(Name = "books.lost")]
             public sealed class BookLost : ICommand<BookLost> { }
+            [Message(Name = "books.review_book")]
+            public sealed class ReviewBook : IRequest<ReviewBook, string> { }
+            [Message(Name = "books.lookup_book")]
+            public sealed class LookupBook : IQuery<string> { }
             [MessagingParticipant(
-                Processes = new[] { typeof(PrintBook) },
+                Processes = new[] { typeof(PrintBook), typeof(ReviewBook), typeof(LookupBook) },
                 Publishes = new[] { typeof(PrintCompleted) },
                 Serializers = new[] { SerializationProtocol.Json },
                 DefaultSerializer = SerializationProtocol.Json,
@@ -268,7 +319,15 @@ public sealed class GeneratorIncrementalityTests
             [],
             cachedSteps: ["MessagingNetworkSpecs", "MessagingNetworkOutput"],
             unchangedSteps: ["MessagingNetworkParser", "MessagingParticipantParser"],
-            expectedOutput: ["sealed partial class BookMessagingNetwork", "CompressionAlgorithm.Gzip", "DispatchAsync", "ARKMSG008"]);
+            expectedOutput:
+            [
+                "sealed partial class BookMessagingNetwork",
+                "CompressionAlgorithm.Gzip",
+                "DispatchAsync",
+                "requestProcessor.ExecuteAsync<global::ReviewBook, string>",
+                "ARKMSG008",
+                "ARKMSG027",
+            ]);
     }
 
     [TestMethod]

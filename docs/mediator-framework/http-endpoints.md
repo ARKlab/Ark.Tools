@@ -13,7 +13,7 @@ access and the request fits a route/query/body envelope.
 | Constructor `template` / `Template` | required `string` | Route template | You want route placeholders such as `{id}` or `{version}` | Generated path appears exactly from this template |
 | `SuccessStatusCode` | `0` | Success status for a non-null result | The default `200 OK` is wrong, for example create = `201` | Successful HTTP response uses your code |
 | `NullResultStatusCode` | `0` | Success-path status when the handler returns `null` | A `null` result is a documented outcome | Queries default to `404`; requests default to `204` |
-| `AcceptsMessagePack` | `false` | Whether HTTP MessagePack negotiation is enabled | The same contract must support JSON and `application/x-msgpack` | Request/response can negotiate MessagePack |
+| `AcceptsMessagePack` | `false` | Whether HTTP MessagePack negotiation is enabled | The same contract must support JSON and `application/x-msgpack` | Request/response can negotiate MessagePack; `GET` and `DELETE` negotiate only the response and never read a body ([ARKMF059](../analyzer-rules/ARKMF059.md)) |
 | `AllowAnonymous` | `false` | HTTP opt-out from the host's default auth requirement | The route is intentionally public | Generated route carries anonymous metadata |
 | `RequireAntiforgery` | `false` | Multipart antiforgery validation | Cookie-authenticated browser forms must post files safely | Missing/invalid antiforgery token rejects the upload |
 | `MaxRequestBodySizeBytes` | `0` | Multipart request body size limit | Uploads need a per-endpoint size ceiling | Oversized request is rejected before handler dispatch |
@@ -66,7 +66,7 @@ public sealed record UpdateGreetingRequest : IRequest<GreetingResponse>
     public string? UpdatedBy { get; init; }
 }
 ```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
 
 Caller request:
 
@@ -77,7 +77,7 @@ Authorization: ******
 
 { "message": "Hello again", "updatedBy": "forged-user" }
 ```
-Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
+Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/BookTransportBoundaryTests.cs)
 
 Value seen by the handler:
 
@@ -116,7 +116,7 @@ OpenAPI group.
 [HttpEndpoint("POST", "/api/v{version}/greetings", SuccessStatusCode = 201)]
 public sealed record CreateGreetingRequest : IRequest<GreetingResponse>;
 ```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
 
 Expected HTTP response for success:
 
@@ -124,7 +124,7 @@ Expected HTTP response for success:
 HTTP/1.1 201 Created
 Content-Type: application/json
 ```
-Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
+Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/BookTransportBoundaryTests.cs)
 
 ```json
 {
@@ -132,7 +132,7 @@ Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sa
   "message": "Hello Ada"
 }
 ```
-Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
+Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/BookTransportBoundaryTests.cs)
 
 If the handler returns `null` and `NullResultStatusCode` is not set, the same
 contract would instead yield the framework default for the handler kind.
@@ -162,7 +162,7 @@ public sealed record UploadGreetingCardsRequest : IRequest<UploadBatchResponse>
     public IReadOnlyList<IArkAttachment> Attachments { get; init; } = [];
 }
 ```
-Source: [`AttachmentContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/AttachmentContracts.cs)
+Source: [`AttachmentContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/AttachmentContracts.cs)
 
 Caller with five files receives a safe public failure before the handler runs:
 
@@ -173,7 +173,7 @@ Caller with five files receives a safe public failure before the handler runs:
   "detail": "The number of uploaded files exceeds the configured limit of 4."
 }
 ```
-Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/BookTransportBoundaryTests.cs)
+Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/BookTransportBoundaryTests.cs)
 
 ## Security and unsupported shapes
 

@@ -40,7 +40,7 @@ public sealed class RenameGreetingHandler : ICommandHandler<RenameGreetingComman
     }
 }
 ```
-Source: [`BookPrintProcessContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookPrintProcessContracts.cs)
+Source: [`BookPrintProcessContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookPrintProcessContracts.cs)
 
 **Outcome:** the handler can be called by any enabled transport and remains
 straightforward to test without an HTTP server, gRPC context, or message bus.
@@ -50,7 +50,9 @@ straightforward to test without an HTTP server, gRPC context, or message bus.
 Use records for small immutable messages. Make every client-controlled member
 explicit; use `[ServerSet]` rather than accepting server-owned values. When a
 contract crosses gRPC, add `[ProtoContract]` and a unique `[ProtoMember(n)]` to
-every serialized member:
+every serialized member. The request, the response and each streamed item must be
+protobuf contracts; a scalar such as `IAsyncEnumerable<int>` fails the build with
+[ARKMF058](../analyzer-rules/ARKMF058.md):
 
 ```csharp
 [ProtoContract]
@@ -63,7 +65,7 @@ public sealed record GreetingResponse
     public required string Message { get; init; }
 }
 ```
-Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookStreamingContracts.cs)
+Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookStreamingContracts.cs)
 
 `ProtoMember` numbers are wire identifiers, not display order. Never reuse a
 released number; add new optional members with new numbers. Replace or version a
@@ -94,7 +96,7 @@ public sealed record CreateOrderRequest : IRequest<OrderResponse>
     public string? TenantId { get; init; }
 }
 ```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
 
 For this HTTP input, `ProductCode` and `Quantity` bind normally, but the
 attempted `userId` and `tenantId` values do not reach the handler:
@@ -102,7 +104,7 @@ attempted `userId` and `tenantId` values do not reach the handler:
 ```json
 { "productCode": "SKU-42", "quantity": 2, "userId": "administrator" }
 ```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
 
 The host, decorator, or handler must then set trusted values before relying on
 them. `ServerSet` prevents client binding; it does **not** populate the member,

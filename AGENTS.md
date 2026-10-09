@@ -94,8 +94,9 @@ regressions.
 # From the repository root
 docker compose up -d
 
-# Wait until the Service Bus emulator accepts connections on both ports (it starts after SQL Server)
-timeout 300s bash -c 'until (echo > /dev/tcp/127.0.0.1/5300) 2>/dev/null && (echo > /dev/tcp/127.0.0.1/5672) 2>/dev/null; do sleep 2; done'
+# Wait until the Service Bus emulator reports healthy (about 2 minutes on a cold start).
+# Its ports open before it is ready; until then tests fail with "Service is warming up".
+timeout 300s bash -c 'until curl -fs http://127.0.0.1:5300/health > /dev/null; do sleep 2; done'
 
 # Stop and remove the containers when done
 docker compose down
@@ -326,7 +327,7 @@ Host.CreateDefaultBuilder(args)
 ## Source Generators
 
 - All projects emit generated code to the intermediate output folder: `obj/$(Configuration)/$(TargetFramework)/generated/<GeneratorAssembly>/<GeneratorName>/`
-- **When developing or changing a Generator**: after building, ALWAYS inspect the emitted `.g.cs` files in the consuming samples/tests projects (e.g., `samples/Ark.MediatorFramework.Sample/src/*/obj/Debug/net10.0/generated/`) to verify the generated code is correct and compilable
+- **When developing or changing a Generator**: after building, ALWAYS inspect the emitted `.g.cs` files in the consuming samples/tests projects (e.g., `samples/Ark.MediatorFramework.Sample/Core/**/obj/Debug/net10.0/generated/`) to verify the generated code is correct and compilable
 
 ## Project Structure
 

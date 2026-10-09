@@ -10,13 +10,15 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Dispatches one generated participant contract.</summary>
 /// <param name="logicalName">The logical contract name.</param>
 /// <param name="payload">The prepared payload reader.</param>
-/// <param name="processor">The scoped command processor.</param>
+/// <param name="processor">The scoped command processor, used for command contracts.</param>
+/// <param name="requestProcessor">The scoped request processor, used for request contracts sent as messages.</param>
 /// <param name="ctk">The cancellation token.</param>
 /// <returns>A task that completes after dispatch.</returns>
 public delegate Task MessagingDispatch(
     string logicalName,
     IMessagingPayloadReader payload,
     ICommandProcessor processor,
+    IRequestProcessor requestProcessor,
     CancellationToken ctk);
 
 /// <summary>Dispatches one generated participant second-level failure.</summary>
@@ -52,6 +54,8 @@ public sealed class MessagingParticipantDescriptor
     /// <param name="dispatchFailed">The generated second-level failure binder.</param>
     /// <param name="handlerServiceTypes">The generated consumed-contract handler service types.</param>
     /// <param name="publishedTopics">The generated participant-owned topic resources.</param>
+    /// <param name="subscribedTopics">The generated topic resources of the events the participant subscribes to.</param>
+    /// <param name="knownNetworkTopics">The generated names of every event topic in the network; defaults to the published and subscribed topic names.</param>
     public MessagingParticipantDescriptor(
         Type participantType,
         MessagingNetworkOptions network,
@@ -65,7 +69,9 @@ public sealed class MessagingParticipantDescriptor
         MessagingDispatch? dispatch,
         MessagingFailedDispatch? dispatchFailed,
         IEnumerable<Type>? handlerServiceTypes = null,
-        IEnumerable<MessagingTopicResource>? publishedTopics = null)
+        IEnumerable<MessagingTopicResource>? publishedTopics = null,
+        IEnumerable<MessagingTopicResource>? subscribedTopics = null,
+        IEnumerable<string>? knownNetworkTopics = null)
     {
         ParticipantType = participantType ?? throw new ArgumentNullException(nameof(participantType));
         Network = network ?? throw new ArgumentNullException(nameof(network));
@@ -92,6 +98,11 @@ public sealed class MessagingParticipantDescriptor
             (handlerServiceTypes ?? Array.Empty<Type>()).ToArray());
         PublishedTopics = new ReadOnlyCollection<MessagingTopicResource>(
             (publishedTopics ?? Array.Empty<MessagingTopicResource>()).ToArray());
+        SubscribedTopics = new ReadOnlyCollection<MessagingTopicResource>(
+            (subscribedTopics ?? Array.Empty<MessagingTopicResource>()).ToArray());
+        KnownNetworkTopics = new ReadOnlyCollection<string>(
+            (knownNetworkTopics ?? PublishedTopics.Concat(SubscribedTopics).Select(static t => t.Name).Distinct(StringComparer.Ordinal))
+            .ToArray());
     }
 
     /// <summary>Gets the participant declaration type.</summary>
@@ -132,6 +143,14 @@ public sealed class MessagingParticipantDescriptor
 
     /// <summary>Gets the generated participant-owned topic resources.</summary>
     public IReadOnlyList<MessagingTopicResource> PublishedTopics { get; }
+
+    /// <summary>Gets the generated topic resources of the events the participant subscribes to.</summary>
+    /// <remarks>Each topic is named and owned by the event publisher, as in <see cref="PublishedTopics"/>.</remarks>
+    public IReadOnlyList<MessagingTopicResource> SubscribedTopics { get; }
+
+    /// <summary>Gets the generated names of every event topic in the network.</summary>
+    /// <remarks>Resource reconciliation lists these topics to delete stale subscriptions owned by the participant.</remarks>
+    public IReadOnlyList<string> KnownNetworkTopics { get; }
 
     /// <summary>Creates the participant payload sender over the shared DataBus.</summary>
     /// <param name="dataBus">The shared network DataBus.</param>

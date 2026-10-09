@@ -23,21 +23,21 @@ jobs:
       ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING: 'Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;'
     services:
       sqlserver:
-        image: mcr.microsoft.com/mssql/server:2025-latest
+        image: mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-24.04@sha256:2b5b581621126574f3d1f75e78d3eebe8d05aedb59ad0cfdf9aa42cb0634d726
         ports:
           - 1433:1433
         env:
           ACCEPT_EULA: 'Y'
           MSSQL_SA_PASSWORD: 'IntegrationTestsDbPassword85!'
           MSSQL_COLLATION: 'Latin1_General_CI_AS_KS'
+        # Boot check only: tests wait for the Service Bus emulator, which needs SQL Server ready.
         options: >-
-          --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P IntegrationTestsDbPassword85! -C -Q 'SELECT 1' || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-          --health-start-period=30s
+          --health-cmd="bash -c 'echo > /dev/tcp/127.0.0.1/1433'"
+          --health-interval=2s
+          --health-timeout=2s
+          --health-retries=60
       servicebus:
-        image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+        image: mcr.microsoft.com/azure-messaging/servicebus-emulator:2.0.1@sha256:5a96d893b245031740f7d46e0fe5ff282d24b78c4b7d761dd57590f3f010a9b3
         ports:
           - 5672:5672
           - 5300:5300
@@ -48,7 +48,7 @@ jobs:
           EMULATOR_HTTP_PORT: 5300
           SQL_WAIT_INTERVAL: 90
       azurite:
-        image: mcr.microsoft.com/azure-storage/azurite:latest
+        image: mcr.microsoft.com/azure-storage/azurite:3.37.0@sha256:830430c1da1a2d537e08f3e6764dd1f5ae00cf0346bcaf625b968ec3f0971fd5
         ports:
           - 10000:10000
           - 10001:10001
@@ -57,24 +57,13 @@ jobs:
           AZURITE_SKIP_API_VERSION_CHECK: 'true'
         options: >-
           --health-cmd="node -e \"require('net').connect(10000, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))\""
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=30
-          --health-start-period=10s
+          --health-interval=2s
+          --health-timeout=2s
+          --health-retries=60
 
     steps:
     - name: 'Checkout'
       uses: actions/checkout@v7
-
-    - name: 'Wait for Service Bus emulator'
-      run: |
-        timeout 300s bash -c '
-          until bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5300" 2>/dev/null \
-            && bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5672" 2>/dev/null; do
-            sleep 2
-          done
-          sleep 5
-        '
 
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v6
@@ -94,6 +83,10 @@ jobs:
     - name: 'Build project (dacpac copy issue)'
       run: dotnet build --configuration Debug
       
+    # The emulator warms up while the build runs; its ports open before it can serve requests.
+    - name: 'Wait for Service Bus emulator'
+      run: timeout 300s bash -c 'until curl -fs http://127.0.0.1:5300/health > /dev/null; do sleep 2; done'
+
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug
 

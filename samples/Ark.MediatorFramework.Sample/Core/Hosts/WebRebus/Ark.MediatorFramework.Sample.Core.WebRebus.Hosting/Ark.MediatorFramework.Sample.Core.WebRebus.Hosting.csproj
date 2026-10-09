@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
+    <PackageReference Include="Ark.Tools.Outbox.Rebus" />
+    <PackageReference Include="Ark.Tools.Rebus" />
+    <PackageReference Include="Ark.Tools.Solid.Authorization" />
+    <PackageReference Include="Ark.Tools.SystemTextJson" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
+  </ItemGroup>
+
+</Project>

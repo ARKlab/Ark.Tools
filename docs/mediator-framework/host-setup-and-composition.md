@@ -7,9 +7,9 @@ The framework has two deliberate seams:
 
 Do not put ASP.NET Core, gRPC server, or Rebus transport objects in a handler.
 The sample keeps the first seam in
-[`ApplicationComposition.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Host/ApplicationComposition.cs)
+[`ApplicationComposition.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Host/ApplicationComposition.cs)
 and the web seam in
-[`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs).
+[`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/SampleStartup.cs).
 
 SimpleInjector remains the authoritative application container. When a host also
 owns an `IServiceCollection` and generated endpoints or native messaging resolve
@@ -37,13 +37,36 @@ services.ConfigureArkMessaging(
     SampleMessagingNetwork.Registry,
     messaging =>
 {
-    messaging.Producer<SampleMessagingPublisherParticipant>(producer => producer
+    messaging.Producer<SampleMessagingApiParticipant>(producer => producer
         .UseTransport(transport => transport.UseServiceBus(client))
         .UseDataBus(dataBus => dataBus.UseInMemory())
         .UseSerialization(serialization => serialization.UseMessagePack())
         .UseOutbox(outbox => outbox.UseEnqueue()));
 });
 ```
+
+`UseServiceBus(client)` hands the client to the composition: the service
+provider disposes the transport, and with it the client, when the provider is
+disposed. A transport passed with `Use(transport)` or `UseTransport(transport)`
+stays owned by the caller, who disposes it.
+
+A transport that does not manage its own resources needs an explicit seam when
+the network uses `CreateIfMissing`. With it, Producers provision their topics,
+and Receivers also their identity queue and forwarding subscriptions:
+
+```csharp
+.UseTransport(transport => transport.UseServiceBus(client, configureServiceBus))
+.UseResourceManagement(new ServiceBusTransportManagement(
+    administrationClient,
+    serviceBusOptions))
+```
+
+Pass the same Service Bus options to `ServiceBusTransportManagement` that the
+transport uses (`configureServiceBus` and `serviceBusOptions` describe the same
+`ServiceBusMessagingOptions`). The transport plans lock renewal against its
+declared lock duration; the management seam creates the queues and subscriptions
+with its own. If they differ, provisioned entities carry a lock duration the
+processor does not expect.
 
 Use `Receiver<TParticipant>(container, ...)` for a custom receive host. Azure
 Functions hosts use `ConfigureArkMessagingFunctions` and select either Service
@@ -81,20 +104,30 @@ owned by a separate native host.
 | API assembly | Public requests, queries, responses, DTOs, public auth metadata, API JSON context | Handlers, persistence, queue topology |
 | Application assembly | Handlers, validators, authorization handlers, services, DAL, internal messages, application JSON context | `HttpContext`, `ServerCallContext`, transport setup |
 | Web host | ASP.NET Core auth, JSON, MessagePack, OpenAPI, gRPC, endpoint mapping | Business transactions |
-| Rebus processor | Input queue, generated message handlers, retries, outbox processor | HTTP route binding |
-| Functions host | Isolated-worker HTTP boundary, generated messaging triggers, and outbound bus client | Rebus workers or outbox polling |
+| Processor | Input queue, generated message handlers, retries, and in the Rebus variant the outbox processor | HTTP route binding |
+| Functions host | Isolated-worker HTTP boundary and generated messaging triggers, one app per participant | Rebus or outbox polling |
 | Native outbox processor | Existing SQL outbox polling and raw-envelope dispatch | Receive queue, subscriptions, application handlers |
+
+The API and Application assemblies take their contract attributes, such as
+`[HttpEndpoint]`, `[GrpcMethod]`, `[GrpcService]` and `[McpTool]`, from
+`Ark.Tools.MediatorFramework`, plus serializer packages such as MessagePack and
+protobuf-net. Only hosts reference transport packages such as
+`Ark.Tools.MediatorFramework.MinimalApi` and `Ark.Tools.MediatorFramework.Grpc`,
+which bring in ASP.NET Core.
 
 ## Register the application graph
 
-The sample selects SQL or in-memory persistence, then registers handlers and
+The sample takes its persistence from `ApplicationOptions` (a SQL connection
+string, or an in-memory context factory in tests), then registers handlers and
 decorators:
 
 ```csharp
 ApplicationComposition.Register(
     container,
-    useSqlStore: true,
-    connectionString: configuration.GetConnectionString("Sample"));
+    new ApplicationOptions
+    {
+        SqlConnectionString = configuration.GetConnectionString("Sample"),
+    });
 
 container.RegisterAuthorization();
 container.RegisterAuthorizationHandler<ScopeAuthorizationHandler>();
@@ -114,9 +147,9 @@ can skip validation or auditing.
 
 ## Configure the common Rebus behavior
 
-`ApplicationComposition.ConfigureRebusCommon` is shared by the web sender,
-processor, and Functions sender. It keeps routing, serialization, user context,
-and NLog behavior consistent:
+The sample's `RebusHosting` library is shared by every process of the WebRebus
+variant: the one-way sender and each processor. Its `Configure<THost>` keeps
+routing, serialization, user context, telemetry, and NLog behavior consistent:
 
 ```csharp
 config.Routing(configureRouting);
@@ -132,9 +165,12 @@ config.Serialization(serializer =>
 config.Options(options =>
 {
     options.AutomaticallyFlowUserContext(container);
-    configureOptions?.Invoke(options);
+    options.UseOpenTelemetry(container);
+    options.UseOpenTelemetryMetrics(container);
+    configureOptions(options);
 });
 ```
+Source: [`RebusHosting.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/RebusHosting.cs)
 
 The source-generated application context includes application-owned Rebus
 messages and the public payload types nested inside them. This avoids silently
@@ -153,10 +189,11 @@ sample appends the generated `IHandleMessages<T>` implementations into
 SimpleInjector:
 
 ```csharp
-RebusProcessorHost.Register(
+THost.Register(
     (serviceType, implementationType) =>
         container.Collection.Append(serviceType, implementationType));
 ```
+Source: [`RebusHosting.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/RebusHosting.cs)
 
 If a future generator API offers Microsoft DI registration helpers, they remain
 opt-in host choices. They do not replace application-container ownership.
@@ -178,7 +215,7 @@ The web host performs these steps:
 
 ```csharp
 builder.UseArkMinimalApiStartupDiagnostics();
-builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.WebInterface");
+builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.Core.Web.WebInterface");
 
 services.AddArkMinimalApiHost(container, options =>
 {
@@ -271,21 +308,31 @@ time assembly anchor.
 
 ## Separate process composition
 
-The processor is a separate executable and container:
+Each processor is a separate executable and container:
 
 ```csharp
-var network = new InMemNetwork();
-await using var container =
-    RebusProcessorComposition.BuildContainer(network, useSqlStore: false);
+await using var container = RebusHosting.CreateContainer(
+    new ApplicationOptions { SqlConnectionString = sql });
+RebusHosting.Configure<WorkerRebusHost>(
+    container,
+    transport => transport.UseAzureServiceBus(
+        serviceBus,
+        SampleMessagingParticipant.Identity),
+    startOutboxProcessor: true);
 
+using var host = builder.Build();
 container.Verify();
 container.StartBus();
-await Task.Delay(Timeout.InfiniteTimeSpan).ConfigureAwait(false);
+await WorkerRebusHost
+    .SubscribeAsync(container.GetInstance<Rebus.Bus.IBus>())
+    .ConfigureAwait(false);
+await host.RunAsync().ConfigureAwait(false);
 ```
+Source: [`Program.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Program.cs)
 
 The web host can share an in-memory network in tests, but it must not share a
-SimpleInjector container or message scope with the processor. In production,
-replace the network with Azure Service Bus.
+SimpleInjector container or message scope with the processor. Production uses
+Azure Service Bus, as above.
 
 ## Compose Azure Functions messaging
 
@@ -327,9 +374,8 @@ Publisher-owned topics are still reconciled when lifecycle management is
 enabled.
 
 Functions composition never starts a Rebus receiver, Rebus outbox processor, or
-native SQL outbox processor. The sample Functions host selects the native
-composition; its separately tested outbound-only Rebus composition remains
-available as a mutually exclusive compatibility path.
+native SQL outbox processor. The sample Functions host is native-only; a
+Rebus topology is a separate all-Rebus deployment, as in the `WebRebus` variant.
 
 ## Host the native SQL outbox processor separately
 

@@ -1,21 +1,42 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Ark.MediatorFramework.Sample.API/Ark.MediatorFramework.Sample.API.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj">
+  <Folder Name="/Core/">
+    <Project Path="Core/Ark.MediatorFramework.Sample.Core.API/Ark.MediatorFramework.Sample.Core.API.csproj" />
+    <Project Path="Core/Ark.MediatorFramework.Sample.Core.Application/Ark.MediatorFramework.Sample.Core.Application.csproj" />
+    <Project Path="Core/Ark.MediatorFramework.Sample.Core.Tests/Ark.MediatorFramework.Sample.Core.Tests.csproj" />
+    <Project Path="Core/Ark.MediatorFramework.Sample.Core.Database/Ark.MediatorFramework.Sample.Core.Database.sqlproj">
       <Build />
       <Deploy />
     </Project>
-    <Project Path="src/Ark.MediatorFramework.Sample.AuditFunctions/Ark.MediatorFramework.Sample.AuditFunctions.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.Functions/Ark.MediatorFramework.Sample.Functions.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.OutboxProcessor/Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
-    <Project Path="src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj" />
   </Folder>
-  <Folder Name="/test/">
-    <Project Path="test/Ark.MediatorFramework.Sample.GrpcClient/Ark.MediatorFramework.Sample.GrpcClient.csproj" />
-    <Project Path="test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj" />
+  <Folder Name="/Core/Hosts/Web/">
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Hosting/Ark.MediatorFramework.Sample.Core.Web.Hosting.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/Ark.MediatorFramework.Sample.Core.Web.WebInterface.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Processor/Ark.MediatorFramework.Sample.Core.Web.Processor.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor/Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.AuditProcessor/Ark.MediatorFramework.Sample.Core.Web.AuditProcessor.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.GrpcClient/Ark.MediatorFramework.Sample.Core.Web.GrpcClient.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/Ark.MediatorFramework.Sample.Core.Web.Tests.csproj" />
+    <File Path="Core/Hosts/Web/README.md" />
+  </Folder>
+  <Folder Name="/Core/Hosts/WebRebus/">
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Ark.MediatorFramework.Sample.Core.WebRebus.Processor.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor.csproj" />
+    <Project Path="Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Tests/Ark.MediatorFramework.Sample.Core.WebRebus.Tests.csproj" />
+    <File Path="Core/Hosts/WebRebus/README.md" />
+  </Folder>
+  <Folder Name="/Core/Hosts/Functions/">
+    <Project Path="Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Hosting/Ark.MediatorFramework.Sample.Core.Functions.Hosting.csproj" />
+    <Project Path="Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Api/Ark.MediatorFramework.Sample.Core.Functions.Api.csproj" />
+    <Project Path="Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Processor/Ark.MediatorFramework.Sample.Core.Functions.Processor.csproj" />
+    <Project Path="Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Notifications/Ark.MediatorFramework.Sample.Core.Functions.Notifications.csproj" />
+    <Project Path="Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Audit/Ark.MediatorFramework.Sample.Core.Functions.Audit.csproj" />
+    <Project Path="Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor.csproj" />
+    <Project Path="Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests/Ark.MediatorFramework.Sample.Core.Functions.Tests.csproj" />
+    <File Path="Core/Hosts/Functions/README.md" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path="Directory.Build.props" />

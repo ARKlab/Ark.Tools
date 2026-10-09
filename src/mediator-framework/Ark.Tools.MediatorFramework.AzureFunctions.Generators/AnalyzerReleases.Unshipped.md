@@ -25,5 +25,6 @@ ARKMF046 | Ark.Tools.MediatorFramework | Error | Messaging native entity name co
 ARKMF047 | Ark.Tools.MediatorFramework | Error | HTTP host version prefix is missing the {version} token
 ARKMF048 | Ark.Tools.MediatorFramework | Error | Conflicting HTTP host version prefixes for the same contract assembly
 ARKMF049 | Ark.Tools.MediatorFramework | Error | HTTP host contract selection does not match an HTTP endpoint contract
+ARKMF059 | Ark.Tools.MediatorFramework | Error | Property cannot be bound from the request
 ARKMSG025 | Ark.Tools.MediatorFramework | Error | MessagePack contract shape is missing
 ARKMSG026 | Ark.Tools.MediatorFramework | Error | Google.Protobuf contract shape is missing

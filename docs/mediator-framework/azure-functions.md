@@ -33,7 +33,7 @@ Select the public API assembly at assembly level:
 
 ```csharp
 [assembly: HttpHost(
-    typeof(Ark.MediatorFramework.Sample.API.RefreshGreetingCommand),
+    typeof(Ark.MediatorFramework.Sample.Core.API.Book_CreateRequest.V1),
     "/api/v{version}")]
 ```
 
@@ -55,36 +55,33 @@ builder.Logging.ClearProviders();
 builder.Logging.AddNLog();
 builder.ConfigureFunctionsWebApplication();
 
-var container = AzureFunctionsNativeComposition.BuildContainer(
-    useSqlStore: !string.IsNullOrWhiteSpace(
-        builder.Configuration["ConnectionStrings:Sample"]),
-    connectionString: builder.Configuration["ConnectionStrings:Sample"]);
-if (bool.TryParse(
-        builder.Configuration["AzureServiceBus:EnableOutboundRebus"],
-        out var enableOutboundRebus)
-    && enableOutboundRebus)
+await using var container = FunctionsHosting.CreateContainer(new ApplicationOptions
 {
-    var outboundServiceBusConfiguration =
-        builder.Configuration["AzureServiceBus:ConnectionString"];
-    if (string.IsNullOrWhiteSpace(outboundServiceBusConfiguration))
-        outboundServiceBusConfiguration =
-            builder.Configuration["AzureServiceBus:fullyQualifiedNamespace"];
-    AzureFunctionsRebusComposition.ConfigureOutbound(
-        container,
-        outboundServiceBusConfiguration);
-}
-builder.Services.AddArkAzureFunctions();
-builder.Services.AddArkSolidProcessors(container);
-builder.Services.AddArkAzureFunctionsSimpleInjectorBridge(container);
+    SqlConnectionString = builder.Configuration.GetConnectionString("Sample")
+        ?? throw new InvalidOperationException("ConnectionStrings:Sample is required."),
+});
+var serviceBusConnection = builder.Configuration["AzureServiceBus:ConnectionString"]
+    ?? throw new InvalidOperationException("AzureServiceBus:ConnectionString is required.");
+FunctionsHosting.AddApiProducer(
+    builder.Services,
+    container,
+    transport => transport.UseServiceBus(new ServiceBusClient(serviceBusConnection)),
+    dataBus => dataBus.UseAzureBlob(
+        FunctionsHosting.DataBusOptions(builder.Configuration)));
 builder.Services.AddArkHealthChecks();
-builder.Services.AddHostedService(
-    _ => new AzureFunctionsContainerHostedService(container));
 
 await builder.Build().RunAsync().ConfigureAwait(false);
 ```
 
-This composes the application and HTTP boundary only. Add the native messaging
-host in step 4. `AddArkSolidProcessors` bridges Microsoft DI-visible
+Source: [`Program.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Api/Program.cs)
+
+`FunctionsHosting` is the sample's shared hosting library. `CreateContainer`
+builds the application container, and `AddApiProducer` composes the Api app: it
+calls `AddArkAzureFunctions`, `AddArkSolidProcessors` and
+`AddArkAzureFunctionsSimpleInjectorBridge`, and registers a native producer that
+enqueues through the outbox and receives nothing. A trigger app calls
+`FunctionsHosting.AddMessagingTrigger` with its generated manifest instead; see
+step 4. `AddArkSolidProcessors` bridges Microsoft DI-visible
 `IRequestProcessor`, `IQueryProcessor`, and `ICommandProcessor` back into the
 same SimpleInjector application container; it does not replace handler
 registrations or decorators. `AddArkAzureFunctionsSimpleInjectorBridge`
@@ -93,26 +90,8 @@ bridges the reverse direction, exposing Microsoft DI's `IBus`,
 messaging or Functions HTTP registers them) into the SimpleInjector container
 for handlers that depend on them. Call it after `AddArkAzureFunctions` and, if
 using native messaging, after `ConfigureArkMessagingFunctions`/
-`AddArkMessagingFunctionsHost`. The sample also supports an explicitly enabled,
-outbound-only Rebus client for HTTP-to-Rebus compatibility. That client is
-added to the same application container; native messaging and its generated
-Function trigger remain registered. It never registers Rebus handlers, an input
-queue, subscriptions, or a worker.
-
-Enable the optional client with external configuration:
-
-```json
-{
-  "Values": {
-    "AzureServiceBus__EnableOutboundRebus": "true"
-  }
-}
-```
-
-When enabled, `AzureServiceBus:ConnectionString` must contain either a Service
-Bus connection string, or `AzureServiceBus:fullyQualifiedNamespace` must contain
-a fully qualified namespace. The latter uses `DefaultAzureCredential`. Leave the
-switch absent or `false` to keep the Function host native-only.
+`AddArkMessagingFunctionsHost`. The Functions apps are native-only: they never
+register Rebus.
 
 The sample configures NLog before building the isolated worker, uses a
 synchronous console target for reliable Core Tools capture, clears the default
@@ -168,7 +147,11 @@ public sealed partial class PrintingParticipant;
 ```
 
 `Processes` owns a message, `Publishes` owns an event, and `Subscribes` requests
-copies of events published on the same network. Exactly one member must process
+copies of events published on the same network. A message is an
+`ICommand<TSelf>` or an `IRequest<TSelf, TResponse>`; a request runs its
+`IRequestHandler` and the response is discarded. An event must be an
+`ICommand<TSelf>`: a request is never an event (`ARKMSG018`), and a processed
+contract that is neither shape is rejected (`ARKMSG027`). Exactly one member must process
 each message or publish each event; subscriptions must be satisfiable and use a
 serializer supported by the subscriber. `DefaultSerializer` must be included in
 `Serializers`. Retry and compression are participant-owned and may differ
@@ -327,7 +310,10 @@ The connection setting can contain a connection string or a fully qualified
 namespace for `DefaultAzureCredential`. It can instead use standard
 identity-based Functions settings beneath the configured prefix:
 `fullyQualifiedNamespace` and the optional user-assigned-identity `clientId`
-(environment variables use `__` separators). Startup validates the participant,
+(environment variables use `__` separators). For Service Bus, the optional
+`administrationConnectionString` child gives resource provisioning its own
+connection string, for example the local emulator's administration endpoint on
+port 5300; without it, provisioning uses the main connection. Startup validates the participant,
 network, transport capabilities, serializers, consumed-message handlers, and
 trigger binding before registering the bus and dispatcher. A receive-capable
 Functions participant cannot select InMemory, because its receive pump is a
@@ -517,6 +503,10 @@ handler runs inline once at delivery `N` in its own scope; missing or fail-fast
 second-level handlers are dead-lettered, while other second-level failures are
 abandoned so normal `T` processing resumes.
 
+A second-level handler that gives up on a message can dead-letter it explicitly by
+throwing `MessagingFailFastException` with `MessagingFailFastReason.HandlerRejected`,
+instead of returning it to retries.
+
 Abandon visibility is transport-specific: InMemory uses the configured
 `RetryDelay`, Storage Queue uses its visibility timeout, and Service Bus
 abandon is immediate. Lock loss or settlement failure is surfaced as an
@@ -579,18 +569,18 @@ lifecycle cleanup eventually removes.
 ### Three-participant Book sample
 
 The `Ark.MediatorFramework.Sample` solution demonstrates one publisher and two
-independent subscribers over the same contract assembly. The Web participant
-declaration owns the `BookPrintCompleted` event topic, `AzureFunctions` owns the
-`sample-messaging-notification` notification queue, and `AuditFunctions` owns
+independent subscribers over the same contract assembly. The print worker participant
+declaration owns the `BookPrintCompleted` event topic, the `Notifications` app owns the
+`sample-messaging-notification` notification queue, and the `Audit` app owns
 the `sample-messaging-audit` audit queue. The generated event topic is
-`sample-messaging-publisher-books/book-print.completed` logically. Each
+`ark-mediator-sample-books/book-print.completed` logically. Each
 subscriber has a forwarding subscription named after its participant identity;
-neither Functions host starts a Rebus receiver or an outbox processor.
+no Functions app starts a Rebus receiver or an outbox processor.
 
 The sample event's logical topic is
-`sample-messaging-publisher-books/book-print.completed`. Service Bus maps that
+`ark-mediator-sample-books/book-print.completed`. Service Bus maps that
 logical value to
-`sample-messaging-publisher-books-book-print.completed-d320f7b71a7f80da8b35e92355395b14c45c7763a520b5aec672ad65d77b26aa`;
+`ark-mediator-sample-books-book-print.completed-6c781d065b678ff1b867ba3b86d5c8a5481c888ba0a4b1064a7d093107cbe40f`;
 the participant queues and subscription names remain `ark-mediator-sample`,
 `sample-messaging-notification`, and `sample-messaging-audit` because they
 already fit the provider grammar. The `amf1-msg-type` header remains the
@@ -610,15 +600,15 @@ per queue. Copy each host's `local.settings.json.example`, replace the Service
 Bus placeholder, then run the two subscribers in separate terminals:
 
 ```bash
-cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
+cd samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Notifications
 cp local.settings.json.example local.settings.json
-func start --port 7071
+func start --port 7073
 ```
 
 ```bash
-cd samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions
+cd samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Audit
 cp local.settings.json.example local.settings.json
-func start --port 7072
+func start --port 7074
 ```
 
 In `local.settings.json`, `AzureServiceBus__ConnectionString` uses the
@@ -726,7 +716,7 @@ provider.
 Copy, do not commit:
 
 ```powershell
-Set-Location samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions
+Set-Location samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Api
 Copy-Item local.settings.json.example local.settings.json
 func start
 ```
@@ -760,7 +750,7 @@ The Functions process:
 
 - receives HTTP-triggered requests;
 - executes the application pipeline;
-- sends owned messages through one-way Service Bus;
+- sends owned messages through the native outbox and Service Bus;
 - receives native messaging through generated Functions triggers when composed
   for a messaging participant;
 - does not start a Rebus worker, Rebus outbox processor, native SQL outbox
@@ -819,8 +809,8 @@ readiness timeout. Do not silently skip when Core Tools is absent.
 
 The repository boundary project is
 `tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Tests`; the sample
-also covers its sender composition in
-[`AzureFunctionsRebusTests.cs`](../../samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/AzureFunctionsRebusTests.cs).
+also covers the composition of every Functions app in
+[`FunctionsCompositionTests.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests/FunctionsCompositionTests.cs).
 
 ## Logical names and provider entities
 

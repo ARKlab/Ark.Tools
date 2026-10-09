@@ -1,0 +1,2 @@
+# Written by OpenApiDocumentTests when the document differs from the snapshot.
+*.received.json

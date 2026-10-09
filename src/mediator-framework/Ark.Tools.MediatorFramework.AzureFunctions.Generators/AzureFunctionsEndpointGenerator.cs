@@ -76,6 +76,30 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         DiagnosticSeverity.Error,
         true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF049.md");
 
+    private static readonly DiagnosticDescriptor _propertyNotBindableWithoutBody = new(
+        "ARKMF059",
+        "Property cannot be bound from the request",
+        "HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
+    private static readonly DiagnosticDescriptor _propertyNotConvertibleFromString = new(
+        "ARKMF059",
+        "Property cannot be bound from the request",
+        "HTTP endpoint '{0}' binds property '{1}' from the route or query string, but its type '{2}' cannot be converted from a string",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
+    private static readonly DiagnosticDescriptor _propertyNotSettable = new(
+        "ARKMF059",
+        "Property cannot be bound from the request",
+        "HTTP endpoint '{0}' binds property '{1}' from the route or query string, but the property has no public setter or init accessor, which Azure Functions needs to set it",
+        "Ark.Tools.MediatorFramework",
+        DiagnosticSeverity.Error,
+        true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -200,6 +224,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 if (!_isSelected(candidate, host))
                     continue;
 
+                if (_reportUnboundProperties(context, candidate, hostLocation))
+                    continue;
+
                 endpoints.Add(candidate with { Prefix = host.Prefix });
             }
         }
@@ -267,6 +294,52 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         context.AddSource("ArkGeneratedFunctions.g.cs", source._toGeneratedSource());
     }
 
+    // A GET, HEAD or DELETE function binds only route and [HttpQuery] properties: report any other client
+    // property instead of silently dropping it. For every verb, a route or query property must bind by the rules
+    // Minimal API applies (HttpStringBinding), so a contract binds the same way on both hosts.
+    private static bool _reportUnboundProperties(SourceProductionContext context, in EndpointSpec endpoint, Location hostLocation)
+    {
+        var noBody = endpoint.Verb is "GET" or "HEAD" or "DELETE";
+        var reported = false;
+        foreach (var property in endpoint.Properties.Where(static property => !property.IsServerSet))
+        {
+            var bound = property.IsRoute || property.IsQuery;
+            if (bound
+                ? !property.IsNotConvertible
+                : !noBody || property.IsETag)
+                continue;
+
+            var location = property.Location ?? endpoint.Location;
+            context.ReportDiagnostic(bound
+                ? Diagnostic.Create(
+                    _propertyNotConvertibleFromString,
+                    location is null ? hostLocation : LocationSpec._toLocation(location),
+                    endpoint.TypeName,
+                    property.Name,
+                    property.TypeFullName.Replace("global::", string.Empty))
+                : Diagnostic.Create(
+                    _propertyNotBindableWithoutBody,
+                    location is null ? hostLocation : LocationSpec._toLocation(location),
+                    endpoint.TypeName,
+                    endpoint.Verb,
+                    property.Name));
+            reported = true;
+        }
+
+        foreach (var property in endpoint.UnsettableProperties)
+        {
+            var location = property.Location ?? endpoint.Location;
+            context.ReportDiagnostic(Diagnostic.Create(
+                _propertyNotSettable,
+                location is null ? hostLocation : LocationSpec._toLocation(location),
+                endpoint.TypeName,
+                property.Name));
+            reported = true;
+        }
+
+        return reported;
+    }
+
     private static bool _isSelected(in EndpointSpec endpoint, in HostSpec host)
     {
         if (!string.Equals(endpoint.AssemblyName, host.MarkerAssemblyName, StringComparison.Ordinal))
@@ -280,7 +353,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     {
         var hasBody = endpoint.Verb is "POST" or "PUT" or "PATCH";
         var routeProperties = endpoint.Properties.Where(static p => p.IsRoute && !p.IsServerSet).ToArray();
-        var queryProperties = endpoint.Properties.Where(static p => p.IsQuery && !p.IsServerSet).ToArray();
+        // As in Minimal API, a property bound from the route is never overwritten from the query string.
+        var queryProperties = endpoint.Properties.Where(static p => p.IsQuery && !p.IsRoute && !p.IsServerSet).ToArray();
         var serverSetProperties = endpoint.Properties.Where(static p => p.IsServerSet).ToArray();
         var attachment = endpoint.Properties.FirstOrDefault(static p => p.IsAttachment || p.IsAttachmentCollection);
         var hasAttachment = attachment.IsAttachment || attachment.IsAttachmentCollection;
@@ -389,10 +463,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             }
             else
             {
-                var varName = "_route_" + prop.Name;
-                source.Append("        if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(request.RouteValues[").Append(_literal(prop.BindingName)).Append("]?.ToString(), out var ").Append(varName).AppendLine("))");
-                source.Append("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Route value '").Append(prop.BindingName).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
-                _emitPropertyAssignment(source, endpoint, "        ", prop.Name, varName);
+                // A block keeps the conversion locals apart from the query ones of a property bound from both.
+                source.AppendLine("        {");
+                source.Append("            var _raw_").Append(prop.Name).Append(" = request.RouteValues[").Append(_literal(prop.BindingName)).AppendLine("]?.ToString();");
+                _emitConversion(source, endpoint, "            ", prop, "Route value '" + prop.BindingName + "'", target: null);
+                source.AppendLine("        }");
             }
         }
 
@@ -406,14 +481,51 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 _emitPropertyAssignment(source, endpoint, "            ", prop.Name,
                     "((string?)_qs_" + prop.Name + ")!");
             }
-            else
+            else if (prop.IsStringCollection)
             {
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, _stringCollection(prop, "_qs_" + prop.Name));
+            }
+            else if (prop.ArrayElementTypeFullName is { } element)
+            {
+                // Mirrors Minimal API: every value of the query parameter converts to one array element.
                 var varName = "_query_" + prop.Name;
-                source.Append("            if (!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<").Append(prop.TypeFullName).Append(">(_qs_").Append(prop.Name).Append(", out var ").Append(varName).AppendLine("))");
-                source.Append("                return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Query value '").Append(prop.Name).Append("' could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+                var index = "_i_" + prop.Name;
+                source.Append("            var ").Append(varName).Append(" = new ").Append(element).Append("[_qs_").Append(prop.Name).AppendLine(".Count];");
+                source.Append("            for (var ").Append(index).Append(" = 0; ").Append(index).Append(" < _qs_").Append(prop.Name).Append(".Count; ").Append(index).AppendLine("++)");
+                source.AppendLine("            {");
+                source.Append("                var _raw_").Append(prop.Name).Append(" = _qs_").Append(prop.Name).Append('[').Append(index).AppendLine("];");
+                _emitConversion(source, endpoint, "                ", prop, "Query value '" + prop.Name + "'", target: varName + "[" + index + "]");
+                source.AppendLine("            }");
                 _emitPropertyAssignment(source, endpoint, "            ", prop.Name, varName);
             }
+            else
+            {
+                source.Append("            var _raw_").Append(prop.Name).Append(" = (string?)_qs_").Append(prop.Name).AppendLine(";");
+                _emitConversion(source, endpoint, "            ", prop, "Query value '" + prop.Name + "'", target: null);
+            }
             source.AppendLine("        }");
+
+            // Mirrors Minimal API, which ignores property initializers: an absent collection or array binds as empty,
+            // an absent nullable value binds null, and an absent non-nullable value is a required parameter.
+            source.AppendLine("        else");
+            if (prop.IsStringCollection || prop.ArrayElementTypeFullName is not null)
+            {
+                // Only a nullable StringValues binds null; every other collection, nullable or not, binds as empty.
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, prop.ArrayElementTypeFullName is { } empty
+                    ? "global::System.Array.Empty<" + empty + ">()"
+                    : prop.TypeFullName == "global::Microsoft.Extensions.Primitives.StringValues?"
+                        ? "default"
+                        : _stringCollection(prop, "global::Microsoft.Extensions.Primitives.StringValues.Empty"));
+            }
+            else if (prop.IsNullableTarget)
+            {
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, "default");
+            }
+            else
+            {
+                source.Append("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Required query value '")
+                    .Append(prop.Name).AppendLine("' was not provided.\");");
+            }
         }
 
         // Server-set property reset (per-property, no runtime reflection)
@@ -476,6 +588,95 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         source.AppendLine("            return global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsResults.FromException(_exception);");
         source.AppendLine("        }");
         source.AppendLine("    }");
+    }
+
+    // Converts _raw_<Name> with the same strategy Minimal API picks for the type, and returns 400 when it fails. As in
+    // Minimal API, an empty element of a nullable array is null, an empty value of a Nullable<T> bound through its type
+    // converter sets the property to null (clearing a value the body set), and any other empty single value is parsed
+    // like the rest. The converted value goes to the array element target, or to the property when target is
+    // null.
+    private static void _emitConversion(StringBuilder source, in EndpointSpec endpoint, string indent, in PropertySpec prop, string valueDescription, string? target)
+    {
+        var raw = "_raw_" + prop.Name;
+        var value = "_value_" + prop.Name;
+        var bodyIndent = indent;
+        // ArkTypeConverterValue<T> skips the converter on an empty value only for a Nullable<T>, the one scalar type
+        // whose name differs from its conversion type.
+        var emptyIsNull = prop.IsNullableTarget && (target is not null
+            || (prop.Conversion == ConversionKind.TypeConverter && prop.TypeFullName != prop.ConversionTypeFullName));
+        if (emptyIsNull)
+        {
+            source.Append(indent).Append("if (!string.IsNullOrEmpty(").Append(raw).AppendLine("))");
+            source.Append(indent).AppendLine("{");
+            bodyIndent = indent + "    ";
+        }
+
+        source.Append(bodyIndent).Append("if (").Append(raw).Append(" is null || !").Append(_conversionCall(prop, raw, value)).AppendLine(")");
+        source.Append(bodyIndent).Append("    return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"")
+            .Append(valueDescription).Append(" could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
+        // A custom TryParse may declare its out parameter nullable without [NotNullWhen(true)]: it succeeded here.
+        if (target is null)
+            _emitPropertyAssignment(source, endpoint, bodyIndent, prop.Name, value + "!");
+        else
+            source.Append(bodyIndent).Append(target).Append(" = ").Append(value).AppendLine("!;");
+
+        if (emptyIsNull)
+        {
+            source.Append(indent).AppendLine("}");
+            if (target is null)
+            {
+                source.Append(indent).AppendLine("else");
+                _emitPropertyAssignment(source, endpoint, indent + "    ", prop.Name, "default");
+            }
+        }
+    }
+
+    private static string _conversionCall(in PropertySpec prop, string raw, string value)
+    {
+        var type = prop.ConversionTypeFullName;
+        return prop.Conversion switch
+        {
+            ConversionKind.Enum => "global::System.Enum.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
+            ConversionKind.Uri => "global::System.Uri.TryCreate(" + raw + ", global::System.UriKind.RelativeOrAbsolute, out var " + value + ")",
+            ConversionKind.TryParseWithProvider => prop.ParserTypeFullName + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, " + _dateTimeStyles(type) + "out var " + value + ")",
+            ConversionKind.TryParse => prop.ParserTypeFullName + ".TryParse(" + raw + ", out var " + value + ")",
+            ConversionKind.Parsable => "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
+            _ => "global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<" + type + ">(" + raw + ", out var " + value + ")",
+        };
+    }
+
+    // Mirrors the DateTimeStyles ASP.NET Core passes when it binds a date or time from a string.
+    private static string _dateTimeStyles(string type)
+    {
+        const string styles = "global::System.Globalization.DateTimeStyles.";
+        return type switch
+        {
+            "global::System.DateTime" => styles + "AllowWhiteSpaces | " + styles + "AdjustToUniversal, ",
+            "global::System.DateTimeOffset" => styles + "AllowWhiteSpaces | " + styles + "AssumeUniversal, ",
+            "global::System.DateOnly" or "global::System.TimeOnly" => styles + "AllowWhiteSpaces, ",
+            _ => string.Empty,
+        };
+    }
+
+    // Mirrors the string collection shapes the Minimal API generator binds from every value of a query parameter.
+    private static string _stringCollection(PropertySpec property, string values)
+    {
+        var array = "global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(" + values + "))";
+        return property.TypeFullName switch
+        {
+            "global::Microsoft.Extensions.Primitives.StringValues"
+                or "global::Microsoft.Extensions.Primitives.StringValues?" => values,
+            "global::System.Collections.Generic.List<string>"
+                or "global::System.Collections.Generic.IList<string>"
+                or "global::System.Collections.Generic.ICollection<string>"
+                => "new global::System.Collections.Generic.List<string>(" + array + ")",
+            "global::System.Collections.Generic.HashSet<string>"
+                or "global::System.Collections.Generic.ISet<string>"
+                => "new global::System.Collections.Generic.HashSet<string>(" + array + ")",
+            "global::System.Collections.Immutable.ImmutableArray<string>"
+                => "global::System.Collections.Immutable.ImmutableArray.Create(" + array + ")",
+            _ => array,
+        };
     }
 
     private static void _emitPropertyAssignment(StringBuilder source, EndpointSpec endpoint, string indent, string propertyName, string value)

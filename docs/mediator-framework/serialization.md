@@ -28,7 +28,7 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
     public required string Name { get; init; }
 }
 ```
-Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookStreamingContracts.cs)
+Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookStreamingContracts.cs)
 
 Register an `IFormatterResolver` that can format every MessagePack contract.
 The sample composes NodaTime, enum-as-string, and the standard resolver:
@@ -40,7 +40,7 @@ var messagePackResolver = CompositeResolver.Create(
     StandardResolver.Instance);
 services.AddMessagePackFormatter(messagePackResolver);
 ```
-Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
+Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/SampleStartup.cs)
 
 Expected behavior:
 
@@ -69,7 +69,7 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
     public string Name { get; init; } = string.Empty;
 }
 ```
-Source: [`BookEditionContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookEditionContracts.cs)
+Source: [`BookEditionContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookEditionContracts.cs)
 
 This single contract means:
 
@@ -93,7 +93,7 @@ services.ConfigureHttpJsonOptions(options =>
         new DefaultJsonTypeInfoResolver());
 });
 ```
-Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/SampleStartup.cs)
+Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/SampleStartup.cs)
 
 This keeps Minimal API JSON behavior explicit and fast while still allowing the
 generated endpoints to serialize normal framework shapes.
@@ -187,6 +187,21 @@ For NodaTime:
 - JSON uses `ConfigureArkDefaults()`.
 - gRPC uses `RuntimeTypeModel.Default.AddNodaTimeSurrogates()`.
 - MessagePack must use a resolver that knows the NodaTime types you expose.
+- HTTP route and query values, on Minimal API and Azure Functions, need
+  `NodaTimeConverter.Register()` from `Ark.Tools.Nodatime`, called once at
+  startup. The hosts resolve type converters trim-safely with
+  `TypeDescriptor.GetConverterFromRegisteredType`, which only sees registered
+  types; `Register()` registers each NodaTime converter so that it is found
+  even if the type was looked up before.
+  The Dapper and JSON dictionary-key support resolve NodaTime converters the
+  same way.
+
+Your own type bound through a `[TypeConverter]` follows the same rule: call
+`TypeDescriptor.RegisterType<T>()` at startup, before the type is first looked
+up through `TypeDescriptor` or a converter is added with
+`TypeDescriptor.AddAttributes`; a later registration is ignored. Binding an unregistered type throws
+`InvalidOperationException`. A type with a static `TryParse` or `IParsable<T>`
+needs no registration.
 
 ## Evolvable enums
 
@@ -219,7 +234,7 @@ public enum CompactStatus : byte
 public sealed record CompactResponse(
     EvolvableEnum<CompactStatus, byte> Status);
 ```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
 
 Use `Value` to switch as on the original enum. Unknown names and numbers expose
 `Value == null`, so the `null` arm is the forward-compatible fallback:
@@ -234,7 +249,7 @@ var action = response.Status.Value switch
     _ => throw new UnreachableException(),
 };
 ```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
 
 `Parse`/`TryParse` accept known names, unknown names, and in-range invariant
 numbers, enabling route and query-string binding. `TypeConverter` supports the
@@ -244,7 +259,7 @@ same string conversion plus conversion from/to the exact backing type:
 var routeValue = EvolvableEnum<GreetingStatus>.Parse("Active");
 var futureValue = EvolvableEnum<CompactStatus, byte>.Parse("255");
 ```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/BookContracts.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
 
 Per-transport wiring (see [design.md](../design/mediator-framework/design.md) → *Evolvable enums* for
 the full rules table):

@@ -10,4 +10,8 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor UnsupportedHandlerKind = new(
         "ARKMF011", "Unsupported handler kind", "Attributed type '{0}' does not implement a supported handler interface",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF011.md");
+
+    public static readonly DiagnosticDescriptor UnbindableGrpcContract = new(
+        "ARKMF058", "gRPC contract is not bindable", "gRPC contract '{0}' cannot be bound: its {1} type '{2}' {3}",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF058.md");
 }

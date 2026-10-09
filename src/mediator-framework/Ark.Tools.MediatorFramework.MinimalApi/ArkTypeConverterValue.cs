@@ -40,17 +40,28 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
     }
 
     /// <summary>Converts a Minimal API route or query value through the registered type converter.</summary>
+    /// <remarks>
+    /// The converter is resolved trim-safely with <see cref="TypeDescriptor.GetConverterFromRegisteredType(Type)"/>, so
+    /// the type must be a primitive, an enum, or registered with <see cref="TypeDescriptor.RegisterType{T}"/> before
+    /// it is first looked up or its converter is added; for NodaTime types call <c>Ark.Tools.Nodatime.NodaTimeConverter.Register()</c>. An
+    /// unregistered type throws <see cref="InvalidOperationException"/>.
+    /// </remarks>
     /// <param name="value">The value to convert.</param>
     /// <param name="provider">The format provider supplied by ASP.NET Core.</param>
     /// <param name="result">The wrapped converted value.</param>
     /// <returns><see langword="true"/> when conversion succeeds; otherwise <see langword="false"/>.</returns>
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Converters are explicitly registered by the host for the closed generated contract types.")]
-    [UnconditionalSuppressMessage("Trimming", "IL2087", Justification = "Converters are explicitly registered by the host for the closed generated contract types.")]
     public static bool TryParse(string? value, IFormatProvider? provider, out ArkTypeConverterValue<T> result)
     {
         result = null!;
         if (value is null)
             return false;
+
+        // An empty value of a Nullable<T> is null, as the nullable converters of Ark.Tools.Nodatime return.
+        if (value.Length == 0 && Nullable.GetUnderlyingType(typeof(T)) is not null)
+        {
+            result = new ArkTypeConverterValue<T>(default(T)!);
+            return true;
+        }
 
         var converter = TypeConverterCache.Converter;
         if (!TypeConverterCache.CanConvertFromString)
@@ -75,14 +86,34 @@ public sealed record ArkTypeConverterValue<T> : IEndpointParameterMetadataProvid
 
     private static class TypeConverterCache
     {
-        public static readonly TypeConverter Converter = _getConverter();
-        public static readonly bool CanConvertFromString = Converter.CanConvertFrom(typeof(string));
+        private static readonly Lazy<TypeConverter> _converter = new(_getConverter);
+        private static readonly Lazy<bool> _canConvertFromString = new(_getCanConvertFromString);
 
-        [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Converters are explicitly registered by the host for the closed generated contract types.")]
-        [UnconditionalSuppressMessage("Trimming", "IL2087", Justification = "Converters are explicitly registered by the host for the closed generated contract types.")]
+        public static TypeConverter Converter => _converter.Value;
+
+        public static bool CanConvertFromString => _canConvertFromString.Value;
+
+        private static bool _getCanConvertFromString()
+        {
+            return _converter.Value.CanConvertFrom(typeof(string));
+        }
+
+        // Resolved on first use, so a type registered after the endpoints are mapped is still found. Lazy caches a
+        // missing registration, which surfaces as the same InvalidOperationException on every conversion. A
+        // Nullable<T> value converts through the converter of its underlying type, as ArkTypeConverter does.
         private static TypeConverter _getConverter()
         {
-            return TypeDescriptor.GetConverter(typeof(T));
+            var type = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+            try
+            {
+                return TypeDescriptor.GetConverterFromRegisteredType(type);
+            }
+            catch (InvalidOperationException exception)
+            {
+                throw new InvalidOperationException(
+                    string.Create(CultureInfo.InvariantCulture, $"No type converter is registered for '{type}'. Call TypeDescriptor.RegisterType<T>() for it at startup, before the type is first looked up through TypeDescriptor or its converter is added with TypeDescriptor.AddAttributes; for NodaTime types call Ark.Tools.Nodatime.NodaTimeConverter.Register()."),
+                    exception);
+            }
         }
     }
 }

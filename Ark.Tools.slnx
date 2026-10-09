@@ -131,17 +131,31 @@
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Grpc.Generators/Ark.Tools.MediatorFramework.Grpc.Generators.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Mcp/Ark.Tools.MediatorFramework.Mcp.csproj" />
     <Project Path="src/mediator-framework/Ark.Tools.MediatorFramework.Mcp.Generators/Ark.Tools.MediatorFramework.Mcp.Generators.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.API/Ark.MediatorFramework.Sample.API.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Application/Ark.MediatorFramework.Sample.Application.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AuditFunctions/Ark.MediatorFramework.Sample.AuditFunctions.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.RebusProcessor/Ark.MediatorFramework.Sample.RebusProcessor.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.OutboxProcessor/Ark.MediatorFramework.Sample.OutboxProcessor.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Functions/Ark.MediatorFramework.Sample.Functions.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.AzureFunctions/Ark.MediatorFramework.Sample.AzureFunctions.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface/Ark.MediatorFramework.Sample.WebInterface.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.GrpcClient/Ark.MediatorFramework.Sample.GrpcClient.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/test/Ark.MediatorFramework.Sample.Tests/Ark.MediatorFramework.Sample.Tests.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.Database/Ark.MediatorFramework.Sample.Database.sqlproj">
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/Ark.MediatorFramework.Sample.Core.API.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Ark.MediatorFramework.Sample.Core.Application.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Tests/Ark.MediatorFramework.Sample.Core.Tests.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Hosting/Ark.MediatorFramework.Sample.Core.Web.Hosting.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/Ark.MediatorFramework.Sample.Core.Web.WebInterface.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Processor/Ark.MediatorFramework.Sample.Core.Web.Processor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor/Ark.MediatorFramework.Sample.Core.Web.NotificationProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.AuditProcessor/Ark.MediatorFramework.Sample.Core.Web.AuditProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.GrpcClient/Ark.MediatorFramework.Sample.Core.Web.GrpcClient.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/Ark.MediatorFramework.Sample.Core.Web.Tests.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting/Ark.MediatorFramework.Sample.Core.WebRebus.Hosting.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Processor/Ark.MediatorFramework.Sample.Core.WebRebus.Processor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Tests/Ark.MediatorFramework.Sample.Core.WebRebus.Tests.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Hosting/Ark.MediatorFramework.Sample.Core.Functions.Hosting.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Api/Ark.MediatorFramework.Sample.Core.Functions.Api.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Processor/Ark.MediatorFramework.Sample.Core.Functions.Processor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Notifications/Ark.MediatorFramework.Sample.Core.Functions.Notifications.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Audit/Ark.MediatorFramework.Sample.Core.Functions.Audit.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests/Ark.MediatorFramework.Sample.Core.Functions.Tests.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Database/Ark.MediatorFramework.Sample.Core.Database.sqlproj">
       <Build />
       <Deploy />
     </Project>
@@ -191,6 +205,7 @@
     <Project Path="tests/Ark.Tools.AspNetCore.MinimalApi.Tests/Ark.Tools.AspNetCore.MinimalApi.Tests.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/Ark.Tools.AspNetCore.ProblemDetails.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Dapper.Tests/Ark.Tools.Dapper.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Auth0.Tests/Ark.Tools.Auth0.Tests.csproj" />
     <Project Path="tests/Ark.Tools.FtpClient.FluentFtp.Tests/Ark.Tools.FtpClient.FluentFtp.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MessagePack.Tests/Ark.Tools.MessagePack.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Protobuf.Tests/Ark.Tools.Protobuf.Tests.csproj" />

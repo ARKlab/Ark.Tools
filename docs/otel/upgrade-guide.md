@@ -43,7 +43,7 @@ uses the AI object model.
    string from the documented configuration keys.
 
 The sample web host follows this route in
-`samples/Ark.MediatorFramework.Sample/src/Ark.MediatorFramework.Sample.WebInterface`.
+`samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface`.
 
 ## Existing application: Application Insights v3
 

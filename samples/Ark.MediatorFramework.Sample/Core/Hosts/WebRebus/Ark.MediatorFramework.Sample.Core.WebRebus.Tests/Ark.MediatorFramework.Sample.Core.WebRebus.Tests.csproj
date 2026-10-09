@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The hosted tests run the WebInterface on TestServer. -->
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <!-- In-memory Rebus test seams (Ark.Tools.Rebus.Tests). -->
+    <PackageReference Include="Ark.Tools.Rebus" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface\appsettings.json"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="appsettings.json" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.WebRebus.Hosting\Ark.MediatorFramework.Sample.Core.WebRebus.Hosting.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface\Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.WebRebus.Processor\Ark.MediatorFramework.Sample.Core.WebRebus.Processor.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor\Ark.MediatorFramework.Sample.Core.WebRebus.NotificationProcessor.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor\Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor.csproj" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.API\Ark.MediatorFramework.Sample.Core.API.csproj" />
+    <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
+  </ItemGroup>
+
+</Project>

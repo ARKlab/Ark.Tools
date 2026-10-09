@@ -16,6 +16,7 @@ public partial class CoreDataContext_Sql
 {
     private const string _schemaPing = "dbo";
     private const string _tablePing = "Ping";
+    private const string _tablePingHistory = "PingHistory";
 
     public async Task<Ping.V1.Output?> ReadPingByIdAsync(int id, CancellationToken ctk = default)
     {
@@ -248,6 +249,15 @@ public partial class CoreDataContext_Sql
 
         var cmd = new CommandDefinition(
             $@"
+                    -- FOR SYSTEM_TIME drops zero-duration versions (ValidFrom = ValidTo), which happen when two transactions
+                    -- share the same begin time: read current and history tables directly to keep the previous version
+                    WITH V AS (
+                        SELECT [Id], [Name], [Type], [Code], [AuditId], [SysStartTime], [SysEndTime]
+                        FROM [{_schemaPing}].[{_tablePing}]
+                        UNION ALL
+                        SELECT [Id], [Name], [Type], [Code], [AuditId], [SysStartTime], [SysEndTime]
+                        FROM [{_schemaPing}].[{_tablePingHistory}]
+                    )
                     SELECT 
                           F.[Id]
                         , F.[Name]
@@ -260,10 +270,10 @@ public partial class CoreDataContext_Sql
                         , F.[SysEndTime]
 
                     FROM 
-                        [{_schemaPing}].[{_tablePing}] FOR SYSTEM_TIME ALL F
+                        V F
 
                     INNER JOIN 
-                        [{_schemaPing}].[{_tablePing}] FOR SYSTEM_TIME ALL R
+                        V R
                         ON 1=1
                             AND F.[Id] = R.[Id]
 

@@ -178,10 +178,14 @@ public sealed class MessagingCompositionBuilder<TNetwork>
 public sealed class MessagingTransportBuilder
 {
     private readonly Action<IMessagingTransport> _select;
+    private readonly Action<IMessagingTransport> _selectOwned;
 
-    internal MessagingTransportBuilder(Action<IMessagingTransport> select)
+    internal MessagingTransportBuilder(
+        Action<IMessagingTransport> select,
+        Action<IMessagingTransport> selectOwned)
     {
         _select = select;
+        _selectOwned = selectOwned;
     }
 
     /// <summary>Uses an in-memory transport.</summary>
@@ -193,13 +197,20 @@ public sealed class MessagingTransportBuilder
     }
 
     /// <summary>Uses a supplied transport.</summary>
-    /// <param name="transport">The transport.</param>
+    /// <param name="transport">The transport. The caller keeps ownership and disposes it.</param>
     /// <returns>This builder.</returns>
     public MessagingTransportBuilder Use(IMessagingTransport transport)
     {
         ArgumentNullException.ThrowIfNull(transport);
         _select(transport);
         return this;
+    }
+
+    /// <summary>Uses a transport the composition creates, so the service provider disposes it.</summary>
+    /// <param name="transport">The transport.</param>
+    internal void _useOwned(IMessagingTransport transport)
+    {
+        _selectOwned(transport);
     }
 }
 
@@ -317,6 +328,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     private readonly MessagingNetworkOptions _network;
     private readonly IMessagingContractRegistry _registry;
     private IMessagingTransport? _transport;
+    private bool _ownsTransport;
     private IMessagingDataBus? _dataBus;
     private IReadOnlyList<Type> _outgoingSteps = Array.Empty<Type>();
     private IReadOnlyList<Type> _incomingSteps = Array.Empty<Type>();
@@ -328,6 +340,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     private bool _outboxEnqueue;
     private bool _outgoingPipelineSelected;
     private bool _incomingPipelineSelected;
+    private IMessagingTransportManagement? _resourceManagement;
 
     protected MessagingModeBuilder(
         IServiceCollection services,
@@ -358,7 +371,13 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         Action<MessagingTransportBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
-        configure(new MessagingTransportBuilder(transport => UseTransport(transport)));
+        configure(new MessagingTransportBuilder(
+            transport => UseTransport(transport),
+            transport =>
+            {
+                UseTransport(transport);
+                _ownsTransport = true;
+            }));
         return this;
     }
 
@@ -490,6 +509,23 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return this;
     }
 
+    /// <summary>Uses an explicit resource-management seam for <c>CreateIfMissing</c> provisioning.</summary>
+    /// <remarks>
+    /// Needed when the transport does not implement <see cref="IMessagingTransportManagement"/> itself,
+    /// for example <c>ServiceBusMessagingTransport</c> with <c>ServiceBusTransportManagement</c>.
+    /// </remarks>
+    /// <param name="management">The resource-management seam.</param>
+    /// <returns>This builder.</returns>
+    public MessagingModeBuilder<TNetwork, TParticipant> UseResourceManagement(
+        IMessagingTransportManagement management)
+    {
+        ArgumentNullException.ThrowIfNull(management);
+        _resourceManagement = _resourceManagement is null
+            ? management
+            : throw new InvalidOperationException("A resource management seam is already selected.");
+        return this;
+    }
+
     /// <summary>Enables outbox enlistment without hosting a processor.</summary>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseOutbox()
@@ -544,7 +580,12 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
             participant,
             transport,
             dataBus,
-            _outgoingSteps);
+            _outgoingSteps,
+            _resourceManagement);
+        // The provider disposes what a factory returns, never a registered instance. An owned transport
+        // that is never resolved never opened a connection either.
+        if (_ownsTransport)
+            _services.Replace(ServiceDescriptor.Singleton<IMessagingTransport>(_ => transport));
         if (_messagePack)
             _services._addMessagePackMessagingCodec();
         if (_protobuf)
@@ -648,8 +689,8 @@ public sealed class MessagingReceiverBuilder<TNetwork, TParticipant>
             serviceProvider.GetRequiredService<MessagingPayloadReceiver>(),
             participant.RetryPolicy,
             serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
-            (logicalName, payload, processor, ctk) =>
-                participant.Dispatch!(logicalName, payload, processor, ctk),
+            (logicalName, payload, processor, requestProcessor, ctk) =>
+                participant.Dispatch!(logicalName, payload, processor, requestProcessor, ctk),
             participant.DispatchFailed is null
                 ? null
                 : (logicalName, payload, deliveryCount, error, processor, ctk) =>
