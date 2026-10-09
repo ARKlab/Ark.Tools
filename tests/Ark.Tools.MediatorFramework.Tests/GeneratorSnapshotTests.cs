@@ -3069,6 +3069,18 @@ public sealed class GeneratorSnapshotTests
                 [HttpRoute] public int Id { get; set; }
                 [ServerSet] public string Tenant { get; init; } = string.Empty;
             }
+            [HttpEndpoint("GET", "/tenants/{tenant}/books")]
+            public sealed record ListTenantBooks : IQuery<string>
+            {
+                [HttpQuery] public int Skip { get; init; }
+                [ServerSet] public string? Tenant { get; init; }
+            }
+            [HttpEndpoint("DELETE", "/tenants/{tenant}/books/{id}")]
+            public sealed record DeleteTenantBook : ICommand<DeleteTenantBook>
+            {
+                public int Id { get; init; }
+                [ServerSet] public string? Tenant { get; init; }
+            }
             [HttpEndpoint("GET", "/authors")]
             public sealed class ListAuthors(string term) : IQuery<string>
             {
@@ -3084,6 +3096,9 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("request.Tenant = default!;");
         result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Term\")] string Term,");
         result.Generated.Should().Contain("var request = new global::ListAuthors(Term) { Owner = default! };");
+        result.Generated.Should().Contain("var request = new global::ListTenantBooks { Skip = Skip, Tenant = default! };");
+        result.Generated.Should().Contain("var request = new global::DeleteTenantBook { Id = Id, Tenant = default! };");
+        result.Generated.Should().NotContain("Tenant = Tenant");
     }
 
     [TestMethod]

@@ -1056,7 +1056,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         if (explicitBindings)
                         {
                             var assignments = string.Join(", ", e.Properties
-                                .Where(property => property.IsRoute || property.IsQuery)
+                                .Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet)
                                 .Select(property => property.Name + " = " + BindingValue(property))
                                 .Concat(e.BodyProperty is null ? System.Linq.Enumerable.Empty<string>() : new[] { e.BodyProperty + " = body" })
                                 .Concat(e.ServerSetProperties.Select(property => property + " = default!")));
@@ -1425,7 +1425,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (explicitBindings)
             {
                 var assignments = string.Join(", ", endpoint.Properties
-                    .Where(property => property.IsRoute || property.IsQuery)
+                    .Where(property => (property.IsRoute || property.IsQuery) && !property.IsServerSet)
                     .Select(property => property.Name + " = " + BindingValue(property))
                     .Concat(endpoint.ServerSetProperties.Select(property => property + " = default!")));
                 sb.AppendLine(bodyVerb
