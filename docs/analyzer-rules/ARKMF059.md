@@ -79,16 +79,22 @@ The rule reports the property when its type is:
 - an array of a type without `TryParse`, which ASP.NET Core rejects at startup
   (`must have a valid TryParse method to support converting from a string`);
 - a collection, such as `List<int>`, `HashSet<Guid>` or a dictionary, without a
-  `[TypeConverter]` attribute, or a complex object. No `TypeConverter` converts a
-  string to them, so every request that carries the value fails with `400`.
+  `[TypeConverter]` attribute. No `TypeConverter` converts a string to it, so
+  every request that carries the value fails with `400`;
+- a complex object without a static `TryParse` or a `[TypeConverter]`
+  attribute. Such a type is almost always a data shape sent by mistake in the
+  route or query string. A converter added only at runtime, with
+  `TypeDescriptor.AddAttributes`, is not visible to the generator, so declare it
+  with a `[TypeConverter]` attribute on the type instead.
 
 A route property is also reported when its type is an array or a collection,
 string collections included: a route segment is a single value, and ASP.NET
 Core binds arrays only from the query string or headers.
 
-A single value whose type has neither `TryParse` nor a `TypeConverter` registered
-at runtime also fails every request that carries it. The generator cannot see
-runtime registrations, so it does not report this case.
+Any other single value, which is not a complex object, is converted with the
+type converter registered at runtime. When it has neither `TryParse` nor a
+registered `TypeConverter`, every request that carries it fails. The generator
+cannot see runtime registrations, so it does not report this case.
 
 The diagnostic is reported at the property. When the contract is in a
 referenced assembly, it is reported at every `MapArkEndpoints` or
