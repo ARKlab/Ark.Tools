@@ -22,6 +22,9 @@ public sealed class SolidDecoratorsTests
         container.Register<IRequestHandler<SelfRequest, int>, SelfRequestHandler>();
         container.Register<ICommandHandler<LegacyCommand>, LegacyCommandHandler>();
         container.Register<ICommandHandler<SelfCommand>, SelfCommandHandler>();
+        container.Register<IQueryHandler<StructQuery, int>, StructQueryHandler>();
+        container.Register<IRequestHandler<StructRequest, int>, StructRequestHandler>();
+        container.Register<ICommandHandler<StructCommand>, StructCommandHandler>();
         container.RegisterDecorator(typeof(IQueryHandler<,>), queryDecorator);
         container.RegisterDecorator(typeof(IRequestHandler<,>), requestDecorator);
         container.RegisterDecorator(typeof(ICommandHandler<>), commandDecorator);
@@ -33,12 +36,18 @@ public sealed class SolidDecoratorsTests
         Assert.AreEqual(requestDecorator.MakeGenericType(typeof(SelfRequest), typeof(int)), container.GetInstance<IRequestHandler<SelfRequest, int>>().GetType());
         Assert.AreEqual(commandDecorator.MakeGenericType(typeof(LegacyCommand)), container.GetInstance<ICommandHandler<LegacyCommand>>().GetType());
         Assert.AreEqual(commandDecorator.MakeGenericType(typeof(SelfCommand)), container.GetInstance<ICommandHandler<SelfCommand>>().GetType());
+        Assert.AreEqual(queryDecorator.MakeGenericType(typeof(StructQuery), typeof(int)), container.GetInstance<IQueryHandler<StructQuery, int>>().GetType());
+        Assert.AreEqual(requestDecorator.MakeGenericType(typeof(StructRequest), typeof(int)), container.GetInstance<IRequestHandler<StructRequest, int>>().GetType());
+        Assert.AreEqual(commandDecorator.MakeGenericType(typeof(StructCommand)), container.GetInstance<ICommandHandler<StructCommand>>().GetType());
     }
 
 #pragma warning disable ARKSOLID001 // Legacy contracts intentionally exercise the v6-style contract shape
     private sealed record LegacyQuery : IQuery<int>;
     private sealed record LegacyRequest : IRequest<int>;
     private sealed record LegacyCommand : ICommand;
+    private readonly record struct StructQuery : IQuery<int>;
+    private readonly record struct StructRequest : IRequest<int>;
+    private readonly record struct StructCommand : ICommand;
 #pragma warning restore ARKSOLID001
     private sealed record SelfQuery : IQuery<SelfQuery, int>;
     private sealed record SelfRequest : IRequest<SelfRequest, int>;
@@ -87,6 +96,30 @@ public sealed class SolidDecoratorsTests
     private sealed class SelfCommandHandler : ICommandHandler<SelfCommand>
     {
         public Task ExecuteAsync(SelfCommand command, CancellationToken ctk = default)
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class StructQueryHandler : IQueryHandler<StructQuery, int>
+    {
+        public Task<int> ExecuteAsync(StructQuery query, CancellationToken ctk = default)
+        {
+            return Task.FromResult(0);
+        }
+    }
+
+    private sealed class StructRequestHandler : IRequestHandler<StructRequest, int>
+    {
+        public Task<int> ExecuteAsync(StructRequest request, CancellationToken ctk = default)
+        {
+            return Task.FromResult(0);
+        }
+    }
+
+    private sealed class StructCommandHandler : ICommandHandler<StructCommand>
+    {
+        public Task ExecuteAsync(StructCommand command, CancellationToken ctk = default)
         {
             return Task.CompletedTask;
         }
