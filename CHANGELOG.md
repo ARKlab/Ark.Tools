@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Trimmed publishes no longer report spurious IL2072 warnings from `ToDataTableArk` or IL2026 warnings from the gRPC business-rule error interceptor.
+
 ## [7.0.0-beta13] - 2026-10-09
 
 ### Added
