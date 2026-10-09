@@ -1232,8 +1232,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("!global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<global::ShelfCode>(_raw_Shelf, out var _value_Shelf)");
         // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
         result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
-        // An empty nullable value sets the property to null, as Minimal API does.
-        result.Generated.Should().Contain("else" + Environment.NewLine + "                body = body with { Owner = default };");
+        // An empty single value is parsed and fails, while an empty nullable array element is null, as in Minimal API.
+        result.Generated.Should().Contain("if (_raw_Owner is null || !global::System.Guid.TryParse(_raw_Owner, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Owner))");
+        result.Generated.Should().NotContain("if (!string.IsNullOrEmpty(_raw_Owner))");
+        result.Generated.Should().NotContain("body = body with { Owner = default };");
         // An absent collection or array binds as empty, as Minimal API does.
         result.Generated.Should().Contain(
             "body = body with { Tags = new global::System.Collections.Generic.List<string>(global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(global::Microsoft.Extensions.Primitives.StringValues.Empty))) };");

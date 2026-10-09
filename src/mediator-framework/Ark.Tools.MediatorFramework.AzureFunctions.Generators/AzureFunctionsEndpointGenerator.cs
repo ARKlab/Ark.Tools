@@ -565,7 +565,10 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var raw = "_raw_" + prop.Name;
         var value = "_value_" + prop.Name;
         var bodyIndent = indent;
-        if (prop.IsNullableTarget)
+        // As in Minimal API, an empty element of a nullable array is null, while an empty single value is parsed
+        // like any other and fails when its parser rejects it.
+        var emptyIsNull = prop.IsNullableTarget && target is not null;
+        if (emptyIsNull)
         {
             source.Append(indent).Append("if (!string.IsNullOrEmpty(").Append(raw).AppendLine("))");
             source.Append(indent).AppendLine("{");
@@ -581,16 +584,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         else
             source.Append(bodyIndent).Append(target).Append(" = ").Append(value).AppendLine("!;");
 
-        if (prop.IsNullableTarget)
-        {
+        if (emptyIsNull)
             source.Append(indent).AppendLine("}");
-            // Minimal API binds an empty nullable value as null, which also clears a value the body set.
-            if (target is null)
-            {
-                source.Append(indent).AppendLine("else");
-                _emitPropertyAssignment(source, endpoint, indent + "    ", prop.Name, "default");
-            }
-        }
     }
 
     private static string _conversionCall(in PropertySpec prop, string raw, string value)
