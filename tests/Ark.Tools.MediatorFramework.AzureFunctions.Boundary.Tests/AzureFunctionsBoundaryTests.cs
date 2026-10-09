@@ -158,7 +158,7 @@ public sealed partial class AzureFunctionsBoundaryTests
     [TestCategory("AzureFunctionsBoundary")]
     public async Task RepeatedQueryValuesAreBoundIntoAnArray()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Scores=4&Scores=7", UriKind.Relative));
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Count=1&Scores=4&Scores=7", UriKind.Relative));
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
 
         using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
@@ -177,7 +177,7 @@ public sealed partial class AzureFunctionsBoundaryTests
     [DataRow("Someday")]
     public async Task EvolvableEnumQueryValueIsBound(string day)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Day={day}", UriKind.Relative));
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Count=1&Day={day}", UriKind.Relative));
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
 
         using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
@@ -194,7 +194,7 @@ public sealed partial class AzureFunctionsBoundaryTests
     [TestCategory("AzureFunctionsBoundary")]
     public async Task MalformedArrayElementProducesProblemDetails()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Scores=4&Scores=x", UriKind.Relative));
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Count=1&Scores=4&Scores=x", UriKind.Relative));
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
 
         using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
@@ -235,6 +235,22 @@ public sealed partial class AzureFunctionsBoundaryTests
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
         var body = await response.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
         body.Should().Contain("Count");
+    }
+
+    [TestMethod]
+    [TestCategory("AzureFunctionsBoundary")]
+    public async Task MissingRequiredQueryValueProducesProblemDetails()
+    {
+        // As in Minimal API, an absent non-nullable query value is a missing required parameter, whatever its initializer.
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri($"api/v1/echo/{Guid.NewGuid()}?Message=hello", UriKind.Relative));
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", JwtTokenBuilder.Build("boundary-user"));
+
+        using var response = await _client!.SendAsync(request, TestContext.CancellationToken).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+        var body = await response.Content.ReadAsStringAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        body.Should().Contain("BINDING_FAILURE").And.Contain("Count");
     }
 
     [TestMethod]

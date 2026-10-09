@@ -57,7 +57,7 @@ public sealed record EchoQuery : IQuery<EchoQuery, EchoResponse>
 
     /// <summary>Gets the day, an evolvable enum that also accepts names it does not know.</summary>
     [HttpQuery]
-    public Ark.Tools.Core.EvolvableEnum<EchoDay> Day { get; init; }
+    public Ark.Tools.Core.EvolvableEnum<EchoDay>? Day { get; init; }
 }
 
 /// <summary>Request exercising JSON body binding on a record contract.</summary>
@@ -101,7 +101,7 @@ public sealed class EchoQueryHandler : IQueryHandler<EchoQuery, EchoResponse>
     public async Task<EchoResponse> ExecuteAsync(EchoQuery query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        return await Task.FromResult(new EchoResponse { Id = query.Id, Message = query.Message ?? string.Empty, Count = query.Count, Scores = query.Scores, Day = query.Day.ToString() }).ConfigureAwait(false);
+        return await Task.FromResult(new EchoResponse { Id = query.Id, Message = query.Message ?? string.Empty, Count = query.Count, Scores = query.Scores, Day = query.Day?.ToString() ?? string.Empty }).ConfigureAwait(false);
     }
 }
 

@@ -368,8 +368,9 @@ internal static class AzureFunctionsEndpointParser
                     _conversionKind(conversionType),
                     _withoutNullable(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     _parserType(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                    conversionType.NullableAnnotation == NullableAnnotation.Annotated
-                        || conversionType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T },
+                    // As in ASP.NET Core, a reference type outside a nullable context is optional too.
+                    conversionType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T }
+                        || (conversionType.IsReferenceType && conversionType.NullableAnnotation != NullableAnnotation.NotAnnotated),
                     LocationSpec._from(p));
             })
             .ToImmutableArray();

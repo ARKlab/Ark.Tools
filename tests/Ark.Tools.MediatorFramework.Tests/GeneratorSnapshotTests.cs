@@ -1253,6 +1253,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("!global::CodeBase<global::AisleCode>.TryParse(_raw_Aisles, out var _value_Aisles)");
         // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
         result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
+        // As in Minimal API, which ignores initializers, an absent non-nullable value is required and an absent nullable
+        // value binds null.
+        result.Generated.Should().Contain("return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Required query value 'Skip' was not provided.\");");
+        result.Generated.Should().Contain("        else" + Environment.NewLine + "            body = body with { Owner = default };");
         // As in Minimal API, an empty Guid? is parsed and fails, while an empty value of a nullable type bound through its
         // type converter sets the property to null, which also clears a value the body set.
         result.Generated.Should().Contain("if (_raw_Owner is null || !global::System.Guid.TryParse(_raw_Owner, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Owner))");

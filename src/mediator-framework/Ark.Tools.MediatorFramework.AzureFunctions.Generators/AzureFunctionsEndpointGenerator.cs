@@ -486,13 +486,23 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             }
             source.AppendLine("        }");
 
-            // Mirrors Minimal API: an absent collection or array binds as empty.
+            // Mirrors Minimal API, which ignores property initializers: an absent collection or array binds as empty,
+            // an absent nullable value binds null, and an absent non-nullable value is a required parameter.
+            source.AppendLine("        else");
             if (prop.IsStringCollection || prop.ArrayElementTypeFullName is not null)
             {
-                source.AppendLine("        else");
                 _emitPropertyAssignment(source, endpoint, "            ", prop.Name, prop.ArrayElementTypeFullName is { } empty
                     ? "global::System.Array.Empty<" + empty + ">()"
                     : _stringCollection(prop, "global::Microsoft.Extensions.Primitives.StringValues.Empty"));
+            }
+            else if (prop.IsNullableTarget)
+            {
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, "default");
+            }
+            else
+            {
+                source.Append("            return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Required query value '")
+                    .Append(prop.Name).AppendLine("' was not provided.\");");
             }
         }
 

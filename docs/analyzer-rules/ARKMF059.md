@@ -131,7 +131,10 @@ that does not convert fails the request with `400`. As in Minimal API, an empty
 element of a nullable array is `null`, an empty value of a nullable type bound
 through its type converter, such as `Instant?`, binds `null`, and any other
 empty single value is parsed like the rest, so `?Owner=` fails with `400` for a
-`Guid?` property.
+`Guid?` property. An absent query value ignores the property initializer, as
+Minimal API does: an absent non-nullable value is a missing required parameter
+and fails with `400`, an absent nullable value binds `null`, and an absent
+collection or array binds as empty.
 
 The diagnostic is reported at the property. When the contract is in a
 referenced assembly, it is reported at the `[assembly: HttpHost]` attribute
