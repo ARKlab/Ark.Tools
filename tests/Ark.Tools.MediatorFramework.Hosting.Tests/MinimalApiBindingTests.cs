@@ -43,6 +43,28 @@ public sealed class MinimalApiBindingTests
         fixture.State.LastRequestServerStamp.Should().BeNull();
     }
 
+    /// <summary>
+    /// Verifies a GET contract whose server-set property ASP.NET Core cannot bind from a string starts and binds
+    /// only its client properties.
+    /// </summary>
+    [TestMethod]
+    public async Task BindsQueryWithoutExposingServerSetProperties()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
+        using var client = app.GetTestServer().CreateClient();
+
+        using var response = await client.GetAsync(
+            new Uri("http://localhost/api/v1/hosting/owned?Value=client&Owner=attacker"),
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<HostingResponse>(
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        result.Should().NotBeNull();
+        result!.Message.Should().Be("client");
+    }
+
     /// <summary>Verifies optional query binding and the generated cancellation token.</summary>
     [TestMethod]
     public async Task BindsOptionalQueryAndCancellationToken()

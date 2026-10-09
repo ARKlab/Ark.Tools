@@ -641,7 +641,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void AzureFunctionsGeneratorEmitsRouteBindingWithTryConvertSafe()
+    public void AzureFunctionsGeneratorEmitsRouteBindingWithTryParse()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
             """
@@ -656,8 +656,9 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        result.Generated.Should().Contain("ArkTypeConverter.TryConvertSafe<int>");
-        result.Generated.Should().NotContain("ArkTypeConverter.TryConvert<int>");
+        result.Generated.Should().Contain("var _raw_Id = request.RouteValues[\"Id\"]?.ToString();");
+        result.Generated.Should().Contain("if (_raw_Id is null || !int.TryParse(_raw_Id, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Id))");
+        result.Generated.Should().NotContain("ArkTypeConverter");
         result.Generated.Should().Contain("BINDING_FAILURE");
         result.Generated.Should().NotContain("InvokeQueryAsync");
     }
@@ -775,7 +776,7 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : IRequest<Update, string>;
             """);
         azure.Generated.Should().Contain("new global::Update(_bodyNullable, default!)");
-        azure.Generated.Should().Contain("body = body with { Id = _route_Id };");
+        azure.Generated.Should().Contain("body = body with { Id = _value_Id! };");
     }
 
     [TestMethod]
@@ -823,7 +824,7 @@ public sealed class GeneratorSnapshotTests
                 [property: HttpRoute] System.Guid Id) : BaseRequest, IRequest<Update, string>;
             """);
         azure.Generated.Should().Contain("Audit");
-        azure.Generated.Should().Contain("body = body with { Id = _route_Id };");
+        azure.Generated.Should().Contain("body = body with { Id = _value_Id! };");
     }
 
     [TestMethod]
@@ -1126,6 +1127,252 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("global::DeleteBook");
         result.Generated.Should().NotContain("global::BookExists");
         result.Generated.Should().Contain("global::CreateBook");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorRejectsRouteAndQueryTypesThatCannotBeConvertedFromAString()
+    {
+        // Functions applies the Minimal API rules: no collection or complex object binds from a string, while a query
+        // string collection or an array of parseable elements receives every value.
+        const string source =
+            """
+            using System;
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            public readonly struct BookCode
+            {
+                public static bool TryParse(string? value, out BookCode result) { result = default; return value is not null; }
+            }
+            [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.TypeConverter))]
+            public readonly struct RefCode
+            {
+                public static bool TryParse(ref string value, out RefCode result) { result = default; return true; }
+                public static bool TryParse<TArg>(string value, out RefCode result) { result = default; return true; }
+            }
+            [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.TypeConverter))]
+            public sealed class RefName { }
+            public class CodeBase<T> where T : CodeBase<T>, new()
+            {
+                public static bool TryParse(string? value, out T result) { result = new T(); return value is not null; }
+            }
+            public sealed class AisleCode : CodeBase<AisleCode>
+            {
+                public static bool TryParse(ReadOnlySpan<char> value, out AisleCode result) { result = new AisleCode(); return false; }
+            }
+            public enum Shade { NOT_SET = 0, Light = 1 }
+            public readonly struct ShelfCode : IParsable<ShelfCode>
+            {
+                public static bool TryParse(string? value, out ShelfCode result) { result = default; return true; }
+                static ShelfCode IParsable<ShelfCode>.Parse(string s, IFormatProvider? provider) => default;
+                static bool IParsable<ShelfCode>.TryParse(string? s, IFormatProvider? provider, out ShelfCode result) { result = default; return true; }
+            }
+            [HttpEndpoint("GET", "/books/{codes}")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                [HttpRoute] public string[] Codes { get; init; } = [];
+                [HttpQuery] public List<int> Ids { get; init; } = [];
+                [HttpQuery] public Filter? Filter { get; init; }
+                [HttpQuery] public Guid? Owner { get; init; }
+                [HttpQuery] public Queue<string> Pending { get; init; } = new();
+                [HttpQuery] public IReadOnlySet<string> Keys { get; init; } = new HashSet<string>();
+                [HttpQuery] public System.Collections.Stack? Stack { get; init; }
+                [HttpQuery] public int[,] Grid { get; init; } = new int[0, 0];
+            }
+            [HttpEndpoint("POST", "/books")]
+            public sealed record CreateBooks : IRequest<string>
+            {
+                [HttpQuery] public Dictionary<string, string> Labels { get; init; } = [];
+                public List<int> Pages { get; init; } = [];
+            }
+            [HttpEndpoint("GET", "/authors")]
+            public sealed record ListAuthors : IQuery<string>
+            {
+                [HttpQuery] public IEnumerable<string> Sort { get; init; } = [];
+                [HttpQuery] public string[] Names { get; init; } = [];
+                [HttpQuery] public List<string> Tags { get; init; } = [];
+                [HttpQuery] public int Skip { get; init; }
+                [HttpQuery] public int[] Years { get; init; } = [];
+                [HttpQuery] public Guid?[] Owners { get; init; } = [];
+                [HttpQuery] public BookCode[] BookCodes { get; init; } = [];
+                [HttpQuery] public DayOfWeek[] Days { get; init; } = [];
+                [HttpQuery] public RefCode Ref { get; init; }
+                [HttpQuery] public RefCode? MaybeRef { get; init; }
+            #nullable enable
+                [HttpQuery] public RefName? MaybeName { get; init; }
+            #nullable disable
+                [HttpQuery] public string Title { get; init; } = "";
+            #nullable restore
+                [HttpQuery] public Microsoft.Extensions.Primitives.StringValues? Values { get; init; }
+                [HttpQuery] public Guid? Owner { get; init; }
+                [HttpQuery] public DateTime From { get; init; }
+                [HttpQuery] public DateTimeOffset At { get; init; }
+                [HttpQuery] public DateOnly Day { get; init; }
+                [HttpQuery] public ShelfCode Shelf { get; init; }
+                [HttpQuery] public AisleCode[] Aisles { get; init; } = [];
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<Shade> Kind { get; init; }
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<Shade>? MaybeKind { get; init; }
+                [HttpQuery] public Ark.Tools.Core.EvolvableEnum<Shade>[] Kinds { get; init; } = [];
+            }
+            """;
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Codes", "Ids", "Filter", "Pending", "Keys", "Stack", "Grid", "Labels");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
+            .GetMessage(CultureInfo.InvariantCulture)
+            .Should().Be("HTTP endpoint 'ListBooks' binds property 'Ids' from the route or query string, but its type 'System.Collections.Generic.List<int>' cannot be converted from a string");
+        result.Generated.Should().NotContain("global::ListBooks");
+        result.Generated.Should().NotContain("global::CreateBooks");
+        result.Generated.Should().Contain(
+            "body = body with { Sort = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Sort)) };");
+        result.Generated.Should().Contain(
+            "body = body with { Names = global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Names)) };");
+        result.Generated.Should().Contain(
+            "body = body with { Tags = new global::System.Collections.Generic.List<string>(global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(_qs_Tags))) };");
+        result.Generated.Should().Contain("if (_raw_Skip is null || !int.TryParse(_raw_Skip, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Skip))");
+        result.Generated.Should().Contain("var _query_Years = new int[_qs_Years.Count];");
+        result.Generated.Should().Contain("var _raw_Years = _qs_Years[_i_Years];");
+        result.Generated.Should().Contain("_query_Years[_i_Years] = _value_Years!;");
+        result.Generated.Should().Contain("var _query_Owners = new global::System.Guid?[_qs_Owners.Count];");
+        result.Generated.Should().Contain("if (!string.IsNullOrEmpty(_raw_Owners))");
+        result.Generated.Should().Contain("!global::BookCode.TryParse(_raw_BookCodes, out var _value_BookCodes)");
+        // Enums parse case-sensitively and dates with the DateTimeStyles ASP.NET Core passes, as Minimal API does.
+        result.Generated.Should().Contain("!global::System.Enum.TryParse<global::System.DayOfWeek>(_raw_Days, out var _value_Days)");
+        result.Generated.Should().Contain("global::System.DateTime.TryParse(_raw_From, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces | global::System.Globalization.DateTimeStyles.AdjustToUniversal, out var _value_From)");
+        result.Generated.Should().Contain("global::System.DateTimeOffset.TryParse(_raw_At, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces | global::System.Globalization.DateTimeStyles.AssumeUniversal, out var _value_At)");
+        result.Generated.Should().Contain("global::System.DateOnly.TryParse(_raw_Day, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces, out var _value_Day)");
+        // An explicit IParsable<T> implementation wins over a public TryParse(string, out T), as in Minimal API.
+        result.Generated.Should().Contain("!global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<global::ShelfCode>(_raw_Shelf, out var _value_Shelf)");
+        // An EvolvableEnum binds through its own TryParse, alone, nullable or in an array, as on Minimal API.
+        result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::Shade>.TryParse(_raw_Kind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Kind)");
+        result.Generated.Should().Contain("!global::Ark.Tools.Core.EvolvableEnum<global::Shade>.TryParse(_raw_MaybeKind, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_MaybeKind)");
+        result.Generated.Should().Contain("var _query_Kinds = new global::Ark.Tools.Core.EvolvableEnum<global::Shade>[_qs_Kinds.Count];");
+        // A TryParse inherited from a base type is called, as ASP.NET Core does.
+        // It is called on its declaring type, so an overload declared on the derived type cannot hide it.
+        result.Generated.Should().Contain("!global::CodeBase<global::AisleCode>.TryParse(_raw_Aisles, out var _value_Aisles)");
+        // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
+        result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
+        // As in Minimal API, which ignores initializers, an absent non-nullable value is required and an absent nullable
+        // value binds null.
+        result.Generated.Should().Contain("return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Required query value 'Skip' was not provided.\");");
+        result.Generated.Should().Contain("        else" + Environment.NewLine + "            body = body with { Owner = default };");
+        // A nullable StringValues receives every value, and binds null when absent, as Minimal API binds it natively.
+        result.Generated.Should().Contain("body = body with { Values = _qs_Values };");
+        result.Generated.Should().Contain("        else" + Environment.NewLine + "            body = body with { Values = default };");
+        result.Generated.Should().NotContain("TryConvertSafe<global::Microsoft.Extensions.Primitives.StringValues>");
+        // As in Minimal API, an empty Guid? is parsed and fails, while an empty value of a nullable type bound through its
+        // type converter sets the property to null, which also clears a value the body set.
+        result.Generated.Should().Contain("if (_raw_Owner is null || !global::System.Guid.TryParse(_raw_Owner, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Owner))");
+        result.Generated.Should().NotContain("if (!string.IsNullOrEmpty(_raw_Owner))");
+        result.Generated.Should().Contain("if (!string.IsNullOrEmpty(_raw_MaybeRef))");
+        result.Generated.Should().Contain("else" + Environment.NewLine + "                body = body with { MaybeRef = default };");
+        // Only a Nullable<T> skips its converter on an empty value: a nullable reference type runs it, as on Minimal API.
+        result.Generated.Should().Contain("if (_raw_MaybeName is null || !global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefName>(_raw_MaybeName, out var _value_MaybeName))");
+        result.Generated.Should().NotContain("if (!string.IsNullOrEmpty(_raw_MaybeName))");
+        // A reference type outside a nullable context is required, as the Minimal API generator emits it non-nullable.
+        result.Generated.Should().Contain("detail: \"Required query value 'Title' was not provided.\");");
+        // An absent collection or array binds as empty, as Minimal API does.
+        result.Generated.Should().Contain(
+            "body = body with { Tags = new global::System.Collections.Generic.List<string>(global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(global::Microsoft.Extensions.Primitives.StringValues.Empty))) };");
+        result.Generated.Should().Contain("body = body with { Years = global::System.Array.Empty<int>() };");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorRejectsRouteAndQueryPropertiesThatCannotBeSet()
+    {
+        // Functions sets every bound property after constructing the contract, so a route or query property without a
+        // public setter or init accessor, constructor-bound or not, would never receive its value.
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed class GetBook(int id) : IQuery<string>
+            {
+                public int Id { get; } = id;
+                [HttpQuery] public int Page { get; }
+                [HttpQuery] public int Size { get; init; }
+                [ServerSet] public string? Owner { get; }
+            }
+            """;
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Id", "Page");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Page'", StringComparison.Ordinal))
+            .GetMessage(CultureInfo.InvariantCulture)
+            .Should().Be("HTTP endpoint 'GetBook' binds property 'Page' from the route or query string, but the property has no public setter or init accessor, which Azure Functions needs to set it");
+        result.Generated.Should().NotContain("global::GetBook");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorKeepsRouteAndQueryLocalsApart()
+    {
+        // A property bound from both the route and the query string binds from the route only, as in Minimal API, so
+        // a query value cannot override the route identity and the generated locals cannot collide.
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed record GetBook : IQuery<string>
+            {
+                [HttpQuery] public int Id { get; init; }
+            }
+            """;
+        var (driver, compilation) = _runGeneratorDriver<AzureFunctionsEndpointGenerator>(source, []);
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+
+        string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
+            .Should().Contain("var _raw_Id = request.RouteValues[\"Id\"]?.ToString();")
+            .And.NotContain("request.Query.TryGetValue(\"Id\", out var _qs_Id)");
+        generatedCompilation.GetDiagnostics().Should().NotContain(static diagnostic => diagnostic.Id == "CS0128" || diagnostic.Id == "CS0136");
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorAcceptsNullableTryParseResults()
+    {
+        // A custom TryParse may declare its out parameter nullable without [NotNullWhen(true)]; the generated
+        // assignment after a successful parse must not raise a nullable warning under warnings-as-errors.
+        const string source =
+            """
+            #nullable enable
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            public sealed class Tag
+            {
+                public static bool TryParse(string? value, out Tag? result) { result = value is null ? null : new Tag(); return result is not null; }
+            }
+            [HttpEndpoint("GET", "/tags")]
+            public sealed record ListTags : IQuery<ListTags, string>
+            {
+                [HttpQuery] public Tag Label { get; init; } = new();
+                [HttpQuery] public Tag[] Labels { get; init; } = [];
+            }
+            """;
+        var (driver, compilation) = _runGeneratorDriver<AzureFunctionsEndpointGenerator>(source, []);
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+
+        string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
+            .Should().Contain("global::Tag.TryParse(_raw_Label, out var _value_Label)");
+        generatedCompilation.GetDiagnostics().Should().NotContain(static diagnostic => diagnostic.Id == "CS8601");
     }
 
     [TestMethod]
@@ -2764,6 +3011,35 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsBindQueryPropertiesOfBodyVerbCommands()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("PUT", "/books/{id}/archive")]
+            public sealed record ArchiveBook : ICommand<ArchiveBook>
+            {
+                public System.Guid Id { get; init; }
+                [HttpQuery] public bool Notify { get; init; }
+                public string Reason { get; init; } = string.Empty;
+            }
+            """;
+
+        var minimalApi = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+        var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+
+        minimalApi.Diagnostics.Should().BeEmpty();
+        minimalApi.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Notify\")] bool Notify,");
+        minimalApi.Generated.Should().Contain("var request = body with { Id = Id, Notify = Notify };");
+        functions.Diagnostics.Should().BeEmpty();
+        functions.Generated.Should().Contain("request.Query.TryGetValue(\"Notify\", out var _qs_Notify)");
+        functions.Generated.Should().Contain("body = body with { Notify = _value_Notify! };");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorBindsStringCollectionTypes()
     {
         var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
@@ -2879,8 +3155,163 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("request = request with { UserId = default };");
+        generated.Should().Contain("request = request with { UserId = default! };");
         generated.Should().NotContain("FromQuery(Name = \"UserId\")");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorNeverExposesServerSetPropertiesToAsParameters()
+    {
+        // [AsParameters] would show server-set properties to ASP.NET, which infers a body for a type it cannot bind
+        // from a string and fails at startup: the client properties are bound explicitly instead.
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Owner
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            public readonly struct Stamp
+            {
+                public long Ticks { get; }
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public int Skip { get; init; }
+                public string? Author { get; init; }
+                [ServerSet] public Owner? Owner { get; set; }
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : ICommand<DeleteBook>
+            {
+                public int Id { get; init; }
+                public bool Force { get; init; }
+                [ServerSet] public Stamp RequestedAt { get; init; }
+            }
+            [HttpEndpoint("GET", "/me")]
+            public sealed class GetMe : IQuery<string>
+            {
+                [ServerSet] public Owner? Owner { get; set; }
+            }
+            [HttpEndpoint("GET", "/shelves")]
+            public sealed record ListShelves : IQuery<string>
+            {
+                public int Skip { get; init; }
+            }
+            [HttpEndpoint("GET", "/exports")]
+            public sealed record DownloadExport : IQuery<IArkAttachment>
+            {
+                public int Year { get; init; }
+                [ServerSet] public string? RequestedBy { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Skip\")] int Skip,");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Author\")] string? Author,");
+        result.Generated.Should().Contain("var request = new global::ListBooks { Skip = Skip, Author = Author, Owner = default! };");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"id\")] int Id,");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Force\")] bool Force,");
+        result.Generated.Should().Contain("var request = new global::DeleteBook { Id = Id, Force = Force, RequestedAt = default! };");
+        result.Generated.Should().Contain("var request = new global::GetMe { Owner = default! };");
+        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListBooks");
+        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DeleteBook");
+        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::GetMe");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListShelves request,");
+        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
+        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DownloadExport");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorKeepsEveryAssignmentWhenItBindsServerSetContractsExplicitly()
+    {
+        // A positional record keeps its non-constructor properties in an object initializer, and a download record
+        // resets its server-set properties, including a required one, which would otherwise not compile. A class
+        // resets an init-only server-set property in its initializer only, and a constructor-bound property stays bound.
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/books")]
+            public sealed record SearchBooks(string Term) : IQuery<string>
+            {
+                public int Page { get; init; }
+                [ServerSet] public string? Owner { get; init; }
+            }
+            [HttpEndpoint("GET", "/exports")]
+            public sealed record DownloadExport : IQuery<IArkAttachment>
+            {
+                public int Year { get; init; }
+                [ServerSet] public required string RequestedBy { get; init; }
+            }
+            [HttpEndpoint("GET", "/shelves/{id}")]
+            public sealed class GetShelf : IQuery<string>
+            {
+                [HttpRoute] public int Id { get; set; }
+                [ServerSet] public string Tenant { get; init; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/versions")]
+            public sealed record ListVersions : IQuery<string>
+            {
+                public int Skip { get; init; }
+                [ETag] public string? Version { get; init; }
+                [ServerSet] public string? Owner { get; init; }
+            }
+            [HttpEndpoint("GET", "/tenants/{tenant}/books")]
+            public sealed record ListTenantBooks : IQuery<string>
+            {
+                [HttpQuery] public int Skip { get; init; }
+                [ServerSet] public string? Tenant { get; init; }
+            }
+            [HttpEndpoint("DELETE", "/tenants/{tenant}/books/{id}")]
+            public sealed record DeleteTenantBook : ICommand<DeleteTenantBook>
+            {
+                public int Id { get; init; }
+                [ServerSet] public string? Tenant { get; init; }
+            }
+            [HttpEndpoint("GET", "/authors")]
+            public sealed class ListAuthors(string term) : IQuery<string>
+            {
+                public string Term { get; } = term;
+                [ServerSet] public string? Owner { get; set; }
+            }
+            [HttpEndpoint("GET", "/editions")]
+            public sealed class ListEditions : IQuery<string>
+            {
+                public ListEditions() { }
+                public ListEditions(int value) { Value = value; }
+                public int Value { get; set; }
+                [ServerSet] public string? Owner { get; set; }
+            }
+            [HttpEndpoint("GET", "/printings")]
+            public sealed class ListPrintings : IQuery<string>
+            {
+                public ListPrintings(string value, int count) { Count = count; }
+                public ListPrintings(int value) { Value = value; }
+                public int Value { get; set; }
+                public int Count { get; set; }
+                [ServerSet] public string? Owner { get; set; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("var request = new global::SearchBooks(Term) { Page = Page, Owner = default! };");
+        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
+        result.Generated.Should().Contain("var request = new global::GetShelf { Id = Id, Tenant = default! };");
+        result.Generated.Should().NotContain("request.Tenant = default!;");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Term\")] string Term,");
+        result.Generated.Should().Contain("var request = new global::ListAuthors(Term) { Owner = default! };");
+        // As ASP.NET Core [AsParameters] does, a parameterless constructor wins over parameterized ones, and a
+        // constructor is used only when its parameters match properties by name and type.
+        result.Generated.Should().Contain("var request = new global::ListEditions { Value = Value, Owner = default! };");
+        result.Generated.Should().Contain("var request = new global::ListPrintings(Value) { Count = Count, Owner = default! };");
+        result.Generated.Should().Contain("var request = new global::ListTenantBooks { Skip = Skip, Tenant = default! };");
+        result.Generated.Should().Contain("var request = new global::DeleteTenantBook { Id = Id, Tenant = default! };");
+        result.Generated.Should().NotContain("Tenant = Tenant");
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Skip\")] int Skip,");
+        result.Generated.Should().NotContain("FromQuery(Name = \"Version\")");
     }
 
     [TestMethod]
@@ -2943,12 +3374,24 @@ public sealed class GeneratorSnapshotTests
     {
         const string source =
             """
+            using System;
             using System.Collections.Generic;
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.Solid;
             public sealed class Filter
             {
                 public string Name { get; set; } = string.Empty;
+            }
+            public sealed class ShelfFilter : IParsable<ShelfFilter>
+            {
+                public string Name { get; set; } = string.Empty;
+                static ShelfFilter IParsable<ShelfFilter>.Parse(string s, IFormatProvider? provider) => new() { Name = s };
+                static bool IParsable<ShelfFilter>.TryParse(string? s, IFormatProvider? provider, out ShelfFilter result) { result = new() { Name = s ?? string.Empty }; return s is not null; }
+            }
+            [HttpEndpoint("GET", "/shelves")]
+            public sealed record ListShelves : IQuery<string>
+            {
+                [HttpQuery] public ShelfFilter? Shelf { get; init; }
             }
             [HttpEndpoint("GET", "/books")]
             public sealed record ListBooks : IQuery<string>
@@ -2973,6 +3416,9 @@ public sealed class GeneratorSnapshotTests
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         result.Generated.Should().NotContain("global::ListBooks");
         result.Generated.Should().NotContain("global::DeleteBook");
+        // A type with settable properties that implements IParsable<T>, even explicitly, binds from a string, and a
+        // nullable reference stays optional.
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Shelf\")] global::ShelfFilter? Shelf,");
     }
 
     [TestMethod]
@@ -3094,6 +3540,209 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorRejectsRouteAndQueryTypesThatCannotBeConvertedFromAString()
+    {
+        // Mirrors ASP.NET Minimal API: an explicit route or query parameter whose type is an array of a type without
+        // TryParse fails at startup, and a collection or a complex object read through ArkTypeConverterValue fails
+        // every request that carries it.
+        const string source =
+            """
+            using System;
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using Microsoft.Extensions.Primitives;
+            using NodaTime;
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            public readonly struct Day
+            {
+                public int Value { get; }
+            }
+            public readonly struct Shelf : IParsable<Shelf>
+            {
+                static Shelf IParsable<Shelf>.Parse(string s, IFormatProvider? provider) => default;
+                static bool IParsable<Shelf>.TryParse(string? s, IFormatProvider? provider, out Shelf result) { result = default; return true; }
+            }
+            [HttpEndpoint("GET", "/books/{codes}")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                [HttpRoute] public Day[] Codes { get; init; } = [];
+                [HttpQuery] public List<int> Ids { get; init; } = [];
+                [HttpQuery] public Dictionary<string, string> Labels { get; init; } = [];
+                [HttpQuery] public Day[] Days { get; init; } = [];
+                [HttpQuery] public Filter? Filter { get; init; }
+                [HttpQuery] public int[] Years { get; init; } = [];
+                [HttpQuery] public string[] Isbns { get; init; } = [];
+                [HttpQuery] public IEnumerable<string> Sort { get; init; } = [];
+                [HttpQuery] public List<string> Tags { get; init; } = [];
+                [HttpQuery] public StringValues Authors { get; init; }
+                [HttpQuery] public Day? Since { get; init; }
+                [HttpQuery] public Instant? From { get; init; }
+                [HttpQuery] public Shelf? Shelf { get; init; }
+                [HttpQuery] public DayOfWeek[] WeekDays { get; init; } = [];
+                [HttpQuery] public Queue<string> Pending { get; init; } = new();
+                [HttpQuery] public IReadOnlySet<string> Keys { get; init; } = new HashSet<string>();
+                [HttpQuery] public System.Collections.Stack? Stack { get; init; }
+                [HttpQuery] public int[,] Grid { get; init; } = new int[0, 0];
+            }
+            [HttpEndpoint("POST", "/books/{id}")]
+            public sealed record UpdateBooks : IRequest<string>
+            {
+                [HttpRoute] public Guid Id { get; init; }
+                [HttpQuery] public HashSet<Guid> Related { get; init; } = [];
+                [HttpQuery] public Guid[] Copies { get; init; } = [];
+                public List<int> Pages { get; init; } = [];
+            }
+            [HttpEndpoint("GET", "/shelves/{shelfIds}/{labels}")]
+            public sealed record ListShelves : IQuery<string>
+            {
+                [HttpRoute] public int[] ShelfIds { get; init; } = [];
+                [HttpRoute] public string[] Labels { get; init; } = [];
+                [HttpQuery] public FilterSet? Filters { get; init; }
+            }
+            public sealed class FilterSetConverter : System.ComponentModel.TypeConverter { }
+            [System.ComponentModel.TypeConverter(typeof(FilterSetConverter))]
+            public sealed class FilterSet : List<Filter> { }
+            [HttpEndpoint("PUT", "/books/{id}/shelves")]
+            public sealed record ShelveBook : ICommand<ShelveBook>
+            {
+                [HttpRoute] public Guid Id { get; init; }
+                [HttpQuery] public Filter? Target { get; init; }
+                [HttpQuery] public Day? On { get; init; }
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            source,
+            [],
+            MetadataReference.CreateFromFile(typeof(NodaTime.LocalDate).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(Microsoft.Extensions.Primitives.StringValues).Assembly.Location));
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Codes", "Ids", "Labels", "Days", "Filter", "Pending", "Keys", "Stack", "Grid", "ShelfIds", "Labels", "Related", "Target");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
+            .GetMessage(CultureInfo.InvariantCulture)
+            .Should().Be("HTTP endpoint 'ListBooks' binds property 'Ids' from the route or query string, but its type 'System.Collections.Generic.List<int>' cannot be converted from a string");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsRouteAndQueryPropertiesThatCannotBeSet()
+    {
+        // A route or query property without a public setter, init accessor or constructor parameter cannot receive
+        // its value: the generated object initializer would fail to compile with CS0200.
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed record GetBook(int Id) : IQuery<string>
+            {
+                [HttpQuery] public int Page { get; }
+                [HttpQuery] public int Size { get; init; }
+            }
+            [HttpEndpoint("GET", "/shelves")]
+            public sealed record ListShelves : IQuery<string>
+            {
+                [HttpQuery] public int Page => 1;
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Page", "Page");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        diagnostics[0].GetMessage(CultureInfo.InvariantCulture)
+            .Should().Be("HTTP endpoint 'GetBook' binds property 'Page' from the route or query string, but the property has no public setter or init accessor and is not a constructor parameter");
+        result.Generated.Should().NotContain("global::GetBook");
+        result.Generated.Should().NotContain("global::ListShelves");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsUnconvertibleQueryPropertiesOfAsParametersCommands()
+    {
+        // A GET or DELETE command binds with [AsParameters], where ASP.NET infers a body for a [HttpQuery] property
+        // it cannot bind from a string and the endpoint fails at startup.
+        const string source =
+            """
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBooks : ICommand<DeleteBooks>
+            {
+                public int Id { get; init; }
+                [HttpQuery] public List<int> Copies { get; init; } = [];
+                [HttpQuery] public int[] Shelves { get; init; } = [];
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059")
+            .Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Copies");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsExplicitParsableQueryValuesWithoutAWrapper()
+    {
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            """
+            using System;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public readonly struct Shelf : IParsable<Shelf>
+            {
+                static Shelf IParsable<Shelf>.Parse(string s, IFormatProvider? provider) => default;
+                static bool IParsable<Shelf>.TryParse(string? s, IFormatProvider? provider, out Shelf result) { result = default; return true; }
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                [HttpQuery] public Shelf? Shelf { get; init; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Shelf\")] global::Shelf? Shelf");
+        result.Generated.Should().NotContain("ArkTypeConverterValue<global::Shelf");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorRejectsAsParametersRoutePropertiesThatAspNetInfersAsBody()
+    {
+        // A GET or DELETE command binds with [AsParameters]: ASP.NET infers a body for a route property it cannot
+        // bind from a string, and the endpoint fails at startup.
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using NodaTime;
+            [HttpEndpoint("DELETE", "/days/{day}")]
+            public sealed record ClearDay : ICommand<ClearDay>
+            {
+                public LocalDate Day { get; init; }
+            }
+            [HttpEndpoint("DELETE", "/books/{id}")]
+            public sealed record DeleteBook : ICommand<DeleteBook>
+            {
+                public int Id { get; init; }
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
+            source, [], MetadataReference.CreateFromFile(typeof(NodaTime.LocalDate).Assembly.Location));
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF059").Subject;
+        source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length).Should().Be("Day");
+        result.Generated.Should().Contain("global::DeleteBook");
+        result.Generated.Should().NotContain("global::ClearDay");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorReportsReferencedGetContractAtTheHostCall()
     {
         var contracts = _createMetadataReference(
@@ -3126,6 +3775,44 @@ public sealed class GeneratorSnapshotTests
         diagnostic.Location.IsInSource.Should().BeTrue();
         source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length)
             .Should().Be("MapArkEndpointsFromAssembly<Marker>()");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorReportsReferencedGetContractAtEveryHostCall()
+    {
+        var contracts = _createMetadataReference(
+            "Contracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Marker;
+            public sealed class Filter
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<string>
+            {
+                public Filter? Filter { get; init; }
+            }
+            """);
+        const string source =
+            """
+            public static class Host
+            {
+                public static void MapPublic() => MapArkEndpointsFromAssembly<Marker>();
+                public static void MapInternal() => MapArkEndpointsFromAssembly<Marker>();
+            }
+            """;
+
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source, [], contracts);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Should().HaveCount(2);
+        diagnostics.Select(static diagnostic => diagnostic.Location.SourceSpan.Start)
+            .Should().BeEquivalentTo([
+                source.IndexOf("MapArkEndpointsFromAssembly", StringComparison.Ordinal),
+                source.LastIndexOf("MapArkEndpointsFromAssembly", StringComparison.Ordinal)]);
     }
 
     [TestMethod]

@@ -30,6 +30,31 @@ internal enum HandlerKind
     Command
 }
 
+/// <summary>How a route or query string value converts to a property value, mirroring Minimal API binding.</summary>
+internal enum ConversionKind
+{
+    /// <summary>The value is a string.</summary>
+    String = 0,
+
+    /// <summary><c>Enum.TryParse</c>, case-sensitive as in Minimal API.</summary>
+    Enum = 1,
+
+    /// <summary><c>Uri.TryCreate</c>.</summary>
+    Uri = 2,
+
+    /// <summary>A public static <c>TryParse(string, IFormatProvider, out T)</c>, called with the invariant culture.</summary>
+    TryParseWithProvider = 3,
+
+    /// <summary>A public static <c>TryParse(string, out T)</c>.</summary>
+    TryParse = 4,
+
+    /// <summary>An explicit <c>IParsable&lt;T&gt;</c> implementation, called with the invariant culture.</summary>
+    Parsable = 5,
+
+    /// <summary>The registered type converter, resolved trim-safely by <c>ArkTypeConverter.TryConvertSafe</c>.</summary>
+    TypeConverter = 6,
+}
+
 /// <summary>A symbol-free description of a bindable endpoint property.</summary>
 /// <param name="Name">The property name.</param>
 /// <param name="TypeFullName">The fully qualified property type.</param>
@@ -42,6 +67,13 @@ internal enum HandlerKind
 /// <param name="IsETag">Whether the property carries the request ETag.</param>
 /// <param name="IsAttachment">Whether the property is a single attachment.</param>
 /// <param name="IsAttachmentCollection">Whether the property is an attachment collection.</param>
+/// <param name="IsStringCollection">Whether the property type is one of the supported string collection shapes that receive every value of a query parameter.</param>
+/// <param name="IsNotConvertible">Whether the property cannot bind from its route value or query string, by the rules Minimal API applies.</param>
+/// <param name="ArrayElementTypeFullName">The fully qualified element type of an array, other than <c>string[]</c>, bound from every value of a query parameter; otherwise <see langword="null"/>.</param>
+/// <param name="Conversion">How one value converts to the property type, or to the array element type.</param>
+/// <param name="ConversionTypeFullName">The fully qualified type one value converts to: the property or element type without <c>Nullable&lt;T&gt;</c>.</param>
+/// <param name="ParserTypeFullName">The fully qualified type that declares the <c>TryParse</c> method to call, which can be a base type; otherwise the conversion type.</param>
+/// <param name="IsNullableTarget">Whether the property or element type is a <c>Nullable&lt;T&gt;</c> or an annotated nullable reference type, so an empty array element, or an absent query value, is <see langword="null"/>.</param>
 /// <param name="Location">The property declaration location, when it is in source.</param>
 internal readonly record struct PropertySpec(
     string Name,
@@ -55,6 +87,13 @@ internal readonly record struct PropertySpec(
     bool IsETag,
     bool IsAttachment,
     bool IsAttachmentCollection,
+    bool IsStringCollection,
+    bool IsNotConvertible,
+    string? ArrayElementTypeFullName,
+    ConversionKind Conversion,
+    string ConversionTypeFullName,
+    string ParserTypeFullName,
+    bool IsNullableTarget,
     LocationSpec? Location);
 
 /// <summary>A symbol-free description of an HTTP endpoint contract.</summary>
@@ -85,6 +124,7 @@ internal readonly record struct PropertySpec(
 /// <param name="IsStreaming">Whether the response is streamed.</param>
 /// <param name="IsRecord">Whether the contract is a record.</param>
 /// <param name="ConstructorParameters">The constructor parameters used for binding.</param>
+/// <param name="UnsettableProperties">The route or query properties without a public setter or init accessor, which the function cannot set.</param>
 internal readonly record struct EndpointSpec(
     string TypeName,
     string FullyQualifiedType,
@@ -112,7 +152,13 @@ internal readonly record struct EndpointSpec(
     EquatableArray<string> AllowedContentTypes,
     bool IsStreaming,
     bool IsRecord,
-    EquatableArray<string> ConstructorParameters);
+    EquatableArray<string> ConstructorParameters,
+    EquatableArray<UnsettablePropertySpec> UnsettableProperties);
+
+/// <summary>A route or query property the function cannot set.</summary>
+/// <param name="Name">The property name.</param>
+/// <param name="Location">The property declaration location, when it is in source.</param>
+internal readonly record struct UnsettablePropertySpec(string Name, LocationSpec? Location);
 
 /// <summary>A contract selection that does not belong to the host contract assembly.</summary>
 /// <param name="TypeName">The selected type name.</param>
@@ -303,6 +349,14 @@ internal static class AzureFunctionsEndpointParser
                     && collection.AllInterfaces.Any(static item => item.ToDisplayString().StartsWith("System.Collections.Generic.IEnumerable<", StringComparison.Ordinal))
                     && collection.TypeArguments.Length == 1
                     && collection.TypeArguments[0].ToDisplayString() == _arkAttachment;
+                // An array of string-bindable elements, other than string[], binds from every value of a query
+                // parameter, one element per value, as Minimal API binds it natively.
+                var element = p.Type is IArrayTypeSymbol { Rank: 1 } array
+                    && array.ElementType.SpecialType != SpecialType.System_String
+                    && HttpStringBinding.IsStringBindable(p.Type)
+                    ? array.ElementType
+                    : null;
+                var conversionType = element ?? p.Type;
                 return new PropertySpec(
                     p.Name,
                     p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -315,6 +369,16 @@ internal static class AzureFunctionsEndpointParser
                     isETag,
                     isAttachment,
                     isAttachmentCollection,
+                    // A nullable StringValues receives every value too, as Minimal API binds it natively.
+                    HttpStringBinding.IsStringCollection(_withoutNullable(p.Type)),
+                    isRoute ? !HttpStringBinding.CanBindFromRoute(p.Type) : !HttpStringBinding.CanBindExplicitly(p.Type),
+                    element is null ? null : element.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    _conversionKind(conversionType),
+                    _withoutNullable(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    _parserType(conversionType).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    // As the Minimal API generator, which emits a reference type outside a nullable context as non-nullable.
+                    conversionType is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T }
+                        || (conversionType.IsReferenceType && conversionType.NullableAnnotation == NullableAnnotation.Annotated),
                     LocationSpec._from(p));
             })
             .ToImmutableArray();
@@ -354,7 +418,16 @@ internal static class AzureFunctionsEndpointParser
             responseSymbol is { } responseNamed
                 && responseNamed.OriginalDefinition.ToDisplayString() == _asyncEnumerable,
             type.IsRecord,
-            _constructorParameters(type, properties));
+            _constructorParameters(type, properties),
+            // The function sets bound properties after constructing the contract, so it cannot bind these.
+            _allProperties(type)
+                .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic && !p.IsIndexer
+                    && p.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
+                    && !p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _serverSetAttribute)
+                    && (routeNames.Contains(p.Name) || p.GetAttributes().Any(static a =>
+                        a.AttributeClass?.ToDisplayString() is _httpRouteAttribute or _httpQueryAttribute)))
+                .Select(static p => new UnsettablePropertySpec(p.Name, LocationSpec._from(p)))
+                .ToImmutableArray());
     }
 
     private static EquatableArray<EndpointSpec> _readMetadataEndpoints(IAssemblySymbol assembly, CancellationToken cancellationToken)
@@ -452,6 +525,60 @@ internal static class AzureFunctionsEndpointParser
             foreach (var child in _allNestedTypes(nested))
                 yield return child;
         }
+    }
+
+    // Mirrors the order in which Minimal API picks a parser: strings, enums and Uri first, then a public static
+    // TryParse (preferring the IFormatProvider overload), then IParsable<T>, and the type converter otherwise.
+    private static ConversionKind _conversionKind(ITypeSymbol type)
+    {
+        type = _withoutNullable(type);
+        if (type.SpecialType == SpecialType.System_String)
+            return ConversionKind.String;
+        if (type.TypeKind == TypeKind.Enum)
+            return ConversionKind.Enum;
+        if (type.ToDisplayString() == "System.Uri")
+            return ConversionKind.Uri;
+
+        var tryParse = _tryParseMethods(type);
+        if (tryParse.Any(_hasFormatProvider))
+            return ConversionKind.TryParseWithProvider;
+        // As in Minimal API, an explicit IParsable<T> implementation wins over a public TryParse(string, out T).
+        if (type.AllInterfaces.Any(candidate => candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
+            && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], type)))
+            return ConversionKind.Parsable;
+        if (tryParse.Any(static method => method.Parameters.Length == 2))
+            return ConversionKind.TryParse;
+        return ConversionKind.TypeConverter;
+    }
+
+    // The type declaring the TryParse to call: the most derived declaration, as ASP.NET Core finds it, called on
+    // its declaring type so an overload declared on a derived type cannot hide it.
+    private static ITypeSymbol _parserType(ITypeSymbol type)
+    {
+        type = _withoutNullable(type);
+        var tryParse = _tryParseMethods(type);
+        var method = tryParse.FirstOrDefault(_hasFormatProvider) ?? tryParse.FirstOrDefault(static method => method.Parameters.Length == 2);
+        return method?.ContainingType ?? type;
+    }
+
+    private static IMethodSymbol[] _tryParseMethods(ITypeSymbol type)
+    {
+        return HttpStringBinding.TryParseMethods(type)
+            .Where(method => HttpStringBinding.IsTryParseShape(method)
+                && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, type))
+            .ToArray();
+    }
+
+    private static bool _hasFormatProvider(IMethodSymbol method)
+    {
+        return method.Parameters.Length == 3 && HttpStringBinding.IsFormatProviderParameter(method.Parameters[1]);
+    }
+
+    private static ITypeSymbol _withoutNullable(ITypeSymbol type)
+    {
+        return type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
+            ? nullable.TypeArguments[0]
+            : type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
     }
 
     private static IEnumerable<IPropertySymbol> _allProperties(INamedTypeSymbol type)
