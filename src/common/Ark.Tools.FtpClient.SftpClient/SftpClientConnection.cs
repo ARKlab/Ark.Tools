@@ -160,8 +160,9 @@ public class SftpClientConnection : FtpClientConnectionBase
         privateKeyPemString = new string(privateKeyPem);
 
         var byteArray = Encoding.UTF8.GetBytes(privateKeyPemString);
+        using var keyStream = new MemoryStream(byteArray);
 
-        return new Renci.SshNet.SftpClient(connInfo.Host, connInfo.Username, new PrivateKeyFile[] { new PrivateKeyFile(new MemoryStream(byteArray)) })
+        return new Renci.SshNet.SftpClient(connInfo.Host, connInfo.Username, new PrivateKeyFile[] { new PrivateKeyFile(keyStream) })
         {
             KeepAliveInterval = _keepAliveInterval,
             OperationTimeout = _operationTimeout,

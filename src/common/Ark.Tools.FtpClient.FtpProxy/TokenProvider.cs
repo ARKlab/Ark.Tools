@@ -59,12 +59,9 @@ internal sealed class TokenProvider
                                       .Build();
     }
 
-    public Task<string> GetToken(CancellationToken ctk = default)
+    public async Task<string> GetToken(CancellationToken ctk = default)
     {
-        if (_config.UseAuth0)
-            return _getAuth0AccessToken(ctk);
-        else
-            return _getAdalAccessToken(ctk);
+        return await (_config.UseAuth0 ? _getAuth0AccessToken(ctk) : _getAdalAccessToken(ctk)).ConfigureAwait(false);
     }
 
     private async Task<string> _getAuth0AccessToken(CancellationToken ctk = default)
