@@ -597,12 +597,25 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var type = prop.ConversionTypeFullName;
         return prop.Conversion switch
         {
-            ConversionKind.Enum => "global::System.Enum.TryParse<" + type + ">(" + raw + ", true, out var " + value + ")",
+            ConversionKind.Enum => "global::System.Enum.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
             ConversionKind.Uri => "global::System.Uri.TryCreate(" + raw + ", global::System.UriKind.RelativeOrAbsolute, out var " + value + ")",
-            ConversionKind.TryParseWithProvider => type + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, out var " + value + ")",
+            ConversionKind.TryParseWithProvider => type + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, " + _dateTimeStyles(type) + "out var " + value + ")",
             ConversionKind.TryParse => type + ".TryParse(" + raw + ", out var " + value + ")",
             ConversionKind.Parsable => "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
             _ => "global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<" + type + ">(" + raw + ", out var " + value + ")",
+        };
+    }
+
+    // Mirrors the DateTimeStyles ASP.NET Core passes when it binds a date or time from a string.
+    private static string _dateTimeStyles(string type)
+    {
+        const string styles = "global::System.Globalization.DateTimeStyles.";
+        return type switch
+        {
+            "global::System.DateTime" => styles + "AllowWhiteSpaces | " + styles + "AdjustToUniversal, ",
+            "global::System.DateTimeOffset" => styles + "AllowWhiteSpaces | " + styles + "AssumeUniversal, ",
+            "global::System.DateOnly" or "global::System.TimeOnly" => styles + "AllowWhiteSpaces, ",
+            _ => string.Empty,
         };
     }
 

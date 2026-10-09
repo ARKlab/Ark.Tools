@@ -107,10 +107,13 @@ an explicit Minimal API route or query value, so the rule reports the same
 properties on both hosts. The generated function converts each value with the
 strategy Minimal API uses for the type:
 
-- an enum with `Enum.TryParse`, ignoring case, and a `Uri` with `Uri.TryCreate`;
+- an enum with `Enum.TryParse`, case-sensitively, and a `Uri` with
+  `Uri.TryCreate`;
 - a type with a public static `TryParse`, such as `int`, `Guid`, `DateTime` or
   your own type, by calling it, with the invariant culture when it accepts an
-  `IFormatProvider`;
+  `IFormatProvider`. `DateTime` and `DateTimeOffset` values are read as UTC,
+  and dates and times allow surrounding white space, with the same
+  `DateTimeStyles` as Minimal API;
 - a type that implements `IParsable<T>` explicitly, through `IParsable<T>`;
 - any other single value through the type converter of its registered type,
   with the same registration rule as Minimal API.

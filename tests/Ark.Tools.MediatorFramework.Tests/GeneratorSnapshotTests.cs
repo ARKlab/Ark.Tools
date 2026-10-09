@@ -1187,6 +1187,9 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public DayOfWeek[] Days { get; init; } = [];
                 [HttpQuery] public RefCode Ref { get; init; }
                 [HttpQuery] public Guid? Owner { get; init; }
+                [HttpQuery] public DateTime From { get; init; }
+                [HttpQuery] public DateTimeOffset At { get; init; }
+                [HttpQuery] public DateOnly Day { get; init; }
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
@@ -1213,7 +1216,11 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("var _query_Owners = new global::System.Guid?[_qs_Owners.Count];");
         result.Generated.Should().Contain("if (!string.IsNullOrEmpty(_raw_Owners))");
         result.Generated.Should().Contain("!global::BookCode.TryParse(_raw_BookCodes, out var _value_BookCodes)");
-        result.Generated.Should().Contain("!global::System.Enum.TryParse<global::System.DayOfWeek>(_raw_Days, true, out var _value_Days)");
+        // Enums parse case-sensitively and dates with the DateTimeStyles ASP.NET Core passes, as Minimal API does.
+        result.Generated.Should().Contain("!global::System.Enum.TryParse<global::System.DayOfWeek>(_raw_Days, out var _value_Days)");
+        result.Generated.Should().Contain("global::System.DateTime.TryParse(_raw_From, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces | global::System.Globalization.DateTimeStyles.AdjustToUniversal, out var _value_From)");
+        result.Generated.Should().Contain("global::System.DateTimeOffset.TryParse(_raw_At, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces | global::System.Globalization.DateTimeStyles.AssumeUniversal, out var _value_At)");
+        result.Generated.Should().Contain("global::System.DateOnly.TryParse(_raw_Day, global::System.Globalization.CultureInfo.InvariantCulture, global::System.Globalization.DateTimeStyles.AllowWhiteSpaces, out var _value_Day)");
         // A TryParse taking the value by ref, or generic, is not callable as a parser: the type converter is used.
         result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
         // An empty nullable value sets the property to null, as Minimal API does.

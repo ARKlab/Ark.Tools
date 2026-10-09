@@ -36,7 +36,7 @@ internal enum ConversionKind
     /// <summary>The value is a string.</summary>
     String = 0,
 
-    /// <summary><c>Enum.TryParse</c>, ignoring case.</summary>
+    /// <summary><c>Enum.TryParse</c>, case-sensitive as in Minimal API.</summary>
     Enum = 1,
 
     /// <summary><c>Uri.TryCreate</c>.</summary>
