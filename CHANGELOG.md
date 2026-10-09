@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- A native messaging delivery cancelled while its payload is being deserialized, by host shutdown or by `MaximumHandlerDuration`, is no longer dead-lettered as a malformed payload; it is retried like any other cancelled or timed-out delivery.
+
 ## [7.0.0-beta13] - 2026-10-09
 
 ### Added
