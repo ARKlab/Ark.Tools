@@ -634,7 +634,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             // query string, or fails at startup when it cannot bind their type from a string. Bind the client
             // properties explicitly instead, as [AsParameters] would: the check above already holds them to its rules.
             var boundProperties = asParameters && properties.Any(static property => property.IsServerSet)
-                ? properties.Select(property => !property.IsRoute && !property.IsServerSet && IsClientBindable(property)
+                ? properties.Select(property => !property.IsRoute && !property.IsServerSet && !property.IsETag && IsClientBindable(property)
                         ? property with { IsQuery = true }
                         : property)
                     .ToImmutableArray()
