@@ -45,4 +45,12 @@ public class NodaTimeConverterRegistrationTests
         TypeDescriptor.GetConverterFromRegisteredType(typeof(OffsetDateTime)).CanConvertFrom(typeof(string)).Should().BeTrue();
         TypeDescriptor.GetConverterFromRegisteredType(typeof(Instant?)).ConvertFrom(null, CultureInfo.InvariantCulture, string.Empty).Should().BeNull();
     }
+
+    [TestMethod]
+    public void RegisteredTypesReuseOneConverterInstance()
+    {
+        // Dapper handlers look the converter up for every value: as TypeDescriptor does, the lookup must not allocate.
+        TypeDescriptor.GetConverterFromRegisteredType(typeof(LocalDate))
+            .Should().BeSameAs(TypeDescriptor.GetConverterFromRegisteredType(typeof(LocalDate)));
+    }
 }

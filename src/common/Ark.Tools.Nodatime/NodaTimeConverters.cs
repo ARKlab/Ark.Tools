@@ -67,9 +67,12 @@ public static class NodeTimeConverter
     private sealed class ConverterDescriptor<TConverter> : CustomTypeDescriptor
         where TConverter : TypeConverter, new()
     {
+        // One stateless converter per type, as TypeDescriptor caches it: Dapper handlers look it up for every value.
+        private static readonly TConverter _converter = new();
+
         public override TypeConverter GetConverterFromRegisteredType()
         {
-            return new TConverter();
+            return _converter;
         }
     }
 }
