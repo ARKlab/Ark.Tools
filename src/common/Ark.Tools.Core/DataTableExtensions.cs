@@ -3,6 +3,7 @@
 
 using System.Collections.Frozen;
 using System.Data;
+using System.Data.SqlTypes;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -73,7 +74,13 @@ public static class DataTableExtensions
     {
         // A single cached column: its name, its derived DataColumn type, and a compiled delegate that
         // reads the member from an instance of T and returns the already-converted column value.
-        private readonly record struct ColumnPlan(string Name, Type ColumnType, Func<T, object?> Accessor);
+        private readonly record struct ColumnPlan(
+            string Name,
+            [DynamicallyAccessedMembers(_columnTypeMembers)] [property: DynamicallyAccessedMembers(_columnTypeMembers)] Type ColumnType,
+            Func<T, object?> Accessor);
+
+        // DataColumn reflects on these members of its data type (the static Null member of INullable types).
+        private const DynamicallyAccessedMemberTypes _columnTypeMembers = DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties;
 
         // NOTE: static field initializers run in declaration order, and BuildPlan() (used by _plan
         // below) calls DeriveColumnType/BuildNonNullableConversion, which read the following fields.
@@ -277,10 +284,7 @@ public static class DataTableExtensions
             {
                 if (!table.Columns.Contains(column.Name))
                 {
-                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
-#pragma warning disable IL2072
                     table.Columns.Add(column.Name, column.ColumnType);
-#pragma warning restore IL2072
                 }
             }
         }
@@ -294,10 +298,7 @@ public static class DataTableExtensions
             {
                 if (!table.Columns.Contains(column.Name))
                 {
-                    // Suppress IL2072: DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives)
-#pragma warning disable IL2072
                     var dc = table.Columns.Add(column.Name, column.ColumnType);
-#pragma warning restore IL2072
                     ordinalMap.Add(column.Name, dc.Ordinal);
                 }
                 else
@@ -309,6 +310,7 @@ public static class DataTableExtensions
             return ordinalMap.ToFrozenDictionary();
         }
 
+        [return: DynamicallyAccessedMembers(_columnTypeMembers)]
         private static Type _deriveColumnType(Type elementType)
         {
             var nullableType = Nullable.GetUnderlyingType(elementType);
@@ -318,13 +320,13 @@ public static class DataTableExtensions
             }
 
             if (_datetimeTypes.Contains(elementType))
-                elementType = typeof(DateTime);
+                return typeof(DateTime);
 
             if (_datetimeOffsetTypes.Contains(elementType))
-                elementType = typeof(DateTimeOffset);
+                return typeof(DateTimeOffset);
 
             if (_timeTypes.Contains(elementType))
-                elementType = typeof(TimeSpan);
+                return typeof(TimeSpan);
 
             if (elementType.IsEnum)
                 return typeof(string);
@@ -335,7 +337,61 @@ public static class DataTableExtensions
             if (_isSensitiveValue(elementType))
                 return typeof(string);
 
-            return elementType;
+            return _knownColumnType(elementType) ?? _customColumnType(elementType);
+        }
+
+        // Literal types satisfy DataColumn's trimming annotation, so every built-in column type stays trim-safe.
+        [return: DynamicallyAccessedMembers(_columnTypeMembers)]
+        private static Type? _knownColumnType(Type type)
+        {
+            return Type.GetTypeCode(type) switch
+            {
+                TypeCode.Boolean => typeof(bool),
+                TypeCode.Char => typeof(char),
+                TypeCode.SByte => typeof(sbyte),
+                TypeCode.Byte => typeof(byte),
+                TypeCode.Int16 => typeof(short),
+                TypeCode.UInt16 => typeof(ushort),
+                TypeCode.Int32 => typeof(int),
+                TypeCode.UInt32 => typeof(uint),
+                TypeCode.Int64 => typeof(long),
+                TypeCode.UInt64 => typeof(ulong),
+                TypeCode.Single => typeof(float),
+                TypeCode.Double => typeof(double),
+                TypeCode.Decimal => typeof(decimal),
+                TypeCode.DateTime => typeof(DateTime),
+                TypeCode.String => typeof(string),
+                _ when type == typeof(DateTimeOffset) => typeof(DateTimeOffset),
+                _ when type == typeof(TimeSpan) => typeof(TimeSpan),
+                _ when type == typeof(Guid) => typeof(Guid),
+                _ when type == typeof(byte[]) => typeof(byte[]),
+                // SqlTypes are INullable: DataColumn reflects on their static Null member.
+                _ when type == typeof(SqlBinary) => typeof(SqlBinary),
+                _ when type == typeof(SqlBoolean) => typeof(SqlBoolean),
+                _ when type == typeof(SqlByte) => typeof(SqlByte),
+                _ when type == typeof(SqlBytes) => typeof(SqlBytes),
+                _ when type == typeof(SqlChars) => typeof(SqlChars),
+                _ when type == typeof(SqlDateTime) => typeof(SqlDateTime),
+                _ when type == typeof(SqlDecimal) => typeof(SqlDecimal),
+                _ when type == typeof(SqlDouble) => typeof(SqlDouble),
+                _ when type == typeof(SqlGuid) => typeof(SqlGuid),
+                _ when type == typeof(SqlInt16) => typeof(SqlInt16),
+                _ when type == typeof(SqlInt32) => typeof(SqlInt32),
+                _ when type == typeof(SqlInt64) => typeof(SqlInt64),
+                _ when type == typeof(SqlMoney) => typeof(SqlMoney),
+                _ when type == typeof(SqlSingle) => typeof(SqlSingle),
+                _ when type == typeof(SqlString) => typeof(SqlString),
+                _ when type == typeof(SqlXml) => typeof(SqlXml),
+                _ => null,
+            };
+        }
+
+        [UnconditionalSuppressMessage("Trimming", "IL2068:UnrecognizedReflectionPattern",
+            Justification = "DataColumn stores other member types as opaque values and reflects on their public fields/properties only to find the static Null member of INullable types. The System.Data.SqlTypes structs take the literal path above; a trimmed app that shreds a member of its own INullable type must preserve that type's Null member itself.")]
+        [return: DynamicallyAccessedMembers(_columnTypeMembers)]
+        private static Type _customColumnType(Type type)
+        {
+            return type;
         }
 
         private static bool _isEvolvableEnum(Type type) =>
@@ -433,9 +489,6 @@ public static class DataTableExtensions
             return plan;
         }
 
-        // Suppress IL2072: DeriveColumnType returns known-safe types (DateTime, DateTimeOffset, TimeSpan, string, or the member's own type).
-        [UnconditionalSuppressMessage("Trimming", "IL2072:UnrecognizedReflectionPattern",
-            Justification = "DeriveColumnType returns known safe types (DateTime, DateTimeOffset, TimeSpan, string, primitives).")]
         private static ColumnPlan _buildColumnPlan(string name, Type memberType, MemberExpression access, ParameterExpression param)
         {
             var columnType = _deriveColumnType(memberType);

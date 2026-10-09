@@ -6,6 +6,7 @@ using AwesomeAssertions;
 using NodaTime;
 
 using System.Data;
+using System.Data.SqlTypes;
 using System.Reflection;
 
 namespace Ark.Tools.Core.Tests;
@@ -54,6 +55,12 @@ public class DataTableExtensionsTests
         public Status State { get; set; }
         public Guid CorrelationId { get; set; }
         public LocalDate EffectiveDate { get; set; }
+    }
+
+    private sealed class SqlTypesEntity
+    {
+        public SqlInt32 Count { get; set; }
+        public SqlString Label { get; set; }
     }
 
     private sealed class EntityWithField
@@ -326,6 +333,24 @@ public class DataTableExtensionsTests
 
         table.Rows[0].IsNull("NullableLocalDate").Should().BeTrue();
         table.Rows[0].IsNull("NullableLocalTime").Should().BeTrue();
+    }
+
+    /// <summary>SqlTypes members keep their own column type, so DataColumn can resolve their static Null member.</summary>
+    [TestMethod]
+    public void ToDataTable_WithSqlTypesProperties_KeepsSqlTypeColumns()
+    {
+        var entities = new[]
+        {
+            new SqlTypesEntity { Count = new SqlInt32(7), Label = new SqlString("x") },
+            new SqlTypesEntity { Count = SqlInt32.Null, Label = SqlString.Null },
+        };
+
+        using var table = entities.ToDataTable();
+
+        table.Columns["Count"]!.DataType.Should().Be<SqlInt32>();
+        table.Columns["Label"]!.DataType.Should().Be<SqlString>();
+        table.Rows[0]["Count"].Should().Be(new SqlInt32(7));
+        table.Rows[1].IsNull("Count").Should().BeTrue();
     }
 
     /// <summary>Public fields are shredded together with properties, fields ordered before properties.</summary>
