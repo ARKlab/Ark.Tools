@@ -185,7 +185,7 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
 .ConfigureAwait(false);
                 }
 
-                if (res != null)
+                if (!string.IsNullOrEmpty(res))
                 {
                     cacheEntry = JsonSerializer.Deserialize<CacheEntry>(res);
                 }
