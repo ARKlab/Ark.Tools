@@ -21,7 +21,7 @@ namespace Ark.Reference.Core.Tests.Init;
 [Binding]
 public sealed class TestClient
 {
-    internal IFlurlClient _client;
+    internal readonly IFlurlClient _client;
     private readonly AuthTestContext _authContext;
     private readonly string _version;
     private IFlurlResponse? _backProperty;
