@@ -1218,6 +1218,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("!global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<global::RefCode>(_raw_Ref, out var _value_Ref)");
         // An empty nullable value sets the property to null, as Minimal API does.
         result.Generated.Should().Contain("else" + Environment.NewLine + "                body = body with { Owner = default };");
+        // An absent collection or array binds as empty, as Minimal API does.
+        result.Generated.Should().Contain(
+            "body = body with { Tags = new global::System.Collections.Generic.List<string>(global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(global::Microsoft.Extensions.Primitives.StringValues.Empty))) };");
+        result.Generated.Should().Contain("body = body with { Years = global::System.Array.Empty<int>() };");
     }
 
     [TestMethod]

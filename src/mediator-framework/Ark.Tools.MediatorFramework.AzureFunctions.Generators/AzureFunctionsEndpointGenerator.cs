@@ -481,6 +481,15 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 _emitConversion(source, endpoint, "            ", prop, "Query value '" + prop.Name + "'", target: null);
             }
             source.AppendLine("        }");
+
+            // Mirrors Minimal API: an absent collection or array binds as empty.
+            if (prop.IsStringCollection || prop.ArrayElementTypeFullName is not null)
+            {
+                source.AppendLine("        else");
+                _emitPropertyAssignment(source, endpoint, "            ", prop.Name, prop.ArrayElementTypeFullName is { } empty
+                    ? "global::System.Array.Empty<" + empty + ">()"
+                    : _stringCollection(prop, "global::Microsoft.Extensions.Primitives.StringValues.Empty"));
+            }
         }
 
         // Server-set property reset (per-property, no runtime reflection)
