@@ -46,6 +46,7 @@ public static class NodeTimeConverter
         where TConverter : TypeConverter, new()
     {
         private readonly Type _type;
+        private readonly ConverterDescriptor<TConverter> _descriptor = new();
 
         public ConverterProvider(Type type)
             : base(TypeDescriptor.GetProvider(type))
@@ -60,14 +61,15 @@ public static class NodeTimeConverter
 
         public override ICustomTypeDescriptor? GetTypeDescriptorFromRegisteredType(Type objectType, object? instance)
         {
-            return objectType == _type ? new ConverterDescriptor<TConverter>() : base.GetTypeDescriptorFromRegisteredType(objectType, instance);
+            return objectType == _type ? _descriptor : base.GetTypeDescriptorFromRegisteredType(objectType, instance);
         }
     }
 
     private sealed class ConverterDescriptor<TConverter> : CustomTypeDescriptor
         where TConverter : TypeConverter, new()
     {
-        // One stateless converter per type, as TypeDescriptor caches it: Dapper handlers look it up for every value.
+        // One stateless converter per type, as TypeDescriptor caches it: Dapper handlers look it up for every value,
+        // so neither the descriptor nor the converter is allocated per lookup.
         private static readonly TConverter _converter = new();
 
         public override TypeConverter GetConverterFromRegisteredType()
