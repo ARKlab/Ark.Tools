@@ -488,7 +488,7 @@ public sealed partial class AzureFunctionsBoundaryTests
             var appDirectory = Environment.GetEnvironmentVariable("ARK_AZF_FUNCTION_APP_DIR")
                 ?? _findFunctionAppDirectory();
             var port = _getAvailablePort();
-            var logPath = Path.Combine(Path.GetTempPath(), $"ark-azf-{Guid.NewGuid():N}.log");
+            var logPath = Path.Join(Path.GetTempPath(), $"ark-azf-{Guid.NewGuid():N}.log");
             var log = new StreamWriter(logPath) { AutoFlush = true };
             var process = new Process
             {
@@ -607,6 +607,7 @@ public sealed partial class AzureFunctionsBoundaryTests
                 }
                 catch (HttpRequestException)
                 {
+                    // Host not listening yet: keep polling until the deadline
                 }
 
                 await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);
@@ -620,10 +621,10 @@ public sealed partial class AzureFunctionsBoundaryTests
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
             while (directory is not null)
             {
-                var candidate = Path.Combine(
+                var candidate = Path.Join(
                     directory.FullName,
                     "tests/Ark.Tools.MediatorFramework.AzureFunctions.Boundary.TestHost/bin/Debug/net10.0");
-                if (File.Exists(Path.Combine(candidate, "host.json")))
+                if (File.Exists(Path.Join(candidate, "host.json")))
                     return candidate;
                 directory = directory.Parent;
             }

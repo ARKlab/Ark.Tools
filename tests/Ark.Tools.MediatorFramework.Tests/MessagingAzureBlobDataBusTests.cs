@@ -38,8 +38,8 @@ public sealed class MessagingAzureBlobDataBusTests
         await using (first.ConfigureAwait(false))
         await using (second.ConfigureAwait(false))
         {
-            var firstRead = new MemoryStream();
-            var secondRead = new MemoryStream();
+            using var firstRead = new MemoryStream();
+            using var secondRead = new MemoryStream();
             await Task.WhenAll(
                     first.CopyToAsync(firstRead),
                     second.CopyToAsync(secondRead))

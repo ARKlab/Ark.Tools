@@ -30,11 +30,11 @@ public class OracleDbConnectionManagerTests
 
         // Act - Call Build directly via reflection to avoid opening the connection
         var buildMethod = typeof(OracleDbConnectionManager).GetMethod("Build", BindingFlags.NonPublic | BindingFlags.Instance);
-        var connection = buildMethod!.Invoke(manager, new object[] { connectionString }) as OracleConnection;
+        var connection = buildMethod!.Invoke(manager, new object[] { connectionString }).Should().BeOfType<OracleConnection>().Subject;
 
         // Assert
         connection.Should().NotBeNull();
-        connection!.CommandTimeout.Should().Be(30);
+        connection.CommandTimeout.Should().Be(30);
 
         // Cleanup
         connection.Dispose();
@@ -53,8 +53,8 @@ public class OracleDbConnectionManagerTests
 
         // Act - Call Build directly via reflection to avoid opening the connection
         var buildMethod = typeof(OracleDbConnectionManager).GetMethod("Build", BindingFlags.NonPublic | BindingFlags.Instance);
-        var connection = buildMethod!.Invoke(manager, new object[] { connectionString }) as OracleConnection;
-        var command = connection!.CreateCommand();
+        var connection = buildMethod!.Invoke(manager, new object[] { connectionString }).Should().BeOfType<OracleConnection>().Subject;
+        var command = connection.CreateCommand();
 
         // Assert
         command.Should().NotBeNull();
@@ -79,8 +79,8 @@ public class OracleDbConnectionManagerTests
 
         // Act - Call Build directly via reflection to avoid opening the connection
         var buildMethod = typeof(OracleDbConnectionManager).GetMethod("Build", BindingFlags.NonPublic | BindingFlags.Instance);
-        var connection = buildMethod!.Invoke(manager, new object[] { connectionString }) as OracleConnection;
-        var command = connection!.CreateCommand();
+        var connection = buildMethod!.Invoke(manager, new object[] { connectionString }).Should().BeOfType<OracleConnection>().Subject;
+        var command = connection.CreateCommand();
         command.CommandTimeout = customTimeout;
 
         // Assert
@@ -104,8 +104,8 @@ public class OracleDbConnectionManagerTests
 
         // Act - Call Build directly via reflection to avoid opening the connection
         var buildMethod = typeof(OracleDbConnectionManager).GetMethod("Build", BindingFlags.NonPublic | BindingFlags.Instance);
-        var connection = buildMethod!.Invoke(manager, new object[] { connectionString }) as OracleConnection;
-        connection!.CommandTimeout = customTimeout;
+        var connection = buildMethod!.Invoke(manager, new object[] { connectionString }).Should().BeOfType<OracleConnection>().Subject;
+        connection.CommandTimeout = customTimeout;
         var command = connection.CreateCommand();
 
         // Assert
