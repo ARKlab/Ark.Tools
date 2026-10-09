@@ -21,15 +21,9 @@ internal sealed class FormDataJsonBinder : IModelBinder
     {
         ArgumentNullException.ThrowIfNull(bindingContext);
 
-        string modelBindingKey;
-        if (bindingContext.IsTopLevelObject)
-        {
-            modelBindingKey = bindingContext.BinderModelName ?? string.Empty;
-        }
-        else
-        {
-            modelBindingKey = bindingContext.ModelName;
-        }
+        var modelBindingKey = bindingContext.IsTopLevelObject
+            ? bindingContext.BinderModelName ?? string.Empty
+            : bindingContext.ModelName;
 
         // Fetch the value of the argument by name and set it to the model state
         string fieldName = bindingContext.FieldName;

@@ -26,8 +26,8 @@ public sealed class OpenApiDocumentTests
 
         var directory = typeof(OpenApiDocumentTests).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
             .Single(static attribute => attribute.Key == "SnapshotDirectory").Value!;
-        var snapshotPath = Path.Combine(directory, "openapi.v1.json");
-        var receivedPath = Path.Combine(directory, "openapi.v1.received.json");
+        var snapshotPath = Path.Join(directory, "openapi.v1.json");
+        var receivedPath = Path.Join(directory, "openapi.v1.received.json");
         var snapshot = File.Exists(snapshotPath)
             ? _normalize(await File.ReadAllTextAsync(snapshotPath, ctk).ConfigureAwait(false))
             : null;
