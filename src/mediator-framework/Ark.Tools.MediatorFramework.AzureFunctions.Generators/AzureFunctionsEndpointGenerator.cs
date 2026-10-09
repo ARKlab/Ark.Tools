@@ -443,8 +443,11 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             }
             else
             {
-                source.Append("        var _raw_").Append(prop.Name).Append(" = request.RouteValues[").Append(_literal(prop.BindingName)).AppendLine("]?.ToString();");
-                _emitConversion(source, endpoint, "        ", prop, "Route value '" + prop.BindingName + "'", target: null);
+                // A block keeps the conversion locals apart from the query ones of a property bound from both.
+                source.AppendLine("        {");
+                source.Append("            var _raw_").Append(prop.Name).Append(" = request.RouteValues[").Append(_literal(prop.BindingName)).AppendLine("]?.ToString();");
+                _emitConversion(source, endpoint, "            ", prop, "Route value '" + prop.BindingName + "'", target: null);
+                source.AppendLine("        }");
             }
         }
 

@@ -1225,6 +1225,30 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorKeepsRouteAndQueryLocalsApart()
+    {
+        // A property bound from both the route and the query string is converted twice; the locals must not collide.
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed record GetBook : IQuery<string>
+            {
+                [HttpQuery] public int Id { get; init; }
+            }
+            """;
+        var (driver, compilation) = _runGeneratorDriver<AzureFunctionsEndpointGenerator>(source, []);
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+
+        string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
+            .Should().Contain("request.Query.TryGetValue(\"Id\", out var _qs_Id)");
+        generatedCompilation.GetDiagnostics().Should().NotContain(static diagnostic => diagnostic.Id == "CS0128" || diagnostic.Id == "CS0136");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorReportsReferencedDroppedPropertyAtTheHost()
     {
         var contracts = _createMetadataReference(
