@@ -87,15 +87,6 @@ jobs:
     - name: 'Install Azure Functions Core Tools'
       run: npm install --global azure-functions-core-tools@4.14.0
 
-    - name: 'Wait for Service Bus emulator'
-      run: |
-        timeout 300s bash -c '
-          until bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5300" 2>/dev/null \
-            && bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/5672" 2>/dev/null; do
-            sleep 2
-          done
-        '
-
     - name: 'Restore packages'
       run: dotnet restore --locked-mode
 
@@ -104,6 +95,10 @@ jobs:
 
     - name: 'Pack projects (package validation and SBOM)'
       run: dotnet pack Ark.Tools.slnx --no-restore --configuration Debug --output "${{ runner.temp }}/ark-tools-packages"
+
+    # The emulator warms up while the build runs; its ports open before it can serve requests.
+    - name: 'Wait for Service Bus emulator'
+      run: timeout 300s bash -c 'until curl -fs http://127.0.0.1:5300/health > /dev/null; do sleep 2; done'
 
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug
