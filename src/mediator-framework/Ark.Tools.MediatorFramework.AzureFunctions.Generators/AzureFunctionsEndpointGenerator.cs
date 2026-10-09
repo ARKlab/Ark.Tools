@@ -491,9 +491,12 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.AppendLine("        else");
             if (prop.IsStringCollection || prop.ArrayElementTypeFullName is not null)
             {
+                // Only a nullable StringValues binds null; every other collection, nullable or not, binds as empty.
                 _emitPropertyAssignment(source, endpoint, "            ", prop.Name, prop.ArrayElementTypeFullName is { } empty
                     ? "global::System.Array.Empty<" + empty + ">()"
-                    : _stringCollection(prop, "global::Microsoft.Extensions.Primitives.StringValues.Empty"));
+                    : prop.TypeFullName == "global::Microsoft.Extensions.Primitives.StringValues?"
+                        ? "default"
+                        : _stringCollection(prop, "global::Microsoft.Extensions.Primitives.StringValues.Empty"));
             }
             else if (prop.IsNullableTarget)
             {
@@ -639,7 +642,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         var array = "global::System.Linq.Enumerable.ToArray(global::System.Linq.Enumerable.OfType<string>(" + values + "))";
         return property.TypeFullName switch
         {
-            "global::Microsoft.Extensions.Primitives.StringValues" => values,
+            "global::Microsoft.Extensions.Primitives.StringValues"
+                or "global::Microsoft.Extensions.Primitives.StringValues?" => values,
             "global::System.Collections.Generic.List<string>"
                 or "global::System.Collections.Generic.IList<string>"
                 or "global::System.Collections.Generic.ICollection<string>"

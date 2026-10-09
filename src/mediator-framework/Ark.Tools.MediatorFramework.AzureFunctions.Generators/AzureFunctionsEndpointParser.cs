@@ -362,7 +362,8 @@ internal static class AzureFunctionsEndpointParser
                     isETag,
                     isAttachment,
                     isAttachmentCollection,
-                    HttpStringBinding.IsStringCollection(p.Type),
+                    // A nullable StringValues receives every value too, as Minimal API binds it natively.
+                    HttpStringBinding.IsStringCollection(_withoutNullable(p.Type)),
                     isRoute ? !HttpStringBinding.CanBindFromRoute(p.Type) : !HttpStringBinding.CanBindExplicitly(p.Type),
                     element is null ? null : element.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     _conversionKind(conversionType),

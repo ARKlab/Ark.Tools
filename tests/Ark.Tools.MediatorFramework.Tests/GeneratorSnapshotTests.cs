@@ -1202,6 +1202,7 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public DayOfWeek[] Days { get; init; } = [];
                 [HttpQuery] public RefCode Ref { get; init; }
                 [HttpQuery] public RefCode? MaybeRef { get; init; }
+                [HttpQuery] public Microsoft.Extensions.Primitives.StringValues? Values { get; init; }
                 [HttpQuery] public Guid? Owner { get; init; }
                 [HttpQuery] public DateTime From { get; init; }
                 [HttpQuery] public DateTimeOffset At { get; init; }
@@ -1257,6 +1258,10 @@ public sealed class GeneratorSnapshotTests
         // value binds null.
         result.Generated.Should().Contain("return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"Required query value 'Skip' was not provided.\");");
         result.Generated.Should().Contain("        else" + Environment.NewLine + "            body = body with { Owner = default };");
+        // A nullable StringValues receives every value, and binds null when absent, as Minimal API binds it natively.
+        result.Generated.Should().Contain("body = body with { Values = _qs_Values };");
+        result.Generated.Should().Contain("        else" + Environment.NewLine + "            body = body with { Values = default };");
+        result.Generated.Should().NotContain("TryConvertSafe<global::Microsoft.Extensions.Primitives.StringValues>");
         // As in Minimal API, an empty Guid? is parsed and fails, while an empty value of a nullable type bound through its
         // type converter sets the property to null, which also clears a value the body set.
         result.Generated.Should().Contain("if (_raw_Owner is null || !global::System.Guid.TryParse(_raw_Owner, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Owner))");
