@@ -58,15 +58,15 @@ public static class ArkTypeConverter
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This method is trim-safe on .NET 9 and later, where it calls
-    /// <c>TypeDescriptor.GetConverterFromRegisteredType</c> which only considers explicitly
-    /// registered converters and does not perform reflection-based discovery.
+    /// This method is trim-safe: it calls <c>TypeDescriptor.GetConverterFromRegisteredType</c>, which only
+    /// considers primitive types, enums and types registered with <c>TypeDescriptor.RegisterType</c>, and does
+    /// not perform reflection-based discovery.
     /// </para>
     /// <para>
-    /// On .NET 8 it falls back to <c>TypeDescriptor.GetConverter</c> and suppresses the trim
-    /// warning; callers must ensure that all required <see cref="TypeConverter"/> registrations are
-    /// in place at application start (e.g. via <c>TypeDescriptor.AddAttributes</c> or NodaTime's
-    /// <c>TypeDescriptor.RegisterType</c> calls).
+    /// Register a type at application start, before the type is first looked up through <c>TypeDescriptor</c> or its
+    /// converter is added with <c>TypeDescriptor.AddAttributes</c>: a later registration is ignored. For NodaTime types call
+    /// <c>Ark.Tools.Nodatime.NodaTimeConverter.Register()</c>. Converting to an unregistered type throws
+    /// <see cref="InvalidOperationException"/>.
     /// </para>
     /// </remarks>
     /// <typeparam name="T">The target type, including <c>Nullable&lt;U&gt;</c> variants.</typeparam>
@@ -157,7 +157,19 @@ public static class ArkTypeConverter
                 };
             }
 
-            var converter = TypeDescriptor.GetConverterFromRegisteredType(underlying);
+            TypeConverter converter;
+            try
+            {
+                converter = TypeDescriptor.GetConverterFromRegisteredType(underlying);
+            }
+            catch (InvalidOperationException exception)
+            {
+                // Report the missing registration on every conversion instead of failing the type initializer.
+                var message = string.Create(CultureInfo.InvariantCulture,
+                    $"No type converter is registered for '{underlying}'. Call TypeDescriptor.RegisterType<T>() for it at startup, before the type is first looked up through TypeDescriptor or its converter is added with TypeDescriptor.AddAttributes; for NodaTime types call Ark.Tools.Nodatime.NodaTimeConverter.Register().");
+                return _ => throw new InvalidOperationException(message, exception);
+            }
+
             return input =>
             {
                 var obj = converter.ConvertFromString(null, CultureInfo.InvariantCulture, input);

@@ -24,6 +24,16 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [TestClass]
 public sealed class MinimalApiHostingExtensionsTests
 {
+    // ArkTypeConverterValue resolves converters trim-safely, so types bound through their declared converter must be
+    // registered, as an application registers them at startup.
+    static MinimalApiHostingExtensionsTests()
+    {
+        TypeDescriptor.RegisterType<UnsupportedValue>();
+        TypeDescriptor.RegisterType<ProviderValue>();
+        TypeDescriptor.RegisterType<FailingValue>();
+        TypeDescriptor.RegisterType<ConcurrentValue>();
+    }
+
     [TestMethod]
     public void OpenApiConventionsReturnTheConfiguredOptions()
     {
@@ -51,6 +61,15 @@ public sealed class MinimalApiHostingExtensionsTests
     public void TypeConverterWrapperRejectsNullInput()
     {
         ArkTypeConverterValue<int>.TryParse(null, null, out _).Should().BeFalse();
+    }
+
+    [TestMethod]
+    public void TypeConverterWrapperReportsUnregisteredType()
+    {
+        var parse = static () => ArkTypeConverterValue<UnregisteredValue>.TryParse("42", null, out _);
+
+        parse.Should().Throw<InvalidOperationException>()
+            .WithMessage("*No type converter is registered for*UnregisteredValue*TypeDescriptor.RegisterType*");
     }
 
     [TestMethod]
@@ -121,6 +140,14 @@ public sealed class MinimalApiHostingExtensionsTests
             app.Lifetime.ApplicationStopping);
         missingResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         boundDate.Should().Be(new NodaTime.LocalDate(2026, 7, 24));
+        boundValue.Should().BeNull();
+
+        // An empty value of a nullable type binds null.
+        boundValue = NodaTime.Instant.FromUtc(2000, 1, 1, 0, 0);
+        using var emptyResponse = await client.GetAsync(
+            new Uri("http://localhost/instant/2026-07-24?value="),
+            app.Lifetime.ApplicationStopping);
+        emptyResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         boundValue.Should().BeNull();
 
         using var validResponse = await client.GetAsync(
@@ -438,6 +465,9 @@ public sealed class MinimalApiHostingExtensionsTests
         public NodaTime.Period Period { get; init; } = NodaTime.Period.Zero;
         public NodaTime.LocalDate? NullableLocalDate { get; init; }
     }
+
+    [TypeConverter(typeof(UnsupportedValueConverter))]
+    private sealed record UnregisteredValue;
 
     [TypeConverter(typeof(UnsupportedValueConverter))]
     private sealed record UnsupportedValue;
