@@ -25,7 +25,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     private readonly IAuthenticationApiClient _inner;
     [Secret]
     private readonly MemoryCache _cache = new(new MemoryCacheOptions());
-    private readonly ConcurrentDictionary<string, Task<AccessTokenResponse>> _pendingTasks = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Lazy<Task<AccessTokenResponse>>> _pendingTasks = new(StringComparer.Ordinal);
 
 
     public AuthenticationApiClientCachingDecorator(IAuthenticationApiClient inner)
@@ -147,13 +147,14 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
     {
         var key = getKey(request);
 
-        var task = _pendingTasks.GetOrAdd(
+        // Lazy: GetOrAdd may run the factory more than once on concurrent misses, but only the stored Lazy is ever started.
+        var pending = _pendingTasks.GetOrAdd(
             key,
-            static async (k, state) => await state.Self._getOrCreateAsync(
+            static (k, state) => new Lazy<Task<AccessTokenResponse>>(async () => await state.Self._getOrCreateAsync(
                 k,
                 ct => state.GetTokenAsync(state.Request, ct),
                 _expiresIn,
-                state.CancellationToken).ConfigureAwait(false),
+                state.CancellationToken).ConfigureAwait(false)),
             (
                 Self: this,
                 Request: request,
@@ -163,11 +164,11 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
         try
         {
-            return await task.ConfigureAwait(false);
+            return await pending.Value.ConfigureAwait(false);
         }
         finally
         {
-            _pendingTasks.TryRemove(key, out var _);
+            _pendingTasks.TryRemove(KeyValuePair.Create(key, pending));
         }
     }
 

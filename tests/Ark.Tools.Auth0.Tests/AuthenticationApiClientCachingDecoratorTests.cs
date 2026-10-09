@@ -58,7 +58,7 @@ public class AuthenticationApiClientCachingDecoratorTests
             .Returns(gate.Task);
         using var sut = new AuthenticationApiClientCachingDecorator(inner.Object);
 
-        var calls = Enumerable.Range(0, 5).Select(_ => sut.GetTokenAsync(_request)).ToList();
+        var calls = Enumerable.Range(0, 20).Select(_ => Task.Run(() => sut.GetTokenAsync(_request))).ToList();
         gate.SetResult(_tokenResponse(TimeSpan.FromHours(1)));
         var results = await Task.WhenAll(calls);
 
