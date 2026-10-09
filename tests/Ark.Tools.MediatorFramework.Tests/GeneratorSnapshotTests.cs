@@ -3576,6 +3576,39 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorRejectsRouteAndQueryPropertiesThatCannotBeSet()
+    {
+        // A route or query property without a public setter, init accessor or constructor parameter cannot receive
+        // its value: the generated object initializer would fail to compile with CS0200.
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed record GetBook(int Id) : IQuery<string>
+            {
+                [HttpQuery] public int Page { get; }
+                [HttpQuery] public int Size { get; init; }
+            }
+            [HttpEndpoint("GET", "/shelves")]
+            public sealed record ListShelves : IQuery<string>
+            {
+                [HttpQuery] public int Page => 1;
+            }
+            """;
+        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
+        diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
+            .Should().BeEquivalentTo("Page", "Page");
+        diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        diagnostics[0].GetMessage(CultureInfo.InvariantCulture)
+            .Should().Be("HTTP endpoint 'GetBook' binds property 'Page' from the route or query string, but the property has no public setter or init accessor and is not a constructor parameter");
+        result.Generated.Should().NotContain("global::GetBook");
+        result.Generated.Should().NotContain("global::ListShelves");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorRejectsUnconvertibleQueryPropertiesOfAsParametersCommands()
     {
         // A GET or DELETE command binds with [AsParameters], where ASP.NET infers a body for a [HttpQuery] property

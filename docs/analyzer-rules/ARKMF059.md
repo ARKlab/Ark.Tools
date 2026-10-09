@@ -5,12 +5,16 @@
 - **Diagnostic messages:**
   - `HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]`
   - `HTTP endpoint '{0}' binds property '{1}' from the route or query string, but its type '{2}' cannot be converted from a string`
+  - `HTTP endpoint '{0}' binds property '{1}' from the route or query string, but the property has no public setter or init accessor and is not a constructor parameter`
 
 ## What it checks
 
 The rule reports a contract property that the generated endpoint cannot bind from
 the request. The second message is used for a route or `[HttpQuery]` property,
-the first for any other property.
+the first for any other property. The third message is used by the Minimal API
+generator for a route or `[HttpQuery]` property that the generated endpoint
+cannot assign: it has no public setter or `init` accessor and is not a
+constructor parameter.
 
 A `GET` or `DELETE` endpoint, and a `HEAD` Azure Functions function, never
 reads the request body, including when `AcceptsMessagePack = true` (MessagePack

@@ -601,11 +601,17 @@ namespace Ark.Tools.MediatorFramework.Generators
                 var needsBody = noBody && (bodyShaped || droppedOrInferredBody);
                 var notConvertible = (routes.Contains(property.Name) && !HttpStringBinding.CanBindFromRoute(property.Type))
                     || (!asParameters && routeOrQuery.Contains(property.Name) && !HttpStringBinding.CanBindExplicitly(property.Type));
-                if (!needsBody && !notConvertible)
+                // The generated object initializer could not assign it.
+                var notSettable = routeOrQuery.Contains(property.Name)
+                    && property.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
+                    && !constructorBound.Contains(property.Name);
+                if (!needsBody && !notConvertible && !notSettable)
                     continue;
 
                 var location = property.Locations.FirstOrDefault(static location => location.IsInSource) ?? GetLocation(http);
-                diagnostics.Add(routeOrQuery.Contains(property.Name)
+                diagnostics.Add(notSettable
+                    ? new DiagnosticInfo(DiagnosticDescriptors.PropertyNotSettable, type.Name, location, property.Name)
+                    : routeOrQuery.Contains(property.Name)
                     ? new DiagnosticInfo(
                         DiagnosticDescriptors.PropertyNotConvertibleFromString,
                         type.Name,

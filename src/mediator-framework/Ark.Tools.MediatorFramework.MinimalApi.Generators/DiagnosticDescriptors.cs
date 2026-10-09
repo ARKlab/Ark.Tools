@@ -38,4 +38,8 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor PropertyNotConvertibleFromString = new(
         "ARKMF059", "Property cannot be bound from the request", "HTTP endpoint '{0}' binds property '{1}' from the route or query string, but its type '{2}' cannot be converted from a string",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
+
+    public static readonly DiagnosticDescriptor PropertyNotSettable = new(
+        "ARKMF059", "Property cannot be bound from the request", "HTTP endpoint '{0}' binds property '{1}' from the route or query string, but the property has no public setter or init accessor and is not a constructor parameter",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
 }

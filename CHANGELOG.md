@@ -38,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- The Minimal API generator reports `ARKMF059` for a route or `[HttpQuery]` property that has no public setter or `init` accessor and is not a constructor parameter, instead of generating code that fails to compile with `CS0200`.
 - `NodaTimeConverter.Register()` (`Ark.Tools.Nodatime`) makes the NodaTime converters visible to trim-safe `TypeDescriptor.GetConverterFromRegisteredType` lookups, even when a NodaTime type was looked up through `TypeDescriptor` before: HTTP route and query binding, the Dapper `OffsetDateTime` handler and JSON dictionary keys. These lookups used to fail with `InvalidOperationException`.
 - The API-surface snapshot records the fields of contracts marked only with `[Message]` or `[Event]`, so renaming or removing a field of such a message fails the API-surface gate again. To accept the new entries, build with `-p:EmitCompilerGeneratedFiles=true`, review the snapshot in the generated `ArkApiSurface.g.cs` under `obj/`, and copy it over `ArkApiSurface.txt`. `ArkApiSurface.current.txt` is not refreshed while ARKAPI002 fails the build.
 - Azure Functions Service Bus hosts read an optional `<connection key>:administrationConnectionString` setting for resource provisioning, so trigger apps can provision against the local Service Bus emulator, which serves administration on a separate port.
