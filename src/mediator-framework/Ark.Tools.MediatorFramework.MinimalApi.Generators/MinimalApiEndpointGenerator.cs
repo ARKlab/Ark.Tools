@@ -585,6 +585,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             var routeOrQuery = new HashSet<string>(
                 properties.Where(property => property.IsRoute || property.IsQuery).Select(property => property.Name),
                 StringComparer.Ordinal);
+            var routes = new HashSet<string>(
+                properties.Where(property => property.IsRoute).Select(property => property.Name),
+                StringComparer.Ordinal);
             foreach (var property in AllProperties(type)
                 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                 .Where(property => !HasAttribute(property, serverSetAttr)))
@@ -596,7 +599,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                 var droppedOrInferredBody = unbound.Contains(property.Name)
                     && (!asParameters || !HttpStringBinding.IsStringBindable(property.Type));
                 var needsBody = noBody && (bodyShaped || droppedOrInferredBody);
-                var notConvertible = !asParameters && routeOrQuery.Contains(property.Name) && !CanBindExplicitly(property.Type);
+                // ASP.NET binds arrays from the query string or headers only, never from a route segment.
+                var routeCollection = routes.Contains(property.Name)
+                    && (HttpStringBinding.IsCollection(property.Type) || HttpStringBinding.IsStringCollection(property.Type));
+                var notConvertible = routeCollection
+                    || (!asParameters && routeOrQuery.Contains(property.Name) && !CanBindExplicitly(property.Type));
                 if (!needsBody && !notConvertible)
                     continue;
 

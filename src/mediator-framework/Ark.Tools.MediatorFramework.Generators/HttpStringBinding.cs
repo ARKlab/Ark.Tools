@@ -137,7 +137,7 @@ internal static class HttpStringBinding
     {
         if (type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable)
             type = nullable.TypeArguments[0];
-        if (type.SpecialType != SpecialType.None || type.TypeKind == TypeKind.Enum)
+        if (type.SpecialType != SpecialType.None || type.TypeKind == TypeKind.Enum || HasTypeConverterAttribute(type))
             return false;
 
         if (includeCollections)

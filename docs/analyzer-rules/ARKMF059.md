@@ -80,6 +80,10 @@ The rule reports the property when its type is:
   `[TypeConverter]` attribute, or a complex object. No `TypeConverter` converts a
   string to them, so every request that carries the value fails with `400`.
 
+A route property is also reported when its type is an array or a collection,
+string collections included: a route segment is a single value, and ASP.NET
+Core binds arrays only from the query string or headers.
+
 A single value whose type has neither `TryParse` nor a `TypeConverter` registered
 at runtime also fails every request that carries it. The generator cannot see
 runtime registrations, so it does not report this case.

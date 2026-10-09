@@ -3367,6 +3367,16 @@ public sealed class GeneratorSnapshotTests
                 [HttpQuery] public Guid[] Copies { get; init; } = [];
                 public List<int> Pages { get; init; } = [];
             }
+            [HttpEndpoint("GET", "/shelves/{shelfIds}/{labels}")]
+            public sealed record ListShelves : IQuery<string>
+            {
+                [HttpRoute] public int[] ShelfIds { get; init; } = [];
+                [HttpRoute] public string[] Labels { get; init; } = [];
+                [HttpQuery] public FilterSet? Filters { get; init; }
+            }
+            public sealed class FilterSetConverter : System.ComponentModel.TypeConverter { }
+            [System.ComponentModel.TypeConverter(typeof(FilterSetConverter))]
+            public sealed class FilterSet : List<Filter> { }
             [HttpEndpoint("PUT", "/books/{id}/shelves")]
             public sealed record ShelveBook : ICommand<ShelveBook>
             {
@@ -3383,7 +3393,7 @@ public sealed class GeneratorSnapshotTests
 
         var diagnostics = result.Diagnostics.Where(static diagnostic => diagnostic.Id == "ARKMF059").ToArray();
         diagnostics.Select(static diagnostic => source.Substring(diagnostic.Location.SourceSpan.Start, diagnostic.Location.SourceSpan.Length))
-            .Should().BeEquivalentTo("Codes", "Ids", "Labels", "Days", "Filter", "Pending", "Keys", "Stack", "Related", "Target");
+            .Should().BeEquivalentTo("Codes", "Ids", "Labels", "Days", "Filter", "Pending", "Keys", "Stack", "ShelfIds", "Labels", "Related", "Target");
         diagnostics.Should().OnlyContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         diagnostics.Single(static diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("'Ids'", StringComparison.Ordinal))
             .GetMessage(CultureInfo.InvariantCulture)
