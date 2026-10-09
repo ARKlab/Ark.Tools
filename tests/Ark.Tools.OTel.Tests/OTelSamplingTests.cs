@@ -648,7 +648,7 @@ public class ArkFailurePromotionProcessorTests
     // ── failure promotion: HTTP 5xx ────────────────────────────────────────
 
     /// <summary>
-    /// A rate-limited span with <c>http.response.status_code</c> >= 400 must be promoted.
+    /// A rate-limited span with <c>http.response.status_code</c> >= 500 must be promoted.
     /// </summary>
     [TestMethod]
     public void FailurePromotion_Http500Tag_SpanIsPromotedAndExported()
@@ -664,6 +664,103 @@ public class ArkFailurePromotionProcessorTests
 
         pipeline.Exported.Should().ContainSingle(
             "a span with HTTP 500 must be promoted");
+    }
+
+    // ── failure promotion: HTTP 4xx follows the span status ───────────────
+
+    /// <summary>
+    /// A rate-limited span with an HTTP 4xx code and no error status is an expected outcome
+    /// and must not be promoted.
+    /// </summary>
+    [TestMethod]
+    public void FailurePromotion_Http404WithoutErrorStatus_IsNotPromoted()
+    {
+        var registry = new FailedTraceRegistry();
+        using var pipeline = _nearZeroPipeline(
+            nameof(FailurePromotion_Http404WithoutErrorStatus_IsNotPromoted), registry);
+
+        using var act = pipeline.StartRoot("GET /api/missing");
+        act.Should().NotBeNull();
+        act!.SetTag("http.response.status_code", 404);
+        act.Stop();
+
+        pipeline.Exported.Should().BeEmpty("an HTTP 4xx span without error status is not a failure");
+        registry.IsFailed(act.TraceId).Should().BeFalse();
+    }
+
+    /// <summary>
+    /// A client span with HTTP 404 whose error status is left by the instrumentation must be promoted.
+    /// </summary>
+    [TestMethod]
+    public void FailurePromotion_ClientHttp404WithErrorStatus_IsPromoted()
+    {
+        var registry = new FailedTraceRegistry();
+        using var pipeline = _nearZeroPipeline(
+            nameof(FailurePromotion_ClientHttp404WithErrorStatus_IsPromoted), registry);
+
+        using var act = pipeline.StartRoot("GET blob", ActivityKind.Client);
+        act.Should().NotBeNull();
+        act!.SetTag("http.response.status_code", 404);
+        act.SetStatus(ActivityStatusCode.Error);
+        act.Stop();
+
+        pipeline.Exported.Should().ContainSingle("the instrumentation marked the 404 dependency as an error");
+    }
+
+    /// <summary>
+    /// A client span with HTTP 404 whose error status is cleared by an application processor
+    /// that runs before failure promotion must not be promoted.
+    /// </summary>
+    [TestMethod]
+    public void FailurePromotion_ClientHttp404WithClearedStatus_IsNotPromoted()
+    {
+        var registry = new FailedTraceRegistry();
+        using var pipeline = new TestPipeline(
+            nameof(FailurePromotion_ClientHttp404WithClearedStatus_IsNotPromoted),
+            new ArkAdaptiveSampler(new ArkAdaptiveSamplerOptions
+            {
+                TracesPerSecond = 0.0001,
+                EnablePerOperationBucketing = false,
+            }, registry),
+            new ClearStatusProcessor(),
+            new ArkFailurePromotionProcessor(registry));
+
+        using var act = pipeline.StartRoot("GET blob", ActivityKind.Client);
+        act.Should().NotBeNull();
+        act!.SetTag("http.response.status_code", 404);
+        act.SetStatus(ActivityStatusCode.Error);
+        act.Stop();
+
+        pipeline.Exported.Should().BeEmpty("the application marked the 404 dependency as expected");
+        registry.IsFailed(act.TraceId).Should().BeFalse();
+    }
+
+    /// <summary>
+    /// An explicit <see cref="ActivityStatusCode.Ok"/> status is final and is not overridden by a 5xx code.
+    /// </summary>
+    [TestMethod]
+    public void FailurePromotion_Http500WithOkStatus_IsNotPromoted()
+    {
+        var registry = new FailedTraceRegistry();
+        using var pipeline = _nearZeroPipeline(
+            nameof(FailurePromotion_Http500WithOkStatus_IsNotPromoted), registry);
+
+        using var act = pipeline.StartRoot("GET /api/expected");
+        act.Should().NotBeNull();
+        act!.SetTag("http.response.status_code", 503);
+        act.SetStatus(ActivityStatusCode.Ok);
+        act.Stop();
+
+        pipeline.Exported.Should().BeEmpty("an explicit Ok status opts the span out of status-code promotion");
+    }
+
+    private sealed class ClearStatusProcessor : BaseProcessor<Activity>
+    {
+        public override void OnEnd(Activity data)
+        {
+            if (data.Kind == ActivityKind.Client && Equals(data.GetTagItem("http.response.status_code"), 404))
+                data.SetStatus(ActivityStatusCode.Unset);
+        }
     }
 
     // ── failure promotion: parent chain walk ──────────────────────────────
