@@ -36,7 +36,7 @@ public sealed class DeclarationAnalyzerTests
         """;
     private static readonly ImmutableArray<AdditionalText> _defaultLexicon = ImmutableArray.Create<AdditionalText>(
         new TextFile("ComplianceLexicon.Ark.txt",
-            File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "ComplianceLexicon.Ark.txt"))));
+            File.ReadAllText(Path.Join(AppContext.BaseDirectory, "ComplianceLexicon.Ark.txt"))));
     private static readonly ImmutableArray<MetadataReference> _platformReferences =
         ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
             .Select(static path => (MetadataReference)MetadataReference.CreateFromFile(path)).ToImmutableArray();

@@ -453,7 +453,7 @@ public sealed class ComplianceSurfaceTests
     public async Task Surface_TargetsRejectDriftAndAcceptReviewedBaseline()
     {
         var repository = new DirectoryInfo(AppContext.BaseDirectory);
-        while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "Ark.Tools.slnx")))
+        while (repository is not null && !File.Exists(Path.Join(repository.FullName, "Ark.Tools.slnx")))
             repository = repository.Parent;
         repository.Should().NotBeNull();
         var relativeSegments = new[]
@@ -464,13 +464,13 @@ public sealed class ComplianceSurfaceTests
         if (relativeSegments.Any(Path.IsPathRooted))
             throw new InvalidOperationException("Compliance target path segments must be relative.");
 
-        var targets = Path.Combine([repository!.FullName, .. relativeSegments]);
-        var directory = Path.Combine(AppContext.BaseDirectory, "SurfaceTargetTests", Guid.NewGuid().ToString("N"));
+        var targets = Path.Join([repository!.FullName, .. relativeSegments]);
+        var directory = Path.Join(AppContext.BaseDirectory, "SurfaceTargetTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         try
         {
-            var project = Path.Combine(directory, "SurfaceFixture.csproj");
-            var declaration = Path.Combine(directory, "Customer.cs");
+            var project = Path.Join(directory, "SurfaceFixture.csproj");
+            var declaration = Path.Join(directory, "Customer.cs");
             await File.WriteAllTextAsync(project, $$"""
                 <Project>
                   <PropertyGroup>
@@ -506,10 +506,10 @@ public sealed class ComplianceSurfaceTests
             missing.ExitCode.Should().NotBe(0);
             missing.Output.Should().Contain("ARKPII020");
 
-            var net10 = await File.ReadAllBytesAsync(Path.Combine(directory, "obj", "Debug", "net10.0", "generated",
+            var net10 = await File.ReadAllBytesAsync(Path.Join(directory, "obj", "Debug", "net10.0", "generated",
                 "Ark.Tools.Compliance.Generators", "Ark.Tools.Compliance.Generators.ComplianceSurfaceGenerator",
                 "ArkComplianceSurface.g.cs")).ConfigureAwait(false);
-            await File.WriteAllBytesAsync(Path.Combine(directory, "ArkComplianceSurface.txt"), net10).ConfigureAwait(false);
+            await File.WriteAllBytesAsync(Path.Join(directory, "ArkComplianceSurface.txt"), net10).ConfigureAwait(false);
             var accepted = await _buildFixtureAsync(project).ConfigureAwait(false);
             accepted.ExitCode.Should().Be(0, accepted.Output);
 
