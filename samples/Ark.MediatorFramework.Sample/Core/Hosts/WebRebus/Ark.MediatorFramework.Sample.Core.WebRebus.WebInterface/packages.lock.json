@@ -222,36 +222,6 @@
         "resolved": "12.1.1",
         "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
       },
-      "Grpc.AspNetCore.Server": {
-        "type": "Transitive",
-        "resolved": "2.80.0",
-        "contentHash": "lbK7z1sZP5imPdQ035f/CZ61iIaBWouY6A580E9JNo7vzXYX/Qo+GQtSjOzhP9VFbxk7mtLoMhn/v1fT2U7kTw==",
-        "dependencies": {
-          "Grpc.Net.Common": "2.80.0"
-        }
-      },
-      "Grpc.Core.Api": {
-        "type": "Transitive",
-        "resolved": "2.84.0",
-        "contentHash": "p2SOMl6q/GZ4/5MLkgboC/z55g4zKUEruRn/g46QgppjQBVnsLZVBU/9VO7n60ll38G3Eo8Zu9b7x+W01GKFVg=="
-      },
-      "Grpc.Net.Common": {
-        "type": "Transitive",
-        "resolved": "2.80.0",
-        "contentHash": "E2ERsx+9IXlry4yjBl8btx0XMIKzymGNSvX5jmBS/uSwYyYDoKIDcIREyLqFLvd8vcJdcoRlycpvn9YRXutFpQ==",
-        "dependencies": {
-          "Grpc.Core.Api": "2.80.0"
-        }
-      },
-      "Grpc.StatusProto": {
-        "type": "Transitive",
-        "resolved": "2.84.0",
-        "contentHash": "Jj8mIcV4KGLmAK0WIiiSOuPZAZkRgi/J+hnM9qJ+BdjxReB9vfzfponLP1mhDpzAuHwGfCO4dKsiiWafEY5PvQ==",
-        "dependencies": {
-          "Google.Api.CommonProtos": "2.17.0",
-          "Grpc.Core.Api": "2.84.0"
-        }
-      },
       "MailKit": {
         "type": "Transitive",
         "resolved": "4.17.0",
@@ -665,24 +635,6 @@
         "resolved": "3.4.30",
         "contentHash": "CZf8U6eON9OBtcPyOiXJ6Oq3Opi/lWtEiireyLCy43iof1A2oA0GEOrEHZISzmQ46s61iOC06Sa4Cs+D41t1DA=="
       },
-      "protobuf-net.Grpc": {
-        "type": "Transitive",
-        "resolved": "1.3.14",
-        "contentHash": "LZXT38nUfQDp5C7V4uVeb7cg7NsAoELKEMklcD9VF0i1MMCY1WrWnrfT7G0hhlmnIGIkBf9lsyoOeIJiQ4wO4Q==",
-        "dependencies": {
-          "Grpc.Core.Api": "2.80.0",
-          "protobuf-net": "2.4.8"
-        }
-      },
-      "protobuf-net.Grpc.AspNetCore": {
-        "type": "Transitive",
-        "resolved": "1.3.14",
-        "contentHash": "vuvVZseBmC5OlCaz++4IG6RxnIEwJTJjpYqOjllauyeGQdQdFdjjL0c+Q7huKMwtM2PVH3qWcDVLZ4Eb4WL7/Q==",
-        "dependencies": {
-          "Grpc.AspNetCore.Server": "2.80.0",
-          "protobuf-net.Grpc": "1.3.14"
-        }
-      },
       "Rebus": {
         "type": "Transitive",
         "resolved": "8.9.5",
@@ -830,22 +782,16 @@
         "resolved": "9.0.18",
         "contentHash": "1/iz9Eex1TBMYdAk+m3igaMvL+nk+rY1EqL6u93an/j1ghxmB24vGOKXkVFy3NSPA39s1H/+SNoK257tHoXoLA=="
       },
-      "System.ServiceModel.Primitives": {
-        "type": "Transitive",
-        "resolved": "10.0.652802",
-        "contentHash": "ULfGNl75BNXkpF42wNV2CDXJ64dUZZEa8xO2mBsc4tqbW9QjruxjEB6bAr4Z/T1rNU+leOztIjCJQYsBGFWYlw=="
-      },
       "ark.mediatorframework.sample.core.api": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Solid.Authorization": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
+          "MessagePack": "[3.1.11, )",
           "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
         }
       },
@@ -855,7 +801,6 @@
           "Ark.MediatorFramework.Sample.Core.API": "[6.6.6, )",
           "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
@@ -994,21 +939,6 @@
           "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "protobuf-net": "[3.4.30, )"
-        }
-      },
-      "ark.tools.mediatorframework.grpc": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Authorization": "[1.0.0, )",
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.MediatorFramework": "[1.0.0, )",
-          "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
-          "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "FluentValidation": "[12.1.1, )",
-          "Google.Api.CommonProtos": "[2.17.0, )",
-          "Grpc.StatusProto": "[2.84.0, )",
-          "System.ServiceModel.Primitives": "[10.0.652802, )",
-          "protobuf-net.Grpc.AspNetCore": "[1.3.14, )"
         }
       },
       "ark.tools.mediatorframework.messaging": {

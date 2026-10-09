@@ -15,8 +15,9 @@ design is in
 ## What the sample proves
 
 - A contract and handler stay independent of HTTP, gRPC, Azure Functions, and
-  Rebus: the API and Application projects reference no host package, and the
-  same application tests run for every variant.
+  Rebus: the API and Application projects reference no host or ASP.NET Core
+  package (their contract attributes come from `Ark.Tools.MediatorFramework`),
+  and the same application tests run for every variant.
 - Public contracts live in the API assembly; application-only messages do not
   leak into the public API.
 - The same handler pipeline applies validation, authorization, auditing, and

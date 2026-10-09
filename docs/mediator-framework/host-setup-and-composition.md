@@ -108,6 +108,13 @@ owned by a separate native host.
 | Functions host | Isolated-worker HTTP boundary and generated messaging triggers, one app per participant | Rebus or outbox polling |
 | Native outbox processor | Existing SQL outbox polling and raw-envelope dispatch | Receive queue, subscriptions, application handlers |
 
+The API and Application assemblies take their contract attributes, such as
+`[HttpEndpoint]`, `[GrpcMethod]`, `[GrpcService]` and `[McpTool]`, from
+`Ark.Tools.MediatorFramework`, plus serializer packages such as MessagePack and
+protobuf-net. Only hosts reference transport packages such as
+`Ark.Tools.MediatorFramework.MinimalApi` and `Ark.Tools.MediatorFramework.Grpc`,
+which bring in ASP.NET Core.
+
 ## Register the application graph
 
 The sample takes its persistence from `ApplicationOptions` (a SQL connection

@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Breaking:** under `CreateIfMissing`, a fluent messaging receiver on a transport without built-in resource management (Service Bus) must call `UseResourceManagement` or set the network to `External`; otherwise composition fails.
 - **Breaking:** the `MessagingDispatch` delegate, the type of the `dispatch` parameter of the public `MessagingDispatcher` constructor, and the `IMessagingPipelineProcessor.ProcessIncomingAsync` terminal also receive the scoped `IRequestProcessor`, so messaging hosts must register `IRequestProcessor` (`AddArkSolidProcessors` does); a receiving host without it fails at startup.
 - **Breaking:** `MessagingParticipantDescriptor` gained constructor parameters, so code compiled against the previous constructor must be rebuilt.
+- **Breaking:** `[GrpcMethod]` and `[GrpcService]` moved from `Ark.Tools.MediatorFramework.Grpc` to `Ark.Tools.MediatorFramework`, with the namespace unchanged, so a contracts project no longer needs an ASP.NET Core package to declare gRPC exposure. Projects that reference the base package keep compiling; binaries built against the old assembly must be rebuilt.
 
 ### Fixed
 
