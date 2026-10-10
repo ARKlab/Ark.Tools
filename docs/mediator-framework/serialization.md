@@ -305,7 +305,11 @@ Ark.Tools assumes the members Vogen generates by default (`Value`, `From`,
 - **JSON**: zero setup. `ConfigureArkDefaults()` registers
   `ValueObjectJsonConverterFactory`, which applies Vogen's converter even
   through a source-generated `JsonSerializerContext`, which cannot see it.
-  This covers HTTP bodies, native messaging, Rebus and Azure Functions.
+  This covers HTTP bodies, native messaging, Rebus and Azure Functions. A
+  context used on its own, such as its `Default` instance, needs the factory in
+  `[JsonSourceGenerationOptions(Converters = ...)]`, plus
+  `[JsonSerializable(typeof(int))]` (or `long`, `double`) for numeric value
+  objects, because Vogen's converter reads the number through the options.
 - **Routes and query strings**: zero setup. Minimal API and Azure Functions
   bind the value through Vogen's `TryParse`.
 - **OpenAPI**: add `AddArkValueObjectSchemas()`; see [OpenAPI](openapi.md).
@@ -319,8 +323,43 @@ Ark.Tools assumes the members Vogen generates by default (`Value`, `From`,
   project to reference Dapper.
 - **`ToDataTableArk()`**: zero setup. A value object member becomes a column
   of its primitive type, ready for table-valued parameters and `SqlBulkCopy`.
-- **MessagePack**: not handled; add Vogen's `Conversions.MessagePack` to a
-  value object used in a `[MessagePackObject]`.
+- **MessagePack**: list the value objects used in a `[MessagePackObject]` on a
+  marker class with Vogen's `[MessagePack<T>]` attributes and compose its
+  generated `MessagePackFormatters` into the resolver; see
+  [`SampleMessagePackFormatters.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/SampleMessagePackFormatters.cs).
+
+Value objects carry no validation in the sample: Vogen's `Validate` would throw
+while the request is deserialized, before the validation pipeline can report
+which field is wrong. Validate the wrapped value with FluentValidation instead,
+keeping the property name in the error:
+
+```csharp
+RuleFor(static book => book.Title.IsInitialized() ? book.Title.Value : null)
+    .NotEmpty()
+    .MaximumLength(200)
+    .OverridePropertyName(nameof(Book.V1.Create.Title));
+```
+Source: [`BookValidators.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Handlers/Validators/BookValidators.cs)
+
+### Personal data
+
+Wrap personal data in an Ark.Tools.Compliance
+[sensitive value object](../compliance/sensitive-value-objects.md), such as
+`PersonName` or your own `[SensitiveValueObject<string>]`, rather than in a
+Vogen one, so that logs and `ToString()` stay redacted. The Mediator Framework
+treats it like a value object over `string`:
+
+- **JSON**: zero setup, including through a source-generated context in the
+  same assembly, with the same `ValueObjectJsonConverterFactory`.
+- **Routes and query strings**: bound through its generated `TypeConverter`.
+- **OpenAPI**: add `AddArkComplianceSchemas()` and
+  `AddSensitiveValueSchema<T>()` for your own types.
+- **gRPC**: zero setup. The exported `.proto` declares a `string`, and
+  `MapArkGrpcServicesFromAssembly` registers it with protobuf-net through
+  `SensitiveValueSerialization`. Do not also register it with
+  `SensitiveValueProtobuf`, whose surrogate writes a nested message instead.
+- **Dapper** and **MessagePack**: register it with the
+  `Ark.Tools.Compliance.Dapper` and `Ark.Tools.Compliance.MessagePack` adapters.
 
 In a Native AOT app, `ConfigureArkDefaults()` is unavailable, so add
 `ValueObjectJsonConverterFactory` (or Vogen's generated `VogenTypesFactory`) to

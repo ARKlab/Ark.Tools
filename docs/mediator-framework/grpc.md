@@ -41,7 +41,9 @@ otherwise:
 Source: [`BookId.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookId.cs)
 
 A [Vogen value object](serialization.md#value-objects-vogen) member is exported
-as the primitive it wraps and needs no registration.
+as the primitive it wraps and needs no registration. A compliance
+[sensitive value object](serialization.md#personal-data), such as `PersonName`,
+is exported as a `string` and registered the same way.
 
 `[GrpcMethod]` and `[GrpcService]` ship in `Ark.Tools.MediatorFramework`, so the
 contracts project references that package and `protobuf-net` only. Reference
