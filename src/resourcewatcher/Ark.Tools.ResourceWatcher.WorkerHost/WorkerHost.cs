@@ -79,7 +79,7 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter, TExtensions> : Worke
 
         [SuppressMessage("Design", "MA0046:Use EventHandler<T> to declare events", Justification = "Historical - Public API - Next Major")]
         [SuppressMessage("Design", "CA1003:Use generic event handler instances", Justification = "Historical - Public API - Next Major")]
-        [SuppressMessage("Design", "CA1030:Use events where appropriate", Justification = "<Pending>")]
+        [SuppressMessage("Design", "CA1030:Use events where appropriate", Justification = "OnBeforeStart is already an event; the rule fires because its accessors (add_OnBeforeStart/remove_OnBeforeStart) match the AddOn/RemoveOn method-name prefixes. Renaming it is a breaking change - Next Major")]
         public event VoidEventHandler OnBeforeStart { add { _host._onBeforeStart += value; } remove { _host._onBeforeStart -= value; } }
     }
 
