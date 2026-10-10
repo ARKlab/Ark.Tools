@@ -180,8 +180,8 @@ Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sa
 Generated endpoints bind route, query and JSON body values in generated code,
 with the same rules as ASP.NET Core Minimal API: a missing required value or a
 value that does not convert returns `400`, and a body with a non-JSON content
-type returns `415`. They do not use `RequestDelegateFactory`, so they are
-trim-safe and need no reflection at startup. Endpoint filters added to the
+type returns `415`. They do not use the reflection-based binding of
+`RequestDelegateFactory`, so they are trim-safe. Endpoint filters added to the
 group run as usual, and OpenAPI still describes every parameter.
 
 In a trimmed app, list the contract and response types in a
