@@ -13,6 +13,7 @@
     <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.Protobuf/Ark.Tools.Compliance.Protobuf.csproj" />
     <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.Reqnroll/Ark.Tools.Compliance.Reqnroll.csproj" />
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.Compliance.OpenApi/Ark.Tools.Compliance.OpenApi.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
     <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="true" />

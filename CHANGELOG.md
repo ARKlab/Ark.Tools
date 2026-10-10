@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.ResourceWatcher.Sql`: `SqlStateProvider` reads and writes `ModifiedSources` through a source-generated serializer, so it keeps working in trimmed applications. The stored JSON format is unchanged.
 - `Ark.Tools.ResourceWatcher.Sql`: `SqlStateProvider.LoadStateAsync` works in trimmed apps; it used to fail because trimming removed the constructors of the row types it reads.
 - `Ark.Tools.MediatorFramework.Grpc`: a compliance sensitive value object, such as `PersonName`, in a gRPC contract is exported to `.proto` as a `string` and registered with protobuf-net by `MapArkGrpcServicesFromAssembly`. It used to be exported as `bytes` and fail at runtime because protobuf-net had no serializer for it.
+- `ConfigureArkDefaults()` serializes a compliance sensitive value object declared in the same assembly as a source-generated `JsonSerializerContext` as its value instead of an empty object, as it already did for Vogen value objects.
 
 ## [7.0.0-beta13] - 2026-10-09
 
