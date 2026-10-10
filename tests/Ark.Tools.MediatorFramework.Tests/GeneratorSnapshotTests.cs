@@ -777,6 +777,21 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorStreamsWithTheConfiguredSuccessStatus()
+    {
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/exports", SuccessStatusCode = 201)]
+            public sealed record StartExport : IRequest<StartExport, IAsyncEnumerable<string>>;
+            """);
+
+        minimal.Should().Contain("ArkGeneratedEndpoint.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), 201);");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorBindsEmptyArrayElementsAsDefault()
     {
         var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(

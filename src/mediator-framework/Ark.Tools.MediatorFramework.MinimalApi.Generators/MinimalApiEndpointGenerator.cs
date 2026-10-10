@@ -1083,7 +1083,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             if (e.AcceptsMessagePack)
                                 EmitMessagePackStreamingResult(sb, e);
                             else
-                                sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.Ok(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken));");
+                                sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkGeneratedEndpoint.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), " + SuccessStatusCode(e) + ");");
                             sb.AppendLine("            })" + MapClose(currentEndpointIndex) + ".Produces<global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">>(" + SuccessStatusCode(e) + responseContentTypes + ")"
                                 + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
                             continue;
