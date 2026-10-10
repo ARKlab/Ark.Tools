@@ -180,9 +180,7 @@ public class SqlStateProvider<[DynamicallyAccessedMembers(_extensionsMembers)] T
             if (m?.ModifiedSourcesJson != null)
             {
                 // Use NodaTime converters from Ark defaults for ModifiedSources
-#pragma warning disable IL2026 // Acceptable: Dictionary with NodaTime converters is trim-compatible when converters are registered
-                result.ModifiedSources = JsonSerializer.Deserialize<Dictionary<string, NodaTime.LocalDateTime>>(m.ModifiedSourcesJson, _internalJsonOptions);
-#pragma warning restore IL2026
+                result.ModifiedSources = JsonSerializer.Deserialize(m.ModifiedSourcesJson, ModifiedSourcesJsonContext.Default.ModifiedSources);
             }
 
             return result;
@@ -265,9 +263,7 @@ UPDATE SET
                     x.ResourceId,
                     Modified = (x.Modified == default) ? null : (DateTime?)x.Modified.ToDateTimeUnspecified(),
                     // Use NodaTime converters from Ark defaults for ModifiedSources
-#pragma warning disable IL2026 // Acceptable: Dictionary with NodaTime converters is trim-compatible when converters are registered
-                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonSerializer.Serialize(x.ModifiedSources, _internalJsonOptions),
-#pragma warning restore IL2026
+                    ModifiedSourcesJson = x.ModifiedSources == null ? null : JsonSerializer.Serialize(x.ModifiedSources, ModifiedSourcesJsonContext.Default.ModifiedSources),
                     LastEvent = x.LastEvent.ToDateTimeUtc(),
                     RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
                     x.RetryCount,
