@@ -4518,6 +4518,39 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorChecksServerSetMembersOfAContractThatIsAlsoAResponse()
+    {
+        // Greeting is the response of GetGreeting, so protobuf-net writes its server-set Guid even though
+        // UpdateGreeting also takes it as a request.
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string UserId { get; set; } = string.Empty;
+            }
+
+            [GrpcMethod("UpdateGreeting")]
+            [ProtoContract]
+            public sealed class Greeting : IQuery<GetGreeting>
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+                [ServerSet]
+                [ProtoMember(2)]
+                public System.Guid TenantId { get; set; }
+            }
+            """);
+
+        result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF060");
+    }
+
+    [TestMethod]
     [DataRow("[ServerSet]", false)]
     [DataRow("", true)]
     public void GrpcGeneratorImportsNodaTimeProtoOnlyForEmittedPeriodFields(string elapsedAttribute, bool imported)
