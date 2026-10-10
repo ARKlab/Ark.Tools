@@ -151,6 +151,51 @@ public static class ArkOpenApiEx
         return options;
     }
 
+    /// <summary>
+    /// Describes Vogen value objects (<c>[ValueObject&lt;T&gt;]</c> or <c>[ValueObject(typeof(T))]</c>) with the
+    /// schema of the primitive they wrap, such as <c>string</c>/<c>uuid</c> for a <see cref="Guid"/>, in bodies,
+    /// routes and query strings.
+    /// </summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkValueObjectSchemas(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        options.AddSchemaTransformer(static async (schema, context, cancellationToken) =>
+        {
+            var type = Nullable.GetUnderlyingType(context.JsonTypeInfo.Type)
+                ?? context.JsonTypeInfo.Type;
+            if (_getValueObjectPrimitive(type) is not { } primitive)
+                return;
+
+            var primitiveSchema = await context.GetOrCreateSchemaAsync(primitive, cancellationToken: cancellationToken).ConfigureAwait(false);
+            schema.Type = schema.Type is { } current && current.HasFlag(JsonSchemaType.Null)
+                ? primitiveSchema.Type | JsonSchemaType.Null
+                : primitiveSchema.Type;
+            schema.Format = primitiveSchema.Format;
+            schema.Pattern = primitiveSchema.Pattern;
+            schema.Properties?.Clear();
+            schema.Required?.Clear();
+        });
+
+        return options;
+    }
+
+    // Detected by attribute name so this package takes no Vogen dependency; Vogen's generated Value property
+    // exposes the primitive and is always kept because Vogen's own members read it.
+    [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+        Justification = "Vogen's generated members (Equals, GetHashCode, ToString, converters) all read the public Value property, so it is preserved whenever the value object is used.")]
+    private static Type? _getValueObjectPrimitive(Type type)
+    {
+        var isValueObject = type.CustomAttributes.Any(static attribute =>
+            attribute.AttributeType.FullName is { } name
+            && (name == "Vogen.ValueObjectAttribute" || name.StartsWith("Vogen.ValueObjectAttribute`1", StringComparison.Ordinal)));
+        return isValueObject
+            ? type.GetProperty("Value", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)?.PropertyType
+            : null;
+    }
+
     /// <summary>Uses the wrapped CLR type for OpenAPI route and query parameter schemas.</summary>
     /// <param name="options">The OpenAPI options to configure.</param>
     /// <returns>The same options instance.</returns>
