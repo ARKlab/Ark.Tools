@@ -9,9 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `ToDataTableArk()` shreds Vogen value objects (`[ValueObject<T>]` or `[ValueObject(typeof(T))]`) into a column of their primitive type, so they can be passed in table-valued parameters and `SqlBulkCopy`. Ark.Tools.Core does not depend on Vogen.
+- Mediator Framework contracts can use Vogen value objects. They travel as the primitive they wrap in JSON (`ConfigureArkDefaults()` now applies Vogen's converter even through a source-generated `JsonSerializerContext`), in Minimal API and Azure Functions routes and query strings, and over gRPC, where the exported `.proto` declares the primitive and `MapArkGrpcServicesFromAssembly` registers the value object with protobuf-net. Add `AddArkValueObjectSchemas()` to document them in OpenAPI and call `ValueObjectDapper.Register<TValueObject, TPrimitive>()` for Dapper. Ark.Tools does not depend on Vogen.
+- Error `ARKMF060` for a gRPC contract member whose exported `.proto` type differs from what protobuf-net writes: a `Guid` below `CompatibilityLevel.Level300`, or a value object over a primitive with no protobuf scalar.
 
 ### Changed
 
+- **Breaking:** the exported gRPC `.proto` declares a `Guid` as `string` instead of `bytes`. protobuf-net writes a `Guid` as its own `bcl.Guid` message, so clients generated from the old schema could not read these fields. Add `[assembly: ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level300)]` to the contracts assembly (`ARKMF060` reports a missing one); this changes the wire format of its `Guid` fields to the canonical string.
 - `Ark.Tools.ResourceWatcher.Sql`: trimmed apps that use `SqlStateProvider<TExtensions>` without `ExtensionsJsonContext` now keep the public constructors, properties and fields of a flat extensions type and opt back into reflection-based serialization, so it round-trips instead of failing or losing values. Generic code that passes its own type parameter as `TExtensions` must add the same `[DynamicallyAccessedMembers]` annotation (trim analyzer IL2091). Nested or polymorphic extension types still need `ExtensionsJsonContext` when trimming.
 
 ### Fixed

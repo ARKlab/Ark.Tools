@@ -284,4 +284,42 @@ the full rules table):
 - **Rebus**: whichever body serializer the host configures (STJ or
   protobuf-net) applies the same rules above; no separate Rebus-specific setup.
 
+## Value objects (Vogen)
+
+A [Vogen](https://github.com/SteveDunn/Vogen) value object travels as the
+primitive it wraps on every transport. Declare it in the contracts project:
+
+```csharp
+[ValueObject<Guid>]
+public readonly partial struct BookId;
+
+public sealed record GetBookQuery(BookId Id) : IQuery<GetBookQuery, Book>;
+```
+Source: [`BookId.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookId.cs)
+
+Ark.Tools recognizes Vogen types by their `[ValueObject]` attribute and takes
+no Vogen dependency. Source generators cannot see each other's output, so
+Ark.Tools assumes the members Vogen generates by default (`Value`, `From`,
+`TryParse` and the JSON converter); do not turn them off for a contract type.
+
+- **JSON**: zero setup. `ConfigureArkDefaults()` registers
+  `ValueObjectJsonConverterFactory`, which applies Vogen's converter even
+  through a source-generated `JsonSerializerContext`, which cannot see it.
+  This covers HTTP bodies, native messaging, Rebus and Azure Functions.
+- **Routes and query strings**: zero setup. Minimal API and Azure Functions
+  bind the value through Vogen's `TryParse`.
+- **OpenAPI**: add `AddArkValueObjectSchemas()`; see [OpenAPI](openapi.md).
+- **gRPC**: zero setup for a value object over `string`, `Guid`, `bool`,
+  `int`, `long`, `float` or `double`. The exported `.proto` declares the
+  primitive, and `MapArkGrpcServicesFromAssembly` registers the value object
+  with protobuf-net. See [gRPC](grpc.md) for `Guid` members.
+- **Dapper** (`Ark.Tools.Dapper`): call
+  `ValueObjectDapper.Register<BookId, Guid>(BookId.From, static id => id.Value)`
+  once at startup. Vogen's own Dapper handler would require the contracts
+  project to reference Dapper.
+- **`ToDataTableArk()`**: zero setup. A value object member becomes a column
+  of its primitive type, ready for table-valued parameters and `SqlBulkCopy`.
+- **MessagePack**: not handled; add Vogen's `Conversions.MessagePack` to a
+  value object used in a `[MessagePackObject]`.
+
 Architecture rationale: [design.md](../design/mediator-framework/design.md).
