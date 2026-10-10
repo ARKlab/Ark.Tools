@@ -10,6 +10,7 @@ using NLog;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Tools.ResourceWatcher;
 
@@ -22,12 +23,14 @@ public interface ISqlStateProviderConfig
     /// <summary>
     /// Optional JsonSerializerContext for Extensions serialization.
     /// When provided, enables trim-safe serialization of Extensions.
-    /// When null, falls back to reflection-based serialization (not trim-safe).
+    /// When null, falls back to reflection-based serialization: trimming keeps the public constructors,
+    /// properties and fields of the extensions type itself, which covers flat types only. Provide a context
+    /// when trimming with nested or polymorphic extension types.
     /// </summary>
     JsonSerializerContext? ExtensionsJsonContext { get => null; }
 }
 
-public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
+public class SqlStateProvider<[DynamicallyAccessedMembers(_extensionsMembers)] TExtensions> : IStateProvider<TExtensions>
     where TExtensions : class
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -35,6 +38,11 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
     private readonly JsonSerializerOptions _internalJsonOptions;
     private readonly JsonSerializerContext? _extensionsJsonContext;
     private readonly IDbConnectionManager _connManager;
+
+    // Members the reflection-based fallback serializer reads on the extensions type.
+    private const DynamicallyAccessedMemberTypes _extensionsMembers = DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields;
+
+    private const string _flatExtensionsJustification = "TExtensions is annotated to keep its own public constructors, properties and fields, which covers flat extension types. Nested or polymorphic extension types need ExtensionsJsonContext when trimming, as documented on ISqlStateProviderConfig.";
 
     private const string _queryState = "SELECT [Tenant], [ResourceId], [Modified], [LastEvent], [RetrievedAt], [RetryCount], [CheckSum], [ExtensionsJson], [ModifiedSourcesJson] FROM [State] WHERE [Tenant] = @tenant";
 
@@ -52,12 +60,20 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
         // Used for Extensions when no external context is provided
         _internalJsonOptions = new JsonSerializerOptions
         {
+            TypeInfoResolver = _createReflectionResolver(),
 #if NET9_0_OR_GREATER
             RespectNullableAnnotations = true,
             RespectRequiredConstructorParameters = true
 #endif
         };
         _internalJsonOptions.ConfigureArkDefaults();
+    }
+
+    // Trimmed apps disable reflection-based serialization by default, so the fallback opts back in explicitly.
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = _flatExtensionsJustification)]
+    private static DefaultJsonTypeInfoResolver _createReflectionResolver()
+    {
+        return new DefaultJsonTypeInfoResolver();
     }
 
     sealed class EJ
@@ -74,7 +90,7 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
     /// When ExtensionsJsonContext is provided, uses trim-safe serialization.
     /// Otherwise falls back to reflection-based serialization for backward compatibility.
     /// </summary>
-    [RequiresUnreferencedCode("Serializing arbitrary objects without JsonSerializerContext requires types that cannot be statically analyzed. Provide ExtensionsJsonContext in config for trim-safe code.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = _flatExtensionsJustification)]
     private string? _serializeExtensions(object? extensions)
     {
         if (extensions == null)
@@ -86,13 +102,19 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
             return extensions.Serialize(extensions.GetType(), _extensionsJsonContext);
         }
 
-        // Fallback to reflection-based serialization (not trim-safe)
+        // Fallback to reflection-based serialization (trim-safe for flat types only)
         // If it's already a JsonElement (deserialized from DB), serialize it directly
         if (extensions is JsonElement element)
             return JsonSerializer.Serialize(element, _internalJsonOptions);
 
         // For other objects, serialize as object (uses reflection - not trim-safe but maintains compatibility)
         return JsonSerializer.Serialize(extensions, _internalJsonOptions);
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = _flatExtensionsJustification)]
+    private TExtensions? _deserializeExtensions(string json)
+    {
+        return JsonSerializer.Deserialize<TExtensions>(json, _internalJsonOptions);
     }
 
     public async Task<IEnumerable<ResourceState<TExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
@@ -142,10 +164,8 @@ public class SqlStateProvider<TExtensions> : IStateProvider<TExtensions>
                     }
                     else
                     {
-                        // Fallback to reflection-based deserialization (not trim-safe)
-#pragma warning disable IL2026 // Acceptable: arbitrary objects in Extensions require reflection when no context provided
-                        result.Extensions = JsonSerializer.Deserialize<TExtensions>(e.ExtensionsJson, _internalJsonOptions);
-#pragma warning restore IL2026
+                        // Fallback to reflection-based deserialization (trim-safe for flat types only)
+                        result.Extensions = _deserializeExtensions(e.ExtensionsJson);
                     }
                 }
                 catch (JsonException ex)
@@ -248,9 +268,7 @@ UPDATE SET
                     RetrievedAt = x.RetrievedAt?.ToDateTimeUtc(),
                     x.RetryCount,
                     x.CheckSum,
-#pragma warning disable IL2026 // Acceptable: arbitrary objects in Extensions require reflection when no context provided
                     ExtensionsJson = _serializeExtensions(x.Extensions),
-#pragma warning restore IL2026
                     Exception = x.LastException?.ToString()
                 }).ToDataTableArk().AsTableValuedParameter("[udt_State_v2]")
             }).ConfigureAwait(false);
