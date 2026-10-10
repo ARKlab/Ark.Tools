@@ -8,6 +8,31 @@ using Microsoft.CodeAnalysis;
 
 namespace Ark.Tools.MediatorFramework.Generators;
 
+/// <summary>How a route or query string value converts to a property value, mirroring Minimal API binding.</summary>
+internal enum ConversionKind
+{
+    /// <summary>The value is a string.</summary>
+    String = 0,
+
+    /// <summary><c>Enum.TryParse</c>, case-sensitive as in Minimal API.</summary>
+    Enum = 1,
+
+    /// <summary><c>Uri.TryCreate</c>.</summary>
+    Uri = 2,
+
+    /// <summary>A public static <c>TryParse(string, IFormatProvider, out T)</c>, called with the invariant culture.</summary>
+    TryParseWithProvider = 3,
+
+    /// <summary>A public static <c>TryParse(string, out T)</c>.</summary>
+    TryParse = 4,
+
+    /// <summary>An explicit <c>IParsable&lt;T&gt;</c> implementation, called with the invariant culture.</summary>
+    Parsable = 5,
+
+    /// <summary>The registered type converter, resolved trim-safely by <c>ArkTypeConverter.TryConvertSafe</c>.</summary>
+    TypeConverter = 6,
+}
+
 /// <summary>
 /// Classifies HTTP contract property types by how a host converts them from a route or query string value,
 /// so the Minimal API and Azure Functions generators apply the same rules.
@@ -229,5 +254,106 @@ internal static class HttpStringBinding
         for (var current = type; current is not null; current = current.BaseType)
             foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
                 yield return property;
+    }
+
+    /// <summary>Gets the strategy that converts a route or query string value to the type.</summary>
+    /// <param name="type">The value type.</param>
+    /// <returns>The conversion strategy.</returns>
+    // Mirrors the order in which Minimal API picks a parser: strings, enums and Uri first, then a public static
+    // TryParse (preferring the IFormatProvider overload), then IParsable<T>, and the type converter otherwise.
+    public static ConversionKind ConversionKindOf(ITypeSymbol type)
+    {
+        type = WithoutNullable(type);
+        if (type.SpecialType == SpecialType.System_String)
+            return ConversionKind.String;
+        if (type.TypeKind == TypeKind.Enum)
+            return ConversionKind.Enum;
+        if (type.ToDisplayString() == "System.Uri")
+            return ConversionKind.Uri;
+
+        var tryParse = _tryParseMethodsOf(type);
+        if (tryParse.Any(_hasFormatProvider))
+            return ConversionKind.TryParseWithProvider;
+        // As in Minimal API, an explicit IParsable<T> implementation wins over a public TryParse(string, out T).
+        if (type.AllInterfaces.Any(candidate => candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
+            && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], type)))
+            return ConversionKind.Parsable;
+        if (tryParse.Any(static method => method.Parameters.Length == 2))
+            return ConversionKind.TryParse;
+        return ConversionKind.TypeConverter;
+    }
+
+    /// <summary>Gets the type declaring the <c>TryParse</c> method to call.</summary>
+    /// <param name="type">The value type.</param>
+    /// <returns>The declaring type, or the value type when it has none.</returns>
+    // The type declaring the TryParse to call: the most derived declaration, as ASP.NET Core finds it, called on
+    // its declaring type so an overload declared on a derived type cannot hide it.
+    public static ITypeSymbol ParserType(ITypeSymbol type)
+    {
+        type = WithoutNullable(type);
+        var tryParse = _tryParseMethodsOf(type);
+        var method = tryParse.FirstOrDefault(_hasFormatProvider) ?? tryParse.FirstOrDefault(static method => method.Parameters.Length == 2);
+        return method?.ContainingType ?? type;
+    }
+
+    private static IMethodSymbol[] _tryParseMethodsOf(ITypeSymbol type)
+    {
+        return TryParseMethods(type)
+            .Where(method => IsTryParseShape(method)
+                && SymbolEqualityComparer.Default.Equals(method.Parameters[^1].Type, type))
+            .ToArray();
+    }
+
+    private static bool _hasFormatProvider(IMethodSymbol method)
+    {
+        return method.Parameters.Length == 3 && IsFormatProviderParameter(method.Parameters[1]);
+    }
+
+    /// <summary>Gets the type without <c>Nullable&lt;T&gt;</c> or a nullable annotation.</summary>
+    /// <param name="type">The type.</param>
+    /// <returns>The underlying type.</returns>
+    public static ITypeSymbol WithoutNullable(ITypeSymbol type)
+    {
+        return type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable
+            ? nullable.TypeArguments[0]
+            : type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+    }
+
+    /// <summary>
+    /// Emits the expression converting <paramref name="raw"/> into the out variable <paramref name="value"/> with the
+    /// strategy Minimal API picks for the type; it is <see langword="true"/> when conversion succeeds.
+    /// </summary>
+    /// <param name="kind">The conversion strategy.</param>
+    /// <param name="conversionType">The fully qualified type one value converts to.</param>
+    /// <param name="parserType">The fully qualified type declaring the <c>TryParse</c> to call.</param>
+    /// <param name="raw">The expression of the string value.</param>
+    /// <param name="value">The name of the out variable.</param>
+    /// <param name="parsableHelper">The generic method calling an <c>IParsable&lt;T&gt;</c> implementation.</param>
+    /// <param name="typeConverterHelper">The generic method converting through the registered type converter.</param>
+    /// <returns>The conversion expression.</returns>
+    public static string TryParseCall(ConversionKind kind, string conversionType, string parserType, string raw, string value, string parsableHelper, string typeConverterHelper)
+    {
+        return kind switch
+        {
+            ConversionKind.Enum => "global::System.Enum.TryParse<" + conversionType + ">(" + raw + ", out var " + value + ")",
+            ConversionKind.Uri => "global::System.Uri.TryCreate(" + raw + ", global::System.UriKind.RelativeOrAbsolute, out var " + value + ")",
+            ConversionKind.TryParseWithProvider => parserType + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, " + _dateTimeStyles(conversionType) + "out var " + value + ")",
+            ConversionKind.TryParse => parserType + ".TryParse(" + raw + ", out var " + value + ")",
+            ConversionKind.Parsable => parsableHelper + "<" + conversionType + ">(" + raw + ", out var " + value + ")",
+            _ => typeConverterHelper + "<" + conversionType + ">(" + raw + ", out var " + value + ")",
+        };
+    }
+
+    // Mirrors the DateTimeStyles ASP.NET Core passes when it binds a date or time from a string.
+    private static string _dateTimeStyles(string type)
+    {
+        const string styles = "global::System.Globalization.DateTimeStyles.";
+        return type switch
+        {
+            "global::System.DateTime" => styles + "AllowWhiteSpaces | " + styles + "AdjustToUniversal, ",
+            "global::System.DateTimeOffset" => styles + "AllowWhiteSpaces | " + styles + "AssumeUniversal, ",
+            "global::System.DateOnly" or "global::System.TimeOnly" => styles + "AllowWhiteSpaces, ",
+            _ => string.Empty,
+        };
     }
 }
