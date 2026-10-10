@@ -777,6 +777,24 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorBindsEmptyArrayElementsAsDefault()
+    {
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<ListBooks, string>
+            {
+                [HttpQuery] public int[] Years { get; init; } = [];
+            }
+            """);
+
+        // As in RDG, ?Years=&Years=2 binds [0, 2] even though the element type is not nullable.
+        minimal.Should().Contain("else if (string.IsNullOrEmpty(p_Years_element))");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorKeepsNullableBodyOptional()
     {
         var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(

@@ -547,9 +547,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                         ConversionTypeFullName = HttpStringBinding.WithoutNullable(BoundValueType(property.Type)).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         ParserTypeFullName = HttpStringBinding.ParserType(BoundValueType(property.Type)).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         IsArray = property.Type is IArrayTypeSymbol && !HttpStringBinding.IsStringCollection(property.Type),
-                        ElementIsNullable = property.Type is IArrayTypeSymbol { ElementType: var element }
-                            && (element.NullableAnnotation == NullableAnnotation.Annotated
-                                || element is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T }),
                     };
                 })
                 .ToImmutableArray();
@@ -1689,12 +1686,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 m.Append(indent).Append("    var ").Append(local).Append("_element = ").Append(local).Append("_values[").Append(local).AppendLine("_index];");
                 m.Append(indent).Append("    if (").Append(ConversionCall(property, local + "_element", local + "_parsed")).AppendLine(")");
                 m.Append(indent).Append("        ").Append(local).Append('[').Append(local).Append("_index] = ").Append(local).AppendLine("_parsed!;");
-                if (property.ElementIsNullable)
-                {
-                    m.Append(indent).Append("    else if (string.IsNullOrEmpty(").Append(local).AppendLine("_element))");
-                    m.Append(indent).Append("        ").Append(local).Append('[').Append(local).AppendLine("_index] = default;");
-                }
-
+                // As in RDG, an empty element binds the element's default value.
+                m.Append(indent).Append("    else if (string.IsNullOrEmpty(").Append(local).AppendLine("_element))");
+                m.Append(indent).Append("        ").Append(local).Append('[').Append(local).AppendLine("_index] = default;");
                 m.Append(indent).AppendLine("    else");
                 m.Append(indent).AppendLine("    {");
                 m.Append(indent).AppendLine("        failed = true;");
@@ -2047,7 +2041,6 @@ namespace Ark.Tools.MediatorFramework.Generators
             public string ConversionTypeFullName { get; init; } = string.Empty;
             public string ParserTypeFullName { get; init; } = string.Empty;
             public bool IsArray { get; init; }
-            public bool ElementIsNullable { get; init; }
         }
     }
 }
