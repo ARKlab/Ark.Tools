@@ -327,6 +327,9 @@ In a Native AOT app, `ConfigureArkDefaults()` is unavailable, so add
 the serializer options yourself. `ToDataTableArk()` handles value objects without
 reflection only when the element type is known at the call site; the reflection
 fallback, used from generic code, throws `NotSupportedException` because Native
-AOT removes the `Value` property metadata.
+AOT removes the `Value` property metadata. Vogen's JSON converter for a numeric
+primitive calls the reflection-based `JsonSerializer` and is reported by Native
+AOT; `Customizations.TreatNumberAsStringInSystemTextJson` avoids it, at the cost of
+writing the number as a JSON string.
 
 Architecture rationale: [design.md](../design/mediator-framework/design.md).
