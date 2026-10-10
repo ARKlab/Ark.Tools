@@ -21,7 +21,6 @@
 
     <IsTrimmable>true</IsTrimmable>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <NoWarn>$(NoWarn);NU5104</NoWarn>
   </PropertyGroup>
   <!--===============================================================================-->
 
