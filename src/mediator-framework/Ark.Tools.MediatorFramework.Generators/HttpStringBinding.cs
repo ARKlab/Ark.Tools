@@ -119,9 +119,10 @@ internal static class HttpStringBinding
             || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
             return false;
 
-        // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see.
+        // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see; without it
+        // the value object binds through the TypeConverter Vogen also generates.
         if (ValueObjectSymbols.IsValueObject(targetType))
-            return false;
+            return !ValueObjectSymbols.GeneratesTryParse(targetType);
 
         return !TryParseMethods(targetType)
             .Any(method => IsTryParseShape(method)
@@ -274,9 +275,10 @@ internal static class HttpStringBinding
             return ConversionKind.Enum;
         if (type.ToDisplayString() == "System.Uri")
             return ConversionKind.Uri;
-        // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see.
+        // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see; without it
+        // the value object binds through the TypeConverter Vogen also generates.
         if (ValueObjectSymbols.IsValueObject(type))
-            return ConversionKind.TryParseWithProvider;
+            return ValueObjectSymbols.GeneratesTryParse(type) ? ConversionKind.TryParseWithProvider : ConversionKind.TypeConverter;
 
         var tryParse = _tryParseMethodsOf(type);
         if (tryParse.Any(_hasFormatProvider))

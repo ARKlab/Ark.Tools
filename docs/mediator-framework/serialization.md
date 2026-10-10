@@ -311,7 +311,9 @@ Ark.Tools assumes the members Vogen generates by default (`Value`, `From`,
   `[JsonSerializable(typeof(int))]` (or `long`, `double`) for numeric value
   objects, because Vogen's converter reads the number through the options.
 - **Routes and query strings**: zero setup. Minimal API and Azure Functions
-  bind the value through Vogen's `TryParse`.
+  bind the value through Vogen's `TryParse`, or through its `TypeConverter`
+  when `parsableForPrimitives` (`parsableForStrings` for a string) is
+  `GenerateNothing`.
 - **OpenAPI**: add `AddArkValueObjectSchemas()`; see [OpenAPI](openapi.md).
 - **gRPC**: zero setup for a value object over `string`, `Guid`, `bool`,
   `int`, `long`, `float` or `double`. The exported `.proto` declares the

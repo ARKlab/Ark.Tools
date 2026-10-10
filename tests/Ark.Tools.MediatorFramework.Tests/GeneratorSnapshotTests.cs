@@ -698,6 +698,51 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    [DataRow("[Vogen.ValueObject<System.Guid>(parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]", "")]
+    [DataRow("[Vogen.ValueObject<System.Guid>]", "[assembly: Vogen.VogenDefaults(parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]")]
+    public void HttpGeneratorsBindValueObjectWithoutTryParseThroughTypeConverter(string valueObjectAttribute, string assemblyAttribute)
+    {
+        var source = $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            {{assemblyAttribute}}
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            {{valueObjectAttribute}}
+            public readonly partial struct BookId { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed class GetBook : IQuery<string>
+            {
+                public BookId Id { get; set; }
+            }
+            namespace Vogen
+            {
+                public enum ParsableForPrimitives { Unspecified = -1, HoistMethodsAndInterfaces = 0, GenerateMethodsAndInterface = 1, GenerateNothing = 2 }
+                public enum ParsableForStrings { Unspecified = -1, GenerateMethodsAndInterface = 0, GenerateNothing = 1 }
+                [System.AttributeUsage(System.AttributeTargets.Struct | System.AttributeTargets.Class)]
+                public sealed class ValueObjectAttribute<T> : System.Attribute
+                {
+                    public ValueObjectAttribute(ParsableForStrings parsableForStrings = ParsableForStrings.Unspecified, ParsableForPrimitives parsableForPrimitives = ParsableForPrimitives.Unspecified) { }
+                }
+                [System.AttributeUsage(System.AttributeTargets.Assembly)]
+                public sealed class VogenDefaultsAttribute : System.Attribute
+                {
+                    public VogenDefaultsAttribute(ParsableForStrings parsableForStrings = ParsableForStrings.Unspecified, ParsableForPrimitives parsableForPrimitives = ParsableForPrimitives.Unspecified) { }
+                }
+            }
+            """;
+
+        var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+        var minimal = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        functions.Diagnostics.Should().BeEmpty();
+        functions.Generated.Should().NotContain("BookId.TryParse");
+        minimal.Diagnostics.Should().BeEmpty();
+        minimal.Generated.Should().NotContain("BookId.TryParse");
+        minimal.Generated.Should().Contain("ArkTypeConverterValue<global::BookId>");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorEmitsRouteBindingWithTryParse()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
