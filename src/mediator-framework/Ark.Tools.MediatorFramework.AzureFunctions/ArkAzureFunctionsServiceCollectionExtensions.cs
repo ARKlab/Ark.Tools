@@ -90,15 +90,13 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
     /// </param>
     /// <returns>The same service collection.</returns>
     /// <remarks>
-    /// In a trimmed or Native AOT app (<see cref="JsonSerializer.IsReflectionEnabledByDefault"/> is
+    /// In a trimmed app (<see cref="JsonSerializer.IsReflectionEnabledByDefault"/> is
     /// <see langword="false"/>), the reflection-based Ark default converters and the fallback resolver are not
     /// added: only the supplied contexts resolve types, so they must cover every contract and response type and
     /// declare the converters they need, for example in <see cref="JsonSourceGenerationOptionsAttribute.Converters"/>.
     /// </remarks>
     [UnconditionalSuppressMessage("Trimming", "IL2026",
-        Justification = "The reflection-based defaults and DefaultJsonTypeInfoResolver are guarded by the JsonSerializer.IsReflectionEnabledByDefault feature switch, which trimming and Native AOT disable.")]
-    [UnconditionalSuppressMessage("AOT", "IL3050",
-        Justification = "The reflection-based defaults and DefaultJsonTypeInfoResolver are guarded by the JsonSerializer.IsReflectionEnabledByDefault feature switch, which Native AOT disables.")]
+        Justification = "The reflection-based defaults and DefaultJsonTypeInfoResolver are guarded by the JsonSerializer.IsReflectionEnabledByDefault feature switch, which trimming disables.")]
     public static IServiceCollection AddArkAzureFunctions(
         this IServiceCollection services,
         params JsonSerializerContext[] additionalContexts)
@@ -112,7 +110,7 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
         {
             if (!JsonSerializer.IsReflectionEnabledByDefault)
             {
-                // Trimmed or Native AOT: keep the reflection-free part of the Ark defaults; the supplied
+                // Trimmed: keep the reflection-free part of the Ark defaults; the supplied
                 // source-generated contexts resolve every type.
                 options.SerializerOptions.AllowTrailingCommas = true;
                 options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
