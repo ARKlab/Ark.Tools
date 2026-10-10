@@ -52,7 +52,6 @@ internal static class Program
         {
             Tenant = tenant,
             ResourceId = "resource-1",
-            Modified = new LocalDateTime(2024, 1, 2, 3, 4, 5),
             ModifiedSources = new Dictionary<string, LocalDateTime>(StringComparer.Ordinal) { ["sourceA"] = sourceModified },
             LastEvent = Instant.FromUtc(2024, 1, 2, 3, 4, 5),
             Extensions = new FlatExtensions { Name = "flat", Count = 42, Flag = true },
@@ -65,8 +64,6 @@ internal static class Program
             throw new InvalidOperationException(FormattableString.Invariant($"Extensions did not round-trip: {actual.Extensions?.Name ?? "<null>"}, {actual.Extensions?.Count}, {actual.Extensions?.Flag}"));
         if (actual.ModifiedSources?.GetValueOrDefault("sourceA") != sourceModified)
             throw new InvalidOperationException("ModifiedSources did not round-trip.");
-        if (actual.Modified != expected.Modified)
-            throw new InvalidOperationException("Modified did not round-trip.");
     }
 }
 
