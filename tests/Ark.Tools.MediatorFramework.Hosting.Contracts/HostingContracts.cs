@@ -68,11 +68,13 @@ public static class HostingEndpointMappings
 {
     /// <summary>Maps the synthetic HTTP endpoints.</summary>
     /// <param name="endpoints">The endpoint route builder.</param>
-    public static void MapMinimalApi(IEndpointRouteBuilder endpoints)
+    /// <param name="configure">Configures the generated endpoint group, for example with endpoint filters.</param>
+    public static void MapMinimalApi(IEndpointRouteBuilder endpoints, Action<RouteGroupBuilder>? configure = null)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArkGeneratedEndpoints.MapArkEndpoints<HostingMinimalApiContext>(
             endpoints,
+            configure,
             versionPrefix: "/api/v{version}");
     }
 

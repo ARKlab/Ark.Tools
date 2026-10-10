@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.OpenApi;
@@ -170,8 +171,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds and maps an independent Minimal API host.</summary>
+    /// <param name="configureEndpoints">Configures the generated endpoint group, for example with endpoint filters.</param>
     /// <returns>The unstarted Minimal API application.</returns>
-    public WebApplication BuildMinimalApiHost()
+    public WebApplication BuildMinimalApiHost(Action<RouteGroupBuilder>? configureEndpoints = null)
     {
         _throwIfDisposed();
         var builder = WebApplication.CreateBuilder();
@@ -207,17 +209,18 @@ public sealed class HostingTestFixture : IAsyncDisposable
 
             await next().ConfigureAwait(false);
         });
-        HostingEndpointMappings.MapMinimalApi(app);
+        HostingEndpointMappings.MapMinimalApi(app, configureEndpoints);
         app.MapOpenApi().AllowAnonymous();
         _hosts.Add(app);
         return app;
     }
 
     /// <summary>Builds and starts an independent Minimal API test host.</summary>
+    /// <param name="configureEndpoints">Configures the generated endpoint group, for example with endpoint filters.</param>
     /// <returns>The started Minimal API application.</returns>
-    public async Task<WebApplication> StartMinimalApiHostAsync()
+    public async Task<WebApplication> StartMinimalApiHostAsync(Action<RouteGroupBuilder>? configureEndpoints = null)
     {
-        var app = BuildMinimalApiHost();
+        var app = BuildMinimalApiHost(configureEndpoints);
         await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
         return app;
     }
