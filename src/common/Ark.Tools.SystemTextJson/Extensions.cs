@@ -24,6 +24,7 @@ public static class Extensions
         @this.Converters.Add(new GenericDictionaryWithConvertibleKey());
         @this.Converters.Add(new ValueCollectionJsonConverterFactory());
         @this.Converters.Add(new EvolvableEnumJsonConverterFactory()); // default: symbolic name; opt into EvolvableEnumIntegerJsonConverterFactory per-property for numbers
+        @this.Converters.Add(new ValueObjectJsonConverterFactory()); // Vogen converters, invisible to source-generated contexts
 
         @this.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
         @this.ConfigureForNodaTimeRanges();
