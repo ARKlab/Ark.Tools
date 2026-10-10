@@ -212,16 +212,23 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
     private static RpcException _createRpcException(StatusCode statusCode, string message) =>
         new(new global::Grpc.Core.Status(statusCode, message));
 
-    [SuppressMessage(
+    [UnconditionalSuppressMessage(
         "Trimming",
         "IL2026",
-        Justification = "The BusinessRuleViolation base type preserves public properties for the documented client-visible contract.")]
+        Justification = "Reflection-based serialization runs only when JsonSerializer.IsReflectionEnabledByDefault is true; trimmed apps substitute false and skip it.")]
     [UnconditionalSuppressMessage(
         "Trimming",
         "IL2072",
         Justification = "Business-rule violation properties are part of the preserved client-visible contract.")]
     private static Dictionary<string, string> _getExtensions(BusinessRuleViolation violation)
     {
+        // Trimmed apps disable reflection-based JSON, which would throw here and replace the rich status with Unknown.
+        if (!JsonSerializer.IsReflectionEnabledByDefault)
+        {
+            _logger.Warn(CultureInfo.InvariantCulture, "Omitting extensions of business rule violation {ViolationType}: reflection-based JSON serialization is disabled", violation.GetType().Name);
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
         // Property discovery is per type; only the values are read per violation.
         var properties = _extensionProperties.GetOrAdd(violation.GetType(), _discoverExtensionProperties);
 

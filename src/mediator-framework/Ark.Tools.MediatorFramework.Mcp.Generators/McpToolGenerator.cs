@@ -496,8 +496,18 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     CreateDocumentationSource(property)))
                 .ToImmutableArray(),
             constructor.Parameters.Select(static parameter => parameter.Name).ToImmutableArray(),
-            location);
+            location)
+        {
+            IsSelfTyped = IsSelfTyped(type),
+        };
     }
+
+    // A self-typed contract (IQuery<TSelf, TResult>, IRequest<TSelf, TResponse>, ICommand<TSelf>) is dispatched
+    // through the typed processor overload, which resolves its handler without reflection and is trim-safe.
+    private static bool IsSelfTyped(INamedTypeSymbol type)
+        => type.AllInterfaces.Any(@interface =>
+            (@interface.OriginalDefinition.ContainingNamespace.ToDisplayString() + "." + @interface.OriginalDefinition.MetadataName) is Query2 or Request2 or GenericCommand
+            && SymbolEqualityComparer.Default.Equals(@interface.TypeArguments[0], type));
 
     private static DocumentationSource CreateDocumentationSource(ISymbol symbol)
         => new(
@@ -914,7 +924,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         if (model.Kind == HandlerKind.Query)
         {
             builder.Append("            var result = await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(services).ExecuteAsync<")
-                .Append(response).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
+                .Append(TypedDispatchArguments(model)).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
             if (attachmentResponse)
                 builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToEmbeddedResourceAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
             else
@@ -923,7 +933,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         else if (model.Kind == HandlerKind.Request)
         {
             builder.Append("            var result = await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IRequestProcessor>(services).ExecuteAsync<")
-                .Append(response).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
+                .Append(TypedDispatchArguments(model)).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
             if (attachmentResponse)
                 builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToEmbeddedResourceAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
             else
@@ -931,11 +941,15 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
         else
         {
-            builder.AppendLine("            await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(services).ExecuteAsync(request, cancellationToken).ConfigureAwait(false);");
+            builder.Append("            await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(services).ExecuteAsync")
+                .Append(model.IsSelfTyped ? "<" + model.TypeFullName + ">" : string.Empty).AppendLine("(request, cancellationToken).ConfigureAwait(false);");
         }
         builder.AppendLine("        }");
         builder.AppendLine("    }");
     }
+
+    private static string TypedDispatchArguments(ContractModel model)
+        => model.IsSelfTyped ? model.TypeFullName + ", " + model.ResponseType : model.ResponseType!;
 
     private static string ToParameterName(string name)
         => char.ToLowerInvariant(name[0]) + name.Substring(1);
@@ -1038,6 +1052,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         EquatableArray<string> ConstructorParameters,
         Location? Location)
     {
+        public bool IsSelfTyped { get; init; }
+
         public static ContractModel Invalid(
             string typeFullName,
             string assemblyName,

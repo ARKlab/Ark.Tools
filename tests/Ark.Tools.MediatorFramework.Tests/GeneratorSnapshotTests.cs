@@ -145,6 +145,36 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorDispatchesSelfTypedContractsWithoutReflection()
+    {
+        // The typed processor overloads resolve the handler at compile time and are trim-safe; a contract that is not
+        // self-typed can only use the reflection-based overload.
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            [McpTool(Name = "books.search")]
+            public sealed record SearchBooks(string Text) : IQuery<SearchBooks, string>;
+            [McpTool(Name = "books.update")]
+            public sealed record UpdateBook(int Id) : IRequest<UpdateBook, string>;
+            [McpTool(Name = "books.archive")]
+            public sealed record ArchiveBook(int Id) : ICommand<ArchiveBook>;
+            [McpTool(Name = "books.legacy")]
+            public sealed record LegacySearch(string Text) : IQuery<string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("IQueryProcessor>(services).ExecuteAsync<global::SearchBooks, string>(request, cancellationToken)");
+        result.Generated.Should().Contain("IRequestProcessor>(services).ExecuteAsync<global::UpdateBook, string>(request, cancellationToken)");
+        result.Generated.Should().Contain("ICommandProcessor>(services).ExecuteAsync<global::ArchiveBook>(request, cancellationToken)");
+        result.Generated.Should().Contain("IQueryProcessor>(services).ExecuteAsync<string>(request, cancellationToken)");
+    }
+
+    [TestMethod]
     public void McpGeneratorEmitsExplicitVersionedToolRegistration()
     {
         var result = _runGeneratorResult<McpToolGenerator>(
