@@ -65,7 +65,7 @@ public sealed class MinimalApiEndpointFilterTests
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         invocations.Should().Be(1);
-        fixture.State.LastRequestServerStamp.Should().BeNull();
+        fixture.State.RequestExecutions.Should().Be(0);
     }
 
     /// <summary>Verifies a filter can short-circuit the handler with its own result.</summary>
@@ -84,5 +84,6 @@ public sealed class MinimalApiEndpointFilterTests
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
         (await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false)).Should().Be("short-circuited");
+        fixture.State.RequestExecutions.Should().Be(0);
     }
 }
