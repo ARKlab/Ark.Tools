@@ -10,6 +10,7 @@ using NLog;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Tools.ResourceWatcher;
 
@@ -59,12 +60,20 @@ public class SqlStateProvider<[DynamicallyAccessedMembers(_extensionsMembers)] T
         // Used for Extensions when no external context is provided
         _internalJsonOptions = new JsonSerializerOptions
         {
+            TypeInfoResolver = _createReflectionResolver(),
 #if NET9_0_OR_GREATER
             RespectNullableAnnotations = true,
             RespectRequiredConstructorParameters = true
 #endif
         };
         _internalJsonOptions.ConfigureArkDefaults();
+    }
+
+    // Trimmed apps disable reflection-based serialization by default, so the fallback opts back in explicitly.
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode", Justification = _flatExtensionsJustification)]
+    private static DefaultJsonTypeInfoResolver _createReflectionResolver()
+    {
+        return new DefaultJsonTypeInfoResolver();
     }
 
     sealed class EJ
@@ -93,7 +102,7 @@ public class SqlStateProvider<[DynamicallyAccessedMembers(_extensionsMembers)] T
             return extensions.Serialize(extensions.GetType(), _extensionsJsonContext);
         }
 
-        // Fallback to reflection-based serialization (not trim-safe)
+        // Fallback to reflection-based serialization (trim-safe for flat types only)
         // If it's already a JsonElement (deserialized from DB), serialize it directly
         if (extensions is JsonElement element)
             return JsonSerializer.Serialize(element, _internalJsonOptions);
@@ -155,7 +164,7 @@ public class SqlStateProvider<[DynamicallyAccessedMembers(_extensionsMembers)] T
                     }
                     else
                     {
-                        // Fallback to reflection-based deserialization (not trim-safe)
+                        // Fallback to reflection-based deserialization (trim-safe for flat types only)
                         result.Extensions = _deserializeExtensions(e.ExtensionsJson);
                     }
                 }
