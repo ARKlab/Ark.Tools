@@ -34,7 +34,7 @@ internal static class Program
         master.InitialCatalog = "master";
         // Plain SqlCommand: Dapper's anonymous-type parameters are not trim-safe, and this setup is not under test.
         using (var connection = new SqlConnection(master.ConnectionString))
-        using (var command = new SqlCommand("IF DB_ID(@database) IS NULL EXEC('CREATE DATABASE ' + QUOTENAME(@database))", connection))
+        using (var command = new SqlCommand("IF DB_ID(@database) IS NULL BEGIN DECLARE @sql nvarchar(max) = N'CREATE DATABASE ' + QUOTENAME(@database); EXEC(@sql); END", connection))
         {
             command.Parameters.AddWithValue("@database", database);
             await connection.OpenAsync().ConfigureAwait(false);
