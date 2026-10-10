@@ -41,7 +41,7 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
             Title = request.Data.Title,
             Author = request.Data.Author,
             Genre = request.Data.Genre,
-            Description = BookDescription.From($"Book updated: {request.Data.Title} by {request.Data.Author.Reveal(CreateBookHandler._descriptionPurpose)}"),
+            Description = BookDescription.From($"Book updated: {request.Data.Title.Value} by {request.Data.Author.Reveal(CreateBookHandler._descriptionPurpose)}"),
         };
         if (!await context.UpdateBookAsync(book, ctk).ConfigureAwait(false))
             throw new EntityTagMismatchException($"The ETag for book '{request.Id}' did not match.");

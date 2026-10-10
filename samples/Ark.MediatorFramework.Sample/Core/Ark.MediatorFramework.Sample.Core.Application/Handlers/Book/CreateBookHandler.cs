@@ -52,7 +52,7 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
             Author = author,
             Genre = genre,
             ISBN = isbn,
-            Description = BookDescription.From($"Book created: {title} by {author.Reveal(_descriptionPurpose)}"),
+            Description = BookDescription.From($"Book created: {title.Value} by {author.Reveal(_descriptionPurpose)}"),
         };
     }
 
