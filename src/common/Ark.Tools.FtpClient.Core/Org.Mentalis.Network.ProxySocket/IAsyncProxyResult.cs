@@ -6,7 +6,7 @@ namespace Org.Mentalis.Network.ProxySocket;
 /// <summary>
 /// A class that implements the IAsyncResult interface. Objects from this class are returned by the BeginConnect method of the ProxySocket class.
 /// </summary>
-[SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "3rd party code. The APM pattern has no disposal point for an IAsyncResult: the lazily created wait handle is handed out through AsyncWaitHandle and callers may still hold it after completion, so it is left to finalization.")]
+[SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "3rd party code. ProxySocket.EndConnect waits on the lazily created wait handle but never closes it, and callers may still hold the handle returned by AsyncWaitHandle, so it is left to finalization. Disposing it would change the ownership contract of the vendored EndConnect.")]
 internal sealed class IAsyncProxyResult : IAsyncResult
 {
     /// <summary>Initializes the internal variables of this object</summary>
