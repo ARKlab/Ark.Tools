@@ -76,6 +76,7 @@ public sealed class ValueObjectOpenApiTests
 
         schemas["OpenApiPageCount"]!["minimum"]!.GetValue<int>().Should().Be(1);
         schemas["OpenApiBook"]!["properties"]!["chapters"]!["items"]!["minimum"]!.GetValue<int>().Should().Be(1);
+        schemas["OpenApiPageCount"]!["multipleOf"]!.GetValue<int>().Should().Be(2);
     }
 
     [TestMethod]
@@ -117,7 +118,10 @@ public sealed class ValueObjectOpenApiTests
             .AddSchemaTransformer(static (schema, context, _) =>
             {
                 if (context.JsonTypeInfo.Type == typeof(int))
+                {
                     schema.Minimum = "1";
+                    schema.MultipleOf = 2;
+                }
                 return Task.CompletedTask;
             })
             .AddArkValueObjectSchemas());

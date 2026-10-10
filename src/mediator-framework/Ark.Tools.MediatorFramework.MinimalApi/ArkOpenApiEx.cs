@@ -250,6 +250,7 @@ public static class ArkOpenApiEx
         target.Maximum = source.Maximum;
         target.ExclusiveMinimum = source.ExclusiveMinimum;
         target.ExclusiveMaximum = source.ExclusiveMaximum;
+        target.MultipleOf = source.MultipleOf;
         target.MinLength = source.MinLength;
         target.MaxLength = source.MaxLength;
         target.Default = source.Default?.DeepClone();
