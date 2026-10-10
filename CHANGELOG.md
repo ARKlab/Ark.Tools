@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `Ark.Tools.MediatorFramework.MinimalApi`: generated endpoints bind route, query and JSON body values in generated code, with the same rules as ASP.NET Core Minimal API, instead of through `RequestDelegateFactory`. They are trim-safe and start without reflection; endpoint filters and OpenAPI work as before. `GET` and `DELETE` contracts are bound property by property instead of with `[AsParameters]`. In a trimmed app, add the contract and response types to a `JsonSerializerContext` in the Minimal API JSON options.
 - `Ark.Tools.ResourceWatcher.Sql`: trimmed apps that use `SqlStateProvider<TExtensions>` without `ExtensionsJsonContext` now keep the public constructors, properties and fields of a flat extensions type and opt back into reflection-based serialization, so it round-trips instead of failing or losing values. Generic code that passes its own type parameter as `TExtensions` must add the same `[DynamicallyAccessedMembers]` annotation (trim analyzer IL2091). Nested or polymorphic extension types still need `ExtensionsJsonContext` when trimming.
 
 ### Fixed

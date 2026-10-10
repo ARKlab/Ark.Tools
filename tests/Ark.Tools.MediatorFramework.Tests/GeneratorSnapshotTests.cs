@@ -2418,7 +2418,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null");
         generated.Should().Contain("var group = endpoints.MapGroup(string.Empty);");
-        generated.Should().Contain("group.MapGet(template0V1");
+        generated.Should().Contain("ArkGeneratedEndpoint.Map(group, template0V1, \"GET\"");
         generated.Should().Contain(".RequireAuthorization()");
         generated.Should().NotContain(".RequireAuthorization(\"admin\")");
         generated.Should().Contain(".AllowAnonymous()");
@@ -2578,7 +2578,7 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().Contain("TypedResults.NotFound()");
-        generated.Should().Contain("Results.Json(result, statusCode: 201)");
+        generated.Should().Contain("ArkGeneratedEndpoint.Json(result, 201)");
         generated.Should().Contain(".Produces<string>(201).Produces(200)");
         generated.Should().Contain(".Produces<string>(200).Produces(404)");
     }
@@ -3219,7 +3219,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListBooks");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DeleteBook");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::GetMe");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListShelves request,");
+        result.Generated.Should().Contain("var request = new global::ListShelves { Skip = Skip };");
+        result.Generated.Should().NotContain("AsParameters");
         result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DownloadExport");
     }
@@ -3364,7 +3365,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain(".Accepts<");
         result.Generated.Should().NotContain("ValidateMessagePackContracts");
         result.Generated.Should().Contain("var request = new global::GetBook {");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::StreamBooks request,");
+        result.Generated.Should().Contain("var request = new global::StreamBooks { Count = Count, Ids = Ids };");
         result.Generated.Should().Contain("ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken, 200, 404)");
         result.Generated.Should().Contain("WriteStreamingResponseAsync<string>");
     }

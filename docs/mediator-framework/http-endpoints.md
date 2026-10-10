@@ -175,6 +175,27 @@ Caller with five files receives a safe public failure before the handler runs:
 ```
 Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/BookTransportBoundaryTests.cs)
 
+## Trimming and request binding
+
+Generated endpoints bind route, query and JSON body values in generated code,
+with the same rules as ASP.NET Core Minimal API: a missing required value or a
+value that does not convert returns `400`, and a body with a non-JSON content
+type returns `415`. They do not use `RequestDelegateFactory`, so they are
+trim-safe and need no reflection at startup. Endpoint filters added to the
+group run as usual, and OpenAPI still describes every parameter.
+
+In a trimmed app, list the contract and response types in a
+`JsonSerializerContext` and add it to the Minimal API JSON options:
+
+```csharp
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, BooksJsonContext.Default));
+```
+
+A type converter used by a route or query value must be registered with
+`TypeDescriptor.RegisterType<T>()`; for NodaTime types call
+`NodaTimeConverter.Register()`.
+
 ## Security and unsupported shapes
 
 Authentication is an ASP.NET Core host concern. Configure schemes and

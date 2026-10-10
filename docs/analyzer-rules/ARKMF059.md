@@ -42,10 +42,10 @@ reports a property when:
   (an explicit route or `[HttpQuery]` property is read through its
   `TypeConverter`), so any other settable property is never set. An `[ETag]`
   property is read from the `If-Match` header and is accepted;
-- ASP.NET Core would infer it as a body. When a request or query has no route
-  or `[HttpQuery]` property, and always for commands, the endpoint binds the
-  contract with `[AsParameters]`. ASP.NET Core Minimal API then binds a
-  property, route properties included, from the route or query string only
+- it cannot be bound from a string. When a request or query has no route or
+  `[HttpQuery]` property, and always for commands, the endpoint binds every
+  settable property from the route or query string, as ASP.NET Core
+  `[AsParameters]` does. A property, route properties included, binds only
   when its type is:
   - a primitive, `string`, an enum, `Guid`, `DateTime`, `DateTimeOffset`,
     `TimeSpan`, `DateOnly`, `TimeOnly` or `Uri`, or `Nullable<T>` of one of
@@ -57,20 +57,13 @@ reports a property when:
 
   Any other type, including `List<T>`, `IReadOnlyList<T>`, `IEnumerable<T>`,
   dictionaries, structs without `TryParse` and NodaTime types such as
-  `LocalDate` and `Instant`, is inferred as a body and the endpoint throws
-  `InvalidOperationException: Body was inferred but the method does not allow
-  inferred body parameters` at startup.
-
-  A contract with `[ServerSet]` properties is not bound with `[AsParameters]`,
-  which would expose them to ASP.NET Core: its other properties are bound
-  explicitly from the route or query string, and the rules above still apply
-  to them.
+  `LocalDate` and `Instant`, would need a body, which a `GET` or `DELETE`
+  endpoint does not read. `[ServerSet]` properties are never bound.
 
 For every verb, the endpoint binds a route or `[HttpQuery]` property
-explicitly, unless it binds the contract with `[AsParameters]` as described
-above. An explicit route or query value is read as follows:
+explicitly. An explicit route or query value is read as follows:
 
-- a type from the list above is bound by ASP.NET Core;
+- a type from the list above is bound with the ASP.NET Core Minimal API rules;
 - a string collection receives every value of the query parameter. The
   supported shapes are `string[]`, `StringValues`, and `IEnumerable`,
   `IReadOnlyCollection`, `IReadOnlyList`, `ICollection`, `IList`, `List`,
@@ -84,8 +77,7 @@ above. An explicit route or query value is read as follows:
 
 The rule reports the property when its type is:
 
-- an array of a type without `TryParse`, which ASP.NET Core rejects at startup
-  (`must have a valid TryParse method to support converting from a string`);
+- an array of a type without `TryParse`, whose values cannot be converted;
 - a collection, such as `List<int>`, `HashSet<Guid>` or a dictionary, without a
   `[TypeConverter]` attribute. No `TypeConverter` converts a string to it, so
   every request that carries the value fails with `400`;
