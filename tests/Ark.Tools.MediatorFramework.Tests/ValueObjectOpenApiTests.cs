@@ -70,6 +70,15 @@ public sealed class ValueObjectOpenApiTests
     }
 
     [TestMethod]
+    public async Task ValueObjectsKeepTheConstraintsOfTheirPrimitive()
+    {
+        var schemas = (await _documentsAsync())["constrained"]["components"]!["schemas"]!;
+
+        schemas["OpenApiPageCount"]!["minimum"]!.GetValue<int>().Should().Be(1);
+        schemas["OpenApiBook"]!["properties"]!["chapters"]!["items"]!["minimum"]!.GetValue<int>().Should().Be(1);
+    }
+
+    [TestMethod]
     public async Task ConcurrentDocumentRequestsEachReplayTheirOwnSchemas()
     {
         // Each request generates its own document; with Vogen's mapping registered after Ark's, every document
@@ -104,6 +113,14 @@ public sealed class ValueObjectOpenApiTests
         builder.Services.AddOpenApi("ark", static options => options.AddArkValueObjectSchemas());
         builder.Services.AddOpenApi("vogen-then-ark", static options => _vogen(options).AddArkValueObjectSchemas());
         builder.Services.AddOpenApi("ark-then-vogen", static options => _vogen(options.AddArkValueObjectSchemas()));
+        builder.Services.AddOpenApi("constrained", static options => options
+            .AddSchemaTransformer(static (schema, context, _) =>
+            {
+                if (context.JsonTypeInfo.Type == typeof(int))
+                    schema.Minimum = "1";
+                return Task.CompletedTask;
+            })
+            .AddArkValueObjectSchemas());
         var app = builder.Build();
         await using var __app = app.ConfigureAwait(false);
         app.MapGet("/books/{id}", static (OpenApiBookId id, OpenApiPageCount pages) => TypedResults.Ok(id.Value));
@@ -113,7 +130,7 @@ public sealed class ValueObjectOpenApiTests
 
         using var client = app.GetTestServer().CreateClient();
         var documents = new Dictionary<string, JsonNode[]>(StringComparer.Ordinal);
-        foreach (var name in new[] { "ark", "vogen-then-ark", "ark-then-vogen" })
+        foreach (var name in new[] { "ark", "vogen-then-ark", "ark-then-vogen", "constrained" })
         {
             var uri = new Uri("http://localhost/openapi/" + name + ".json");
             var json = await Task.WhenAll(Enumerable.Range(0, concurrentRequests)

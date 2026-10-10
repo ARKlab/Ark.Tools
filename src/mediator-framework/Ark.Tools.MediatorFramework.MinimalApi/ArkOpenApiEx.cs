@@ -235,7 +235,24 @@ public static class ArkOpenApiEx
 
     private static OpenApiSchema _copy(OpenApiSchema primitiveSchema)
     {
-        return new OpenApiSchema { Type = primitiveSchema.Type, Format = primitiveSchema.Format, Pattern = primitiveSchema.Pattern };
+        var copy = new OpenApiSchema { Type = primitiveSchema.Type };
+        _copyConstraints(primitiveSchema, copy);
+        return copy;
+    }
+
+    // The value constraints of the primitive's schema; titles, descriptions and references stay with the target.
+    private static void _copyConstraints(OpenApiSchema source, OpenApiSchema target)
+    {
+        target.Format = source.Format;
+        target.Pattern = source.Pattern;
+        target.Enum = source.Enum is null ? null : [.. source.Enum.Select(static value => value?.DeepClone()).OfType<JsonNode>()];
+        target.Minimum = source.Minimum;
+        target.Maximum = source.Maximum;
+        target.ExclusiveMinimum = source.ExclusiveMinimum;
+        target.ExclusiveMaximum = source.ExclusiveMaximum;
+        target.MinLength = source.MinLength;
+        target.MaxLength = source.MaxLength;
+        target.Default = source.Default?.DeepClone();
     }
 
     private static void _apply(OpenApiSchema schema, OpenApiSchema valueObject, bool isCollection)
@@ -243,14 +260,13 @@ public static class ArkOpenApiEx
         if (isCollection)
         {
             // ASP.NET Core emits no items for a collection of a converter-backed type.
-            schema.Items = new OpenApiSchema { Type = valueObject.Type, Format = valueObject.Format, Pattern = valueObject.Pattern };
+            schema.Items = _copy(valueObject);
             return;
         }
 
         var nullable = schema.Type is { } current && current.HasFlag(JsonSchemaType.Null);
         schema.Type = nullable ? valueObject.Type | JsonSchemaType.Null : valueObject.Type;
-        schema.Format = valueObject.Format;
-        schema.Pattern = valueObject.Pattern;
+        _copyConstraints(valueObject, schema);
         schema.Items = null;
         schema.Properties?.Clear();
         schema.Required?.Clear();
