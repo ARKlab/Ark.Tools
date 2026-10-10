@@ -3,6 +3,8 @@
 
 using AwesomeAssertions;
 
+using System.Data;
+
 namespace Ark.Tools.Dapper.Tests;
 
 /// <summary>Tests for <see cref="ValueObjectTypeHandler{TValueObject, TPrimitive}"/>.</summary>
@@ -24,9 +26,10 @@ public class ValueObjectTypeHandlerTests
         handler.SetValue(parameter, new OrderId(id));
 
         parameter.Value.Should().Be(id);
+        parameter.DbType.Should().Be(DbType.Guid);
     }
 
-    /// <summary>A null reference-type value object is written as <see cref="DBNull"/>.</summary>
+    /// <summary>A null reference-type value object is written as <see cref="DBNull"/>, typed as its primitive.</summary>
     [TestMethod]
     public void SetValue_Null_ShouldWriteDbNull()
     {
@@ -36,6 +39,7 @@ public class ValueObjectTypeHandlerTests
         handler.SetValue(parameter, null);
 
         parameter.Value.Should().Be(DBNull.Value);
+        parameter.DbType.Should().Be(DbType.Guid);
     }
 
     /// <summary>A column value is read through the value object's factory, converting a different primitive type.</summary>

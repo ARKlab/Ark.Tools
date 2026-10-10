@@ -27,6 +27,9 @@ public static class ValueObjectDapper
 /// <typeparam name="TPrimitive">The wrapped primitive.</typeparam>
 public sealed class ValueObjectTypeHandler<TValueObject, TPrimitive> : SqlMapper.TypeHandler<TValueObject>
 {
+    // The parameter type of the primitive, so that a null value object still binds as a typed parameter.
+    private static readonly DbType? _dbType = _dbTypeOf(Nullable.GetUnderlyingType(typeof(TPrimitive)) ?? typeof(TPrimitive));
+
     private readonly Func<TPrimitive, TValueObject> _from;
     private readonly Func<TValueObject, TPrimitive> _value;
 
@@ -45,6 +48,8 @@ public sealed class ValueObjectTypeHandler<TValueObject, TPrimitive> : SqlMapper
     public override void SetValue(IDbDataParameter parameter, TValueObject? value)
     {
         ArgumentNullException.ThrowIfNull(parameter);
+        if (_dbType is { } dbType)
+            parameter.DbType = dbType;
         parameter.Value = value is null ? DBNull.Value : _value(value);
     }
 
@@ -54,5 +59,29 @@ public sealed class ValueObjectTypeHandler<TValueObject, TPrimitive> : SqlMapper
         return _from(value is TPrimitive primitive
             ? primitive
             : (TPrimitive)Convert.ChangeType(value, typeof(TPrimitive), CultureInfo.InvariantCulture));
+    }
+
+    private static DbType? _dbTypeOf(Type type)
+    {
+        if (type == typeof(Guid))
+            return DbType.Guid;
+        if (type == typeof(DateTimeOffset))
+            return DbType.DateTimeOffset;
+        if (type == typeof(byte[]))
+            return DbType.Binary;
+        return Type.GetTypeCode(type) switch
+        {
+            TypeCode.String => DbType.String,
+            TypeCode.Boolean => DbType.Boolean,
+            TypeCode.Byte => DbType.Byte,
+            TypeCode.Int16 => DbType.Int16,
+            TypeCode.Int32 => DbType.Int32,
+            TypeCode.Int64 => DbType.Int64,
+            TypeCode.Single => DbType.Single,
+            TypeCode.Double => DbType.Double,
+            TypeCode.Decimal => DbType.Decimal,
+            TypeCode.DateTime => DbType.DateTime2,
+            _ => null,
+        };
     }
 }
