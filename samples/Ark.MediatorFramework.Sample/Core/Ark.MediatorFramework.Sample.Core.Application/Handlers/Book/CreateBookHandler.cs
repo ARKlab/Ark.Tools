@@ -52,14 +52,10 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
             Author = author,
             Genre = genre,
             ISBN = isbn,
-            Description = BookDescription.From($"Book created: {title.Value} by {author.Reveal(_descriptionPurpose)}"),
+            // The author is personal data: it stays out of the description, which is not classified.
+            Description = BookDescription.From($"Book created: {title.Value}"),
         };
     }
-
-    /// <summary>Reveals the author's name to compose the generated book description.</summary>
-    internal static readonly CompliancePurpose _descriptionPurpose = CompliancePurpose.Custom(
-        "Compose the Book description",
-        CompliancePurposeCategory.TechnicalFunctional);
 
     private AuditEntry _createAudit(BookId id, string operation)
     {
