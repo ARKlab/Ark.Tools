@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.OpenApi;
 
 using Microsoft.OpenApi;
 
+using System.Collections.Concurrent;
 using System.Text.Json.Nodes;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
@@ -162,24 +163,103 @@ public static class ArkOpenApiEx
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        options.AddSchemaTransformer(static async (schema, context, cancellationToken) =>
+        // Every schema rewritten for a document, replayed once all schema transformers ran: a Vogen
+        // MapVogenTypesIn... transformer registered after this one then cannot change the published schema.
+        var rewritten = new ConcurrentDictionary<string, ConcurrentQueue<(OpenApiSchema Schema, OpenApiSchema ValueObject, bool IsCollection)>>(StringComparer.Ordinal);
+
+        options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
         {
-            var type = Nullable.GetUnderlyingType(context.JsonTypeInfo.Type)
-                ?? context.JsonTypeInfo.Type;
-            if (_getValueObjectPrimitive(type) is not { } primitive)
+            var type = context.JsonTypeInfo.Type;
+            var element = _collectionElementType(type);
+            var isCollection = element is not null;
+            var valueObjectType = Nullable.GetUnderlyingType(element ?? type) ?? element ?? type;
+            if (_getValueObjectPrimitive(valueObjectType) is not { } primitive)
                 return;
 
-            var primitiveSchema = await context.GetOrCreateSchemaAsync(primitive, cancellationToken: cancellationToken).ConfigureAwait(false);
-            schema.Type = schema.Type is { } current && current.HasFlag(JsonSchemaType.Null)
-                ? primitiveSchema.Type | JsonSchemaType.Null
-                : primitiveSchema.Type;
-            schema.Format = primitiveSchema.Format;
-            schema.Pattern = primitiveSchema.Pattern;
-            schema.Properties?.Clear();
-            schema.Required?.Clear();
+            var valueObject = await _valueObjectSchemaAsync(primitive, context, cancellationToken).ConfigureAwait(false);
+            if (isCollection && Nullable.GetUnderlyingType(element!) is not null)
+                valueObject.Type |= JsonSchemaType.Null;
+            _apply(schema, valueObject, isCollection);
+            rewritten.GetOrAdd(context.DocumentName, static _ => new()).Enqueue((schema, valueObject, isCollection));
+        });
+
+        // A route or query value of a plain Minimal API endpoint is described as a bare string; generated
+        // endpoints already reference the value object's schema.
+        options.AddOperationTransformer(static async (operation, context, cancellationToken) =>
+        {
+            if (operation.Parameters is null)
+                return;
+
+            foreach (var description in context.Description.ParameterDescriptions)
+            {
+                var type = Nullable.GetUnderlyingType(description.Type) ?? description.Type;
+                if (type is null || _getValueObjectPrimitive(type) is not { } primitive)
+                    continue;
+
+                var parameter = operation.Parameters.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Name, description.Name, StringComparison.OrdinalIgnoreCase));
+                if (parameter is OpenApiParameter { Schema: OpenApiSchema } mutable)
+                    mutable.Schema = await _valueObjectSchemaAsync(primitive, context, cancellationToken).ConfigureAwait(false);
+            }
+        });
+
+        options.AddDocumentTransformer((_, context, _) =>
+        {
+            if (rewritten.TryRemove(context.DocumentName, out var schemas))
+            {
+                foreach (var (schema, valueObject, isCollection) in schemas)
+                    _apply(schema, valueObject, isCollection);
+            }
+
+            return Task.CompletedTask;
         });
 
         return options;
+    }
+
+    // The schema of the wrapped primitive: Vogen's JSON converters read and write it with the serializer options,
+    // so it accepts what the primitive accepts, such as a number in a string under the web defaults.
+    private static async Task<OpenApiSchema> _valueObjectSchemaAsync(Type primitive, OpenApiSchemaTransformerContext context, CancellationToken cancellationToken)
+    {
+        return _copy(await context.GetOrCreateSchemaAsync(primitive, cancellationToken: cancellationToken).ConfigureAwait(false));
+    }
+
+    private static async Task<OpenApiSchema> _valueObjectSchemaAsync(Type primitive, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    {
+        return _copy(await context.GetOrCreateSchemaAsync(primitive, cancellationToken: cancellationToken).ConfigureAwait(false));
+    }
+
+    private static OpenApiSchema _copy(OpenApiSchema primitiveSchema)
+    {
+        return new OpenApiSchema { Type = primitiveSchema.Type, Format = primitiveSchema.Format, Pattern = primitiveSchema.Pattern };
+    }
+
+    private static void _apply(OpenApiSchema schema, OpenApiSchema valueObject, bool isCollection)
+    {
+        if (isCollection)
+        {
+            // ASP.NET Core emits no items for a collection of a converter-backed type.
+            schema.Items = new OpenApiSchema { Type = valueObject.Type, Format = valueObject.Format, Pattern = valueObject.Pattern };
+            return;
+        }
+
+        var nullable = schema.Type is { } current && current.HasFlag(JsonSchemaType.Null);
+        schema.Type = nullable ? valueObject.Type | JsonSchemaType.Null : valueObject.Type;
+        schema.Format = valueObject.Format;
+        schema.Pattern = valueObject.Pattern;
+        schema.Items = null;
+        schema.Properties?.Clear();
+        schema.Required?.Clear();
+    }
+
+    // The element type of an array or of a single-argument generic collection, such as List<T>.
+    private static Type? _collectionElementType(Type type)
+    {
+        if (type.IsArray)
+            return type.GetElementType();
+        return type.IsGenericType && type.GenericTypeArguments.Length == 1 && typeof(System.Collections.IEnumerable).IsAssignableFrom(type)
+            ? type.GenericTypeArguments[0]
+            : null;
     }
 
     // Detected by attribute name so this package takes no Vogen dependency. The primitive is read from the
