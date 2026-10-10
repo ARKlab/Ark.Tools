@@ -747,6 +747,24 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorKeepsNullableBodyOptional()
+    {
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("PUT", "/items/{id}")]
+            public sealed record Update(
+                [property: HttpBody] int? Count,
+                [property: HttpRoute] System.Guid Id) : IRequest<Update, string>;
+            """);
+
+        // As with RequestDelegateFactory, a nullable body accepts an empty request and is optional in OpenAPI.
+        minimal.Should().Contain(".AddJsonBody(builder, typeof(int), isOptional: true);");
+        minimal.Should().Contain(".ReadJsonBodyAsync<int?>(httpContext, true, ");
+    }
+
+    [TestMethod]
     public void GeneratorsComposeBodyAndRouteIntoPositionalRecords()
     {
         var source =

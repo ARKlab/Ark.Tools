@@ -1592,7 +1592,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .AppendLine("(global::System.Reflection.ParameterInfo[] parameters, global::Microsoft.AspNetCore.Builder.EndpointBuilder builder)");
             m.AppendLine("        {");
             foreach (var body in parameters.Where(static parameter => parameter.Source == ParameterSource.Body))
-                m.Append("            ").Append(endpointType).Append(".AddJsonBody(builder, typeof(").Append(body.Type.TrimEnd('?')).AppendLine("), isOptional: false);");
+                m.Append("            ").Append(endpointType).Append(".AddJsonBody(builder, typeof(").Append(body.Type.TrimEnd('?')).Append("), isOptional: ").Append(body.IsOptional ? "true" : "false").AppendLine(");");
             for (var i = 0; i < parameters.Count; i++)
             {
                 var parameter = parameters[i];
@@ -1660,7 +1660,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (parameter.Source == ParameterSource.Body)
             {
                 m.Append(indent).Append("var (").Append(local).Append("_ok, ").Append(local).Append(") = await binder.ReadJsonBodyAsync<").Append(parameter.Type)
-                    .Append(">(httpContext, false, ").Append(Literal(ShortTypeName(parameter.Type))).Append(", ").Append(name).AppendLine(").ConfigureAwait(false);");
+                    .Append(">(httpContext, ").Append(parameter.IsOptional ? "true" : "false").Append(", ").Append(Literal(ShortTypeName(parameter.Type))).Append(", ").Append(name).AppendLine(").ConfigureAwait(false);");
                 m.Append(indent).Append("if (!").Append(local).AppendLine("_ok)");
                 m.Append(indent).AppendLine("    return;");
                 return;
