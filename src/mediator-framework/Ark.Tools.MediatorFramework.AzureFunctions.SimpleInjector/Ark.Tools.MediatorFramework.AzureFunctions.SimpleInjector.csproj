@@ -1,9 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- NU5104: ProjectReference to the sibling MediatorFramework packages is pinned to their exact build
-         version, which can carry the shared $(ArkToolsCoreVersionSuffix) even though this package packs as
-         stable; suppressed repo-wide the same way for the other Ark.Tools packages built alongside it. -->
     <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
     <Description>Opt-in SimpleInjector bridge for Ark.Tools.MediatorFramework.AzureFunctions consumers that compose their application with SimpleInjector.</Description>
