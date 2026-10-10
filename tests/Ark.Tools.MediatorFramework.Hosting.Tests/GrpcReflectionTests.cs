@@ -14,6 +14,9 @@ public sealed class GrpcReflectionTests
 {
     private const int _grpcPort = 50051;
 
+    // GHCR copy of the official image: Docker Hub rate-limits anonymous pulls on CI runners.
+    private const string _grpcurlImage = "ghcr.io/fullstorydev/grpcurl:v1.9.4@sha256:1586c70091a7338f14177f6f6077e4d3ca90c6f0b6d9ea541638b4c803a50846";
+
     /// <summary>Verifies grpcurl discovers every generated versioned service via the reflection endpoint.</summary>
     [TestMethod]
     public async Task DiscoversVersionedServicesThroughReflection()
@@ -33,7 +36,7 @@ public sealed class GrpcReflectionTests
         startInfo.ArgumentList.Add("run");
         startInfo.ArgumentList.Add("--rm");
         startInfo.ArgumentList.Add("--add-host=host.docker.internal:host-gateway");
-        startInfo.ArgumentList.Add("fullstorydev/grpcurl:latest");
+        startInfo.ArgumentList.Add(_grpcurlImage);
         startInfo.ArgumentList.Add("-plaintext");
         startInfo.ArgumentList.Add($"host.docker.internal:{_grpcPort}");
         startInfo.ArgumentList.Add("list");
