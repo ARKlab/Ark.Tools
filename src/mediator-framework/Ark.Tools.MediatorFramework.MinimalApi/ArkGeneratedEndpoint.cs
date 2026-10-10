@@ -191,8 +191,12 @@ public sealed class ArkEndpointBinder
     {
         if (_throwOnBadRequest)
             throw new BadHttpRequestException(string.Format(CultureInfo.InvariantCulture, "Failed to bind parameter \"{0} {1}\" from \"{2}\".", typeName, parameterName, sourceValue));
-        _logger.Debug(CultureInfo.InvariantCulture, "Failed to bind parameter \"{ParameterType} {ParameterName}\" from \"{SourceValue}\".", typeName, parameterName, sourceValue);
+        _logger.Debug(CultureInfo.InvariantCulture, "Failed to bind parameter \"{ParameterType} {ParameterName}\" from \"{SourceValue}\".", typeName, parameterName, _forLog(sourceValue));
     }
+
+    // Request values are logged with line breaks escaped, so a value cannot forge log entries.
+    private static string? _forLog(string? value)
+        => value?.Replace("\r", "\\r", StringComparison.Ordinal).Replace("\n", "\\n", StringComparison.Ordinal);
 
     /// <summary>Reads an inferred JSON body with the semantics of <see cref="RequestDelegateFactory"/>.</summary>
     /// <typeparam name="T">The body type.</typeparam>
@@ -213,7 +217,7 @@ public sealed class ArkEndpointBinder
             {
                 if (_throwOnBadRequest)
                     throw new BadHttpRequestException(string.Format(CultureInfo.InvariantCulture, "Expected a supported JSON media type but got \"{0}\".", httpContext.Request.ContentType), StatusCodes.Status415UnsupportedMediaType);
-                _logger.Debug(CultureInfo.InvariantCulture, "Expected a supported JSON media type but got \"{ContentType}\".", httpContext.Request.ContentType ?? "(none)");
+                _logger.Debug(CultureInfo.InvariantCulture, "Expected a supported JSON media type but got \"{ContentType}\".", _forLog(httpContext.Request.ContentType) ?? "(none)");
                 httpContext.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;
                 return (false, default);
             }
