@@ -4397,6 +4397,38 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorDoesNotReportOmittedServerSetRequestMembers()
+    {
+        // The request message omits the server-set Guid, so its wire format cannot disagree with the .proto.
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string UserId { get; set; } = string.Empty;
+                [ServerSet]
+                [ProtoMember(2)]
+                public System.Guid TenantId { get; set; }
+            }
+
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().NotContain("tenant_id");
+    }
+
+    [TestMethod]
     [DataRow("[ServerSet]", false)]
     [DataRow("", true)]
     public void GrpcGeneratorImportsNodaTimeProtoOnlyForEmittedPeriodFields(string elapsedAttribute, bool imported)

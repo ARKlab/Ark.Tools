@@ -510,6 +510,10 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             var valueObjects = new SortedDictionary<string, (string Primitive, bool IsSensitive)>(StringComparer.Ordinal);
             var reported = new HashSet<string>(StringComparer.Ordinal);
+            // The exported request messages omit [ServerSet] members (see EmitProtoMessage), so they are not checked.
+            var requestNames = items
+                .Select(item => ProtoTypeName(item.TypeFullName, contractLookup))
+                .ToHashSet(StringComparer.Ordinal);
             foreach (var item in items)
             {
                 var reachable = new HashSet<string>(StringComparer.Ordinal);
@@ -519,6 +523,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 {
                     foreach (var member in contract.Members.Items)
                     {
+                        if (member.IsServerSet && requestNames.Contains(contract.Name))
+                            continue;
+
                         if (member.ExportIssue is not null)
                         {
                             if (reported.Add(contract.TypeFullName + "." + member.Name))
