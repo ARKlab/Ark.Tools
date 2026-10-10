@@ -63,8 +63,8 @@ public static class ArkProtobufValueObjects
 internal sealed class ValueObjectSerializer<TValueObject, TPrimitive> : ISerializer<TValueObject>
 {
     // protobuf-net creates the serializer from its type, so the conversions are held per closed generic type.
-    private static Func<TPrimitive, TValueObject>? _from;
-    private static Func<TValueObject, TPrimitive>? _value;
+    // Both delegates are published as one object so a serializer never mixes the conversions of two registrations.
+    private static Conversions? _conversions;
 
     private static readonly SerializerFeatures? _features = typeof(TPrimitive) switch
     {
@@ -81,9 +81,10 @@ internal sealed class ValueObjectSerializer<TValueObject, TPrimitive> : ISeriali
             throw new NotSupportedException($"Value object '{typeof(TValueObject)}' wraps '{typeof(TPrimitive)}', which has no protobuf scalar.");
 
         // The first registration wins, so a later one, even on another model, cannot change existing serialization.
-        Interlocked.CompareExchange(ref _from, from, null);
-        Interlocked.CompareExchange(ref _value, value, null);
+        Interlocked.CompareExchange(ref _conversions, new Conversions(from, value), null);
     }
+
+    private sealed record Conversions(Func<TPrimitive, TValueObject> From, Func<TValueObject, TPrimitive> Value);
 
     /// <inheritdoc />
     public SerializerFeatures Features => _features!.Value;
@@ -101,13 +102,13 @@ internal sealed class ValueObjectSerializer<TValueObject, TPrimitive> : ISeriali
             var t when t == typeof(float) => state.ReadSingle(),
             _ => state.ReadDouble(),
         };
-        return _from!((TPrimitive)primitive);
+        return _conversions!.From((TPrimitive)primitive);
     }
 
     /// <inheritdoc />
     public void Write(ref ProtoWriter.State state, TValueObject value)
     {
-        object? primitive = _value!(value);
+        object? primitive = _conversions!.Value(value);
         switch (primitive)
         {
             case string text:
