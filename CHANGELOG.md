@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - A native messaging delivery cancelled while its payload is being deserialized, by host shutdown or by `MaximumHandlerDuration`, is no longer dead-lettered as a malformed payload; it is retried like any other cancelled or timed-out delivery.
 - `Ark.Tools.ResourceWatcher.ApplicationInsights`: the `RetrievedAt` telemetry property now holds the resource retrieval instant instead of the state type name, and is omitted when the instant is unknown.
+- `Ark.Tools.ResourceWatcher.Sql`: `SqlStateProvider` reads and writes `ModifiedSources` through a source-generated serializer, so it keeps working in trimmed applications. The stored JSON format is unchanged.
 
 ## [7.0.0-beta13] - 2026-10-09
 
