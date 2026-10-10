@@ -3,6 +3,8 @@
 
 using Microsoft.CodeAnalysis;
 
+using System.Linq;
+
 namespace Ark.Tools.MediatorFramework.Generators;
 
 /// <summary>
@@ -38,6 +40,21 @@ internal static class ValueObjectSymbols
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Gets whether the type is an Ark.Tools.Compliance sensitive value object: a string wrapper whose cleartext is only
+    /// reachable through <c>SensitiveValueSerialization</c>. The type implements <c>ISensitiveValue&lt;T&gt;</c> once
+    /// compiled, or carries <c>[SensitiveValueObject&lt;string&gt;]</c> in the compilation that declares it.
+    /// </summary>
+    /// <param name="type">The candidate type.</param>
+    /// <returns><see langword="true"/> for a sensitive value object.</returns>
+    public static bool IsSensitiveValueObject(ITypeSymbol type)
+    {
+        return type.AllInterfaces.Any(static contract => contract is { MetadataName: "ISensitiveValue`1" }
+                && contract.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Compliance")
+            || type.GetAttributes().Any(static attribute => attribute.AttributeClass is { MetadataName: "SensitiveValueObjectAttribute`1" } attributeClass
+                && attributeClass.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Compliance");
     }
 
     /// <summary>Gets whether the type is a Vogen value object.</summary>

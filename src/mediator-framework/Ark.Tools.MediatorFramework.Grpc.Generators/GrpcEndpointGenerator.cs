@@ -502,13 +502,13 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         // Value objects reachable from the served contracts, registered as protobuf scalars when the services are
         // mapped, and the members whose exported .proto type would disagree with protobuf-net's wire format.
-        private static List<(string Type, string Primitive)> CollectValueObjects(
+        private static List<(string Type, string Primitive, bool IsSensitive)> CollectValueObjects(
             ImmutableArray<EndpointModel> items,
             ImmutableEquatableArray<AssemblyMapping> mappings,
             ProtoContractLookup contractLookup,
             List<DiagnosticInfo> diagnostics)
         {
-            var valueObjects = new SortedDictionary<string, string>(StringComparer.Ordinal);
+            var valueObjects = new SortedDictionary<string, (string Primitive, bool IsSensitive)>(StringComparer.Ordinal);
             var reported = new HashSet<string>(StringComparer.Ordinal);
             foreach (var item in items)
             {
@@ -538,13 +538,13 @@ namespace Ark.Tools.MediatorFramework.Generators
                         }
                         else if (member.ValueObjectType is not null)
                         {
-                            valueObjects[member.ValueObjectType] = member.ValueObjectPrimitive!;
+                            valueObjects[member.ValueObjectType] = (member.ValueObjectPrimitive!, member.IsSensitiveValueObject);
                         }
                     }
                 }
             }
 
-            return valueObjects.Select(static pair => (pair.Key, pair.Value)).ToList();
+            return valueObjects.Select(static pair => (pair.Key, pair.Value.Primitive, pair.Value.IsSensitive)).ToList();
         }
 
         private static GrpcOutput BuildOutput(
@@ -722,8 +722,13 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var valueObject in valueObjects)
             {
+                // A sensitive value object reveals its cleartext only through the compliance transport helpers.
+                var (from, value) = valueObject.IsSensitive
+                    ? ("global::Ark.Tools.Compliance.SensitiveValueSerialization.FromTransport<" + valueObject.Type + ">(value)",
+                        "global::Ark.Tools.Compliance.SensitiveValueSerialization.ToTransport(value, \"gRPC\")")
+                    : (valueObject.Type + ".From(value)", "value.Value");
                 sb.AppendLine("            global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<" + valueObject.Type + ", " + valueObject.Primitive + ">("
-                    + "global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => " + valueObject.Type + ".From(value), static value => value.Value);");
+                    + "global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => " + from + ", static value => " + value + ");");
             }
             foreach (var item in items)
             {
@@ -1023,6 +1028,9 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             var element = ProtoElementType(property.Type);
             var valueObjectPrimitive = ValueObjectSymbols.GetPrimitive(element);
+            var isSensitive = valueObjectPrimitive is null && ValueObjectSymbols.IsSensitiveValueObject(element);
+            if (isSensitive)
+                valueObjectPrimitive = "string";
             var precomputed = property.Type is INamedTypeSymbol evolvableEnum && IsEvolvableEnum(evolvableEnum)
                 ? EvolvableEnumProtoType(evolvableEnum)
                 : null;
@@ -1051,7 +1059,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 precomputed,
                 valueObjectPrimitive is null ? null : element.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 valueObjectPrimitive,
-                exportIssue);
+                exportIssue,
+                isSensitive);
         }
 
         // The primitives ArkProtobufValueObjects serializes as protobuf scalars.
@@ -1514,7 +1523,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             string? PrecomputedProtoType,
             string? ValueObjectType = null,
             string? ValueObjectPrimitive = null,
-            string? ExportIssue = null);
+            string? ExportIssue = null,
+            bool IsSensitiveValueObject = false);
 
         private readonly record struct ProtoIncludeModel(string TypeFullName, int Number)
         {

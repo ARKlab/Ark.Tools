@@ -4147,6 +4147,48 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorExportsSensitiveValueObjectsAsStringsAndRegistersThroughTheComplianceTransport()
+    {
+        // ReaderName is recognized by the attribute (declared in this compilation), AuthorName by the interface the
+        // compliance generator implements (a compiled reference).
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            namespace Ark.Tools.Compliance
+            {
+                [System.AttributeUsage(System.AttributeTargets.Struct)]
+                public sealed class SensitiveValueObjectAttribute<T> : System.Attribute { }
+                public interface ISensitiveValue<TSelf> where TSelf : struct, ISensitiveValue<TSelf> { }
+            }
+            [Ark.Tools.Compliance.SensitiveValueObject<string>]
+            public readonly partial struct ReaderName { }
+            public readonly partial struct AuthorName : Ark.Tools.Compliance.ISensitiveValue<AuthorName> { }
+            [GrpcService("Books")]
+            [GrpcMethod("GetBook")]
+            [ProtoContract]
+            public sealed class GetBook : IQuery<BookItem>
+            {
+                [ProtoMember(1)]
+                public ReaderName Reader { get; set; }
+            }
+            [ProtoContract]
+            public sealed class BookItem
+            {
+                [ProtoMember(1)]
+                public AuthorName? Author { get; set; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("string reader = 1;");
+        result.Generated.Should().Contain("string author = 1;");
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::ReaderName, string>(global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => global::Ark.Tools.Compliance.SensitiveValueSerialization.FromTransport<global::ReaderName>(value), static value => global::Ark.Tools.Compliance.SensitiveValueSerialization.ToTransport(value, \"gRPC\"));");
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::AuthorName, string>(");
+    }
+
+    [TestMethod]
     [DataRow("", true)]
     [DataRow("[assembly: ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level300)]", false)]
     public void GrpcGeneratorReportsGuidBelowCompatibilityLevel300(string assemblyAttribute, bool reported)
