@@ -517,7 +517,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             foreach (var item in items)
             {
                 var reachable = new HashSet<string>(StringComparer.Ordinal);
-                AddReachable(item.TypeFullName, contractLookup, reachable);
+                AddReachable(item.TypeFullName, contractLookup, reachable, omitServerSet: true);
                 AddReachable(item.IsStreaming ? item.StreamElement! : item.Response, contractLookup, reachable);
                 foreach (var contract in reachable.Select(type => contractLookup.ByType[type]).OrderBy(static contract => contract.TypeFullName, StringComparer.Ordinal))
                 {
@@ -843,7 +843,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 foreach (var endpoint in active)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    AddReachable(endpoint.TypeFullName, contractLookup, reachable);
+                    AddReachable(endpoint.TypeFullName, contractLookup, reachable, omitServerSet: true);
                     AddReachable(endpoint.IsStreaming ? endpoint.StreamElement! : endpoint.Response, contractLookup, reachable);
                 }
 
@@ -1157,10 +1157,13 @@ namespace Ark.Tools.MediatorFramework.Generators
                 new ImmutableEquatableArray<ProtoIncludeModel>(includes));
         }
 
+        // omitServerSet: the contract is a request, whose exported message omits its [ServerSet] members (see
+        // EmitProtoMessage), so the types only they reference are not reachable.
         private static void AddReachable(
             string displayName,
             ProtoContractLookup contractLookup,
-            ISet<string> reachable)
+            ISet<string> reachable,
+            bool omitServerSet = false)
         {
             var name = SimpleName(displayName);
             var contract = contractLookup.ByType.TryGetValue(displayName, out var byType)
@@ -1171,7 +1174,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (contract is null || !reachable.Add(contract.TypeFullName))
                 return;
 
-            foreach (var member in contract.Members.Items)
+            foreach (var member in contract.Members.Items.Where(member => !omitServerSet || !member.IsServerSet))
                 AddReachable(member.Type, contractLookup, reachable);
             foreach (var include in contract.Includes.Items)
                 AddReachable(include.TypeName, contractLookup, reachable);

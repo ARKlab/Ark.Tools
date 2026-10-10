@@ -4459,6 +4459,16 @@ public sealed class GeneratorSnapshotTests
                 [ServerSet]
                 [ProtoMember(2)]
                 public System.Guid TenantId { get; set; }
+                [ServerSet]
+                [ProtoMember(3)]
+                public ServerMetadata Metadata { get; set; } = new();
+            }
+
+            [ProtoContract]
+            public sealed class ServerMetadata
+            {
+                [ProtoMember(1)]
+                public System.Guid TraceId { get; set; }
             }
 
             [ProtoContract]
@@ -4471,6 +4481,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().BeEmpty();
         result.Generated.Should().NotContain("tenant_id");
+        result.Generated.Should().NotContain("message ServerMetadata");
     }
 
     [TestMethod]
