@@ -3991,6 +3991,125 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("GreetingsV1GrpcService");
     }
 
+    private const string _vogenAttributes = """
+        namespace Vogen
+        {
+            [System.AttributeUsage(System.AttributeTargets.Struct | System.AttributeTargets.Class)]
+            public sealed class ValueObjectAttribute<T> : System.Attribute { }
+        }
+        """;
+
+    [TestMethod]
+    public void GrpcGeneratorExportsValueObjectsAsPrimitiveScalarsAndRegistersThem()
+    {
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [Vogen.ValueObject<System.Guid>]
+            public readonly partial struct BookId { }
+            [Vogen.ValueObject<string>]
+            public readonly partial struct BookCode { }
+            [GrpcService("Books")]
+            [GrpcMethod("GetBook")]
+            [ProtoContract]
+            public sealed class GetBook : IQuery<BookItem>
+            {
+                [ProtoMember(1)]
+                public BookId Id { get; set; }
+            }
+            [ProtoContract]
+            public sealed class BookItem
+            {
+                [ProtoMember(1)]
+                public BookId? Parent { get; set; }
+                [ProtoMember(2)]
+                public System.Collections.Generic.List<BookCode> Codes { get; set; } = [];
+            }
+            """ + _vogenAttributes);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("string id = 1;");
+        result.Generated.Should().Contain("string parent = 1;");
+        result.Generated.Should().Contain("repeated string codes = 2;");
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::BookId, global::System.Guid>(global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => global::BookId.From(value), static value => value.Value);");
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::BookCode, string>(");
+    }
+
+    [TestMethod]
+    [DataRow("", true)]
+    [DataRow("[assembly: ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level300)]", false)]
+    public void GrpcGeneratorReportsGuidBelowCompatibilityLevel300(string assemblyAttribute, bool reported)
+    {
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            {{assemblyAttribute}}
+            [GrpcService("Books")]
+            [GrpcMethod("GetBook")]
+            [ProtoContract]
+            public sealed class GetBook : IQuery<BookItem>
+            {
+                [ProtoMember(1)]
+                public System.Guid Id { get; set; }
+            }
+            [ProtoContract]
+            public sealed class BookItem
+            {
+                [ProtoMember(1)]
+                public string Title { get; set; } = string.Empty;
+            }
+            """);
+
+        result.Generated.Should().Contain("string id = 1;");
+        if (!reported)
+        {
+            result.Diagnostics.Should().BeEmpty();
+            return;
+        }
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF060").Subject;
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Should().StartWith(
+            "gRPC contract 'GetBook' member 'Id' is a Guid, which protobuf-net serializes as bcl.Guid below CompatibilityLevel.Level300");
+        diagnostic.Location.IsInSource.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorReportsValueObjectWithoutProtobufScalar()
+    {
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [Vogen.ValueObject<decimal>]
+            public readonly partial struct Price { }
+            [GrpcService("Books")]
+            [GrpcMethod("GetBook")]
+            [ProtoContract]
+            public sealed class GetBook : IQuery<BookItem>
+            {
+                [ProtoMember(1)]
+                public string Title { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class BookItem
+            {
+                [ProtoMember(1)]
+                public Price Price { get; set; }
+            }
+            """ + _vogenAttributes);
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF060").Subject;
+        diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Should().Be(
+            "gRPC contract 'BookItem' member 'Price' is a value object over 'decimal', which has no protobuf scalar; wrap a string, Guid, bool, int, long, float or double");
+        result.Generated.Should().NotContain("ArkProtobufValueObjects.Register<global::Price");
+    }
+
     [TestMethod]
     [DataRow("IQuery<Page<Greeting>>", "response", "Page<Greeting>")]
     [DataRow("IQuery<System.Collections.Generic.IAsyncEnumerable<Page<Greeting>>>", "stream element", "Page<Greeting>")]
