@@ -56,9 +56,16 @@ public sealed class ValueObjectTypeHandler<TValueObject, TPrimitive> : SqlMapper
     /// <inheritdoc />
     public override TValueObject Parse(object value)
     {
-        return _from(value is TPrimitive primitive
-            ? primitive
-            : (TPrimitive)Convert.ChangeType(value, typeof(TPrimitive), CultureInfo.InvariantCulture));
+        // Guid and DateTimeOffset are not IConvertible, so a provider returning them as text needs an explicit parse.
+        object primitive = value switch
+        {
+            TPrimitive same => same,
+            string text when typeof(TPrimitive) == typeof(Guid) => Guid.Parse(text, CultureInfo.InvariantCulture),
+            byte[] bytes when typeof(TPrimitive) == typeof(Guid) => new Guid(bytes),
+            string text when typeof(TPrimitive) == typeof(DateTimeOffset) => DateTimeOffset.Parse(text, CultureInfo.InvariantCulture),
+            _ => Convert.ChangeType(value, typeof(TPrimitive), CultureInfo.InvariantCulture),
+        };
+        return _from((TPrimitive)primitive);
     }
 
     private static DbType? _dbTypeOf(Type type)

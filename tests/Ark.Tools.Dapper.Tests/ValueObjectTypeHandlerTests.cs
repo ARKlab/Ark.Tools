@@ -53,4 +53,15 @@ public class ValueObjectTypeHandlerTests
         guids.Parse(id).Should().Be(new OrderId(id));
         lines.Parse(7).Should().Be(new LineNumber(7));
     }
+
+    /// <summary>A provider returning a Guid as text or bytes, such as SQLite, still creates the value object.</summary>
+    [TestMethod]
+    public void Parse_ShouldCreateGuidValueObjectFromTextOrBytes()
+    {
+        var id = Guid.NewGuid();
+        var guids = new ValueObjectTypeHandler<OrderId, Guid>(static value => new OrderId(value), static value => value.Value);
+
+        guids.Parse(id.ToString()).Should().Be(new OrderId(id));
+        guids.Parse(id.ToByteArray()).Should().Be(new OrderId(id));
+    }
 }
