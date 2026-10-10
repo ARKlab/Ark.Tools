@@ -6,8 +6,6 @@
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <FunctionsInDependencies>true</FunctionsInDependencies>
     <OutputType>Exe</OutputType>
-    <!-- Non-production host: redaction registration (ARKPII013) not required -->
-    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -21,6 +19,7 @@
     <PackageReference Include="FluentValidation" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.AzureFunctions/Ark.Tools.MediatorFramework.AzureFunctions.csproj" />
     <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
+    <ProjectReference Include="../../src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.Analyzers/Ark.Tools.Solid.Analyzers.csproj"

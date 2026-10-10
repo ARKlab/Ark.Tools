@@ -3,6 +3,7 @@
 
 using Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions;
 using Ark.Tools.AspNetCore.HealthChecks;
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 
@@ -33,6 +34,7 @@ public static class Program
     {
         var builder = FunctionsApplication.CreateBuilder(args);
         builder.ConfigureFunctionsWebApplication();
+        builder.Services.AddArkRedaction();
 
 #pragma warning disable CA2000 // The container lives for the whole process.
         var container = _buildContainer();

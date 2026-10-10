@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <TargetFrameworks></TargetFrameworks>
     <TargetFramework>net10.0</TargetFramework>
     <Description>Azure Functions isolated-worker HTTP and messaging hosting for Ark.Tools MediatorFramework.</Description>

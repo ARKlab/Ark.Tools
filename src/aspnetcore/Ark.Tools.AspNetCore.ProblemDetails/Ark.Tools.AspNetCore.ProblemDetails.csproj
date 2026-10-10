@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);NU5104</NoWarn>
     <TargetFrameworks>net10.0</TargetFrameworks>
     <Description>Transport-neutral exception to RFC 7807 ProblemDetails mapping for Ark.Tools applications</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;ProblemDetails</PackageTags>
