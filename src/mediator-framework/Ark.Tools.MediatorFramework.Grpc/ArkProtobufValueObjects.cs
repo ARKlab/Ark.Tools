@@ -21,6 +21,10 @@ public static class ArkProtobufValueObjects
     /// <summary>
     /// Registers a value object as a protobuf scalar. Calling it more than once is a no-op for an already-registered type.
     /// </summary>
+    /// <remarks>
+    /// protobuf-net creates the serializer from its type, so a value object has one pair of conversions per process:
+    /// the first registration's <paramref name="from"/> and <paramref name="value"/> serve every model.
+    /// </remarks>
     /// <typeparam name="TValueObject">The value object.</typeparam>
     /// <typeparam name="TPrimitive">
     /// The wrapped primitive: <see cref="string"/>, <see cref="Guid"/>, <see cref="bool"/>, <see cref="int"/>,
@@ -76,8 +80,9 @@ internal sealed class ValueObjectSerializer<TValueObject, TPrimitive> : ISeriali
         if (_features is null)
             throw new NotSupportedException($"Value object '{typeof(TValueObject)}' wraps '{typeof(TPrimitive)}', which has no protobuf scalar.");
 
-        _from = from;
-        _value = value;
+        // The first registration wins, so a later one, even on another model, cannot change existing serialization.
+        Interlocked.CompareExchange(ref _from, from, null);
+        Interlocked.CompareExchange(ref _value, value, null);
     }
 
     /// <inheritdoc />

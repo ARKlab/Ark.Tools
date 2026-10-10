@@ -18,6 +18,22 @@ public class ArkProtobufValueObjectsTests
 
     private readonly record struct Quantity(int Value);
 
+    private readonly record struct Copies(int Value);
+
+    [ProtoContract]
+    private sealed class Shelf
+    {
+        [ProtoMember(1)]
+        public Copies Copies { get; set; }
+    }
+
+    [ProtoContract]
+    private sealed class PlainShelf
+    {
+        [ProtoMember(1)]
+        public int Copies { get; set; }
+    }
+
     [ProtoContract]
     private sealed class Order
     {
@@ -80,6 +96,22 @@ public class ArkProtobufValueObjectsTests
         read.Id.Should().Be(order.Id);
         read.ParentId.Should().Be(order.ParentId);
         read.Quantities.Should().Equal(order.Quantities);
+    }
+
+    /// <summary>A later registration, even on another model, does not change the conversions of the first.</summary>
+    [TestMethod]
+    public void Register_Again_ShouldKeepTheFirstConversions()
+    {
+        var first = RuntimeTypeModel.Create();
+        var second = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Copies, int>(first, static value => new Copies(value), static value => value.Value);
+        ArkProtobufValueObjects.Register<Copies, int>(second, static value => new Copies(value / 2), static value => value.Value * 2);
+        using var stream = new MemoryStream();
+
+        first.Serialize(stream, new Shelf { Copies = new Copies(3) });
+        stream.Position = 0;
+
+        RuntimeTypeModel.Create().Deserialize<PlainShelf>(stream).Copies.Should().Be(3);
     }
 
     /// <summary>A primitive without a protobuf scalar is rejected.</summary>
