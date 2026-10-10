@@ -77,6 +77,7 @@ public sealed class ValueObjectOpenApiTests
         schemas["OpenApiPageCount"]!["minimum"]!.GetValue<int>().Should().Be(1);
         schemas["OpenApiBook"]!["properties"]!["chapters"]!["items"]!["minimum"]!.GetValue<int>().Should().Be(1);
         schemas["OpenApiPageCount"]!["multipleOf"]!.GetValue<int>().Should().Be(2);
+        schemas["OpenApiPageCount"]!["examples"]![0]!.GetValue<int>().Should().Be(4);
     }
 
     [TestMethod]
@@ -121,6 +122,7 @@ public sealed class ValueObjectOpenApiTests
                 {
                     schema.Minimum = "1";
                     schema.MultipleOf = 2;
+                    schema.Examples = [JsonValue.Create(4)];
                 }
                 return Task.CompletedTask;
             })

@@ -254,6 +254,9 @@ public static class ArkOpenApiEx
         target.MinLength = source.MinLength;
         target.MaxLength = source.MaxLength;
         target.Default = source.Default?.DeepClone();
+        if (source.Const is not null)
+            target.Const = source.Const;
+        target.Examples = source.Examples is null ? null : [.. source.Examples.Select(static value => value?.DeepClone()).OfType<JsonNode>()];
     }
 
     private static void _apply(OpenApiSchema schema, OpenApiSchema valueObject, bool isCollection)
