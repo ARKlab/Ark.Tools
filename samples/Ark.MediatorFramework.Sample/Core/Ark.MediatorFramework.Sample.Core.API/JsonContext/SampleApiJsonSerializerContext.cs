@@ -36,6 +36,8 @@ namespace Ark.MediatorFramework.Sample.Core.API.JsonContext;
         typeof(LocalDateRangeConverter),
         typeof(LocalDateTimeRangeConverter),
         typeof(ZonedDateTimeRangeConverter),
+        // Vogen value objects: the source generator ignores their type-level [JsonConverter].
+        typeof(Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory),
     })]
 [JsonSerializable(typeof(UploadResponse))]
 [JsonSerializable(typeof(GetAuditsQuery.V1), TypeInfoPropertyName = "GetAuditsQueryV1")]
@@ -54,6 +56,9 @@ namespace Ark.MediatorFramework.Sample.Core.API.JsonContext;
 [JsonSerializable(typeof(ReadingActivity))]
 [JsonSerializable(typeof(RecordReadingActivityRequest.V1), TypeInfoPropertyName = "RecordReadingActivityRequestV1")]
 [JsonSerializable(typeof(GetReadingActivityQuery.V1), TypeInfoPropertyName = "GetReadingActivityQueryV1")]
+// Vogen's converters for numeric value objects read and write the wrapped number through these options.
+[JsonSerializable(typeof(int))]
+[JsonSerializable(typeof(long))]
 public sealed partial class SampleApiJsonSerializerContext : JsonSerializerContext
 {
 }

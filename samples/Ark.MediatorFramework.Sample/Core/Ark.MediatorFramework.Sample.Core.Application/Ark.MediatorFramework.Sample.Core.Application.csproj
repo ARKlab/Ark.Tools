@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ark.Tools.Compliance.Dapper" />
     <PackageReference Include="Ark.Tools.Dapper" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />

@@ -36,8 +36,8 @@ public sealed class BookStreamingAndEditionTests
             {
                 Edition = new DigitalBookEdition
                 {
-                    Format = "EPUB",
-                    SizeBytes = 1_048_576,
+                    Format = EditionFormat.From("EPUB"),
+                    SizeBytes = FileSize.From(1_048_576),
                 },
             }).ConfigureAwait(false);
 

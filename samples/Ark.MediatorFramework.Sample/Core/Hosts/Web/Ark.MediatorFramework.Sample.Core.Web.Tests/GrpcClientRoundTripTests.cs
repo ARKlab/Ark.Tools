@@ -49,11 +49,17 @@ public sealed class GrpcClientRoundTripTests
 
         using var call = client.StreamBooks(new Client.StreamBooksQuery_V1 { Count = 2 }, headers, cancellationToken: ctk);
         var titles = new List<string>();
+        var authors = new List<string>();
         await foreach (var item in call.ResponseStream.ReadAllAsync(ctk).ConfigureAwait(false))
+        {
             titles.Add(item.Title);
+            authors.Add(item.Author);
+        }
 
         edition.Description.Should().Be("Paperback print edition with 320 pages");
         titles.Should().Equal("Book 0", "Book 1");
+        // The author is a PersonName sensitive value object, exported to .proto as its cleartext string.
+        authors.Should().Equal("Author 0", "Author 1");
     }
 
     /// <summary>

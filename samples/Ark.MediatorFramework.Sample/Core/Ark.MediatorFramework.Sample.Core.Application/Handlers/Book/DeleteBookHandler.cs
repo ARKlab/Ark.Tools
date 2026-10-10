@@ -35,8 +35,7 @@ public sealed class DeleteBookHandler : IRequestHandler<Book_DeleteRequest.V1, b
             throw new EntityNotFoundException($"Book '{request.Id}' was not found.");
         await context.WriteAuditAsync(new AuditEntry
         {
-            Id = Guid.NewGuid(),
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(Book.V1.Output),
             Identifier = request.Id.Value.ToString("D"),
             Operation = typeof(Book_DeleteRequest).Name + "." + typeof(Book_DeleteRequest.V1).Name,

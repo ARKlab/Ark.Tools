@@ -15,7 +15,7 @@ public sealed record UploadResponse
 {
     /// <summary>Gets the upload correlation identifier.</summary>
     [ProtoMember(1)]
-    public required Guid Id { get; init; }
+    public required UploadId Id { get; init; }
 
     /// <summary>Gets the attachment file name.</summary>
     [ProtoMember(2)]

@@ -3,7 +3,6 @@
 
 using Ark.MediatorFramework.Sample.Core.API.Authorization;
 
-using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 using NodaTime;
@@ -14,20 +13,19 @@ namespace Ark.MediatorFramework.Sample.Core.API;
 public sealed record BookReview
 {
     /// <summary>Gets the review identifier.</summary>
-    public required Guid Id { get; init; }
+    public required BookReviewId Id { get; init; }
 
     /// <summary>Gets the reviewed book identifier.</summary>
     public required BookId BookId { get; init; }
 
     /// <summary>Gets the authenticated reviewer identifier.</summary>
-    [Pseudonymous]
-    public required string UserId { get; init; }
+    public required UserId UserId { get; init; }
 
     /// <summary>Gets the rating from one to five.</summary>
-    public required int Rating { get; init; }
+    public required ReviewRating Rating { get; init; }
 
     /// <summary>Gets the review text.</summary>
-    public required string Text { get; init; }
+    public required ReviewText Text { get; init; }
 
     /// <summary>Gets the review creation timestamp.</summary>
     public required Instant CreatedAt { get; init; }
@@ -51,13 +49,13 @@ public static class CreateBookReviewRequest
         /// same book returns the stored review and writes nothing; senders over a message bus must set it so
         /// that redelivery is idempotent. When omitted, the server generates a new identifier.
         /// </summary>
-        public Guid? ReviewId { get; init; }
+        public BookReviewId? ReviewId { get; init; }
 
         /// <summary>Gets the rating from one to five.</summary>
-        public int Rating { get; init; }
+        public ReviewRating Rating { get; init; }
 
         /// <summary>Gets the review text.</summary>
-        public string Text { get; init; } = string.Empty;
+        public ReviewText Text { get; init; }
     }
 }
 

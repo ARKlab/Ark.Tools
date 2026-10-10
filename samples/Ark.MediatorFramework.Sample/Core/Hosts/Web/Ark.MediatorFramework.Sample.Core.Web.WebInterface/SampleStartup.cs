@@ -136,6 +136,7 @@ public sealed class SampleStartup
         services.AddControllers();
 
         var messagePackResolver = CompositeResolver.Create(
+            SampleMessagePackFormatters.Resolver,
             MessagePack.NodaTime.NodatimeResolver.Instance,
             DynamicEnumAsStringResolver.Instance,
             StandardResolver.Instance);
@@ -232,6 +233,7 @@ public sealed class SampleStartup
             .AddArkNodaTimeSchemas()
             .AddArkValueObjectSchemas()
             .AddArkComplianceSchemas()
+            .AddSensitiveValueSchema<UserId>(ArkDataClassifications.Pseudonymous, "user-0001")
             .AddArkServerSetProperties()
             .AddArkXmlDocumentation()
             .AddArkOAuthSecurity(_openApiSecurity)

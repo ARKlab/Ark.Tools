@@ -6,7 +6,6 @@ using Ark.Tools.Outbox;
 using Ark.Tools.Core;
 
 using Dapper;
-using Ark.Tools.Compliance;
 
 using System.Data.Common;
 
@@ -51,7 +50,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
     Task SaveBookReviewAsync(BookReview review, CancellationToken ctk = default);
 
     /// <summary>Reads a book review by identifier.</summary>
-    Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default);
+    Task<BookReview?> ReadBookReviewAsync(BookReviewId id, CancellationToken ctk = default);
 
     /// <summary>Reads bounded reviews for a book.</summary>
     Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(BookId bookId, int skip, int limit, CancellationToken ctk = default);
@@ -62,7 +61,7 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Reads bounded activity for a book and reader.</summary>
     Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
         BookId bookId,
-        [Pseudonymous] string userId,
+        UserId userId,
         int limit,
         CancellationToken ctk = default);
 
@@ -70,13 +69,13 @@ public interface ISampleDataContext : IOutboxAsyncContext
     Task<bool> TrySaveBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
 
     /// <summary>Reads a book print process.</summary>
-    Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(Guid id, bool forUpdate = false, CancellationToken ctk = default);
+    Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(BookPrintProcessId id, bool forUpdate = false, CancellationToken ctk = default);
 
     /// <summary>Updates a book print process.</summary>
     Task<bool> UpdateBookPrintProcessAsync(BookPrintProcessResponse process, CancellationToken ctk = default);
 
     /// <summary>Cancels a pending or running book print process.</summary>
-    Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(Guid id, CancellationToken ctk = default);
+    Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(BookPrintProcessId id, CancellationToken ctk = default);
 }
 
 /// <summary>Creates application contexts for handler-owned transactions.</summary>
@@ -365,7 +364,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Reads a book review by identifier in the current transaction.</summary>
-    public async Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default)
+    public async Task<BookReview?> ReadBookReviewAsync(BookReviewId id, CancellationToken ctk = default)
     {
         const string sql = """
             SELECT [Id], [BookId], [UserId], [Rating], [Text], [CreatedAt]
@@ -417,7 +416,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     /// <summary>Reads bounded reading activity for a book and reader in the current transaction.</summary>
     public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
         BookId bookId,
-        [Pseudonymous] string userId,
+        UserId userId,
         int limit,
         CancellationToken ctk = default)
     {
@@ -463,7 +462,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 
     /// <summary>Reads a book print process in the current transaction.</summary>
     public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(
-        Guid id,
+        BookPrintProcessId id,
         bool forUpdate = false,
         CancellationToken ctk = default)
     {
@@ -516,7 +515,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Cancels a pending or running book print process in the current transaction.</summary>
-    public async Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(Guid id, CancellationToken ctk = default)
+    public async Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(BookPrintProcessId id, CancellationToken ctk = default)
     {
         const string sql = """
             UPDATE [dbo].[BookPrintProcess]
@@ -612,20 +611,20 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 
     private sealed record BookBulkInsertRow(
         BookId Id,
-        string Title,
-        string Author,
+        BookTitle Title,
+        PersonName Author,
         EvolvableEnum<Book.V1.Genre> Genre,
-        string? ISBN,
-        string Description);
+        Isbn? ISBN,
+        BookDescription Description);
 
     private sealed class BookRow
     {
         public BookId Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Author { get; set; } = string.Empty;
+        public BookTitle Title { get; set; }
+        public PersonName Author { get; set; }
         public EvolvableEnum<Book.V1.Genre> Genre { get; set; }
-        public string? ISBN { get; set; }
-        public string Description { get; set; } = string.Empty;
+        public Isbn? ISBN { get; set; }
+        public BookDescription Description { get; set; }
         public byte[] ETag { get; set; } = [];
 
         public Book.V1.Output ToResponse()

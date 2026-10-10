@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
@@ -37,10 +38,10 @@ public static class Book
         public record Input
         {
             /// <summary>Gets the book title.</summary>
-            public string Title { get; init; } = string.Empty;
+            public BookTitle Title { get; init; }
 
             /// <summary>Gets the book author.</summary>
-            public string Author { get; init; } = string.Empty;
+            public PersonName Author { get; init; }
 
             /// <summary>Gets the book category.</summary>
             public EvolvableEnum<Genre> Genre { get; init; }
@@ -51,7 +52,7 @@ public static class Book
         public record Create : Input
         {
             /// <summary>Gets the optional ISBN assigned when the book is created.</summary>
-            public string? ISBN { get; init; }
+            public Isbn? ISBN { get; init; }
         }
 
         /// <summary>Fields accepted when a book is updated.</summary>
@@ -66,7 +67,7 @@ public static class Book
 
             /// <summary>Gets the generated book description.</summary>
             [ServerSet]
-            public string Description { get; init; } = string.Empty;
+            public BookDescription Description { get; init; }
 
             /// <summary>Gets the opaque concurrency token.</summary>
             [ETag]
@@ -152,10 +153,10 @@ public static class Book_SearchQuery
     public sealed record V1 : IQuery<V1, Book.V1.Page>, IQueryPaged
     {
         /// <summary>Gets the optional exact title filter.</summary>
-        public string? Title { get; init; }
+        public BookTitle? Title { get; init; }
 
         /// <summary>Gets the optional exact author filter.</summary>
-        public string? Author { get; init; }
+        public PersonName? Author { get; init; }
 
         /// <summary>Gets the optional category filter.</summary>
         public EvolvableEnum<Book.V1.Genre>? Genre { get; init; }

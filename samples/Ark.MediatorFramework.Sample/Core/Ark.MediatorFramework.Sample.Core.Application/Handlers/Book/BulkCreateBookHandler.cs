@@ -48,8 +48,7 @@ public sealed class BulkCreateBookHandler :
         {
             await context.WriteAuditAsync(new AuditEntry
             {
-                Id = Guid.NewGuid(),
-                UserId = _user.GetUserId() ?? "anonymous",
+                UserId = _user.GetUserIdOrAnonymous(),
                 EntityType = nameof(Book.V1.Output),
                 Identifier = book.Id.Value.ToString("D"),
                 Operation = typeof(Book_BulkCreateRequest).Name + "." + typeof(Book_BulkCreateRequest.V1).Name,

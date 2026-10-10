@@ -9,6 +9,9 @@
     <PackageVersion Include="Ark.Tools.AspNetCore.ApplicationInsights" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.HealthChecks" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Compliance" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Compliance.Dapper" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Compliance.MessagePack" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Compliance.Reqnroll" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.OTel" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.MinimalApi" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Dapper" Version="999.9.9" />

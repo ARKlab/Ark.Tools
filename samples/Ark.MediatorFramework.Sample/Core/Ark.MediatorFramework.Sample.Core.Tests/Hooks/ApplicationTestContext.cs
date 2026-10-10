@@ -3,7 +3,6 @@
 
 using Ark.MediatorFramework.Sample.Core.Tests.Fakes;
 
-using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Outbox;
 using Ark.Tools.Solid;
@@ -322,9 +321,9 @@ public sealed class ApplicationTestContext : IAsyncDisposable
             throw new ArgumentException("A book identifier is required.", nameof(bookId));
         var process = new BookPrintProcessResponse
         {
-            Id = Guid.NewGuid(),
+            Id = BookPrintProcessId.New(),
             BookId = bookId,
-            Progress = 0.5,
+            Progress = PrintProgress.From(0.5),
             Status = BookPrintProcessStatus.Running,
         };
         var context = await _dataContextFactory.CreateAsync(ctk).ConfigureAwait(false);

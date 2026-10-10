@@ -32,13 +32,13 @@ public enum BookPrintProcessStatus
 public sealed record BookPrintProcessResponse
 {
     /// <summary>Gets the print-process identifier.</summary>
-    public Guid Id { get; init; }
+    public BookPrintProcessId Id { get; init; }
 
     /// <summary>Gets the identifier of the book being printed.</summary>
     public BookId BookId { get; init; }
 
     /// <summary>Gets the progress fraction.</summary>
-    public double Progress { get; init; }
+    public PrintProgress Progress { get; init; } = PrintProgress.Zero;
 
     /// <summary>Gets the current process status.</summary>
     public EvolvableEnum<BookPrintProcessStatus> Status { get; init; }
@@ -71,7 +71,7 @@ public static class GetBookPrintProcessQuery
     public sealed record V1 : IQuery<V1, BookPrintProcessResponse>
     {
         /// <summary>Gets the print-process identifier.</summary>
-        public Guid Id { get; init; }
+        public BookPrintProcessId Id { get; init; }
     }
 }
 
@@ -82,6 +82,6 @@ public static class CancelBookPrintProcessRequest
     public sealed record V1 : IRequest<V1, BookPrintProcessResponse>
     {
         /// <summary>Gets the print-process identifier.</summary>
-        public Guid Id { get; init; }
+        public BookPrintProcessId Id { get; init; }
     }
 }

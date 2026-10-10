@@ -14,6 +14,7 @@
     <PackageReference Include="NodaTime.Testing" />
     <PackageReference Include="Reqnroll.MsTest" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" />
+    <PackageReference Include="Ark.Tools.Compliance.Reqnroll" />
     <PackageReference Include="Ark.Tools.Reqnroll" />
     <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />

@@ -35,7 +35,7 @@ public sealed class BookDriver
     public BookReview? CurrentReview { get; private set; }
 
     /// <summary>Gets or sets the identifier of the review the scenario is about, including one created over the bus.</summary>
-    public Guid? CurrentReviewId { get; set; }
+    public BookReviewId? CurrentReviewId { get; set; }
 
     /// <summary>Gets the review created before <see cref="CurrentReview"/>.</summary>
     public BookReview? PreviousReview { get; private set; }
@@ -130,15 +130,15 @@ public sealed class BookDriver
     /// <param name="text">The review text.</param>
     /// <param name="reviewId">The optional client-generated review identifier.</param>
     /// <param name="ctk">The cancellation token.</param>
-    public async Task CreateReviewAsync(int rating, string text, Guid? reviewId = null, CancellationToken ctk = default)
+    public async Task CreateReviewAsync(int rating, string text, BookReviewId? reviewId = null, CancellationToken ctk = default)
     {
         var review = await _context.DispatchRequestAsync<CreateBookReviewRequest.V1, BookReview>(
             new CreateBookReviewRequest.V1
             {
                 BookId = Current.Id,
                 ReviewId = reviewId,
-                Rating = rating,
-                Text = text,
+                Rating = ReviewRating.From(rating),
+                Text = ReviewText.From(text),
             },
             ctk).ConfigureAwait(false);
         PreviousReview = CurrentReview;
@@ -155,7 +155,7 @@ public sealed class BookDriver
             new GetAuditsQuery.V1
             {
                 EntityType = nameof(BookReview),
-                Identifier = (CurrentReviewId ?? throw new InvalidOperationException("No current review is available in this scenario.")).ToString("D"),
+                Identifier = (CurrentReviewId ?? throw new InvalidOperationException("No current review is available in this scenario.")).Value.ToString("D"),
                 Limit = 25,
             },
             ctk).ConfigureAwait(false);
@@ -186,7 +186,7 @@ public sealed class BookDriver
             {
                 BookId = Current.Id,
                 Kind = kind,
-                Progress = progress,
+                Progress = ReadingProgress.From(progress),
             },
             ctk).ConfigureAwait(false);
     }

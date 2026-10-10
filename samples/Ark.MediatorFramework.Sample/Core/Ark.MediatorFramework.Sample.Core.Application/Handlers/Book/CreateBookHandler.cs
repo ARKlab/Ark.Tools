@@ -40,10 +40,10 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
 
     internal static Book.V1.Output _createResponse(
         BookId id,
-        string title,
-        string author,
+        BookTitle title,
+        PersonName author,
         EvolvableEnum<Book.V1.Genre> genre,
-        string? isbn)
+        Isbn? isbn)
     {
         return new Book.V1.Output
         {
@@ -52,16 +52,20 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
             Author = author,
             Genre = genre,
             ISBN = isbn,
-            Description = $"Book created: {title} by {author}",
+            Description = BookDescription.From($"Book created: {title} by {author.Reveal(_descriptionPurpose)}"),
         };
     }
+
+    /// <summary>Reveals the author's name to compose the generated book description.</summary>
+    internal static readonly CompliancePurpose _descriptionPurpose = CompliancePurpose.Custom(
+        "Compose the Book description",
+        CompliancePurposeCategory.TechnicalFunctional);
 
     private AuditEntry _createAudit(BookId id, string operation)
     {
         return new AuditEntry
         {
-            Id = Guid.NewGuid(),
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(Book.V1.Output),
             Identifier = id.Value.ToString("D"),
             Operation = operation,

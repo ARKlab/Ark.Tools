@@ -1493,6 +1493,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
+          "Ark.Tools.Compliance.MessagePack": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
@@ -1507,6 +1508,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework.Sample.Core.API": "[6.6.6, )",
+          "Ark.Tools.Compliance.Dapper": "[999.9.9, )",
           "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
@@ -1675,6 +1677,20 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
+        }
+      },
+      "ark.tools.compliance.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Dapper": "[2.1.89, )"
+        }
+      },
+      "ark.tools.compliance.messagepack": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "MessagePack": "[3.1.11, )"
         }
       },
       "ark.tools.compliance.nlog": {

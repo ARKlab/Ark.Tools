@@ -10,5 +10,5 @@ public sealed record ResumeBookPrintProcessRequest :
     IRequest<ResumeBookPrintProcessRequest, BookPrintProcessResponse>
 {
     /// <summary>Gets the print-process identifier.</summary>
-    public Guid Id { get; init; }
+    public BookPrintProcessId Id { get; init; }
 }

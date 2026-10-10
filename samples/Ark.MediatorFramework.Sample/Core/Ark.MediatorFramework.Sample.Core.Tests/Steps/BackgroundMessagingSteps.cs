@@ -42,7 +42,7 @@ public sealed class BackgroundMessagingSteps
         var request = table.CreateInstance<CreateBookReviewRequest.V1>() with
         {
             BookId = _books.Current.Id,
-            ReviewId = Guid.NewGuid(),
+            ReviewId = BookReviewId.New(),
         };
         await _sampleContext.Application.SendAsync(request).ConfigureAwait(false);
     }
@@ -55,7 +55,7 @@ public sealed class BackgroundMessagingSteps
         var request = table.CreateInstance<CreateBookReviewRequest.V1>() with
         {
             BookId = _books.Current.Id,
-            ReviewId = Guid.NewGuid(),
+            ReviewId = BookReviewId.New(),
         };
         _books.CurrentReviewId = request.ReviewId;
         await _sampleContext.Application.SendAsync(request).ConfigureAwait(false);

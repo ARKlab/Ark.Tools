@@ -2,7 +2,7 @@
 CONTRACT BookPrintCompleted -> BookPrintCompleted [group=Ark]
 CONTRACT BookPrintCompleted.BookId : BookId
 CONTRACT ProcessBookPrintProcessRequest -> ProcessBookPrintProcessRequest [group=Ark]
-CONTRACT ProcessBookPrintProcessRequest.Id : Guid
+CONTRACT ProcessBookPrintProcessRequest.Id : BookPrintProcessId
 EVENT Ark.MediatorFramework.Sample.Core.Application.Messages.BookPrintCompleted
   name: books/book-print.completed
   former: -
