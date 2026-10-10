@@ -322,4 +322,11 @@ Ark.Tools assumes the members Vogen generates by default (`Value`, `From`,
 - **MessagePack**: not handled; add Vogen's `Conversions.MessagePack` to a
   value object used in a `[MessagePackObject]`.
 
+In a Native AOT app, `ConfigureArkDefaults()` is unavailable, so add
+`ValueObjectJsonConverterFactory` (or Vogen's generated `VogenTypesFactory`) to
+the serializer options yourself. `ToDataTableArk()` handles value objects without
+reflection only when the element type is known at the call site; the reflection
+fallback, used from generic code, throws `NotSupportedException` because Native
+AOT removes the `Value` property metadata.
+
 Architecture rationale: [design.md](../design/mediator-framework/design.md).

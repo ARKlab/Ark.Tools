@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `ToDataTableArk()` no longer fails in Native AOT apps when the element type, shredded through the reflection fallback, has a nullable value-type member such as `Guid?`, and publishing no longer reports a trimming warning for it.
 - `Ark.Tools.MediatorFramework.Grpc`: in a trimmed app, a business rule violation now reaches the client as `FailedPrecondition` with its title and detail. Its extra properties are omitted, with a warning in the log, because reflection-based JSON is disabled. Before, the mapping threw and the client received `Unknown`.
 - `Ark.Tools.AspNetCore.OTel`: binding `ApplicationInsights:ArkAdaptiveSampler` settings no longer relies on reflection, so it keeps working in trimmed apps.
 - A native messaging delivery cancelled while its payload is being deserialized, by host shutdown or by `MaximumHandlerDuration`, is no longer dead-lettered as a malformed payload; it is retried like any other cancelled or timed-out delivery.
