@@ -824,6 +824,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
+          "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.AzureFunctions.Boundary.Functions": "[999.9.9, )",
           "Ark.Tools.MediatorFramework.MinimalApi": "[1.0.0, )",
