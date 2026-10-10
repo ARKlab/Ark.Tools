@@ -124,7 +124,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         if (method.TypeArguments[0] is not INamedTypeSymbol elementType)
             return null; // T is an open type parameter, array, pointer, etc. - not compile-time-known here.
 
-        var typeModel = _buildTypeModel(elementType, cancellationToken);
+        var typeModel = _buildTypeModel(elementType, semanticModel.Compilation, cancellationToken);
         if (typeModel is null)
             return null; // T does not meet the "flat, public, instance-only" eligibility rules.
 
@@ -141,7 +141,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     // its containing types accessible from anywhere in the assembly (so the generated code - which
     // lives in an unrelated namespace - can reference it), and every property having an accessible
     // public getter. Anything else is left for the reflection-based fallback to handle.
-    private static TypeModel? _buildTypeModel(INamedTypeSymbol type, CancellationToken cancellationToken)
+    private static TypeModel? _buildTypeModel(INamedTypeSymbol type, Compilation compilation, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (type.IsAnonymousType || !_isGloballyAccessible(type))
@@ -172,7 +172,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
                 case IFieldSymbol { DeclaredAccessibility: Accessibility.Public, IsImplicitlyDeclared: false } field:
                     if (field.IsStatic || _requiresRuntimeValueConversion(field.Type))
                         return null;
-                    fields.Add(_buildMemberModel(field.Name, field.Type));
+                    fields.Add(_buildMemberModel(field.Name, field.Type, compilation));
                     break;
                 case IPropertySymbol { DeclaredAccessibility: Accessibility.Public } property:
                     if (property.IsStatic
@@ -182,7 +182,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
                     {
                         return null; // The runtime fallback safely excludes unreadable and indexed properties.
                     }
-                    properties.Add(_buildMemberModel(property.Name, property.Type));
+                    properties.Add(_buildMemberModel(property.Name, property.Type, compilation));
                     break;
             }
         }
@@ -201,9 +201,12 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         return type.SpecialType == SpecialType.System_Object || type.TypeKind == TypeKind.Interface;
     }
 
-    private static MemberModel _buildMemberModel(string name, ITypeSymbol declaredType)
+    private static MemberModel _buildMemberModel(string name, ITypeSymbol declaredType, Compilation compilation)
     {
         var underlying = _unwrapNullable(declaredType, out var isNullable);
+        var valueObjectPrimitive = _getValueObjectPrimitive(underlying, compilation);
+        if (valueObjectPrimitive is not null)
+            underlying = valueObjectPrimitive;
         var conversion = _determineConversion(underlying);
         var columnType = conversion switch
         {
@@ -214,7 +217,36 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             _ => underlying.ToFullyQualifiedString(),
         };
 
-        return new MemberModel(name, isNullable, conversion, columnType);
+        return new MemberModel(name, isNullable, conversion, columnType, IsValueObject: valueObjectPrimitive is not null);
+    }
+
+    // A Vogen value object ([Vogen.ValueObject<T>] or [Vogen.ValueObject(typeof(T))]), detected by name so
+    // Ark.Tools.Core takes no Vogen dependency. Its DataColumn carries the primitive exposed by the generated
+    // Value property, so TVP/SqlBulkCopy see a plain scalar column. Generators cannot see each other's
+    // output, so the primitive is read from the attribute rather than from the generated Value property.
+    private static ITypeSymbol? _getValueObjectPrimitive(ITypeSymbol type, Compilation compilation)
+    {
+        foreach (var attribute in type.GetAttributes())
+        {
+            if (attribute.AttributeClass is not { } attributeClass
+                || attributeClass.ContainingNamespace.ToDisplayString() != "Vogen")
+            {
+                continue;
+            }
+
+            if (attributeClass.MetadataName == "ValueObjectAttribute`1")
+                return attributeClass.TypeArguments[0];
+
+            if (attributeClass.MetadataName == "ValueObjectAttribute")
+            {
+                // Vogen defaults the primitive to int when [ValueObject] names no type.
+                return attribute.ConstructorArguments is [{ Value: ITypeSymbol primitive }, ..]
+                    ? primitive
+                    : compilation.GetSpecialType(SpecialType.System_Int32);
+            }
+        }
+
+        return null;
     }
 
     private static ITypeSymbol _unwrapNullable(ITypeSymbol type, out bool isNullable)
@@ -424,7 +456,7 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
         for (var i = 0; i < type.Members.Length; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            sb.Append("                    values[").Append(i).Append("] = ").Append(_buildValueExpressionText(type.Members[i])).AppendLine(";");
+            sb.Append("                    values[").Append(i).Append("] = ").Append(_buildValueExpressionText(type.Members[i], i)).AppendLine(";");
         }
 
         sb.AppendLine("                    table.LoadDataRow(values, true);");
@@ -440,9 +472,16 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
     // Builds a C# expression equivalent to the runtime's BuildValueExpression/BuildNonNullableConversion:
     // for a nullable member, only converts/boxes when HasValue (else null); otherwise applies the
     // member's conversion (enum-to-string, NodaTime-to-.NET, or a direct passthrough) unconditionally.
-    private static string _buildValueExpressionText(MemberModel member)
+    private static string _buildValueExpressionText(MemberModel member, int index)
     {
         var accessor = "it.@" + member.Name;
+
+        if (member.IsValueObject)
+        {
+            // Null-safe for Nullable<struct> and reference-type value objects alike; a plain struct always matches.
+            var local = "__vo" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return accessor + " is { } " + local + " ? (object)(" + _applyConversion(local + ".Value", member.Conversion) + ") : null";
+        }
 
         if (member.Conversion == ConversionKind.Direct)
         {

@@ -48,12 +48,12 @@ public sealed record PrintBookEdition : BookEdition
     /// <summary>Gets the print format.</summary>
     [ProtoMember(1)]
     [Key(0)]
-    public required string Format { get; init; }
+    public required EditionFormat Format { get; init; }
 
     /// <summary>Gets the number of pages.</summary>
     [ProtoMember(2)]
     [Key(1)]
-    public int PageCount { get; init; }
+    public PageCount PageCount { get; init; }
 }
 
 /// <summary>Describes a digital Book edition.</summary>
@@ -67,12 +67,12 @@ public sealed record DigitalBookEdition : BookEdition
     /// <summary>Gets the digital file format.</summary>
     [ProtoMember(1)]
     [Key(0)]
-    public required string Format { get; init; }
+    public required EditionFormat Format { get; init; }
 
     /// <summary>Gets the file size in bytes.</summary>
     [ProtoMember(2)]
     [Key(1)]
-    public long SizeBytes { get; init; }
+    public FileSize SizeBytes { get; init; }
 }
 
 /// <summary>Response describing a concrete Book edition.</summary>

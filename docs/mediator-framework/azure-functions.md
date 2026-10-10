@@ -845,3 +845,20 @@ Instrumentation is present and inert by default. Collection is opt-in:
 configure an OpenTelemetry meter provider with
 `AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)`; no exporter is
 required by the messaging runtime.
+
+## Trimming and ReadyToRun
+
+Azure Functions supports ReadyToRun but not Native AOT deployment. Generated
+functions bind requests without reflection, so an app can also be published
+trimmed. In a trimmed app, `AddArkAzureFunctions` skips the reflection-based Ark
+JSON defaults, so pass a `JsonSerializerContext` covering every contract and
+response type, with the converters it needs in
+`[JsonSourceGenerationOptions(Converters = ...)]`:
+
+```csharp
+builder.Services.AddArkAzureFunctions(ApiJsonContext.Default);
+```
+
+The Functions worker and its ASP.NET Core integration report trimming warnings of
+their own, so test a trimmed app before deploying it. Dapper and SimpleInjector
+are not trim compatible.

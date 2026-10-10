@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.Compliance;
+using Ark.Tools.Compliance.MessagePack;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
@@ -10,8 +10,6 @@ using MessagePack;
 using NodaTime;
 
 using ProtoBuf;
-
-using System.ComponentModel;
 
 namespace Ark.MediatorFramework.Sample.Core.API;
 
@@ -23,14 +21,13 @@ public sealed record AuditRecord
     /// <summary>Gets the audit identifier.</summary>
     [ProtoMember(1)]
     [Key(0)]
-    public required Guid Id { get; init; }
+    public required AuditId Id { get; init; }
 
     /// <summary>Gets the authenticated user identifier.</summary>
-    [DefaultValue("anonymous")]
     [ProtoMember(2)]
     [Key(1)]
-    [Pseudonymous]
-    public string UserId { get; set; } = "anonymous";
+    [MessagePackFormatter(typeof(SensitiveValueFormatter<UserId>))]
+    public required UserId UserId { get; init; }
 
     /// <summary>Gets the type of entity affected by the operation.</summary>
     [ProtoMember(3)]
@@ -62,8 +59,7 @@ public static class GetAuditsQuery
     {
         /// <summary>Gets the user identifier filter.</summary>
         [HttpQuery]
-        [Pseudonymous]
-        public string? UserId { get; init; }
+        public UserId? UserId { get; init; }
 
         /// <summary>Gets the entity type filter.</summary>
         [HttpQuery]

@@ -16,5 +16,5 @@ public sealed record ProcessBookPrintProcessRequest :
     ICommand<ProcessBookPrintProcessRequest>
 {
     /// <summary>Gets the print-process identifier.</summary>
-    public Guid Id { get; init; }
+    public BookPrintProcessId Id { get; init; }
 }

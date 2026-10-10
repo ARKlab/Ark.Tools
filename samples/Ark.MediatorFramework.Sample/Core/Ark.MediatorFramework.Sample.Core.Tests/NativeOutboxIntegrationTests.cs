@@ -25,7 +25,7 @@ public sealed class NativeOutboxIntegrationTests
             Assert.Inconclusive("The SQL integration profile is disabled.");
         await DatabaseHooks.ResetDatabaseAsync().ConfigureAwait(false);
         var factory = _sqlFactory();
-        var committedAuditId = Guid.NewGuid();
+        var committedAuditId = AuditId.New();
         var committed = await factory.CreateAsync().ConfigureAwait(false);
         await using (var _ = committed.ConfigureAwait(false))
         {
@@ -40,7 +40,7 @@ public sealed class NativeOutboxIntegrationTests
         var rolledBack = await factory.CreateAsync().ConfigureAwait(false);
         await using (var _ = rolledBack.ConfigureAwait(false))
         {
-            await rolledBack.WriteAuditAsync(_audit(Guid.NewGuid())).ConfigureAwait(false);
+            await rolledBack.WriteAuditAsync(_audit(AuditId.New())).ConfigureAwait(false);
             await rolledBack.SendAsync([_message(2)]).ConfigureAwait(false);
         }
 
@@ -74,20 +74,20 @@ public sealed class NativeOutboxIntegrationTests
 
     private static ISampleDataContextFactory _sqlFactory()
     {
-        Ark.Tools.Sql.SqlServer.NodaTimeDapperSqlServer.Setup();
+        SampleDapperMappings.Register();
         return new SampleDataContextFactory(
             new Ark.Tools.Sql.SqlServer.SqlConnectionManager(),
             new SampleDataContextConfig(DatabaseHooks.ConnectionString));
     }
 
-    private static AuditEntry _audit(Guid id)
+    private static AuditEntry _audit(AuditId id)
     {
         return new AuditEntry
         {
             Id = id,
-            UserId = "native-outbox-test",
+            UserId = UserId.From("native-outbox-test"),
             EntityType = "NativeOutbox",
-            Identifier = id.ToString("D"),
+            Identifier = id.Value.ToString("D"),
             Operation = "enqueue",
             Timestamp = SystemClock.Instance.GetCurrentInstant(),
         };

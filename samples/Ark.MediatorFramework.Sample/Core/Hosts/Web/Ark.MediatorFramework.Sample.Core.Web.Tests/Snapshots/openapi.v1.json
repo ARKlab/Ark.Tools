@@ -91,8 +91,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           }
         ],
@@ -163,8 +162,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           },
           {
@@ -329,8 +327,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           }
         ],
@@ -384,8 +381,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           }
         ],
@@ -457,7 +453,11 @@
             "name": "UserId",
             "in": "query",
             "schema": {
-              "type": "string"
+              "examples": [
+                "user-0001"
+              ],
+              "type": "string",
+              "x-ark-classification": "Ark:Pseudonymous"
             }
           },
           {
@@ -591,8 +591,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           },
           {
@@ -669,8 +668,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           }
         ],
@@ -834,9 +832,25 @@
           }
         }
       },
+      "ArkTypeConverterValueOfUserId": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/UserId"
+          }
+        }
+      },
+      "AuditId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "AuditRecord": {
         "required": [
           "id",
+          "userId",
           "entityType",
           "identifier",
           "operation",
@@ -845,12 +859,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/AuditId"
           },
           "userId": {
-            "type": "string",
-            "default": "anonymous"
+            "$ref": "#/components/schemas/UserId"
           },
           "entityType": {
             "type": "string"
@@ -878,15 +890,10 @@
                 "$ref": "#/components/schemas/BookEditionKind"
               },
               "format": {
-                "type": "string"
+                "$ref": "#/components/schemas/EditionFormat"
               },
               "pageCount": {
-                "pattern": "^-?(?:0|[1-9]\\d*)$",
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "format": "int32"
+                "$ref": "#/components/schemas/PageCount"
               }
             }
           },
@@ -900,15 +907,10 @@
                 "$ref": "#/components/schemas/BookEditionKind"
               },
               "format": {
-                "type": "string"
+                "$ref": "#/components/schemas/EditionFormat"
               },
               "sizeBytes": {
-                "pattern": "^-?(?:0|[1-9]\\d*)$",
-                "type": [
-                  "integer",
-                  "string"
-                ],
-                "format": "int64"
+                "$ref": "#/components/schemas/FileSize"
               }
             }
           }
@@ -937,6 +939,10 @@
         }
       },
       "BookEditionKind": { },
+      "BookId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "BookReview": {
         "required": [
           "id",
@@ -949,31 +955,28 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/BookReviewId"
           },
           "bookId": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/BookId"
           },
           "userId": {
-            "type": "string"
+            "$ref": "#/components/schemas/UserId"
           },
           "rating": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
+            "$ref": "#/components/schemas/ReviewRating"
           },
           "text": {
-            "type": "string"
+            "$ref": "#/components/schemas/ReviewText"
           },
           "createdAt": {
             "$ref": "#/components/schemas/Instant"
           }
         }
+      },
+      "BookReviewId": {
+        "type": "string",
+        "format": "uuid"
       },
       "BookStreamItem": {
         "required": [
@@ -991,27 +994,34 @@
             "format": "int32"
           },
           "title": {
-            "type": "string"
+            "$ref": "#/components/schemas/BookTitle"
           },
           "author": {
-            "type": "string"
+            "$ref": "#/components/schemas/PersonName"
           }
         }
+      },
+      "BookTitle": {
+        "type": "string"
       },
       "Create": {
         "type": "object",
         "properties": {
           "isbn": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Isbn"
+              }
             ]
           },
           "title": {
-            "type": "string"
+            "$ref": "#/components/schemas/BookTitle"
           },
           "author": {
-            "type": "string"
+            "$ref": "#/components/schemas/PersonName"
           },
           "genre": {
             "$ref": "#/components/schemas/EvolvableEnumOfGenre"
@@ -1028,20 +1038,26 @@
             "$ref": "#/components/schemas/BookEditionKind"
           },
           "format": {
-            "type": "string"
+            "$ref": "#/components/schemas/EditionFormat"
           },
           "sizeBytes": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64"
+            "$ref": "#/components/schemas/FileSize"
           }
         }
       },
+      "EditionFormat": {
+        "type": "string"
+      },
       "EvolvableEnumOfGenre": { },
       "EvolvableEnumOfReadingActivityKind": { },
+      "FileSize": {
+        "pattern": "^-?(?:0|[1-9]\\d*)$",
+        "type": [
+          "integer",
+          "string"
+        ],
+        "format": "int64"
+      },
       "IFormFile": {
         "type": "string",
         "format": "binary"
@@ -1051,6 +1067,9 @@
           "2016-01-21T15:01:01.999999999Z"
         ],
         "format": "date-time"
+      },
+      "Isbn": {
+        "type": "string"
       },
       "Output": {
         "type": "object",
@@ -1062,21 +1081,33 @@
             ]
           },
           "isbn": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Isbn"
+              }
             ]
           },
           "title": {
-            "type": "string"
+            "$ref": "#/components/schemas/BookTitle"
           },
           "author": {
-            "type": "string"
+            "$ref": "#/components/schemas/PersonName"
           },
           "genre": {
             "$ref": "#/components/schemas/EvolvableEnumOfGenre"
           }
         }
+      },
+      "PageCount": {
+        "pattern": "^-?(?:0|[1-9]\\d*)$",
+        "type": [
+          "integer",
+          "string"
+        ],
+        "format": "int32"
       },
       "PagedResultOfAuditRecord": {
         "type": "object",
@@ -1116,6 +1147,13 @@
           }
         }
       },
+      "PersonName": {
+        "examples": [
+          "Jane Doe"
+        ],
+        "type": "string",
+        "x-ark-classification": "Ark:PersonalData"
+      },
       "PrintBookEdition": {
         "required": [
           "format"
@@ -1126,15 +1164,10 @@
             "$ref": "#/components/schemas/BookEditionKind"
           },
           "format": {
-            "type": "string"
+            "$ref": "#/components/schemas/EditionFormat"
           },
           "pageCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
+            "$ref": "#/components/schemas/PageCount"
           }
         }
       },
@@ -1188,31 +1221,51 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/ReadingActivityId"
           },
           "bookId": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/BookId"
           },
           "userId": {
-            "type": "string"
+            "$ref": "#/components/schemas/UserId"
           },
           "kind": {
             "$ref": "#/components/schemas/EvolvableEnumOfReadingActivityKind"
           },
           "progress": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
+            "$ref": "#/components/schemas/ReadingProgress"
           },
           "occurredAt": {
             "$ref": "#/components/schemas/Instant"
           }
         }
+      },
+      "ReadingActivityId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "ReadingProgress": {
+        "pattern": "^-?(?:0|[1-9]\\d*)$",
+        "type": [
+          "integer",
+          "string"
+        ],
+        "format": "int32"
+      },
+      "ReviewRating": {
+        "pattern": "^-?(?:0|[1-9]\\d*)$",
+        "type": [
+          "integer",
+          "string"
+        ],
+        "format": "int32"
+      },
+      "ReviewText": {
+        "type": "string"
+      },
+      "UploadId": {
+        "type": "string",
+        "format": "uuid"
       },
       "UploadResponse": {
         "required": [
@@ -1224,8 +1277,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/UploadId"
           },
           "name": {
             "type": "string"
@@ -1243,30 +1295,34 @@
           }
         }
       },
+      "UserId": {
+        "examples": [
+          "user-0001"
+        ],
+        "type": "string",
+        "x-ark-classification": "Ark:Pseudonymous"
+      },
       "V1": {
         "type": "object",
         "properties": {
           "bookId": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/BookId"
           },
           "reviewId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BookReviewId"
+              }
+            ]
           },
           "rating": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
+            "$ref": "#/components/schemas/ReviewRating"
           },
           "text": {
-            "type": "string"
+            "$ref": "#/components/schemas/ReviewText"
           }
         }
       }

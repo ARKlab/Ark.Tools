@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Core.API.Authorization;
+using Ark.Tools.Compliance;
 using Ark.Tools.Solid;
 
 using MessagePack;
@@ -23,12 +24,12 @@ public sealed record BookStreamItem
     /// <summary>Gets the streamed Book title.</summary>
     [ProtoMember(2)]
     [Key(1)]
-    public required string Title { get; init; }
+    public required BookTitle Title { get; init; }
 
     /// <summary>Gets the streamed Book author.</summary>
     [ProtoMember(3)]
     [Key(2)]
-    public required string Author { get; init; }
+    public required PersonName Author { get; init; }
 }
 
 /// <summary>Streams Book items without buffering the complete result.</summary>

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ark.Tools.Compliance" />
+    <PackageReference Include="Ark.Tools.Compliance.MessagePack" />
     <PackageReference Include="Microsoft.Extensions.Compliance.Abstractions" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />
     <PackageReference Include="Ark.Tools.Nodatime.Protobuf" />
@@ -16,6 +17,7 @@
     <PackageReference Include="Ark.Tools.Solid.Authorization" />
     <PackageReference Include="Ark.Tools.SystemTextJson" />
     <PackageReference Include="MessagePack" />
+    <PackageReference Include="Vogen" />
   </ItemGroup>
 
 </Project>

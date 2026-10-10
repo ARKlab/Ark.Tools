@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.OpenApi;
 
 using Microsoft.OpenApi;
 
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
@@ -149,6 +151,157 @@ public static class ArkOpenApiEx
         });
 
         return options;
+    }
+
+    /// <summary>
+    /// Describes Vogen value objects (<c>[ValueObject&lt;T&gt;]</c> or <c>[ValueObject(typeof(T))]</c>) with the
+    /// schema of the primitive they wrap, such as <c>string</c>/<c>uuid</c> for a <see cref="Guid"/>, in bodies,
+    /// routes and query strings.
+    /// </summary>
+    /// <param name="options">The OpenAPI options to configure.</param>
+    /// <returns>The same options instance.</returns>
+    public static OpenApiOptions AddArkValueObjectSchemas(this OpenApiOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        // Every schema rewritten for a document, replayed once all schema transformers ran: a Vogen
+        // MapVogenTypesIn... transformer registered after this one then cannot change the published schema. Keyed by
+        // the document being generated, because each request to the document endpoint generates a new one.
+        var rewritten = new ConditionalWeakTable<OpenApiDocument, ConcurrentQueue<(OpenApiSchema Schema, OpenApiSchema ValueObject, bool IsCollection)>>();
+
+        options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
+        {
+            var type = context.JsonTypeInfo.Type;
+            var element = _collectionElementType(type);
+            var isCollection = element is not null;
+            var valueObjectType = Nullable.GetUnderlyingType(element ?? type) ?? element ?? type;
+            if (_getValueObjectPrimitive(valueObjectType) is not { } primitive)
+                return;
+
+            var valueObject = await _valueObjectSchemaAsync(primitive, context, cancellationToken).ConfigureAwait(false);
+            if (isCollection && Nullable.GetUnderlyingType(element!) is not null)
+                valueObject.Type |= JsonSchemaType.Null;
+            _apply(schema, valueObject, isCollection);
+            if (context.Document is { } document)
+                rewritten.GetOrCreateValue(document).Enqueue((schema, valueObject, isCollection));
+        });
+
+        // A route or query value of a plain Minimal API endpoint is described as a bare string; generated
+        // endpoints already reference the value object's schema.
+        options.AddOperationTransformer(static async (operation, context, cancellationToken) =>
+        {
+            if (operation.Parameters is null)
+                return;
+
+            foreach (var description in context.Description.ParameterDescriptions)
+            {
+                var type = Nullable.GetUnderlyingType(description.Type) ?? description.Type;
+                if (type is null || _getValueObjectPrimitive(type) is not { } primitive)
+                    continue;
+
+                var parameter = operation.Parameters.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Name, description.Name, StringComparison.OrdinalIgnoreCase));
+                if (parameter is OpenApiParameter { Schema: OpenApiSchema } mutable)
+                    mutable.Schema = await _valueObjectSchemaAsync(primitive, context, cancellationToken).ConfigureAwait(false);
+            }
+        });
+
+        options.AddDocumentTransformer((document, _, _) =>
+        {
+            if (rewritten.TryGetValue(document, out var schemas))
+            {
+                rewritten.Remove(document);
+                foreach (var (schema, valueObject, isCollection) in schemas)
+                    _apply(schema, valueObject, isCollection);
+            }
+
+            return Task.CompletedTask;
+        });
+
+        return options;
+    }
+
+    // The schema of the wrapped primitive: Vogen's JSON converters read and write it with the serializer options,
+    // so it accepts what the primitive accepts, such as a number in a string under the web defaults.
+    private static async Task<OpenApiSchema> _valueObjectSchemaAsync(Type primitive, OpenApiSchemaTransformerContext context, CancellationToken cancellationToken)
+    {
+        return _copy(await context.GetOrCreateSchemaAsync(primitive, cancellationToken: cancellationToken).ConfigureAwait(false));
+    }
+
+    private static async Task<OpenApiSchema> _valueObjectSchemaAsync(Type primitive, OpenApiOperationTransformerContext context, CancellationToken cancellationToken)
+    {
+        return _copy(await context.GetOrCreateSchemaAsync(primitive, cancellationToken: cancellationToken).ConfigureAwait(false));
+    }
+
+    private static OpenApiSchema _copy(OpenApiSchema primitiveSchema)
+    {
+        var copy = new OpenApiSchema { Type = primitiveSchema.Type };
+        _copyConstraints(primitiveSchema, copy);
+        return copy;
+    }
+
+    // The value constraints of the primitive's schema; titles, descriptions and references stay with the target.
+    private static void _copyConstraints(OpenApiSchema source, OpenApiSchema target)
+    {
+        target.Format = source.Format;
+        target.Pattern = source.Pattern;
+        target.Enum = source.Enum is null ? null : [.. source.Enum.Select(static value => value?.DeepClone()).OfType<JsonNode>()];
+        target.Minimum = source.Minimum;
+        target.Maximum = source.Maximum;
+        target.ExclusiveMinimum = source.ExclusiveMinimum;
+        target.ExclusiveMaximum = source.ExclusiveMaximum;
+        target.MultipleOf = source.MultipleOf;
+        target.MinLength = source.MinLength;
+        target.MaxLength = source.MaxLength;
+        target.Default = source.Default?.DeepClone();
+        if (source.Const is not null)
+            target.Const = source.Const;
+        target.Examples = source.Examples is null ? null : [.. source.Examples.Select(static value => value?.DeepClone()).OfType<JsonNode>()];
+    }
+
+    private static void _apply(OpenApiSchema schema, OpenApiSchema valueObject, bool isCollection)
+    {
+        if (isCollection)
+        {
+            // ASP.NET Core emits no items for a collection of a converter-backed type.
+            schema.Items = _copy(valueObject);
+            return;
+        }
+
+        var nullable = schema.Type is { } current && current.HasFlag(JsonSchemaType.Null);
+        schema.Type = nullable ? valueObject.Type | JsonSchemaType.Null : valueObject.Type;
+        _copyConstraints(valueObject, schema);
+        schema.Items = null;
+        schema.Properties?.Clear();
+        schema.Required?.Clear();
+    }
+
+    // The element type of an array or of a single-argument generic collection, such as List<T>.
+    private static Type? _collectionElementType(Type type)
+    {
+        if (type.IsArray)
+            return type.GetElementType();
+        return type.IsGenericType && type.GenericTypeArguments.Length == 1 && typeof(System.Collections.IEnumerable).IsAssignableFrom(type)
+            ? type.GenericTypeArguments[0]
+            : null;
+    }
+
+    // Detected by attribute name so this package takes no Vogen dependency. The primitive is read from the
+    // attribute, which survives trimming and Native AOT unlike the metadata of the generated Value property.
+    private static Type? _getValueObjectPrimitive(Type type)
+    {
+        foreach (var attribute in type.CustomAttributes)
+        {
+            var name = attribute.AttributeType.FullName;
+            if (name is null)
+                continue;
+            if (name.StartsWith("Vogen.ValueObjectAttribute`1", StringComparison.Ordinal))
+                return attribute.AttributeType.GetGenericArguments()[0];
+            if (string.Equals(name, "Vogen.ValueObjectAttribute", StringComparison.Ordinal))
+                return attribute.ConstructorArguments is [{ Value: Type primitive }, ..] ? primitive : typeof(int); // Vogen's default
+        }
+
+        return null;
     }
 
     /// <summary>Uses the wrapped CLR type for OpenAPI route and query parameter schemas.</summary>

@@ -30,7 +30,7 @@ public sealed class BulkImportDataBusTests
             builder => builder.Use(dataBus),
             store).ConfigureAwait(false);
         await using var worker = FunctionsTestHosts.ComposeWorkerTrigger(dataBus, store);
-        var author = "Bulk " + Guid.NewGuid().ToString("N");
+        var author = PersonName.From("Bulk " + Guid.NewGuid().ToString("N"));
 
         await api.Bus.Send(FunctionsTestHosts.NewOversizedBulkImport(author)).ConfigureAwait(false);
         var deliveries = await transport.ReceiveBatchAsync(

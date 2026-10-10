@@ -671,6 +671,111 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void HttpGeneratorsBindValueObjectRouteThroughVogenTryParse()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [Vogen.ValueObject<System.Guid>]
+            public readonly partial struct BookId { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed class GetBook : IQuery<string>
+            {
+                public BookId Id { get; set; }
+            }
+            """;
+
+        var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source + _vogenAttributes);
+        var minimal = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source + _vogenAttributes);
+
+        functions.Diagnostics.Should().BeEmpty();
+        functions.Generated.Should().Contain("!global::BookId.TryParse(_raw_Id, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Id)");
+        minimal.Diagnostics.Should().BeEmpty();
+        minimal.Generated.Should().Contain("global::BookId.TryParse(p_Id_text, global::System.Globalization.CultureInfo.InvariantCulture, out var p_Id_parsed)");
+        minimal.Generated.Should().NotContain("ArkTypeConverterValue<global::BookId>");
+    }
+
+    // Vogen's attributes with the conversion and parsing options the HTTP generators read.
+    private const string _vogenParseOptionAttributes = """
+        namespace Vogen
+        {
+            [System.Flags]
+            public enum Conversions { Unspecified = -1, None = 0, TypeConverter = 2, SystemTextJson = 4 }
+            public enum ParsableForPrimitives { Unspecified = -1, HoistMethodsAndInterfaces = 0, GenerateMethodsAndInterface = 1, GenerateNothing = 2 }
+            public enum ParsableForStrings { Unspecified = -1, GenerateMethodsAndInterface = 0, GenerateNothing = 1 }
+            [System.AttributeUsage(System.AttributeTargets.Struct | System.AttributeTargets.Class)]
+            public sealed class ValueObjectAttribute<T> : System.Attribute
+            {
+                public ValueObjectAttribute(Conversions conversions = Conversions.Unspecified, ParsableForStrings parsableForStrings = ParsableForStrings.Unspecified, ParsableForPrimitives parsableForPrimitives = ParsableForPrimitives.Unspecified) { }
+            }
+            [System.AttributeUsage(System.AttributeTargets.Assembly)]
+            public sealed class VogenDefaultsAttribute : System.Attribute
+            {
+                public VogenDefaultsAttribute(Conversions conversions = Conversions.Unspecified, ParsableForStrings parsableForStrings = ParsableForStrings.Unspecified, ParsableForPrimitives parsableForPrimitives = ParsableForPrimitives.Unspecified) { }
+            }
+        }
+        """;
+
+    [TestMethod]
+    [DataRow("[Vogen.ValueObject<System.Guid>(conversions: Vogen.Conversions.SystemTextJson, parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]", "")]
+    [DataRow("[Vogen.ValueObject<System.Guid>(parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]", "[assembly: Vogen.VogenDefaults(conversions: Vogen.Conversions.None)]")]
+    public void HttpGeneratorsReportValueObjectWithoutTryParseOrTypeConverter(string valueObjectAttribute, string assemblyAttribute)
+    {
+        var source = $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            {{assemblyAttribute}}
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            {{valueObjectAttribute}}
+            public readonly partial struct BookId { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed class GetBook : IQuery<string>
+            {
+                public BookId Id { get; set; }
+            }
+            """ + _vogenParseOptionAttributes;
+
+        var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+        var minimal = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        functions.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF059");
+        minimal.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF059");
+    }
+
+    [TestMethod]
+    [DataRow("[Vogen.ValueObject<System.Guid>(parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]", "")]
+    [DataRow("[Vogen.ValueObject<System.Guid>]", "[assembly: Vogen.VogenDefaults(parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]")]
+    public void HttpGeneratorsBindValueObjectWithoutTryParseThroughTypeConverter(string valueObjectAttribute, string assemblyAttribute)
+    {
+        var source = $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            {{assemblyAttribute}}
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            {{valueObjectAttribute}}
+            public readonly partial struct BookId { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed class GetBook : IQuery<string>
+            {
+                public BookId Id { get; set; }
+            }
+            """ + _vogenParseOptionAttributes;
+
+        var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+        var minimal = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        functions.Diagnostics.Should().BeEmpty();
+        functions.Generated.Should().NotContain("BookId.TryParse");
+        minimal.Diagnostics.Should().BeEmpty();
+        minimal.Generated.Should().NotContain("BookId.TryParse");
+        minimal.Generated.Should().Contain("ArkTypeConverterValue<global::BookId>");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorEmitsRouteBindingWithTryParse()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
@@ -4073,6 +4178,167 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("GreetingsV1GrpcService");
     }
 
+    private const string _vogenAttributes = """
+        namespace Vogen
+        {
+            [System.AttributeUsage(System.AttributeTargets.Struct | System.AttributeTargets.Class)]
+            public sealed class ValueObjectAttribute<T> : System.Attribute { }
+        }
+        """;
+
+    [TestMethod]
+    public void GrpcGeneratorExportsValueObjectsAsPrimitiveScalarsAndRegistersThem()
+    {
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [Vogen.ValueObject<System.Guid>]
+            public readonly partial struct BookId { }
+            [Vogen.ValueObject<string>]
+            public readonly partial struct BookCode { }
+            [GrpcService("Books")]
+            [GrpcMethod("GetBook")]
+            [ProtoContract]
+            public sealed class GetBook : IQuery<BookItem>
+            {
+                [ProtoMember(1)]
+                public BookId Id { get; set; }
+            }
+            [ProtoContract]
+            public sealed class BookItem
+            {
+                [ProtoMember(1)]
+                public BookId? Parent { get; set; }
+                [ProtoMember(2)]
+                public System.Collections.Generic.List<BookCode> Codes { get; set; } = [];
+            }
+            """ + _vogenAttributes);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("string id = 1;");
+        result.Generated.Should().Contain("string parent = 1;");
+        result.Generated.Should().Contain("repeated string codes = 2;");
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::BookId, global::System.Guid>(global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => global::BookId.From(value), static value => value.Value);");
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::BookCode, string>(");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorExportsSensitiveValueObjectsAsStringsAndRegistersThroughTheComplianceTransport()
+    {
+        // ReaderName is recognized by the attribute (declared in this compilation), AuthorName by the interface the
+        // compliance generator implements (a compiled reference).
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            namespace Ark.Tools.Compliance
+            {
+                [System.AttributeUsage(System.AttributeTargets.Struct)]
+                public sealed class SensitiveValueObjectAttribute<T> : System.Attribute { }
+                public interface ISensitiveValue<TSelf> where TSelf : struct, ISensitiveValue<TSelf> { }
+            }
+            [Ark.Tools.Compliance.SensitiveValueObject<string>]
+            public readonly partial struct ReaderName { }
+            public readonly partial struct AuthorName : Ark.Tools.Compliance.ISensitiveValue<AuthorName> { }
+            [GrpcService("Books")]
+            [GrpcMethod("GetBook")]
+            [ProtoContract]
+            public sealed class GetBook : IQuery<BookItem>
+            {
+                [ProtoMember(1)]
+                public ReaderName Reader { get; set; }
+            }
+            [ProtoContract]
+            public sealed class BookItem
+            {
+                [ProtoMember(1)]
+                public AuthorName? Author { get; set; }
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().Contain("string reader = 1;");
+        result.Generated.Should().Contain("string author = 1;");
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::ReaderName, string>(global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => global::Ark.Tools.Compliance.SensitiveValueSerialization.FromTransport<global::ReaderName>(value), static value => global::Ark.Tools.Compliance.SensitiveValueSerialization.ToTransport(value, \"gRPC\"));");
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::AuthorName, string>(");
+    }
+
+    [TestMethod]
+    [DataRow("", true)]
+    [DataRow("[assembly: ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level300)]", false)]
+    public void GrpcGeneratorReportsGuidBelowCompatibilityLevel300(string assemblyAttribute, bool reported)
+    {
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            {{assemblyAttribute}}
+            [GrpcService("Books")]
+            [GrpcMethod("GetBook")]
+            [ProtoContract]
+            public sealed class GetBook : IQuery<BookItem>
+            {
+                [ProtoMember(1)]
+                public System.Guid Id { get; set; }
+            }
+            [ProtoContract]
+            public sealed class BookItem
+            {
+                [ProtoMember(1)]
+                public string Title { get; set; } = string.Empty;
+            }
+            """);
+
+        result.Generated.Should().Contain("string id = 1;");
+        if (!reported)
+        {
+            result.Diagnostics.Should().BeEmpty();
+            return;
+        }
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF060").Subject;
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Should().StartWith(
+            "gRPC contract 'GetBook' member 'Id' is a Guid, which protobuf-net serializes as bcl.Guid below CompatibilityLevel.Level300");
+        diagnostic.Location.IsInSource.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorReportsValueObjectWithoutProtobufScalar()
+    {
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [Vogen.ValueObject<decimal>]
+            public readonly partial struct Price { }
+            [GrpcService("Books")]
+            [GrpcMethod("GetBook")]
+            [ProtoContract]
+            public sealed class GetBook : IQuery<BookItem>
+            {
+                [ProtoMember(1)]
+                public string Title { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class BookItem
+            {
+                [ProtoMember(1)]
+                public Price Price { get; set; }
+            }
+            """ + _vogenAttributes);
+
+        var diagnostic = result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF060").Subject;
+        diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Should().Be(
+            "gRPC contract 'BookItem' member 'Price' is a value object over 'decimal', which has no protobuf scalar; wrap a string, Guid, bool, int, long, float or double");
+        result.Generated.Should().NotContain("ArkProtobufValueObjects.Register<global::Price");
+    }
+
     [TestMethod]
     [DataRow("IQuery<Page<Greeting>>", "response", "Page<Greeting>")]
     [DataRow("IQuery<System.Collections.Generic.IAsyncEnumerable<Page<Greeting>>>", "stream element", "Page<Greeting>")]
@@ -4206,6 +4472,82 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().NotContain("tenant_id");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorDoesNotReportOmittedServerSetRequestMembers()
+    {
+        // The request message omits the server-set Guid, so its wire format cannot disagree with the .proto.
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string UserId { get; set; } = string.Empty;
+                [ServerSet]
+                [ProtoMember(2)]
+                public System.Guid TenantId { get; set; }
+                [ServerSet]
+                [ProtoMember(3)]
+                public ServerMetadata Metadata { get; set; } = new();
+            }
+
+            [ProtoContract]
+            public sealed class ServerMetadata
+            {
+                [ProtoMember(1)]
+                public System.Guid TraceId { get; set; }
+            }
+
+            [ProtoContract]
+            public sealed class Greeting
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+            }
+            """);
+
+        result.Diagnostics.Should().BeEmpty();
+        result.Generated.Should().NotContain("tenant_id");
+        result.Generated.Should().NotContain("message ServerMetadata");
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorChecksServerSetMembersOfAContractThatIsAlsoAResponse()
+    {
+        // Greeting is the response of GetGreeting, so protobuf-net writes its server-set Guid even though
+        // UpdateGreeting also takes it as a request.
+        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcMethod("GetGreeting")]
+            [ProtoContract]
+            public sealed class GetGreeting : IQuery<Greeting>
+            {
+                [ProtoMember(1)]
+                public string UserId { get; set; } = string.Empty;
+            }
+
+            [GrpcMethod("UpdateGreeting")]
+            [ProtoContract]
+            public sealed class Greeting : IQuery<GetGreeting>
+            {
+                [ProtoMember(1)]
+                public string Message { get; set; } = string.Empty;
+                [ServerSet]
+                [ProtoMember(2)]
+                public System.Guid TenantId { get; set; }
+            }
+            """);
+
+        result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF060");
     }
 
     [TestMethod]

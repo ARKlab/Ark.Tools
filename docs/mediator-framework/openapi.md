@@ -32,6 +32,7 @@ private static void ConfigureOpenApi(OpenApiOptions options)
     options
         .AddArkTypeConverterValueSchemas()
         .AddArkNodaTimeSchemas()
+        .AddArkValueObjectSchemas()
         .AddArkComplianceSchemas()
         .AddArkServerSetProperties()
         .AddArkXmlDocumentation()
@@ -50,11 +51,32 @@ Why each option exists:
 | --- | --- |
 | `AddArkTypeConverterValueSchemas` | Documents custom converter values accurately |
 | `AddArkNodaTimeSchemas` | Publishes stable NodaTime formats |
+| `AddArkValueObjectSchemas` | Documents Vogen value objects as the schema of the primitive they wrap |
 | `AddArkComplianceSchemas` | Documents sensitive value objects as their primitive schema |
 | `AddArkServerSetProperties` | Removes server-owned input members |
 | `AddArkXmlDocumentation` | Copies contract XML comments |
 | `AddArkOAuthSecurity` | Publishes OAuth flows and scopes |
 | `AddArkPolymorphism` | Documents discriminator and concrete types |
+
+### Vogen value objects
+
+`AddArkValueObjectSchemas()` describes a Vogen value object with the schema of the
+primitive it wraps wherever it appears: as a component, as the items of an array
+or list, and as a route or query parameter. Vogen can generate its own mapping
+(`[OpenApiMarker<T>]` and `MapVogenTypesIn...()`); registering it as well, before
+or after, leaves the document unchanged, because the Ark schemas are applied last.
+
+Call Vogen's generated `MapVogenTypesIn...()` from a method of your own rather than
+directly in the `AddOpenApi` lambda. ASP.NET Core's XML comment generator cannot
+see Vogen's generated code, so it skips an `AddOpenApi` call whose lambda uses it,
+and that document loses its XML descriptions:
+
+```csharp
+services.AddOpenApi("v1", options => ConfigureOpenApi(options));
+
+private static void ConfigureOpenApi(OpenApiOptions options)
+    => options.MapVogenTypesInVogenOpenApiMarkers().AddArkValueObjectSchemas();
+```
 
 ## 3. Map JSON, YAML, and Scalar
 

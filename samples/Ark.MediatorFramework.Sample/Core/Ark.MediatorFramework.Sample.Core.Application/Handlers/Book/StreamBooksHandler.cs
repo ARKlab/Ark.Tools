@@ -36,8 +36,8 @@ public sealed class StreamBooksHandler : IQueryHandler<StreamBooksQuery.V1, IAsy
             yield return new BookStreamItem
             {
                 Index = index,
-                Title = $"Book {index}",
-                Author = $"Author {index}",
+                Title = BookTitle.From($"Book {index}"),
+                Author = PersonName.From($"Author {index}"),
             };
 
             if (index + 1 < query.Count)

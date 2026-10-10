@@ -41,7 +41,7 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
             Title = request.Data.Title,
             Author = request.Data.Author,
             Genre = request.Data.Genre,
-            Description = $"Book updated: {request.Data.Title} by {request.Data.Author}",
+            Description = BookDescription.From($"Book updated: {request.Data.Title.Value}"),
         };
         if (!await context.UpdateBookAsync(book, ctk).ConfigureAwait(false))
             throw new EntityTagMismatchException($"The ETag for book '{request.Id}' did not match.");
@@ -49,10 +49,9 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
             ?? throw new EntityNotFoundException($"Book '{request.Id}' was not found after update.");
         await context.WriteAuditAsync(new AuditEntry
         {
-            Id = Guid.NewGuid(),
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(Book.V1.Output),
-            Identifier = book.Id.ToString("D"),
+            Identifier = book.Id.Value.ToString("D"),
             Operation = typeof(Book_UpdateRequest).Name + "." + typeof(Book_UpdateRequest.V1).Name,
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);

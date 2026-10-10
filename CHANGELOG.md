@@ -6,13 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `ToDataTableArk()` shreds Vogen value objects (`[ValueObject<T>]` or `[ValueObject(typeof(T))]`) into a column of their primitive type, so they can be passed in table-valued parameters and `SqlBulkCopy`. Ark.Tools.Core does not depend on Vogen.
+- Mediator Framework contracts can use Vogen value objects. They travel as the primitive they wrap in JSON (`ConfigureArkDefaults()` now applies Vogen's converter even through a source-generated `JsonSerializerContext`), in Minimal API and Azure Functions routes and query strings, and over gRPC, where the exported `.proto` declares the primitive and `MapArkGrpcServicesFromAssembly` registers the value object with protobuf-net. Add `AddArkValueObjectSchemas()` to document them in OpenAPI, including collections and route and query parameters, with the same result whether or not Vogen's own OpenAPI mapping is also registered, and call `ValueObjectDapper.Register<TValueObject, TPrimitive>()` for Dapper. Ark.Tools does not depend on Vogen.
+- Error `ARKMF060` for a gRPC contract member whose exported `.proto` type differs from what protobuf-net writes: a `Guid` below `CompatibilityLevel.Level300`, or a value object over a primitive with no protobuf scalar.
+
 ### Changed
 
+- **Breaking:** the exported gRPC `.proto` declares a `Guid` as `string` instead of `bytes`. protobuf-net writes a `Guid` as its own `bcl.Guid` message, so clients generated from the old schema could not read these fields. Add `[assembly: ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level300)]` to the contracts assembly (`ARKMF060` reports a missing one); this changes the wire format of its `Guid` fields to the canonical string.
 - `Ark.Tools.MediatorFramework.MinimalApi`: generated endpoints bind route, query and JSON body values in generated code, with the same rules as ASP.NET Core Minimal API, instead of through `RequestDelegateFactory`. They avoid its reflection-based binding, so they are trim-safe; endpoint filters and OpenAPI work as before. `GET` and `DELETE` contracts are bound property by property instead of with `[AsParameters]`. In a trimmed app, add the contract and response types to a `JsonSerializerContext` in the Minimal API JSON options.
 - `Ark.Tools.ResourceWatcher.Sql`: trimmed apps that use `SqlStateProvider<TExtensions>` without `ExtensionsJsonContext` now keep the public constructors, properties and fields of a flat extensions type and opt back into reflection-based serialization, so it round-trips instead of failing or losing values. Generic code that passes its own type parameter as `TExtensions` must add the same `[DynamicallyAccessedMembers]` annotation (trim analyzer IL2091). Nested or polymorphic extension types still need `ExtensionsJsonContext` when trimming.
 
 ### Fixed
 
+- `AddArkAzureFunctions` no longer adds reflection-based JSON when reflection-based serialization is disabled, as in trimmed apps: it keeps camelCase naming and Vogen value object support, and the source-generated contexts passed to it resolve every type. A trimmed Functions app no longer reports trimming warnings from Ark.Tools.
+- `ToDataTableArk()` no longer fails in Native AOT apps when the element type, shredded through the reflection fallback, has a nullable value-type member such as `Guid?`, and publishing no longer reports a trimming warning for it.
 - `Ark.Tools.MediatorFramework.Grpc`: in a trimmed app, a business rule violation now reaches the client as `FailedPrecondition` with its title and detail. Its extra properties are omitted, with a warning in the log, because reflection-based JSON is disabled. Before, the mapping threw and the client received `Unknown`.
 - `Ark.Tools.AspNetCore.OTel`: binding `ApplicationInsights:ArkAdaptiveSampler` settings no longer relies on reflection, so it keeps working in trimmed apps.
 - `Ark.Tools.MediatorFramework.Mcp`: generated MCP tools for self-typed contracts (`IQuery<TSelf, TResult>`, `IRequest<TSelf, TResponse>`, `ICommand<TSelf>`) call the processor's typed overloads, so they no longer need reflection and work in trimmed apps. Contracts that implement only `IQuery<TResult>` or `IRequest<TResponse>` still use the reflection-based dispatch.
@@ -20,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.ResourceWatcher.ApplicationInsights`: the `RetrievedAt` telemetry property now holds the resource retrieval instant instead of the state type name, and is omitted when the instant is unknown.
 - `Ark.Tools.ResourceWatcher.Sql`: `SqlStateProvider` reads and writes `ModifiedSources` through a source-generated serializer, so it keeps working in trimmed applications. The stored JSON format is unchanged.
 - `Ark.Tools.ResourceWatcher.Sql`: `SqlStateProvider.LoadStateAsync` works in trimmed apps; it used to fail because trimming removed the constructors of the row types it reads.
+- `Ark.Tools.MediatorFramework.Grpc`: a compliance sensitive value object, such as `PersonName`, in a gRPC contract is exported to `.proto` as a `string` and registered with protobuf-net by `MapArkGrpcServicesFromAssembly`. It used to be exported as `bytes` and fail at runtime because protobuf-net had no serializer for it.
+- `ConfigureArkDefaults()` serializes a compliance sensitive value object declared in the same assembly as a source-generated `JsonSerializerContext` as its value instead of an empty object, as it already did for Vogen value objects.
 
 ## [7.0.0-beta13] - 2026-10-09
 

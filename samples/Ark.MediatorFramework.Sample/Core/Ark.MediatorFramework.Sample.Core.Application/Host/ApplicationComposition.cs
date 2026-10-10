@@ -4,7 +4,6 @@
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 using Ark.Tools.Core;
-using Ark.Tools.Dapper;
 using Ark.Tools.Nodatime;
 using Ark.Tools.Sql;
 using Ark.Tools.Sql.SqlServer;
@@ -75,11 +74,7 @@ public static class ApplicationComposition
         }
         else
         {
-            // Register SQL Server mappings for LocalDate, LocalDateTime, and OffsetDateTime.
-            NodaTimeDapperSqlServer.Setup();
-            EvolvableEnumDapper.Register<Book.V1.Genre>();
-            EvolvableEnumDapper.Register<BookPrintProcessStatus>();
-            EvolvableEnumDapper.Register<ReadingActivityKind>();
+            SampleDapperMappings.Register();
             container.RegisterInstance(new SampleDataContextConfig(options.SqlConnectionString!));
             container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
             container.RegisterSingleton<SampleDataContextFactory>();

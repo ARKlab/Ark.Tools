@@ -119,6 +119,11 @@ internal static class HttpStringBinding
             || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
             return false;
 
+        // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see; without it
+        // the value object binds through the TypeConverter Vogen also generates.
+        if (ValueObjectSymbols.IsValueObject(targetType))
+            return !ValueObjectSymbols.GeneratesTryParse(targetType);
+
         return !TryParseMethods(targetType)
             .Any(method => IsTryParseShape(method)
                 && (method.Parameters.Length == 2 || IsFormatProviderParameter(method.Parameters[1]))
@@ -166,6 +171,13 @@ internal static class HttpStringBinding
     /// <returns><see langword="true"/> when the value binds.</returns>
     public static bool CanBindExplicitly(ITypeSymbol type)
     {
+        // A Vogen value object without TryParse or a TypeConverter cannot convert from a string at all.
+        var element = WithoutNullable(type is IArrayTypeSymbol array ? array.ElementType : type);
+        if (ValueObjectSymbols.IsValueObject(element)
+            && !ValueObjectSymbols.GeneratesTryParse(element)
+            && !ValueObjectSymbols.GeneratesTypeConverter(element))
+            return false;
+
         if (IsStringBindable(type) || IsStringCollection(type))
             return true;
         if (IsComplexOrComplexCollection(type))
@@ -270,6 +282,10 @@ internal static class HttpStringBinding
             return ConversionKind.Enum;
         if (type.ToDisplayString() == "System.Uri")
             return ConversionKind.Uri;
+        // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see; without it
+        // the value object binds through the TypeConverter Vogen also generates.
+        if (ValueObjectSymbols.IsValueObject(type))
+            return ValueObjectSymbols.GeneratesTryParse(type) ? ConversionKind.TryParseWithProvider : ConversionKind.TypeConverter;
 
         var tryParse = _tryParseMethodsOf(type);
         if (tryParse.Any(_hasFormatProvider))

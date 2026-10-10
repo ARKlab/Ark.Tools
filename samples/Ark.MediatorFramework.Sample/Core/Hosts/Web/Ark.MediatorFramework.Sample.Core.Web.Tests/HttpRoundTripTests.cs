@@ -68,12 +68,13 @@ public sealed class HttpRoundTripTests
         using var client = host.CreateClient(ApplicationScopes.BookRead);
         var options = MessagePackSerializerOptions.Standard.WithResolver(
             CompositeResolver.Create(
+                SampleMessagePackFormatters.Resolver,
                 MessagePack.NodaTime.NodatimeResolver.Instance,
                 DynamicEnumAsStringResolver.Instance,
                 StandardResolver.Instance));
 
         using var body = new ByteArrayContent(MessagePackSerializer.Serialize(
-            new DescribeBookEditionRequest.V1 { Edition = new PrintBookEdition { Format = "Paperback", PageCount = 320 } },
+            new DescribeBookEditionRequest.V1 { Edition = new PrintBookEdition { Format = EditionFormat.From("Paperback"), PageCount = PageCount.From(320) } },
             options,
             ctk));
         body.Headers.ContentType = new("application/x-msgpack");

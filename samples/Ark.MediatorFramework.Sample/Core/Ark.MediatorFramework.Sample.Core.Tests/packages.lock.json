@@ -1172,19 +1172,22 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
+          "Ark.Tools.Compliance.MessagePack": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Nodatime.Protobuf": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Solid.Authorization": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "MessagePack": "[3.1.11, )",
-          "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )",
+          "Vogen": "[8.0.7, )"
         }
       },
       "ark.mediatorframework.sample.core.application": {
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework.Sample.Core.API": "[6.6.6, )",
+          "Ark.Tools.Compliance.Dapper": "[999.9.9, )",
           "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
@@ -1224,11 +1227,32 @@
           "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
         }
       },
+      "ark.tools.compliance.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Dapper": "[2.1.89, )"
+        }
+      },
+      "ark.tools.compliance.messagepack": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "MessagePack": "[3.1.11, )"
+        }
+      },
       "ark.tools.compliance.nlog": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
           "NLog": "[6.2.1, )"
+        }
+      },
+      "ark.tools.compliance.reqnroll": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Reqnroll": "[3.3.4, )"
         }
       },
       "ark.tools.core": {
@@ -1515,6 +1539,12 @@
           "Microsoft.IdentityModel.JsonWebTokens": "8.23.0",
           "Microsoft.IdentityModel.Tokens": "8.23.0"
         }
+      },
+      "Vogen": {
+        "type": "CentralTransitive",
+        "requested": "[8.0.7, )",
+        "resolved": "8.0.7",
+        "contentHash": "0DrJ2ZPEGoJlzwqhum2LaZJ2FzJzgy5HP0km+XYL2MC/hS4Sn5/C35oRyob146Yjlf5xit2tmPx5xhI2BXkhLw=="
       }
     }
   }

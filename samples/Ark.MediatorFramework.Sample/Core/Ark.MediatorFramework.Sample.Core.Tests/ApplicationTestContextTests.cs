@@ -22,12 +22,12 @@ public sealed class ApplicationTestContextTests
         var response = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
             new Book_CreateRequest.V1(new Book.V1.Create
             {
-                Title = "Clean Code",
-                Author = "Martin",
+                Title = BookTitle.From("Clean Code"),
+                Author = PersonName.From("Martin"),
                 Genre = Book.V1.Genre.Technology,
             })).ConfigureAwait(false);
 
-        response.Title.Should().Be("Clean Code");
+        response.Title.Should().Be(BookTitle.From("Clean Code"));
         context.AuditCount.Should().Be(1);
     }
 
@@ -44,20 +44,20 @@ public sealed class ApplicationTestContextTests
             [
                 new Book.V1.Create
                 {
-                    Title = "Clean Code",
-                    Author = "Martin",
+                    Title = BookTitle.From("Clean Code"),
+                    Author = PersonName.From("Martin"),
                     Genre = Book.V1.Genre.Technology,
                 },
                 new Book.V1.Create
                 {
-                    Title = "Dune",
-                    Author = "Herbert",
+                    Title = BookTitle.From("Dune"),
+                    Author = PersonName.From("Herbert"),
                     Genre = Book.V1.Genre.Fiction,
                 },
             ])).ConfigureAwait(false);
 
         response.Should().HaveCount(2);
-        response.Select(static book => book.Title).Should().Equal("Clean Code", "Dune");
+        response.Select(static book => book.Title.Value).Should().Equal("Clean Code", "Dune");
         context.AuditCount.Should().Be(1);
     }
 

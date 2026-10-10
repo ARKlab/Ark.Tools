@@ -154,6 +154,7 @@ attribute location:
 | ARKMF032 | Error | Azure Functions name is duplicated |
 | ARKMF058 | Error | gRPC contract has a request, response or stream item that is not a protobuf contract |
 | ARKMF059 | Error | HTTP property cannot be bound from the request: a `GET`, `HEAD` or `DELETE` property not bound from the route or query string, or a route or query property whose type cannot be converted from a string |
+| ARKMF060 | Error | gRPC contract member does not match its exported `.proto` type: a `Guid` below protobuf-net `CompatibilityLevel.Level300`, or a value object whose primitive has no protobuf scalar |
 | ARKAPI001 | Error | API surface baseline is missing |
 | ARKAPI002 | Error | API surface contract changed |
 | ARKAPI003 | Error | Multiple API surface baselines were found |

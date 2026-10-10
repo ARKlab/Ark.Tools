@@ -19,19 +19,29 @@ public sealed class CreateBookRequestValidator : AbstractValidator<Book_CreateRe
 /// <summary>Validates book creation data.</summary>
 public sealed class BookCreateValidator : AbstractValidator<Book.V1.Create>
 {
+    /// <summary>Reveals the author's name to check its length.</summary>
+    internal static readonly CompliancePurpose _validationPurpose = CompliancePurpose.Custom(
+        "Validate the Book author",
+        CompliancePurposeCategory.TechnicalFunctional);
+
     /// <summary>Initializes a new instance of the <see cref="BookCreateValidator"/> class.</summary>
     public BookCreateValidator()
     {
-        RuleFor(static book => book.Title)
+        // Value objects carry no invariants (see #1089): the rules validate the wrapped value, naming the property
+        // as before so the validation errors keep their keys.
+        RuleFor(static book => book.Title.IsInitialized() ? book.Title.Value : null)
             .NotEmpty()
-            .MaximumLength(200);
+            .MaximumLength(200)
+            .OverridePropertyName(nameof(Book.V1.Create.Title));
         RuleFor(static book => book.Author)
             .NotEmpty()
-            .MaximumLength(100);
+            .Must(static author => author.Reveal(_validationPurpose).Length <= 100)
+            .WithMessage("The author must be 100 characters or fewer.");
         RuleFor(static book => book.Genre)
             .NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
-        RuleFor(static book => book.ISBN)
-            .MaximumLength(20);
+        RuleFor(static book => book.ISBN.HasValue ? book.ISBN.Value.Value : null)
+            .MaximumLength(20)
+            .OverridePropertyName(nameof(Book.V1.Create.ISBN));
     }
 }
 
@@ -53,8 +63,14 @@ public sealed class UpdateBookRequestValidator : AbstractValidator<Book_UpdateRe
     public UpdateBookRequestValidator()
     {
         RuleFor(static request => request.Id).NotEmpty();
-        RuleFor(static request => request.Data.Title).NotEmpty().MaximumLength(200);
-        RuleFor(static request => request.Data.Author).NotEmpty().MaximumLength(100);
+        RuleFor(static request => request.Data.Title.IsInitialized() ? request.Data.Title.Value : null)
+            .NotEmpty()
+            .MaximumLength(200)
+            .OverridePropertyName("Data.Title");
+        RuleFor(static request => request.Data.Author)
+            .NotEmpty()
+            .Must(static author => author.Reveal(BookCreateValidator._validationPurpose).Length <= 100)
+            .WithMessage("The author must be 100 characters or fewer.");
         RuleFor(static request => request.Data.Genre).NotEqual(Ark.Tools.Core.EvolvableEnum<Book.V1.Genre>.NotSet);
     }
 }
@@ -141,9 +157,17 @@ public sealed class CreateBookReviewRequestValidator : AbstractValidator<CreateB
     public CreateBookReviewRequestValidator()
     {
         RuleFor(static request => request.BookId).NotEmpty();
-        RuleFor(static request => request.ReviewId).NotEqual(Guid.Empty).When(static request => request.ReviewId.HasValue);
-        RuleFor(static request => request.Rating).InclusiveBetween(1, 5);
-        RuleFor(static request => request.Text).NotEmpty().MaximumLength(2000);
+        RuleFor(static request => request.ReviewId.HasValue ? request.ReviewId.Value.Value : Guid.Empty)
+            .NotEqual(Guid.Empty)
+            .When(static request => request.ReviewId.HasValue)
+            .OverridePropertyName(nameof(CreateBookReviewRequest.V1.ReviewId));
+        RuleFor(static request => request.Rating.IsInitialized() ? request.Rating.Value : 0)
+            .InclusiveBetween(1, 5)
+            .OverridePropertyName(nameof(CreateBookReviewRequest.V1.Rating));
+        RuleFor(static request => request.Text.IsInitialized() ? request.Text.Value : null)
+            .NotEmpty()
+            .MaximumLength(2000)
+            .OverridePropertyName(nameof(CreateBookReviewRequest.V1.Text));
     }
 }
 
@@ -167,14 +191,18 @@ public sealed class RecordReadingActivityRequestValidator : AbstractValidator<Re
     {
         RuleFor(static request => request.BookId).NotEmpty();
         RuleFor(static request => request.Kind).NotEqual(Ark.Tools.Core.EvolvableEnum<ReadingActivityKind>.NotSet);
-        RuleFor(static request => request.Progress).InclusiveBetween(0, 100);
+        RuleFor(static request => _progress(request.Progress))
+            .InclusiveBetween(0, 100)
+            .OverridePropertyName(nameof(RecordReadingActivityRequest.V1.Progress));
         RuleFor(static request => request)
-            .Must(static request => request.Kind != ReadingActivityKind.Started || request.Progress == 0)
+            .Must(static request => request.Kind != ReadingActivityKind.Started || _progress(request.Progress) == 0)
             .WithMessage("Started activity must have zero progress.");
         RuleFor(static request => request)
-            .Must(static request => request.Kind != ReadingActivityKind.Finished || request.Progress == 100)
+            .Must(static request => request.Kind != ReadingActivityKind.Finished || _progress(request.Progress) == 100)
             .WithMessage("Finished activity must have complete progress.");
     }
+
+    private static int _progress(ReadingProgress progress) => progress.IsInitialized() ? progress.Value : 0;
 }
 
 /// <summary>Validates reading activity queries.</summary>

@@ -94,8 +94,8 @@ internal static class WebRebusTestHosts
     {
         return new Book_CreateRequest.V1(new Book.V1.Create
         {
-            Title = "Dune",
-            Author = "Herbert",
+            Title = BookTitle.From("Dune"),
+            Author = PersonName.From("Herbert"),
             Genre = Book.V1.Genre.Fiction,
         });
     }
@@ -103,14 +103,14 @@ internal static class WebRebusTestHosts
     /// <summary>Creates a bulk import whose serialized body exceeds the DataBus threshold.</summary>
     /// <param name="author">The author shared by every imported book, used to find them.</param>
     /// <returns>The bulk request.</returns>
-    public static Book_BulkCreateRequest.V1 NewOversizedBulkImport(string author)
+    public static Book_BulkCreateRequest.V1 NewOversizedBulkImport(PersonName author)
     {
         // About 2,000 x 200 bytes of random Base64 titles, which compress poorly: the payload stays above the
         // offload threshold even if messaging compression is enabled.
         return new Book_BulkCreateRequest.V1(Enumerable.Range(0, BulkImportSize)
             .Select(_ => new Book.V1.Create
             {
-                Title = Convert.ToBase64String(RandomNumberGenerator.GetBytes(150)),
+                Title = BookTitle.From(Convert.ToBase64String(RandomNumberGenerator.GetBytes(150))),
                 Author = author,
                 Genre = Book.V1.Genre.Fiction,
             })
@@ -121,7 +121,7 @@ internal static class WebRebusTestHosts
     /// <param name="factory">The shared application store.</param>
     /// <param name="author">The author.</param>
     /// <returns>The number of matching books.</returns>
-    public static async Task<long> CountBooksAsync(InMemorySampleDataContextFactory factory, string author)
+    public static async Task<long> CountBooksAsync(InMemorySampleDataContextFactory factory, PersonName author)
     {
         var context = await factory.CreateAsync().ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);

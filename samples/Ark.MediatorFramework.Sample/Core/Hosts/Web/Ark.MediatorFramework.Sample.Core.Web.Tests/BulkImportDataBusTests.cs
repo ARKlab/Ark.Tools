@@ -44,7 +44,7 @@ public sealed class BulkImportDataBusTests
             .ConfigureAwait(false);
         await using var worker = await _startAsync<SampleMessagingParticipant>(factory, transport, dataBus, receiver: true)
             .ConfigureAwait(false);
-        var author = "Bulk " + Guid.NewGuid().ToString("N");
+        var author = PersonName.From("Bulk " + Guid.NewGuid().ToString("N"));
 
         await api.Container.GetInstance<IBus>().Send(_newOversizedBulkImport(author)).ConfigureAwait(false);
 
@@ -79,21 +79,21 @@ public sealed class BulkImportDataBusTests
         return new Process(container, provider, hosted);
     }
 
-    private static Book_BulkCreateRequest.V1 _newOversizedBulkImport(string author)
+    private static Book_BulkCreateRequest.V1 _newOversizedBulkImport(PersonName author)
     {
         // About 2,000 x 200 bytes of random Base64 titles, which compress poorly: the payload stays above the
         // offload threshold even if messaging compression is enabled.
         return new Book_BulkCreateRequest.V1(Enumerable.Range(0, _bulkImportSize)
             .Select(_ => new Book.V1.Create
             {
-                Title = Convert.ToBase64String(RandomNumberGenerator.GetBytes(150)),
+                Title = BookTitle.From(Convert.ToBase64String(RandomNumberGenerator.GetBytes(150))),
                 Author = author,
                 Genre = Book.V1.Genre.Fiction,
             })
             .ToArray());
     }
 
-    private static async Task<long> _countBooksAsync(InMemorySampleDataContextFactory factory, string author)
+    private static async Task<long> _countBooksAsync(InMemorySampleDataContextFactory factory, PersonName author)
     {
         var context = await factory.CreateAsync().ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);

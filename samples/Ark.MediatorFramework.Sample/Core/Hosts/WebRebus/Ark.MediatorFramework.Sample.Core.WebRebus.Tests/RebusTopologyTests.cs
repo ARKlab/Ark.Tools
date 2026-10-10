@@ -53,7 +53,7 @@ public sealed class RebusTopologyTests
             .ConfigureAwait(false);
 
         api.SetScopes(ApplicationScopes.BookRead, ApplicationScopes.BookWrite);
-        await api.SendAsync(new CreateBookReviewRequest.V1 { ReviewId = Guid.NewGuid(), BookId = book.Id, Rating = 5, Text = "Good" })
+        await api.SendAsync(new CreateBookReviewRequest.V1 { ReviewId = BookReviewId.New(), BookId = book.Id, Rating = ReviewRating.From(5), Text = ReviewText.From("Good") })
             .ConfigureAwait(false);
 
         await WebRebusTestHosts.WaitUntilAsync(() => network.GetCount("error") > 0).ConfigureAwait(false);
@@ -71,7 +71,7 @@ public sealed class RebusTopologyTests
         var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
         await using var api = await WebRebusTestHosts.ApiAsync(network, subscribers, dataStore, factory).ConfigureAwait(false);
         await using var worker = await WebRebusTestHosts.WorkerAsync(network, subscribers, dataStore, factory).ConfigureAwait(false);
-        var author = "Bulk " + Guid.NewGuid().ToString("N");
+        var author = PersonName.From("Bulk " + Guid.NewGuid().ToString("N"));
 
         await api.SendAsync(WebRebusTestHosts.NewOversizedBulkImport(author)).ConfigureAwait(false);
 

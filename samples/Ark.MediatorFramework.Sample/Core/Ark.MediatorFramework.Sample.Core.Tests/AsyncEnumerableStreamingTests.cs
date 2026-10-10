@@ -35,7 +35,7 @@ public sealed class AsyncEnumerableStreamingTests
 
         await action.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
         items.Select(static item => item.Index).Should().Equal(0, 1);
-        items[0].Title.Should().Be("Book 0");
+        items[0].Title.Should().Be(BookTitle.From("Book 0"));
     }
 
     /// <summary>Returns no items when the application query requests an empty stream.</summary>

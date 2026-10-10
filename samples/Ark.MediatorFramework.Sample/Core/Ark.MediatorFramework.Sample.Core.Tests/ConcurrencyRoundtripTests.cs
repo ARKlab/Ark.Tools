@@ -25,16 +25,16 @@ public sealed class ConcurrencyRoundtripTests
         var created = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
             new Book_CreateRequest.V1(new Book.V1.Create
             {
-                Title = "ETag",
-                Author = "Author",
+                Title = BookTitle.From("ETag"),
+                Author = PersonName.From("Author"),
                 Genre = Book.V1.Genre.Fiction,
             })).ConfigureAwait(false);
         var updated = await context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
             new Book_UpdateRequest.V1(
                 new Book.V1.Input
                 {
-                    Title = "Updated once",
-                    Author = "Author",
+                    Title = BookTitle.From("Updated once"),
+                    Author = PersonName.From("Author"),
                     Genre = Book.V1.Genre.Fiction,
                 },
                 created.Id,
@@ -45,8 +45,8 @@ public sealed class ConcurrencyRoundtripTests
             new Book_UpdateRequest.V1(
                 new Book.V1.Input
                 {
-                    Title = "Stale",
-                    Author = "Author",
+                    Title = BookTitle.From("Stale"),
+                    Author = PersonName.From("Author"),
                     Genre = Book.V1.Genre.Fiction,
                 },
                 created.Id,
@@ -70,22 +70,22 @@ public sealed class ConcurrencyRoundtripTests
         var created = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
             new Book_CreateRequest.V1(new Book.V1.Create
             {
-                Title = "Retry",
-                Author = "Author",
+                Title = BookTitle.From("Retry"),
+                Author = PersonName.From("Author"),
                 Genre = Book.V1.Genre.Fiction,
             })).ConfigureAwait(false);
         var updated = await context.DispatchRequestAsync<Book_UpdateRequest.V1, Book.V1.Output>(
             new Book_UpdateRequest.V1(
                 new Book.V1.Input
                 {
-                    Title = "Retried",
-                    Author = "Author",
+                    Title = BookTitle.From("Retried"),
+                    Author = PersonName.From("Author"),
                     Genre = Book.V1.Genre.Fiction,
                 },
                 created.Id,
                 created.ETag)).ConfigureAwait(false);
 
-        updated.Title.Should().Be("Retried");
+        updated.Title.Should().Be(BookTitle.From("Retried"));
         faults.PendingFailures.Should().Be(0);
     }
 }

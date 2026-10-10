@@ -7,3 +7,4 @@ Rule ID | Category | Severity | Notes
 ---------|----------|----------|-------
 ARKMF011 | Ark.Tools.MediatorFramework | Error | Unsupported handler kind
 ARKMF058 | Ark.Tools.MediatorFramework | Error | gRPC contract is not bindable
+ARKMF060 | Ark.Tools.MediatorFramework | Error | gRPC contract member does not match its exported .proto type

@@ -35,12 +35,12 @@ public sealed class CreateBookReviewHandler : IRequestHandler<CreateBookReviewRe
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var userId = _user.GetUserId() ?? "anonymous";
+        var userId = _user.GetUserIdOrAnonymous();
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
         _ = await context.ReadBookAsync(request.BookId, ctk: ctk).ConfigureAwait(false)
             ?? throw new EntityNotFoundException($"Book '{request.BookId}' was not found.");
-        var reviewId = request.ReviewId ?? Guid.NewGuid();
+        var reviewId = request.ReviewId ?? BookReviewId.New();
         var existing = await context.ReadBookReviewAsync(reviewId, ctk).ConfigureAwait(false);
         if (existing is not null)
         {
@@ -62,10 +62,9 @@ public sealed class CreateBookReviewHandler : IRequestHandler<CreateBookReviewRe
         await context.SaveBookReviewAsync(review, ctk).ConfigureAwait(false);
         await context.WriteAuditAsync(new AuditEntry
         {
-            Id = Guid.NewGuid(),
             UserId = userId,
             EntityType = nameof(BookReview),
-            Identifier = review.Id.ToString("D"),
+            Identifier = review.Id.Value.ToString("D"),
             Operation = nameof(CreateBookReviewRequest),
             Timestamp = review.CreatedAt,
         }, ctk).ConfigureAwait(false);

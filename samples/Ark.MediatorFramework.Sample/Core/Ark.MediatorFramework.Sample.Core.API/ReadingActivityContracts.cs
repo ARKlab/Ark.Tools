@@ -3,7 +3,6 @@
 
 using Ark.MediatorFramework.Sample.Core.API.Authorization;
 
-using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Solid;
 
@@ -31,20 +30,19 @@ public enum ReadingActivityKind
 public sealed record ReadingActivity
 {
     /// <summary>Gets the activity identifier.</summary>
-    public required Guid Id { get; init; }
+    public required ReadingActivityId Id { get; init; }
 
     /// <summary>Gets the book identifier.</summary>
-    public required Guid BookId { get; init; }
+    public required BookId BookId { get; init; }
 
     /// <summary>Gets the authenticated reader identifier.</summary>
-    [Pseudonymous]
-    public required string UserId { get; init; }
+    public required UserId UserId { get; init; }
 
     /// <summary>Gets the activity kind.</summary>
     public required EvolvableEnum<ReadingActivityKind> Kind { get; init; }
 
     /// <summary>Gets the percentage read at the time of the activity.</summary>
-    public required int Progress { get; init; }
+    public required ReadingProgress Progress { get; init; }
 
     /// <summary>Gets the activity timestamp.</summary>
     public required Instant OccurredAt { get; init; }
@@ -60,13 +58,13 @@ public static class RecordReadingActivityRequest
     {
         /// <summary>Gets the book identifier.</summary>
         [HttpRoute]
-        public Guid BookId { get; init; }
+        public BookId BookId { get; init; }
 
         /// <summary>Gets the activity kind.</summary>
         public EvolvableEnum<ReadingActivityKind> Kind { get; init; }
 
         /// <summary>Gets the percentage read at the time of the activity.</summary>
-        public int Progress { get; init; }
+        public ReadingProgress Progress { get; init; }
     }
 }
 
@@ -80,7 +78,7 @@ public static class GetReadingActivityQuery
     {
         /// <summary>Gets the book identifier.</summary>
         [HttpRoute]
-        public Guid BookId { get; init; }
+        public BookId BookId { get; init; }
 
         /// <summary>Gets the maximum number of activity events to return.</summary>
         [HttpQuery]

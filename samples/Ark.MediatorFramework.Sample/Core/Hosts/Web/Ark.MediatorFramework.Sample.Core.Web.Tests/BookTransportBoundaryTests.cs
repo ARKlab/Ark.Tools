@@ -56,8 +56,8 @@ public sealed class BookTransportBoundaryTests
             {
                 Edition = new PrintBookEdition
                 {
-                    Format = "Paperback",
-                    PageCount = 320,
+                    Format = EditionFormat.From("Paperback"),
+                    PageCount = PageCount.From(320),
                 },
             },
             default(ProtoBuf.Grpc.CallContext),

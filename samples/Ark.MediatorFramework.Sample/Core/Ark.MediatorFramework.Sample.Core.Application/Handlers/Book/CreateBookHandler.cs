@@ -29,7 +29,7 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
     public async Task<Book.V1.Output> ExecuteAsync(Book_CreateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var book = _createResponse(Guid.NewGuid(), request.Data.Title, request.Data.Author, request.Data.Genre, request.Data.ISBN);
+        var book = _createResponse(BookId.New(), request.Data.Title, request.Data.Author, request.Data.Genre, request.Data.ISBN);
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
         await context.WriteAuditAsync(_createAudit(book.Id, typeof(Book_CreateRequest).Name + "." + typeof(Book_CreateRequest.V1).Name), ctk).ConfigureAwait(false);
@@ -39,11 +39,11 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
     }
 
     internal static Book.V1.Output _createResponse(
-        Guid id,
-        string title,
-        string author,
+        BookId id,
+        BookTitle title,
+        PersonName author,
         EvolvableEnum<Book.V1.Genre> genre,
-        string? isbn)
+        Isbn? isbn)
     {
         return new Book.V1.Output
         {
@@ -52,18 +52,18 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
             Author = author,
             Genre = genre,
             ISBN = isbn,
-            Description = $"Book created: {title} by {author}",
+            // The author is personal data: it stays out of the description, which is not classified.
+            Description = BookDescription.From($"Book created: {title.Value}"),
         };
     }
 
-    private AuditEntry _createAudit(Guid id, string operation)
+    private AuditEntry _createAudit(BookId id, string operation)
     {
         return new AuditEntry
         {
-            Id = Guid.NewGuid(),
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(Book.V1.Output),
-            Identifier = id.ToString("D"),
+            Identifier = id.Value.ToString("D"),
             Operation = operation,
             Timestamp = _clock.GetCurrentInstant(),
         };
