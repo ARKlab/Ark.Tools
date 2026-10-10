@@ -85,11 +85,20 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
     /// <param name="additionalContexts">
     /// Optional source-generated <see cref="JsonSerializerContext"/> instances to include in the
     /// type-info resolver chain. When provided, types in these contexts are resolved without
-    /// reflection. A <see cref="DefaultJsonTypeInfoResolver"/> fallback is always appended.
+    /// reflection. A <see cref="DefaultJsonTypeInfoResolver"/> fallback is appended while reflection-based
+    /// serialization is enabled.
     /// </param>
     /// <returns>The same service collection.</returns>
+    /// <remarks>
+    /// In a trimmed or Native AOT app (<see cref="JsonSerializer.IsReflectionEnabledByDefault"/> is
+    /// <see langword="false"/>), the reflection-based Ark default converters and the fallback resolver are not
+    /// added: only the supplied contexts resolve types, so they must cover every contract and response type and
+    /// declare the converters they need, for example in <see cref="JsonSourceGenerationOptionsAttribute.Converters"/>.
+    /// </remarks>
     [UnconditionalSuppressMessage("Trimming", "IL2026",
-        Justification = "DefaultJsonTypeInfoResolver is only used as a fallback for types not covered by the supplied source-generated contexts.")]
+        Justification = "The reflection-based defaults and DefaultJsonTypeInfoResolver are guarded by the JsonSerializer.IsReflectionEnabledByDefault feature switch, which trimming and Native AOT disable.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050",
+        Justification = "The reflection-based defaults and DefaultJsonTypeInfoResolver are guarded by the JsonSerializer.IsReflectionEnabledByDefault feature switch, which Native AOT disables.")]
     public static IServiceCollection AddArkAzureFunctions(
         this IServiceCollection services,
         params JsonSerializerContext[] additionalContexts)
@@ -101,6 +110,20 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
 
         services.ConfigureHttpJsonOptions(options =>
         {
+            if (!JsonSerializer.IsReflectionEnabledByDefault)
+            {
+                // Trimmed or Native AOT: keep the reflection-free part of the Ark defaults; the supplied
+                // source-generated contexts resolve every type.
+                options.SerializerOptions.AllowTrailingCommas = true;
+                options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                options.SerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+                options.SerializerOptions.PropertyNameCaseInsensitive = true;
+                options.SerializerOptions.Converters.Add(new Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory());
+                if (additionalContexts.Length > 0)
+                    options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(additionalContexts);
+                return;
+            }
+
             options.SerializerOptions.ConfigureArkDefaults();
             IJsonTypeInfoResolver resolver = new DefaultJsonTypeInfoResolver();
             if (additionalContexts.Length > 0)
