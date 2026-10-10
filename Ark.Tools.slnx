@@ -221,6 +221,7 @@
     <Project Path="tests/Ark.Tools.OTel.Tests/Ark.Tools.OTel.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Rebus.Tests/Ark.Tools.Rebus.Tests.csproj" />
     <Project Path="tests/Ark.Tools.ResourceWatcher.Tests/Ark.Tools.ResourceWatcher.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.ResourceWatcher.TrimmedApp/Ark.Tools.ResourceWatcher.TrimmedApp.csproj" />
     <Project Path="tests/Ark.Tools.Sql.Oracle.Tests/Ark.Tools.Sql.Oracle.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Solid.Analyzers.Tests/Ark.Tools.Solid.Analyzers.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Solid.SimpleInjector.Tests/Ark.Tools.Solid.SimpleInjector.Tests.csproj" />

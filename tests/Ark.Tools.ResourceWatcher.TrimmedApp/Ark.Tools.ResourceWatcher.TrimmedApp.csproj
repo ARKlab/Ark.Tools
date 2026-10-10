@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Trimmed smoke test for SqlStateProvider without ExtensionsJsonContext.
+    CI publishes it (trimmed) and runs it with the ResourceWatcher.Tests appsettings against the SQL Server service.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PublishTrimmed>true</PublishTrimmed>
+    <!-- Pinned so the lock file is the same on every OS and the referenced libraries restore without a RID. CI runs on linux-x64. -->
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <!-- IL2104 summarizes warnings of non-trimmable third-party assemblies (Dapper, SqlClient); the run itself checks them.
+         Detailed warnings from Ark.Tools' IsTrimmable assemblies still fail the publish. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2104</WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/common/Ark.Tools.Nodatime.Dapper/Ark.Tools.Nodatime.Dapper.csproj" />
+    <ProjectReference Include="../../src/resourcewatcher/Ark.Tools.ResourceWatcher.Sql/Ark.Tools.ResourceWatcher.Sql.csproj" />
+  </ItemGroup>
+
+</Project>

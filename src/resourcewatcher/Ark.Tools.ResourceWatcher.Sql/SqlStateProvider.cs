@@ -117,6 +117,10 @@ public class SqlStateProvider<[DynamicallyAccessedMembers(_extensionsMembers)] T
         return JsonSerializer.Deserialize<TExtensions>(json, _internalJsonOptions);
     }
 
+    // Dapper creates these row types through reflection, so trimming would otherwise remove their constructors and setters.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties, typeof(ResourceState))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties, typeof(SqlStateProvider<>.EJ))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties, typeof(SqlStateProvider<>.MMJ))]
     public async Task<IEnumerable<ResourceState<TExtensions>>> LoadStateAsync(string tenant, string[]? resourceIds = null, CancellationToken ctk = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tenant);
