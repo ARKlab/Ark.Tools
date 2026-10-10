@@ -5,6 +5,7 @@
 
   <!--===================Configuration for Nuget Package=========================-->
   <PropertyGroup>
+    <!-- due to azure.monitor.opentelemetry.profiler having no stable release -->
     <NoWarn>$(NoWarn);NU5104</NoWarn>
 
     <TargetFrameworks>net10.0</TargetFrameworks>
