@@ -8,16 +8,16 @@ namespace Ark.MediatorFramework.Sample.Core.WebRebus.Tests;
 /// <summary>Records the books a subscriber was notified about.</summary>
 internal sealed class RecordingSink : IBookPrintNotificationSink, IBookPrintAuditSink
 {
-    private readonly ConcurrentQueue<Guid> _bookIds = new();
+    private readonly ConcurrentQueue<BookId> _bookIds = new();
 
     /// <summary>Gets the number of recorded books.</summary>
     public int Count => _bookIds.Count;
 
     /// <summary>Gets the recorded book identifiers in arrival order.</summary>
-    public IReadOnlyCollection<Guid> BookIds => _bookIds;
+    public IReadOnlyCollection<BookId> BookIds => _bookIds;
 
     /// <inheritdoc />
-    public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
+    public async Task RecordAsync(BookId bookId, CancellationToken ctk = default)
     {
         _bookIds.Enqueue(bookId);
         await Task.CompletedTask.ConfigureAwait(false);

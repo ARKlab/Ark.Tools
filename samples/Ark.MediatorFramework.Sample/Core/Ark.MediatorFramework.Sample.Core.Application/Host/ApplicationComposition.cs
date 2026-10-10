@@ -80,6 +80,7 @@ public static class ApplicationComposition
             EvolvableEnumDapper.Register<Book.V1.Genre>();
             EvolvableEnumDapper.Register<BookPrintProcessStatus>();
             EvolvableEnumDapper.Register<ReadingActivityKind>();
+            ValueObjectDapper.Register<BookId, Guid>(BookId.From, static id => id.Value);
             container.RegisterInstance(new SampleDataContextConfig(options.SqlConnectionString!));
             container.RegisterSingleton<IDbConnectionManager, SqlConnectionManager>();
             container.RegisterSingleton<SampleDataContextFactory>();

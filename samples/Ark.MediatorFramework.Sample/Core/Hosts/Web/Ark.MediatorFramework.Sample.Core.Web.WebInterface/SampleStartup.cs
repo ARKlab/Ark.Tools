@@ -230,6 +230,7 @@ public sealed class SampleStartup
         options
             .AddArkTypeConverterValueSchemas()
             .AddArkNodaTimeSchemas()
+            .AddArkValueObjectSchemas()
             .AddArkComplianceSchemas()
             .AddArkServerSetProperties()
             .AddArkXmlDocumentation()

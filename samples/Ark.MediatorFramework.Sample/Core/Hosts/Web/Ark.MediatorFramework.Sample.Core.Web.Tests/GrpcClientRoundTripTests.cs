@@ -55,4 +55,55 @@ public sealed class GrpcClientRoundTripTests
         edition.Description.Should().Be("Paperback print edition with 320 pages");
         titles.Should().Equal("Book 0", "Book 1");
     }
+
+    /// <summary>
+    /// Uploads a cover over HTTP and downloads it through the generated client, whose request carries the
+    /// <see cref="BookId"/> value object as the <c>string</c> exported to <c>.proto</c>.
+    /// </summary>
+    [TestMethod]
+    public async Task DownloadBookCoverByValueObjectIdThroughGeneratedClient()
+    {
+        await using var host = await WebInterfaceTestHost.StartAsync().ConfigureAwait(false);
+        var ctk = host.App.Lifetime.ApplicationStopping;
+        var bookId = BookId.New();
+        byte[] cover = [0x89, 0x50, 0x4E, 0x47];
+        using (var http = host.CreateClient(ApplicationScopes.BookCover))
+        using (var form = new MultipartFormDataContent())
+        using (var file = new ByteArrayContent(cover))
+        {
+            file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+            form.Add(file, "attachment", "cover.png");
+            using var upload = await http.PostAsync(
+                new Uri("/api/v1/books/" + bookId.Value.ToString("D") + "/cover", UriKind.Relative),
+                form,
+                ctk).ConfigureAwait(false);
+            upload.EnsureSuccessStatusCode();
+        }
+
+        var server = host.App.GetTestServer();
+        using var channel = GrpcChannel.ForAddress(
+            server.BaseAddress,
+            new GrpcChannelOptions { HttpHandler = server.CreateHandler() });
+        var client = new Client.BooksV1.BooksV1Client(channel);
+        var headers = new Metadata
+        {
+            { "Authorization", "Bearer " + WebInterfaceTestHost.CreateBearer(ApplicationScopes.BookCover) },
+        };
+
+        using var call = client.DownloadBookCover(
+            new Client.DownloadBookCoverQuery_V1 { Id = bookId.Value.ToString("D") },
+            headers,
+            cancellationToken: ctk);
+        var name = string.Empty;
+        var data = new List<byte>();
+        await foreach (var chunk in call.ResponseStream.ReadAllAsync(ctk).ConfigureAwait(false))
+        {
+            if (chunk.Metadata is not null)
+                name = chunk.Metadata.Name;
+            data.AddRange(chunk.Data);
+        }
+
+        name.Should().Be("cover.png");
+        data.Should().Equal(cover);
+    }
 }

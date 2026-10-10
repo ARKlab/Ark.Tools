@@ -315,10 +315,10 @@ public sealed class ApplicationTestContext : IAsyncDisposable
     /// <param name="ctk">The cancellation token.</param>
     /// <returns>The process that was stored.</returns>
     public async Task<BookPrintProcessResponse> SeedRunningBookPrintProcessAsync(
-        Guid bookId,
+        BookId bookId,
         CancellationToken ctk = default)
     {
-        if (bookId == Guid.Empty)
+        if (!bookId.IsInitialized())
             throw new ArgumentException("A book identifier is required.", nameof(bookId));
         var process = new BookPrintProcessResponse
         {

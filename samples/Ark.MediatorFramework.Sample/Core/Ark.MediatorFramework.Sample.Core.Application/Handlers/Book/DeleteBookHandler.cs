@@ -38,7 +38,7 @@ public sealed class DeleteBookHandler : IRequestHandler<Book_DeleteRequest.V1, b
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(Book.V1.Output),
-            Identifier = request.Id.ToString("D"),
+            Identifier = request.Id.Value.ToString("D"),
             Operation = typeof(Book_DeleteRequest).Name + "." + typeof(Book_DeleteRequest.V1).Name,
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);

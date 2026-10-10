@@ -211,7 +211,7 @@ public sealed class BookDriver
         return await _context.DispatchQueryAsync<GetAuditsQuery.V1, PagedResult<AuditRecord>>(
             new GetAuditsQuery.V1
             {
-                Identifier = Current.Id.ToString("D"),
+                Identifier = Current.Id.Value.ToString("D"),
                 Limit = 25,
             },
             ctk).ConfigureAwait(false);

@@ -17,7 +17,7 @@ public sealed record BookReview
     public required Guid Id { get; init; }
 
     /// <summary>Gets the reviewed book identifier.</summary>
-    public required Guid BookId { get; init; }
+    public required BookId BookId { get; init; }
 
     /// <summary>Gets the authenticated reviewer identifier.</summary>
     [Pseudonymous]
@@ -44,7 +44,7 @@ public static class CreateBookReviewRequest
     {
         /// <summary>Gets the reviewed book identifier.</summary>
         [HttpRoute]
-        public Guid BookId { get; init; }
+        public BookId BookId { get; init; }
 
         /// <summary>
         /// Gets the client-generated review identifier. Repeating a request with the same identifier for the
@@ -71,7 +71,7 @@ public static class ListBookReviewsQuery
     {
         /// <summary>Gets the reviewed book identifier.</summary>
         [HttpRoute]
-        public Guid BookId { get; init; }
+        public BookId BookId { get; init; }
 
         /// <summary>Gets the number of reviews to skip.</summary>
         [HttpQuery]

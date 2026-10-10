@@ -62,7 +62,7 @@ public static class Book
         {
             /// <summary>Gets the book identifier.</summary>
             [ServerSet]
-            public Guid Id { get; init; }
+            public BookId Id { get; init; }
 
             /// <summary>Gets the generated book description.</summary>
             [ServerSet]
@@ -123,7 +123,7 @@ public static class Book_UpdateRequest
     [RequireScopePolicy(ApplicationScopes.BookWrite)]
     public sealed record V1(
         [property: HttpBody] Book.V1.Input Data,
-        [property: HttpRoute] Guid Id,
+        [property: HttpRoute] BookId Id,
         [property: ETag] string? ETag = null) : IRequest<V1, Book.V1.Output>;
 }
 
@@ -132,7 +132,7 @@ public static class Book_DeleteRequest
 {
     /// <summary>Version one of the book deletion request.</summary>
     [RequireScopePolicy(ApplicationScopes.BookWrite)]
-    public sealed record V1(Guid Id) : IRequest<V1, bool>;
+    public sealed record V1(BookId Id) : IRequest<V1, bool>;
 }
 
 /// <summary>Reads a book by identifier.</summary>
@@ -141,7 +141,7 @@ public static class Book_GetQuery
     /// <summary>Version one of the book query.</summary>
     [McpTool(Name = "books.get")]
     [RequireScopePolicy(ApplicationScopes.BookRead)]
-    public sealed record V1(Guid Id) : IQuery<V1, Book.V1.Output>;
+    public sealed record V1(BookId Id) : IQuery<V1, Book.V1.Output>;
 }
 
 /// <summary>Searches books by their business fields.</summary>

@@ -36,13 +36,13 @@ public interface ISampleDataContext : IOutboxAsyncContext
         CancellationToken ctk = default);
 
     /// <summary>Reads a book.</summary>
-    Task<Book.V1.Output?> ReadBookAsync(Guid id, CancellationToken ctk = default);
+    Task<Book.V1.Output?> ReadBookAsync(BookId id, CancellationToken ctk = default);
 
     /// <summary>Updates a book.</summary>
     Task<bool> UpdateBookAsync(Book.V1.Output book, CancellationToken ctk = default);
 
     /// <summary>Deletes a book.</summary>
-    Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default);
+    Task<bool> DeleteBookAsync(BookId id, CancellationToken ctk = default);
 
     /// <summary>Reads a page of books.</summary>
     Task<Book.V1.Page> ReadBooksAsync(Book_SearchQuery.V1 query, CancellationToken ctk = default);
@@ -54,14 +54,14 @@ public interface ISampleDataContext : IOutboxAsyncContext
     Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default);
 
     /// <summary>Reads bounded reviews for a book.</summary>
-    Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(Guid bookId, int skip, int limit, CancellationToken ctk = default);
+    Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(BookId bookId, int skip, int limit, CancellationToken ctk = default);
 
     /// <summary>Saves reading activity.</summary>
     Task SaveReadingActivityAsync(ReadingActivity activity, CancellationToken ctk = default);
 
     /// <summary>Reads bounded activity for a book and reader.</summary>
     Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
-        Guid bookId,
+        BookId bookId,
         [Pseudonymous] string userId,
         int limit,
         CancellationToken ctk = default);
@@ -264,7 +264,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 
     /// <summary>Reads a book by identifier in the current transaction.</summary>
     public async Task<Book.V1.Output?> ReadBookAsync(
-        Guid id,
+        BookId id,
         CancellationToken ctk = default)
     {
         const string sql = """
@@ -304,7 +304,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     /// <summary>Deletes a book in the current transaction.</summary>
-    public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
+    public async Task<bool> DeleteBookAsync(BookId id, CancellationToken ctk = default)
     {
         const string sql = """
             DELETE FROM [dbo].[Book]
@@ -378,7 +378,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 
     /// <summary>Reads bounded reviews for a book in the current transaction.</summary>
     public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
-        Guid bookId,
+        BookId bookId,
         int skip,
         int limit,
         CancellationToken ctk = default)
@@ -416,7 +416,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 
     /// <summary>Reads bounded reading activity for a book and reader in the current transaction.</summary>
     public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
-        Guid bookId,
+        BookId bookId,
         [Pseudonymous] string userId,
         int limit,
         CancellationToken ctk = default)
@@ -611,7 +611,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     }
 
     private sealed record BookBulkInsertRow(
-        Guid Id,
+        BookId Id,
         string Title,
         string Author,
         EvolvableEnum<Book.V1.Genre> Genre,
@@ -620,7 +620,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
 
     private sealed class BookRow
     {
-        public Guid Id { get; set; }
+        public BookId Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Author { get; set; } = string.Empty;
         public EvolvableEnum<Book.V1.Genre> Genre { get; set; }

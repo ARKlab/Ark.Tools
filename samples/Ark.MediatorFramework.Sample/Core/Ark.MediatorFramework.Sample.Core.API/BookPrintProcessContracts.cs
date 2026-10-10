@@ -35,7 +35,7 @@ public sealed record BookPrintProcessResponse
     public Guid Id { get; init; }
 
     /// <summary>Gets the identifier of the book being printed.</summary>
-    public Guid BookId { get; init; }
+    public BookId BookId { get; init; }
 
     /// <summary>Gets the progress fraction.</summary>
     public double Progress { get; init; }
@@ -57,7 +57,7 @@ public static class CreateBookPrintProcessRequest
     public sealed record V1 : IRequest<V1, BookPrintProcessResponse>
     {
         /// <summary>Gets the identifier of the book to print.</summary>
-        public Guid BookId { get; init; }
+        public BookId BookId { get; init; }
 
         /// <summary>Gets whether the process should report an error.</summary>
         public bool ShouldFail { get; init; }

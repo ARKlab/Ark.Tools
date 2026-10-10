@@ -91,8 +91,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           }
         ],
@@ -163,8 +162,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           },
           {
@@ -329,8 +327,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           }
         ],
@@ -384,8 +381,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           }
         ],
@@ -591,8 +587,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           },
           {
@@ -669,8 +664,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "$ref": "#/components/schemas/BookId"
             }
           }
         ],
@@ -937,6 +931,10 @@
         }
       },
       "BookEditionKind": { },
+      "BookId": {
+        "type": "string",
+        "format": "uuid"
+      },
       "BookReview": {
         "required": [
           "id",
@@ -953,8 +951,7 @@
             "format": "uuid"
           },
           "bookId": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/BookId"
           },
           "userId": {
             "type": "string"
@@ -1192,8 +1189,7 @@
             "format": "uuid"
           },
           "bookId": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/BookId"
           },
           "userId": {
             "type": "string"
@@ -1247,8 +1243,7 @@
         "type": "object",
         "properties": {
           "bookId": {
-            "type": "string",
-            "format": "uuid"
+            "$ref": "#/components/schemas/BookId"
           },
           "reviewId": {
             "type": [

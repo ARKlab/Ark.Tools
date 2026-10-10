@@ -219,6 +219,7 @@ public sealed class WebRebusStartup
         options
             .AddArkTypeConverterValueSchemas()
             .AddArkNodaTimeSchemas()
+            .AddArkValueObjectSchemas()
             .AddArkComplianceSchemas()
             .AddArkServerSetProperties()
             .AddArkXmlDocumentation()

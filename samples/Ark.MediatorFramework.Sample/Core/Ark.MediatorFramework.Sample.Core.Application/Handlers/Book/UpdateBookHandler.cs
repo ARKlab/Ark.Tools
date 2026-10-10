@@ -52,7 +52,7 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(Book.V1.Output),
-            Identifier = book.Id.ToString("D"),
+            Identifier = book.Id.Value.ToString("D"),
             Operation = typeof(Book_UpdateRequest).Name + "." + typeof(Book_UpdateRequest.V1).Name,
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);

@@ -35,7 +35,7 @@ public sealed class UploadBookCoverHandler : IRequestHandler<UploadBookCoverRequ
 
         return new UploadResponse
         {
-            Id = request.Id,
+            Id = request.Id.Value,
             Name = request.Attachment.Name,
             ContentType = request.Attachment.ContentType,
             Length = length,

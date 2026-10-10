@@ -14,8 +14,8 @@ namespace Ark.MediatorFramework.Sample.Core.Application.DAL;
 public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 {
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
-    private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
-    private readonly ConcurrentDictionary<Guid, long> _bookVersions = new();
+    private readonly ConcurrentDictionary<BookId, Book.V1.Output> _books = new();
+    private readonly ConcurrentDictionary<BookId, long> _bookVersions = new();
     private readonly ConcurrentDictionary<Guid, BookReview> _bookReviews = new();
     private readonly ConcurrentDictionary<Guid, ReadingActivity> _readingActivities = new();
     private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
@@ -150,7 +150,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         }
 
         public async Task<Book.V1.Output?> ReadBookAsync(
-            Guid id,
+            BookId id,
             CancellationToken ctk = default)
         {
             _owner._books.TryGetValue(id, out var book);
@@ -175,7 +175,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return await Task.FromResult(updated).ConfigureAwait(false);
         }
 
-        public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
+        public async Task<bool> DeleteBookAsync(BookId id, CancellationToken ctk = default)
         {
             return await Task.FromResult(_owner._books.TryRemove(id, out _)).ConfigureAwait(false);
         }
@@ -218,7 +218,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         }
 
         public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
-            Guid bookId,
+            BookId bookId,
             int skip,
             int limit,
             CancellationToken ctk = default)
@@ -242,7 +242,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         }
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
-            Guid bookId,
+            BookId bookId,
             [Pseudonymous] string userId,
             int limit,
             CancellationToken ctk = default)

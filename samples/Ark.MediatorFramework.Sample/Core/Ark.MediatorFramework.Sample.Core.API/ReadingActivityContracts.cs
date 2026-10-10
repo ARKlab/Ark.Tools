@@ -34,7 +34,7 @@ public sealed record ReadingActivity
     public required Guid Id { get; init; }
 
     /// <summary>Gets the book identifier.</summary>
-    public required Guid BookId { get; init; }
+    public required BookId BookId { get; init; }
 
     /// <summary>Gets the authenticated reader identifier.</summary>
     [Pseudonymous]
@@ -60,7 +60,7 @@ public static class RecordReadingActivityRequest
     {
         /// <summary>Gets the book identifier.</summary>
         [HttpRoute]
-        public Guid BookId { get; init; }
+        public BookId BookId { get; init; }
 
         /// <summary>Gets the activity kind.</summary>
         public EvolvableEnum<ReadingActivityKind> Kind { get; init; }
@@ -80,7 +80,7 @@ public static class GetReadingActivityQuery
     {
         /// <summary>Gets the book identifier.</summary>
         [HttpRoute]
-        public Guid BookId { get; init; }
+        public BookId BookId { get; init; }
 
         /// <summary>Gets the maximum number of activity events to return.</summary>
         [HttpQuery]

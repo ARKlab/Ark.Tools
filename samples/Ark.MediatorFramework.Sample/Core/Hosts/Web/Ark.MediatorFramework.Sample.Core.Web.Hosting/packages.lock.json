@@ -428,7 +428,8 @@
           "Ark.Tools.Solid.Authorization": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "MessagePack": "[3.1.11, )",
-          "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )",
+          "Vogen": "[8.0.7, )"
         }
       },
       "ark.mediatorframework.sample.core.application": {
@@ -730,6 +731,12 @@
           "Microsoft.IdentityModel.JsonWebTokens": "8.23.0",
           "Microsoft.IdentityModel.Tokens": "8.23.0"
         }
+      },
+      "Vogen": {
+        "type": "CentralTransitive",
+        "requested": "[8.0.7, )",
+        "resolved": "8.0.7",
+        "contentHash": "0DrJ2ZPEGoJlzwqhum2LaZJ2FzJzgy5HP0km+XYL2MC/hS4Sn5/C35oRyob146Yjlf5xit2tmPx5xhI2BXkhLw=="
       }
     }
   }

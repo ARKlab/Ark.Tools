@@ -16,6 +16,7 @@
     <PackageReference Include="Ark.Tools.Solid.Authorization" />
     <PackageReference Include="Ark.Tools.SystemTextJson" />
     <PackageReference Include="MessagePack" />
+    <PackageReference Include="Vogen" />
   </ItemGroup>
 
 </Project>

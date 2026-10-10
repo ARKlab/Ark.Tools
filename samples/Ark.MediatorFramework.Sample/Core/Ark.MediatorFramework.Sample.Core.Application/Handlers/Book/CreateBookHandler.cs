@@ -29,7 +29,7 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
     public async Task<Book.V1.Output> ExecuteAsync(Book_CreateRequest.V1 request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var book = _createResponse(Guid.NewGuid(), request.Data.Title, request.Data.Author, request.Data.Genre, request.Data.ISBN);
+        var book = _createResponse(BookId.New(), request.Data.Title, request.Data.Author, request.Data.Genre, request.Data.ISBN);
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
         await context.WriteAuditAsync(_createAudit(book.Id, typeof(Book_CreateRequest).Name + "." + typeof(Book_CreateRequest.V1).Name), ctk).ConfigureAwait(false);
@@ -39,7 +39,7 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
     }
 
     internal static Book.V1.Output _createResponse(
-        Guid id,
+        BookId id,
         string title,
         string author,
         EvolvableEnum<Book.V1.Genre> genre,
@@ -56,14 +56,14 @@ public sealed class CreateBookHandler : IRequestHandler<Book_CreateRequest.V1, B
         };
     }
 
-    private AuditEntry _createAudit(Guid id, string operation)
+    private AuditEntry _createAudit(BookId id, string operation)
     {
         return new AuditEntry
         {
             Id = Guid.NewGuid(),
             UserId = _user.GetUserId() ?? "anonymous",
             EntityType = nameof(Book.V1.Output),
-            Identifier = id.ToString("D"),
+            Identifier = id.Value.ToString("D"),
             Operation = operation,
             Timestamp = _clock.GetCurrentInstant(),
         };

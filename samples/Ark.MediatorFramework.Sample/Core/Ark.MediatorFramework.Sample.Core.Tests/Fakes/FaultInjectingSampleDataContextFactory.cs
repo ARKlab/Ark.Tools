@@ -104,7 +104,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
         }
 
         public async Task<Book.V1.Output?> ReadBookAsync(
-            Guid id,
+            BookId id,
             CancellationToken ctk = default)
         {
             return await _inner.ReadBookAsync(id, ctk).ConfigureAwait(false);
@@ -116,7 +116,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             return await _inner.UpdateBookAsync(book, ctk).ConfigureAwait(false);
         }
 
-        public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
+        public async Task<bool> DeleteBookAsync(BookId id, CancellationToken ctk = default)
         {
             return await _inner.DeleteBookAsync(id, ctk).ConfigureAwait(false);
         }
@@ -139,7 +139,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
         }
 
         public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
-            Guid bookId,
+            BookId bookId,
             int skip,
             int limit,
             CancellationToken ctk = default)
@@ -153,7 +153,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
         }
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
-            Guid bookId,
+            BookId bookId,
             [Pseudonymous] string userId,
             int limit,
             CancellationToken ctk = default)
