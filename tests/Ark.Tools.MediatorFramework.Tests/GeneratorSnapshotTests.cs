@@ -697,6 +697,54 @@ public sealed class GeneratorSnapshotTests
         minimal.Generated.Should().NotContain("ArkTypeConverterValue<global::BookId>");
     }
 
+    // Vogen's attributes with the conversion and parsing options the HTTP generators read.
+    private const string _vogenParseOptionAttributes = """
+        namespace Vogen
+        {
+            [System.Flags]
+            public enum Conversions { Unspecified = -1, None = 0, TypeConverter = 2, SystemTextJson = 4 }
+            public enum ParsableForPrimitives { Unspecified = -1, HoistMethodsAndInterfaces = 0, GenerateMethodsAndInterface = 1, GenerateNothing = 2 }
+            public enum ParsableForStrings { Unspecified = -1, GenerateMethodsAndInterface = 0, GenerateNothing = 1 }
+            [System.AttributeUsage(System.AttributeTargets.Struct | System.AttributeTargets.Class)]
+            public sealed class ValueObjectAttribute<T> : System.Attribute
+            {
+                public ValueObjectAttribute(Conversions conversions = Conversions.Unspecified, ParsableForStrings parsableForStrings = ParsableForStrings.Unspecified, ParsableForPrimitives parsableForPrimitives = ParsableForPrimitives.Unspecified) { }
+            }
+            [System.AttributeUsage(System.AttributeTargets.Assembly)]
+            public sealed class VogenDefaultsAttribute : System.Attribute
+            {
+                public VogenDefaultsAttribute(Conversions conversions = Conversions.Unspecified, ParsableForStrings parsableForStrings = ParsableForStrings.Unspecified, ParsableForPrimitives parsableForPrimitives = ParsableForPrimitives.Unspecified) { }
+            }
+        }
+        """;
+
+    [TestMethod]
+    [DataRow("[Vogen.ValueObject<System.Guid>(conversions: Vogen.Conversions.SystemTextJson, parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]", "")]
+    [DataRow("[Vogen.ValueObject<System.Guid>(parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]", "[assembly: Vogen.VogenDefaults(conversions: Vogen.Conversions.None)]")]
+    public void HttpGeneratorsReportValueObjectWithoutTryParseOrTypeConverter(string valueObjectAttribute, string assemblyAttribute)
+    {
+        var source = $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            {{assemblyAttribute}}
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            {{valueObjectAttribute}}
+            public readonly partial struct BookId { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed class GetBook : IQuery<string>
+            {
+                public BookId Id { get; set; }
+            }
+            """ + _vogenParseOptionAttributes;
+
+        var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
+        var minimal = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);
+
+        functions.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF059");
+        minimal.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF059");
+    }
+
     [TestMethod]
     [DataRow("[Vogen.ValueObject<System.Guid>(parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]", "")]
     [DataRow("[Vogen.ValueObject<System.Guid>]", "[assembly: Vogen.VogenDefaults(parsableForPrimitives: Vogen.ParsableForPrimitives.GenerateNothing)]")]
@@ -715,22 +763,7 @@ public sealed class GeneratorSnapshotTests
             {
                 public BookId Id { get; set; }
             }
-            namespace Vogen
-            {
-                public enum ParsableForPrimitives { Unspecified = -1, HoistMethodsAndInterfaces = 0, GenerateMethodsAndInterface = 1, GenerateNothing = 2 }
-                public enum ParsableForStrings { Unspecified = -1, GenerateMethodsAndInterface = 0, GenerateNothing = 1 }
-                [System.AttributeUsage(System.AttributeTargets.Struct | System.AttributeTargets.Class)]
-                public sealed class ValueObjectAttribute<T> : System.Attribute
-                {
-                    public ValueObjectAttribute(ParsableForStrings parsableForStrings = ParsableForStrings.Unspecified, ParsableForPrimitives parsableForPrimitives = ParsableForPrimitives.Unspecified) { }
-                }
-                [System.AttributeUsage(System.AttributeTargets.Assembly)]
-                public sealed class VogenDefaultsAttribute : System.Attribute
-                {
-                    public VogenDefaultsAttribute(ParsableForStrings parsableForStrings = ParsableForStrings.Unspecified, ParsableForPrimitives parsableForPrimitives = ParsableForPrimitives.Unspecified) { }
-                }
-            }
-            """;
+            """ + _vogenParseOptionAttributes;
 
         var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
         var minimal = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source);

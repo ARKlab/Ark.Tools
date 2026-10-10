@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 
 using System;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Linq;
 
 namespace Ark.Tools.MediatorFramework.Generators;
@@ -74,8 +75,35 @@ internal static class ValueObjectSymbols
         return declared != "GenerateNothing";
     }
 
+    /// <summary>
+    /// Gets whether Vogen generates a <c>TypeConverter</c> for the value object: its <c>conversions</c>, from the type's
+    /// attribute or, when unspecified there, from the assembly's <c>[VogenDefaults]</c>, include <c>TypeConverter</c>.
+    /// </summary>
+    /// <param name="type">A Vogen value object.</param>
+    /// <returns><see langword="true"/> when the value object has a generated <c>TypeConverter</c>.</returns>
+    public static bool GeneratesTypeConverter(ITypeSymbol type)
+    {
+        var conversions = _vogenArgument(type.GetAttributes(), "ValueObjectAttribute", "conversions")
+            ?? _vogenArgument(type.ContainingAssembly?.GetAttributes() ?? default, "VogenDefaultsAttribute", "conversions");
+        if (conversions is not { Type: { } enumType, Value: { } value })
+            return true;
+
+        var typeConverter = enumType.GetMembers("TypeConverter").OfType<IFieldSymbol>().FirstOrDefault()?.ConstantValue;
+        return typeConverter is null || (Convert.ToInt64(value, CultureInfo.InvariantCulture) & Convert.ToInt64(typeConverter, CultureInfo.InvariantCulture)) != 0;
+    }
+
     // The enum member name passed for a Vogen attribute parameter, or null when it is absent or Unspecified.
     private static string? _vogenOption(ImmutableArray<AttributeData> attributes, string attributeName, string parameter)
+    {
+        if (_vogenArgument(attributes, attributeName, parameter) is not { } argument)
+            return null;
+
+        return argument.Type?.GetMembers().OfType<IFieldSymbol>()
+            .FirstOrDefault(field => field.HasConstantValue && Equals(field.ConstantValue, argument.Value))?.Name;
+    }
+
+    // The argument passed for a Vogen attribute parameter, or null when it is absent or Unspecified.
+    private static TypedConstant? _vogenArgument(ImmutableArray<AttributeData> attributes, string attributeName, string parameter)
     {
         foreach (var attribute in attributes.IsDefault ? ImmutableArray<AttributeData>.Empty : attributes)
         {
@@ -93,9 +121,8 @@ internal static class ValueObjectSymbols
                     continue;
 
                 var argument = attribute.ConstructorArguments[index];
-                var name = argument.Type?.GetMembers().OfType<IFieldSymbol>()
-                    .FirstOrDefault(field => field.HasConstantValue && Equals(field.ConstantValue, argument.Value))?.Name;
-                return name is null or "Unspecified" ? null : name;
+                var unspecified = argument.Type?.GetMembers("Unspecified").OfType<IFieldSymbol>().FirstOrDefault();
+                return unspecified is { HasConstantValue: true } && Equals(unspecified.ConstantValue, argument.Value) ? null : argument;
             }
         }
 

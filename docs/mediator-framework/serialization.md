@@ -299,8 +299,10 @@ Source: [`BookId.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.Mediat
 
 Ark.Tools recognizes Vogen types by their `[ValueObject]` attribute and takes
 no Vogen dependency. Source generators cannot see each other's output, so
-Ark.Tools assumes the members Vogen generates by default (`Value`, `From`,
-`TryParse` and the JSON converter); do not turn them off for a contract type.
+Ark.Tools assumes the members Vogen generates by default: keep `Value`, `From`
+and the JSON converter on a contract type. A route or query value needs
+`TryParse` or the `TypeConverter`; with neither, the endpoint reports
+`ARKMF059`.
 
 - **JSON**: zero setup. `ConfigureArkDefaults()` registers
   `ValueObjectJsonConverterFactory`, which applies Vogen's converter even

@@ -171,6 +171,13 @@ internal static class HttpStringBinding
     /// <returns><see langword="true"/> when the value binds.</returns>
     public static bool CanBindExplicitly(ITypeSymbol type)
     {
+        // A Vogen value object without TryParse or a TypeConverter cannot convert from a string at all.
+        var element = WithoutNullable(type is IArrayTypeSymbol array ? array.ElementType : type);
+        if (ValueObjectSymbols.IsValueObject(element)
+            && !ValueObjectSymbols.GeneratesTryParse(element)
+            && !ValueObjectSymbols.GeneratesTypeConverter(element))
+            return false;
+
         if (IsStringBindable(type) || IsStringCollection(type))
             return true;
         if (IsComplexOrComplexCollection(type))
