@@ -145,6 +145,36 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorDispatchesSelfTypedContractsWithoutReflection()
+    {
+        // The typed processor overloads resolve the handler at compile time and are trim-safe; a contract that is not
+        // self-typed can only use the reflection-based overload.
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            [McpTool(Name = "books.search")]
+            public sealed record SearchBooks(string Text) : IQuery<SearchBooks, string>;
+            [McpTool(Name = "books.update")]
+            public sealed record UpdateBook(int Id) : IRequest<UpdateBook, string>;
+            [McpTool(Name = "books.archive")]
+            public sealed record ArchiveBook(int Id) : ICommand<ArchiveBook>;
+            [McpTool(Name = "books.legacy")]
+            public sealed record LegacySearch(string Text) : IQuery<string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("IQueryProcessor>(services).ExecuteAsync<global::SearchBooks, string>(request, cancellationToken)");
+        result.Generated.Should().Contain("IRequestProcessor>(services).ExecuteAsync<global::UpdateBook, string>(request, cancellationToken)");
+        result.Generated.Should().Contain("ICommandProcessor>(services).ExecuteAsync<global::ArchiveBook>(request, cancellationToken)");
+        result.Generated.Should().Contain("IQueryProcessor>(services).ExecuteAsync<string>(request, cancellationToken)");
+    }
+
+    [TestMethod]
     public void McpGeneratorEmitsExplicitVersionedToolRegistration()
     {
         var result = _runGeneratorResult<McpToolGenerator>(
@@ -663,6 +693,7 @@ public sealed class GeneratorSnapshotTests
         functions.Diagnostics.Should().BeEmpty();
         functions.Generated.Should().Contain("!global::BookId.TryParse(_raw_Id, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Id)");
         minimal.Diagnostics.Should().BeEmpty();
+        minimal.Generated.Should().Contain("global::BookId.TryParse(p_Id_text, global::System.Globalization.CultureInfo.InvariantCulture, out var p_Id_parsed)");
         minimal.Generated.Should().NotContain("ArkTypeConverterValue<global::BookId>");
     }
 
@@ -770,6 +801,57 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("Results.Json(_result, statusCode: 201");
         result.Generated.Should().Contain("Results.StatusCode(404)");
         result.Generated.Should().Contain("Results.StatusCode(200)");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorStreamsWithTheConfiguredSuccessStatus()
+    {
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/exports", SuccessStatusCode = 201)]
+            public sealed record StartExport : IRequest<StartExport, IAsyncEnumerable<string>>;
+            """);
+
+        minimal.Should().Contain("ArkGeneratedEndpoint.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), 201);");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsEmptyArrayElementsAsDefault()
+    {
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/books")]
+            public sealed record ListBooks : IQuery<ListBooks, string>
+            {
+                [HttpQuery] public int[] Years { get; init; } = [];
+            }
+            """);
+
+        // As in RDG, ?Years=&Years=2 binds [0, 2] even though the element type is not nullable.
+        minimal.Should().Contain("else if (string.IsNullOrEmpty(p_Years_element))");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorKeepsNullableBodyOptional()
+    {
+        var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("PUT", "/items/{id}")]
+            public sealed record Update(
+                [property: HttpBody] int? Count,
+                [property: HttpRoute] System.Guid Id) : IRequest<Update, string>;
+            """);
+
+        // As with RequestDelegateFactory, a nullable body accepts an empty request and is optional in OpenAPI.
+        minimal.Should().Contain(".AddJsonBody(builder, typeof(int), isOptional: true);");
+        minimal.Should().Contain(".ReadJsonBodyAsync<int?>(httpContext, true, ");
     }
 
     [TestMethod]
@@ -2444,7 +2526,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null");
         generated.Should().Contain("var group = endpoints.MapGroup(string.Empty);");
-        generated.Should().Contain("group.MapGet(template0V1");
+        generated.Should().Contain("ArkGeneratedEndpoint.Map(group, template0V1, \"GET\"");
         generated.Should().Contain(".RequireAuthorization()");
         generated.Should().NotContain(".RequireAuthorization(\"admin\")");
         generated.Should().Contain(".AllowAnonymous()");
@@ -2604,7 +2686,7 @@ public sealed class GeneratorSnapshotTests
             """);
 
         generated.Should().Contain("TypedResults.NotFound()");
-        generated.Should().Contain("Results.Json(result, statusCode: 201)");
+        generated.Should().Contain("ArkGeneratedEndpoint.Json(result, 201)");
         generated.Should().Contain(".Produces<string>(201).Produces(200)");
         generated.Should().Contain(".Produces<string>(200).Produces(404)");
     }
@@ -3245,7 +3327,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListBooks");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DeleteBook");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::GetMe");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListShelves request,");
+        result.Generated.Should().Contain("var request = new global::ListShelves { Skip = Skip };");
+        result.Generated.Should().NotContain("AsParameters");
         result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
         result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DownloadExport");
     }
@@ -3390,7 +3473,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().NotContain(".Accepts<");
         result.Generated.Should().NotContain("ValidateMessagePackContracts");
         result.Generated.Should().Contain("var request = new global::GetBook {");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Http.AsParameters] global::StreamBooks request,");
+        result.Generated.Should().Contain("var request = new global::StreamBooks { Count = Count, Ids = Ids };");
         result.Generated.Should().Contain("ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken, 200, 404)");
         result.Generated.Should().Contain("WriteStreamingResponseAsync<string>");
     }

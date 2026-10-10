@@ -611,7 +611,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             bodyIndent = indent + "    ";
         }
 
-        source.Append(bodyIndent).Append("if (").Append(raw).Append(" is null || !").Append(_conversionCall(prop, raw, value)).AppendLine(")");
+        source.Append(bodyIndent).Append("if (").Append(raw).Append(" is null || !").Append(HttpStringBinding.TryParseCall(prop.Conversion, prop.ConversionTypeFullName, prop.ParserTypeFullName, raw, value, "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse", "global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe")).AppendLine(")");
         source.Append(bodyIndent).Append("    return global::Microsoft.AspNetCore.Http.Results.Problem(statusCode: 400, title: \"BINDING_FAILURE\", detail: \"")
             .Append(valueDescription).Append(" could not be bound to type '").Append(prop.TypeFullName).AppendLine("'.\");");
         // A custom TryParse may declare its out parameter nullable without [NotNullWhen(true)]: it succeeded here.
@@ -629,33 +629,6 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 _emitPropertyAssignment(source, endpoint, indent + "    ", prop.Name, "default");
             }
         }
-    }
-
-    private static string _conversionCall(in PropertySpec prop, string raw, string value)
-    {
-        var type = prop.ConversionTypeFullName;
-        return prop.Conversion switch
-        {
-            ConversionKind.Enum => "global::System.Enum.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
-            ConversionKind.Uri => "global::System.Uri.TryCreate(" + raw + ", global::System.UriKind.RelativeOrAbsolute, out var " + value + ")",
-            ConversionKind.TryParseWithProvider => prop.ParserTypeFullName + ".TryParse(" + raw + ", global::System.Globalization.CultureInfo.InvariantCulture, " + _dateTimeStyles(type) + "out var " + value + ")",
-            ConversionKind.TryParse => prop.ParserTypeFullName + ".TryParse(" + raw + ", out var " + value + ")",
-            ConversionKind.Parsable => "global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsBinding.TryParse<" + type + ">(" + raw + ", out var " + value + ")",
-            _ => "global::Ark.Tools.Core.ArkTypeConverter.TryConvertSafe<" + type + ">(" + raw + ", out var " + value + ")",
-        };
-    }
-
-    // Mirrors the DateTimeStyles ASP.NET Core passes when it binds a date or time from a string.
-    private static string _dateTimeStyles(string type)
-    {
-        const string styles = "global::System.Globalization.DateTimeStyles.";
-        return type switch
-        {
-            "global::System.DateTime" => styles + "AllowWhiteSpaces | " + styles + "AdjustToUniversal, ",
-            "global::System.DateTimeOffset" => styles + "AllowWhiteSpaces | " + styles + "AssumeUniversal, ",
-            "global::System.DateOnly" or "global::System.TimeOnly" => styles + "AllowWhiteSpaces, ",
-            _ => string.Empty,
-        };
     }
 
     // Mirrors the string collection shapes the Minimal API generator binds from every value of a query parameter.
