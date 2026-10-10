@@ -538,6 +538,9 @@ internal static class AzureFunctionsEndpointParser
             return ConversionKind.Enum;
         if (type.ToDisplayString() == "System.Uri")
             return ConversionKind.Uri;
+        // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see.
+        if (ValueObjectSymbols.IsValueObject(type))
+            return ConversionKind.TryParseWithProvider;
 
         var tryParse = _tryParseMethods(type);
         if (tryParse.Any(_hasFormatProvider))

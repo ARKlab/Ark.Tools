@@ -641,6 +641,32 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void HttpGeneratorsBindValueObjectRouteThroughVogenTryParse()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [Vogen.ValueObject<System.Guid>]
+            public readonly partial struct BookId { }
+            [HttpEndpoint("GET", "/books/{id}")]
+            public sealed class GetBook : IQuery<string>
+            {
+                public BookId Id { get; set; }
+            }
+            """;
+
+        var functions = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source + _vogenAttributes);
+        var minimal = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(source + _vogenAttributes);
+
+        functions.Diagnostics.Should().BeEmpty();
+        functions.Generated.Should().Contain("!global::BookId.TryParse(_raw_Id, global::System.Globalization.CultureInfo.InvariantCulture, out var _value_Id)");
+        minimal.Diagnostics.Should().BeEmpty();
+        minimal.Generated.Should().NotContain("ArkTypeConverterValue<global::BookId>");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorEmitsRouteBindingWithTryParse()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(

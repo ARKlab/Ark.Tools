@@ -29,6 +29,7 @@
     <Compile Include="../Ark.Tools.MediatorFramework.Messaging/MessagingNativeEntityNameMapper.cs" Link="MessagingNativeEntityNameMapper.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/MessagingContractTopologyValidator.cs" Link="MessagingContractTopologyValidator.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/GeneratorSpecPrimitives.cs" Link="GeneratorSpecPrimitives.cs" />
+    <Compile Include="../Ark.Tools.MediatorFramework.Generators/ValueObjectSymbols.cs" Link="ValueObjectSymbols.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/HttpStringBinding.cs" Link="HttpStringBinding.cs" />
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>

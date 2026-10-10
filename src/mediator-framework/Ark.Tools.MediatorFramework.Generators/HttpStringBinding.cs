@@ -94,6 +94,10 @@ internal static class HttpStringBinding
             || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
             return false;
 
+        // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see.
+        if (ValueObjectSymbols.IsValueObject(targetType))
+            return false;
+
         return !TryParseMethods(targetType)
             .Any(method => IsTryParseShape(method)
                 && (method.Parameters.Length == 2 || IsFormatProviderParameter(method.Parameters[1]))
