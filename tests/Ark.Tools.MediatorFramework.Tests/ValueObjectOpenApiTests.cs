@@ -69,6 +69,17 @@ public sealed class ValueObjectOpenApiTests
         _content(documents["ark-then-vogen"]).Should().Be(expected);
     }
 
+    [TestMethod]
+    public async Task ConcurrentDocumentRequestsEachReplayTheirOwnSchemas()
+    {
+        // Each request generates its own document; with Vogen's mapping registered after Ark's, every document
+        // depends on replaying the schemas rewritten during its own generation.
+        var documents = await _documentsAsync(concurrentRequests: 16);
+
+        var expected = _content(documents["ark"][0]);
+        documents["ark-then-vogen"].Select(_content).Should().AllBe(expected);
+    }
+
     // Called from a helper, not from the AddOpenApi lambda: the XML comment generator cannot see Vogen's generated
     // extension method, so a lambda that calls it directly is not intercepted and loses the XML descriptions.
     private static OpenApiOptions _vogen(OpenApiOptions options)
@@ -80,6 +91,11 @@ public sealed class ValueObjectOpenApiTests
         => document["paths"]!.ToJsonString() + document["components"]!.ToJsonString();
 
     private static async Task<Dictionary<string, JsonNode>> _documentsAsync()
+    {
+        return (await _documentsAsync(concurrentRequests: 1).ConfigureAwait(false)).ToDictionary(static pair => pair.Key, static pair => pair.Value[0], StringComparer.Ordinal);
+    }
+
+    private static async Task<Dictionary<string, JsonNode[]>> _documentsAsync(int concurrentRequests)
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
@@ -96,11 +112,13 @@ public sealed class ValueObjectOpenApiTests
         await app.StartAsync(app.Lifetime.ApplicationStarted).ConfigureAwait(false);
 
         using var client = app.GetTestServer().CreateClient();
-        var documents = new Dictionary<string, JsonNode>(StringComparer.Ordinal);
+        var documents = new Dictionary<string, JsonNode[]>(StringComparer.Ordinal);
         foreach (var name in new[] { "ark", "vogen-then-ark", "ark-then-vogen" })
         {
-            var json = await client.GetStringAsync(new Uri("http://localhost/openapi/" + name + ".json"), app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-            documents[name] = JsonNode.Parse(json)!;
+            var uri = new Uri("http://localhost/openapi/" + name + ".json");
+            var json = await Task.WhenAll(Enumerable.Range(0, concurrentRequests)
+                .Select(_ => client.GetStringAsync(uri, app.Lifetime.ApplicationStopping))).ConfigureAwait(false);
+            documents[name] = json.Select(static document => JsonNode.Parse(document)!).ToArray();
         }
 
         return documents;

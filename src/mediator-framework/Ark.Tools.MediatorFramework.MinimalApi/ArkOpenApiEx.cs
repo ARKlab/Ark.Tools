@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 
 namespace Ark.Tools.MediatorFramework.MinimalApi;
@@ -164,8 +165,9 @@ public static class ArkOpenApiEx
         ArgumentNullException.ThrowIfNull(options);
 
         // Every schema rewritten for a document, replayed once all schema transformers ran: a Vogen
-        // MapVogenTypesIn... transformer registered after this one then cannot change the published schema.
-        var rewritten = new ConcurrentDictionary<string, ConcurrentQueue<(OpenApiSchema Schema, OpenApiSchema ValueObject, bool IsCollection)>>(StringComparer.Ordinal);
+        // MapVogenTypesIn... transformer registered after this one then cannot change the published schema. Keyed by
+        // the document being generated, because each request to the document endpoint generates a new one.
+        var rewritten = new ConditionalWeakTable<OpenApiDocument, ConcurrentQueue<(OpenApiSchema Schema, OpenApiSchema ValueObject, bool IsCollection)>>();
 
         options.AddSchemaTransformer(async (schema, context, cancellationToken) =>
         {
@@ -180,7 +182,8 @@ public static class ArkOpenApiEx
             if (isCollection && Nullable.GetUnderlyingType(element!) is not null)
                 valueObject.Type |= JsonSchemaType.Null;
             _apply(schema, valueObject, isCollection);
-            rewritten.GetOrAdd(context.DocumentName, static _ => new()).Enqueue((schema, valueObject, isCollection));
+            if (context.Document is { } document)
+                rewritten.GetOrCreateValue(document).Enqueue((schema, valueObject, isCollection));
         });
 
         // A route or query value of a plain Minimal API endpoint is described as a bare string; generated
@@ -203,10 +206,11 @@ public static class ArkOpenApiEx
             }
         });
 
-        options.AddDocumentTransformer((_, context, _) =>
+        options.AddDocumentTransformer((document, _, _) =>
         {
-            if (rewritten.TryRemove(context.DocumentName, out var schemas))
+            if (rewritten.TryGetValue(document, out var schemas))
             {
+                rewritten.Remove(document);
                 foreach (var (schema, valueObject, isCollection) in schemas)
                     _apply(schema, valueObject, isCollection);
             }
