@@ -337,6 +337,9 @@ public static class DataTableExtensions
             if (_isSensitiveValue(elementType))
                 return typeof(string);
 
+            if (_getValueObjectValueProperty(elementType) is { } valueProperty)
+                return _deriveColumnType(valueProperty.PropertyType);
+
             return _knownColumnType(elementType) ?? _customColumnType(elementType);
         }
 
@@ -420,6 +423,36 @@ public static class DataTableExtensions
                 @interface.IsGenericType
                 && @interface.FullName?.StartsWith("Ark.Tools.Compliance.ISensitiveValue`1", StringComparison.Ordinal) == true
                 && @interface.GetGenericArguments()[0] == type);
+        }
+
+        // A Vogen value object ([Vogen.ValueObject<T>] or [Vogen.ValueObject(typeof(T))]), detected by
+        // attribute name so Ark.Tools.Core takes no Vogen dependency. Its DataColumn carries the
+        // primitive exposed by the generated Value property.
+        [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+            Justification = "Vogen's generated members (Equals, GetHashCode, ToString, converters) all read the public Value property, so it is preserved whenever the value object is used.")]
+        private static PropertyInfo? _getValueObjectValueProperty(Type type)
+        {
+            var isValueObject = type.CustomAttributes.Any(static attribute =>
+                attribute.AttributeType.FullName is { } name
+                && (name == "Vogen.ValueObjectAttribute" || name.StartsWith("Vogen.ValueObjectAttribute`1", StringComparison.Ordinal)));
+            return isValueObject
+                ? type.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance)
+                : null;
+        }
+
+        // Builds `access.Value` converted like any other member, null-safe for reference-type value objects.
+        private static Expression _buildValueObjectConversion(Expression access, Type memberType, PropertyInfo valueProperty)
+        {
+            var value = Expression.Convert(
+                _buildNonNullableConversion(Expression.Property(access, valueProperty), valueProperty.PropertyType),
+                typeof(object));
+            if (memberType.IsValueType)
+                return value;
+
+            return Expression.Condition(
+                Expression.ReferenceEqual(access, Expression.Constant(null, memberType)),
+                Expression.Constant(null, typeof(object)),
+                value);
         }
 
         // Builds `value.Reveal(CompliancePurpose.Custom("ToDataTableArk", CompliancePurposeCategory.TechnicalFunctional))`
@@ -537,6 +570,9 @@ public static class DataTableExtensions
             if (_getSensitiveValueInterface(memberType) is { } sensitiveInterface)
                 return _buildSensitiveValueReveal(access, memberType, sensitiveInterface);
 
+            if (_getValueObjectValueProperty(memberType) is { } valueProperty)
+                return _buildValueObjectConversion(access, memberType, valueProperty);
+
             if (memberType == typeof(LocalDate))
                 return Expression.Call(access, _localDateToDateTimeUnspecified);
 
@@ -582,6 +618,9 @@ public static class DataTableExtensions
                 // Rare path: a sensitive value object stored in an object/interface-typed member.
                 return _revealSensitiveValue(value, sensitiveInterface);
             }
+
+            if (_getValueObjectValueProperty(value.GetType()) is { } valueProperty)
+                return _convertColumnValueValue(valueProperty.GetValue(value));
 
             return value switch
             {

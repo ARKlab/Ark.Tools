@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `ToDataTableArk()` shreds Vogen value objects (`[ValueObject<T>]` or `[ValueObject(typeof(T))]`) into a column of their primitive type, so they can be passed in table-valued parameters and `SqlBulkCopy`. Ark.Tools.Core does not depend on Vogen.
+
 ### Changed
 
 - `Ark.Tools.ResourceWatcher.Sql`: trimmed apps that use `SqlStateProvider<TExtensions>` without `ExtensionsJsonContext` now keep the public constructors, properties and fields of a flat extensions type and opt back into reflection-based serialization, so it round-trips instead of failing or losing values. Generic code that passes its own type parameter as `TExtensions` must add the same `[DynamicallyAccessedMembers]` annotation (trim analyzer IL2091). Nested or polymorphic extension types still need `ExtensionsJsonContext` when trimming.
