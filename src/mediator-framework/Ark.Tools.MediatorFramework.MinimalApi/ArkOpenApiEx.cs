@@ -182,18 +182,22 @@ public static class ArkOpenApiEx
         return options;
     }
 
-    // Detected by attribute name so this package takes no Vogen dependency; Vogen's generated Value property
-    // exposes the primitive and is always kept because Vogen's own members read it.
-    [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
-        Justification = "Vogen's generated members (Equals, GetHashCode, ToString, converters) all read the public Value property, so it is preserved whenever the value object is used.")]
+    // Detected by attribute name so this package takes no Vogen dependency. The primitive is read from the
+    // attribute, which survives trimming and Native AOT unlike the metadata of the generated Value property.
     private static Type? _getValueObjectPrimitive(Type type)
     {
-        var isValueObject = type.CustomAttributes.Any(static attribute =>
-            attribute.AttributeType.FullName is { } name
-            && (name == "Vogen.ValueObjectAttribute" || name.StartsWith("Vogen.ValueObjectAttribute`1", StringComparison.Ordinal)));
-        return isValueObject
-            ? type.GetProperty("Value", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)?.PropertyType
-            : null;
+        foreach (var attribute in type.CustomAttributes)
+        {
+            var name = attribute.AttributeType.FullName;
+            if (name is null)
+                continue;
+            if (name.StartsWith("Vogen.ValueObjectAttribute`1", StringComparison.Ordinal))
+                return attribute.AttributeType.GetGenericArguments()[0];
+            if (string.Equals(name, "Vogen.ValueObjectAttribute", StringComparison.Ordinal))
+                return attribute.ConstructorArguments is [{ Value: Type primitive }, ..] ? primitive : typeof(int); // Vogen's default
+        }
+
+        return null;
     }
 
     /// <summary>Uses the wrapped CLR type for OpenAPI route and query parameter schemas.</summary>

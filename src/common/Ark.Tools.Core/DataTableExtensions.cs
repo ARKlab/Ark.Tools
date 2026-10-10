@@ -76,7 +76,7 @@ public static class DataTableExtensions
         // reads the member from an instance of T and returns the already-converted column value.
         private readonly record struct ColumnPlan(
             string Name,
-            [DynamicallyAccessedMembers(_columnTypeMembers)] [property: DynamicallyAccessedMembers(_columnTypeMembers)] Type ColumnType,
+            [DynamicallyAccessedMembers(_columnTypeMembers)] [property: DynamicallyAccessedMembers(_columnTypeMembers)] [field: DynamicallyAccessedMembers(_columnTypeMembers)] Type ColumnType,
             Func<T, object?> Accessor);
 
         // DataColumn reflects on these members of its data type (the static Null member of INullable types).
@@ -337,8 +337,8 @@ public static class DataTableExtensions
             if (_isSensitiveValue(elementType))
                 return typeof(string);
 
-            if (_getValueObjectValueProperty(elementType) is { } valueProperty)
-                return _deriveColumnType(valueProperty.PropertyType);
+            if (_getValueObjectPrimitive(elementType) is { } primitive)
+                return _deriveColumnType(primitive);
 
             return _knownColumnType(elementType) ?? _customColumnType(elementType);
         }
@@ -427,18 +427,29 @@ public static class DataTableExtensions
 
         // A Vogen value object ([Vogen.ValueObject<T>] or [Vogen.ValueObject(typeof(T))]), detected by
         // attribute name so Ark.Tools.Core takes no Vogen dependency. Its DataColumn carries the
-        // primitive exposed by the generated Value property.
-        [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
-            Justification = "Vogen's generated members (Equals, GetHashCode, ToString, converters) all read the public Value property, so it is preserved whenever the value object is used.")]
-        private static PropertyInfo? _getValueObjectValueProperty(Type type)
+        // primitive named by the attribute, which survives trimming unlike the generated Value property.
+        private static Type? _getValueObjectPrimitive(Type type)
         {
-            var isValueObject = type.CustomAttributes.Any(static attribute =>
-                attribute.AttributeType.FullName is { } name
-                && (name == "Vogen.ValueObjectAttribute" || name.StartsWith("Vogen.ValueObjectAttribute`1", StringComparison.Ordinal)));
-            return isValueObject
-                ? type.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance)
-                : null;
+            foreach (var attribute in type.CustomAttributes)
+            {
+                var name = attribute.AttributeType.FullName;
+                if (name is null)
+                    continue;
+                if (name.StartsWith("Vogen.ValueObjectAttribute`1", StringComparison.Ordinal))
+                    return attribute.AttributeType.GetGenericArguments()[0];
+                if (string.Equals(name, "Vogen.ValueObjectAttribute", StringComparison.Ordinal))
+                    return attribute.ConstructorArguments is [{ Value: Type primitive }, ..] ? primitive : typeof(int); // Vogen's default
+            }
+
+            return null;
         }
+
+        [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
+            Justification = "Only the reflection fallback reads Value; when trimming or Native AOT removed its metadata, the exception names the interceptor path that needs no reflection.")]
+        private static PropertyInfo _getValueObjectValueProperty(Type type)
+            => type.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance)
+                ?? throw new NotSupportedException(
+                    $"Value object '{type}' has no Value property metadata: trimming or Native AOT removed it. Call ToDataTableArk() with a compile-time-known element type so the generated interceptor shreds it without reflection.");
 
         // Builds `access.Value` converted like any other member, null-safe for reference-type value objects.
         private static Expression _buildValueObjectConversion(Expression access, Type memberType, PropertyInfo valueProperty)
@@ -533,24 +544,25 @@ public static class DataTableExtensions
         // Builds an Expression that reads `access` (a field/property of the compiled T parameter) and
         // returns the boxed, already-converted column value - equivalent to the historical
         // ConvertColumnValue(f.GetValue(instance)) but with no runtime type inspection.
-        [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern",
-            Justification = "System.Nullable<T> always exposes public HasValue/Value instance properties regardless of T; trimming cannot remove them.")]
         private static Expression _buildValueExpression(Expression access, Type memberType)
         {
             var nullableUnderlying = Nullable.GetUnderlyingType(memberType);
             if (nullableUnderlying is not null)
             {
-                // Nullable<X>: only convert/box when HasValue, matching the CLR's own boxing rule
-                // that a Nullable<X> without a value boxes to a null reference. The PropertyInfo
-                // overload of Expression.Property is used (instead of the string-name overload) so
-                // that building this expression does not itself require unreferenced code.
-                var hasValueProperty = memberType.GetProperty(nameof(Nullable<int>.HasValue))!;
-                var valueProperty = memberType.GetProperty(nameof(Nullable<int>.Value))!;
-                var hasValue = Expression.Property(access, hasValueProperty);
-                var value = Expression.Property(access, valueProperty);
-                var convertedValue = Expression.Convert(_buildNonNullableConversion(value, nullableUnderlying), typeof(object));
-                var nullConstant = Expression.Constant(null, typeof(object));
-                return Expression.Condition(hasValue, convertedValue, nullConstant);
+                // Nullable<X>: a Nullable<X> without a value boxes to a null reference, so box once and
+                // unbox X when non-null. Reflecting on Nullable<X>.HasValue/Value would fail under Native
+                // AOT, which keeps no metadata for those members of an arbitrary instantiation.
+                var boxed = Expression.Variable(typeof(object), "boxed");
+                var convertedValue = Expression.Convert(
+                    _buildNonNullableConversion(Expression.Unbox(boxed, nullableUnderlying), nullableUnderlying),
+                    typeof(object));
+                return Expression.Block(
+                    [boxed],
+                    Expression.Assign(boxed, Expression.Convert(access, typeof(object))),
+                    Expression.Condition(
+                        Expression.ReferenceEqual(boxed, Expression.Constant(null)),
+                        Expression.Constant(null, typeof(object)),
+                        convertedValue));
             }
 
             return Expression.Convert(_buildNonNullableConversion(access, memberType), typeof(object));
@@ -570,8 +582,8 @@ public static class DataTableExtensions
             if (_getSensitiveValueInterface(memberType) is { } sensitiveInterface)
                 return _buildSensitiveValueReveal(access, memberType, sensitiveInterface);
 
-            if (_getValueObjectValueProperty(memberType) is { } valueProperty)
-                return _buildValueObjectConversion(access, memberType, valueProperty);
+            if (_getValueObjectPrimitive(memberType) is not null)
+                return _buildValueObjectConversion(access, memberType, _getValueObjectValueProperty(memberType));
 
             if (memberType == typeof(LocalDate))
                 return Expression.Call(access, _localDateToDateTimeUnspecified);
@@ -619,8 +631,8 @@ public static class DataTableExtensions
                 return _revealSensitiveValue(value, sensitiveInterface);
             }
 
-            if (_getValueObjectValueProperty(value.GetType()) is { } valueProperty)
-                return _convertColumnValueValue(valueProperty.GetValue(value));
+            if (_getValueObjectPrimitive(value.GetType()) is not null)
+                return _convertColumnValueValue(_getValueObjectValueProperty(value.GetType()).GetValue(value));
 
             return value switch
             {
