@@ -824,6 +824,12 @@ before the producer completes and that client disconnect cancels the handler
 `ClientDisconnectCancelsStreamingHandler`). Responses stream through the
 ASP.NET Core integration without buffering the complete payload.
 
+System.Text.Json serializes the stream with the host's JSON options. In a
+trimmed app with reflection-based JSON disabled, add the stream type itself, not
+only its item type, to the source-generated context passed to
+`AddArkAzureFunctions`, for example
+`[JsonSerializable(typeof(IAsyncEnumerable<Book>))]`.
+
 ## 9. Test the boundary
 
 Application tests should dispatch contracts directly. A Functions boundary test
