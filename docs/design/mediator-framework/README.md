@@ -23,6 +23,7 @@ lives in [`docs/plans/mediator-framework/`](../../plans/mediator-framework/READM
 | [`mcp-design.md`](mcp-design.md) | Proposed source-generated MCP tool bridge using the official ASP.NET Core MCP SDK. |
 | [`messaging-throughput-prd.md`](messaging-throughput-prd.md) | Proposed high-throughput messaging receivers: receive/processing seam split, adaptive concurrency, credit-bounded prefetch, lock renewal, transport profiles. |
 | [`sample-hosting-variants.md`](sample-hosting-variants.md) | Sample reorganization: one Core service hosted by Web, WebRebus, and Functions variants without changing API, Application, or application tests. |
+| [`value-object-libraries.md`](value-object-libraries.md) | Vogen vs Meziantou.Framework.StronglyTypedId for value objects across JSON, binding, gRPC, FluentValidation, Dapper and OpenAPI. |
 | [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
 | [`migration-from-mvc.md`](../../mediator-framework/migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
 
