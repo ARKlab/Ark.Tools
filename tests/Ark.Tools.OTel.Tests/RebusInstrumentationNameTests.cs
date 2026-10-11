@@ -26,10 +26,12 @@ public sealed class RebusInstrumentationNameTests
     [TestMethod]
     public void AddArkAspNetCoreOpenTelemetry_CollectsTheRebusSourceAndMeter()
     {
+        using var exporter = new NoopMetricExporter();
+        using var reader = new BaseExportingMetricReader(exporter);
         var services = new ServiceCollection();
         services.AddOpenTelemetry()
             .AddArkAspNetCoreOpenTelemetry()
-            .WithMetrics(static metrics => metrics.AddReader(new BaseExportingMetricReader(new NoopMetricExporter())));
+            .WithMetrics(metrics => metrics.AddReader(reader));
         using var serviceProvider = services.BuildServiceProvider();
         _ = serviceProvider.GetRequiredService<TracerProvider>();
         _ = serviceProvider.GetRequiredService<MeterProvider>();

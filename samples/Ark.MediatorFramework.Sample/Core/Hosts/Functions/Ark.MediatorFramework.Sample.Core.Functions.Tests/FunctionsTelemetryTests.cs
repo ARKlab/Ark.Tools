@@ -32,6 +32,8 @@ public sealed class FunctionsTelemetryTests
     [DataRow(_placeholderSetting)]
     public void AddTelemetry_CollectsMessagingMetricsAndExportsOnlyWithAConnectionString(string? setting)
     {
+        using var exporter = new NoopMetricExporter();
+        using var reader = new BaseExportingMetricReader(exporter);
         var services = new ServiceCollection();
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -42,7 +44,7 @@ public sealed class FunctionsTelemetryTests
 
         FunctionsHosting.AddTelemetry(services, configuration);
         services.AddOpenTelemetry()
-            .WithMetrics(static metrics => metrics.AddReader(new BaseExportingMetricReader(new NoopMetricExporter())));
+            .WithMetrics(metrics => metrics.AddReader(reader));
         using var serviceProvider = services.BuildServiceProvider();
         _ = serviceProvider.GetRequiredService<TracerProvider>();
         _ = serviceProvider.GetRequiredService<MeterProvider>();
