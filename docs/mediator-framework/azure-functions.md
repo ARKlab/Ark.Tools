@@ -121,11 +121,18 @@ The sample configures NLog before building the isolated worker, uses a
 synchronous console target for reliable Core Tools capture, clears the default
 logging providers, and registers one NLog provider with message templates and
 named properties enabled. This keeps structured application events visible in
-the Functions console without duplicate provider output. Application Insights
-telemetry is configured separately from Functions configuration; use
-`ApplicationInsights__ConnectionString` in local settings or
-`APPLICATIONINSIGHTS_CONNECTION_STRING` in Azure, and never place a connection
-string in source.
+the Functions console without duplicate provider output.
+
+Telemetry uses OpenTelemetry. Each worker calls
+`AddArkAzureMonitorOpenTelemetry(builder.Configuration)` from
+`Ark.Tools.AspNetCore.OTel` and
+`AddOpenTelemetry().UseFunctionsWorkerDefaults()` from
+`Microsoft.Azure.Functions.Worker.OpenTelemetry`, and each `host.json` sets
+`"telemetryMode": "OpenTelemetry"` so that the host and the worker emit
+correlated OpenTelemetry data. Azure Monitor export starts only when a
+connection string is configured: use `ApplicationInsights__ConnectionString`
+in local settings or `APPLICATIONINSIGHTS_CONNECTION_STRING` in Azure, and
+never place a connection string in source.
 
 ## 3. Declare a shared messaging network
 
