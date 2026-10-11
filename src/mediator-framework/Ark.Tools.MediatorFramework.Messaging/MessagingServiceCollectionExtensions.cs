@@ -66,13 +66,22 @@ public static class MessagingServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>Registers native transactional outbox enqueue support.</summary>
+    /// <summary>Registers how the participant's bus handles outbox enlistment.</summary>
     /// <param name="services">The service collection.</param>
+    /// <param name="mode">The selected outbox mode.</param>
     /// <returns>The same service collection.</returns>
-    internal static IServiceCollection _addArkMessagingOutboxEnqueue(this IServiceCollection services)
+    internal static IServiceCollection _addArkMessagingOutbox(
+        this IServiceCollection services,
+        MessagingOutboxMode mode)
     {
         ArgumentNullException.ThrowIfNull(services);
-        services.TryAddSingleton<MessagingOutboxEnqueueRegistration>();
+        var existing = services.FirstOrDefault(static service =>
+                service.ServiceType == typeof(MessagingOutboxRegistration))
+            ?.ImplementationInstance as MessagingOutboxRegistration;
+        if (existing is null)
+            services.AddSingleton(new MessagingOutboxRegistration(mode));
+        else if (existing.Mode != mode)
+            throw new InvalidOperationException("A different messaging outbox is already selected.");
         return services;
     }
 
@@ -97,7 +106,7 @@ public static class MessagingServiceCollectionExtensions
                 "A native messaging outbox processor is already registered or Azure Functions composition is active.");
         }
 
-        services._addArkMessagingOutboxEnqueue();
+        services._addArkMessagingOutbox(MessagingOutboxMode.Enqueue);
         services.AddSingleton(contextFactory);
         services.AddSingleton(serviceProvider => new MessagingOutboxProcessor(
             serviceProvider.GetRequiredService<IOutboxAsyncContextFactory>(),
@@ -223,7 +232,11 @@ public static class MessagingServiceCollectionExtensions
                 participantIdentity,
                 serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
                 outgoingStepTypes,
-                utcNow: null));
+                utcNow: null)
+        {
+            // Read at resolve time: composition may register the outbox before or after the participant.
+            _outboxMode = serviceProvider.GetService<MessagingOutboxRegistration>()?.Mode ?? MessagingOutboxMode.None,
+        });
         services.AddSingleton<IBus>(
             static serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
         services.AddSingleton<IBusOutboxEnlistment>(
@@ -467,6 +480,14 @@ internal sealed class MessagingParticipantStartupValidator : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        if (_serviceProvider.GetService<MessagingOutboxRegistration>()?.Mode == MessagingOutboxMode.DevelopmentPassthrough)
+        {
+            // A host without IHostEnvironment is refused too: the pass-through must not reach production by default.
+            var environment = _serviceProvider.GetService<IHostEnvironment>();
+            if (environment?.IsDevelopment() != true)
+                throw new InvalidOperationException(
+                    $"Messaging participant '{_participant.Identity}' uses the development outbox pass-through, which sends without atomicity, but the host environment is '{environment?.EnvironmentName ?? "not registered"}'. The pass-through is allowed only in the Development environment; use UseOutbox() in any other environment.");
+        }
         MessagingJsonStartupValidation.ValidateDeclaredSerializers(
             _codecs,
             _participant.Serializers,
@@ -488,4 +509,17 @@ internal sealed class MessagingParticipantStartupValidator : IHostedService
     }
 }
 
-internal sealed class MessagingOutboxEnqueueRegistration;
+internal sealed record MessagingOutboxRegistration(MessagingOutboxMode Mode);
+
+/// <summary>How a native bus handles <see cref="IBusOutboxEnlistment.Enlist"/>.</summary>
+internal enum MessagingOutboxMode
+{
+    /// <summary>No outbox: enlisting throws.</summary>
+    None,
+
+    /// <summary>Enlisted sends are staged in the application outbox.</summary>
+    Enqueue,
+
+    /// <summary>Development only: enlisting is a no-op and sends go straight to the transport.</summary>
+    DevelopmentPassthrough,
+}

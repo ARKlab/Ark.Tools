@@ -25,6 +25,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     private readonly IMessagingPipelineProcessor? _pipelineProcessor;
     private readonly IReadOnlyList<Type> _outgoingStepTypes;
     private readonly Func<DateTimeOffset> _utcNow;
+    private static readonly PassthroughOutboxScope _passthroughScope = new();
     private readonly AsyncLocal<MessagingOutboxScope?> _outboxScope = new();
     private int _disposed;
 
@@ -150,14 +151,30 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     }
 
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">The participant was composed without an outbox.</exception>
     public IBusOutboxScope Enlist(IOutboxContextCore context)
     {
         _throwIfDisposed();
         ArgumentNullException.ThrowIfNull(context);
+        switch (_outboxMode)
+        {
+            case MessagingOutboxMode.None:
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Messaging participant '{0}' has no outbox, so nothing would send the enlisted messages. Call UseOutbox() in its messaging composition, or UseOutbox(outbox => outbox.UseDevelopmentPassthrough()) to send directly during development.",
+                        _participantIdentity));
+            case MessagingOutboxMode.DevelopmentPassthrough:
+                return _passthroughScope;
+        }
+
         var scope = new MessagingOutboxScope(this, context, _outboxScope.Value);
         _outboxScope.Value = scope;
         return scope;
     }
+
+    /// <summary>How <see cref="Enlist"/> behaves; set by the messaging composition from <c>UseOutbox</c>.</summary>
+    internal MessagingOutboxMode _outboxMode { get; init; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -341,6 +358,19 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     private void _throwIfDisposed()
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+    }
+
+    // Nothing is staged, so the sends made while it is open already went to the transport.
+    private sealed class PassthroughOutboxScope : IBusOutboxScope
+    {
+        public async Task CompleteAsync(CancellationToken cancellationToken = default)
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class MessagingOutboxScope : IBusOutboxScope

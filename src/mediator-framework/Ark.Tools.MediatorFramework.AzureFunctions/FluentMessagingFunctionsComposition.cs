@@ -331,10 +331,28 @@ public sealed class MessagingFunctionsSerializationBuilder
 public sealed class MessagingFunctionsOutboxBuilder
 {
     private readonly Action _enqueue;
+    private readonly Action _passthrough;
 
-    internal MessagingFunctionsOutboxBuilder(Action enqueue)
+    internal MessagingFunctionsOutboxBuilder(Action enqueue, Action passthrough)
     {
         _enqueue = enqueue;
+        _passthrough = passthrough;
+    }
+
+    /// <summary>
+    /// Development only: <see cref="IBusOutboxEnlistment.Enlist"/> returns a scope that does nothing, and every send
+    /// goes straight to the transport.
+    /// </summary>
+    /// <remarks>
+    /// Not atomic: a message is sent when the handler sends it, before the application transaction commits, so a
+    /// failed commit leaves a message sent for a change that was not stored. The host refuses to start unless its
+    /// <c>IHostEnvironment</c> is Development.
+    /// </remarks>
+    /// <returns>This builder.</returns>
+    public MessagingFunctionsOutboxBuilder UseDevelopmentPassthrough()
+    {
+        _passthrough();
+        return this;
     }
 
     /// <summary>Enables transactional outbox enlistment.</summary>
@@ -384,7 +402,7 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
     private bool _messagePack;
     private bool _protobuf;
     private MessagingResourceLifecycle? _lifecycle;
-    private bool _outboxEnqueue;
+    private MessagingOutboxMode? _outbox;
     private readonly MessagingFunctionsManifest? _manifest;
     private readonly bool _metadataManifest;
 
@@ -534,9 +552,7 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
     /// <returns>This builder.</returns>
     public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseOutbox()
     {
-        if (_outboxEnqueue)
-            throw new InvalidOperationException("A messaging outbox is already selected.");
-        _outboxEnqueue = true;
+        _selectOutbox(MessagingOutboxMode.Enqueue);
         return this;
     }
 
@@ -547,7 +563,9 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
         Action<MessagingFunctionsOutboxBuilder> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
-        configure(new MessagingFunctionsOutboxBuilder(() => UseOutbox()));
+        configure(new MessagingFunctionsOutboxBuilder(
+            () => UseOutbox(),
+            () => _selectOutbox(MessagingOutboxMode.DevelopmentPassthrough)));
         return this;
     }
 
@@ -576,14 +594,21 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
             _services._addMessagePackMessagingCodec();
         if (_protobuf)
             _services._addProtobufMessagingCodec();
-        if (_outboxEnqueue)
-            _services._addArkMessagingOutboxEnqueue();
+        if (_outbox.HasValue)
+            _services._addArkMessagingOutbox(_outbox.Value);
         _services.AddArkMessagingFunctionsHost(
             _configuration,
             manifest,
             dataBus,
             _transport.Value,
             _storageQueueSettings);
+    }
+
+    private void _selectOutbox(MessagingOutboxMode mode)
+    {
+        if (_outbox.HasValue)
+            throw new InvalidOperationException("A messaging outbox is already selected.");
+        _outbox = mode;
     }
 
     private void _selectTransport(MessagingFunctionsRuntimeTransport transport)

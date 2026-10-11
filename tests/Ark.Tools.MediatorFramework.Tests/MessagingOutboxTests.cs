@@ -171,9 +171,43 @@ public sealed partial class MessagingOutboxTests
         await dispose.Should().NotThrowAsync().ConfigureAwait(false);
     }
 
+    [TestMethod]
+    public async Task EnlistWithoutOutboxFailsNamingTheParticipantAndUseOutbox()
+    {
+        using var bus = _createBus(new RecordingTransport(), outboxMode: MessagingOutboxMode.None);
+        var context = await new InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        var enlist = () => ((IBusOutboxEnlistment)bus).Enlist(context);
+
+        enlist.Should().Throw<InvalidOperationException>()
+            .WithMessage("Messaging participant 'sender' has no outbox*UseOutbox()*");
+    }
+
+    [TestMethod]
+    public async Task DevelopmentPassthroughEnlistIsNoOpAndSendsDirectly()
+    {
+        var transport = new RecordingTransport();
+        using var bus = _createBus(transport, outboxMode: MessagingOutboxMode.DevelopmentPassthrough);
+        var factory = new InMemoryOutboxContextFactory();
+        var context = await factory.CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        using (var scope = ((IBusOutboxEnlistment)bus).Enlist(context))
+        {
+            await bus.Send(new TestMessage { Value = "direct" }).ConfigureAwait(false);
+            transport.Sends.Should().ContainSingle();
+            await scope.CompleteAsync().ConfigureAwait(false);
+        }
+        await context.CommitAsync().ConfigureAwait(false);
+
+        (await _countAsync(factory).ConfigureAwait(false)).Should().Be(0);
+    }
+
     private static MessagingBus _createBus(
         IMessagingTransport transport,
-        string participantIdentity = "sender")
+        string participantIdentity = "sender",
+        MessagingOutboxMode outboxMode = MessagingOutboxMode.Enqueue)
     {
         var network = new MessagingNetworkOptions(
             typeof(MessagingOutboxTests),
@@ -205,7 +239,10 @@ public sealed partial class MessagingOutboxTests
             participantIdentity,
             utcNow: static () => DateTimeOffset.Parse(
                 "2024-01-01T00:00:00Z",
-                CultureInfo.InvariantCulture));
+                CultureInfo.InvariantCulture))
+        {
+            _outboxMode = outboxMode,
+        };
     }
 
     private static Dictionary<string, string> _outboxHeaders(string messageId)

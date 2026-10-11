@@ -287,13 +287,32 @@ public sealed class MessagingOutboxBuilder
 {
     private readonly Action _enqueue;
     private readonly Action<IOutboxAsyncContextFactory, int> _processor;
+    private readonly Action _passthrough;
 
     internal MessagingOutboxBuilder(
         Action enqueue,
-        Action<IOutboxAsyncContextFactory, int> processor)
+        Action<IOutboxAsyncContextFactory, int> processor,
+        Action passthrough)
     {
         _enqueue = enqueue;
         _processor = processor;
+        _passthrough = passthrough;
+    }
+
+    /// <summary>
+    /// Development only: <see cref="IBusOutboxEnlistment.Enlist"/> returns a scope that does nothing, and every send
+    /// goes straight to the transport.
+    /// </summary>
+    /// <remarks>
+    /// Not atomic: a message is sent when the handler sends it, before the application transaction commits, so a
+    /// failed commit leaves a message sent for a change that was not stored. The host refuses to start unless its
+    /// <c>IHostEnvironment</c> is Development.
+    /// </remarks>
+    /// <returns>This builder.</returns>
+    public MessagingOutboxBuilder UseDevelopmentPassthrough()
+    {
+        _passthrough();
+        return this;
     }
 
     /// <summary>Enables outbox enlistment without hosting a processor.</summary>
@@ -338,6 +357,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     private IOutboxAsyncContextFactory? _outboxFactory;
     private int _outboxBatchSize = 10;
     private bool _outboxEnqueue;
+    private bool _outboxPassthrough;
     private bool _outgoingPipelineSelected;
     private bool _incomingPipelineSelected;
     private IMessagingTransportManagement? _resourceManagement;
@@ -530,8 +550,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseOutbox()
     {
-        if (_outboxFactory is not null || _outboxEnqueue)
-            throw new InvalidOperationException("A messaging outbox is already selected.");
+        _throwIfOutboxSelected();
         _outboxEnqueue = true;
         return this;
     }
@@ -546,8 +565,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
     {
         ArgumentNullException.ThrowIfNull(contextFactory);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(batchSize);
-        if (_outboxFactory is not null || _outboxEnqueue)
-            throw new InvalidOperationException("A messaging outbox is already selected.");
+        _throwIfOutboxSelected();
         _outboxFactory = contextFactory;
         _outboxBatchSize = batchSize;
         return this;
@@ -562,8 +580,19 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         ArgumentNullException.ThrowIfNull(configure);
         configure(new MessagingOutboxBuilder(
             () => UseOutbox(),
-            (factory, batchSize) => UseOutbox(factory, batchSize)));
+            (factory, batchSize) => UseOutbox(factory, batchSize),
+            () =>
+            {
+                _throwIfOutboxSelected();
+                _outboxPassthrough = true;
+            }));
         return this;
+    }
+
+    private void _throwIfOutboxSelected()
+    {
+        if (_outboxFactory is not null || _outboxEnqueue || _outboxPassthrough)
+            throw new InvalidOperationException("A messaging outbox is already selected.");
     }
 
     internal void _registerCommon(MessagingParticipantDescriptor participant)
@@ -593,7 +622,9 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         if (_outboxFactory is not null)
             _services.AddArkMessagingOutboxProcessor(_outboxFactory, _outboxBatchSize);
         else if (_outboxEnqueue)
-            _services._addArkMessagingOutboxEnqueue();
+            _services._addArkMessagingOutbox(MessagingOutboxMode.Enqueue);
+        else if (_outboxPassthrough)
+            _services._addArkMessagingOutbox(MessagingOutboxMode.DevelopmentPassthrough);
     }
 
     internal IMessagingTransport _transportValue =>
