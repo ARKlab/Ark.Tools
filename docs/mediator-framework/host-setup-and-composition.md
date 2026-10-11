@@ -246,7 +246,7 @@ services.AddCodeFirstGrpc(options =>
 services.AddCodeFirstGrpcReflection();
 ```
 
-The sample also adds MessagePack, Application Insights, authentication, and
+The sample also adds MessagePack, OpenTelemetry, authentication, and
 versioned OpenAPI. Add only the capabilities the host intends to expose.
 
 ## Configure source-generated JSON

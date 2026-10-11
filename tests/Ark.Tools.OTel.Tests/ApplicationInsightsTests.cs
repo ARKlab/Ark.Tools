@@ -15,9 +15,9 @@ using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Security.Claims;
 
-namespace Ark.MediatorFramework.Sample.Core.Web.Tests;
+namespace Ark.Tools.OTel.Tests;
 
-/// <summary>Verifies the sample's OpenTelemetry Application Insights defaults.</summary>
+/// <summary>Verifies the Ark.Tools.AspNetCore.ApplicationInsights OpenTelemetry defaults and processors.</summary>
 [TestClass]
 public sealed class ApplicationInsightsTests
 {
