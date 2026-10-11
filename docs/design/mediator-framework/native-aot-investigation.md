@@ -43,6 +43,9 @@ in 45 to 65 MB of RSS.
   `ServiceProviderRequestProcessor` and `ServiceProviderCommandProcessor`, registered by
   `AddArkSolidServiceProviderProcessors()`. Their typed overloads resolve the closed handler without reflection;
   decorators are applied at registration, as the [composition comparison](aot-di-comparison.md) recommends.
+- **Generated Azure Functions streaming responses used the default JSON options.** `WriteJsonStreamAsync` now resolves
+  `JsonTypeInfo<IAsyncEnumerable<T>>` from the host's `JsonOptions`, so it honours the configured naming and works with
+  reflection-based JSON disabled.
 
 ### Open
 
@@ -54,7 +57,6 @@ in 45 to 65 MB of RSS.
 | The Functions source generators cannot see each other's output: the Worker SDK metadata and executor generators ignore a `[Function]` the Ark generator emits in the same compilation | A `MessagingFunctionsHost` declared in the app is not indexed, and the generated `DirectFunctionExecutor` does nothing for it. Not specific to AOT: the Core Functions Processor's generated metadata also lacks its Service Bus trigger (observed in the generated provider; not run under `func`) | Declare `MessagingFunctionsHost` in a referenced library and set `FunctionsInDependencies`, as `HttpHost` already is. Document it, or emit a diagnostic when it is declared in an executable |
 | The Worker SDK generator also indexes the HTTP functions of a referenced library even without `FunctionsInDependencies` | A trigger app exposes the HTTP API of any library it references | Keep `HttpHost` and `MessagingFunctionsHost` in separate libraries |
 | `Ark.Tools.MediatorFramework.Messaging` always references MessagePack, and registers `StandardResolver` by default | MessagePack's dynamic resolvers use `Reflection.Emit`: publish warnings (IL2104/IL3053) even for JSON-only apps, and a runtime failure if a MessagePack participant is used | Register the MessagePack codec only when a participant selects it, and require a source-generated resolver under AOT |
-| `ArkAzureFunctionsHttp.WriteJsonStreamAsync` serializes with the default options, not the host's | Streaming responses ignore the configured naming and fail when reflection-based JSON is disabled | Resolve `JsonTypeInfo<IAsyncEnumerable<T>>` from `JsonOptions`, like `Json<T>` |
 | The Functions generator drops the nullable annotation of a query result (`IQuery<V1, Greeting?>` fails with CS8631) | A nullable result, which maps to 404, cannot be declared honestly | Emit the annotated type argument |
 | `ConfigureArkDefaults`, the NodaTime range converters, the `EvolvableEnum` converter factory and Vogen's numeric converters are `[RequiresDynamicCode]` | Applications with these types need explicit converters in a source-generated context | Known and documented ([value objects](../../mediator-framework/value-objects-best-practices.md)); a per-type, AOT-safe converter set would remove the step |
 | SimpleInjector, Dapper, Application Insights and MVC are not AOT-safe | The existing Core sample cannot be published as Native AOT without replacing its container, data access and telemetry | Out of scope for the framework; Microsoft DI, Dapper.AOT and OpenTelemetry are the usual replacements, as in `AotSample` |
@@ -93,7 +95,7 @@ non-fatal (`WarningsNotAsErrors`). ReadyToRun without trimming avoids them all.
 2. **Native AOT today:** host the same Application in ASP.NET Core Minimal API and a generic-host receiver, for example on
    Azure Container Apps with scale to zero. The framework already supports it with no Ark.Tools warnings.
 3. **Framework work, in order:** optional MessagePack registration; the SQL exception mapping out of
-   `Ark.Tools.AspNetCore.ProblemDetails`; an AOT-safe SQL outbox; the decorated-handler registration helpers; the
-   streaming JSON helper; nullable query results.
+   `Ark.Tools.AspNetCore.ProblemDetails`; an AOT-safe SQL outbox; the decorated-handler registration helpers; nullable
+   query results.
 4. **Guard it in CI:** publish `AotSample`'s hosts as Native AOT, as CI already does for
    `tests/Ark.Tools.MediatorFramework.NativeAotApp`, and fail on any Ark.Tools or Dapper warning.

@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Generated Azure Functions endpoints that stream an `IAsyncEnumerable<T>` serialize it with the host's JSON options, as Minimal API does, instead of the defaults: streamed objects follow the configured naming, and trimmed apps can stream with reflection-based JSON disabled.
 - `Ark.Tools.MediatorFramework.AzureFunctions`: generated HTTP functions read the request body and write the response with the source-generated metadata of the configured JSON options, so they no longer report trimming and Native AOT warnings.
 - `AddArkAzureFunctions` no longer adds reflection-based JSON when reflection-based serialization is disabled, as in trimmed apps: it keeps camelCase naming and Vogen value object support, and the source-generated contexts passed to it resolve every type. A trimmed Functions app no longer reports trimming warnings from Ark.Tools.
 - `ToDataTableArk()` no longer fails in Native AOT apps when the element type, shredded through the reflection fallback, has a nullable value-type member such as `Guid?`, and publishing no longer reports a trimming warning for it.

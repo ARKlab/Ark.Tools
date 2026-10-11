@@ -118,15 +118,14 @@ public static class ArkAzureFunctionsHttp
         }
     }
 
-    /// <summary>Writes an async sequence as a JSON array without buffering the sequence.</summary>
+    /// <summary>
+    /// Writes an async sequence as a JSON array without buffering the sequence, with the metadata of the host JSON
+    /// options and without reflection.
+    /// </summary>
     /// <typeparam name="T">The streamed element type.</typeparam>
     /// <param name="response">The current response.</param>
     /// <param name="items">The response sequence.</param>
     /// <param name="cancellationToken">The invocation cancellation token.</param>
-    [UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2026",
-        Justification = "The generated endpoint preserves the statically selected response element type.")]
     public static async Task WriteJsonStreamAsync<T>(
         HttpResponse response,
         IAsyncEnumerable<T> items,
@@ -139,7 +138,8 @@ public static class ArkAzureFunctionsHttp
         await System.Text.Json.JsonSerializer.SerializeAsync(
             response.Body,
             items,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+            _getTypeInfo<IAsyncEnumerable<T>>(response.HttpContext),
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Executes registered health checks and returns their HTTP status result.</summary>
