@@ -18,4 +18,14 @@
     <ProjectReference Include="..\..\..\Ark.MediatorFramework.Sample.Core.Application\Ark.MediatorFramework.Sample.Core.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- FunctionsIndexingTests reads each app's functions.metadata: build the apps first, without referencing them. -->
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Api\Ark.MediatorFramework.Sample.Core.Functions.Api.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Processor\Ark.MediatorFramework.Sample.Core.Functions.Processor.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Notifications\Ark.MediatorFramework.Sample.Core.Functions.Notifications.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Audit\Ark.MediatorFramework.Sample.Core.Functions.Audit.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
+    <AssemblyMetadata Include="FunctionsAppsDirectory" Value="$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/..'))" />
+    <AssemblyMetadata Include="FunctionsAppsConfiguration" Value="$(Configuration)" />
+  </ItemGroup>
+
 </Project>
