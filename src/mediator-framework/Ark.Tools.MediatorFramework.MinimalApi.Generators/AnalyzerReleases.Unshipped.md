@@ -6,7 +6,6 @@
 Rule ID | Category | Severity | Notes
 ---------|----------|----------|-------
 ARKMF001 | Ark.Tools.MediatorFramework | Error | Multiple attachment properties
-ARKMF002 | Ark.Tools.MediatorFramework | Error | Server-set property cannot be reset
 ARKMF003 | Ark.Tools.MediatorFramework | Warning | Possible mass assignment
 ARKMF005 | Ark.Tools.MediatorFramework | Error | Unsupported attachment collection
 ARKMF010 | Ark.Tools.MediatorFramework | Error | Unsupported HTTP verb

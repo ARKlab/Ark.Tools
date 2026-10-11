@@ -37,7 +37,6 @@ internal enum HandlerKind
 /// <param name="BindingName">The binding name used for route values.</param>
 /// <param name="IsQuery">Whether the property binds from the query string.</param>
 /// <param name="IsBody">Whether the property binds from the body.</param>
-/// <param name="IsServerSet">Whether the property is server set.</param>
 /// <param name="IsString">Whether the property type is <see cref="string"/>.</param>
 /// <param name="IsETag">Whether the property carries the request ETag.</param>
 /// <param name="IsAttachment">Whether the property is a single attachment.</param>
@@ -57,7 +56,6 @@ internal readonly record struct PropertySpec(
     string BindingName,
     bool IsQuery,
     bool IsBody,
-    bool IsServerSet,
     bool IsString,
     bool IsETag,
     bool IsAttachment,
@@ -179,7 +177,6 @@ internal static class AzureFunctionsEndpointParser
     private const string _httpRouteAttribute = "Ark.Tools.MediatorFramework.HttpRouteAttribute";
     private const string _httpQueryAttribute = "Ark.Tools.MediatorFramework.HttpQueryAttribute";
     private const string _httpBodyAttribute = "Ark.Tools.MediatorFramework.HttpBodyAttribute";
-    private const string _serverSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
     private const string _eTagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";
     private const string _arkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
     private const string _asyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
@@ -316,7 +313,6 @@ internal static class AzureFunctionsEndpointParser
                 var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
                 var isQuery = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _httpQueryAttribute);
                 var isBody = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _httpBodyAttribute);
-                var isServerSet = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _serverSetAttribute);
                 var isETag = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _eTagAttribute);
                 var isString = p.Type.SpecialType == SpecialType.System_String;
                 var isAttachment = p.Type.ToDisplayString() == _arkAttachment;
@@ -339,7 +335,6 @@ internal static class AzureFunctionsEndpointParser
                     bindingName,
                     isQuery,
                     isBody,
-                    isServerSet,
                     isString,
                     isETag,
                     isAttachment,
@@ -398,7 +393,6 @@ internal static class AzureFunctionsEndpointParser
             _allProperties(type)
                 .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic && !p.IsIndexer
                     && p.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
-                    && !p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _serverSetAttribute)
                     && (routeNames.Contains(p.Name) || p.GetAttributes().Any(static a =>
                         a.AttributeClass?.ToDisplayString() is _httpRouteAttribute or _httpQueryAttribute)))
                 .Select(static p => new UnsettablePropertySpec(p.Name, LocationSpec._from(p)))

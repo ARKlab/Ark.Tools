@@ -107,10 +107,10 @@ the only transport hint the developer writes; the generator turns each *declared
 transport into concrete hosting code. A request/query with **no** transport
 attribute is not hosted — the developer wires it by hand.
 
-Properties marked with `[ServerSet]` are never read from HTTP route, query, or
-body input. The Minimal API generator resets them after deserialization, the
-gRPC proto export omits them from request messages, and
-`AddArkServerSetProperties()` removes them from generated schemas.
+Input and output are separate models. An earlier `[ServerSet]` attribute let one
+model serve both: every transport ignored or reset its computed and output-only
+properties on input. It was removed (#1090); output-only properties now live on
+an `Output` model that the request returns but never accepts.
 
 ### Optimistic concurrency: opaque ETag tokens
 
@@ -861,8 +861,8 @@ snapshot differs from what is committed.
 - Contract metadata: API group, optional gRPC group override, HTTP routing and
   active version range, and gRPC method/version metadata.
 - Rebus: message contract name and owner queue.
-- Contract members: name, fully-qualified type, nullability, `[ServerSet]` when
-  true, and source-level default values.
+- Contract members: name, fully-qualified type, nullability, and source-level
+  default values.
   Nested types are expanded recursively so a change to any nested field produces
   a visible diff.
 - Enum members reached from a contract: every member name and its numeric

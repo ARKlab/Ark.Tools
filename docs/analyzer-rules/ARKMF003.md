@@ -2,27 +2,44 @@
 
 - **Severity:** Warning
 - **Component:** Mediator Framework
-- **Diagnostic message:** `HTTP endpoint '{0}' has property '{1}' that may be server-owned; mark it with [ServerSet] or suppress this warning`
+- **Diagnostic message:** `HTTP endpoint '{0}' has property '{1}' that may be server-owned; read it in the handler from the user context instead of the request, or suppress this warning when the client chooses it`
 
 ## What it checks
 
-This Ark.Tools diagnostic identifies the condition described above and reports it at the relevant declaration, contract, or generated-code input. The diagnostic message includes the contextual symbol and the required correction where applicable.
+The rule reports an HTTP contract property named `TenantId`, `UserId`,
+`IsAdmin`, `Role` or `Roles` that a client would bind from the route or the
+body. Such values usually belong to the server, and accepting them from the
+request lets a caller choose them.
 
 ## How to fix it
 
-Apply the correction stated by the diagnostic. Do not suppress the rule when changing the declaration, contract, host configuration, or data flow is possible.
+Remove the property and read the value in the handler from the user context.
+When the client legitimately chooses the value, for example a tenant identifier
+in the route of an administration API, suppress the warning for that property
+after review; binding it from the route does not silence the rule.
 
 ### Incorrect
 
 ```csharp
-// Violates the rule
-// Generated contract or host declaration does not satisfy the diagnostic.
+[HttpEndpoint("POST", "/api/v{version}/orders")]
+public sealed record CreateOrderRequest : IRequest<OrderResponse>
+{
+    public required string ProductCode { get; init; }
+
+    public string? UserId { get; init; }
+}
 ```
 
 ### Correct
 
 ```csharp
-// Correct the contract or host declaration as requested by the diagnostic.
+[HttpEndpoint("POST", "/api/v{version}/orders")]
+public sealed record CreateOrderRequest : IRequest<OrderResponse>
+{
+    public required string ProductCode { get; init; }
+}
+
+// The handler reads the user from IContextProvider<ClaimsPrincipal>.
 ```
 
 ## Suppression and configuration

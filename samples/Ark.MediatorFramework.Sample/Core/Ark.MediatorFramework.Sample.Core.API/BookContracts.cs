@@ -62,11 +62,9 @@ public static class Book
         public record Output : Create
         {
             /// <summary>Gets the book identifier.</summary>
-            [ServerSet]
             public BookId Id { get; init; }
 
             /// <summary>Gets the generated book description.</summary>
-            [ServerSet]
             public BookDescription Description { get; init; }
 
             /// <summary>Gets the opaque concurrency token.</summary>

@@ -3,7 +3,7 @@
 - **Severity:** Error
 - **Component:** Mediator Framework
 - **Diagnostic messages:**
-  - `HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]`
+  - `HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or remove it from the contract`
   - `HTTP endpoint '{0}' binds property '{1}' from the route or query string, but its type '{2}' cannot be converted from a string`
   - `HTTP endpoint '{0}' binds property '{1}' from the route or query string, but the property has no public setter or init accessor and is not a constructor parameter`
   - `HTTP endpoint '{0}' binds property '{1}' from the route or query string, but the property has no public setter or init accessor, which Azure Functions needs to set it`
@@ -23,8 +23,7 @@ bound properties after constructing the contract.
 A `GET` or `DELETE` endpoint, and a `HEAD` Azure Functions function, never
 reads the request body, including when `AcceptsMessagePack = true` (MessagePack
 then applies to the response only). Every property of the contract must therefore be bound from the route
-or the query string. Properties marked `[ServerSet]` are filled by the server,
-are never bound from the request, and are not checked.
+or the query string.
 
 ### Minimal API generator
 
@@ -58,7 +57,7 @@ reports a property when:
   Any other type, including `List<T>`, `IReadOnlyList<T>`, `IEnumerable<T>`,
   dictionaries, structs without `TryParse` and NodaTime types such as
   `LocalDate` and `Instant`, would need a body, which a `GET` or `DELETE`
-  endpoint does not read. `[ServerSet]` properties are never bound.
+  endpoint does not read.
 
 For every verb, the endpoint binds a route or `[HttpQuery]` property
 explicitly. An explicit route or query value is read as follows:
@@ -143,8 +142,8 @@ that selects it.
 
 ## How to fix it
 
-Mark every input property `[HttpRoute]` or `[HttpQuery]`, or `[ServerSet]`
-when the server fills it. Use an array instead of a list, flatten a complex
+Mark every input property `[HttpRoute]` or `[HttpQuery]`, or remove it from
+the contract when the server supplies it. Use an array instead of a list, flatten a complex
 value into scalar query properties, use `POST` for a request that needs a body,
 or give the type a static `TryParse` method so it can be read from a single
 string.

@@ -2,6 +2,11 @@
 
 **Category**: security · **Priority**: Release blocker · **Scope**: FRAMEWORK
 
+> **Superseded (#1090).** `[ServerSet]`, `AddArkServerSetProperties()` and `ARKMF002` were removed:
+> contracts use separate input and output models, so computed and output-only properties are never
+> bound from a request. `ARKMF003` still warns about suspicious property names. This record is kept
+> as history.
+
 ## Problem
 
 A mediator contract is simultaneously the HTTP body/query envelope, the gRPC message and the bus

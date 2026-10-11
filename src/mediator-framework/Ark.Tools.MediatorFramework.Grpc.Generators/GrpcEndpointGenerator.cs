@@ -30,7 +30,6 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string GrpcServiceAttribute = "Ark.Tools.MediatorFramework.GrpcServiceAttribute";
         private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
         private const string VersioningAttribute = "Ark.Tools.MediatorFramework.VersioningAttribute";
-        private const string ServerSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
         private const string ArkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
         private const string ArkGenerateGrpcForAssemblyAttribute = "Ark.Tools.MediatorFramework.Grpc.ArkGenerateGrpcForAssemblyAttribute";
         private const string MappingParserTrackingName = "GrpcMappingParser";
@@ -512,26 +511,15 @@ namespace Ark.Tools.MediatorFramework.Generators
             var valueObjects = new SortedDictionary<string, (string Primitive, bool IsSensitive)>(StringComparer.Ordinal);
             var absentMembers = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
             var reported = new HashSet<string>(StringComparer.Ordinal);
-            // The exported request messages omit [ServerSet] members (see EmitProtoMessage), so they are not checked,
-            // unless the contract is also a response or stream item, which protobuf-net writes with every member.
-            var requestNames = items
-                .Select(item => ProtoTypeName(item.TypeFullName, contractLookup))
-                .ToHashSet(StringComparer.Ordinal);
-            var responseReachable = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var item in items)
-                AddReachable(item.IsStreaming ? item.StreamElement! : item.Response, contractLookup, responseReachable);
             foreach (var item in items)
             {
                 var reachable = new HashSet<string>(StringComparer.Ordinal);
-                AddReachable(item.TypeFullName, contractLookup, reachable, omitServerSet: true);
+                AddReachable(item.TypeFullName, contractLookup, reachable);
                 AddReachable(item.IsStreaming ? item.StreamElement! : item.Response, contractLookup, reachable);
                 foreach (var contract in reachable.Select(type => contractLookup.ByType[type]).OrderBy(static contract => contract.TypeFullName, StringComparer.Ordinal))
                 {
                     foreach (var member in contract.Members.Items)
                     {
-                        if (member.IsServerSet && requestNames.Contains(contract.Name) && !responseReachable.Contains(contract.TypeFullName))
-                            continue;
-
                         if (member.ExportIssue is not null)
                         {
                             if (reported.Add(contract.TypeFullName + "." + member.Name))
@@ -860,7 +848,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 foreach (var endpoint in active)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    AddReachable(endpoint.TypeFullName, contractLookup, reachable, omitServerSet: true);
+                    AddReachable(endpoint.TypeFullName, contractLookup, reachable);
                     AddReachable(endpoint.IsStreaming ? endpoint.StreamElement! : endpoint.Response, contractLookup, reachable);
                 }
 
@@ -872,7 +860,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .AppendLine(";");
                 content.AppendLine();
                 // Well-known and NodaTime imports are inserted once the emitted field types are known: protoc warns
-                // on unused imports, and a reachable member may not be emitted (a request's [ServerSet] member).
+                // on unused imports, and a reachable member may not be emitted (a request's attachment).
                 var wellKnownImportsAt = content.Length;
                 var usedTypes = new HashSet<string>(StringComparer.Ordinal);
                 // Download chunks are declared locally; only uploads use ark.mediator.UploadDocumentChunk.
@@ -995,8 +983,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             }
 
             foreach (var member in contract.Members.Items
-                .Where(member => !isRequest || (!member.IsServerSet
-                    && !member.Type.Contains("IArkAttachment", StringComparison.Ordinal)))
+                .Where(member => !isRequest || !member.Type.Contains("IArkAttachment", StringComparison.Ordinal))
                 .OrderBy(static member => member.Number))
             {
                 WriteComment(sb, member.Description);
@@ -1078,8 +1065,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 XmlDocumentation.Summary(property),
                 protoMember.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
                 IsRepeatedProtoType(property.Type),
-                property.GetAttributes().Any(attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute),
                 precomputed,
                 valueObjectPrimitive is null ? null : element.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 valueObjectPrimitive,
@@ -1178,13 +1163,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                 new ImmutableEquatableArray<ProtoIncludeModel>(includes));
         }
 
-        // omitServerSet: the contract is a request, whose exported message omits its [ServerSet] members (see
-        // EmitProtoMessage), so the types only they reference are not reachable.
         private static void AddReachable(
             string displayName,
             ProtoContractLookup contractLookup,
-            ISet<string> reachable,
-            bool omitServerSet = false)
+            ISet<string> reachable)
         {
             var name = SimpleName(displayName);
             var contract = contractLookup.ByType.TryGetValue(displayName, out var byType)
@@ -1195,7 +1177,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (contract is null || !reachable.Add(contract.TypeFullName))
                 return;
 
-            foreach (var member in contract.Members.Items.Where(member => !omitServerSet || !member.IsServerSet))
+            foreach (var member in contract.Members.Items)
                 AddReachable(member.Type, contractLookup, reachable);
             foreach (var include in contract.Includes.Items)
                 AddReachable(include.TypeName, contractLookup, reachable);
@@ -1550,7 +1532,6 @@ namespace Ark.Tools.MediatorFramework.Generators
             string? Description,
             int Number,
             bool IsRepeated,
-            bool IsServerSet,
             string? PrecomputedProtoType,
             string? ValueObjectType = null,
             string? ValueObjectPrimitive = null,

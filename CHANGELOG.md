@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.MediatorFramework.MinimalApi`: generated endpoints bind route, query and JSON body values in generated code, with the same rules as ASP.NET Core Minimal API, instead of through `RequestDelegateFactory`. They avoid its reflection-based binding, so they are trim-safe; endpoint filters and OpenAPI work as before. `GET` and `DELETE` contracts are bound property by property instead of with `[AsParameters]`. In a trimmed app, add the contract and response types to a `JsonSerializerContext` in the Minimal API JSON options.
 - `Ark.Tools.ResourceWatcher.Sql`: trimmed apps that use `SqlStateProvider<TExtensions>` without `ExtensionsJsonContext` now keep the public constructors, properties and fields of a flat extensions type and opt back into reflection-based serialization, so it round-trips instead of failing or losing values. Generic code that passes its own type parameter as `TExtensions` must add the same `[DynamicallyAccessedMembers]` annotation (trim analyzer IL2091). Nested or polymorphic extension types still need `ExtensionsJsonContext` when trimming.
 
+### Removed
+
+- **Breaking:** `Ark.Tools.MediatorFramework`: the `[ServerSet]` attribute, `AddArkServerSetProperties()` and error `ARKMF002` are removed. The attribute let one model serve as both input and output by ignoring its computed or output-only properties on input. Use separate input and output models instead: move those properties to the model the request returns, as the sample's `Book.V1.Output` does. OpenAPI response schemas now include the properties that were marked `[ServerSet]`, which `AddArkServerSetProperties()` used to drop.
+
 ### Fixed
 
 - `AddArkAzureFunctions` no longer adds reflection-based JSON when reflection-based serialization is disabled, as in trimmed apps: it keeps camelCase naming and Vogen value object support, and the source-generated contexts passed to it resolve every type. A trimmed Functions app no longer reports trimming warnings from Ark.Tools.

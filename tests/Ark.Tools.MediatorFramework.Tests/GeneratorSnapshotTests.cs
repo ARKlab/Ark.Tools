@@ -1281,7 +1281,6 @@ public sealed class GeneratorSnapshotTests
                 public int Id { get; init; }
                 [HttpQuery] public int Skip { get; init; }
                 public string? Author { get; init; }
-                [ServerSet] public string? UserId { get; set; }
                 [ETag] public string? Version { get; init; }
                 public string Display => "books";
             }
@@ -1489,7 +1488,6 @@ public sealed class GeneratorSnapshotTests
                 public int Id { get; } = id;
                 [HttpQuery] public int Page { get; }
                 [HttpQuery] public int Size { get; init; }
-                [ServerSet] public string? Owner { get; }
             }
             """;
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(source);
@@ -3326,182 +3324,6 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void MinimalApiGeneratorProtectsServerSetProperties()
-    {
-        var generated = _runGenerator<ArkMinimalApiEndpointGenerator>(
-            """
-            using Ark.Tools.MediatorFramework;
-            using Ark.Tools.Solid;
-            [HttpEndpoint("POST", "/messages")]
-            public sealed record Message : IRequest<string>
-            {
-                public string Value { get; init; } = string.Empty;
-                [ServerSet]
-                public string UserId { get; init; } = string.Empty;
-            }
-            """);
-
-        generated.Should().Contain("request = request with { UserId = default! };");
-        generated.Should().NotContain("FromQuery(Name = \"UserId\")");
-    }
-
-    [TestMethod]
-    public void MinimalApiGeneratorNeverExposesServerSetPropertiesToAsParameters()
-    {
-        // [AsParameters] would show server-set properties to ASP.NET, which infers a body for a type it cannot bind
-        // from a string and fails at startup: the client properties are bound explicitly instead.
-        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
-            """
-            using Ark.Tools.MediatorFramework;
-            using Ark.Tools.Solid;
-            public sealed class Owner
-            {
-                public string Name { get; set; } = string.Empty;
-            }
-            public readonly struct Stamp
-            {
-                public long Ticks { get; }
-            }
-            [HttpEndpoint("GET", "/books")]
-            public sealed record ListBooks : IQuery<string>
-            {
-                public int Skip { get; init; }
-                public string? Author { get; init; }
-                [ServerSet] public Owner? Owner { get; set; }
-            }
-            [HttpEndpoint("DELETE", "/books/{id}")]
-            public sealed record DeleteBook : ICommand<DeleteBook>
-            {
-                public int Id { get; init; }
-                public bool Force { get; init; }
-                [ServerSet] public Stamp RequestedAt { get; init; }
-            }
-            [HttpEndpoint("GET", "/me")]
-            public sealed class GetMe : IQuery<string>
-            {
-                [ServerSet] public Owner? Owner { get; set; }
-            }
-            [HttpEndpoint("GET", "/shelves")]
-            public sealed record ListShelves : IQuery<string>
-            {
-                public int Skip { get; init; }
-            }
-            [HttpEndpoint("GET", "/exports")]
-            public sealed record DownloadExport : IQuery<IArkAttachment>
-            {
-                public int Year { get; init; }
-                [ServerSet] public string? RequestedBy { get; init; }
-            }
-            """);
-
-        result.Diagnostics.Should().BeEmpty();
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Skip\")] int Skip,");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Author\")] string? Author,");
-        result.Generated.Should().Contain("var request = new global::ListBooks { Skip = Skip, Author = Author, Owner = default! };");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromRoute(Name = \"id\")] int Id,");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Force\")] bool Force,");
-        result.Generated.Should().Contain("var request = new global::DeleteBook { Id = Id, Force = Force, RequestedAt = default! };");
-        result.Generated.Should().Contain("var request = new global::GetMe { Owner = default! };");
-        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::ListBooks");
-        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DeleteBook");
-        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::GetMe");
-        result.Generated.Should().Contain("var request = new global::ListShelves { Skip = Skip };");
-        result.Generated.Should().NotContain("AsParameters");
-        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
-        result.Generated.Should().NotContain("[global::Microsoft.AspNetCore.Http.AsParameters] global::DownloadExport");
-    }
-
-    [TestMethod]
-    public void MinimalApiGeneratorKeepsEveryAssignmentWhenItBindsServerSetContractsExplicitly()
-    {
-        // A positional record keeps its non-constructor properties in an object initializer, and a download record
-        // resets its server-set properties, including a required one, which would otherwise not compile. A class
-        // resets an init-only server-set property in its initializer only, and a constructor-bound property stays bound.
-        var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
-            """
-            using Ark.Tools.MediatorFramework;
-            using Ark.Tools.Solid;
-            [HttpEndpoint("GET", "/books")]
-            public sealed record SearchBooks(string Term) : IQuery<string>
-            {
-                public int Page { get; init; }
-                [ServerSet] public string? Owner { get; init; }
-            }
-            [HttpEndpoint("GET", "/exports")]
-            public sealed record DownloadExport : IQuery<IArkAttachment>
-            {
-                public int Year { get; init; }
-                [ServerSet] public required string RequestedBy { get; init; }
-            }
-            [HttpEndpoint("GET", "/shelves/{id}")]
-            public sealed class GetShelf : IQuery<string>
-            {
-                [HttpRoute] public int Id { get; set; }
-                [ServerSet] public string Tenant { get; init; } = string.Empty;
-            }
-            [HttpEndpoint("GET", "/versions")]
-            public sealed record ListVersions : IQuery<string>
-            {
-                public int Skip { get; init; }
-                [ETag] public string? Version { get; init; }
-                [ServerSet] public string? Owner { get; init; }
-            }
-            [HttpEndpoint("GET", "/tenants/{tenant}/books")]
-            public sealed record ListTenantBooks : IQuery<string>
-            {
-                [HttpQuery] public int Skip { get; init; }
-                [ServerSet] public string? Tenant { get; init; }
-            }
-            [HttpEndpoint("DELETE", "/tenants/{tenant}/books/{id}")]
-            public sealed record DeleteTenantBook : ICommand<DeleteTenantBook>
-            {
-                public int Id { get; init; }
-                [ServerSet] public string? Tenant { get; init; }
-            }
-            [HttpEndpoint("GET", "/authors")]
-            public sealed class ListAuthors(string term) : IQuery<string>
-            {
-                public string Term { get; } = term;
-                [ServerSet] public string? Owner { get; set; }
-            }
-            [HttpEndpoint("GET", "/editions")]
-            public sealed class ListEditions : IQuery<string>
-            {
-                public ListEditions() { }
-                public ListEditions(int value) { Value = value; }
-                public int Value { get; set; }
-                [ServerSet] public string? Owner { get; set; }
-            }
-            [HttpEndpoint("GET", "/printings")]
-            public sealed class ListPrintings : IQuery<string>
-            {
-                public ListPrintings(string value, int count) { Count = count; }
-                public ListPrintings(int value) { Value = value; }
-                public int Value { get; set; }
-                public int Count { get; set; }
-                [ServerSet] public string? Owner { get; set; }
-            }
-            """);
-
-        result.Diagnostics.Should().BeEmpty();
-        result.Generated.Should().Contain("var request = new global::SearchBooks(Term) { Page = Page, Owner = default! };");
-        result.Generated.Should().Contain("var request = new global::DownloadExport { Year = Year, RequestedBy = default! };");
-        result.Generated.Should().Contain("var request = new global::GetShelf { Id = Id, Tenant = default! };");
-        result.Generated.Should().NotContain("request.Tenant = default!;");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Term\")] string Term,");
-        result.Generated.Should().Contain("var request = new global::ListAuthors(Term) { Owner = default! };");
-        // As ASP.NET Core [AsParameters] does, a parameterless constructor wins over parameterized ones, and a
-        // constructor is used only when its parameters match properties by name and type.
-        result.Generated.Should().Contain("var request = new global::ListEditions { Value = Value, Owner = default! };");
-        result.Generated.Should().Contain("var request = new global::ListPrintings(Value) { Count = Count, Owner = default! };");
-        result.Generated.Should().Contain("var request = new global::ListTenantBooks { Skip = Skip, Tenant = default! };");
-        result.Generated.Should().Contain("var request = new global::DeleteTenantBook { Id = Id, Tenant = default! };");
-        result.Generated.Should().NotContain("Tenant = Tenant");
-        result.Generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Skip\")] int Skip,");
-        result.Generated.Should().NotContain("FromQuery(Name = \"Version\")");
-    }
-
-    [TestMethod]
     public void MinimalApiGeneratorWarnsOnSuspiciousProperties()
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
@@ -3585,7 +3407,6 @@ public sealed class GeneratorSnapshotTests
             {
                 public Filter? Filter { get; init; }
                 public IReadOnlyList<Filter> Filters { get; init; } = [];
-                [ServerSet] public Filter? Owner { get; set; }
             }
             [HttpEndpoint("DELETE", "/books/{id}")]
             public sealed record DeleteBook : IRequest<string>
@@ -3643,7 +3464,6 @@ public sealed class GeneratorSnapshotTests
                 public int Id { get; init; }
                 [HttpQuery] public int Skip { get; init; }
                 public int Limit { get; init; }
-                [ServerSet] public string? UserId { get; set; }
                 [ETag] public string? Version { get; init; }
                 public string Display => "reviews";
             }
@@ -4450,113 +4270,6 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void GrpcGeneratorExcludesServerSetRequestMembers()
-    {
-        var generated = _runGenerator<ArkGrpcEndpointGenerator>(
-            """
-            using Ark.Tools.MediatorFramework;
-            using Ark.Tools.Solid;
-            using ProtoBuf;
-            [GrpcMethod("GetGreeting")]
-            [ProtoContract]
-            public sealed class GetGreeting : IQuery<Greeting>
-            {
-                [ProtoMember(1)]
-                public string UserId { get; set; } = string.Empty;
-                [ServerSet]
-                [ProtoMember(2)]
-                public string TenantId { get; set; } = string.Empty;
-            }
-
-            [ProtoContract]
-            public sealed class Greeting
-            {
-                [ProtoMember(1)]
-                public string Message { get; set; } = string.Empty;
-            }
-            """);
-
-        generated.Should().NotContain("tenant_id");
-    }
-
-    [TestMethod]
-    public void GrpcGeneratorDoesNotReportOmittedServerSetRequestMembers()
-    {
-        // The request message omits the server-set Guid, so its wire format cannot disagree with the .proto.
-        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
-            """
-            using Ark.Tools.MediatorFramework;
-            using Ark.Tools.Solid;
-            using ProtoBuf;
-            [GrpcMethod("GetGreeting")]
-            [ProtoContract]
-            public sealed class GetGreeting : IQuery<Greeting>
-            {
-                [ProtoMember(1)]
-                public string UserId { get; set; } = string.Empty;
-                [ServerSet]
-                [ProtoMember(2)]
-                public System.Guid TenantId { get; set; }
-                [ServerSet]
-                [ProtoMember(3)]
-                public ServerMetadata Metadata { get; set; } = new();
-            }
-
-            [ProtoContract]
-            public sealed class ServerMetadata
-            {
-                [ProtoMember(1)]
-                public System.Guid TraceId { get; set; }
-            }
-
-            [ProtoContract]
-            public sealed class Greeting
-            {
-                [ProtoMember(1)]
-                public string Message { get; set; } = string.Empty;
-            }
-            """);
-
-        result.Diagnostics.Should().BeEmpty();
-        result.Generated.Should().NotContain("tenant_id");
-        result.Generated.Should().NotContain("message ServerMetadata");
-    }
-
-    [TestMethod]
-    public void GrpcGeneratorChecksServerSetMembersOfAContractThatIsAlsoAResponse()
-    {
-        // Greeting is the response of GetGreeting, so protobuf-net writes its server-set Guid even though
-        // UpdateGreeting also takes it as a request.
-        var result = _runGeneratorResult<ArkGrpcEndpointGenerator>(
-            """
-            using Ark.Tools.MediatorFramework;
-            using Ark.Tools.Solid;
-            using ProtoBuf;
-            [GrpcMethod("GetGreeting")]
-            [ProtoContract]
-            public sealed class GetGreeting : IQuery<Greeting>
-            {
-                [ProtoMember(1)]
-                public string UserId { get; set; } = string.Empty;
-            }
-
-            [GrpcMethod("UpdateGreeting")]
-            [ProtoContract]
-            public sealed class Greeting : IQuery<GetGreeting>
-            {
-                [ProtoMember(1)]
-                public string Message { get; set; } = string.Empty;
-                [ServerSet]
-                [ProtoMember(2)]
-                public System.Guid TenantId { get; set; }
-            }
-            """);
-
-        result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF060");
-    }
-
-    [TestMethod]
-    [DataRow("[ServerSet]", false)]
     [DataRow("", true)]
     public void GrpcGeneratorImportsNodaTimeProtoOnlyForEmittedPeriodFields(string elapsedAttribute, bool imported)
     {

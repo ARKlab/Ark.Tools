@@ -105,7 +105,7 @@ public static class HostingEndpointMappings
 }
 
 /// <summary>
-/// Deterministic request contract with route, query, body, and server-owned properties.
+/// Deterministic request contract with route, query, and body properties.
 /// </summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/requests/{id}", AllowAnonymous = true, AcceptsMessagePack = true)]
 [GrpcMethod]
@@ -127,11 +127,6 @@ public sealed record HostingRequest : Solid.IRequest<HostingRequest, HostingResp
     /// <summary>Gets or sets the request body value.</summary>
     [ProtoBuf.ProtoMember(3)]
     public string Value { get; set; } = string.Empty;
-
-    /// <summary>Gets or sets the server-owned stamp.</summary>
-    [ServerSet]
-    [ProtoBuf.ProtoMember(4)]
-    public string? ServerStamp { get; set; }
 }
 
 /// <summary>Response returned by deterministic hosting handlers.</summary>
@@ -165,29 +160,6 @@ public sealed record HostingQuery : Solid.IQuery<HostingQuery, HostingResponse>
     [HttpQuery]
     [ProtoBuf.ProtoMember(2)]
     public string? Value { get; set; }
-}
-
-/// <summary>Owner data that only the server sets.</summary>
-public sealed class HostingOwner
-{
-    /// <summary>Gets or sets the owner name.</summary>
-    public string Name { get; set; } = string.Empty;
-}
-
-/// <summary>Query contract with a server-set property that ASP.NET Core cannot bind from a string.</summary>
-[HttpEndpoint("GET", "/api/v{version}/hosting/owned", AllowAnonymous = true)]
-public sealed record HostingOwnedQuery : Solid.IQuery<HostingOwnedQuery, HostingResponse>
-{
-    /// <summary>Gets or sets the query value.</summary>
-    public string? Value { get; set; }
-
-    /// <summary>Gets or sets the server-owned owner.</summary>
-    [ServerSet]
-    public HostingOwner? Owner { get; set; }
-
-    /// <summary>Gets or sets the server-owned tenant, a non-nullable reference the endpoint resets.</summary>
-    [ServerSet]
-    public string Tenant { get; set; } = string.Empty;
 }
 
 /// <summary>Command contract exposed through HTTP, gRPC, and Rebus.</summary>
@@ -473,7 +445,6 @@ public sealed record HostingOpenApiResponse
     public HostingShape Shape { get; init; } = new HostingCircle();
 
     /// <summary>Gets or sets the server-owned response stamp.</summary>
-    [ServerSet]
     public string ServerStamp { get; init; } = string.Empty;
 }
 

@@ -171,7 +171,7 @@ messaging are never mixed on one network.
 ### API
 
 Public contracts only, with per-transport metadata (`[HttpEndpoint]`,
-`[GrpcMethod]`, `[McpTool]`, versioning, `[ServerSet]`, `[ETag]`). A variant
+`[GrpcMethod]`, `[McpTool]`, versioning, `[ETag]`). A variant
 maps only the transports it hosts; contracts it does not host are excluded
 at the host (as the Functions host already excludes MessagePack and
 streaming contracts). Package references are limited to attribute and
