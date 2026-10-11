@@ -9,12 +9,21 @@ Functions app, and nothing else runs outside Azure Functions. The apps share
 
 The variant runs on Azure Functions only, so it has no outbox: Functions never
 poll the outbox, and there is no separate process to dispatch it. The handlers
-still enlist their data context's outbox, as in every variant, but the
-Functions composition replaces the bus with `DirectSendBus`, whose enlistment is
-a no-op: a message goes to Service Bus when the handler sends it, before the
-data context commits. If the handler or the commit fails afterwards, the message
-has been sent for a change that was not stored. Use the Web variant, with its
-`OutboxProcessor`, when the send must be atomic with the database change.
+still enlist their data context's outbox, as in every variant:
+
+- The Api and Processor apps, whose handlers send and publish, select
+  `UseOutbox(outbox => outbox.UseDevelopmentPassthrough())`. Enlisting is a
+  no-op and a message goes to Service Bus when the handler sends it, before the
+  data context commits. If the handler or the commit fails afterwards, the
+  message has been sent for a change that was not stored. Because it is not
+  atomic, the pass-through starts only in the `Development` environment: these
+  two apps refuse to start anywhere else until they get an outbox that something
+  drains.
+- The Notifications and Audit apps send nothing, so they select no outbox, and
+  an enlistment there would fail.
+
+Use the Web variant, with its `OutboxProcessor`, when the send must be atomic
+with the database change.
 
 ## Deployables
 

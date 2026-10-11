@@ -10,6 +10,8 @@ using Ark.Tools.Solid;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting.Internal;
 
 using System.Reflection;
 using System.Security.Claims;
@@ -55,6 +57,8 @@ internal static class FunctionsTestHosts
         services.AddLogging();
         // Registered before AddArkAzureFunctions, whose TryAdd would otherwise read the HTTP user.
         services.AddSingleton<IContextProvider<ClaimsPrincipal>>(new AllScopesUser());
+        // The Api producer uses the development outbox pass-through, which starts only in Development.
+        services.AddSingleton<IHostEnvironment>(new HostingEnvironment { EnvironmentName = Environments.Development });
         FunctionsHosting.AddApiProducer(services, container, transport, dataBus);
         return await FunctionsTestProcess.StartAsync(services, container).ConfigureAwait(false);
     }
@@ -75,7 +79,8 @@ internal static class FunctionsTestHosts
             _triggerConfiguration,
             ProcessorFunctions.Manifest,
             container,
-            builder => builder.Use(dataBus));
+            builder => builder.Use(dataBus),
+            static outbox => outbox.UseDevelopmentPassthrough());
         return FunctionsTestProcess.Compose(services, container);
     }
 

@@ -5,7 +5,6 @@ using Ark.MediatorFramework.Sample.Core.Application.Authorization;
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
-using Ark.Tools.MediatorFramework;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 using Ark.Tools.MediatorFramework.Messaging;
@@ -15,7 +14,6 @@ using Ark.Tools.Solid.SimpleInjector;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -78,7 +76,7 @@ public static class FunctionsHosting
         return principal;
     }
 
-    /// <summary>Composes a trigger app: its generated Service Bus trigger, direct sends, and container bridge.</summary>
+    /// <summary>Composes a trigger app: its generated Service Bus trigger, its outbox choice, and container bridge.</summary>
     /// <remarks>
     /// The order matters: the user context goes before <c>AddArkAzureFunctions</c> so its
     /// <c>TryAdd</c> keeps the message principal, and the processors are bridged before
@@ -92,12 +90,17 @@ public static class FunctionsHosting
     /// Selects the claim-check DataBus: Azure Blob Storage from <see cref="DataBusOptions"/> in production, shared
     /// with the other apps; an in-memory instance shared by every process in tests.
     /// </param>
+    /// <param name="outbox">
+    /// Selects the outbox of an app whose handlers enlist one, or <see langword="null"/> for an app whose handlers
+    /// never send, which then rejects enlistment.
+    /// </param>
     public static void AddMessagingTrigger(
         IServiceCollection services,
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
         Container container,
-        Action<MessagingFunctionsDataBusBuilder> dataBus)
+        Action<MessagingFunctionsDataBusBuilder> dataBus,
+        Action<MessagingFunctionsOutboxBuilder>? outbox = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -111,17 +114,25 @@ public static class FunctionsHosting
         services.ConfigureArkMessagingFunctions(
             configuration,
             manifest,
-            messaging => messaging
-                .UseTransport(static transport => transport.UseServiceBus())
-                .UseDataBus(dataBus));
-        _useDirectSend(services);
+            messaging =>
+            {
+                messaging
+                    .UseTransport(static transport => transport.UseServiceBus())
+                    .UseDataBus(dataBus);
+                if (outbox is not null)
+                    messaging.UseOutbox(outbox);
+            });
         services.AddArkAzureFunctionsSimpleInjectorBridge(container);
     }
 
-    /// <summary>Composes the Api app's producer: it sends directly, without an outbox, and receives nothing.</summary>
+    /// <summary>
+    /// Composes the Api app's producer: it receives nothing and sends through the development outbox pass-through.
+    /// </summary>
     /// <remarks>
     /// The outgoing user is the HTTP user that <c>AddArkAzureFunctions</c> registers, unless the
     /// caller registered another <see cref="IContextProvider{TItem}"/> of <see cref="ClaimsPrincipal"/> first.
+    /// Nothing drains an outbox in a Functions-only deployment, so the handlers' enlistment is the pass-through,
+    /// which is not atomic and starts only in the Development environment.
     /// </remarks>
     /// <param name="services">The Functions service collection.</param>
     /// <param name="container">The application container.</param>
@@ -144,18 +155,9 @@ public static class FunctionsHosting
             messaging => messaging.Producer<SampleMessagingApiParticipant>(producer => producer
                 .UseTransport(transport)
                 .UseDataBus(dataBus)
-                .UseOutgoingPipeline(typeof(UserContextOutgoingStep))));
-        _useDirectSend(services);
+                .UseOutgoingPipeline(typeof(UserContextOutgoingStep))
+                .UseOutbox(static outbox => outbox.UseDevelopmentPassthrough())));
         services.AddArkAzureFunctionsSimpleInjectorBridge(container);
-    }
-
-    // Functions-only: no process drains the outbox, so the handlers' enlistment sends directly (see DirectSendBus).
-    private static void _useDirectSend(IServiceCollection services)
-    {
-        services.Replace(ServiceDescriptor.Singleton<IBus>(
-            static serviceProvider => new DirectSendBus(serviceProvider.GetRequiredService<MessagingBus>())));
-        services.Replace(ServiceDescriptor.Singleton<IBusOutboxEnlistment>(
-            static serviceProvider => (DirectSendBus)serviceProvider.GetRequiredService<IBus>()));
     }
 
     private static void _configureMessagingJson(IServiceCollection services)
