@@ -123,19 +123,23 @@ logging providers, and registers one NLog provider with message templates and
 named properties enabled. This keeps structured application events visible in
 the Functions console without duplicate provider output.
 
-Telemetry uses OpenTelemetry. Each worker calls
-`AddArkAzureMonitorOpenTelemetry(builder.Configuration)` from
-`Ark.Tools.AspNetCore.OTel` and
-`AddOpenTelemetry().UseFunctionsWorkerDefaults()` from
-`Microsoft.Azure.Functions.Worker.OpenTelemetry`, with
-`WithMetrics(metrics => metrics.AddArkMessagingInstrumentation())` from
-`Ark.Tools.MediatorFramework.Messaging.OTel` to export the messaging metrics,
-and each `host.json` sets
-`"telemetryMode": "OpenTelemetry"` so that the host and the worker emit
-correlated OpenTelemetry data. Azure Monitor export starts only when a
-connection string is configured: use `ApplicationInsights__ConnectionString`
-in local settings or `APPLICATIONINSIGHTS_CONNECTION_STRING` in Azure, and
-never place a connection string in source.
+Telemetry uses OpenTelemetry. Each `host.json` sets
+`"telemetryMode": "OpenTelemetry"`, and each worker calls the sample's
+`FunctionsHosting.AddTelemetry`. It registers Ark's instrumentation with
+`AddArkAspNetCoreOpenTelemetry()` from `Ark.Tools.AspNetCore.OTel`, the
+messaging metrics with `AddArkMessagingInstrumentation()`, and
+`UseFunctionsWorkerDefaults()` from `Microsoft.Azure.Functions.Worker.OpenTelemetry`.
+When a connection string is configured, it adds the Azure Monitor trace and
+metric exporters from `Azure.Monitor.OpenTelemetry.Exporter`. Use
+`ApplicationInsights__ConnectionString` in local settings or
+`APPLICATIONINSIGHTS_CONNECTION_STRING` in Azure, and never place a connection
+string in source.
+
+Do not use `AddArkAzureMonitorOpenTelemetry` or the Azure Monitor distro in a
+Functions worker: their ASP.NET Core instrumentation reports every request a
+second time, after the host. The worker does not export logs either: the host
+captures the NLog console output and exports it, so a worker log exporter would
+send each entry twice.
 
 ## 3. Declare a shared messaging network
 

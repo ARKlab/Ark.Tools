@@ -43,18 +43,6 @@
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
         }
       },
-      "Microsoft.Azure.Functions.Worker.OpenTelemetry": {
-        "type": "Direct",
-        "requested": "[1.2.0, )",
-        "resolved": "1.2.0",
-        "contentHash": "WzQsSzgR5KpC4IZ0BETZUz1kidWPIyUwR4KIzNeBS/RCRFhqZN1k9Sd3dXD7Es2KTAGvUvy2VpeAYEUHnm1fvQ==",
-        "dependencies": {
-          "Microsoft.Azure.Functions.Worker.Core": "2.52.0",
-          "OpenTelemetry": "1.13.1",
-          "OpenTelemetry.Api": "1.13.1",
-          "OpenTelemetry.Extensions.Hosting": "1.13.1"
-        }
-      },
       "Microsoft.Azure.Functions.Worker.Sdk": {
         "type": "Direct",
         "requested": "[2.1.0, )",
@@ -137,16 +125,6 @@
           "OpenTelemetry.Extensions.Hosting": "1.15.3",
           "OpenTelemetry.Instrumentation.AspNetCore": "1.15.2",
           "OpenTelemetry.Instrumentation.Http": "1.15.1"
-        }
-      },
-      "Azure.Monitor.OpenTelemetry.Exporter": {
-        "type": "Transitive",
-        "resolved": "1.8.3",
-        "contentHash": "hZ35hXxiRuJcT67u970iqqJ+z2ol3Sg23/m1wwNNh8uzK/48uB9iJ3va9PQ7gXn6kij6wzowUe5olPPfObkEug==",
-        "dependencies": {
-          "Azure.Core": "1.60.0",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "OpenTelemetry.PersistentStorage.FileSystem": "1.0.3"
         }
       },
       "Azure.Security.KeyVault.Secrets": {
@@ -1148,11 +1126,15 @@
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework.Sample.Core.Application": "[6.6.6, )",
+          "Ark.Tools.AspNetCore.OTel": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.AzureFunctions": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Messaging.OTel": "[1.0.0, )",
           "Ark.Tools.Solid.Authorization": "[1.0.0, )",
-          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )"
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )",
+          "Azure.Monitor.OpenTelemetry.Exporter": "[1.8.3, )",
+          "Microsoft.Azure.Functions.Worker.OpenTelemetry": "[1.2.0, )"
         }
       },
       "ark.tools.aspnetcore.healthchecks": {
@@ -1459,6 +1441,17 @@
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )"
         }
       },
+      "Azure.Monitor.OpenTelemetry.Exporter": {
+        "type": "CentralTransitive",
+        "requested": "[1.8.3, )",
+        "resolved": "1.8.3",
+        "contentHash": "hZ35hXxiRuJcT67u970iqqJ+z2ol3Sg23/m1wwNNh8uzK/48uB9iJ3va9PQ7gXn6kij6wzowUe5olPPfObkEug==",
+        "dependencies": {
+          "Azure.Core": "1.60.0",
+          "OpenTelemetry.Extensions.Hosting": "1.15.3",
+          "OpenTelemetry.PersistentStorage.FileSystem": "1.0.3"
+        }
+      },
       "Google.Api.CommonProtos": {
         "type": "CentralTransitive",
         "requested": "[2.17.0, )",
@@ -1529,6 +1522,18 @@
           "Microsoft.Azure.Functions.Worker.Extensions.Abstractions": "1.3.0",
           "Microsoft.Azure.Functions.Worker.Extensions.Rpc": "1.0.1",
           "Microsoft.Extensions.Azure": "1.13.0"
+        }
+      },
+      "Microsoft.Azure.Functions.Worker.OpenTelemetry": {
+        "type": "CentralTransitive",
+        "requested": "[1.2.0, )",
+        "resolved": "1.2.0",
+        "contentHash": "WzQsSzgR5KpC4IZ0BETZUz1kidWPIyUwR4KIzNeBS/RCRFhqZN1k9Sd3dXD7Es2KTAGvUvy2VpeAYEUHnm1fvQ==",
+        "dependencies": {
+          "Microsoft.Azure.Functions.Worker.Core": "2.52.0",
+          "OpenTelemetry": "1.13.1",
+          "OpenTelemetry.Api": "1.13.1",
+          "OpenTelemetry.Extensions.Hosting": "1.13.1"
         }
       },
       "Microsoft.Extensions.Compliance.Abstractions": {

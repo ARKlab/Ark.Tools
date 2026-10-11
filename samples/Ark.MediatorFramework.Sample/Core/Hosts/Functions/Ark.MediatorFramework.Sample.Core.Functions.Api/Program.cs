@@ -4,11 +4,9 @@
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Functions.Hosting;
 using Ark.Tools.AspNetCore.HealthChecks;
-using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.Messaging;
-using Ark.Tools.MediatorFramework.Messaging.OTel;
 using Ark.Tools.NLog;
 
 using Azure.Identity;
@@ -16,7 +14,6 @@ using Azure.Messaging.ServiceBus;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.Functions.Worker.Builder;
-using Microsoft.Azure.Functions.Worker.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,10 +41,7 @@ try
     });
     builder.ConfigureFunctionsWebApplication();
     builder.Services.AddArkRedaction();
-    builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
-    builder.Services.AddOpenTelemetry()
-        .WithMetrics(static metrics => metrics.AddArkMessagingInstrumentation())
-        .UseFunctionsWorkerDefaults();
+    FunctionsHosting.AddTelemetry(builder.Services, builder.Configuration);
 
     await using var container = FunctionsHosting.CreateContainer(new ApplicationOptions
     {
