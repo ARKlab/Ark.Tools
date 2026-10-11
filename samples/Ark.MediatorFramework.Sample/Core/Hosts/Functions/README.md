@@ -82,7 +82,7 @@ examples hold the values for the local emulators. Every app uses the same keys:
 | `AzureServiceBus__ConnectionString__administrationConnectionString` | Trigger apps only. Optional: Service Bus administration for provisioning. The local emulator serves it on port 5300 |
 | `ConnectionStrings__Sample` | SQL Server database of the sample |
 | `ConnectionStrings__DataBus` | Azure Blob Storage for the claim-check DataBus. `UseDevelopmentStorage=true` for Azurite. Each app creates the `amf1-databus` container if it is missing |
-| `ApplicationInsights__ConnectionString` | Optional telemetry |
+| `APPLICATIONINSIGHTS_CONNECTION_STRING` | Optional telemetry, read by both the Functions host and the worker |
 | `KeyVault__Uri` | Optional Key Vault that supplies the settings the worker reads. The Functions host reads `AzureWebJobsStorage` and the trigger connection itself, so those stay app settings or Key Vault references |
 
 ## Run locally

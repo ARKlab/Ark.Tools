@@ -5,13 +5,18 @@ using Ark.MediatorFramework.Sample.Core.Application.Authorization;
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
+using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 using Ark.Tools.MediatorFramework.Messaging;
+using Ark.Tools.MediatorFramework.Messaging.OTel;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Solid.SimpleInjector;
 
+using Azure.Monitor.OpenTelemetry.Exporter;
+
+using Microsoft.Azure.Functions.Worker.OpenTelemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +31,39 @@ namespace Ark.MediatorFramework.Sample.Core.Functions.Hosting;
 /// <summary>Composition shared by every app of the Functions variant.</summary>
 public static class FunctionsHosting
 {
+    /// <summary>
+    /// Adds OpenTelemetry for a Functions worker: the Ark instrumentation, the messaging metrics and the Functions
+    /// worker defaults. Azure Monitor receives traces and metrics only when a connection string is configured.
+    /// </summary>
+    /// <remarks>
+    /// The Azure Monitor distro is not used: its ASP.NET Core instrumentation would report every request the Functions
+    /// host already reports. Logs are not exported by the worker either: with <c>telemetryMode: OpenTelemetry</c> the
+    /// host captures the NLog console output and exports it, so a worker log exporter would send each entry twice.
+    /// </remarks>
+    /// <param name="services">The worker services.</param>
+    /// <param name="configuration">The worker configuration.</param>
+    public static void AddTelemetry(IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        var telemetry = services.AddOpenTelemetry()
+            .AddArkAspNetCoreOpenTelemetry()
+            .WithMetrics(static metrics => metrics.AddArkMessagingInstrumentation());
+        // Same lookup as AddArkAzureMonitorOpenTelemetry.
+        var connectionString = configuration["ApplicationInsights:ConnectionString"]
+            ?? configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+            ?? Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+        {
+            telemetry
+                .WithTracing(tracing => tracing.AddAzureMonitorTraceExporter(o => o.ConnectionString = connectionString))
+                .WithMetrics(metrics => metrics.AddAzureMonitorMetricExporter(o => o.ConnectionString = connectionString));
+        }
+
+        telemetry.UseFunctionsWorkerDefaults();
+    }
+
     /// <summary>Creates the application container for one app.</summary>
     /// <param name="options">The application options.</param>
     /// <returns>The populated, unverified container.</returns>
