@@ -20,8 +20,11 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
   (`Ark.MediatorFramework.Sample.Core.<Variant>.yml`, `.buildStage.yml`,
   `.deployStage.yml`) and register the projects in the root
   `Ark.MediatorFramework.Sample.slnx`.
-- Run each participant in its own process. Rebus and native messaging are never
-  mixed within a variant.
+- Run each participant in its own process by default. Every messaging background
+  host is an isolated `IHostedService` with its own application container and
+  messaging composition (`AddReceiverHost`, `AddOutboxProcessorHost`,
+  `AddRebusReceiverHost`), so one process can host several. Rebus and native
+  messaging are never mixed within a variant.
 
 ## Application architecture
 

@@ -482,6 +482,16 @@
           "Polly.Core": "[8.8.0, )"
         }
       },
+      "ark.mediatorframework.sample.core.web.hosting": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.MediatorFramework.Sample.Core.Application": "[6.6.6, )",
+          "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
+          "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",
+          "Ark.Tools.Solid.Authorization": "[1.0.0, )",
+          "Ark.Tools.Solid.SimpleInjector": "[1.0.0, )"
+        }
+      },
       "ark.tools.authorization": {
         "type": "Project",
         "dependencies": {

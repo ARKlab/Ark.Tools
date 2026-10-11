@@ -1548,7 +1548,7 @@
       "ark.mediatorframework.sample.core.web.outboxprocessor": {
         "type": "Project",
         "dependencies": {
-          "Ark.MediatorFramework.Sample.Core.Application": "[6.6.6, )",
+          "Ark.MediatorFramework.Sample.Core.Web.Hosting": "[6.6.6, )",
           "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",

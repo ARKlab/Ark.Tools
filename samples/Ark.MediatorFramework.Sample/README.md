@@ -89,7 +89,11 @@ on the API without receiving the worker's topology.
 | `Functions` | Azure Functions (isolated worker) HTTP and Service Bus triggers, ReadyToRun | Native Ark messaging without an outbox: Azure Functions only | [`Core/Hosts/Functions`](Core/Hosts/Functions/README.md) |
 
 The network keeps four participants. Each runs in its own process in every
-variant, and a variant never mixes Rebus and native messaging.
+variant, and a variant never mixes Rebus and native messaging. In the `Web` and
+`WebRebus` variants each messaging background host is an isolated
+`IHostedService` with its own application container and messaging composition, so
+one process, such as the WebInterface of a single App Service, can also host
+several of them.
 
 | Participant | Role | `Web` | `WebRebus` | `Functions` |
 | --- | --- | --- | --- | --- |

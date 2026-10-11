@@ -6,11 +6,9 @@ using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.Application.Services;
 using Ark.MediatorFramework.Sample.Core.Web.Hosting;
 using Ark.Tools.Compliance;
-using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
 
 using Azure.Identity;
-using Azure.Messaging.ServiceBus;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -32,24 +30,11 @@ try
     builder.Logging.ClearProviders();
     builder.Logging.AddNLog();
     builder.Services.AddArkRedaction();
-    var sql = builder.Configuration.GetConnectionString("Sample")
-        ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
-    var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")
-        ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
-    await using var container = WebHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
-#pragma warning disable CA2000 // The transport owns and disposes the Service Bus client.
-    await using var transport = new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus));
-#pragma warning restore CA2000
-    ApplicationComposition.RegisterNotificationSubscriber(container, new LoggingBookPrintNotificationSink());
-    WebHosting.AddParticipant<SampleMessagingNotificationParticipant>(
-        builder.Services, container, transport, WebHosting.CreateDataBus(builder.Configuration),
-        WebHosting.CreateResourceManagement(builder.Configuration), receiver: true);
-    IHost? built = null;
-    WebHosting.BridgeBus(container, () => built?.Services
-        ?? throw new InvalidOperationException("The host is not built yet."));
+    // An isolated hosted service: its own application container, transport and processor.
+    builder.Services.AddReceiverHost<SampleMessagingNotificationParticipant>(
+        _ => WebHosting.CreateHostOptions(builder.Configuration),
+        static container => ApplicationComposition.RegisterNotificationSubscriber(container, new LoggingBookPrintNotificationSink()));
     using var host = builder.Build();
-    built = host;
-    container.Verify();
     await host.RunAsync().ConfigureAwait(false);
 }
 catch (Exception ex)

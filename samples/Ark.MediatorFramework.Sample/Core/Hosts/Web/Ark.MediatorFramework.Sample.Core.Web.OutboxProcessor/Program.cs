@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.Sample.Core.Application.DAL;
-using Ark.MediatorFramework.Sample.Core.Web.OutboxProcessor;
+using Ark.MediatorFramework.Sample.Core.Web.Hosting;
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.NLog;
@@ -35,13 +35,10 @@ try
         ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
     var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")
         ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
-#pragma warning disable CA2000 // The transport owns and disposes the Service Bus client.
-    await using var transport = new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus));
-#pragma warning restore CA2000
-    OutboxProcessorComposition.AddOutboxProcessor(
-        builder.Services,
-        transport,
-        new SampleDataContextFactory(new SqlConnectionManager(), new SampleDataContextConfig(sql)));
+    // An isolated hosted service: its own transport and outbox processor.
+    builder.Services.AddOutboxProcessorHost(
+        _ => new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus)),
+        _ => new SampleDataContextFactory(new SqlConnectionManager(), new SampleDataContextConfig(sql)));
     using var host = builder.Build();
     await host.RunAsync().ConfigureAwait(false);
 }
