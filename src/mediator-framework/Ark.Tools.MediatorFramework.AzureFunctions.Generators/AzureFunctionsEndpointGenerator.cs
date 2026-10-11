@@ -685,7 +685,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private static void _emitResponse(StringBuilder source, EndpointSpec endpoint)
     {
-        if (endpoint.ResponseType == "global::Ark.Tools.MediatorFramework.IArkAttachment")
+        if (endpoint.ResponseType.TrimEnd('?') == "global::Ark.Tools.MediatorFramework.IArkAttachment")
         {
             source.AppendLine("        await global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteAttachmentAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");

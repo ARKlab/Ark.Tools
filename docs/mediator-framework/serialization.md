@@ -155,6 +155,8 @@ Call `UseMessagePack()` or `UseProtobuf()` on the fluent composition builder to
 install `application/x-msgpack` or `application/x-protobuf`. The MessagePack
 overload accepting an `IFormatterResolver` uses the host's contract
 configuration; the parameterless overload uses the standard resolver.
+Native AOT hosts must pass a source-generated resolver, because the standard
+resolver generates formatters with `Reflection.Emit`.
 MessagePack reads use the `UntrustedData` security mode.
 
 Native messaging contract validation is performed from Roslyn symbols while the
