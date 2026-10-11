@@ -18,6 +18,7 @@ internal sealed class ScopeAwareRequestProcessor(Container container, Func<IRequ
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
     {
         return await ScopedProcessorExecution.ExecuteAsync(
@@ -46,6 +47,7 @@ internal sealed class ScopeAwareQueryProcessor(Container container, Func<IQueryP
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
     {
         return await ScopedProcessorExecution.ExecuteAsync(
@@ -74,6 +76,7 @@ internal sealed class ScopeAwareCommandProcessor(Container container, Func<IComm
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
     {
         await ScopedProcessorExecution.ExecuteAsync(

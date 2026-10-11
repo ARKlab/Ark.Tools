@@ -26,6 +26,7 @@ public sealed class ServiceProviderQueryProcessor(IServiceProvider services) : I
 
     /// <inheritdoc />
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -64,6 +65,7 @@ public sealed class ServiceProviderRequestProcessor(IServiceProvider services) :
 
     /// <inheritdoc />
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -101,6 +103,7 @@ public sealed class ServiceProviderCommandProcessor(IServiceProvider services) :
 
     /// <inheritdoc />
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(command);

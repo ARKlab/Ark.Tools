@@ -9,6 +9,7 @@ public interface IRequestProcessor
     TResponse Execute<TResponse>(IRequest<TResponse> request);
 
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default);
 
     /// <summary>
