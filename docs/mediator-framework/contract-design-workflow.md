@@ -28,7 +28,7 @@ written down. "Not applicable" is an answer only when its reason is recorded.
 | Kind | Is it a query, request, command, event, or background message? |
 | Owner | Which application owns the contract and its compatibility policy? |
 | HTTP | Is it exposed as HTTP? If yes, which verb, exact route, version, status codes, and anonymous/authenticated behavior? |
-| Model | Which fields are required, optional, computed, server-set, write-once, immutable, or concurrency-controlled? |
+| Model | Which fields are required, optional, computed, output-only, write-once, immutable, or concurrency-controlled? |
 | Binding | Which values come from route, query, body, authenticated user, tenant, clock, or server context? |
 | Event | If it is an event, who publishes it, who subscribes, and what happens when a subscriber is unavailable? |
 | Background work | If it is a message, who sends it, who consumes it, which queue/participant owns it, and what is retry/dead-letter behavior? |
@@ -75,8 +75,8 @@ Need a new or changed contract?
 |     |          keep host registration and generated output host-owned
 |     `-- no -> use the smallest transport-neutral contract
 |
-|-- Does a property come from the server or authenticated context?
-|     |-- yes -> mark it [ServerSet], omit it from client input, and set it in trusted code
+|-- Is a property computed or returned only?
+|     |-- yes -> put it on the output model, not on the input model
 |     `-- no -> keep it client-controlled and validate it
 |
 `-- Is the proposed change compatible with deployed clients?
@@ -89,13 +89,9 @@ Need a new or changed contract?
 
 Keep model types separate from operation envelopes. Use versioned
 `Input`/`Create`/`Update`/`Output` models and compose them into request, query,
-or command envelopes. Put route, query, and server-owned values on the
-operation envelope when they are not reusable model data.
-
-Use `[ServerSet]` for values owned by the host, principal, tenant resolver,
-clock, correlation context, handler, or persistence layer. It prevents generated
-client binding; it does not authenticate or authorize the caller and it does not
-populate the value.
+or command envelopes. Put route and query values on the operation envelope when
+they are not reusable model data. Computed and output-only properties belong on
+the `Output` model, never on the `Input` or `Create` model the request accepts.
 
 For HTTP, route placeholders, `[HttpRoute]`, `[HttpQuery]`, and `[HttpBody]`
 must be deliberate. Choose `201`, `202`, `204`, `404`, or another outcome based

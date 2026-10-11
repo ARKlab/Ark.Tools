@@ -222,7 +222,6 @@ public sealed class WebRebusStartup
             .AddArkValueObjectSchemas()
             .AddArkComplianceSchemas()
             .AddSensitiveValueSchema<UserId>(ArkDataClassifications.Pseudonymous, "user-0001")
-            .AddArkServerSetProperties()
             .AddArkXmlDocumentation()
             .AddArkOAuthSecurity(_openApiSecurity)
             .AddArkPolymorphism<BookEdition, BookEditionKind>(

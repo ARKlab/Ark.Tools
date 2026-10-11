@@ -16,9 +16,9 @@ namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 [TestClass]
 public sealed class MinimalApiBindingTests
 {
-    /// <summary>Verifies route and query values override body values and server-set input.</summary>
+    /// <summary>Verifies route and query values override body values.</summary>
     [TestMethod]
-    public async Task BindsRouteQueryBodyAndServerSetValues()
+    public async Task BindsRouteQueryAndBodyValues()
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
@@ -31,7 +31,6 @@ public sealed class MinimalApiBindingTests
                 Id = 999,
                 Filter = "body",
                 Value = "body-value",
-                ServerStamp = "client-value",
             },
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
@@ -40,29 +39,6 @@ public sealed class MinimalApiBindingTests
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
         result.Should().NotBeNull();
         result!.Message.Should().Be("42:query:body-value");
-        fixture.State.LastRequestServerStamp.Should().BeNull();
-    }
-
-    /// <summary>
-    /// Verifies a GET contract whose server-set property ASP.NET Core cannot bind from a string starts and binds
-    /// only its client properties.
-    /// </summary>
-    [TestMethod]
-    public async Task BindsQueryWithoutExposingServerSetProperties()
-    {
-        await using var fixture = new HostingTestFixture();
-        await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
-        using var client = app.GetTestServer().CreateClient();
-
-        using var response = await client.GetAsync(
-            new Uri("http://localhost/api/v1/hosting/owned?Value=client&Owner=attacker"),
-            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<HostingResponse>(
-            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-        result.Should().NotBeNull();
-        result!.Message.Should().Be("client");
     }
 
     /// <summary>Verifies optional query binding and the generated cancellation token.</summary>

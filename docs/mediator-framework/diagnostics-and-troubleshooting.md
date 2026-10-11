@@ -12,7 +12,7 @@ for compatibility.
 | IDs | Meaning | Typical resolution |
 | --- | --- | --- |
 | `ARKMF001`, `ARKMF005` | Attachment declarations have multiple or unsupported shapes | Use one supported `IArkAttachment` or supported collection shape |
-| `ARKMF002`, `ARKMF003` | Server-owned or suspicious input properties need review | Mark server-owned properties correctly and remove unintended client binding |
+| `ARKMF003` | An input property looks server-owned | Read the value in the handler from the user context, or suppress the warning when the client chooses it |
 | `ARKMF004` | Rebus owner queue is invalid | Set a non-blank owner queue |
 | `ARKMF010`–`ARKMF013` | HTTP verb, handler, route, or contract shape is invalid | Correct the HTTP metadata and handler interface |
 | `ARKMF014`, `ARKMF015`, `ARKMF019` | Rebus registration, queue, or streaming response is invalid | Register each message once, use one owner queue, and return a supported response |

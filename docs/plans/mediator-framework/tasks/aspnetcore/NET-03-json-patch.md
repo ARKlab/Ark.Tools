@@ -22,8 +22,8 @@ Newtonsoft), enabling a `[HttpEndpoint("PATCH", ...)]` design.
    diagnostic; patch documents are not transport-agnostic).
 4. Sample: `PatchGreetingRequest` endpoint + Reqnroll scenario (patch one field, verify others
    untouched; invalid patch → 400; validation failure after apply → 400).
-5. Security: cap patch document size/operation count; respect `[ServerSet]` (SEC-04) — operations
-   targeting server-set paths must be rejected with 400 (test).
+5. Security: cap patch document size/operation count. Patches apply to the input model, which
+   has no computed or output-only properties (#1090).
 
 ## Outcomes
 
@@ -32,6 +32,5 @@ Newtonsoft), enabling a `[HttpEndpoint("PATCH", ...)]` design.
 ## Acceptance
 
 - [ ] PATCH endpoint round-trip test (partial update) passes; invalid/oversized patch → 400.
-- [ ] `[ServerSet]` paths unpatchable (test).
 - [ ] PATCH + bus/gRPC combination produces a build diagnostic (or documented semantics with tests).
 - [ ] OpenAPI documents the patch request; full solution build + tests green.

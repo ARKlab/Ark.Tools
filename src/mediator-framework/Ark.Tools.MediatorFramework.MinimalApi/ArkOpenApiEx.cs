@@ -78,35 +78,6 @@ public static class ArkOpenApiEx
     private static IOpenApiSchema? _resolveSchema(IOpenApiSchema? schema)
         => schema is OpenApiSchemaReference reference ? reference.Target : schema;
 
-    /// <summary>
-    /// Excludes properties marked with <see cref="ServerSetAttribute"/> from generated schemas.
-    /// </summary>
-    /// <param name="options">The OpenAPI options to configure.</param>
-    /// <returns>The same options instance.</returns>
-    public static OpenApiOptions AddArkServerSetProperties(this OpenApiOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        options.AddSchemaTransformer(static (schema, context, _) =>
-        {
-            var properties = context.JsonTypeInfo.Properties
-                .Where(static property => property.AttributeProvider?.IsDefined(typeof(ServerSetAttribute), inherit: false) == true)
-                .Select(static property => property.Name)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            if (schema.Properties is not null)
-            {
-                foreach (var property in schema.Properties.Keys
-                    .Where(property => properties.Contains(property))
-                    .ToArray())
-                    schema.Properties.Remove(property);
-            }
-
-            return Task.CompletedTask;
-        });
-
-        return options;
-    }
-
     /// <summary>Adds Ark schema formats for supported NodaTime types.</summary>
     /// <param name="options">The OpenAPI options to configure.</param>
     /// <returns>The same options instance.</returns>

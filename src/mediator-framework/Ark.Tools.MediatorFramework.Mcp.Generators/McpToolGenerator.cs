@@ -32,7 +32,6 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private const string Request2 = "Ark.Tools.Solid.IRequest`2";
     private const string Command = "Ark.Tools.Solid.ICommand";
     private const string GenericCommand = "Ark.Tools.Solid.ICommand`1";
-    private const string ServerSetAttribute = "Ark.Tools.MediatorFramework.ServerSetAttribute";
     private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const string HttpEndpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
     private const string MarkerParserTrackingName = "McpMarkerParser";
@@ -447,9 +446,6 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         foreach (var property in properties)
         {
             if (property.IsIndexer || property.SetMethod is null && !HasConstructorParameter(type, property))
-                diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
-            if (property.GetAttributes().Any(attribute =>
-                attribute.AttributeClass?.ToDisplayString() == ServerSetAttribute))
                 diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
         }
         if (diagnostics.Count > 0)

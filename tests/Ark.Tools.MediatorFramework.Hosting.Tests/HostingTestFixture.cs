@@ -412,7 +412,6 @@ public sealed class HostingTestFixture : IAsyncDisposable
         container.RegisterInstance<IContextProvider<ClaimsPrincipal>>(_principalProvider);
         container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
         container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
-        container.Register<IQueryHandler<HostingOwnedQuery, HostingResponse>, HostingOwnedQueryHandler>();
         container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
         if (includeRebusHandlers)
         {
@@ -448,7 +447,6 @@ public sealed class HostingTestFixture : IAsyncDisposable
     private static void _configureOpenApi(OpenApiOptions options)
     {
         options
-            .AddArkServerSetProperties()
             .AddArkXmlDocumentation()
             .AddArkNodaTimeSchemas()
             .AddArkPolymorphism<HostingShape, HostingShapeKind>(
@@ -471,9 +469,6 @@ public sealed class HostingTestState
 
     /// <summary>Gets whether a generated request supplied a cancellable token.</summary>
     public bool RequestCancellationTokenWasCancelable { get; internal set; }
-
-    /// <summary>Gets the server-owned stamp received by the request handler.</summary>
-    public string? LastRequestServerStamp { get; internal set; }
 
     /// <summary>Gets the number of command handler executions.</summary>
     public int CommandExecutions => Volatile.Read(ref _commandExecutions);
@@ -663,7 +658,6 @@ internal sealed class HostingRequestHandler : IRequestHandler<HostingRequest, Ho
         await Task.CompletedTask.ConfigureAwait(false);
         _state.RequestExecutions++;
         _state.RequestCancellationTokenWasCancelable = ctk.CanBeCanceled;
-        _state.LastRequestServerStamp = request.ServerStamp;
         return new HostingResponse
         {
             Message = $"{request.Id}:{request.Filter}:{request.Value}",
@@ -681,18 +675,6 @@ internal sealed class HostingQueryHandler : IQueryHandler<HostingQuery, HostingR
         {
             Message = $"{query.Id}:{query.Value}",
             ServerStamp = "hosting-server",
-        };
-    }
-}
-
-internal sealed class HostingOwnedQueryHandler : IQueryHandler<HostingOwnedQuery, HostingResponse>
-{
-    public async Task<HostingResponse> ExecuteAsync(HostingOwnedQuery query, CancellationToken ctk = default)
-    {
-        await Task.CompletedTask.ConfigureAwait(false);
-        return new HostingResponse
-        {
-            Message = query.Owner is null ? query.Value ?? string.Empty : "owner-bound",
         };
     }
 }
