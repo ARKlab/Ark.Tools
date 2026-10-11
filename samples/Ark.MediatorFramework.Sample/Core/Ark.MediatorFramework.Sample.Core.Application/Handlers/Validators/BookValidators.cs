@@ -27,12 +27,11 @@ public sealed class BookCreateValidator : AbstractValidator<Book.V1.Create>
     /// <summary>Initializes a new instance of the <see cref="BookCreateValidator"/> class.</summary>
     public BookCreateValidator()
     {
-        // Value objects carry no invariants (see #1089): the rules validate the wrapped value, naming the property
-        // as before so the validation errors keep their keys.
-        RuleFor(static book => book.Title.IsInitialized() ? book.Title.Value : null)
+        // Value objects carry no invariants (see #1089): the rules validate the wrapped value through Vogen's
+        // explicit cast, which FluentValidation strips when it names the property.
+        RuleFor(static book => (string)book.Title)
             .NotEmpty()
-            .MaximumLength(200)
-            .OverridePropertyName(nameof(Book.V1.Create.Title));
+            .MaximumLength(200);
         RuleFor(static book => book.Author)
             .NotEmpty()
             .Must(static author => author.Reveal(_validationPurpose).Length <= 100)
@@ -63,10 +62,9 @@ public sealed class UpdateBookRequestValidator : AbstractValidator<Book_UpdateRe
     public UpdateBookRequestValidator()
     {
         RuleFor(static request => request.Id).NotEmpty();
-        RuleFor(static request => request.Data.Title.IsInitialized() ? request.Data.Title.Value : null)
+        RuleFor(static request => (string)request.Data.Title)
             .NotEmpty()
-            .MaximumLength(200)
-            .OverridePropertyName("Data.Title");
+            .MaximumLength(200);
         RuleFor(static request => request.Data.Author)
             .NotEmpty()
             .Must(static author => author.Reveal(BookCreateValidator._validationPurpose).Length <= 100)
@@ -161,13 +159,11 @@ public sealed class CreateBookReviewRequestValidator : AbstractValidator<CreateB
             .NotEqual(Guid.Empty)
             .When(static request => request.ReviewId.HasValue)
             .OverridePropertyName(nameof(CreateBookReviewRequest.V1.ReviewId));
-        RuleFor(static request => request.Rating.IsInitialized() ? request.Rating.Value : 0)
-            .InclusiveBetween(1, 5)
-            .OverridePropertyName(nameof(CreateBookReviewRequest.V1.Rating));
-        RuleFor(static request => request.Text.IsInitialized() ? request.Text.Value : null)
+        RuleFor(static request => (int)request.Rating)
+            .InclusiveBetween(1, 5);
+        RuleFor(static request => (string)request.Text)
             .NotEmpty()
-            .MaximumLength(2000)
-            .OverridePropertyName(nameof(CreateBookReviewRequest.V1.Text));
+            .MaximumLength(2000);
     }
 }
 
@@ -191,18 +187,15 @@ public sealed class RecordReadingActivityRequestValidator : AbstractValidator<Re
     {
         RuleFor(static request => request.BookId).NotEmpty();
         RuleFor(static request => request.Kind).NotEqual(Ark.Tools.Core.EvolvableEnum<ReadingActivityKind>.NotSet);
-        RuleFor(static request => _progress(request.Progress))
-            .InclusiveBetween(0, 100)
-            .OverridePropertyName(nameof(RecordReadingActivityRequest.V1.Progress));
+        RuleFor(static request => (int)request.Progress)
+            .InclusiveBetween(0, 100);
         RuleFor(static request => request)
-            .Must(static request => request.Kind != ReadingActivityKind.Started || _progress(request.Progress) == 0)
+            .Must(static request => request.Kind != ReadingActivityKind.Started || request.Progress.Value == 0)
             .WithMessage("Started activity must have zero progress.");
         RuleFor(static request => request)
-            .Must(static request => request.Kind != ReadingActivityKind.Finished || _progress(request.Progress) == 100)
+            .Must(static request => request.Kind != ReadingActivityKind.Finished || request.Progress.Value == 100)
             .WithMessage("Finished activity must have complete progress.");
     }
-
-    private static int _progress(ReadingProgress progress) => progress.IsInitialized() ? progress.Value : 0;
 }
 
 /// <summary>Validates reading activity queries.</summary>

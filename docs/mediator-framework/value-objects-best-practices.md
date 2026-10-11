@@ -59,16 +59,28 @@ and the JSON converter on a contract type. A route or query value needs
   generated `MessagePackFormatters` into the resolver; see
   [`SampleMessagePackFormatters.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/SampleMessagePackFormatters.cs).
 
+Define `VOGEN_NO_VALIDATION` in the contracts project:
+
+```xml
+<DefineConstants>$(DefineConstants);VOGEN_NO_VALIDATION</DefineConstants>
+```
+
+Without it, a value object that a request omits stays uninitialized and its
+`Value` throws, so the request fails with an error instead of a validation
+message. With it, an omitted value object reads as its primitive's default, as
+the primitive did, on every transport. Vogen still runs `Validate` in `From`,
+but no longer detects use of an uninitialized value object.
+
 Value objects carry no validation in the sample: Vogen's `Validate` would throw
 while the request is deserialized, before the validation pipeline can report
 which field is wrong. Validate the wrapped value with FluentValidation instead,
-keeping the property name in the error:
+through Vogen's explicit cast, which FluentValidation strips when it names the
+property:
 
 ```csharp
-RuleFor(static book => book.Title.IsInitialized() ? book.Title.Value : null)
+RuleFor(static book => (string)book.Title)
     .NotEmpty()
-    .MaximumLength(200)
-    .OverridePropertyName(nameof(Book.V1.Create.Title));
+    .MaximumLength(200);
 ```
 Source: [`BookValidators.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Handlers/Validators/BookValidators.cs)
 

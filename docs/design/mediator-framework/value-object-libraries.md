@@ -79,14 +79,14 @@ FluentValidation 12 removed `Transform`. With Vogen, `RuleFor(x => (string)x.Tit
 names the rule `Title` (FluentValidation strips the cast; *verified*, also
 `Data.Title` when nested) but throws on an uninitialized value object, which
 still reaches the validator for a member that is not `required` when JSON omits
-it or code does not set it. The sample therefore guards with `IsInitialized()`
-and `OverridePropertyName`.
+it or code does not set it.
 
 Defining `VOGEN_NO_VALIDATION` in the contracts project makes `IsInitialized()`
 always true and `Value` return the primitive's default instead of throwing,
 while `Validate` still runs in `From` (*verified*): the cast form then reports
 `'Title' must not be empty.` for an unset value. The cost is losing Vogen's
-detection of uninitialized use everywhere else.
+detection of uninitialized use everywhere else. The sample defines it and uses
+the cast form.
 
 Meziantou has no conversion operators: `RuleFor(x => x.Title.Value)` is safe but
 named `Title.Value`, so it still needs `OverridePropertyName`.

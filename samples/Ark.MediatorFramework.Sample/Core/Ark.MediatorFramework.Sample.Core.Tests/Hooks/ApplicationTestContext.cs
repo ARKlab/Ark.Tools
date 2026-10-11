@@ -317,7 +317,7 @@ public sealed class ApplicationTestContext : IAsyncDisposable
         BookId bookId,
         CancellationToken ctk = default)
     {
-        if (!bookId.IsInitialized())
+        if (bookId.Value == Guid.Empty)
             throw new ArgumentException("A book identifier is required.", nameof(bookId));
         var process = new BookPrintProcessResponse
         {

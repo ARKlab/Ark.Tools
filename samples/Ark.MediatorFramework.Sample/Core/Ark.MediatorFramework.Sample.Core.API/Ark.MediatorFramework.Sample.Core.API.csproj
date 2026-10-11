@@ -5,6 +5,9 @@
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- An omitted value object reads as its primitive's default, as the primitive did, instead of throwing on
+         Value: validators then report it as a field error. Vogen still runs Validate in From. -->
+    <DefineConstants>$(DefineConstants);VOGEN_NO_VALIDATION</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
