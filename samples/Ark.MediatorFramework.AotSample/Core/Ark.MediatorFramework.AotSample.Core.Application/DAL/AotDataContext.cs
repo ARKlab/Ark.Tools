@@ -83,7 +83,7 @@ public sealed class AotDataContext : IOutboxAsyncContext
             _transaction).ConfigureAwait(false);
     }
 
-    /// <summary>Marks a book printed.</summary>
+    /// <summary>Marks a book printed, keeping the first print time when the command is redelivered.</summary>
     /// <param name="id">The identifier.</param>
     /// <param name="printedAt">When it was printed, in UTC.</param>
     /// <param name="ctk">The cancellation token.</param>
@@ -91,7 +91,7 @@ public sealed class AotDataContext : IOutboxAsyncContext
     public async Task<bool> MarkPrintedAsync(BookId id, LocalDateTime printedAt, CancellationToken ctk = default)
     {
         return await _connection.ExecuteAsync(
-            "UPDATE [dbo].[Book] SET [Printed] = 1, [PrintedAt] = @printedAt WHERE [Id] = @id",
+            "UPDATE [dbo].[Book] SET [Printed] = 1, [PrintedAt] = COALESCE([PrintedAt], @printedAt) WHERE [Id] = @id",
             new { id, printedAt, ctk },
             _transaction).ConfigureAwait(false) == 1;
     }
