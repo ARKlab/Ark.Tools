@@ -8,7 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Ark.Tools.AspNetCore.OTel" />
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.OTel" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.OpenTelemetry" />
     <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.Azure" />
     <PackageReference Include="Ark.Tools.Solid.SimpleInjector" />

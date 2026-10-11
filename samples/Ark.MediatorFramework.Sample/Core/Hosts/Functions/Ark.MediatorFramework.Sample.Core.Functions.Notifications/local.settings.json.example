@@ -7,6 +7,6 @@
     "AzureServiceBus__ConnectionString__administrationConnectionString": "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;",
     "ConnectionStrings__Sample": "Server=localhost,1433;Database=Ark.MediatorFramework.Sample;User Id=sa;Password=IntegrationTestsDbPassword85!;TrustServerCertificate=True;Encrypt=False",
     "ConnectionStrings__DataBus": "UseDevelopmentStorage=true",
-    "ApplicationInsights__ConnectionString": ""
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": ""
   }
 }

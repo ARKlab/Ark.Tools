@@ -17,7 +17,6 @@ using OpenTelemetry.Trace;
 using System.Data.Common;
 
 using Ark.Tools.AspNetCore.HealthChecks.OTel;
-using Ark.Tools.Rebus;
 using Ark.Tools.OTel;
 
 namespace Ark.Tools.AspNetCore.OTel;
@@ -28,6 +27,8 @@ namespace Ark.Tools.AspNetCore.OTel;
 public static class Ex
 {
     private const string _mediatorMessagingInstrumentationName = "Ark.MediatorFramework.Messaging";
+    // Ark.Tools.Rebus's activity source and meter name, kept as a literal so native-only hosts don't carry Rebus.
+    private const string _rebusInstrumentationName = "ark.tools.rebus";
 
     /// <summary>
     /// Adds Ark ASP.NET Core instrumentation to an exporter-agnostic OpenTelemetry builder.
@@ -85,7 +86,7 @@ public static class Ex
                 })
                 .AddProcessor(new ArkPreFilterProcessor())
                 .SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>())
-                .AddSource(OpenTelemetryStep.ActivitySourceName)
+                .AddSource(_rebusInstrumentationName)
                 .AddSource(_mediatorMessagingInstrumentationName)
                 .AddHttpClientInstrumentation()
                 .AddSqlClientInstrumentation(options =>
@@ -110,7 +111,7 @@ public static class Ex
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
                 .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction))
             .WithMetrics(static metrics => metrics
-                .AddMeter(OpenTelemetryProcessingMetricsStep.MeterName)
+                .AddMeter(_rebusInstrumentationName)
                 .AddMeter(_mediatorMessagingInstrumentationName)
                 .AddMeter(ArkOTelHealthCheckPublisher.MeterName)
                 .AddSqlClientInstrumentation());

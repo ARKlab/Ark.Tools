@@ -3,7 +3,6 @@
 
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Functions.Hosting;
-using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.AzureFunctions;
@@ -42,7 +41,7 @@ try
     });
     builder.ConfigureFunctionsWebApplication();
     builder.Services.AddArkRedaction();
-    builder.Services.ArkApplicationInsightsTelemetry(builder.Configuration);
+    FunctionsHosting.AddTelemetry(builder.Services, builder.Configuration);
 
     await using var container = FunctionsHosting.CreateContainer(new ApplicationOptions
     {
