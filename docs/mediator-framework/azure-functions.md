@@ -130,10 +130,10 @@ Telemetry uses OpenTelemetry. Each `host.json` sets
 messaging metrics with `AddArkMessagingInstrumentation()`, and
 `UseFunctionsWorkerDefaults()` from `Microsoft.Azure.Functions.Worker.OpenTelemetry`.
 When a connection string is configured, it adds the Azure Monitor trace and
-metric exporters from `Azure.Monitor.OpenTelemetry.Exporter`. Use
-`ApplicationInsights__ConnectionString` in local settings or
-`APPLICATIONINSIGHTS_CONNECTION_STRING` in Azure, and never place a connection
-string in source.
+metric exporters from `Azure.Monitor.OpenTelemetry.Exporter`. Set
+`APPLICATIONINSIGHTS_CONNECTION_STRING`, in local settings and in Azure alike:
+it is the only setting the Functions host reads, so host and worker export to
+the same resource. Never place a connection string in source.
 
 Do not use `AddArkAzureMonitorOpenTelemetry` or the Azure Monitor distro in a
 Functions worker: their ASP.NET Core instrumentation reports every request a

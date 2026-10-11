@@ -53,8 +53,8 @@ public static class FunctionsHosting
         var telemetry = services.AddOpenTelemetry()
             .AddArkAspNetCoreOpenTelemetry()
             .WithMetrics(static metrics => metrics.AddArkMessagingInstrumentation());
-        var connectionString = configuration["ApplicationInsights:ConnectionString"]
-            ?? configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+        // The setting the Functions host reads too, so host and worker export to the same resource or not at all.
+        var connectionString = configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
             telemetry
