@@ -2,7 +2,7 @@
 
 - **Severity:** Warning
 - **Component:** Mediator Framework
-- **Diagnostic message:** `HTTP endpoint '{0}' has property '{1}' that may be server-owned; take it from the user context or the route in the handler instead of the request, or suppress this warning`
+- **Diagnostic message:** `HTTP endpoint '{0}' has property '{1}' that may be server-owned; read it in the handler from the user context instead of the request, or suppress this warning when the client chooses it`
 
 ## What it checks
 
@@ -13,8 +13,10 @@ request lets a caller choose them.
 
 ## How to fix it
 
-Remove the property and read the value in the handler from the user context,
-or bind an identifier the client may choose from the route.
+Remove the property and read the value in the handler from the user context.
+When the client legitimately chooses the value, for example a tenant identifier
+in the route of an administration API, suppress the warning for that property
+after review; binding it from the route does not silence the rule.
 
 ### Incorrect
 

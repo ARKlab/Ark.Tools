@@ -61,7 +61,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static readonly DiagnosticDescriptor PossibleMassAssignment = new DiagnosticDescriptor(
             "ARKMF003",
             "Possible mass assignment",
-            "HTTP endpoint '{0}' has property '{1}' that may be server-owned; take it from the user context or the route in the handler instead of the request, or suppress this warning",
+            "HTTP endpoint '{0}' has property '{1}' that may be server-owned; read it in the handler from the user context instead of the request, or suppress this warning when the client chooses it",
             "Ark.Tools.MediatorFramework",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF003.md");
