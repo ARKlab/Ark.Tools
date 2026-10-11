@@ -25,6 +25,21 @@ decorators, and verification in SimpleInjector. It creates a scope using the
 container's configured `DefaultScopedLifestyle` when a host call begins and
 reuses the ambient scope for nested dispatch.
 
+SimpleInjector cannot run in a Native AOT app. There, register the handlers in
+Microsoft DI as closed services and add the Microsoft DI processors instead:
+
+```csharp
+services.AddScoped<IQueryHandler<GetBookQuery, Book>, GetBookQueryHandler>();
+services.AddArkSolidServiceProviderProcessors();
+```
+
+Their typed `ExecuteAsync<TQuery, TResult>` overloads, which generated endpoints
+and messaging dispatch call, resolve the handler without reflection. Microsoft DI
+has no open-generic decorators, so wrap each handler in its decorators when you
+register it; the
+[Native AOT composition comparison](../design/mediator-framework/aot-di-comparison.md)
+shows a generic helper that does this.
+
 ## Fluent native messaging composition
 
 Native messaging hosts use one composition call for the generated network and
