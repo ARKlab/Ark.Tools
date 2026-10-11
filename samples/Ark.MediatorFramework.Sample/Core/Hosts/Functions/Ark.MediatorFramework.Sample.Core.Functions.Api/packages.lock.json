@@ -1357,6 +1357,13 @@
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.12, )"
         }
       },
+      "ark.tools.mediatorframework.messaging.otel": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
+          "OpenTelemetry.Api": "[1.19.1, )"
+        }
+      },
       "ark.tools.nlog": {
         "type": "Project",
         "dependencies": {

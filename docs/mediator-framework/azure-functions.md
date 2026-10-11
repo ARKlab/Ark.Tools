@@ -127,7 +127,10 @@ Telemetry uses OpenTelemetry. Each worker calls
 `AddArkAzureMonitorOpenTelemetry(builder.Configuration)` from
 `Ark.Tools.AspNetCore.OTel` and
 `AddOpenTelemetry().UseFunctionsWorkerDefaults()` from
-`Microsoft.Azure.Functions.Worker.OpenTelemetry`, and each `host.json` sets
+`Microsoft.Azure.Functions.Worker.OpenTelemetry`, with
+`WithMetrics(metrics => metrics.AddArkMessagingInstrumentation())` from
+`Ark.Tools.MediatorFramework.Messaging.OTel` to export the messaging metrics,
+and each `host.json` sets
 `"telemetryMode": "OpenTelemetry"` so that the host and the worker emit
 correlated OpenTelemetry data. Azure Monitor export starts only when a
 connection string is configured: use `ApplicationInsights__ConnectionString`

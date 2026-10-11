@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Ark.Tools.AspNetCore.OTel" />
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.OTel" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <PackageReference Include="Ark.Tools.Compliance" />
     <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Api.Triggers\Ark.MediatorFramework.Sample.Core.Functions.Api.Triggers.csproj" />

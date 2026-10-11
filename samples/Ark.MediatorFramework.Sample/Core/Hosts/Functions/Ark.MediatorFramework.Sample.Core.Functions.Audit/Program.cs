@@ -8,6 +8,7 @@ using Ark.Tools.AspNetCore.HealthChecks;
 using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.AzureFunctions.Generated;
+using Ark.Tools.MediatorFramework.Messaging.OTel;
 using Ark.Tools.NLog;
 
 using Azure.Identity;
@@ -41,7 +42,9 @@ try
     builder.ConfigureFunctionsWebApplication();
     builder.Services.AddArkRedaction();
     builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
-    builder.Services.AddOpenTelemetry().UseFunctionsWorkerDefaults();
+    builder.Services.AddOpenTelemetry()
+        .WithMetrics(static metrics => metrics.AddArkMessagingInstrumentation())
+        .UseFunctionsWorkerDefaults();
 
     await using var container = FunctionsHosting.CreateContainer(new ApplicationOptions
     {
