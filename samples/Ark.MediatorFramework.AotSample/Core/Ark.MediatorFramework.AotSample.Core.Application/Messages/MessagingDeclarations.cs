@@ -25,7 +25,7 @@ public sealed partial class AotProcessorParticipant;
 public sealed class AotRetryPolicy : IMessagingRetryPolicy
 {
     /// <inheritdoc />
-    public int MaximumDeliveryCount => 2;
+    public int MaximumDeliveryCount => 3;
 
     /// <inheritdoc />
     public bool SecondLevelRetriesEnabled => false;
