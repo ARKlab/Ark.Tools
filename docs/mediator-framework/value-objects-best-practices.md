@@ -33,7 +33,7 @@ and the JSON converter on a contract type. A route or query value needs
   output. If a context has to live with the contracts, add
   `ValueObjectJsonConverterFactory` to its
   `[JsonSourceGenerationOptions(Converters = ...)]`; `ConfigureArkDefaults()`
-  also registers it. A context needs `[JsonSerializable(typeof(int))]` (or
+  does not register it. A context needs `[JsonSerializable(typeof(int))]` (or
   `long`, `double`) for numeric value objects, because Vogen's converter reads
   the number through the options.
 - **Routes and query strings**: zero setup. Minimal API and Azure Functions
@@ -94,9 +94,9 @@ treats it like a value object over `string`:
 
 ## Native AOT
 
-In a Native AOT app, `ConfigureArkDefaults()` is unavailable, so add
-`ValueObjectJsonConverterFactory` (or Vogen's generated `VogenTypesFactory`) to
-the serializer options yourself. `ToDataTableArk()` handles value objects without
+In a Native AOT app, keep the source-generated context outside the contracts
+assembly too, or add `ValueObjectJsonConverterFactory` (or Vogen's generated
+`VogenTypesFactory`) to the serializer options yourself. `ToDataTableArk()` handles value objects without
 reflection only when the element type is known at the call site; the reflection
 fallback, used from generic code, throws `NotSupportedException` because Native
 AOT removes the `Value` property metadata. Vogen's JSON converter for a numeric

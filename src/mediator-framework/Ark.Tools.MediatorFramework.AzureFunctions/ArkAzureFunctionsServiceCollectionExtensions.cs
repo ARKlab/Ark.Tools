@@ -116,7 +116,6 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
                 options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 options.SerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
                 options.SerializerOptions.PropertyNameCaseInsensitive = true;
-                options.SerializerOptions.Converters.Add(new Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory());
                 if (additionalContexts.Length > 0)
                     options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(additionalContexts);
                 return;

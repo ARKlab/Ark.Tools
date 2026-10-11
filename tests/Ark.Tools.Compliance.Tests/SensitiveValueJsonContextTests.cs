@@ -26,15 +26,16 @@ public sealed record ContextAudit
 public sealed partial class SensitiveValueJsonContext : JsonSerializerContext;
 
 /// <summary>
-/// The Ark defaults must serialize a sensitive value object as its cleartext even through a source-generated context
-/// in the same assembly, which cannot see the generated <see cref="JsonConverterAttribute"/>.
+/// <see cref="Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory"/> serializes a sensitive value object as its
+/// cleartext even through a source-generated context in the same assembly, which cannot see the generated
+/// <see cref="JsonConverterAttribute"/>.
 /// </summary>
 [TestClass]
 public sealed class SensitiveValueJsonContextTests
 {
     /// <summary>The sensitive value object round-trips as its cleartext string.</summary>
     [TestMethod]
-    public void SourceGeneratedContext_WithArkDefaults_SerializesCleartext()
+    public void SourceGeneratedContext_WithFactory_SerializesCleartext()
     {
         var options = new JsonSerializerOptions
         {
@@ -42,6 +43,7 @@ public sealed class SensitiveValueJsonContextTests
             RespectNullableAnnotations = true,
             RespectRequiredConstructorParameters = true,
         }.ConfigureArkDefaults();
+        options.Converters.Add(new Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory());
         var audit = new ContextAudit { UserId = ContextUserId.From("user-0001") };
 
         var json = JsonSerializer.Serialize(audit, options);

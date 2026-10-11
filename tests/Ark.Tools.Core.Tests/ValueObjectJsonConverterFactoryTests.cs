@@ -30,15 +30,15 @@ public sealed record JsonOrder
 public sealed partial class ValueObjectJsonContext : JsonSerializerContext;
 
 /// <summary>
-/// The Ark defaults must serialize Vogen value objects as their primitive even through a source-generated
-/// context in the same assembly, which cannot see Vogen's generated <see cref="JsonConverterAttribute"/>.
+/// <see cref="Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory"/> serializes Vogen value objects as their primitive even through a
+/// source-generated context in the same assembly, which cannot see Vogen's generated <see cref="JsonConverterAttribute"/>.
 /// </summary>
 [TestClass]
 public class ValueObjectJsonConverterFactoryTests
 {
     /// <summary>The value object round-trips as its primitive.</summary>
     [TestMethod]
-    public void SourceGeneratedContext_WithArkDefaults_SerializesPrimitive()
+    public void SourceGeneratedContext_WithFactory_SerializesPrimitive()
     {
         var id = Guid.Parse("8f1c4d6e-0a52-4c39-9a7e-2f1b3c4d5e6f");
         var options = new JsonSerializerOptions
@@ -47,6 +47,7 @@ public class ValueObjectJsonConverterFactoryTests
             RespectNullableAnnotations = true,
             RespectRequiredConstructorParameters = true,
         }.ConfigureArkDefaults();
+        options.Converters.Add(new Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory());
         var order = new JsonOrder { Id = JsonOrderId.From(id) };
 
         var json = JsonSerializer.Serialize(order, options);
