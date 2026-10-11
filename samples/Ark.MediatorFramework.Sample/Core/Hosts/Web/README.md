@@ -1,6 +1,6 @@
 # Web variant
 
-The `Core` service hosted on ASP.NET Core Minimal API, gRPC, and MCP, with native
+The `Core` service hosted on ASP.NET Core Minimal API (the slim `WebApplication` builder, without MVC), gRPC, and MCP, with native
 Ark messaging on Azure Service Bus. Every messaging participant runs in its own
 process by default, as an isolated hosted service that one process can also
 combine with others. The processes share only `Ark.MediatorFramework.Sample.Core.Web.Hosting`.

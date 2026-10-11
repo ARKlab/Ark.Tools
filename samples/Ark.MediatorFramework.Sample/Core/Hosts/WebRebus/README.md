@@ -1,6 +1,6 @@
 # WebRebus variant
 
-The `Core` service hosted on ASP.NET Core Minimal API, with Rebus on Azure
+The `Core` service hosted on ASP.NET Core Minimal API (the slim `WebApplication` builder, without MVC), with Rebus on Azure
 Service Bus. Every messaging participant runs in its own process by default, as
 an isolated hosted service that one process can also combine with others. The processes
 share only `Ark.MediatorFramework.Sample.Core.WebRebus.Hosting`, whose

@@ -44,7 +44,7 @@ internal sealed class WebInterfaceTestHost : IAsyncDisposable
         var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
         var transport = new InMemoryMessagingTransport();
         var container = WebHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory });
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions
         {
             ApplicationName = typeof(SampleHost).Assembly.GetName().Name,
             EnvironmentName = "IntegrationTests",

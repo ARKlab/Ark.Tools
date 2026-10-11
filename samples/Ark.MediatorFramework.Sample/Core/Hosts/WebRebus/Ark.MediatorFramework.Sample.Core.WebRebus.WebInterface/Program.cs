@@ -12,7 +12,10 @@ using Rebus.Config;
 
 try
 {
-    var builder = WebApplication.CreateBuilder(args);
+    // Slim: Minimal API, gRPC and MCP need no MVC, hosting startup assemblies or IIS integration.
+    var builder = WebApplication.CreateSlimBuilder(args);
+    // The slim builder does not configure HTTPS endpoints: add them back for local development and gRPC over TLS.
+    builder.WebHost.UseKestrelHttpsConfiguration();
     // Before reading connection strings, so that Key Vault can supply them.
     var keyVaultUri = builder.Configuration["KeyVault:Uri"];
     if (Uri.TryCreate(keyVaultUri, UriKind.Absolute, out var uri))

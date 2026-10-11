@@ -49,7 +49,7 @@ internal sealed class WebInterfaceTestHost : IAsyncDisposable
             t => t.UseDrainableInMemoryTransportAsOneWayClient(network),
             static d => d.StoreInMemory(new InMemDataStore()),
             startOutboxProcessor: false);
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions
         {
             ApplicationName = typeof(WebRebusStartup).Assembly.GetName().Name,
             EnvironmentName = "IntegrationTests",

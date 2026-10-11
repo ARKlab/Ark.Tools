@@ -5,7 +5,6 @@ using Ark.MediatorFramework.Sample.Core.Application;
 using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface.Auth;
-using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.OTel;
 using Ark.Tools.AspNetCore.ProblemDetails;
@@ -20,6 +19,7 @@ using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 
+using MessagePack;
 using MessagePack.Resolvers;
 
 using Scalar.AspNetCore;
@@ -129,7 +129,6 @@ public sealed class WebRebusStartup
         services.AddArkMinimalApiSecurity();
 
         services.AddRouting();
-        services.AddControllers();
 
         // The generated endpoints negotiate MessagePack for the contracts that declare it and
         // validate their formatters at startup.
@@ -138,7 +137,8 @@ public sealed class WebRebusStartup
             MessagePack.NodaTime.NodatimeResolver.Instance,
             DynamicEnumAsStringResolver.Instance,
             StandardResolver.Instance);
-        services.AddMessagePackFormatter(messagePackResolver);
+        // The generated Minimal API endpoints read the resolver from dependency injection.
+        services.AddSingleton<IFormatterResolver>(messagePackResolver);
 
         // Minimal API JSON: compose the source-generated application metadata with the Ark
         // defaults (camelCase, NodaTime, enum-as-member).
@@ -198,7 +198,6 @@ public sealed class WebRebusStartup
             endpoints.MapArkEndpoints<SampleEndpointContext>(
                 versionPrefix: "/api/v{version}");
             endpoints.MapArkMinimalApiHost();
-            endpoints.MapControllers();
 
             // Serves generated JSON and YAML documents at /openapi/{documentName}.{json|yaml}.
             endpoints.MapOpenApi().AllowAnonymous();
