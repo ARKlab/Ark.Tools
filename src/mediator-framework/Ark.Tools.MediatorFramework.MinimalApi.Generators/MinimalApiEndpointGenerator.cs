@@ -26,6 +26,10 @@ namespace Ark.Tools.MediatorFramework.Generators
     [Generator(LanguageNames.CSharp)]
     public sealed class ArkMinimalApiEndpointGenerator : IIncrementalGenerator
     {
+        // Keeps `?` on a nullable reference result: the generated ExecuteAsync<TQuery, TResult> call must match the contract.
+        private static readonly SymbolDisplayFormat _annotatedFormat =
+            SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
         private const string HttpEndpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
         private const string ArkGenerateMinimalApiForAssemblyAttribute = "Ark.Tools.MediatorFramework.MinimalApi.ArkGenerateMinimalApiForAssemblyAttribute";
         private const string HttpQueryAttribute = "Ark.Tools.MediatorFramework.HttpQueryAttribute";
@@ -428,7 +432,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 if (IsType(def, "IRequest`1", "Ark.Tools.Solid"))
                 {
                     kind = HandlerKind.Request;
-                    response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    response = iface.TypeArguments[0].ToDisplayString(_annotatedFormat);
                     responseType = iface.TypeArguments[0];
                     attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
                     streamElement = GetAsyncEnumerableElement(iface.TypeArguments[0], asyncEnumerableType);
@@ -438,7 +442,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 if (IsType(def, "IQuery`1", "Ark.Tools.Solid"))
                 {
                     kind = HandlerKind.Query;
-                    response = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    response = iface.TypeArguments[0].ToDisplayString(_annotatedFormat);
                     responseType = iface.TypeArguments[0];
                     attachmentResponse = IsAttachmentType(iface.TypeArguments[0], attachmentType);
                     streamElement = GetAsyncEnumerableElement(iface.TypeArguments[0], asyncEnumerableType);
