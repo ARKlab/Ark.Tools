@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <!-- Exposes the HTTP functions generated in the HttpTriggers library. -->
+    <FunctionsInDependencies>true</FunctionsInDependencies>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- -p:FunctionsNativeAot=false publishes self-contained, trimmed and ReadyToRun: the mode Azure Functions supports. -->
+    <PublishAot Condition="'$(FunctionsNativeAot)' != 'false'">true</PublishAot>
+    <SelfContained Condition="'$(FunctionsNativeAot)' == 'false'">true</SelfContained>
+    <PublishTrimmed Condition="'$(FunctionsNativeAot)' == 'false'">true</PublishTrimmed>
+    <PublishReadyToRun Condition="'$(FunctionsNativeAot)' == 'false'">true</PublishReadyToRun>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Pinned so the referenced libraries restore without a RID. -->
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <!-- Prototype: the Functions worker, the MVC it registers and MessagePack are not AOT-safe; keep their publish
+         warnings visible but not fatal. Publish with -p:TrimmerSingleWarn=false for per-call details.
+         The Application library still treats its own trim and AOT warnings as errors. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2026;IL2057;IL2067;IL2070;IL2072;IL2075;IL2091;IL2104;IL3000;IL3050;IL3053</WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" OutputItemType="Analyzer" PrivateAssets="all" />
+    <!-- Direct reference: the messaging trigger generator does not flow transitively. -->
+    <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
+    <PackageReference Include="Ark.Tools.Compliance" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Aot.Functions.HttpTriggers\Ark.MediatorFramework.Sample.Aot.Functions.HttpTriggers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="host.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="local.settings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <Import Project="..\FunctionsNativeAot.targets" />
+
+</Project>
