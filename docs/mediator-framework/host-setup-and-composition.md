@@ -416,6 +416,9 @@ services.AddSingleton<IMessagingTransport>(transport);
 services.AddArkMessagingOutboxProcessor(outboxContextFactory, batchSize: 10);
 ```
 
+Registering the processor does not opt a participant into enlistment: each
+participant whose handlers enlist still calls `UseOutbox()`.
+
 The registered `MessagingOutboxProcessor` is the single `IHostedService` for the
 reserved `outbox-processor` identity. It uses the existing
 `OutboxProcessorBase` bounded polling, SQL peek-lock, commit-after-acceptance,

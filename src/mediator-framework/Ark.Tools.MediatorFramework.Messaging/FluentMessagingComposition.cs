@@ -620,7 +620,10 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         if (_protobuf)
             _services._addProtobufMessagingCodec();
         if (_outboxFactory is not null)
+        {
+            _services._addArkMessagingOutbox(MessagingOutboxMode.Enqueue);
             _services.AddArkMessagingOutboxProcessor(_outboxFactory, _outboxBatchSize);
+        }
         else if (_outboxEnqueue)
             _services._addArkMessagingOutbox(MessagingOutboxMode.Enqueue);
         else if (_outboxPassthrough)

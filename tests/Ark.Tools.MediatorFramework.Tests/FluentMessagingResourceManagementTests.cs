@@ -77,6 +77,26 @@ public sealed class FluentMessagingResourceManagementTests
             .WithMessage("Messaging participant 'test-publisher' has no outbox*UseOutbox()*");
     }
 
+    /// <summary>A separately registered outbox processor does not opt a participant into enlistment.</summary>
+    [TestMethod]
+    public async Task OutboxProcessorAloneDoesNotEnableEnlistment()
+    {
+        var services = new ServiceCollection();
+        services.Configure<JsonSerializerOptions>(
+            static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+        services.ConfigureArkMessaging<TestNetwork>(static b => b.Producer<TestPublisher>(static p =>
+            p.UseInMemoryTransport().UseInMemoryDataBus()));
+        services.AddArkMessagingOutboxProcessor(new Ark.Tools.Outbox.InMemoryOutboxContextFactory());
+        await using var provider = services.BuildServiceProvider();
+        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        var enlist = () => provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+
+        enlist.Should().Throw<InvalidOperationException>()
+            .WithMessage("Messaging participant 'test-publisher' has no outbox*UseOutbox()*");
+    }
+
     /// <summary>Each outbox choice of the fluent builder reaches the composed bus.</summary>
     /// <param name="choice">The outbox call made on the builder.</param>
     /// <param name="passthrough">Whether the bus is expected to use the development pass-through.</param>

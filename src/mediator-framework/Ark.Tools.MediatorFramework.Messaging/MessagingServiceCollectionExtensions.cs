@@ -106,7 +106,6 @@ public static class MessagingServiceCollectionExtensions
                 "A native messaging outbox processor is already registered or Azure Functions composition is active.");
         }
 
-        services._addArkMessagingOutbox(MessagingOutboxMode.Enqueue);
         services.AddSingleton(contextFactory);
         services.AddSingleton(serviceProvider => new MessagingOutboxProcessor(
             serviceProvider.GetRequiredService<IOutboxAsyncContextFactory>(),
