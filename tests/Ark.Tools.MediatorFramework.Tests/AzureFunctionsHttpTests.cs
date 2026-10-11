@@ -153,7 +153,11 @@ public sealed class AzureFunctionsHttpTests
     [TestMethod]
     public async Task StreamsJsonArrayWithoutBuffering()
     {
-        var context = new DefaultHttpContext();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddArkAzureFunctions();
+        await using var provider = services.BuildServiceProvider();
+        var context = new DefaultHttpContext { RequestServices = provider };
         context.Response.Body = new MemoryStream();
 
         await ArkAzureFunctionsHttp.WriteJsonStreamAsync(
