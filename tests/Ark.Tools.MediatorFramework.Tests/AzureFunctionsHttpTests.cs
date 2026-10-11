@@ -6,11 +6,15 @@ using Ark.Tools.MediatorFramework.AzureFunctions;
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -232,6 +236,18 @@ public sealed class AzureFunctionsHttpTests
         json["entries"]!["failing"]!["data"]!["answer"]!.GetValue<int>().Should().Be(42);
     }
 
+    [TestMethod]
+    public void UsesConvertersDeclaredOnSuppliedContexts()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddArkAzureFunctions(MarkerJsonContext.Default);
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+
+        JsonSerializer.Serialize(new Marker(), options).Should().Be("\"marker\"");
+    }
+
     private static async IAsyncEnumerable<int> _valuesAsync()
     {
         yield return 1;
@@ -239,3 +255,27 @@ public sealed class AzureFunctionsHttpTests
         yield return 2;
     }
 }
+
+/// <summary>A type serialized only through a context-declared converter.</summary>
+public sealed record Marker;
+
+/// <summary>Writes <see cref="Marker"/> as a fixed string.</summary>
+public sealed class MarkerJsonConverter : JsonConverter<Marker>
+{
+    /// <inheritdoc />
+    public override Marker Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        reader.Skip();
+        return new Marker();
+    }
+
+    /// <inheritdoc />
+    public override void Write(Utf8JsonWriter writer, Marker value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue("marker");
+    }
+}
+
+[JsonSourceGenerationOptions(RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true, Converters = new[] { typeof(MarkerJsonConverter) })]
+[JsonSerializable(typeof(Marker))]
+internal sealed partial class MarkerJsonContext : JsonSerializerContext;

@@ -108,6 +108,13 @@ public static class ArkAzureFunctionsServiceCollectionExtensions
 
         services.ConfigureHttpJsonOptions(options =>
         {
+            // A context's own converters don't apply when it serves as another options' resolver, so copy them.
+            foreach (var context in additionalContexts)
+            {
+                foreach (var converter in context.Options.Converters)
+                    options.SerializerOptions.Converters.Add(converter);
+            }
+
             if (!JsonSerializer.IsReflectionEnabledByDefault)
             {
                 // Trimmed: keep the reflection-free part of the Ark defaults; the supplied

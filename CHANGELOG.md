@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `Ark.Tools.MediatorFramework.AzureFunctions`: `AddArkAzureFunctions(contexts)` adds the converters declared on the supplied source-generated contexts to the HTTP JSON options. Before, those converters (for example the NodaTime or `EvolvableEnum` ones) were ignored, because a context's converters don't apply when it serves as another options' resolver.
 - Generated Minimal API and Azure Functions HTTP endpoints accept a query or request with a nullable reference result, such as `IQuery<V1, Book?>`; the generated code no longer fails to compile with CS8631.
 - `EvolvableEnum` works in Native AOT apps: it reads the enum members with the generic `Enum` APIs, and `EvolvableEnumTypeHandler` and `EvolvableEnumDapper.Register` carry the trimming annotations `EvolvableEnum` requires.
 - Generated Azure Functions endpoints that stream an `IAsyncEnumerable<T>` serialize it with the host's JSON options, as Minimal API does, instead of the defaults: streamed objects follow the configured naming, and trimmed apps can stream with reflection-based JSON disabled.
