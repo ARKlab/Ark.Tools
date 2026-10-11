@@ -46,8 +46,14 @@ in 45 to 65 MB of RSS.
 - **Generated Azure Functions streaming responses used the default JSON options.** `WriteJsonStreamAsync` now resolves
   `JsonTypeInfo<IAsyncEnumerable<T>>` from the host's `JsonOptions`, so it honours the configured naming and works with
   reflection-based JSON disabled.
-- **The Functions generator dropped the nullable annotation of a query result.** `IQuery<V1, Greeting?>` failed with
-  CS8631; the generated `ExecuteAsync` call now keeps the annotation, so a nullable result that answers 404 can be
+- **`EvolvableEnum` failed Native AOT analysis.** Its static constructor used `Enum.GetValues(Type)`; the Dapper handlers
+  lacked the trimming annotations; the JSON factory closes converters at run time. It now uses the generic `Enum` APIs,
+  the handlers are annotated, and `EvolvableEnumJsonConverter<TEnum>` is a closed converter for source-generated contexts.
+- **Ark.Tools Dapper handlers for Dapper.AOT.** `EvolvableEnumTypeHandler` gained a public parameterless constructor so
+  `[module: TypeHandler(...)]` can use it, and `NodaTimeDapperSqlServer.ConfigureParameterTypes()` applies the SQL Server
+  parameter types without `SqlMapper`.
+- **The Minimal API and Functions generators dropped the nullable annotation of a query result.** `IQuery<V1, Greeting?>`
+  failed with CS8631; the generated `ExecuteAsync` call now keeps the annotation, so a nullable result that answers 404 can be
   declared.
 
 ### Open
@@ -70,6 +76,9 @@ in 45 to 65 MB of RSS.
 | Microsoft.Data.SqlClient throws `Globalization Invariant Mode is not supported` when it opens a connection | Do not set `InvariantGlobalization`; ship ICU in the image |
 | Dapper.AOT 1.1.0 binds a `byte[]` parameter as a list expansion (`PackListParameters`), even with `[DbValue(DbType = Binary)]`, which produces invalid SQL ([DapperAOT#226](https://github.com/DapperLib/DapperAOT/issues/226)) | Plain ADO.NET for that statement |
 | Dapper.AOT 1.1.0 silently leaves a call on reflection-based Dapper when a parameter member's type depends on another source generator's output (a `var` local or inline expression using a System.Text.Json `JsonSerializerContext`): generators do not see each other. No diagnostic; it fails only at run time | Type such locals explicitly (`string headers = …`). The publish log shows a fallback: Dapper's `IL2104`/`IL3053` appear only when a call was left on reflection |
+| Dapper.AOT ignores `SqlMapper.AddTypeHandler`, and calling it crashes Native AOT at startup (`TypeHandlerCache<T>` is closed by reflection) with no publish warning. Every Ark.Tools `Register`/`Setup` helper (`NodaTimeDapper`, `EvolvableEnumDapper`, `ValueObjectDapper`, `SensitiveValueDapper`) calls it | Register each type with `[module: TypeHandler(typeof(T), typeof(THandler))]`. Dapper.AOT adapts a `SqlMapper.TypeHandler<T>` with a public parameterless constructor (`SensitiveValueTypeHandler<T>`, `EvolvableEnumTypeHandler<TEnum>`); the NodaTime singletons and `ValueObjectTypeHandler` need a small `DbValueHandler<T>` that delegates to them, as `AotSample` does. An Ark.Tools package of Dapper.AOT handlers would remove that step |
+| Converters declared in `[JsonSourceGenerationOptions(Converters = ...)]` apply only to the context's own options. Used as a resolver in the HTTP or messaging options, NodaTime and `EvolvableEnum` values fail to bind (an empty 400) | Add the context's converters to those options too (`ApplicationComposition.ConfigureJson` in `AotSample`) |
+| Vogen's JSON converter for a numeric primitive uses reflection-based serialization (IL2026/IL3050 in a project with `IsAotCompatible`) | Use a `Guid` or `string` primitive, or Vogen's `TreatNumberAsStringInSystemTextJson` |
 | Dapper.AOT reads the SQL and parameters only from the direct overloads, not from `CommandDefinition` (DAP057) | Pass the `CancellationToken` as a member of the parameter object. Verified: it cancels when the object also has a SQL parameter, but is silently ignored when the token is the only member |
 | An intercepted call without `commandTimeout` runs with no timeout instead of the provider default ([DapperAOT#229](https://github.com/DapperLib/DapperAOT/issues/229)) | None in the sample; expected to be fixed upstream |
 
