@@ -69,7 +69,7 @@ public static class ArkProtobufValueObjects
                 throw new InvalidOperationException($"Value object '{typeof(TValueObject)}' is already registered over '{primitive}', not '{typeof(TPrimitive)}'.");
             // Through the serializer's published conversions, so absent members use the same From as reads.
             _emptyValues.TryAdd(typeof(TValueObject), (
-                static () => ValueObjectSerializer<TValueObject, TPrimitive>._from(typeof(TPrimitive) == typeof(string) ? (TPrimitive)(object)string.Empty : default!),
+                static () => ValueObjectSerializer<TValueObject, TPrimitive>._from(string.Empty is TPrimitive empty ? empty : default!),
                 default(TValueObject)));
             // Add returns the existing MetaType of a type already known to the model.
             var metaType = model.Add(typeof(TValueObject), applyDefaultBehaviour: false);
