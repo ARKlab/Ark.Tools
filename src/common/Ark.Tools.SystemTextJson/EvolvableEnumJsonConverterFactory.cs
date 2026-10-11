@@ -41,6 +41,35 @@ public class EvolvableEnumIntegerJsonConverterFactory : JsonConverterFactory
             options.Encoder ?? JavaScriptEncoder.Default);
 }
 
+/// <summary>
+/// Serializes <see cref="EvolvableEnum{TEnum}"/> by symbolic name, without reflection.
+/// </summary>
+/// <remarks>
+/// <see cref="EvolvableEnumJsonConverterFactory"/> closes its converters at run time, which Native AOT cannot do. In an
+/// AOT app, list this converter per enum in the source-generated context instead, for example
+/// <c>[JsonSourceGenerationOptions(Converters = new[] { typeof(EvolvableEnumJsonConverter&lt;Genre&gt;) })]</c>.
+/// </remarks>
+/// <typeparam name="TEnum">The wrapped enum.</typeparam>
+public sealed class EvolvableEnumJsonConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum> :
+    JsonConverter<EvolvableEnum<TEnum>>
+    where TEnum : struct, Enum
+{
+    private readonly JsonConverter<EvolvableEnum<TEnum>> _converter =
+        EvolvableEnumJsonConverter.CreateByName<TEnum>(JavaScriptEncoder.Default);
+
+    /// <inheritdoc />
+    public override EvolvableEnum<TEnum> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return _converter.Read(ref reader, typeToConvert, options);
+    }
+
+    /// <inheritdoc />
+    public override void Write(Utf8JsonWriter writer, EvolvableEnum<TEnum> value, JsonSerializerOptions options)
+    {
+        _converter.Write(writer, value, options);
+    }
+}
+
 internal static class EvolvableEnumJsonConverter
 {
     public static bool IsSupported(Type type)
@@ -51,6 +80,11 @@ internal static class EvolvableEnumJsonConverter
         var definition = type.GetGenericTypeDefinition();
         return definition == typeof(EvolvableEnum<>) || definition == typeof(EvolvableEnum<,>);
     }
+
+    public static JsonConverter<EvolvableEnum<TEnum>> CreateByName<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(JavaScriptEncoder encoder)
+        where TEnum : struct, Enum
+        => new DefaultConverter<TEnum>(EvolvableEnumWireFormat.Name, encoder);
 
     [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType", Justification = "Arguments come from a closed EvolvableEnum type.")]
     public static JsonConverter Create(Type type, EvolvableEnumWireFormat format, JavaScriptEncoder encoder)

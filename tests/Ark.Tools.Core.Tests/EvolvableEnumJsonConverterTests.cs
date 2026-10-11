@@ -57,6 +57,20 @@ public class EvolvableEnumJsonConverterTests
         return options;
     }
 
+    /// <summary>Verifies that the closed converter for Native AOT reads and writes names like the factory.</summary>
+    [TestMethod]
+    public void ClosedConverter_ShouldRoundTripLikeTheFactory()
+    {
+        var options = new JsonSerializerOptions { RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true };
+        options.Converters.Add(new SystemTextJson.EvolvableEnumJsonConverter<Status>());
+
+        var json = JsonSerializer.Serialize(EvolvableEnum<Status>.FromValue(Status.Active), options);
+
+        json.Should().Be(JsonSerializer.Serialize(EvolvableEnum<Status>.FromValue(Status.Active), _createDefaultOptions()));
+        JsonSerializer.Deserialize<EvolvableEnum<Status>>(json, options).Should().Be(EvolvableEnum<Status>.FromValue(Status.Active));
+        JsonSerializer.Deserialize<EvolvableEnum<Status>>("\"Unknown\"", options).Name.Should().Be("Unknown");
+    }
+
     /// <summary>Verifies that a defined value is serialized as its symbolic name by default.</summary>
     [TestMethod]
     public void DefaultFormat_ShouldSerializeDefinedValueAsName()

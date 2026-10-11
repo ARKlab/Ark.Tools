@@ -157,8 +157,8 @@ public readonly struct EvolvableEnum<
             throw new NotSupportedException(
                 $"EvolvableEnum<{enumType.Name}, {typeof(TBacking).Name}> does not support [Flags] enums.");
 
-        var names = Enum.GetNames(enumType);
-        var values = (TEnum[])Enum.GetValues(enumType);
+        var names = Enum.GetNames<TEnum>();
+        var values = Enum.GetValues<TEnum>();
         var numberToName = new Dictionary<TBacking, string>(names.Length);
         var numericValues = new TBacking[names.Length];
         var displayNames = new string[names.Length];

@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `Ark.Tools.SystemTextJson`: `EvolvableEnumJsonConverter<TEnum>`, a closed converter for `EvolvableEnum<TEnum>` that Native AOT apps list in their source-generated JSON context; `EvolvableEnumJsonConverterFactory` closes its converters at run time, which Native AOT cannot do.
+- `Ark.Tools.Dapper`: `EvolvableEnumTypeHandler` has a public parameterless constructor, so Dapper.AOT can use it from `[module: TypeHandler(...)]`.
+- `Ark.Tools.Sql.SqlServer`: `NodaTimeDapperSqlServer.ConfigureParameterTypes()` sets the SQL Server parameter types on the shared NodaTime handlers without registering them with `SqlMapper`, for Native AOT apps whose Dapper.AOT handlers reuse them.
 - `ToDataTableArk()` shreds Vogen value objects (`[ValueObject<T>]` or `[ValueObject(typeof(T))]`) into a column of their primitive type, so they can be passed in table-valued parameters and `SqlBulkCopy`. Ark.Tools.Core does not depend on Vogen.
 - Mediator Framework contracts can use Vogen value objects. They travel as the primitive they wrap in JSON (a source-generated `JsonSerializerContext` outside the contracts assembly uses Vogen's converter; add the new `ValueObjectJsonConverterFactory` to a context in the same assembly), in Minimal API and Azure Functions routes and query strings, and over gRPC, where the exported `.proto` declares the primitive, `MapArkGrpcServicesFromAssembly` registers the value object with protobuf-net, and an absent field (how proto3 sends `""` or `0`) reads as the value object over that empty value, as in JSON. Add `AddArkValueObjectSchemas()` to document them in OpenAPI, including collections and route and query parameters, with the same result whether or not Vogen's own OpenAPI mapping is also registered, and call `ValueObjectDapper.Register<TValueObject, TPrimitive>()` for Dapper. Ark.Tools does not depend on Vogen.
 - Error `ARKMF060` for a gRPC contract member whose exported `.proto` type differs from what protobuf-net writes: a `Guid` below `CompatibilityLevel.Level300`, or a value object over a primitive with no protobuf scalar.
@@ -25,7 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- Generated Azure Functions HTTP endpoints accept a query or request with a nullable reference result, such as `IQuery<V1, Book?>`; the generated code no longer fails to compile with CS8631.
+- Generated Minimal API and Azure Functions HTTP endpoints accept a query or request with a nullable reference result, such as `IQuery<V1, Book?>`; the generated code no longer fails to compile with CS8631.
+- `EvolvableEnum` works in Native AOT apps: it reads the enum members with the generic `Enum` APIs, and `EvolvableEnumTypeHandler` and `EvolvableEnumDapper.Register` carry the trimming annotations `EvolvableEnum` requires.
 - Generated Azure Functions endpoints that stream an `IAsyncEnumerable<T>` serialize it with the host's JSON options, as Minimal API does, instead of the defaults: streamed objects follow the configured naming, and trimmed apps can stream with reflection-based JSON disabled.
 - `Ark.Tools.MediatorFramework.AzureFunctions`: generated HTTP functions read the request body and write the response with the source-generated metadata of the configured JSON options, so they no longer report trimming and Native AOT warnings.
 - `AddArkAzureFunctions` no longer adds reflection-based JSON when reflection-based serialization is disabled, as in trimmed apps: it keeps camelCase naming and Vogen value object support, and the source-generated contexts passed to it resolve every type. A trimmed Functions app no longer reports trimming warnings from Ark.Tools.
