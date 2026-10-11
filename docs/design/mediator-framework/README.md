@@ -23,6 +23,7 @@ lives in [`docs/plans/mediator-framework/`](../../plans/mediator-framework/READM
 | [`mcp-design.md`](mcp-design.md) | Proposed source-generated MCP tool bridge using the official ASP.NET Core MCP SDK. |
 | [`messaging-throughput-prd.md`](messaging-throughput-prd.md) | Proposed high-throughput messaging receivers: receive/processing seam split, adaptive concurrency, credit-bounded prefetch, lock renewal, transport profiles. |
 | [`sample-hosting-variants.md`](sample-hosting-variants.md) | Sample reorganization: one Core service hosted by Web, WebRebus, and Functions variants without changing API, Application, or application tests. |
+| [`aot-di-comparison.md`](aot-di-comparison.md) | Verified comparison of Native AOT composition with open-generic decorators: Microsoft DI helpers and generators, Scrutor, Pure.DI. |
 | [`native-aot-investigation.md`](native-aot-investigation.md) | Native AOT prototype: what runs end to end, the Ark.Tools and Azure Functions gaps, and recommendations. |
 | [`value-object-libraries.md`](value-object-libraries.md) | Vogen vs Meziantou.Framework.StronglyTypedId for value objects across JSON, binding, gRPC, FluentValidation, Dapper and OpenAPI. |
 | [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
