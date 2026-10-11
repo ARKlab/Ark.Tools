@@ -260,6 +260,11 @@ internal sealed class ValueObjectSerializer<TValueObject, TPrimitive> : ISeriali
             case double number:
                 state.WriteDouble(number);
                 break;
+            // An unset string value object (VOGEN_NO_VALIDATION) has a null value: written as the empty string, which
+            // is how proto3 carries an absent string, as JSON writes null.
+            case null when typeof(TPrimitive) == typeof(string):
+                state.WriteString(string.Empty);
+                break;
             default:
                 throw new InvalidOperationException($"Value object '{typeof(TValueObject)}' has no primitive value.");
         }

@@ -241,6 +241,32 @@ public class ArkProtobufValueObjectsTests
         act.Should().Throw<InvalidOperationException>();
     }
 
+    private readonly record struct Caption(string Value);
+
+    [ProtoContract]
+    private sealed class Figure
+    {
+        [ProtoMember(1)]
+        public Caption Caption { get; init; }
+    }
+
+    /// <summary>
+    /// An unset string value object, whose value is null under VOGEN_NO_VALIDATION, is written as the empty string
+    /// instead of failing the call, and reads back as the value object over it.
+    /// </summary>
+    [TestMethod]
+    public void Serialize_UnsetStringValueObject_ShouldWriteTheEmptyString()
+    {
+        var model = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Caption, string>(model, static value => new Caption(value), static value => value.Value);
+        using var stream = new MemoryStream();
+
+        model.Serialize(stream, new Figure());
+        stream.Position = 0;
+
+        model.Deserialize<Figure>(stream).Caption.Should().Be(new Caption(string.Empty));
+    }
+
     /// <summary>A member that is not a registered value object is rejected.</summary>
     [TestMethod]
     public void InitializeAbsentValueObjects_UnregisteredMember_ShouldThrow()

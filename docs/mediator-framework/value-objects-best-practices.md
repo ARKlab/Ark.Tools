@@ -46,7 +46,8 @@ and the JSON converter on a contract type. A route or query value needs
   primitive, and `MapArkGrpcServicesFromAssembly` registers the value object
   with protobuf-net. proto3 never writes `""` or `0`, so an absent field reads
   as the value object over that empty value, as JSON reads an explicit `""`;
-  an optional (`?`) member stays `null`. See [gRPC](grpc.md) for `Guid`
+  an optional (`?`) member stays `null`. An unset string value object is
+  written as `""`. See [gRPC](grpc.md) for `Guid`
   members.
 - **Dapper** (`Ark.Tools.Dapper`): call
   `ValueObjectDapper.Register<BookId, Guid>(BookId.From, static id => id.Value)`
