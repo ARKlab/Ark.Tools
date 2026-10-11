@@ -1,5 +1,9 @@
 # Mediator Framework Native AOT sample
 
+> [!WARNING]
+> This sample is a prototype and a large work in progress. It exists to explore Native AOT with the Mediator
+> Framework: do not use it as a template or reference for production applications.
+
 A slim Mediator Framework application whose every host is published as Native AOT: a Minimal API that stores a book in
 SQL Server and, in the same transaction, queues a print command in the outbox; an outbox processor that moves it to Azure
 Service Bus; and a processor that prints the book. It has the structure of
