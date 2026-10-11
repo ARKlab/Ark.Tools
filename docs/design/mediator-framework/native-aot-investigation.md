@@ -70,6 +70,29 @@ in 45 to 65 MB of RSS.
 | Dapper.AOT 1.1.0 silently leaves a call inside a `foreach` body on reflection-based Dapper, with no diagnostic; it fails only at run time | Move the call to a helper method. The publish log shows it: Dapper's `IL2104`/`IL3053` appear only when a call fell back |
 | Dapper.AOT reads the SQL and parameters only from the direct overloads, not from `CommandDefinition` (DAP057) | Pass the `CancellationToken` as a member of the parameter object; Dapper.AOT honours it |
 
+## gRPC (spike)
+
+A time-boxed spike published a Minimal API host with one query mapped by `MapArkGrpcServicesFromAssembly`, Microsoft
+DI only, as Native AOT (protobuf-net 3.4.30, protobuf-net.Grpc 1.3.14, Grpc.AspNetCore.Server 2.80.0). It publishes
+with 39 warnings, none from Ark.Tools: 34 from protobuf-net.Grpc (`MakeGenericMethod`, `Expression.Call`, interface and
+attribute reflection) and 5 from protobuf-net.Grpc.AspNetCore. Out of the box every call answers `Unimplemented`. A
+unary query worked only after four host-side workarounds, each fixing the failure the previous one uncovered:
+
+| # | Failure | Workaround |
+| --- | --- | --- |
+| 1 | `ProtoBufMarshallerFactory.Default` is unavailable when dynamic code is not supported, so no contract is serializable and no method is bound | Register `BinderConfiguration.Create([ProtoBufMarshallerFactory.Create(RuntimeTypeModel.Default, Options.None)])` |
+| 2 | The trimmer removes the generated service interface, so no operation is discovered | Root the host assembly |
+| 3 | protobuf-net reads contract attributes whose getters were trimmed, so `CanSerialize` returns false | Root the contracts, protobuf-net and protobuf-net.Core (about 200 more ILC warnings) |
+| 4 | Binding fails with `No method 'AsTask' on type ValueTask`1[...]` | Preserve `ValueTask`1` and `Task`1` with an ILLink descriptor |
+
+protobuf-net's own AOT support (`[ProtoModel]`, `[Experimental("PBN9001")]`) generated nothing in the spike, and
+protobuf-net.Grpc's binder has no generated alternative. Streaming, value-object surrogates and the error interceptor
+were not tried. To make the gRPC host AOT-safe, in increasing effort: emit the `BinderConfiguration` registration (S);
+emit `[DynamicDependency]` annotations for the service, the contracts and the `ValueTask<T>` instantiations (M); root
+protobuf-net for AOT hosts through `buildTransitive` (S, crude); or generate `Grpc.Core.Method<,>` definitions, a
+`ServiceBinderBase` binder and the serializers, bypassing protobuf-net.Grpc and protobuf-net reflection (L). The Ark
+generator already knows every type involved. Until then, `AotSample` has no gRPC host.
+
 ## Azure Functions gaps (Microsoft)
 
 Microsoft's position ([azure-functions-dotnet-worker#2428](https://github.com/Azure/azure-functions-dotnet-worker/issues/2428),
@@ -94,7 +117,7 @@ non-fatal (`WarningsNotAsErrors`). ReadyToRun without trimming avoids them all.
    Functions hosts do. This is the supported fast path; revisit Native AOT when the worker fixes gaps 3 and 4.
 2. **Native AOT today:** host the same Application in ASP.NET Core Minimal API and a generic-host receiver, for example on
    Azure Container Apps with scale to zero. The framework already supports it with no Ark.Tools warnings.
-3. **Framework work, in order:** optional MessagePack registration; the SQL exception mapping out of
+3. **Framework work, in order:** optional MessagePack registration; the gRPC host (see the spike); the SQL exception mapping out of
    `Ark.Tools.AspNetCore.ProblemDetails`; an AOT-safe SQL outbox; the decorated-handler registration helpers; nullable
    query results.
 4. **Guard it in CI:** publish `AotSample`'s hosts as Native AOT, as CI already does for
