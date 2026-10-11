@@ -160,16 +160,6 @@ public static class ArkAzureFunctionsInvocation
 
         foreach (var entry in PropertyCache<T>.Entries)
         {
-            if (entry.IsServerSet)
-            {
-                // Only reset writable properties; skip non-nullable value types to avoid InvalidCastException.
-                if (entry.Property.CanWrite && entry.IsNullableOrReference)
-                    entry.Property.SetValue(value, null);
-                else if (entry.Property.CanWrite)
-                    entry.Property.SetValue(value, entry.DefaultValue);
-                continue;
-            }
-
             var bindingName = entry.BindingName;
             if (entry.IsRoute && request.RouteValues.TryGetValue(bindingName, out var route))
             {
@@ -255,12 +245,7 @@ public static class ArkAzureFunctionsInvocation
                     var isRoute = routeAttr is not null;
                     var isQuery = p.CustomAttributes.Any(static a =>
                         string.Equals(a.AttributeType.FullName, "Ark.Tools.MediatorFramework.HttpQueryAttribute", StringComparison.Ordinal));
-                    var isServerSet = p.CustomAttributes.Any(static a =>
-                        string.Equals(a.AttributeType.FullName, "Ark.Tools.MediatorFramework.ServerSetAttribute", StringComparison.Ordinal));
-                    var propType = p.PropertyType;
-                    var isNullableOrRef = !propType.IsValueType || Nullable.GetUnderlyingType(propType) is not null;
-                    var defaultValue = propType.IsValueType ? Activator.CreateInstance(propType) : null;
-                    return new PropertyEntry(p, bindingName, isRoute, isQuery, isServerSet, isNullableOrRef, defaultValue);
+                    return new PropertyEntry(p, bindingName, isRoute, isQuery);
                 })
                 .ToArray();
         }
@@ -270,18 +255,12 @@ public static class ArkAzureFunctionsInvocation
         PropertyInfo property,
         string bindingName,
         bool isRoute,
-        bool isQuery,
-        bool isServerSet,
-        bool isNullableOrReference,
-        object? defaultValue)
+        bool isQuery)
     {
         public PropertyInfo Property { get; } = property;
         public string BindingName { get; } = bindingName;
         public bool IsRoute { get; } = isRoute;
         public bool IsQuery { get; } = isQuery;
-        public bool IsServerSet { get; } = isServerSet;
-        public bool IsNullableOrReference { get; } = isNullableOrReference;
-        public object? DefaultValue { get; } = defaultValue;
     }
 
     private readonly record struct BindingResult<T>(T? Value, bool Succeeded, string? Error)

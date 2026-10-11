@@ -79,7 +79,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private static readonly DiagnosticDescriptor _propertyNotBindableWithoutBody = new(
         "ARKMF059",
         "Property cannot be bound from the request",
-        "HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or [ServerSet]",
+        "HTTP endpoint '{0}' uses verb '{1}', which has no request body, but property '{2}' is not bound from the route or query string; mark it [HttpRoute] or [HttpQuery] with a type that converts from a string, or remove it from the contract",
         "Ark.Tools.MediatorFramework",
         DiagnosticSeverity.Error,
         true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF059.md");
@@ -301,7 +301,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     {
         var noBody = endpoint.Verb is "GET" or "HEAD" or "DELETE";
         var reported = false;
-        foreach (var property in endpoint.Properties.Where(static property => !property.IsServerSet))
+        foreach (var property in endpoint.Properties)
         {
             var bound = property.IsRoute || property.IsQuery;
             if (bound
@@ -352,10 +352,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private static void _emitFunction(StringBuilder source, EndpointSpec endpoint)
     {
         var hasBody = endpoint.Verb is "POST" or "PUT" or "PATCH";
-        var routeProperties = endpoint.Properties.Where(static p => p.IsRoute && !p.IsServerSet).ToArray();
+        var routeProperties = endpoint.Properties.Where(static p => p.IsRoute).ToArray();
         // As in Minimal API, a property bound from the route is never overwritten from the query string.
-        var queryProperties = endpoint.Properties.Where(static p => p.IsQuery && !p.IsRoute && !p.IsServerSet).ToArray();
-        var serverSetProperties = endpoint.Properties.Where(static p => p.IsServerSet).ToArray();
+        var queryProperties = endpoint.Properties.Where(static p => p.IsQuery && !p.IsRoute).ToArray();
         var attachment = endpoint.Properties.FirstOrDefault(static p => p.IsAttachment || p.IsAttachmentCollection);
         var hasAttachment = attachment.IsAttachment || attachment.IsAttachmentCollection;
 
@@ -528,11 +527,6 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             }
         }
 
-        // Server-set property reset (per-property, no runtime reflection)
-        foreach (var prop in serverSetProperties)
-        {
-            _emitPropertyAssignment(source, endpoint, "        ", prop.Name, "default!");
-        }
         var _etagProperties = endpoint.Properties.Where(static p => p.IsETag).ToArray();
         if (_etagProperties.Length > 0)
         {

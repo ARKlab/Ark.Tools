@@ -878,6 +878,9 @@
           }
         }
       },
+      "BookDescription": {
+        "type": "string"
+      },
       "BookEdition": {
         "oneOf": [
           {
@@ -1074,6 +1077,12 @@
       "Output": {
         "type": "object",
         "properties": {
+          "id": {
+            "$ref": "#/components/schemas/BookId"
+          },
+          "description": {
+            "$ref": "#/components/schemas/BookDescription"
+          },
           "eTag": {
             "type": [
               "null",

@@ -22,7 +22,6 @@ Every Ark.Tools diagnostic has a dedicated page with its severity, rule-specific
 - [ARKCORE005](analyzer-rules/ARKCORE005.md)
 - [ARKCORE006](analyzer-rules/ARKCORE006.md)
 - [ARKMF001](analyzer-rules/ARKMF001.md)
-- [ARKMF002](analyzer-rules/ARKMF002.md)
 - [ARKMF003](analyzer-rules/ARKMF003.md)
 - [ARKMF004](analyzer-rules/ARKMF004.md)
 - [ARKMF005](analyzer-rules/ARKMF005.md)
@@ -134,7 +133,6 @@ attribute location:
 | ID | Severity | Meaning |
 |---|---|---|
 | ARKMF001 | Error | HTTP endpoint declares multiple attachments |
-| ARKMF002 | Error | HTTP server-set property cannot be reset |
 | ARKMF003 | Warning | HTTP property may allow mass assignment |
 | ARKMF005 | Error | HTTP attachment collection has an unsupported shape |
 | ARKMF004 | Error | Rebus owner queue is invalid |

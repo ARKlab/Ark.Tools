@@ -14,7 +14,7 @@ namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 [TestClass]
 public sealed class MinimalApiOpenApiTests
 {
-    /// <summary>Verifies v1 paths, documentation, schemas, and server-set filtering.</summary>
+    /// <summary>Verifies v1 paths, documentation, and schemas.</summary>
     [TestMethod]
     public async Task V1DocumentContainsFilteredSchemasAndDocumentation()
     {
@@ -40,7 +40,7 @@ public sealed class MinimalApiOpenApiTests
 
         var requestOperation = paths["/api/v1/hosting/requests/{id}"]!["post"]!;
         requestOperation["summary"]?.GetValue<string>()
-            .Should().Be("Deterministic request contract with route, query, body, and server-owned properties.");
+            .Should().Be("Deterministic request contract with route, query, and body properties.");
         var requestParameters = requestOperation["parameters"]?.AsArray()
             ?? throw new InvalidOperationException("The request operation had no parameters.");
         requestParameters.Single(static parameter => parameter?["name"]?.GetValue<string>() == "id")!["description"]?
@@ -58,7 +58,7 @@ public sealed class MinimalApiOpenApiTests
 
         var responseSchema = document["components"]?["schemas"]?["HostingOpenApiResponse"]
             ?? throw new InvalidOperationException("The OpenAPI response schema was not generated.");
-        responseSchema["properties"]?["serverStamp"].Should().BeNull();
+        responseSchema["properties"]?["serverStamp"].Should().NotBeNull();
         responseSchema["properties"]?["date"]?["format"]?.GetValue<string>().Should().Be("date");
         responseSchema["properties"]?["shape"]?["oneOf"]?.AsArray().Count.Should().Be(1);
     }

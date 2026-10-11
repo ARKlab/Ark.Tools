@@ -36,7 +36,6 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string Network = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
     private const string GeneratedSurface = "Ark.Tools.MediatorFramework.MessagingGeneratedSurfaceAttribute";
     private const string ApiGroup = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
-    private const string ServerSet = "Ark.Tools.MediatorFramework.ServerSetAttribute";
     private const string Versioning = "Ark.Tools.MediatorFramework.VersioningAttribute";
     private const string McpTool = "Ark.Tools.MediatorFramework.McpToolAttribute";
     private const string SpecStage = "ApiSurfaceSpecs";
@@ -805,7 +804,6 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         if (property.Name == "EqualityContract")
             return;
         var path = prefix + property.Name;
-        var serverSet = Attribute(property, ServerSet) is not null;
         var type = Unwrap(property.Type, out var collection);
         if (type is INamedTypeSymbol named && named.TypeKind == TypeKind.Class && named.SpecialType == SpecialType.None
             && named.ContainingAssembly.Name == property.ContainingAssembly.Name
@@ -818,7 +816,6 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         else
         {
             lines.Add($"CONTRACT {owner}.{path}{(collection ? "[]" : string.Empty)} : {TypeName(property.Type)}"
-                + (serverSet ? " server-set=true" : string.Empty)
                 + DefaultValue(property));
             AddEnumEntries(lines, type);
         }
