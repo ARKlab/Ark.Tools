@@ -7,7 +7,7 @@ using Ark.Tools.Core;
 
 using System.Text.Json.Serialization;
 
-namespace Ark.MediatorFramework.Sample.Core.API.JsonContext;
+namespace Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 
 /// <summary>Source-generated JSON metadata for all public API wire contracts in the sample.</summary>
 [JsonSourceGenerationOptions(
@@ -36,9 +36,6 @@ namespace Ark.MediatorFramework.Sample.Core.API.JsonContext;
         typeof(LocalDateRangeConverter),
         typeof(LocalDateTimeRangeConverter),
         typeof(ZonedDateTimeRangeConverter),
-        // Vogen value objects of this assembly: the source generator cannot see their [JsonConverter], which Vogen
-        // generates in the same compilation. Contexts in other assemblies, such as the application's, see it.
-        typeof(Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory),
     })]
 [JsonSerializable(typeof(UploadResponse))]
 [JsonSerializable(typeof(GetAuditsQuery.V1), TypeInfoPropertyName = "GetAuditsQueryV1")]

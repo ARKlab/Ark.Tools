@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.Generated;
-using Ark.MediatorFramework.Sample.Core.API.JsonContext;
 
 using Ark.MediatorFramework.Sample.Core.Web.Hosting;
 using Ark.MediatorFramework.Sample.Core.Web.WebInterface.Auth;
