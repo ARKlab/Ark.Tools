@@ -87,6 +87,9 @@ on the API without receiving the worker's topology.
 | `WebRebus` | ASP.NET Core Minimal API | Rebus on Azure Service Bus with the Rebus outbox | [`Core/Hosts/WebRebus`](Core/Hosts/WebRebus/README.md) |
 | `Functions` | Azure Functions (isolated worker) HTTP and Service Bus triggers | Native Ark messaging, with a separate `OutboxProcessor` console app | [`Core/Hosts/Functions`](Core/Hosts/Functions/README.md) |
 
+A separate, minimal [Native AOT prototype](Aot/README.md) hosts its own small service on Minimal API, a generic host
+worker and Azure Functions, without the outbox.
+
 The network keeps four participants. Each runs in its own process in every
 variant, and a variant never mixes Rebus and native messaging.
 

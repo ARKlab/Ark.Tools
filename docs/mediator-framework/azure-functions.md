@@ -862,3 +862,7 @@ builder.Services.AddArkAzureFunctions(ApiJsonContext.Default);
 The Functions worker and its ASP.NET Core integration report trimming warnings of
 their own, so test a trimmed app before deploying it. Dapper and SimpleInjector
 are not trim compatible.
+
+A trimmed app also needs workarounds for the Functions worker, which bootstraps through reflection: the
+[Native AOT investigation](../design/mediator-framework/native-aot-investigation.md) lists them, and its prototype
+runs a trimmed, ReadyToRun Functions app end to end. Native AOT publishing succeeds, but the worker fails at startup.
