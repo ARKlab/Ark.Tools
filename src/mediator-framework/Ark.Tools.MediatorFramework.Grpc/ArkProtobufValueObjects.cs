@@ -78,7 +78,8 @@ public static class ArkProtobufValueObjects
     /// <remarks>
     /// proto3 never writes a scalar's empty value, so an absent field is how a client sends <c>""</c> or <c>0</c>;
     /// without this, the member keeps its uninitialized default. A member that an initializer already set keeps its
-    /// value. Calling it again for the same model and contract is a no-op. The generated
+    /// value. protobuf-net creates the contract from its type, so every model shares one set of members: calling it
+    /// again with the same members is a no-op, and with different members throws. The generated
     /// <c>MapArkGrpcServicesFromAssembly</c> calls this for the served contracts.
     /// </remarks>
     /// <typeparam name="TContract">The protobuf contract.</typeparam>
@@ -86,6 +87,7 @@ public static class ArkProtobufValueObjects
     /// <param name="members">The settable properties of a value object type registered with <see cref="Register{TValueObject, TPrimitive}"/>.</param>
     /// <returns>The same <paramref name="model"/> for chaining.</returns>
     /// <exception cref="ArgumentException">A member is not a settable property of a registered value object type.</exception>
+    /// <exception cref="InvalidOperationException">The contract is already configured with different members.</exception>
     public static RuntimeTypeModel InitializeAbsentValueObjects<[DynamicallyAccessedMembers(AbsentValueObjects._contractMembers)] TContract>(
         RuntimeTypeModel model,
         params string[] members)
@@ -104,10 +106,10 @@ public static class ArkProtobufValueObjects
 
         lock (model)
         {
+            AbsentValueObjects<TContract>._configure(properties);
             if (!_initializedContracts.GetOrCreateValue(model).Add(typeof(TContract)))
                 return model;
 
-            AbsentValueObjects<TContract>._configure(properties);
             model.Add(typeof(TContract), applyDefaultBehaviour: true)
                 .SetFactory(typeof(AbsentValueObjects<TContract>).GetMethod(nameof(AbsentValueObjects<TContract>.Create))!);
         }
@@ -144,7 +146,13 @@ internal static class AbsentValueObjects<[DynamicallyAccessedMembers(AbsentValue
     private static readonly ConstructorInfo? _constructor = typeof(TContract).GetConstructor(
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, Type.EmptyTypes);
 
-    internal static void _configure(AbsentMember[] members) => Interlocked.CompareExchange(ref _members, members, null);
+    internal static void _configure(AbsentMember[] members)
+    {
+        var configured = Interlocked.CompareExchange(ref _members, members, null) ?? members;
+        if (!configured.Select(static member => member.Property.Name).Order(StringComparer.Ordinal)
+                .SequenceEqual(members.Select(static member => member.Property.Name).Order(StringComparer.Ordinal), StringComparer.Ordinal))
+            throw new InvalidOperationException($"The absent value object members of '{typeof(TContract)}' are already configured as {string.Join(", ", configured.Select(static member => member.Property.Name))}; every model shares them.");
+    }
 
     /// <summary>Creates the contract before protobuf-net reads its fields, which then replace the preset members.</summary>
     /// <returns>The new contract.</returns>

@@ -168,6 +168,35 @@ public class ArkProtobufValueObjectsTests
         written.Pages.Should().Be(new Pages(3));
     }
 
+    [ProtoContract]
+    private sealed class Section
+    {
+        [ProtoMember(1)]
+        public Title Title { get; init; }
+
+        [ProtoMember(2)]
+        public Title Heading { get; init; }
+    }
+
+    /// <summary>
+    /// Every model shares the members, as protobuf-net creates the contract from its type: the same members again
+    /// are accepted, different ones are rejected rather than silently ignored.
+    /// </summary>
+    [TestMethod]
+    public void InitializeAbsentValueObjects_DifferentMembersOnAnotherModel_ShouldThrow()
+    {
+        var first = RuntimeTypeModel.Create();
+        var second = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Title, string>(first, static value => new Title(value), static value => value.Value);
+        ArkProtobufValueObjects.InitializeAbsentValueObjects<Section>(first, nameof(Section.Title));
+
+        var same = () => ArkProtobufValueObjects.InitializeAbsentValueObjects<Section>(second, nameof(Section.Title));
+        var different = () => ArkProtobufValueObjects.InitializeAbsentValueObjects<Section>(second, nameof(Section.Title), nameof(Section.Heading));
+
+        same.Should().NotThrow();
+        different.Should().Throw<InvalidOperationException>();
+    }
+
     /// <summary>A member that is not a registered value object is rejected.</summary>
     [TestMethod]
     public void InitializeAbsentValueObjects_UnregisteredMember_ShouldThrow()
