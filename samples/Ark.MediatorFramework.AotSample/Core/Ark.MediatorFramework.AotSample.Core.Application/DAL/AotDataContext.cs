@@ -139,21 +139,29 @@ public sealed class AotDataContext : IOutboxAsyncContext
     /// <inheritdoc />
     public async Task<int> CountAsync(CancellationToken ctk = default)
     {
-        return await _connection.QuerySingleAsync<int>(
-            "SELECT COUNT(*) FROM [dbo].[Outbox]",
-            new { ctk },
-            _transaction).ConfigureAwait(false);
+        // Plain ADO.NET: Dapper.AOT 1.1.0 ignores a CancellationToken that is the only parameter member.
+        var command = _connection.CreateCommand();
+        await using (command.ConfigureAwait(false))
+        {
+            command.Transaction = _transaction;
+            command.CommandText = "SELECT COUNT(*) FROM [dbo].[Outbox]";
+            return (int)(await command.ExecuteScalarAsync(ctk).ConfigureAwait(false))!;
+        }
     }
 
     /// <inheritdoc />
     public async Task ClearAsync(CancellationToken ctk = default)
     {
+        // Plain ADO.NET: Dapper.AOT 1.1.0 ignores a CancellationToken that is the only parameter member.
+        var command = _connection.CreateCommand();
+        await using (command.ConfigureAwait(false))
+        {
+            command.Transaction = _transaction;
 #pragma warning disable DAP223 // DELETE lacks WHERE: clearing the outbox is the point.
-        await _connection.ExecuteAsync(
-            "DELETE FROM [dbo].[Outbox]",
-            new { ctk },
-            _transaction).ConfigureAwait(false);
+            command.CommandText = "DELETE FROM [dbo].[Outbox]";
 #pragma warning restore DAP223
+            await command.ExecuteNonQueryAsync(ctk).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc />

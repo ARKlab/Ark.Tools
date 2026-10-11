@@ -49,7 +49,13 @@ public sealed class AotDataContextFactory(string sql) : IOutboxAsyncContextFacto
         await using (var connection = new SqlConnection(sql))
         {
             await connection.OpenAsync(ctk).ConfigureAwait(false);
-            await connection.ExecuteAsync(_schema, new { ctk }).ConfigureAwait(false);
+            // Plain ADO.NET: Dapper.AOT 1.1.0 ignores a CancellationToken that is the only parameter member.
+            var command = connection.CreateCommand();
+            await using (command.ConfigureAwait(false))
+            {
+                command.CommandText = _schema;
+                await command.ExecuteNonQueryAsync(ctk).ConfigureAwait(false);
+            }
         }
     }
 
