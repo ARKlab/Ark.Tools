@@ -1548,7 +1548,7 @@
       "ark.mediatorframework.sample.core.web.outboxprocessor": {
         "type": "Project",
         "dependencies": {
-          "Ark.MediatorFramework.Sample.Core.Application": "[6.6.6, )",
+          "Ark.MediatorFramework.Sample.Core.Web.Hosting": "[6.6.6, )",
           "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging.Azure": "[1.0.0, )",
@@ -1564,7 +1564,6 @@
           "Ark.MediatorFramework.Sample.Core.Application": "[6.6.6, )",
           "Ark.MediatorFramework.Sample.Core.Web.Hosting": "[6.6.6, )",
           "Ark.Tools.AspNetCore.HealthChecks": "[1.0.0, )",
-          "Ark.Tools.AspNetCore.MessagePack": "[1.0.0, )",
           "Ark.Tools.AspNetCore.MinimalApi": "[1.0.0, )",
           "Ark.Tools.AspNetCore.OTel": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Grpc": "[1.0.0, )",
@@ -1618,13 +1617,6 @@
       },
       "ark.tools.aspnetcore.healthchecks.otel": {
         "type": "Project"
-      },
-      "ark.tools.aspnetcore.messagepack": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Core": "[1.0.0, )",
-          "MessagePack": "[3.1.11, )"
-        }
       },
       "ark.tools.aspnetcore.minimalapi": {
         "type": "Project",

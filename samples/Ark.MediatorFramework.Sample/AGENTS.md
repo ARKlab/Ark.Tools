@@ -20,8 +20,11 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
   (`Ark.MediatorFramework.Sample.Core.<Variant>.yml`, `.buildStage.yml`,
   `.deployStage.yml`) and register the projects in the root
   `Ark.MediatorFramework.Sample.slnx`.
-- Run each participant in its own process. Rebus and native messaging are never
-  mixed within a variant.
+- Run each participant in its own process by default. Every messaging background
+  host is an isolated `IHostedService` with its own application container and
+  messaging composition (`AddReceiverHost`, `AddOutboxProcessorHost`,
+  `AddRebusReceiverHost`), so one process can host several. Rebus and native
+  messaging are never mixed within a variant.
 
 ## Application architecture
 
@@ -39,9 +42,10 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
 - Context factories and DAL contexts expose fine-grained, composable ORM
   operations. The in-memory profile must use an in-memory context factory with
   the same context interface as SQL, including the composable in-memory outbox.
-- Every host configures its messaging outbox in every profile. Handlers always
-  enlist the current context's outbox; do not branch on SQL versus in-memory
-  storage.
+- Every host configures its messaging outbox in every profile, except the
+  Functions variant: it runs on Azure Functions only, so its `DirectSendBus`
+  turns the enlistment into a direct send. Handlers always enlist the current
+  context's outbox; do not branch on SQL versus in-memory storage or on the host.
 - Singleton domain services own reusable business logic and side-effects.
 - External adapters own calls to systems outside this service. Each adapter
   must have a mock/stub implementation and a test binding driver.

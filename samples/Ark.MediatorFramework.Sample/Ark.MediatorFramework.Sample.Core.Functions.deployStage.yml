@@ -36,14 +36,11 @@ stages:
                 - download: current
                   artifact: mediator-framework-sample-functions
 
-                # The remaining hosts are published as independent artifacts because
-                # their hosting target is environment-specific (WebJob, Container
-                # Apps, VM, or another worker host). Deploy each with that target's
-                # approved task before enabling this stage in a real environment.
+                # The database is deployed with the environment's approved DACPAC task
+                # before enabling this stage in a real environment.
                 - script: |
-                    echo "OutboxProcessor: $(Pipeline.Workspace)/mediator-framework-sample-functions/OutboxProcessor"
                     echo "Database DACPAC: $(Pipeline.Workspace)/mediator-framework-sample-functions/database"
-                  displayName: Inspect remaining host and database artifacts
+                  displayName: Inspect database artifact
 
                 - task: AzureFunctionApp@2
                   displayName: Deploy Api

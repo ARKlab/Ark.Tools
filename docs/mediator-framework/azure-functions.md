@@ -40,6 +40,30 @@ Select the public API assembly at assembly level:
 The marker is an assembly anchor. `IncludedContracts` and `ExcludedContracts`
 allow a host to narrow the generated set; do not configure both.
 
+### Declare the markers in a library, not in the Functions app
+
+Declare `HttpHost` and `MessagingFunctionsHost` in a class library that the
+Functions app references, and set `FunctionsInDependencies` in the app:
+
+```xml
+<!-- Functions app -->
+<FunctionsInDependencies>true</FunctionsInDependencies>
+...
+<ProjectReference Include="..\Sample.Functions.Processor.Triggers\Sample.Functions.Processor.Triggers.csproj" />
+```
+
+The Ark generator emits the `[Function]` methods. The Azure Functions Worker SDK
+source generators, which index the functions for the host and generate the
+executor that invokes them, run on the same compilation and cannot see what
+another source generator emits there: source generators do not chain. A marker
+declared in the app therefore produces a function that the host never lists and
+the worker never invokes, without any error. The Worker SDK does see functions
+compiled into referenced assemblies.
+
+Use one library per Functions app. The Worker SDK indexes the functions of every
+referenced library, so an app that references a library holding another app's
+`HttpHost` also exposes that HTTP API.
+
 ## 2. Build the isolated worker
 
 ```csharp
@@ -848,9 +872,16 @@ required by the messaging runtime.
 
 ## Trimming and ReadyToRun
 
-Azure Functions supports ReadyToRun but not Native AOT deployment. Generated
-functions bind requests without reflection, so an app can also be published
-trimmed. In a trimmed app, `AddArkAzureFunctions` skips the reflection-based Ark
+Azure Functions supports ReadyToRun but not Native AOT deployment. Compile a
+Linux 64-bit app as ReadyToRun to reduce its cold start:
+
+```xml
+<RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+<PublishReadyToRun>true</PublishReadyToRun>
+```
+
+Generated functions bind requests without reflection, so an app can also be
+published trimmed. In a trimmed app, `AddArkAzureFunctions` skips the reflection-based Ark
 JSON defaults, so pass a `JsonSerializerContext` covering every contract and
 response type, with the converters it needs in
 `[JsonSourceGenerationOptions(Converters = ...)]`:
