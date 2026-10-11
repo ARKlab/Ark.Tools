@@ -54,19 +54,25 @@ public sealed class EvolvableEnumJsonConverter<[DynamicallyAccessedMembers(Dynam
     JsonConverter<EvolvableEnum<TEnum>>
     where TEnum : struct, Enum
 {
-    private readonly JsonConverter<EvolvableEnum<TEnum>> _converter =
-        EvolvableEnumJsonConverter.CreateByName<TEnum>(JavaScriptEncoder.Default);
+    private JsonConverter<EvolvableEnum<TEnum>>? _converter;
 
     /// <inheritdoc />
     public override EvolvableEnum<TEnum> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return _converter.Read(ref reader, typeToConvert, options);
+        return _getConverter(options).Read(ref reader, typeToConvert, options);
     }
 
     /// <inheritdoc />
     public override void Write(Utf8JsonWriter writer, EvolvableEnum<TEnum> value, JsonSerializerOptions options)
     {
-        _converter.Write(writer, value, options);
+        _getConverter(options).Write(writer, value, options);
+    }
+
+    // Like the factory, encodes names with the options' encoder. An instance belongs to one options instance,
+    // as a source-generated context creates its converters per options.
+    private JsonConverter<EvolvableEnum<TEnum>> _getConverter(JsonSerializerOptions options)
+    {
+        return _converter ??= EvolvableEnumJsonConverter.CreateByName<TEnum>(options.Encoder ?? JavaScriptEncoder.Default);
     }
 }
 

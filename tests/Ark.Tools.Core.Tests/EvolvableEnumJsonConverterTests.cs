@@ -3,6 +3,8 @@
 
 using AwesomeAssertions;
 
+using System.Runtime.Serialization;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace Ark.Tools.Core.Tests;
@@ -15,6 +17,21 @@ namespace Ark.Tools.Core.Tests;
 [TestClass]
 public class EvolvableEnumJsonConverterTests
 {
+    private static readonly JsonSerializerOptions _relaxedOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+        Converters = { new SystemTextJson.EvolvableEnumJsonConverter<Comparison>() },
+    };
+
+    private enum Comparison
+    {
+        NOT_SET = 0,
+        [EnumMember(Value = "a<b")]
+        Less = 1,
+    }
+
     private enum Status
     {
         NOT_SET = 0,
@@ -69,6 +86,13 @@ public class EvolvableEnumJsonConverterTests
         json.Should().Be(JsonSerializer.Serialize(EvolvableEnum<Status>.FromValue(Status.Active), _createDefaultOptions()));
         JsonSerializer.Deserialize<EvolvableEnum<Status>>(json, options).Should().Be(EvolvableEnum<Status>.FromValue(Status.Active));
         JsonSerializer.Deserialize<EvolvableEnum<Status>>("\"Unknown\"", options).Name.Should().Be("Unknown");
+    }
+
+    /// <summary>Verifies that the closed converter honours the encoder of the options it serializes with.</summary>
+    [TestMethod]
+    public void ClosedConverter_ShouldUseTheOptionsEncoder()
+    {
+        JsonSerializer.Serialize(EvolvableEnum<Comparison>.FromValue(Comparison.Less), _relaxedOptions).Should().Be("\"a<b\"");
     }
 
     /// <summary>Verifies that a defined value is serialized as its symbolic name by default.</summary>
