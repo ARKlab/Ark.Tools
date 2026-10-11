@@ -228,6 +228,19 @@ public class ArkProtobufValueObjectsTests
         second.Deserialize<Page>(stream).Note.Should().Be(new Note("first:"));
     }
 
+    private readonly record struct Volume(int Value);
+
+    /// <summary>A value object has one primitive, and so one wire format, across models.</summary>
+    [TestMethod]
+    public void Register_OtherPrimitiveOnAnotherModel_ShouldThrow()
+    {
+        ArkProtobufValueObjects.Register<Volume, int>(RuntimeTypeModel.Create(), static value => new Volume(value), static value => value.Value);
+
+        var act = static () => ArkProtobufValueObjects.Register<Volume, long>(RuntimeTypeModel.Create(), static value => new Volume((int)value), static value => value.Value);
+
+        act.Should().Throw<InvalidOperationException>();
+    }
+
     /// <summary>A member that is not a registered value object is rejected.</summary>
     [TestMethod]
     public void InitializeAbsentValueObjects_UnregisteredMember_ShouldThrow()

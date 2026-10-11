@@ -26,6 +26,9 @@ public static class ArkProtobufValueObjects
     // uninitialized default.
     private static readonly ConcurrentDictionary<Type, (Func<object?> Empty, object? Default)> _emptyValues = new();
 
+    // The primitive each value object is registered over: one wire format per value object, as for its conversions.
+    private static readonly ConcurrentDictionary<Type, Type> _primitives = new();
+
     // The contracts each model already creates through AbsentValueObjects: protobuf-net freezes a type once it
     // serialized it, so a second call, such as from another host sharing RuntimeTypeModel.Default, must not change it.
     private static readonly ConditionalWeakTable<RuntimeTypeModel, HashSet<Type>> _initializedContracts = new();
@@ -47,6 +50,7 @@ public static class ArkProtobufValueObjects
     /// <param name="value">Reads the primitive of a value object.</param>
     /// <returns>The same <paramref name="model"/> for chaining.</returns>
     /// <exception cref="NotSupportedException"><typeparamref name="TPrimitive"/> has no protobuf scalar.</exception>
+    /// <exception cref="InvalidOperationException">The value object is already registered over another primitive.</exception>
     public static RuntimeTypeModel Register<TValueObject, TPrimitive>(
         RuntimeTypeModel model,
         Func<TPrimitive, TValueObject> from,
@@ -58,7 +62,11 @@ public static class ArkProtobufValueObjects
 
         lock (model)
         {
+            // Rejects a primitive without a protobuf scalar before the value object is bound to it.
             ValueObjectSerializer<TValueObject, TPrimitive>._configure(from, value);
+            var primitive = _primitives.GetOrAdd(typeof(TValueObject), typeof(TPrimitive));
+            if (primitive != typeof(TPrimitive))
+                throw new InvalidOperationException($"Value object '{typeof(TValueObject)}' is already registered over '{primitive}', not '{typeof(TPrimitive)}'.");
             // Through the serializer's published conversions, so absent members use the same From as reads.
             _emptyValues.TryAdd(typeof(TValueObject), (
                 static () => ValueObjectSerializer<TValueObject, TPrimitive>._from(typeof(TPrimitive) == typeof(string) ? (TPrimitive)(object)string.Empty : default!),
