@@ -87,6 +87,10 @@ public sealed class EndToEndTests
         using var missing = await http.GetAsync(new Uri("/api/v1/books/" + Guid.Empty.ToString("D", CultureInfo.InvariantCulture), UriKind.Relative), ctk).ConfigureAwait(false);
         missing.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
+        using var noContact = new StringContent("{\"title\":\"Book B\"}", System.Text.Encoding.UTF8, "application/json");
+        using var rejected = await http.PostAsync(new Uri("/api/v1/books", UriKind.Relative), noContact, ctk).ConfigureAwait(false);
+        rejected.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
         await app.StopAsync(ctk).ConfigureAwait(false);
         await outbox.StopAsync(ctk).ConfigureAwait(false);
         await processor.StopAsync(ctk).ConfigureAwait(false);

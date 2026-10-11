@@ -90,7 +90,7 @@ public static class Book_CreateRequest
         public LocalTime PrintSlot { get; init; }
 
         /// <summary>Gets the publisher contact.</summary>
-        public EmailAddress Contact { get; init; }
+        public required EmailAddress Contact { get; init; }
     }
 }
 
