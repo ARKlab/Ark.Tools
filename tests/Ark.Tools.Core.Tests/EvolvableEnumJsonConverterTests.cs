@@ -17,6 +17,13 @@ namespace Ark.Tools.Core.Tests;
 [TestClass]
 public class EvolvableEnumJsonConverterTests
 {
+    private static readonly JsonSerializerOptions _byteStatusOptions = new()
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+        Converters = { new SystemTextJson.EvolvableEnumJsonConverter<ByteStatus, byte>() },
+    };
+
     private static readonly SystemTextJson.EvolvableEnumJsonConverter<Comparison> _sharedComparisonConverter = new();
 
     private static readonly JsonSerializerOptions _relaxedOptions = new()
@@ -95,6 +102,19 @@ public class EvolvableEnumJsonConverterTests
         json.Should().Be(JsonSerializer.Serialize(EvolvableEnum<Status>.FromValue(Status.Active), _createDefaultOptions()));
         JsonSerializer.Deserialize<EvolvableEnum<Status>>(json, options).Should().Be(EvolvableEnum<Status>.FromValue(Status.Active));
         JsonSerializer.Deserialize<EvolvableEnum<Status>>("\"Unknown\"", options).Name.Should().Be("Unknown");
+    }
+
+    /// <summary>Verifies that the closed two-parameter converter reads and writes names like the factory.</summary>
+    [TestMethod]
+    public void ClosedBackingConverter_ShouldRoundTripLikeTheFactory()
+    {
+        var value = EvolvableEnum<ByteStatus, byte>.FromValue(ByteStatus.Active);
+
+        var json = JsonSerializer.Serialize(value, _byteStatusOptions);
+
+        json.Should().Be(JsonSerializer.Serialize(value, _createDefaultOptions()));
+        JsonSerializer.Deserialize<EvolvableEnum<ByteStatus, byte>>(json, _byteStatusOptions).Should().Be(value);
+        JsonSerializer.Deserialize<EvolvableEnum<ByteStatus, byte>>("\"Unknown\"", _byteStatusOptions).Name.Should().Be("Unknown");
     }
 
     /// <summary>Verifies that the closed converter honours the encoder of the options it serializes with.</summary>

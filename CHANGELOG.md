@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `Ark.Tools.SystemTextJson`: `EvolvableEnumJsonConverter<TEnum>`, a closed converter for `EvolvableEnum<TEnum>` that Native AOT apps list in their source-generated JSON context; `EvolvableEnumJsonConverterFactory` closes its converters at run time, which Native AOT cannot do.
+- `Ark.Tools.SystemTextJson`: `EvolvableEnumJsonConverter<TEnum>` and `EvolvableEnumJsonConverter<TEnum, TBacking>`, closed converters for `EvolvableEnum<TEnum>` and `EvolvableEnum<TEnum, TBacking>` that Native AOT apps list in their source-generated JSON context; `EvolvableEnumJsonConverterFactory` closes its converters at run time, which Native AOT cannot do.
 - `Ark.Tools.Dapper`: `EvolvableEnumTypeHandler` has a public parameterless constructor, so Dapper.AOT can use it from `[module: TypeHandler(...)]`.
 - `Ark.Tools.Sql.SqlServer`: `NodaTimeDapperSqlServer.ConfigureParameterTypes()` sets the SQL Server parameter types on the shared NodaTime handlers without registering them with `SqlMapper`, for Native AOT apps whose Dapper.AOT handlers reuse them.
 - `ToDataTableArk()` shreds Vogen value objects (`[ValueObject<T>]` or `[ValueObject(typeof(T))]`) into a column of their primitive type, so they can be passed in table-valued parameters and `SqlBulkCopy`. Ark.Tools.Core does not depend on Vogen.
