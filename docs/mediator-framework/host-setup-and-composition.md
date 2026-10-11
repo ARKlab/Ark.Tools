@@ -236,8 +236,9 @@ versioned OpenAPI. Add only the capabilities the host intends to expose.
 
 ## Configure source-generated JSON
 
-The public API assembly owns
-`SampleApiJsonSerializerContext`. The host combines it with Ark defaults:
+The Application assembly owns `SampleApiJsonSerializerContext`, outside the
+public contracts assembly so that it sees the converters of the contracts' value
+objects. The host combines it with Ark defaults:
 
 ```csharp
 services.ConfigureHttpJsonOptions(options =>

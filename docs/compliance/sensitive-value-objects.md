@@ -120,7 +120,7 @@ in the same assembly cannot see that converter: use `ConfigureArkDefaults()` or
 add `ValueObjectJsonConverterFactory` (`Ark.Tools.SystemTextJson`) to its
 converters. The Mediator Framework exports a sensitive value object over gRPC as
 a `string` and registers it itself; see
-[serialization](../mediator-framework/serialization.md#personal-data).
+[value objects best practices](../mediator-framework/value-objects-best-practices.md#personal-data).
 
 Group the registrations in one startup class per serializer, implementing
 `ISensitiveValueSerializerRegistration` so they are easy to find:
