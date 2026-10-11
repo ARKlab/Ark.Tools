@@ -17,12 +17,21 @@ namespace Ark.Tools.Core.Tests;
 [TestClass]
 public class EvolvableEnumJsonConverterTests
 {
+    private static readonly SystemTextJson.EvolvableEnumJsonConverter<Comparison> _sharedComparisonConverter = new();
+
     private static readonly JsonSerializerOptions _relaxedOptions = new()
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         RespectNullableAnnotations = true,
         RespectRequiredConstructorParameters = true,
-        Converters = { new SystemTextJson.EvolvableEnumJsonConverter<Comparison>() },
+        Converters = { _sharedComparisonConverter },
+    };
+
+    private static readonly JsonSerializerOptions _defaultEncoderOptions = new()
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+        Converters = { _sharedComparisonConverter },
     };
 
     private enum Comparison
@@ -93,6 +102,15 @@ public class EvolvableEnumJsonConverterTests
     public void ClosedConverter_ShouldUseTheOptionsEncoder()
     {
         JsonSerializer.Serialize(EvolvableEnum<Comparison>.FromValue(Comparison.Less), _relaxedOptions).Should().Be("\"a<b\"");
+    }
+
+    /// <summary>Verifies that one closed converter instance shared by two options uses each options' encoder.</summary>
+    [TestMethod]
+    public void ClosedConverter_ShouldUseEachOptionsEncoderWhenShared()
+    {
+        var value = EvolvableEnum<Comparison>.FromValue(Comparison.Less);
+        JsonSerializer.Serialize(value, _relaxedOptions).Should().Be("\"a<b\"");
+        JsonSerializer.Serialize(value, _defaultEncoderOptions).Should().Be("\"a\\u003Cb\"");
     }
 
     /// <summary>Verifies that a defined value is serialized as its symbolic name by default.</summary>

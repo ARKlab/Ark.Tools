@@ -7,6 +7,7 @@ using Ark.Tools.Core;
 using System.Collections.Frozen;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -54,7 +55,7 @@ public sealed class EvolvableEnumJsonConverter<[DynamicallyAccessedMembers(Dynam
     JsonConverter<EvolvableEnum<TEnum>>
     where TEnum : struct, Enum
 {
-    private JsonConverter<EvolvableEnum<TEnum>>? _converter;
+    private readonly ConditionalWeakTable<JavaScriptEncoder, JsonConverter<EvolvableEnum<TEnum>>> _converters = new();
 
     /// <inheritdoc />
     public override EvolvableEnum<TEnum> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -68,11 +69,11 @@ public sealed class EvolvableEnumJsonConverter<[DynamicallyAccessedMembers(Dynam
         _getConverter(options).Write(writer, value, options);
     }
 
-    // Like the factory, encodes names with the options' encoder. An instance belongs to one options instance,
-    // as a source-generated context creates its converters per options.
+    // Like the factory, encodes names with the options' encoder. One instance can serve several options, so the
+    // inner converter is cached per encoder.
     private JsonConverter<EvolvableEnum<TEnum>> _getConverter(JsonSerializerOptions options)
     {
-        return _converter ??= EvolvableEnumJsonConverter.CreateByName<TEnum>(options.Encoder ?? JavaScriptEncoder.Default);
+        return _converters.GetValue(options.Encoder ?? JavaScriptEncoder.Default, EvolvableEnumJsonConverter.CreateByName<TEnum>);
     }
 }
 
