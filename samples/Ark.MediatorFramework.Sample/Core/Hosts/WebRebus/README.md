@@ -1,7 +1,8 @@
 # WebRebus variant
 
-The `Core` service hosted on ASP.NET Core Minimal API, with Rebus on Azure
-Service Bus. Every messaging participant runs in its own process. The processes
+The `Core` service hosted on ASP.NET Core Minimal API (the slim `WebApplication` builder, without MVC), with Rebus on Azure
+Service Bus. Every messaging participant runs in its own process by default, as
+an isolated hosted service that one process can also combine with others. The processes
 share only `Ark.MediatorFramework.Sample.Core.WebRebus.Hosting`, whose
 `RebusHosting` holds all Rebus configuration: the source-generated application
 JSON serializer, NLog, user-context flow, OpenTelemetry, the generated routing
@@ -20,6 +21,13 @@ Each process has one generated `[ArkRebusHost]` over its participant. The two
 subscribers subscribe to `BookPrintCompleted` when they start
 (`SubscribeAsync`); Rebus creates the queues, the topic, and the subscriptions on
 Service Bus.
+
+Each processor registers its receiver as one isolated `IHostedService` with
+`AddRebusReceiverHost<THost>` (`RebusReceiverHost.cs`): when the process starts,
+it creates its own application container and bus, starts the bus and subscribes;
+when the process stops, it disposes them. One process can register several
+receivers, for example inside the WebInterface of a single App Service; only one
+of them may pass `startOutboxProcessor: true`.
 
 A request that exhausts its retries moves to the Rebus `error` queue. A
 background review sent without the `books.reviews.write` scope is the example

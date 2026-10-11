@@ -38,8 +38,12 @@ var messagePackResolver = CompositeResolver.Create(
     MessagePack.NodaTime.NodatimeResolver.Instance,
     DynamicEnumAsStringResolver.Instance,
     StandardResolver.Instance);
-services.AddMessagePackFormatter(messagePackResolver);
+services.AddSingleton<IFormatterResolver>(messagePackResolver);
 ```
+
+The generated Minimal API endpoints read the resolver from dependency injection.
+`AddMessagePackFormatter` from `Ark.Tools.AspNetCore.MessagePack` configures MVC
+formatters only, so a Minimal API host does not need it.
 Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/SampleStartup.cs)
 
 Expected behavior:

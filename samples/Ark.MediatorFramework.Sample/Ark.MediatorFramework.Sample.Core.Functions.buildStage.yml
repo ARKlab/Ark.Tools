@@ -101,15 +101,6 @@ stages:
               projects: '${{ parameters.workingDirectory }}/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Audit/Ark.MediatorFramework.Sample.Core.Functions.Audit.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/Audit'
 
-          - task: DotNetCoreCLI@2
-            displayName: Publish OutboxProcessor
-            inputs:
-              command: publish
-              publishWebProjects: false
-              zipAfterPublish: false
-              projects: '${{ parameters.workingDirectory }}/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor.csproj'
-              arguments: '--configuration $(buildConfiguration) --no-restore --output $(Build.ArtifactStagingDirectory)/OutboxProcessor'
-
           - task: CopyFiles@2
             displayName: Stage database package
             inputs:

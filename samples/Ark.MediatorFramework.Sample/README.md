@@ -30,8 +30,9 @@ design is in
   for personal data. See
   [Value objects best practices](../../docs/mediator-framework/value-objects-best-practices.md).
 - Every messaging participant runs in its own process and commits its messages
-  through a transactional outbox. Receivers own a queue; the API participant only
-  sends, so it has none.
+  through a transactional outbox, except in the Functions variant, which runs on
+  Azure Functions only and sends directly. Receivers own a queue; the API
+  participant only sends, so it has none.
 - The sample supports SQL Server and an explicit in-memory test profile.
 - The framework generates HTTP endpoints, gRPC services, exported `.proto` files,
   OpenAPI documents, MCP tools, and messaging routing/handlers from contracts
@@ -85,13 +86,17 @@ on the API without receiving the worker's topology.
 | --- | --- | --- | --- |
 | `Web` | ASP.NET Core Minimal API, gRPC, MCP | Native Ark messaging on Azure Service Bus, with a separate `OutboxProcessor` | [`Core/Hosts/Web`](Core/Hosts/Web/README.md) |
 | `WebRebus` | ASP.NET Core Minimal API | Rebus on Azure Service Bus with the Rebus outbox | [`Core/Hosts/WebRebus`](Core/Hosts/WebRebus/README.md) |
-| `Functions` | Azure Functions (isolated worker) HTTP and Service Bus triggers | Native Ark messaging, with a separate `OutboxProcessor` console app | [`Core/Hosts/Functions`](Core/Hosts/Functions/README.md) |
+| `Functions` | Azure Functions (isolated worker) HTTP and Service Bus triggers, ReadyToRun | Native Ark messaging without an outbox: Azure Functions only | [`Core/Hosts/Functions`](Core/Hosts/Functions/README.md) |
 
 A separate solution, [`Ark.MediatorFramework.AotSample`](../Ark.MediatorFramework.AotSample/README.md), has the same
 structure with a slimmer API and publishes every host as Native AOT.
 
 The network keeps four participants. Each runs in its own process in every
-variant, and a variant never mixes Rebus and native messaging.
+variant, and a variant never mixes Rebus and native messaging. In the `Web` and
+`WebRebus` variants each messaging background host is an isolated
+`IHostedService` with its own application container and messaging composition, so
+one process, such as the WebInterface of a single App Service, can also host
+several of them.
 
 | Participant | Role | `Web` | `WebRebus` | `Functions` |
 | --- | --- | --- | --- | --- |
@@ -99,7 +104,7 @@ variant, and a variant never mixes Rebus and native messaging.
 | Print worker (`ark-mediator-sample`) | Processes the sent messages; publishes `BookPrintCompleted` | `Processor` | `Processor` | `Processor` |
 | Notification subscriber | Records the notification | `NotificationProcessor` | `NotificationProcessor` | `Notifications` |
 | Audit subscriber | Records the print audit effect | `AuditProcessor` | `AuditProcessor` | `Audit` |
-| Outbox drain | Dispatches committed envelopes | `OutboxProcessor` | Rebus outbox processor inside `Processor` | `OutboxProcessor` |
+| Outbox drain | Dispatches committed envelopes | `OutboxProcessor` | Rebus outbox processor inside `Processor` | None: sends are direct |
 
 `BookPrintCompleted` is declared once in the Application assembly. The print
 worker owns its topic; the notification and audit subscribers each receive an
@@ -338,7 +343,7 @@ variant:
 | --- | --- | --- |
 | `Ark.MediatorFramework.Sample.Core.Web.yml` | `Core.Tests`, `Core.Web.Tests` | WebInterface, Processor, NotificationProcessor, AuditProcessor, OutboxProcessor, DACPAC |
 | `Ark.MediatorFramework.Sample.Core.WebRebus.yml` | `Core.Tests`, `Core.WebRebus.Tests` | WebInterface, Processor, NotificationProcessor, AuditProcessor, DACPAC |
-| `Ark.MediatorFramework.Sample.Core.Functions.yml` | `Core.Tests`, `Core.Functions.Tests` (with the Service Bus emulator) | Api, Processor, Notifications, Audit, OutboxProcessor, DACPAC |
+| `Ark.MediatorFramework.Sample.Core.Functions.yml` | `Core.Tests`, `Core.Functions.Tests` (with the Service Bus emulator) | Api, Processor, Notifications, Audit, DACPAC |
 
 Each pipeline triggers on `master`, `develop`, and pull requests that touch
 `Core`, its own variant, the shared sample-root files, or its own pipeline

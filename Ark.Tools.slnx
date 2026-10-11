@@ -149,11 +149,14 @@
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor/Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.Tests/Ark.MediatorFramework.Sample.Core.WebRebus.Tests.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Hosting/Ark.MediatorFramework.Sample.Core.Functions.Hosting.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Api.Triggers/Ark.MediatorFramework.Sample.Core.Functions.Api.Triggers.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Processor.Triggers/Ark.MediatorFramework.Sample.Core.Functions.Processor.Triggers.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Notifications.Triggers/Ark.MediatorFramework.Sample.Core.Functions.Notifications.Triggers.csproj" />
+    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Audit.Triggers/Ark.MediatorFramework.Sample.Core.Functions.Audit.Triggers.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Api/Ark.MediatorFramework.Sample.Core.Functions.Api.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Processor/Ark.MediatorFramework.Sample.Core.Functions.Processor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Notifications/Ark.MediatorFramework.Sample.Core.Functions.Notifications.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Audit/Ark.MediatorFramework.Sample.Core.Functions.Audit.csproj" />
-    <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor/Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/Ark.MediatorFramework.Sample.Core.Functions.Tests/Ark.MediatorFramework.Sample.Core.Functions.Tests.csproj" />
     <Project Path="samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Database/Ark.MediatorFramework.Sample.Core.Database.sqlproj">
       <Build />

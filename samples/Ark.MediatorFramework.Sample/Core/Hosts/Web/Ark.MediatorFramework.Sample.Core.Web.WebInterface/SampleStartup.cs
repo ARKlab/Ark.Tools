@@ -7,7 +7,6 @@ using Ark.MediatorFramework.Sample.Core.Web.Hosting;
 using Ark.MediatorFramework.Sample.Core.Web.WebInterface.Auth;
 using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
-using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.Compliance;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
@@ -22,6 +21,7 @@ using Ark.Tools.Nodatime.Protobuf;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 
+using MessagePack;
 using MessagePack.Resolvers;
 
 using Scalar.AspNetCore;
@@ -132,14 +132,14 @@ public sealed class SampleStartup
         services.AddArkMinimalApiSecurity();
 
         services.AddRouting();
-        services.AddControllers();
 
         var messagePackResolver = CompositeResolver.Create(
             SampleMessagePackFormatters.Resolver,
             MessagePack.NodaTime.NodatimeResolver.Instance,
             DynamicEnumAsStringResolver.Instance,
             StandardResolver.Instance);
-        services.AddMessagePackFormatter(messagePackResolver);
+        // The generated Minimal API endpoints read the resolver from dependency injection.
+        services.AddSingleton<IFormatterResolver>(messagePackResolver);
 
         // Minimal API JSON: compose the source-generated application metadata with the Ark
         // defaults (camelCase, NodaTime, enum-as-member).
@@ -209,7 +209,6 @@ public sealed class SampleStartup
             endpoints.MapMcp("/mcp/v{version}").RequireAuthorization();
             endpoints.MapArkGrpcServicesFromAssembly<Book_CreateRequest.V1>();
             endpoints.MapCodeFirstGrpcReflectionService().AllowAnonymous();
-            endpoints.MapControllers();
 
             // Serves generated JSON and YAML documents at /openapi/{documentName}.{json|yaml}.
             endpoints.MapOpenApi().AllowAnonymous();

@@ -11,6 +11,7 @@ using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Solid.SimpleInjector;
 
+using Azure.Messaging.ServiceBus;
 using Azure.Messaging.ServiceBus.Administration;
 
 using Microsoft.Extensions.Configuration;
@@ -151,6 +152,30 @@ public static class WebHosting
             ConnectionString = configuration.GetConnectionString("DataBus")
                 ?? throw new InvalidOperationException("ConnectionStrings:DataBus is required."),
         });
+    }
+
+    /// <summary>Creates the options of an isolated messaging host from the process configuration.</summary>
+    /// <remarks>
+    /// Reads <c>ConnectionStrings:Sample</c>, <c>ConnectionStrings:ServiceBus</c> and the settings of
+    /// <see cref="CreateDataBus"/> and <see cref="CreateResourceManagement"/>. Each host creates its own
+    /// Service Bus client and application container from them.
+    /// </remarks>
+    /// <param name="configuration">The process configuration.</param>
+    /// <returns>The host options.</returns>
+    public static MessagingHostOptions CreateHostOptions(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var sql = configuration.GetConnectionString("Sample")
+            ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
+        var serviceBus = configuration.GetConnectionString("ServiceBus")
+            ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
+        return new MessagingHostOptions
+        {
+            Application = new ApplicationOptions { SqlConnectionString = sql },
+            Transport = () => new ServiceBusMessagingTransport(new ServiceBusClient(serviceBus)),
+            DataBus = CreateDataBus(configuration),
+            ResourceManagement = CreateResourceManagement(configuration),
+        };
     }
 
     /// <summary>Exposes the participant bus, which lives in Microsoft DI, to the application container.</summary>

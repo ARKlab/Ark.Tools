@@ -88,7 +88,8 @@ public partial class HelloEndpointContext
 {
 }
 
-var builder = WebApplication.CreateBuilder(args);
+// The generated endpoints need no MVC: the slim builder is enough.
+var builder = WebApplication.CreateSlimBuilder(args);
 builder.UseArkMinimalApiStartupDiagnostics();
 
 var container = new Container();

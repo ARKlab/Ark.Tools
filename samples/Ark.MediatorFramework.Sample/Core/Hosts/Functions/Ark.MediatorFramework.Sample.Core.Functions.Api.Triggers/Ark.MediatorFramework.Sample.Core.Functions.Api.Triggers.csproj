@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Holds the Api app's HttpHost. The Azure Functions Worker SDK source generators index and execute only the
+    functions they see in referenced assemblies: they never see a [Function] that another source generator, such as
+    Ark's, emits in the same compilation. The app references this library with FunctionsInDependencies.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.MediatorFramework.AzureFunctions" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Hosting\Ark.MediatorFramework.Sample.Core.Functions.Hosting.csproj" />
+  </ItemGroup>
+
+</Project>

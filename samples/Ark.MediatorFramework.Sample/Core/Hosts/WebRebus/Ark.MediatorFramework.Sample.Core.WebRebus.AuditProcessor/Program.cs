@@ -4,13 +4,11 @@
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.Application.Services;
-using Ark.MediatorFramework.Sample.Core.WebRebus.Hosting;
 using Ark.MediatorFramework.Sample.Core.WebRebus.AuditProcessor;
+using Ark.MediatorFramework.Sample.Core.WebRebus.Hosting;
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.NLog;
-using Ark.Tools.Rebus;
-using Ark.Tools.Solid;
 
 using Azure.Identity;
 
@@ -20,10 +18,6 @@ using Microsoft.Extensions.Logging;
 
 using NLog;
 using NLog.Extensions.Logging;
-
-using Rebus.Config;
-
-using System.Security.Claims;
 
 try
 {
@@ -38,25 +32,11 @@ try
     builder.Logging.ClearProviders();
     builder.Logging.AddNLog();
     builder.Services.AddArkRedaction();
-    var sql = builder.Configuration.GetConnectionString("Sample")
-        ?? throw new InvalidOperationException("ConnectionStrings:Sample is required.");
-    var serviceBus = builder.Configuration.GetConnectionString("ServiceBus")
-        ?? throw new InvalidOperationException("ConnectionStrings:ServiceBus is required.");
-    var dataBus = builder.Configuration.GetConnectionString("DataBus")
-        ?? throw new InvalidOperationException("ConnectionStrings:DataBus is required.");
-    await using var container = RebusHosting.CreateContainer(new ApplicationOptions { SqlConnectionString = sql });
-    container.RegisterSingleton<IContextProvider<ClaimsPrincipal>, RebusPrincipalContextWithFallbackProvider>();
-    ApplicationComposition.RegisterAuditSubscriber(container, new LoggingBookPrintAuditSink());
-    RebusHosting.Configure<AuditRebusHost>(
-        container,
-        t => t.UseAzureServiceBus(serviceBus, SampleMessagingAuditParticipant.Identity),
-        d => d.StoreInBlobStorage(dataBus, RebusHosting.DataBusContainerName),
-        startOutboxProcessor: false);
+    // An isolated hosted service: its own application container and bus.
+    builder.Services.AddRebusReceiverHost<AuditRebusHost>(
+        _ => RebusReceiverHostServiceCollectionExtensions.CreateRebusReceiverHostOptions(builder.Configuration),
+        static container => ApplicationComposition.RegisterAuditSubscriber(container, new LoggingBookPrintAuditSink()));
     using var host = builder.Build();
-    container.Verify();
-    container.StartBus();
-    // Starting the bus does not subscribe: this subscribes the process to BookPrintCompleted.
-    await AuditRebusHost.SubscribeAsync(container.GetInstance<global::Rebus.Bus.IBus>()).ConfigureAwait(false);
     await host.RunAsync().ConfigureAwait(false);
 }
 catch (Exception ex)

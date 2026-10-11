@@ -336,3 +336,11 @@ Every step builds the root solution and passes the affected tests.
 - **Framework gaps.** A variant may reveal a missing framework capability
   (for example, hosting a producer in the Functions HTTP app). Such gaps get
   their own task and framework tests before the variant depends on them.
+
+## Update: Functions-only messaging (2026-10)
+
+The Functions variant no longer has an `OutboxProcessor`: it runs on Azure Functions only and sends directly through
+`DirectSendBus`, accepting the loss of the outbox's atomicity. Each Functions app's `HttpHost` or
+`MessagingFunctionsHost` moved to a per-app `Triggers` library, because the Worker SDK source generators cannot see
+functions that the Ark generator emits in the same project. See the
+[Functions variant README](../../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/README.md).

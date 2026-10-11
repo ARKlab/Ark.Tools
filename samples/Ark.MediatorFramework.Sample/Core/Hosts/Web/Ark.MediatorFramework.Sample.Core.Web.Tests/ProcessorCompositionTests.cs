@@ -3,7 +3,6 @@
 
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Web.Hosting;
-using Ark.Tools.MediatorFramework;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Outbox;
 
@@ -14,11 +13,9 @@ using Microsoft.Extensions.Hosting;
 
 using NodaTime;
 
-using SimpleInjector;
-
 namespace Ark.MediatorFramework.Sample.Core.Web.Tests;
 
-/// <summary>Composes and verifies each receiver process of the Web variant, as its <c>Program.cs</c> does.</summary>
+/// <summary>Composes and starts each receiver of the Web variant as an isolated hosted service, as its <c>Program.cs</c> does.</summary>
 [TestClass]
 public sealed class ProcessorCompositionTests
 {
@@ -30,46 +27,89 @@ public sealed class ProcessorCompositionTests
     [DataRow("AuditProcessor")]
     public async Task EachProcessorHostsExactlyOneReceiver(string processor)
     {
-        var factory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory());
-        var transport = new InMemoryMessagingTransport();
-        // The attachment lifetime must outlive the network's one-hour maximum scheduling delay.
-        var dataBus = new InMemoryMessagingDataBus(SystemClock.Instance, Duration.FromHours(2));
-        await using var container = WebHosting.CreateContainer(new ApplicationOptions { DataContextFactory = factory });
         var services = new ServiceCollection();
         services.AddLogging();
+        _addReceiver(processor, services, _options());
+        var provider = services.BuildServiceProvider();
+        await using var __provider = provider.ConfigureAwait(false);
+        var host = provider.GetServices<IHostedService>().Should().ContainSingle()
+            .Which.Should().BeAssignableTo<IsolatedMessagingHost>().Subject;
 
-        _addReceiver(processor, services, container, transport, dataBus);
-        await using var provider = services.BuildServiceProvider();
-        WebHosting.BridgeBus(container, () => provider);
-        container.Verify();
-
-        var hosted = provider.GetServices<IHostedService>().ToArray();
-        hosted.OfType<MessagingProcessorHost>().Should().ContainSingle();
-        hosted.OfType<MessagingOutboxProcessor>().Should().BeEmpty();
+        // Starting verifies the receiver's own application container.
+        await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            var hosted = host.Services.GetServices<IHostedService>().ToArray();
+            hosted.OfType<MessagingProcessorHost>().Should().ContainSingle();
+            hosted.OfType<MessagingOutboxProcessor>().Should().BeEmpty();
+        }
+        finally
+        {
+            await host.StopAsync(CancellationToken.None).ConfigureAwait(false);
+        }
     }
 
-    private static void _addReceiver(
-        string processor,
-        IServiceCollection services,
-        Container container,
-        IMessagingTransport transport,
-        IMessagingDataBus dataBus)
+    /// <summary>One process can host every receiver and the outbox processor, each isolated from the others.</summary>
+    [TestMethod]
+    public async Task OneProcessHostsEveryMessagingHost()
+    {
+        var options = _options();
+        var builder = Host.CreateApplicationBuilder();
+        _addReceiver("Processor", builder.Services, options);
+        _addReceiver("NotificationProcessor", builder.Services, options);
+        _addReceiver("AuditProcessor", builder.Services, options);
+        builder.Services.AddOutboxProcessorHost(
+            _ => options.Transport(),
+            static _ => new InMemoryOutboxContextFactory());
+        using var host = builder.Build();
+
+        await host.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            var hosts = host.Services.GetServices<IHostedService>().OfType<IsolatedMessagingHost>().ToArray();
+            hosts.Should().HaveCount(4);
+            hosts.Select(static h => h.Services).Should().OnlyHaveUniqueItems();
+            hosts.SelectMany(static h => h.Services.GetServices<IHostedService>())
+                .OfType<MessagingProcessorHost>().Should().HaveCount(3);
+        }
+        finally
+        {
+            await host.StopAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+    }
+
+    private static MessagingHostOptions _options()
+    {
+        // One in-memory transport and DataBus stand for the shared Service Bus namespace and blob container.
+        var transport = new InMemoryMessagingTransport();
+        return new MessagingHostOptions
+        {
+            Application = new ApplicationOptions
+            {
+                DataContextFactory = new InMemorySampleDataContextFactory(new InMemoryOutboxContextFactory()),
+            },
+            Transport = () => transport,
+            // The attachment lifetime must outlive the network's one-hour maximum scheduling delay.
+            DataBus = new InMemoryMessagingDataBus(SystemClock.Instance, Duration.FromHours(2)),
+        };
+    }
+
+    private static void _addReceiver(string processor, IServiceCollection services, MessagingHostOptions options)
     {
         switch (processor)
         {
             case "Processor":
-                WebHosting.AddParticipant<SampleMessagingParticipant>(
-                    services, container, transport, dataBus, resourceManagement: null, receiver: true);
+                services.AddReceiverHost<SampleMessagingParticipant>(_ => options);
                 break;
             case "NotificationProcessor":
-                ApplicationComposition.RegisterNotificationSubscriber(container, new NoOpBookPrintNotificationSink());
-                WebHosting.AddParticipant<SampleMessagingNotificationParticipant>(
-                    services, container, transport, dataBus, resourceManagement: null, receiver: true);
+                services.AddReceiverHost<SampleMessagingNotificationParticipant>(
+                    _ => options,
+                    static container => ApplicationComposition.RegisterNotificationSubscriber(container, new NoOpBookPrintNotificationSink()));
                 break;
             case "AuditProcessor":
-                ApplicationComposition.RegisterAuditSubscriber(container, new NoOpBookPrintAuditSink());
-                WebHosting.AddParticipant<SampleMessagingAuditParticipant>(
-                    services, container, transport, dataBus, resourceManagement: null, receiver: true);
+                services.AddReceiverHost<SampleMessagingAuditParticipant>(
+                    _ => options,
+                    static container => ApplicationComposition.RegisterAuditSubscriber(container, new NoOpBookPrintAuditSink()));
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(processor), processor, "Unknown processor.");
