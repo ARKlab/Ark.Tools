@@ -66,9 +66,10 @@ in 45 to 65 MB of RSS.
 | Finding | Workaround |
 | --- | --- |
 | Microsoft.Data.SqlClient throws `Globalization Invariant Mode is not supported` when it opens a connection | Do not set `InvariantGlobalization`; ship ICU in the image |
-| Dapper.AOT 1.1.0 binds a `byte[]` parameter as a list expansion (`PackListParameters`), even with `[DbValue(DbType = Binary)]`, which produces invalid SQL | Plain ADO.NET for that statement |
-| Dapper.AOT 1.1.0 silently leaves a call inside a `foreach` body on reflection-based Dapper, with no diagnostic; it fails only at run time | Move the call to a helper method. The publish log shows it: Dapper's `IL2104`/`IL3053` appear only when a call fell back |
-| Dapper.AOT reads the SQL and parameters only from the direct overloads, not from `CommandDefinition` (DAP057) | Pass the `CancellationToken` as a member of the parameter object; Dapper.AOT honours it |
+| Dapper.AOT 1.1.0 binds a `byte[]` parameter as a list expansion (`PackListParameters`), even with `[DbValue(DbType = Binary)]`, which produces invalid SQL ([DapperAOT#226](https://github.com/DapperLib/DapperAOT/issues/226)) | Plain ADO.NET for that statement |
+| Dapper.AOT 1.1.0 silently leaves a call on reflection-based Dapper when a parameter member's type depends on another source generator's output (a `var` local or inline expression using a System.Text.Json `JsonSerializerContext`): generators do not see each other. No diagnostic; it fails only at run time | Type such locals explicitly (`string headers = …`). The publish log shows a fallback: Dapper's `IL2104`/`IL3053` appear only when a call was left on reflection |
+| Dapper.AOT reads the SQL and parameters only from the direct overloads, not from `CommandDefinition` (DAP057) | Pass the `CancellationToken` as a member of the parameter object. Verified: it cancels when the object also has a SQL parameter, but is silently ignored when the token is the only member |
+| An intercepted call without `commandTimeout` runs with no timeout instead of the provider default ([DapperAOT#229](https://github.com/DapperLib/DapperAOT/issues/229)) | None in the sample; expected to be fixed upstream |
 
 ## gRPC (spike)
 
