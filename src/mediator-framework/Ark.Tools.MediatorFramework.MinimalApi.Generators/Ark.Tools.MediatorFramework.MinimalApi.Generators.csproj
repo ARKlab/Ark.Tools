@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/GeneratorSpecPrimitives.cs" Link="GeneratorSpecPrimitives.cs" />
+    <Compile Include="../Ark.Tools.MediatorFramework.Generators/ValueObjectSymbols.cs" Link="ValueObjectSymbols.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/HttpStringBinding.cs" Link="HttpStringBinding.cs" />
   </ItemGroup>
 

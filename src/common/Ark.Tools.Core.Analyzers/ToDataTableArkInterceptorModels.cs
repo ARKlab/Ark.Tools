@@ -54,8 +54,11 @@ internal enum ConversionKind
     SensitiveValueToTransport,
 }
 
-/// <summary>A single shredded column: its source member name, nullability, conversion, and derived DataColumn type.</summary>
-internal readonly record struct MemberModel(string Name, bool IsNullable, ConversionKind Conversion, string ColumnTypeFullName);
+/// <summary>
+/// A single shredded column: its source member name, nullability, conversion, and derived DataColumn type.
+/// <paramref name="IsValueObject"/> marks a Vogen value object: its <c>Value</c> is read (null-safe) and the conversion applies to that primitive.
+/// </summary>
+internal readonly record struct MemberModel(string Name, bool IsNullable, ConversionKind Conversion, string ColumnTypeFullName, bool IsValueObject = false);
 
 /// <summary>The cached shape of a compile-time-known element type T eligible for interception.</summary>
 internal readonly record struct TypeModel(

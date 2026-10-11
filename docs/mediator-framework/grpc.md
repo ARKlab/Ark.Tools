@@ -30,6 +30,23 @@ Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample
 Every protobuf member needs a stable number. Never reuse a number after a client
 has shipped. Add a new number or introduce a new API version.
 
+The exported `.proto` declares a `Guid` as `string`. protobuf-net writes it as a
+string only from `CompatibilityLevel.Level300`, so set it once in the contracts
+assembly; the generator reports [`ARKMF060`](../analyzer-rules/ARKMF060.md)
+otherwise:
+
+```csharp
+[assembly: ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level300)]
+```
+Source: [`BookId.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookId.cs)
+
+A [Vogen value object](value-objects-best-practices.md#vogen-value-objects) member is exported
+as the primitive it wraps and needs no registration. An absent field, which is
+how proto3 sends `""` or `0`, reads as the value object over that empty value,
+as in JSON, rather than as an uninitialized value object. A compliance
+[sensitive value object](value-objects-best-practices.md#personal-data), such as `PersonName`,
+is exported as a `string` and registered the same way.
+
 `[GrpcMethod]` and `[GrpcService]` ship in `Ark.Tools.MediatorFramework`, so the
 contracts project references that package and `protobuf-net` only. Reference
 `Ark.Tools.MediatorFramework.Grpc` from the host that serves the methods.

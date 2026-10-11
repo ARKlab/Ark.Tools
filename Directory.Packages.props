@@ -74,6 +74,7 @@
     <PackageVersion Include="Reqnroll" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.MsTest" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
+    <PackageVersion Include="Vogen" Version="8.0.7" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <!-- MONITORING & LOGGING -->
     <PackageVersion Include="Microsoft.ApplicationInsights" Version="3.1.2" />

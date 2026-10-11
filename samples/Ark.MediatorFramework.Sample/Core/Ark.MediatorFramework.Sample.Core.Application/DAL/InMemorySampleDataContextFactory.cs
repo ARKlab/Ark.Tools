@@ -3,7 +3,6 @@
 
 using Ark.Tools.Core;
 using Ark.Tools.Core.Reflection;
-using Ark.Tools.Compliance;
 using Ark.Tools.Outbox;
 
 using System.Collections.Concurrent;
@@ -14,11 +13,11 @@ namespace Ark.MediatorFramework.Sample.Core.Application.DAL;
 public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
 {
     private readonly ConcurrentQueue<AuditRecord> _audits = new();
-    private readonly ConcurrentDictionary<Guid, Book.V1.Output> _books = new();
-    private readonly ConcurrentDictionary<Guid, long> _bookVersions = new();
-    private readonly ConcurrentDictionary<Guid, BookReview> _bookReviews = new();
-    private readonly ConcurrentDictionary<Guid, ReadingActivity> _readingActivities = new();
-    private readonly ConcurrentDictionary<Guid, BookPrintProcessResponse> _printProcesses = new();
+    private readonly ConcurrentDictionary<BookId, Book.V1.Output> _books = new();
+    private readonly ConcurrentDictionary<BookId, long> _bookVersions = new();
+    private readonly ConcurrentDictionary<BookReviewId, BookReview> _bookReviews = new();
+    private readonly ConcurrentDictionary<ReadingActivityId, ReadingActivity> _readingActivities = new();
+    private readonly ConcurrentDictionary<BookPrintProcessId, BookPrintProcessResponse> _printProcesses = new();
     private readonly Lock _sync = new();
     private readonly IOutboxAsyncContextFactory _outboxFactory;
 
@@ -150,7 +149,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         }
 
         public async Task<Book.V1.Output?> ReadBookAsync(
-            Guid id,
+            BookId id,
             CancellationToken ctk = default)
         {
             _owner._books.TryGetValue(id, out var book);
@@ -175,7 +174,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             return await Task.FromResult(updated).ConfigureAwait(false);
         }
 
-        public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
+        public async Task<bool> DeleteBookAsync(BookId id, CancellationToken ctk = default)
         {
             return await Task.FromResult(_owner._books.TryRemove(id, out _)).ConfigureAwait(false);
         }
@@ -187,8 +186,8 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             ArgumentNullException.ThrowIfNull(query);
             var matching = _owner._books.Values
                 .Where(book =>
-                    (query.Title is null || string.Equals(book.Title, query.Title, StringComparison.Ordinal))
-                    && (query.Author is null || string.Equals(book.Author, query.Author, StringComparison.Ordinal))
+                    (query.Title is null || book.Title == query.Title)
+                    && (query.Author is null || book.Author == query.Author)
                     && (query.Genre is null || book.Genre == query.Genre));
             var sorts = query.Sort?.Where(static sort => !string.IsNullOrWhiteSpace(sort)).ToArray() ?? [];
             var ordered = sorts.Length == 0
@@ -212,13 +211,13 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
-        public async Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default)
+        public async Task<BookReview?> ReadBookReviewAsync(BookReviewId id, CancellationToken ctk = default)
         {
             return await Task.FromResult(_owner._bookReviews.TryGetValue(id, out var review) ? review : null).ConfigureAwait(false);
         }
 
         public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
-            Guid bookId,
+            BookId bookId,
             int skip,
             int limit,
             CancellationToken ctk = default)
@@ -242,8 +241,8 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         }
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
-            Guid bookId,
-            [Pseudonymous] string userId,
+            BookId bookId,
+            UserId userId,
             int limit,
             CancellationToken ctk = default)
         {
@@ -274,7 +273,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         }
 
         public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(
-            Guid id,
+            BookPrintProcessId id,
             bool forUpdate = false,
             CancellationToken ctk = default)
         {
@@ -302,7 +301,7 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
         }
 
         public async Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(
-            Guid id,
+            BookPrintProcessId id,
             CancellationToken ctk = default)
         {
             BookPrintProcessResponse? cancelled = null;

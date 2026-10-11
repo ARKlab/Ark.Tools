@@ -62,7 +62,7 @@ public sealed class ProcessBookPrintProcessHandler :
     }
 
     private async Task<BookPrintProcessResponse> _executeAsync(
-        Guid id,
+        BookPrintProcessId id,
         CancellationToken ctk)
     {
         using var activity = SampleTelemetry._activitySource.StartActivity(
@@ -88,7 +88,7 @@ public sealed class ProcessBookPrintProcessHandler :
         {
             process = process with
             {
-                Progress = 0.5,
+                Progress = PrintProgress.From(0.5),
                 Status = BookPrintProcessStatus.Running,
             };
             process = await _persistAsync(process, ctk).ConfigureAwait(false);
@@ -104,7 +104,7 @@ public sealed class ProcessBookPrintProcessHandler :
             }
             : process with
             {
-                Progress = 1,
+                Progress = PrintProgress.From(1),
                 Status = BookPrintProcessStatus.Completed,
             };
         process = await _persistAsync(process, ctk).ConfigureAwait(false);
@@ -150,14 +150,13 @@ public sealed class ProcessBookPrintProcessHandler :
         return process;
     }
 
-    private AuditEntry _createAudit(Guid id)
+    private AuditEntry _createAudit(BookPrintProcessId id)
     {
         return new AuditEntry
         {
-            Id = Guid.NewGuid(),
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(BookPrintProcessResponse),
-            Identifier = id.ToString("D"),
+            Identifier = id.Value.ToString("D"),
             Operation = nameof(ProcessBookPrintProcessRequest),
             Timestamp = _clock.GetCurrentInstant(),
         };

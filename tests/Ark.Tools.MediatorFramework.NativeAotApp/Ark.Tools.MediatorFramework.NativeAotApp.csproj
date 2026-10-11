@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    Native AOT smoke test for Vogen value objects across the Ark.Tools features that support Native AOT:
+    System.Text.Json, ToDataTableArk and generated Minimal API endpoints.
+    CI publishes it with Native AOT and runs it; it exits non-zero when a check fails.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Non-production smoke test: redaction registration (ARKPII013) not required -->
+    <NoWarn>$(NoWarn);ARKPII013</NoWarn>
+    <!-- Pinned so the lock file is the same on every OS and the referenced libraries restore without a RID. CI runs on linux-x64. -->
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Ark.Tools.Core.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Vogen" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Core/Ark.Tools.Core.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Core.Analyzers/Ark.Tools.Core.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../../src/common/Ark.Tools.Solid/Ark.Tools.Solid.csproj" />
+    <ProjectReference Include="../../src/common/Ark.Tools.SystemTextJson/Ark.Tools.SystemTextJson.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework/Ark.Tools.MediatorFramework.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
+    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi.Generators/Ark.Tools.MediatorFramework.MinimalApi.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>

@@ -10,7 +10,7 @@ public sealed class BookReviewIdConflictViolation : BusinessRuleViolation
 {
     /// <summary>Initializes a new instance of the <see cref="BookReviewIdConflictViolation"/> class.</summary>
     /// <param name="reviewId">The review identifier that is already in use.</param>
-    public BookReviewIdConflictViolation(Guid reviewId)
+    public BookReviewIdConflictViolation(BookReviewId reviewId)
         : base("The review identifier is already in use.")
     {
         ReviewId = reviewId;
@@ -18,5 +18,5 @@ public sealed class BookReviewIdConflictViolation : BusinessRuleViolation
     }
 
     /// <summary>Gets the review identifier that is already in use.</summary>
-    public Guid ReviewId { get; }
+    public BookReviewId ReviewId { get; }
 }

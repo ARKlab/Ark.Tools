@@ -13,14 +13,14 @@ public interface IBookPrintNotificationSink
     /// <summary>Records a completed book print.</summary>
     /// <param name="bookId">The completed book identifier.</param>
     /// <param name="ctk">The cancellation token.</param>
-    Task RecordAsync(Guid bookId, CancellationToken ctk = default);
+    Task RecordAsync(BookId bookId, CancellationToken ctk = default);
 }
 
 /// <summary>Default notification sink for hosts without an external notifier.</summary>
 public sealed class NoOpBookPrintNotificationSink : IBookPrintNotificationSink
 {
     /// <inheritdoc />
-    public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
+    public async Task RecordAsync(BookId bookId, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
     }
@@ -32,14 +32,14 @@ public interface IBookPrintAuditSink
     /// <summary>Records a completed book print audit entry.</summary>
     /// <param name="bookId">The completed book identifier.</param>
     /// <param name="ctk">The cancellation token.</param>
-    Task RecordAsync(Guid bookId, CancellationToken ctk = default);
+    Task RecordAsync(BookId bookId, CancellationToken ctk = default);
 }
 
 /// <summary>Default audit sink for hosts without an external audit store.</summary>
 public sealed class NoOpBookPrintAuditSink : IBookPrintAuditSink
 {
     /// <inheritdoc />
-    public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
+    public async Task RecordAsync(BookId bookId, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
     }
@@ -51,7 +51,7 @@ public sealed class LoggingBookPrintNotificationSink : IBookPrintNotificationSin
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     /// <inheritdoc />
-    public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
+    public async Task RecordAsync(BookId bookId, CancellationToken ctk = default)
     {
         _logger.Info(CultureInfo.InvariantCulture, "Book print notification recorded for book {BookId}", bookId);
         await Task.CompletedTask.ConfigureAwait(false);
@@ -64,7 +64,7 @@ public sealed class LoggingBookPrintAuditSink : IBookPrintAuditSink
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
     /// <inheritdoc />
-    public async Task RecordAsync(Guid bookId, CancellationToken ctk = default)
+    public async Task RecordAsync(BookId bookId, CancellationToken ctk = default)
     {
         _logger.Info(CultureInfo.InvariantCulture, "Book print audit recorded for book {BookId}", bookId);
         await Task.CompletedTask.ConfigureAwait(false);

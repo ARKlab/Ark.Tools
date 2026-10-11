@@ -115,7 +115,12 @@ read.
 | `Ark.Tools.Compliance.Reqnroll` | `SensitiveValueReqnroll.Register();` in test setup — feature tables then bind columns to sensitive value objects |
 
 System.Text.Json and `TypeConverter` need no registration — the generator applies
-the converters directly on the struct.
+the converters directly on the struct. A source-generated `JsonSerializerContext`
+in the same assembly cannot see that converter: declare the context in another
+assembly, or add `ValueObjectJsonConverterFactory` (`Ark.Tools.SystemTextJson`)
+to its converters. The Mediator Framework exports a sensitive value object over gRPC as
+a `string` and registers it itself; see
+[value objects best practices](../mediator-framework/value-objects-best-practices.md#personal-data).
 
 Group the registrations in one startup class per serializer, implementing
 `ISensitiveValueSerializerRegistration` so they are easy to find:

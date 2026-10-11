@@ -1,11 +1,13 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Core.API.JsonContext;
+using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 
 using Ark.Tools.Nodatime.Protobuf;
 
 using AwesomeAssertions;
+
+using Ark.Tools.MediatorFramework.Grpc;
 
 using MessagePack;
 using MessagePack.Resolvers;
@@ -28,8 +30,8 @@ public sealed class NodaTimeContractRoundtripTests
     {
         var original = new AuditRecord
         {
-            Id = Guid.Parse("4f8f3b0a-7c5a-4d3e-9a1b-2c6d8e0f1234"),
-            UserId = "roundtrip-user",
+            Id = AuditId.From(Guid.Parse("4f8f3b0a-7c5a-4d3e-9a1b-2c6d8e0f1234")),
+            UserId = UserId.From("roundtrip-user"),
             EntityType = "Book",
             Identifier = "book-42",
             Operation = "Updated",
@@ -45,6 +47,7 @@ public sealed class NodaTimeContractRoundtripTests
 
         var messagePackOptions = MessagePackSerializerOptions.Standard.WithResolver(
             CompositeResolver.Create(
+                SampleMessagePackFormatters.Resolver,
                 MessagePack.NodaTime.NodatimeResolver.Instance,
                 DynamicEnumAsStringResolver.Instance,
                 StandardResolver.Instance));
@@ -55,6 +58,12 @@ public sealed class NodaTimeContractRoundtripTests
 
         var protobufModel = RuntimeTypeModel.Create();
         protobufModel.AddNodaTimeSurrogates();
+        // Generated gRPC services register the value objects they reach; AuditRecord is not exposed over gRPC.
+        ArkProtobufValueObjects.Register<AuditId, Guid>(protobufModel, AuditId.From, static id => id.Value);
+        ArkProtobufValueObjects.Register<UserId, string>(
+            protobufModel,
+            SensitiveValueSerialization.FromTransport<UserId>,
+            static userId => SensitiveValueSerialization.ToTransport(userId, "protobuf"));
         protobufModel.Add(typeof(AuditRecord), true);
         using var protobufStream = new MemoryStream();
         protobufModel.Serialize(protobufStream, original);

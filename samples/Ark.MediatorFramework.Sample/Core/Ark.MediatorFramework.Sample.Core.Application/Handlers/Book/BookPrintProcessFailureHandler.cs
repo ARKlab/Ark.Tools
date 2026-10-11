@@ -67,10 +67,9 @@ public sealed class BookPrintProcessFailureHandler :
         };
         await context.WriteAuditAsync(new AuditEntry
         {
-            Id = Guid.NewGuid(),
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(BookPrintProcessResponse),
-            Identifier = process.Id.ToString("D"),
+            Identifier = process.Id.Value.ToString("D"),
             Operation = nameof(BookPrintProcessFailureHandler),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);

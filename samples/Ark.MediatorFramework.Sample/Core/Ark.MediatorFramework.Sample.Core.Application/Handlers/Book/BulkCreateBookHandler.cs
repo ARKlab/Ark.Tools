@@ -36,7 +36,7 @@ public sealed class BulkCreateBookHandler :
         ArgumentNullException.ThrowIfNull(request);
         var books = request.Data
             .Select(static data => CreateBookHandler._createResponse(
-                Guid.NewGuid(),
+                BookId.New(),
                 data.Title,
                 data.Author,
                 data.Genre,
@@ -48,10 +48,9 @@ public sealed class BulkCreateBookHandler :
         {
             await context.WriteAuditAsync(new AuditEntry
             {
-                Id = Guid.NewGuid(),
-                UserId = _user.GetUserId() ?? "anonymous",
+                UserId = _user.GetUserIdOrAnonymous(),
                 EntityType = nameof(Book.V1.Output),
-                Identifier = book.Id.ToString("D"),
+                Identifier = book.Id.Value.ToString("D"),
                 Operation = typeof(Book_BulkCreateRequest).Name + "." + typeof(Book_BulkCreateRequest.V1).Name,
                 Timestamp = _clock.GetCurrentInstant(),
             }, ctk).ConfigureAwait(false);

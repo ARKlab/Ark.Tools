@@ -48,10 +48,9 @@ public sealed class CancelBookPrintProcessHandler :
         }
         await context.WriteAuditAsync(new AuditEntry
         {
-            Id = Guid.NewGuid(),
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(BookPrintProcessResponse),
-            Identifier = request.Id.ToString("D"),
+            Identifier = request.Id.Value.ToString("D"),
             Operation = nameof(CancelBookPrintProcessRequest),
             Timestamp = _clock.GetCurrentInstant(),
         }, ctk).ConfigureAwait(false);

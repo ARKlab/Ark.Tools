@@ -13,7 +13,7 @@ public sealed class BookPrintProcessCannotBeCancelledViolation : BusinessRuleVio
     /// <param name="processId">The identifier of the print process.</param>
     /// <param name="status">The current print-process status.</param>
     public BookPrintProcessCannotBeCancelledViolation(
-        Guid processId,
+        BookPrintProcessId processId,
         EvolvableEnum<BookPrintProcessStatus> status)
         : base("The book print process cannot be cancelled.")
     {
@@ -23,7 +23,7 @@ public sealed class BookPrintProcessCannotBeCancelledViolation : BusinessRuleVio
     }
 
     /// <summary>Gets the identifier of the print process.</summary>
-    public Guid ProcessId { get; }
+    public BookPrintProcessId ProcessId { get; }
 
     /// <summary>Gets the current print-process status.</summary>
     public EvolvableEnum<BookPrintProcessStatus> CurrentStatus { get; }

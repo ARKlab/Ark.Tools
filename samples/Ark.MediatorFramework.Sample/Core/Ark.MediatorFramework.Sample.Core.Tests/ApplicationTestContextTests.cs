@@ -22,12 +22,12 @@ public sealed class ApplicationTestContextTests
         var response = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
             new Book_CreateRequest.V1(new Book.V1.Create
             {
-                Title = "Clean Code",
-                Author = "Martin",
+                Title = BookTitle.From("Clean Code"),
+                Author = PersonName.From("Martin"),
                 Genre = Book.V1.Genre.Technology,
             })).ConfigureAwait(false);
 
-        response.Title.Should().Be("Clean Code");
+        response.Title.Should().Be(BookTitle.From("Clean Code"));
         context.AuditCount.Should().Be(1);
     }
 
@@ -44,20 +44,20 @@ public sealed class ApplicationTestContextTests
             [
                 new Book.V1.Create
                 {
-                    Title = "Clean Code",
-                    Author = "Martin",
+                    Title = BookTitle.From("Clean Code"),
+                    Author = PersonName.From("Martin"),
                     Genre = Book.V1.Genre.Technology,
                 },
                 new Book.V1.Create
                 {
-                    Title = "Dune",
-                    Author = "Herbert",
+                    Title = BookTitle.From("Dune"),
+                    Author = PersonName.From("Herbert"),
                     Genre = Book.V1.Genre.Fiction,
                 },
             ])).ConfigureAwait(false);
 
         response.Should().HaveCount(2);
-        response.Select(static book => book.Title).Should().Equal("Clean Code", "Dune");
+        response.Select(static book => book.Title.Value).Should().Equal("Clean Code", "Dune");
         context.AuditCount.Should().Be(1);
     }
 
@@ -71,6 +71,28 @@ public sealed class ApplicationTestContextTests
 
         var exception = await action.Should().ThrowAsync<ValidationException>().ConfigureAwait(false);
         exception.Which.Errors.Should().Contain(static error => error.PropertyName == "Data.Title");
+    }
+
+    /// <summary>
+    /// An omitted value object, as JSON or MessagePack leave it, reads as its primitive's default instead of
+    /// failing when it is stored (<c>VOGEN_NO_VALIDATION</c> in the contracts project).
+    /// </summary>
+    [TestMethod]
+    public async Task OmittedValueObjectIsStoredAsItsPrimitiveDefault()
+    {
+        await using var context = new ApplicationTestContext(useSqlStore: false);
+        var book = await context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
+            new Book_CreateRequest.V1(new Book.V1.Create
+            {
+                Title = BookTitle.From("Dune"),
+                Author = PersonName.From("Herbert"),
+                Genre = Book.V1.Genre.Fiction,
+            })).ConfigureAwait(false);
+
+        var activity = await context.DispatchRequestAsync<RecordReadingActivityRequest.V1, ReadingActivity>(
+            new RecordReadingActivityRequest.V1 { BookId = book.Id, Kind = ReadingActivityKind.Started }).ConfigureAwait(false);
+
+        activity.Progress.Value.Should().Be(0);
     }
 
     /// <summary>Uses a new scoped graph for each top-level dispatch.</summary>

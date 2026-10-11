@@ -14,4 +14,8 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor UnbindableGrpcContract = new(
         "ARKMF058", "gRPC contract is not bindable", "gRPC contract '{0}' cannot be bound: its {1} type '{2}' {3}",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF058.md");
+
+    public static readonly DiagnosticDescriptor GrpcMemberNotExportable = new(
+        "ARKMF060", "gRPC contract member does not match its exported .proto type", "gRPC contract '{0}' member '{1}' {2}",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF060.md");
 }

@@ -284,4 +284,11 @@ the full rules table):
 - **Rebus**: whichever body serializer the host configures (STJ or
   protobuf-net) applies the same rules above; no separate Rebus-specific setup.
 
+## Value objects
+
+Vogen value objects and Ark.Tools.Compliance sensitive value objects need no
+serializer-specific contract code; see
+[Value objects best practices](value-objects-best-practices.md) for the setup
+each transport needs.
+
 Architecture rationale: [design.md](../design/mediator-framework/design.md).

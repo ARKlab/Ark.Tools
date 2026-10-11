@@ -1,0 +1,287 @@
+// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+// Licensed under the MIT License. See LICENSE file for license information.
+
+using Ark.Tools.MediatorFramework.Grpc;
+
+using AwesomeAssertions;
+
+using ProtoBuf;
+using ProtoBuf.Meta;
+
+namespace Ark.Tools.MediatorFramework.Tests;
+
+/// <summary>Tests for <see cref="ArkProtobufValueObjects"/>.</summary>
+[TestClass]
+public class ArkProtobufValueObjectsTests
+{
+    private readonly record struct OrderId(Guid Value);
+
+    private readonly record struct Quantity(int Value);
+
+    private readonly record struct Copies(int Value);
+
+    [ProtoContract]
+    private sealed class Shelf
+    {
+        [ProtoMember(1)]
+        public Copies Copies { get; set; }
+    }
+
+    [ProtoContract]
+    private sealed class PlainShelf
+    {
+        [ProtoMember(1)]
+        public int Copies { get; set; }
+    }
+
+    [ProtoContract]
+    private sealed class Order
+    {
+        [ProtoMember(1)]
+        public OrderId Id { get; set; }
+
+        [ProtoMember(2)]
+        public OrderId? ParentId { get; set; }
+
+        [ProtoMember(3)]
+        public List<Quantity> Quantities { get; set; } = [];
+    }
+
+    [ProtoContract]
+    [CompatibilityLevel(CompatibilityLevel.Level300)]
+    private sealed class PlainOrder
+    {
+        [ProtoMember(1)]
+        public Guid Id { get; set; }
+
+        [ProtoMember(3)]
+        public List<int> Quantities { get; set; } = [];
+    }
+
+    // A string value object whose default, like Vogen's, differs from the value over "".
+    private readonly record struct Title(string Value);
+
+    private readonly record struct Pages(int Value);
+
+    [ProtoContract]
+    private sealed class Chapter
+    {
+        [ProtoMember(1)]
+        public Title Title { get; init; }
+
+        // The initializer is the point of the test: an absent field keeps an initialized member's value.
+#pragma warning disable PBN0022 // Field should use IsRequired because it is initialized to a non-default value
+        [ProtoMember(2)]
+        public Pages Pages { get; init; } = new Pages(7);
+#pragma warning restore PBN0022
+
+        [ProtoMember(3)]
+        public Title? Subtitle { get; init; }
+    }
+
+    [ProtoContract]
+    private sealed class EmptyMessage
+    {
+    }
+
+    private static RuntimeTypeModel _model()
+    {
+        var model = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<OrderId, Guid>(model, static value => new OrderId(value), static value => value.Value);
+        ArkProtobufValueObjects.Register<Quantity, int>(model, static value => new Quantity(value), static value => value.Value);
+        return model;
+    }
+
+    /// <summary>A value object has the wire format of its primitive, a Guid being a Level300 string.</summary>
+    [TestMethod]
+    public void Serialize_ShouldMatchPrimitiveWireFormat()
+    {
+        var id = Guid.NewGuid();
+        var model = _model();
+        using var valueObjects = new MemoryStream();
+        using var primitives = new MemoryStream();
+
+        model.Serialize(valueObjects, new Order { Id = new OrderId(id), Quantities = [new Quantity(3)] });
+        model.Serialize(primitives, new PlainOrder { Id = id, Quantities = [3] });
+
+        valueObjects.ToArray().Should().Equal(primitives.ToArray());
+    }
+
+    /// <summary>Required, nullable and repeated value objects round-trip.</summary>
+    [TestMethod]
+    public void Deserialize_ShouldRoundTrip()
+    {
+        var model = _model();
+        var order = new Order { Id = new OrderId(Guid.NewGuid()), ParentId = new OrderId(Guid.NewGuid()), Quantities = [new Quantity(1), new Quantity(2)] };
+        using var stream = new MemoryStream();
+
+        model.Serialize(stream, order);
+        stream.Position = 0;
+        var read = model.Deserialize<Order>(stream);
+
+        read.Id.Should().Be(order.Id);
+        read.ParentId.Should().Be(order.ParentId);
+        read.Quantities.Should().Equal(order.Quantities);
+    }
+
+    /// <summary>A later registration, even on another model, does not change the conversions of the first.</summary>
+    [TestMethod]
+    public void Register_Again_ShouldKeepTheFirstConversions()
+    {
+        var first = RuntimeTypeModel.Create();
+        var second = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Copies, int>(first, static value => new Copies(value), static value => value.Value);
+        ArkProtobufValueObjects.Register<Copies, int>(second, static value => new Copies(value / 2), static value => value.Value * 2);
+        using var stream = new MemoryStream();
+
+        first.Serialize(stream, new Shelf { Copies = new Copies(3) });
+        stream.Position = 0;
+
+        RuntimeTypeModel.Create().Deserialize<PlainShelf>(stream).Copies.Should().Be(3);
+    }
+
+    /// <summary>
+    /// An absent value object member, as proto3 sends <c>""</c>, holds the value over the empty primitive; an
+    /// initialized or nullable member keeps its value.
+    /// </summary>
+    [TestMethod]
+    public void InitializeAbsentValueObjects_ShouldReadAbsentMembersAsTheEmptyValue()
+    {
+        var model = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Title, string>(model, static value => new Title(value), static value => value.Value);
+        ArkProtobufValueObjects.Register<Pages, int>(model, static value => new Pages(value), static value => value.Value);
+        ArkProtobufValueObjects.InitializeAbsentValueObjects<Chapter>(model, nameof(Chapter.Title), nameof(Chapter.Pages));
+        using var absent = new MemoryStream();
+        using var present = new MemoryStream();
+
+        model.Serialize(absent, new EmptyMessage());
+        absent.Position = 0;
+        model.Serialize(present, new Chapter { Title = new Title("One"), Pages = new Pages(3) });
+        present.Position = 0;
+
+        var read = model.Deserialize<Chapter>(absent);
+        read.Title.Should().Be(new Title(string.Empty));
+        read.Pages.Should().Be(new Pages(7));
+        read.Subtitle.Should().BeNull();
+        var written = model.Deserialize<Chapter>(present);
+        written.Title.Should().Be(new Title("One"));
+        written.Pages.Should().Be(new Pages(3));
+    }
+
+    [ProtoContract]
+    private sealed class Section
+    {
+        [ProtoMember(1)]
+        public Title Title { get; init; }
+
+        [ProtoMember(2)]
+        public Title Heading { get; init; }
+    }
+
+    /// <summary>
+    /// Every model shares the members, as protobuf-net creates the contract from its type: the same members again
+    /// are accepted, different ones are rejected rather than silently ignored.
+    /// </summary>
+    [TestMethod]
+    public void InitializeAbsentValueObjects_DifferentMembersOnAnotherModel_ShouldThrow()
+    {
+        var first = RuntimeTypeModel.Create();
+        var second = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Title, string>(first, static value => new Title(value), static value => value.Value);
+        ArkProtobufValueObjects.InitializeAbsentValueObjects<Section>(first, nameof(Section.Title));
+
+        var same = () => ArkProtobufValueObjects.InitializeAbsentValueObjects<Section>(second, nameof(Section.Title));
+        var different = () => ArkProtobufValueObjects.InitializeAbsentValueObjects<Section>(second, nameof(Section.Title), nameof(Section.Heading));
+
+        same.Should().NotThrow();
+        different.Should().Throw<InvalidOperationException>();
+    }
+
+    private readonly record struct Note(string Value);
+
+    [ProtoContract]
+    private sealed class Page
+    {
+        [ProtoMember(1)]
+        public Note Note { get; init; }
+    }
+
+    [ProtoContract]
+    private sealed class EmptyPage
+    {
+    }
+
+    /// <summary>An absent member is created through the first registration's conversion, as a read field is.</summary>
+    [TestMethod]
+    public void InitializeAbsentValueObjects_ShouldUseTheFirstRegistrationsConversion()
+    {
+        var first = RuntimeTypeModel.Create();
+        var second = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Note, string>(first, static value => new Note("first:" + value), static value => value.Value);
+        ArkProtobufValueObjects.Register<Note, string>(second, static value => new Note("second:" + value), static value => value.Value);
+        ArkProtobufValueObjects.InitializeAbsentValueObjects<Page>(second, nameof(Page.Note));
+        using var stream = new MemoryStream();
+
+        second.Serialize(stream, new EmptyPage());
+        stream.Position = 0;
+
+        second.Deserialize<Page>(stream).Note.Should().Be(new Note("first:"));
+    }
+
+    private readonly record struct Volume(int Value);
+
+    /// <summary>A value object has one primitive, and so one wire format, across models.</summary>
+    [TestMethod]
+    public void Register_OtherPrimitiveOnAnotherModel_ShouldThrow()
+    {
+        ArkProtobufValueObjects.Register<Volume, int>(RuntimeTypeModel.Create(), static value => new Volume(value), static value => value.Value);
+
+        var act = static () => ArkProtobufValueObjects.Register<Volume, long>(RuntimeTypeModel.Create(), static value => new Volume((int)value), static value => value.Value);
+
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    private readonly record struct Caption(string Value);
+
+    [ProtoContract]
+    private sealed class Figure
+    {
+        [ProtoMember(1)]
+        public Caption Caption { get; init; }
+    }
+
+    /// <summary>
+    /// An unset string value object, whose value is null under VOGEN_NO_VALIDATION, is written as the empty string
+    /// instead of failing the call, and reads back as the value object over it.
+    /// </summary>
+    [TestMethod]
+    public void Serialize_UnsetStringValueObject_ShouldWriteTheEmptyString()
+    {
+        var model = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Caption, string>(model, static value => new Caption(value), static value => value.Value);
+        using var stream = new MemoryStream();
+
+        model.Serialize(stream, new Figure());
+        stream.Position = 0;
+
+        model.Deserialize<Figure>(stream).Caption.Should().Be(new Caption(string.Empty));
+    }
+
+    /// <summary>A member that is not a registered value object is rejected.</summary>
+    [TestMethod]
+    public void InitializeAbsentValueObjects_UnregisteredMember_ShouldThrow()
+    {
+        var act = static () => ArkProtobufValueObjects.InitializeAbsentValueObjects<Chapter>(RuntimeTypeModel.Create(), nameof(Chapter.Subtitle));
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    /// <summary>A primitive without a protobuf scalar is rejected.</summary>
+    [TestMethod]
+    public void Register_UnsupportedPrimitive_ShouldThrow()
+    {
+        var act = static () => ArkProtobufValueObjects.Register<Quantity, decimal>(RuntimeTypeModel.Create(), static value => new Quantity((int)value), static value => value.Value);
+
+        act.Should().Throw<NotSupportedException>();
+    }
+}

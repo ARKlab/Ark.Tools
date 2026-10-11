@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 
-using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 using Ark.Tools.Outbox;
 
@@ -104,7 +103,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
         }
 
         public async Task<Book.V1.Output?> ReadBookAsync(
-            Guid id,
+            BookId id,
             CancellationToken ctk = default)
         {
             return await _inner.ReadBookAsync(id, ctk).ConfigureAwait(false);
@@ -116,7 +115,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             return await _inner.UpdateBookAsync(book, ctk).ConfigureAwait(false);
         }
 
-        public async Task<bool> DeleteBookAsync(Guid id, CancellationToken ctk = default)
+        public async Task<bool> DeleteBookAsync(BookId id, CancellationToken ctk = default)
         {
             return await _inner.DeleteBookAsync(id, ctk).ConfigureAwait(false);
         }
@@ -133,13 +132,13 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
             await _inner.SaveBookReviewAsync(review, ctk).ConfigureAwait(false);
         }
 
-        public async Task<BookReview?> ReadBookReviewAsync(Guid id, CancellationToken ctk = default)
+        public async Task<BookReview?> ReadBookReviewAsync(BookReviewId id, CancellationToken ctk = default)
         {
             return await _inner.ReadBookReviewAsync(id, ctk).ConfigureAwait(false);
         }
 
         public async Task<IReadOnlyList<BookReview>> ReadBookReviewsAsync(
-            Guid bookId,
+            BookId bookId,
             int skip,
             int limit,
             CancellationToken ctk = default)
@@ -153,8 +152,8 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
         }
 
         public async Task<IReadOnlyList<ReadingActivity>> ReadReadingActivityAsync(
-            Guid bookId,
-            [Pseudonymous] string userId,
+            BookId bookId,
+            UserId userId,
             int limit,
             CancellationToken ctk = default)
         {
@@ -169,7 +168,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
         }
 
         public async Task<BookPrintProcessResponse?> ReadBookPrintProcessAsync(
-            Guid id,
+            BookPrintProcessId id,
             bool forUpdate = false,
             CancellationToken ctk = default)
         {
@@ -184,7 +183,7 @@ public sealed class FaultInjectingSampleDataContextFactory : ISampleDataContextF
         }
 
         public async Task<BookPrintProcessResponse?> CancelBookPrintProcessAsync(
-            Guid id,
+            BookPrintProcessId id,
             CancellationToken ctk = default)
         {
             return await _inner.CancelBookPrintProcessAsync(id, ctk).ConfigureAwait(false);

@@ -108,6 +108,13 @@ jobs:
       run: |
         dotnet publish tests/Ark.Tools.ResourceWatcher.TrimmedApp --configuration Debug --framework net10.0 --output "${{ runner.temp }}/trimmed-app"
         "${{ runner.temp }}/trimmed-app/Ark.Tools.ResourceWatcher.TrimmedApp" tests/Ark.Tools.ResourceWatcher.Tests/appsettings.IntegrationTests.json
+
+    # Publishes Vogen value objects through JSON, ToDataTableArk and generated Minimal API endpoints with Native AOT;
+    # Ark.Tools AOT warnings fail the publish and a failing check fails the run.
+    - name: 'Native AOT smoke test'
+      run: |
+        dotnet publish tests/Ark.Tools.MediatorFramework.NativeAotApp --configuration Debug --framework net10.0 --output "${{ runner.temp }}/native-aot-app"
+        "${{ runner.temp }}/native-aot-app/Ark.Tools.MediatorFramework.NativeAotApp"
       
     # see https://github.com/dorny/test-reporter?tab=readme-ov-file#recommended-setup-for-public-repositories
     - uses: actions/upload-artifact@v7  # upload test results

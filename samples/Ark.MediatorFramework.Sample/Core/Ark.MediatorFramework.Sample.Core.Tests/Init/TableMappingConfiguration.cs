@@ -25,5 +25,8 @@ public sealed class TableMappingConfiguration
         Service.Instance.ValueComparers.Register(new EnumValueRetrieverAndComparer());
         Service.Instance.ValueRetrievers.Register(new EvolvableEnumValueRetrieverAndComparer());
         Service.Instance.ValueComparers.Register(new EvolvableEnumValueRetrieverAndComparer());
+        Service.Instance.ValueRetrievers.Register(new ValueObjectValueRetriever());
+        // Sensitive value objects such as PersonName and UserId: binds cells and compares their cleartext.
+        Ark.Tools.Compliance.Reqnroll.SensitiveValueReqnroll.Register();
     }
 }

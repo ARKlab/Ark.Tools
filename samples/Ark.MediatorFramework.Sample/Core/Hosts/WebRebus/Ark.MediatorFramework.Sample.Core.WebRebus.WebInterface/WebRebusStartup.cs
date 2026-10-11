@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.Sample.Core.API.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Application;
 using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
@@ -135,6 +134,7 @@ public sealed class WebRebusStartup
         // The generated endpoints negotiate MessagePack for the contracts that declare it and
         // validate their formatters at startup.
         var messagePackResolver = CompositeResolver.Create(
+            SampleMessagePackFormatters.Resolver,
             MessagePack.NodaTime.NodatimeResolver.Instance,
             DynamicEnumAsStringResolver.Instance,
             StandardResolver.Instance);
@@ -219,7 +219,9 @@ public sealed class WebRebusStartup
         options
             .AddArkTypeConverterValueSchemas()
             .AddArkNodaTimeSchemas()
+            .AddArkValueObjectSchemas()
             .AddArkComplianceSchemas()
+            .AddSensitiveValueSchema<UserId>(ArkDataClassifications.Pseudonymous, "user-0001")
             .AddArkServerSetProperties()
             .AddArkXmlDocumentation()
             .AddArkOAuthSecurity(_openApiSecurity)

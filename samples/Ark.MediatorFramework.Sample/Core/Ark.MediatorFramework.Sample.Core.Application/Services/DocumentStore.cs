@@ -8,11 +8,11 @@ namespace Ark.MediatorFramework.Sample.Core.Application.Services;
 /// <summary>In-memory attachment storage used by the sample.</summary>
 public sealed class DocumentStore
 {
-    private readonly ConcurrentDictionary<Guid, Document> _documents = new();
+    private readonly ConcurrentDictionary<BookId, Document> _documents = new();
 
     /// <summary>Saves an attachment under its correlation identifier.</summary>
     /// <returns>The number of bytes saved.</returns>
-    public async Task<long> SaveAsync(Guid id, string name, string contentType, Stream content)
+    public async Task<long> SaveAsync(BookId id, string name, string contentType, Stream content)
     {
         ArgumentNullException.ThrowIfNull(content);
         using var buffer = new MemoryStream();
@@ -22,7 +22,7 @@ public sealed class DocumentStore
     }
 
     /// <summary>Gets an attachment, or <see langword="null"/> when it does not exist.</summary>
-    public IArkAttachment? Get(Guid id)
+    public IArkAttachment? Get(BookId id)
     {
         return _documents.TryGetValue(id, out var document)
             ? new ArkAttachment(document.Name, document.ContentType, () => new MemoryStream(document.Content, writable: false))

@@ -7,7 +7,7 @@ using Ark.Tools.Core;
 
 using System.Text.Json.Serialization;
 
-namespace Ark.MediatorFramework.Sample.Core.API.JsonContext;
+namespace Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 
 /// <summary>Source-generated JSON metadata for all public API wire contracts in the sample.</summary>
 [JsonSourceGenerationOptions(
@@ -54,6 +54,9 @@ namespace Ark.MediatorFramework.Sample.Core.API.JsonContext;
 [JsonSerializable(typeof(ReadingActivity))]
 [JsonSerializable(typeof(RecordReadingActivityRequest.V1), TypeInfoPropertyName = "RecordReadingActivityRequestV1")]
 [JsonSerializable(typeof(GetReadingActivityQuery.V1), TypeInfoPropertyName = "GetReadingActivityQueryV1")]
+// Vogen's converters for numeric value objects read and write the wrapped number through these options.
+[JsonSerializable(typeof(int))]
+[JsonSerializable(typeof(long))]
 public sealed partial class SampleApiJsonSerializerContext : JsonSerializerContext
 {
 }

@@ -32,6 +32,10 @@ namespace Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 [JsonSerializable(typeof(BookReview))]
 [JsonSerializable(typeof(Book_BulkCreateRequest.V1), TypeInfoPropertyName = "Book_BulkCreateRequestV1")]
 [JsonSerializable(typeof(ReadingActivity))]
+// Vogen's converters for numeric value objects (ReviewRating, ReadingProgress, PrintProgress) read and write the
+// wrapped number through these options, so the context must also describe the primitives.
+[JsonSerializable(typeof(int))]
+[JsonSerializable(typeof(double))]
 public sealed partial class ApplicationJsonSerializerContext : JsonSerializerContext
 {
 }

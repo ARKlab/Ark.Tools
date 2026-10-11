@@ -171,7 +171,7 @@ public sealed class BookSteps
     {
         var audits = await _books.ReadCurrentAuditsAsync().ConfigureAwait(false);
         var audit = audits.Data.Single(record => record.Operation == operation);
-        audit.UserId.Should().Be("application-test-user");
+        audit.UserId.Should().Be(UserId.From("application-test-user"));
         audit.EntityType.Should().Be(nameof(Book.V1.Output));
     }
 
@@ -325,7 +325,7 @@ public sealed class BookSteps
     {
         var values = table.Rows.Single();
         var rating = int.Parse(values["Rating"], CultureInfo.InvariantCulture);
-        Guid? reviewId = values.TryGetValue("ReviewId", out var id) ? Guid.Parse(id) : null;
+        BookReviewId? reviewId = values.TryGetValue("ReviewId", out var id) ? BookReviewId.Parse(id, CultureInfo.InvariantCulture) : null;
         _exception = await _captureAsync(() => _books.CreateReviewAsync(rating, values["Text"], reviewId))
             .ConfigureAwait(false);
     }
@@ -491,8 +491,8 @@ public sealed class BookSteps
             {
                 Edition = new PrintBookEdition
                 {
-                    Format = "Paperback",
-                    PageCount = 320,
+                    Format = EditionFormat.From("Paperback"),
+                    PageCount = PageCount.From(320),
                 },
             }).ConfigureAwait(false);
     }
@@ -506,8 +506,8 @@ public sealed class BookSteps
             {
                 Edition = new DigitalBookEdition
                 {
-                    Format = "EPUB",
-                    SizeBytes = 1_048_576,
+                    Format = EditionFormat.From("EPUB"),
+                    SizeBytes = FileSize.From(1_048_576),
                 },
             }).ConfigureAwait(false);
     }

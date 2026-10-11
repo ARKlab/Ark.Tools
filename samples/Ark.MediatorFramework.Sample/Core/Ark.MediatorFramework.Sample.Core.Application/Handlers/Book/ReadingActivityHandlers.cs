@@ -37,9 +37,9 @@ public sealed class RecordReadingActivityHandler :
         ArgumentNullException.ThrowIfNull(request);
         var activity = new ReadingActivity
         {
-            Id = Guid.NewGuid(),
+            Id = ReadingActivityId.New(),
             BookId = request.BookId,
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             Kind = request.Kind,
             Progress = request.Progress,
             OccurredAt = _clock.GetCurrentInstant(),
@@ -50,10 +50,9 @@ public sealed class RecordReadingActivityHandler :
             ?? throw new EntityNotFoundException($"Book '{request.BookId}' was not found.");
         await context.WriteAuditAsync(new AuditEntry
         {
-            Id = Guid.NewGuid(),
             UserId = activity.UserId,
             EntityType = nameof(ReadingActivity),
-            Identifier = activity.Id.ToString("D"),
+            Identifier = activity.Id.Value.ToString("D"),
             Operation = nameof(RecordReadingActivityRequest),
             Timestamp = activity.OccurredAt,
         }, ctk).ConfigureAwait(false);
@@ -91,7 +90,7 @@ public sealed class GetReadingActivityHandler :
             ?? throw new EntityNotFoundException($"Book '{query.BookId}' was not found.");
         var activities = await context.ReadReadingActivityAsync(
             query.BookId,
-            _user.GetUserId() ?? "anonymous",
+            _user.GetUserIdOrAnonymous(),
             query.Limit,
             ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);

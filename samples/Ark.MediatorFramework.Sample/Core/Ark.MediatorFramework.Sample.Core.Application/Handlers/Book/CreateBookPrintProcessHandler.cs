@@ -46,7 +46,7 @@ public sealed class CreateBookPrintProcessHandler :
 
         var process = new BookPrintProcessResponse
         {
-            Id = Guid.NewGuid(),
+            Id = BookPrintProcessId.New(),
             BookId = request.BookId,
             Status = BookPrintProcessStatus.Pending,
             ShouldFail = request.ShouldFail,
@@ -65,14 +65,13 @@ public sealed class CreateBookPrintProcessHandler :
         return process;
     }
 
-    private AuditEntry _createAudit(Guid id, string operation)
+    private AuditEntry _createAudit(BookPrintProcessId id, string operation)
     {
         return new AuditEntry
         {
-            Id = Guid.NewGuid(),
-            UserId = _user.GetUserId() ?? "anonymous",
+            UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(BookPrintProcessResponse),
-            Identifier = id.ToString("D"),
+            Identifier = id.Value.ToString("D"),
             Operation = operation,
             Timestamp = _clock.GetCurrentInstant(),
         };

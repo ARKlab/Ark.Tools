@@ -10,7 +10,7 @@ public sealed class BookPrintingProcessAlreadyRunningViolation : BusinessRuleVio
 {
     /// <summary>Initializes a new instance of the <see cref="BookPrintingProcessAlreadyRunningViolation"/> class.</summary>
     /// <param name="bookId">The identifier of the book that already has a print process.</param>
-    public BookPrintingProcessAlreadyRunningViolation(Guid bookId)
+    public BookPrintingProcessAlreadyRunningViolation(BookId bookId)
         : base("A book print process is already pending or running.")
     {
         BookId = bookId;
@@ -18,5 +18,5 @@ public sealed class BookPrintingProcessAlreadyRunningViolation : BusinessRuleVio
     }
 
     /// <summary>Gets the identifier of the book that already has a print process.</summary>
-    public Guid BookId { get; }
+    public BookId BookId { get; }
 }

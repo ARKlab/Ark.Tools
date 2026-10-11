@@ -10,5 +10,5 @@ namespace Ark.MediatorFramework.Sample.Core.Application.Messages;
 public sealed record BookPrintCompleted : ICommand<BookPrintCompleted>
 {
     /// <summary>Gets the identifier of the printed book.</summary>
-    public Guid BookId { get; init; }
+    public BookId BookId { get; init; }
 }

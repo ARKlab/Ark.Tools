@@ -15,7 +15,7 @@ public sealed record UploadResponse
 {
     /// <summary>Gets the upload correlation identifier.</summary>
     [ProtoMember(1)]
-    public required Guid Id { get; init; }
+    public required UploadId Id { get; init; }
 
     /// <summary>Gets the attachment file name.</summary>
     [ProtoMember(2)]
@@ -44,7 +44,7 @@ public static class UploadBookCoverRequest
     {
         /// <summary>Gets the book identifier.</summary>
         [HttpRoute]
-        public Guid Id { get; init; }
+        public BookId Id { get; init; }
 
         /// <summary>Gets the uploaded cover attachment.</summary>
         public required IArkAttachment Attachment { get; init; }
@@ -65,6 +65,6 @@ public static class DownloadBookCoverQuery
         /// <summary>Gets the book identifier.</summary>
         [HttpRoute]
         [ProtoMember(1)]
-        public Guid Id { get; init; }
+        public BookId Id { get; init; }
     }
 }
