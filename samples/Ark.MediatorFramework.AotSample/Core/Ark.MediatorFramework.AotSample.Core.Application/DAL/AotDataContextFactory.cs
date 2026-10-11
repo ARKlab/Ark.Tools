@@ -34,8 +34,7 @@ public sealed class AotDataContextFactory(string sql) : IOutboxAsyncContextFacto
         var builder = new SqlConnectionStringBuilder(sql);
         var database = builder.InitialCatalog;
         builder.InitialCatalog = "master";
-        var master = new SqlConnection(builder.ConnectionString);
-        await using (master.ConfigureAwait(false))
+        await using (var master = new SqlConnection(builder.ConnectionString))
         {
             await master.OpenAsync(ctk).ConfigureAwait(false);
             await master.ExecuteAsync("""
@@ -47,8 +46,7 @@ public sealed class AotDataContextFactory(string sql) : IOutboxAsyncContextFacto
                 """, new { database, ctk }).ConfigureAwait(false);
         }
 
-        var connection = new SqlConnection(sql);
-        await using (connection.ConfigureAwait(false))
+        await using (var connection = new SqlConnection(sql))
         {
             await connection.OpenAsync(ctk).ConfigureAwait(false);
             await connection.ExecuteAsync(_schema, new { ctk }).ConfigureAwait(false);
