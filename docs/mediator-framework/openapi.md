@@ -34,7 +34,6 @@ private static void ConfigureOpenApi(OpenApiOptions options)
         .AddArkNodaTimeSchemas()
         .AddArkValueObjectSchemas()
         .AddArkComplianceSchemas()
-        .AddArkServerSetProperties()
         .AddArkXmlDocumentation()
         .AddArkOAuthSecurity(openApiSecurity)
         .AddArkPolymorphism<Shape, ShapeKind>(
@@ -53,7 +52,6 @@ Why each option exists:
 | `AddArkNodaTimeSchemas` | Publishes stable NodaTime formats |
 | `AddArkValueObjectSchemas` | Documents Vogen value objects as the schema of the primitive they wrap |
 | `AddArkComplianceSchemas` | Documents sensitive value objects as their primitive schema |
-| `AddArkServerSetProperties` | Removes server-owned input members |
 | `AddArkXmlDocumentation` | Copies contract XML comments |
 | `AddArkOAuthSecurity` | Publishes OAuth flows and scopes |
 | `AddArkPolymorphism` | Documents discriminator and concrete types |

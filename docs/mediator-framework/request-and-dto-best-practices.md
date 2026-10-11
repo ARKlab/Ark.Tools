@@ -24,10 +24,8 @@ public static class Book
 
         public record Output : Create
         {
-            [ServerSet]
             public Guid Id { get; init; }
 
-            [ServerSet]
             public required string Description { get; init; }
         }
     }
@@ -62,12 +60,12 @@ operation sent to the application. It also makes the distinction explicit:
 - `Output` describes the model returned by the domain.
 - `Request`, `Query`, and `Command` describe an operation and its transport
   bindings.
-- Route, query, and server-owned values belong to the operation envelope, not
-  to a reusable model.
+- Route and query values belong to the operation envelope, not to a reusable
+  model. Server-owned values belong to neither; the handler supplies them.
 
 An update normally uses `Input` directly because it has the same writable
 fields. Do not add an `Id` to the update body: the operation envelope carries
-the route `Id`, and the returned `Output` owns the server-set identifier. A
+the route `Id`, and the returned `Output` owns the server-generated identifier. A
 `Create` model may inherit from `Input` when creation accepts additional
 write-once fields, such as the `ISBN` above.
 

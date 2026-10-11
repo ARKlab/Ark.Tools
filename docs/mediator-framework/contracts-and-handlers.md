@@ -6,7 +6,7 @@ dispatch, and serialize.
 
 Before adding or changing one, complete the [contract design
 workflow](contract-design-workflow.md). It records transport exposure, ownership,
-server-set fields, messaging participants, validation, authorization, versioning,
+server-owned values, messaging participants, validation, authorization, versioning,
 and test boundaries before implementation.
 
 ## Choose the contract shape
@@ -48,7 +48,7 @@ straightforward to test without an HTTP server, gRPC context, or message bus.
 ## Keep contracts stable
 
 Use records for small immutable messages. Make every client-controlled member
-explicit; use `[ServerSet]` rather than accepting server-owned values. When a
+explicit and keep server-owned values out of the contract. When a
 contract crosses gRPC, add `[ProtoContract]` and a unique `[ProtoMember(n)]` to
 every serialized member. The request, the response and each streamed item must be
 protobuf contracts; a scalar such as `IAsyncEnumerable<int>` fails the build with
@@ -71,54 +71,41 @@ Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample
 released number; add new optional members with new numbers. Replace or version a
 contract instead of changing the meaning or type of an existing member.
 
-## Protect server-owned values with `ServerSet`
+## Keep server-owned values out of contracts
 
-Apply `[ServerSet]` to data whose authoritative value comes from the host,
-authenticated principal, tenant resolver, clock, correlation context, or a
-handler—not from the caller. The attribute is a binding and schema boundary:
-the generated HTTP endpoint resets the property after input binding, generated
-gRPC requests omit it, and generated OpenAPI request schemas omit it.
+A contract carries only what the caller chooses. Values whose authoritative
+source is the host, the authenticated principal, the tenant resolver, the clock,
+the correlation context, or the handler are not contract members:
+
+- read the user or tenant from the user context (`IContextProvider<ClaimsPrincipal>`)
+  in the handler;
+- take an identifier the client must not choose from the route;
+- put server-generated values, such as an identifier or an audit timestamp, on
+  the response type.
 
 ```csharp
 [HttpEndpoint("POST", "/api/v{version}/orders")]
-[GrpcMethod("CreateOrder")]
-[GrpcService("Orders")]
 public sealed record CreateOrderRequest : IRequest<OrderResponse>
 {
     public required string ProductCode { get; init; }
 
     public int Quantity { get; init; }
+}
 
-    [ServerSet]
-    public string? UserId { get; init; }
-
-    [ServerSet]
-    public string? TenantId { get; init; }
+public sealed class CreateOrderHandler(IContextProvider<ClaimsPrincipal> user)
+    : IRequestHandler<CreateOrderRequest, OrderResponse>
+{
+    public async Task<OrderResponse> ExecuteAsync(CreateOrderRequest request, CancellationToken ctk = default)
+    {
+        var userId = user.Current.Identity?.Name;
+        // ...
+    }
 }
 ```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
+Source: [`BookPrintProcessFailureHandler.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Handlers/Book/BookPrintProcessFailureHandler.cs)
 
-For this HTTP input, `ProductCode` and `Quantity` bind normally, but the
-attempted `userId` and `tenantId` values do not reach the handler:
-
-```json
-{ "productCode": "SKU-42", "quantity": 2, "userId": "administrator" }
-```
-Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
-
-The host, decorator, or handler must then set trusted values before relying on
-them. `ServerSet` prevents client binding; it does **not** populate the member,
-authenticate a caller, or authorize an operation.
-
-| Use `ServerSet` | Do not use `ServerSet` |
-| --- | --- |
-| Authenticated user/subject, tenant, correlation ID, server timestamp, generated audit values, or server-calculated defaults. | A client choice such as filter, page size, display name, requested delivery date, or optimistic concurrency token. |
-| A field must never appear in generated gRPC input or HTTP request schemas. | The caller must provide it and validation must report a missing/invalid value. |
-| You want one transport-neutral contract while preventing over-posting. | The value belongs only to a transport-specific adapter or endpoint. |
-
-Do not mark a response-only property `ServerSet`; put it on the response type
-instead. Do not use it as a substitute for authorization: a caller can still
-invoke the operation unless the endpoint policy rejects them.
+[ARKMF003](../analyzer-rules/ARKMF003.md) warns when an HTTP contract has a
+property such as `TenantId` or `UserId` that looks server-owned.
 
 ## Handler boundaries
 

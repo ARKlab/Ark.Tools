@@ -107,10 +107,12 @@ the only transport hint the developer writes; the generator turns each *declared
 transport into concrete hosting code. A request/query with **no** transport
 attribute is not hosted — the developer wires it by hand.
 
-Properties marked with `[ServerSet]` are never read from HTTP route, query, or
-body input. The Minimal API generator resets them after deserialization, the
-gRPC proto export omits them from request messages, and
-`AddArkServerSetProperties()` removes them from generated schemas.
+Server-owned values are not contract members. An earlier `[ServerSet]`
+attribute marked them and every transport reset or omitted them; it was removed
+(#1090) because a contract shared by all transports should carry only what the
+caller chooses. Handlers read server-owned values from the user context, and
+identifiers the client must not choose come from the route. `ARKMF003` warns
+about property names that look server-owned.
 
 ### Optimistic concurrency: opaque ETag tokens
 
@@ -861,8 +863,8 @@ snapshot differs from what is committed.
 - Contract metadata: API group, optional gRPC group override, HTTP routing and
   active version range, and gRPC method/version metadata.
 - Rebus: message contract name and owner queue.
-- Contract members: name, fully-qualified type, nullability, `[ServerSet]` when
-  true, and source-level default values.
+- Contract members: name, fully-qualified type, nullability, and source-level
+  default values.
   Nested types are expanded recursively so a change to any nested field produces
   a visible diff.
 - Enum members reached from a contract: every member name and its numeric

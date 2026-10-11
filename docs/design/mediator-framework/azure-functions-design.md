@@ -17,7 +17,7 @@ In scope:
 - .NET isolated worker with ASP.NET Core HTTP integration;
 - `net10.0` and Azure Functions runtime v4;
 - JSON HTTP endpoints generated from the existing `[HttpEndpoint]`,
-  `[Versioning]`, `[HttpQuery]`, `[ServerSet]` and `[ETag]` metadata;
+  `[Versioning]`, `[HttpQuery]` and `[ETag]` metadata;
 - route, query, JSON body and multipart binding;
 - authentication, transport-agnostic authorization and user-context propagation;
 - validation and domain failures as the same `application/problem+json` shapes;
@@ -152,8 +152,7 @@ Each generated method delegates in this order:
    `IContextProvider<ClaimsPrincipal>`;
 3. bind route, query, body, headers or multipart form data into the existing
    request envelope;
-4. overwrite `[ServerSet]` members and apply HTTP-owned values such as ETag
-   preconditions after client binding;
+4. apply HTTP-owned values such as ETag preconditions after client binding;
 5. resolve the exact generated handler interface (`IRequestProcessor`,
    `IQueryProcessor`, or `ICommandProcessor`) from `HttpContext.RequestServices`;
 6. execute it with the Functions invocation cancellation token using `async` and
@@ -171,8 +170,7 @@ Binding parity:
 | --- | --- |
 | Route | Read from `HttpRequest.RouteValues`; use invariant conversion and reject invalid values with 400 |
 | Query | Follow the existing body-less and `[HttpQuery]` rules, including collections |
-| JSON body | Deserialize the complete envelope with host-configured ASP.NET Core JSON options, then overwrite route/query/server-owned members |
-| `[ServerSet]` | Never trust client input; reset after deserialization |
+| JSON body | Deserialize the complete envelope with host-configured ASP.NET Core JSON options, then overwrite route/query members |
 | `[ETag]` | `If-Match`/`If-None-Match` override the model exactly as on Minimal API |
 | Attachment | Read multipart form files, sanitize names, enforce request/file-count/content-type limits, and expose `IArkAttachment` |
 

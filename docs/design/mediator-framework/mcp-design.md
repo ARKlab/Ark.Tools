@@ -212,9 +212,9 @@ The wrapper constructs the contract using its accessible `init`/`set`
 properties, then invokes the typed handler. HTTP binding attributes do not change
 this shape: `[HttpRoute]`, `[HttpQuery]`, and `[HttpBody]` are ignored for MCP,
 and every public bindable contract property is an MCP argument. They are not
-interpreted as route, query-string, or body locations. `ServerSet`, write-only,
+interpreted as route, query-string, or body locations. Write-only,
 indexer, pointer, ref, and unsupported member shapes remain rejected rather than
-silently omitted because server-owned values must not be supplied by a caller.
+silently omitted.
 Nullable members and members with defaults remain optional according to the
 generated JSON schema. An `IArkAttachment` property is the one exception to
 ordinary JSON member binding and is described in [Attachment mapping](#attachment-mapping).

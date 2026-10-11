@@ -39,7 +39,8 @@ contracts.
 Route placeholders bind to properties with the same name. Use `[HttpRoute]` to
 make route binding explicit or to override the placeholder name. Mark values
 that must come from the query string with `[HttpQuery]`; remaining client
-values bind from the request body. Mark server-owned values with `[ServerSet]`.
+values bind from the request body. Server-owned values do not belong on the
+contract; see [contracts and handlers](contracts-and-handlers.md#keep-server-owned-values-out-of-contracts).
 
 ### Binding rules by endpoint shape
 
@@ -61,9 +62,6 @@ public sealed record UpdateGreetingRequest : IRequest<GreetingResponse>
     public bool Notify { get; init; }
 
     public required string Message { get; init; }
-
-    [ServerSet]
-    public string? UpdatedBy { get; init; }
 }
 ```
 Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
@@ -75,7 +73,7 @@ PATCH /api/v1/greetings/3fa85f64-5717-4562-b3fc-2c963f66afa6?notify=true
 Content-Type: application/json
 Authorization: ******
 
-{ "message": "Hello again", "updatedBy": "forged-user" }
+{ "message": "Hello again" }
 ```
 Source: [`BookTransportBoundaryTests.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/BookTransportBoundaryTests.cs)
 
@@ -86,10 +84,9 @@ Value seen by the handler:
 | `Id` | Route | `3fa85f64-5717-4562-b3fc-2c963f66afa6` |
 | `Notify` | Query string | `true` |
 | `Message` | JSON body | `"Hello again"` |
-| `UpdatedBy` | Client body ignored | `null` until server code sets it |
 
-**Outcome:** generated binding prevents clients from setting server-owned data
-while preserving a single contract for the handler.
+**Outcome:** one contract serves the handler while each value comes from its
+declared source.
 
 ## Common endpoint shapes and their defaults
 
