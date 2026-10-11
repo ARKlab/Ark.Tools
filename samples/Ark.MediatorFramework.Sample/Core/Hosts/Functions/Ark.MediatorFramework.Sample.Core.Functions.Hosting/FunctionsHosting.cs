@@ -5,6 +5,7 @@ using Ark.MediatorFramework.Sample.Core.Application.Authorization;
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
+using Ark.Tools.MediatorFramework;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 using Ark.Tools.MediatorFramework.Messaging;
@@ -14,6 +15,7 @@ using Ark.Tools.Solid.SimpleInjector;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using SimpleInjector;
 using SimpleInjector.Lifestyles;
@@ -76,7 +78,7 @@ public static class FunctionsHosting
         return principal;
     }
 
-    /// <summary>Composes a trigger app: its generated Service Bus trigger, enqueue-only outbox, and container bridge.</summary>
+    /// <summary>Composes a trigger app: its generated Service Bus trigger, direct sends, and container bridge.</summary>
     /// <remarks>
     /// The order matters: the user context goes before <c>AddArkAzureFunctions</c> so its
     /// <c>TryAdd</c> keeps the message principal, and the processors are bridged before
@@ -111,12 +113,12 @@ public static class FunctionsHosting
             manifest,
             messaging => messaging
                 .UseTransport(static transport => transport.UseServiceBus())
-                .UseDataBus(dataBus)
-                .UseOutbox(static outbox => outbox.UseEnqueue()));
+                .UseDataBus(dataBus));
+        _useDirectSend(services);
         services.AddArkAzureFunctionsSimpleInjectorBridge(container);
     }
 
-    /// <summary>Composes the Api app's producer: it sends through the outbox and receives nothing.</summary>
+    /// <summary>Composes the Api app's producer: it sends directly, without an outbox, and receives nothing.</summary>
     /// <remarks>
     /// The outgoing user is the HTTP user that <c>AddArkAzureFunctions</c> registers, unless the
     /// caller registered another <see cref="IContextProvider{TItem}"/> of <see cref="ClaimsPrincipal"/> first.
@@ -142,9 +144,18 @@ public static class FunctionsHosting
             messaging => messaging.Producer<SampleMessagingApiParticipant>(producer => producer
                 .UseTransport(transport)
                 .UseDataBus(dataBus)
-                .UseOutgoingPipeline(typeof(UserContextOutgoingStep))
-                .UseOutbox()));
+                .UseOutgoingPipeline(typeof(UserContextOutgoingStep))));
+        _useDirectSend(services);
         services.AddArkAzureFunctionsSimpleInjectorBridge(container);
+    }
+
+    // Functions-only: no process drains the outbox, so the handlers' enlistment sends directly (see DirectSendBus).
+    private static void _useDirectSend(IServiceCollection services)
+    {
+        services.Replace(ServiceDescriptor.Singleton<IBus>(
+            static serviceProvider => new DirectSendBus(serviceProvider.GetRequiredService<MessagingBus>())));
+        services.Replace(ServiceDescriptor.Singleton<IBusOutboxEnlistment>(
+            static serviceProvider => (DirectSendBus)serviceProvider.GetRequiredService<IBus>()));
     }
 
     private static void _configureMessagingJson(IServiceCollection services)

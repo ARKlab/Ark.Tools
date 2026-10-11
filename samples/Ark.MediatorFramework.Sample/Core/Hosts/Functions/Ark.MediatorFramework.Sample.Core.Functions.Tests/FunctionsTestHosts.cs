@@ -4,7 +4,6 @@
 extern alias Processor;
 
 using Ark.MediatorFramework.Sample.Core.Functions.Hosting;
-using Ark.MediatorFramework.Sample.Core.Functions.OutboxProcessor;
 using Ark.Tools.MediatorFramework;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Solid;
@@ -44,7 +43,7 @@ internal static class FunctionsTestHosts
     /// <summary>Starts the Api app's producer with an authenticated user holding every scope.</summary>
     /// <param name="transport">Selects the transport.</param>
     /// <param name="dataBus">Selects the claim-check DataBus.</param>
-    /// <param name="store">The application store, whose outbox the producer commits to.</param>
+    /// <param name="store">The application store.</param>
     /// <returns>The started Api process.</returns>
     public static async Task<FunctionsTestProcess> StartApiProducerAsync(
         Action<MessagingTransportBuilder> transport,
@@ -78,20 +77,6 @@ internal static class FunctionsTestHosts
             container,
             builder => builder.Use(dataBus));
         return FunctionsTestProcess.Compose(services, container);
-    }
-
-    /// <summary>Starts the outbox processor over the same store.</summary>
-    /// <param name="transport">The transport the outbox processor dispatches to.</param>
-    /// <param name="store">The application store whose outbox is drained.</param>
-    /// <returns>The started outbox processor process.</returns>
-    public static async Task<FunctionsTestProcess> StartOutboxProcessorAsync(
-        IMessagingTransport transport,
-        InMemorySampleDataContextFactory store)
-    {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        OutboxProcessorComposition.AddOutboxProcessor(services, transport, store);
-        return await FunctionsTestProcess.StartAsync(services, container: null).ConfigureAwait(false);
     }
 
     /// <summary>Creates a valid book.</summary>

@@ -21,9 +21,9 @@ public sealed class ServiceBusDeliveryTests
 {
     private const string _userContextHeaderName = MessagingHeaders.UserId;
 
-    /// <summary>The Api producer commits to the outbox; the outbox processor puts the message on the worker queue.</summary>
+    /// <summary>The Api producer has no outbox: the handler's send puts the message on the worker queue.</summary>
     [TestMethod]
-    public async Task ApiMessageReachesWorkerQueueThroughTheOutbox()
+    public async Task ApiMessageReachesWorkerQueueWithoutAnOutbox()
     {
         var queue = FunctionsTestHosts.WorkerQueueName();
         var administration = new ServiceBusAdministrationClient(ServiceBusEmulator.AdministrationConnectionString);
@@ -37,10 +37,6 @@ public sealed class ServiceBusDeliveryTests
                 transport => transport.UseServiceBus(client),
                 static dataBus => dataBus.UseInMemory(lifetime: Duration.FromHours(2)),
                 store).ConfigureAwait(false);
-#pragma warning disable CA2000 // The test owns the Service Bus client the transport wraps.
-            await using var outbox = await FunctionsTestHosts.StartOutboxProcessorAsync(
-                new ServiceBusMessagingTransport(client), store).ConfigureAwait(false);
-#pragma warning restore CA2000
 
             var book = await api.DispatchAsync<Book_CreateRequest.V1, Book.V1.Output>(FunctionsTestHosts.NewBook())
                 .ConfigureAwait(false);

@@ -42,7 +42,7 @@ public sealed class FunctionsCompositionTests
         })
         .Build();
 
-    /// <summary>The Api app hosts a producer: it sends through the outbox and receives nothing.</summary>
+    /// <summary>The Api app hosts a producer: it sends directly, without an outbox, and receives nothing.</summary>
     [TestMethod]
     public async Task ApiAppIsProducerOnly()
     {
@@ -58,7 +58,7 @@ public sealed class FunctionsCompositionTests
 
         services.Should().NotContain(static service => service.ServiceType == typeof(MessagingTriggeredHostMarker));
         provider.GetServices<IHostedService>().OfType<MessagingProcessorHost>().Should().BeEmpty();
-        provider.GetRequiredService<IBus>().Should().NotBeNull();
+        provider.GetRequiredService<IBus>().Should().BeOfType<DirectSendBus>();
     }
 
     /// <summary>Each trigger app is generated for exactly one participant.</summary>
@@ -96,6 +96,9 @@ public sealed class FunctionsCompositionTests
         var hosted = provider.GetServices<IHostedService>().ToArray();
         hosted.OfType<MessagingProcessorHost>().Should().BeEmpty();
         hosted.OfType<MessagingOutboxProcessor>().Should().BeEmpty();
+        // Functions-only: nothing drains the outbox, so the handlers' enlistment sends directly.
+        provider.GetRequiredService<IBus>().Should().BeOfType<DirectSendBus>();
+        provider.GetRequiredService<IBusOutboxEnlistment>().Should().BeSameAs(provider.GetRequiredService<IBus>());
     }
 
     /// <summary>Bridges the Processor app's container into Microsoft DI for scoped processor dispatch.</summary>

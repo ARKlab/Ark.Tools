@@ -3,8 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
-    <!-- Exposes the HTTP functions generated in the Hosting library. -->
+    <!-- Exposes the functions generated in the Api.Triggers library. -->
     <FunctionsInDependencies>true</FunctionsInDependencies>
+    <!-- ReadyToRun for a Linux 64-bit Functions app: the supported cold-start optimization. -->
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <PublishReadyToRun>true</PublishReadyToRun>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
@@ -20,7 +23,7 @@
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
     <PackageReference Include="Ark.Tools.NLog.Configuration" />
     <PackageReference Include="Ark.Tools.Compliance" />
-    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Hosting\Ark.MediatorFramework.Sample.Core.Functions.Hosting.csproj" />
+    <ProjectReference Include="..\Ark.MediatorFramework.Sample.Core.Functions.Api.Triggers\Ark.MediatorFramework.Sample.Core.Functions.Api.Triggers.csproj" />
   </ItemGroup>
 
 </Project>

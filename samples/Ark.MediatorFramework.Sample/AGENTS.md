@@ -39,9 +39,10 @@ Framework. Follow the repository `AGENTS.md` and the framework guidance under
 - Context factories and DAL contexts expose fine-grained, composable ORM
   operations. The in-memory profile must use an in-memory context factory with
   the same context interface as SQL, including the composable in-memory outbox.
-- Every host configures its messaging outbox in every profile. Handlers always
-  enlist the current context's outbox; do not branch on SQL versus in-memory
-  storage.
+- Every host configures its messaging outbox in every profile, except the
+  Functions variant: it runs on Azure Functions only, so its `DirectSendBus`
+  turns the enlistment into a direct send. Handlers always enlist the current
+  context's outbox; do not branch on SQL versus in-memory storage or on the host.
 - Singleton domain services own reusable business logic and side-effects.
 - External adapters own calls to systems outside this service. Each adapter
   must have a mock/stub implementation and a test binding driver.
