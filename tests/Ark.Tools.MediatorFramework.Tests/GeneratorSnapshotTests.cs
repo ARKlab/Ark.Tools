@@ -875,8 +875,8 @@ public sealed class GeneratorSnapshotTests
             public sealed class PostRequest : IRequest<string> { }
             """);
 
-        result.Generated.Should().Contain("Results.Json(_result, statusCode: 200");
-        result.Generated.Should().Contain("Results.Json(_result, statusCode: 201");
+        result.Generated.Should().Contain("ArkAzureFunctionsHttp.Json(request.HttpContext, _result, 200);");
+        result.Generated.Should().Contain("ArkAzureFunctionsHttp.Json(request.HttpContext, _result, 201);");
         result.Generated.Should().Contain("Results.StatusCode(404)");
         result.Generated.Should().Contain("Results.StatusCode(200)");
     }

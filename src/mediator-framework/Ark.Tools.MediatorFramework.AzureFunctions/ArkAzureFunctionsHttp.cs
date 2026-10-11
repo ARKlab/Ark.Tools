@@ -6,7 +6,12 @@ using Ark.Tools.Compliance;
 using HealthChecks.UI.Client;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
+
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
@@ -29,6 +34,35 @@ public static class ArkAzureFunctionsHttp
             feature.MaxRequestBodySize = maxRequestBodySizeBytes;
 
         return null;
+    }
+
+    /// <summary>Reads the JSON request body with the metadata of the host JSON options, without reflection.</summary>
+    /// <typeparam name="T">The body type.</typeparam>
+    /// <param name="request">The current request.</param>
+    /// <param name="cancellationToken">The invocation cancellation token.</param>
+    /// <returns>The deserialized body, or <see langword="null"/>.</returns>
+    public static async Task<T?> ReadJsonAsync<T>(HttpRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return await request.ReadFromJsonAsync(_getTypeInfo<T>(request.HttpContext), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Creates a JSON result with the metadata of the host JSON options, without reflection.</summary>
+    /// <typeparam name="T">The response type.</typeparam>
+    /// <param name="context">The current HTTP context.</param>
+    /// <param name="value">The response value.</param>
+    /// <param name="statusCode">The response status code.</param>
+    /// <returns>The JSON result.</returns>
+    public static IResult Json<T>(HttpContext context, T value, int statusCode)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        return Results.Json(value, _getTypeInfo<T>(context), statusCode: statusCode);
+    }
+
+    private static JsonTypeInfo<T> _getTypeInfo<T>(HttpContext context)
+    {
+        var options = context.RequestServices.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+        return (JsonTypeInfo<T>)options.GetTypeInfo(typeof(T));
     }
 
     /// <summary>Reads uploaded files as transport-neutral attachments.</summary>
