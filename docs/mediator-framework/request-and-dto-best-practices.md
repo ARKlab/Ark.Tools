@@ -61,11 +61,13 @@ operation sent to the application. It also makes the distinction explicit:
 - `Request`, `Query`, and `Command` describe an operation and its transport
   bindings.
 - Route and query values belong to the operation envelope, not to a reusable
-  model. Server-owned values belong to neither; the handler supplies them.
+  model.
+- Computed and output-only properties, such as `Id` and `Description`, belong
+  on `Output` only, so a caller cannot send them.
 
 An update normally uses `Input` directly because it has the same writable
 fields. Do not add an `Id` to the update body: the operation envelope carries
-the route `Id`, and the returned `Output` owns the server-generated identifier. A
+the route `Id`, and the returned `Output` owns the generated identifier. A
 `Create` model may inherit from `Input` when creation accepts additional
 write-once fields, such as the `ISBN` above.
 

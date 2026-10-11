@@ -3,8 +3,9 @@
 **Category**: security · **Priority**: Release blocker · **Scope**: FRAMEWORK
 
 > **Superseded (#1090).** `[ServerSet]`, `AddArkServerSetProperties()` and `ARKMF002` were removed:
-> server-owned values are not contract members; the handler reads them from the user context or the
-> route. `ARKMF003` still warns about suspicious property names. This record is kept as history.
+> contracts use separate input and output models, so computed and output-only properties are never
+> bound from a request. `ARKMF003` still warns about suspicious property names. This record is kept
+> as history.
 
 ## Problem
 

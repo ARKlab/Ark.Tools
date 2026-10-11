@@ -107,12 +107,10 @@ the only transport hint the developer writes; the generator turns each *declared
 transport into concrete hosting code. A request/query with **no** transport
 attribute is not hosted — the developer wires it by hand.
 
-Server-owned values are not contract members. An earlier `[ServerSet]`
-attribute marked them and every transport reset or omitted them; it was removed
-(#1090) because a contract shared by all transports should carry only what the
-caller chooses. Handlers read server-owned values from the user context, and
-identifiers the client must not choose come from the route. `ARKMF003` warns
-about property names that look server-owned.
+Input and output are separate models. An earlier `[ServerSet]` attribute let one
+model serve both: every transport ignored or reset its computed and output-only
+properties on input. It was removed (#1090); output-only properties now live on
+an `Output` model that the request returns but never accepts.
 
 ### Optimistic concurrency: opaque ETag tokens
 

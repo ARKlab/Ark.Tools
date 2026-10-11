@@ -39,8 +39,8 @@ contracts.
 Route placeholders bind to properties with the same name. Use `[HttpRoute]` to
 make route binding explicit or to override the placeholder name. Mark values
 that must come from the query string with `[HttpQuery]`; remaining client
-values bind from the request body. Server-owned values do not belong on the
-contract; see [contracts and handlers](contracts-and-handlers.md#keep-server-owned-values-out-of-contracts).
+values bind from the request body. Keep computed and output-only properties on
+the output model; see [contracts and handlers](contracts-and-handlers.md#separate-input-and-output-models).
 
 ### Binding rules by endpoint shape
 

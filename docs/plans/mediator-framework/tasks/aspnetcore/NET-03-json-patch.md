@@ -22,8 +22,8 @@ Newtonsoft), enabling a `[HttpEndpoint("PATCH", ...)]` design.
    diagnostic; patch documents are not transport-agnostic).
 4. Sample: `PatchGreetingRequest` endpoint + Reqnroll scenario (patch one field, verify others
    untouched; invalid patch → 400; validation failure after apply → 400).
-5. Security: cap patch document size/operation count. Server-owned values are not contract members
-   (#1090), so a patch cannot reach them.
+5. Security: cap patch document size/operation count. Patches apply to the input model, which
+   has no computed or output-only properties (#1090).
 
 ## Outcomes
 

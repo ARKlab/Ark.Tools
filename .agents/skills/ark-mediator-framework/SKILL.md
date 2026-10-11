@@ -20,7 +20,7 @@ answer every applicable question:
 - Is it exposed as HTTP? Which verb, exact route, API version, status codes,
   request binding, and anonymous/authenticated behavior?
 - What is the model? Which properties are required, optional, computed,
-  server-owned, write-once, immutable, or concurrency-controlled?
+  output-only, write-once, immutable, or concurrency-controlled?
 - Is it an event? Who publishes it, who subscribes, and what delivery/replay
   behavior is required?
 - Is it background work or a message? Who sends it, which participant consumes
@@ -46,8 +46,8 @@ Do not start implementation while an answer is assumed, guessed, or missing.
 2. Decide the contract kind: `IQuery<T>`, `IRequest<T>`, or `ICommand`; split
    immediate HTTP work from delayed/retried background messages.
 3. Keep versioned model types separate from operation envelopes. Keep
-   server-owned values off the contract: the handler reads them from the user
-   context or the route.
+   computed and output-only properties on the `Output` model, never on the
+   input model a request accepts.
 4. Add only the metadata for transports actually required. Define participant
    publisher/consumer/subscriber ownership and serializer compatibility.
 5. Implement the application handler, FluentValidation validator, Ark
@@ -83,7 +83,7 @@ express the requirement.
 
 - You are about to write an endpoint method, generated wrapper, or routing switch.
 - You cannot state the exact HTTP route or have not decided that HTTP is absent.
-- A request contract carries a server-owned value such as the user or tenant.
+- An input model carries a computed or output-only property.
 - You changed a released property without checking compatibility and versioning.
 - You added an event without naming its publisher and every subscriber.
 - You added a message without naming its consumer, queue/participant, retry, and

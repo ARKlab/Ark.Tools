@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Removed
 
-- **Breaking:** `Ark.Tools.MediatorFramework`: the `[ServerSet]` attribute, `AddArkServerSetProperties()` and error `ARKMF002` are removed. A contract carries only what the caller chooses: remove server-owned properties from request contracts, read the user or tenant in the handler from `IContextProvider<ClaimsPrincipal>`, take identifiers the client must not choose from the route, and return server-generated values on the response. `ARKMF003` still warns about properties such as `UserId` or `TenantId` on an HTTP contract. OpenAPI response schemas now include the properties that were marked `[ServerSet]`, which `AddArkServerSetProperties()` used to drop.
+- **Breaking:** `Ark.Tools.MediatorFramework`: the `[ServerSet]` attribute, `AddArkServerSetProperties()` and error `ARKMF002` are removed. The attribute let one model serve as both input and output by ignoring its computed or output-only properties on input. Use separate input and output models instead: move those properties to the model the request returns, as the sample's `Book.V1.Output` does. OpenAPI response schemas now include the properties that were marked `[ServerSet]`, which `AddArkServerSetProperties()` used to drop.
 
 ### Fixed
 

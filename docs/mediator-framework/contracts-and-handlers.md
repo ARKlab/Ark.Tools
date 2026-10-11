@@ -6,7 +6,7 @@ dispatch, and serialize.
 
 Before adding or changing one, complete the [contract design
 workflow](contract-design-workflow.md). It records transport exposure, ownership,
-server-owned values, messaging participants, validation, authorization, versioning,
+input and output models, messaging participants, validation, authorization, versioning,
 and test boundaries before implementation.
 
 ## Choose the contract shape
@@ -48,7 +48,7 @@ straightforward to test without an HTTP server, gRPC context, or message bus.
 ## Keep contracts stable
 
 Use records for small immutable messages. Make every client-controlled member
-explicit and keep server-owned values out of the contract. When a
+explicit and keep output-only members on the output model. When a
 contract crosses gRPC, add `[ProtoContract]` and a unique `[ProtoMember(n)]` to
 every serialized member. The request, the response and each streamed item must be
 protobuf contracts; a scalar such as `IAsyncEnumerable<int>` fails the build with
@@ -71,41 +71,41 @@ Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample
 released number; add new optional members with new numbers. Replace or version a
 contract instead of changing the meaning or type of an existing member.
 
-## Keep server-owned values out of contracts
+## Separate input and output models
 
-A contract carries only what the caller chooses. Values whose authoritative
-source is the host, the authenticated principal, the tenant resolver, the clock,
-the correlation context, or the handler are not contract members:
-
-- read the user or tenant from the user context (`IContextProvider<ClaimsPrincipal>`)
-  in the handler;
-- take an identifier the client must not choose from the route;
-- put server-generated values, such as an identifier or an audit timestamp, on
-  the response type.
+Every transport binds every settable property of an input type. Keep computed
+and output-only properties, such as a generated `Id` or `Description`, on an
+output model instead of the input model:
 
 ```csharp
-[HttpEndpoint("POST", "/api/v{version}/orders")]
-public sealed record CreateOrderRequest : IRequest<OrderResponse>
+public static class Book
 {
-    public required string ProductCode { get; init; }
-
-    public int Quantity { get; init; }
-}
-
-public sealed class CreateOrderHandler(IContextProvider<ClaimsPrincipal> user)
-    : IRequestHandler<CreateOrderRequest, OrderResponse>
-{
-    public async Task<OrderResponse> ExecuteAsync(CreateOrderRequest request, CancellationToken ctk = default)
+    public static class V1
     {
-        var userId = user.Current.Identity?.Name;
-        // ...
+        public record Input
+        {
+            public BookTitle Title { get; init; }
+        }
+
+        public record Create : Input
+        {
+            public Isbn? ISBN { get; init; }
+        }
+
+        public record Output : Create
+        {
+            public BookId Id { get; init; }
+
+            public BookDescription Description { get; init; }
+        }
     }
 }
 ```
-Source: [`BookPrintProcessFailureHandler.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.Application/Handlers/Book/BookPrintProcessFailureHandler.cs)
+Source: [`BookContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs)
 
-[ARKMF003](../analyzer-rules/ARKMF003.md) warns when an HTTP contract has a
-property such as `TenantId` or `UserId` that looks server-owned.
+Requests take `Create` or `Input` and return `Output`, so a caller cannot send
+the output-only values and OpenAPI documents each shape exactly. See [request
+and DTO best practices](request-and-dto-best-practices.md).
 
 ## Handler boundaries
 
