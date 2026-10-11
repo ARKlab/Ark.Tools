@@ -4,6 +4,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
+using System.Reflection;
+
 namespace Ark.Tools.Solid;
 
 /// <summary>
@@ -109,7 +111,7 @@ public sealed class ServiceProviderCommandProcessor(IServiceProvider services) :
         ArgumentNullException.ThrowIfNull(command);
         var handlerType = typeof(ICommandHandler<>).MakeGenericType(command.GetType());
         var handler = services.GetRequiredService(handlerType);
-        var task = (Task)handlerType.GetMethod(nameof(ICommandHandler<ICommand>.ExecuteAsync))!.Invoke(handler, [command, ctk])!;
+        var task = (Task)handlerType.GetMethod(nameof(ICommandHandler<ICommand>.ExecuteAsync))!.Invoke(handler, BindingFlags.DoNotWrapExceptions, null, [command, ctk], null)!;
         await task.ConfigureAwait(false);
     }
 
@@ -151,7 +153,7 @@ internal static class ServiceProviderProcessorInvoker
         IServiceProvider services, Type handlerType, object message, CancellationToken ctk)
     {
         var handler = services.GetRequiredService(handlerType);
-        var task = (Task<TResult>)handlerType.GetMethod("ExecuteAsync")!.Invoke(handler, [message, ctk])!;
+        var task = (Task<TResult>)handlerType.GetMethod("ExecuteAsync")!.Invoke(handler, BindingFlags.DoNotWrapExceptions, null, [message, ctk], null)!;
         return await task.ConfigureAwait(false);
     }
 }

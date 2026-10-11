@@ -37,6 +37,20 @@ public sealed class ServiceProviderProcessorTests
         Assert.IsTrue(legacyCommand.Executed);
     }
 
+    [TestMethod]
+    public async Task Untyped_dispatch_rethrows_the_handler_exception_unwrapped()
+    {
+        var services = new ServiceCollection()
+            .AddArkSolidServiceProviderProcessors();
+        services.AddScoped<ICommandHandler<LegacyCommand>, LegacyCommandHandler>();
+        await using var provider = services.BuildServiceProvider(validateScopes: true);
+        await using var scope = provider.CreateAsyncScope();
+
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+            await scope.ServiceProvider.GetRequiredService<ICommandProcessor>()
+                .ExecuteAsync(new LegacyCommand { Fail = true }).ConfigureAwait(false)).ConfigureAwait(false);
+    }
+
     private sealed record SelfRequest(int Value) : IRequest<SelfRequest, int>;
     private sealed record SelfQuery(int Value) : IQuery<SelfQuery, int>;
     private sealed class SelfCommand : ICommand<SelfCommand>
@@ -49,6 +63,8 @@ public sealed class ServiceProviderProcessorTests
     private sealed class LegacyCommand : ICommand
     {
         public bool Executed { get; set; }
+
+        public bool Fail { get; init; }
     }
 #pragma warning restore ARKSOLID001
 
@@ -89,6 +105,9 @@ public sealed class ServiceProviderProcessorTests
     {
         public Task ExecuteAsync(LegacyCommand command, CancellationToken ctk = default)
         {
+            if (command.Fail)
+                throw new InvalidOperationException("Handler failed before returning a task.");
+
             command.Executed = true;
             return Task.CompletedTask;
         }
