@@ -63,6 +63,36 @@ public sealed class GrpcClientRoundTripTests
     }
 
     /// <summary>
+    /// Sends empty values, which proto3 leaves off the wire: the value objects read them as <c>""</c> and <c>0</c>,
+    /// as JSON reads an explicit empty value, instead of staying uninitialized.
+    /// </summary>
+    [TestMethod]
+    public async Task EmptyValueObjectsReadAsEmptyValuesThroughGeneratedClient()
+    {
+        await using var host = await WebInterfaceTestHost.StartAsync().ConfigureAwait(false);
+        var ctk = host.App.Lifetime.ApplicationStopping;
+        var server = host.App.GetTestServer();
+        using var channel = GrpcChannel.ForAddress(
+            server.BaseAddress,
+            new GrpcChannelOptions { HttpHandler = server.CreateHandler() });
+        var client = new Client.BooksV1.BooksV1Client(channel);
+        var headers = new Metadata
+        {
+            { "Authorization", "Bearer " + WebInterfaceTestHost.CreateBearer(ApplicationScopes.BookRead) },
+        };
+
+        var edition = await client.DescribeBookEditionAsync(
+            new Client.DescribeBookEditionRequest_V1
+            {
+                Edition = new Client.BookEdition { PrintBookEdition = new Client.PrintBookEdition { Format = string.Empty, PageCount = 0 } },
+            },
+            headers,
+            cancellationToken: ctk);
+
+        edition.Description.Should().Be(" print edition with 0 pages");
+    }
+
+    /// <summary>
     /// Uploads a cover over HTTP and downloads it through the generated client, whose request carries the
     /// <see cref="BookId"/> value object as the <c>string</c> exported to <c>.proto</c>.
     /// </summary>

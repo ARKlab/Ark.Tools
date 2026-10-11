@@ -41,7 +41,9 @@ otherwise:
 Source: [`BookId.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookId.cs)
 
 A [Vogen value object](value-objects-best-practices.md#vogen-value-objects) member is exported
-as the primitive it wraps and needs no registration. A compliance
+as the primitive it wraps and needs no registration. An absent field, which is
+how proto3 sends `""` or `0`, reads as the value object over that empty value,
+as in JSON, rather than as an uninitialized value object. A compliance
 [sensitive value object](value-objects-best-practices.md#personal-data), such as `PersonName`,
 is exported as a `string` and registered the same way.
 

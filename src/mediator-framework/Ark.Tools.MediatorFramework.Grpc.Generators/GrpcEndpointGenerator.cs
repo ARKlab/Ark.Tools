@@ -502,13 +502,15 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         // Value objects reachable from the served contracts, registered as protobuf scalars when the services are
         // mapped, and the members whose exported .proto type would disagree with protobuf-net's wire format.
-        private static List<(string Type, string Primitive, bool IsSensitive)> CollectValueObjects(
+        // Also returns, per contract, the value object members to initialize when a message leaves them absent.
+        private static (List<(string Type, string Primitive, bool IsSensitive)> ValueObjects, SortedDictionary<string, SortedSet<string>> AbsentMembers) CollectValueObjects(
             ImmutableArray<EndpointModel> items,
             ImmutableEquatableArray<AssemblyMapping> mappings,
             ProtoContractLookup contractLookup,
             List<DiagnosticInfo> diagnostics)
         {
             var valueObjects = new SortedDictionary<string, (string Primitive, bool IsSensitive)>(StringComparer.Ordinal);
+            var absentMembers = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
             var reported = new HashSet<string>(StringComparer.Ordinal);
             // The exported request messages omit [ServerSet] members (see EmitProtoMessage), so they are not checked,
             // unless the contract is also a response or stream item, which protobuf-net writes with every member.
@@ -550,12 +552,18 @@ namespace Ark.Tools.MediatorFramework.Generators
                         else if (member.ValueObjectType is not null)
                         {
                             valueObjects[member.ValueObjectType] = (member.ValueObjectPrimitive!, member.IsSensitiveValueObject);
+                            if (member.InitializeWhenAbsent)
+                            {
+                                if (!absentMembers.TryGetValue(contract.TypeFullName, out var members))
+                                    absentMembers[contract.TypeFullName] = members = new SortedSet<string>(StringComparer.Ordinal);
+                                members.Add(member.Name);
+                            }
                         }
                     }
                 }
             }
 
-            return valueObjects.Select(static pair => (pair.Key, pair.Value.Primitive, pair.Value.IsSensitive)).ToList();
+            return (valueObjects.Select(static pair => (pair.Key, pair.Value.Primitive, pair.Value.IsSensitive)).ToList(), absentMembers);
         }
 
         private static GrpcOutput BuildOutput(
@@ -596,7 +604,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             }
 
             items = bindable.ToImmutable();
-            var valueObjects = CollectValueObjects(items, mappings, contractLookup, diagnosticsBuilder);
+            var (valueObjects, absentMembers) = CollectValueObjects(items, mappings, contractLookup, diagnosticsBuilder);
             var diagnostics = new ImmutableEquatableArray<DiagnosticInfo>(diagnosticsBuilder.ToImmutableArray());
 
             var sb = new StringBuilder();
@@ -740,6 +748,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                     : (valueObject.Type + ".From(value)", "value.Value");
                 sb.AppendLine("            global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<" + valueObject.Type + ", " + valueObject.Primitive + ">("
                     + "global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => " + from + ", static value => " + value + ");");
+            }
+            foreach (var contract in absentMembers)
+            {
+                sb.AppendLine("            global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.InitializeAbsentValueObjects<" + contract.Key + ">("
+                    + "global::ProtoBuf.Meta.RuntimeTypeModel.Default, " + string.Join(", ", contract.Value.Select(Literal)) + ");");
             }
             foreach (var item in items)
             {
@@ -1071,7 +1084,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                 valueObjectPrimitive is null ? null : element.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 valueObjectPrimitive,
                 exportIssue,
-                isSensitive);
+                isSensitive,
+                // A sensitive value object reads its default as empty already; an optional member stays null.
+                valueObjectPrimitive is not null && !isSensitive && exportIssue is null && property.SetMethod is not null
+                    && SymbolEqualityComparer.Default.Equals(property.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated), element)
+                    && property.Type.NullableAnnotation != NullableAnnotation.Annotated);
         }
 
         // The primitives ArkProtobufValueObjects serializes as protobuf scalars.
@@ -1538,7 +1555,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             string? ValueObjectType = null,
             string? ValueObjectPrimitive = null,
             string? ExportIssue = null,
-            bool IsSensitiveValueObject = false);
+            bool IsSensitiveValueObject = false,
+            bool InitializeWhenAbsent = false);
 
         private readonly record struct ProtoIncludeModel(string TypeFullName, int Number)
         {

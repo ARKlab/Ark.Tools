@@ -44,7 +44,10 @@ and the JSON converter on a contract type. A route or query value needs
 - **gRPC**: zero setup for a value object over `string`, `Guid`, `bool`,
   `int`, `long`, `float` or `double`. The exported `.proto` declares the
   primitive, and `MapArkGrpcServicesFromAssembly` registers the value object
-  with protobuf-net. See [gRPC](grpc.md) for `Guid` members.
+  with protobuf-net. proto3 never writes `""` or `0`, so an absent field reads
+  as the value object over that empty value, as JSON reads an explicit `""`;
+  an optional (`?`) member stays `null`. See [gRPC](grpc.md) for `Guid`
+  members.
 - **Dapper** (`Ark.Tools.Dapper`): call
   `ValueObjectDapper.Register<BookId, Guid>(BookId.From, static id => id.Value)`
   once at startup. Vogen's own Dapper handler would require the contracts

@@ -5,6 +5,10 @@ using ProtoBuf;
 using ProtoBuf.Meta;
 using ProtoBuf.Serializers;
 
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+
 namespace Ark.Tools.MediatorFramework.Grpc;
 
 /// <summary>
@@ -18,6 +22,14 @@ namespace Ark.Tools.MediatorFramework.Grpc;
 /// </remarks>
 public static class ArkProtobufValueObjects
 {
+    // Each registered value object over its primitive's empty value, which proto3 never writes, and its
+    // uninitialized default.
+    private static readonly ConcurrentDictionary<Type, (Func<object?> Empty, object? Default)> _emptyValues = new();
+
+    // The contracts each model already creates through AbsentValueObjects: protobuf-net freezes a type once it
+    // serialized it, so a second call, such as from another host sharing RuntimeTypeModel.Default, must not change it.
+    private static readonly ConditionalWeakTable<RuntimeTypeModel, HashSet<Type>> _initializedContracts = new();
+
     /// <summary>
     /// Registers a value object as a protobuf scalar. Calling it more than once is a no-op for an already-registered type.
     /// </summary>
@@ -47,6 +59,9 @@ public static class ArkProtobufValueObjects
         lock (model)
         {
             ValueObjectSerializer<TValueObject, TPrimitive>._configure(from, value);
+            _emptyValues.TryAdd(typeof(TValueObject), (
+                () => from(typeof(TPrimitive) == typeof(string) ? (TPrimitive)(object)string.Empty : default!),
+                default(TValueObject)));
             // Add returns the existing MetaType of a type already known to the model.
             var metaType = model.Add(typeof(TValueObject), applyDefaultBehaviour: false);
             if (metaType.SerializerType is null)
@@ -54,6 +69,99 @@ public static class ArkProtobufValueObjects
         }
 
         return model;
+    }
+
+    /// <summary>
+    /// Sets the value object members a message leaves absent to the value object over the primitive's empty value,
+    /// such as <c>""</c> or <c>0</c>, as JSON and MessagePack read an explicit empty value.
+    /// </summary>
+    /// <remarks>
+    /// proto3 never writes a scalar's empty value, so an absent field is how a client sends <c>""</c> or <c>0</c>;
+    /// without this, the member keeps its uninitialized default. A member that an initializer already set keeps its
+    /// value. Calling it again for the same model and contract is a no-op. The generated
+    /// <c>MapArkGrpcServicesFromAssembly</c> calls this for the served contracts.
+    /// </remarks>
+    /// <typeparam name="TContract">The protobuf contract.</typeparam>
+    /// <param name="model">The protobuf-net runtime type model to configure.</param>
+    /// <param name="members">The settable properties of a value object type registered with <see cref="Register{TValueObject, TPrimitive}"/>.</param>
+    /// <returns>The same <paramref name="model"/> for chaining.</returns>
+    /// <exception cref="ArgumentException">A member is not a settable property of a registered value object type.</exception>
+    public static RuntimeTypeModel InitializeAbsentValueObjects<[DynamicallyAccessedMembers(AbsentValueObjects._contractMembers)] TContract>(
+        RuntimeTypeModel model,
+        params string[] members)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(members);
+
+        var properties = new AbsentMember[members.Length];
+        for (var i = 0; i < members.Length; i++)
+        {
+            var property = typeof(TContract).GetProperty(members[i], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (property?.SetMethod is null || !_emptyValues.TryGetValue(property.PropertyType, out var value))
+                throw new ArgumentException($"'{typeof(TContract)}.{members[i]}' is not a settable property of a registered value object type.", nameof(members));
+            properties[i] = new AbsentMember(property, value.Empty, value.Default);
+        }
+
+        lock (model)
+        {
+            if (!_initializedContracts.GetOrCreateValue(model).Add(typeof(TContract)))
+                return model;
+
+            AbsentValueObjects<TContract>._configure(properties);
+            model.Add(typeof(TContract), applyDefaultBehaviour: true)
+                .SetFactory(typeof(AbsentValueObjects<TContract>).GetMethod(nameof(AbsentValueObjects<TContract>.Create))!);
+        }
+
+        return model;
+    }
+}
+
+/// <summary>A value object member to set when a message leaves it absent.</summary>
+/// <param name="Property">The member.</param>
+/// <param name="Empty">Creates the value object over the primitive's empty value.</param>
+/// <param name="Default">The member's uninitialized value: the boxed default of a struct, or null.</param>
+internal sealed record AbsentMember(PropertyInfo Property, Func<object?> Empty, object? Default);
+
+/// <summary>Trimming annotations shared by <see cref="AbsentValueObjects{TContract}"/>.</summary>
+internal static class AbsentValueObjects
+{
+    // The members InitializeAbsentValueObjects reads: the properties to set and the constructor to call.
+    internal const DynamicallyAccessedMemberTypes _contractMembers = DynamicallyAccessedMemberTypes.PublicConstructors
+        | DynamicallyAccessedMemberTypes.NonPublicConstructors
+        | DynamicallyAccessedMemberTypes.PublicProperties
+        | DynamicallyAccessedMemberTypes.NonPublicProperties;
+}
+
+/// <summary>Creates a contract whose absent value object members hold the value over the primitive's empty value.</summary>
+/// <typeparam name="TContract">The protobuf contract.</typeparam>
+internal static class AbsentValueObjects<[DynamicallyAccessedMembers(AbsentValueObjects._contractMembers)] TContract>
+{
+    // protobuf-net calls the factory from its type, so the members are held per closed generic type; the first
+    // registration wins, as for the value object conversions.
+    private static AbsentMember[]? _members;
+
+    // The constructor protobuf-net itself would call; without one, it would skip construction.
+    private static readonly ConstructorInfo? _constructor = typeof(TContract).GetConstructor(
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, Type.EmptyTypes);
+
+    internal static void _configure(AbsentMember[] members) => Interlocked.CompareExchange(ref _members, members, null);
+
+    /// <summary>Creates the contract before protobuf-net reads its fields, which then replace the preset members.</summary>
+    /// <returns>The new contract.</returns>
+    public static TContract Create()
+    {
+        var contract = _constructor is null
+            ? RuntimeHelpers.GetUninitializedObject(typeof(TContract))
+            : _constructor.Invoke(null);
+        foreach (var member in _members!)
+        {
+            // Compared bitwise, because a value object's own Equals may throw when uninitialized.
+            var current = member.Property.GetValue(contract);
+            if (current is null || (member.Default is not null && RuntimeHelpers.Equals(current, member.Default)))
+                member.Property.SetValue(contract, member.Empty());
+        }
+
+        return (TContract)contract;
     }
 }
 

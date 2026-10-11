@@ -58,6 +58,29 @@ public class ArkProtobufValueObjectsTests
         public List<int> Quantities { get; set; } = [];
     }
 
+    // A string value object whose default, like Vogen's, differs from the value over "".
+    private readonly record struct Title(string Value);
+
+    private readonly record struct Pages(int Value);
+
+    [ProtoContract]
+    private sealed class Chapter
+    {
+        [ProtoMember(1)]
+        public Title Title { get; init; }
+
+        [ProtoMember(2)]
+        public Pages Pages { get; init; } = new Pages(7);
+
+        [ProtoMember(3)]
+        public Title? Subtitle { get; init; }
+    }
+
+    [ProtoContract]
+    private sealed class EmptyMessage
+    {
+    }
+
     private static RuntimeTypeModel _model()
     {
         var model = RuntimeTypeModel.Create();
@@ -112,6 +135,43 @@ public class ArkProtobufValueObjectsTests
         stream.Position = 0;
 
         RuntimeTypeModel.Create().Deserialize<PlainShelf>(stream).Copies.Should().Be(3);
+    }
+
+    /// <summary>
+    /// An absent value object member, as proto3 sends <c>""</c>, holds the value over the empty primitive; an
+    /// initialized or nullable member keeps its value.
+    /// </summary>
+    [TestMethod]
+    public void InitializeAbsentValueObjects_ShouldReadAbsentMembersAsTheEmptyValue()
+    {
+        var model = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Title, string>(model, static value => new Title(value), static value => value.Value);
+        ArkProtobufValueObjects.Register<Pages, int>(model, static value => new Pages(value), static value => value.Value);
+        ArkProtobufValueObjects.InitializeAbsentValueObjects<Chapter>(model, nameof(Chapter.Title), nameof(Chapter.Pages));
+        using var absent = new MemoryStream();
+        using var present = new MemoryStream();
+
+        model.Serialize(absent, new EmptyMessage());
+        absent.Position = 0;
+        model.Serialize(present, new Chapter { Title = new Title("One"), Pages = new Pages(3) });
+        present.Position = 0;
+
+        var read = model.Deserialize<Chapter>(absent);
+        read.Title.Should().Be(new Title(string.Empty));
+        read.Pages.Should().Be(new Pages(7));
+        read.Subtitle.Should().BeNull();
+        var written = model.Deserialize<Chapter>(present);
+        written.Title.Should().Be(new Title("One"));
+        written.Pages.Should().Be(new Pages(3));
+    }
+
+    /// <summary>A member that is not a registered value object is rejected.</summary>
+    [TestMethod]
+    public void InitializeAbsentValueObjects_UnregisteredMember_ShouldThrow()
+    {
+        var act = static () => ArkProtobufValueObjects.InitializeAbsentValueObjects<Chapter>(RuntimeTypeModel.Create(), nameof(Chapter.Subtitle));
+
+        act.Should().Throw<ArgumentException>();
     }
 
     /// <summary>A primitive without a protobuf scalar is rejected.</summary>

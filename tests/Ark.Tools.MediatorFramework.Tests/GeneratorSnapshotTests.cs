@@ -4222,6 +4222,9 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("repeated string codes = 2;");
         result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::BookId, global::System.Guid>(global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => global::BookId.From(value), static value => value.Value);");
         result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::BookCode, string>(");
+        // proto3 leaves "" and 0 absent: a required value object reads them as JSON does, an optional or repeated one does not.
+        result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.InitializeAbsentValueObjects<global::GetBook>(global::ProtoBuf.Meta.RuntimeTypeModel.Default, \"Id\");");
+        result.Generated.Should().NotContain("InitializeAbsentValueObjects<global::BookItem>");
     }
 
     [TestMethod]
@@ -4264,6 +4267,8 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("string author = 1;");
         result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::ReaderName, string>(global::ProtoBuf.Meta.RuntimeTypeModel.Default, static value => global::Ark.Tools.Compliance.SensitiveValueSerialization.FromTransport<global::ReaderName>(value), static value => global::Ark.Tools.Compliance.SensitiveValueSerialization.ToTransport(value, \"gRPC\"));");
         result.Generated.Should().Contain("global::Ark.Tools.MediatorFramework.Grpc.ArkProtobufValueObjects.Register<global::AuthorName, string>(");
+        // A sensitive value object reads its uninitialized default as an empty value already.
+        result.Generated.Should().NotContain("InitializeAbsentValueObjects");
     }
 
     [TestMethod]
