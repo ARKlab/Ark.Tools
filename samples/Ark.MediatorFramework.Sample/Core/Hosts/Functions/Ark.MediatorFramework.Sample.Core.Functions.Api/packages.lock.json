@@ -1028,51 +1028,6 @@
         "resolved": "3.4.30",
         "contentHash": "CZf8U6eON9OBtcPyOiXJ6Oq3Opi/lWtEiireyLCy43iof1A2oA0GEOrEHZISzmQ46s61iOC06Sa4Cs+D41t1DA=="
       },
-      "Rebus": {
-        "type": "Transitive",
-        "resolved": "8.9.5",
-        "contentHash": "PfsmgENA9mrAnIAJEKh/Z7KiZay3cUXkHRxcfbkp+9//wnXEWOFoPAC9b2Y38kTYCFMc8eFiD3cXPERoS104cw==",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.4"
-        }
-      },
-      "Rebus.AzureBlobs": {
-        "type": "Transitive",
-        "resolved": "1.1.0",
-        "contentHash": "yPkvYzbEcECGEm8vVophhlRvoPT7KlpFpGrSBUDov5r5RDTw7yzHaKMNEYcp3GSaUlXsZfvNZPHSgoXeWQFndA==",
-        "dependencies": {
-          "azure.storage.blobs": "12.19.1",
-          "rebus": "8.0.1"
-        }
-      },
-      "Rebus.AzureServiceBus": {
-        "type": "Transitive",
-        "resolved": "10.7.1",
-        "contentHash": "YOi3rkSIf7AgqgLJVpX2tLpnXyFMFfBCtzoW3uuIDPgMOar7EsjKV7L+sbNlmI9NrTv+VqZg7Ajsgv4SeyC5Jw==",
-        "dependencies": {
-          "Azure.Messaging.ServiceBus": "7.20.1",
-          "Rebus": "8.9.2",
-          "azure.identity": "1.21.0"
-        }
-      },
-      "Rebus.NLog": {
-        "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "4cJjk1W0TAgQn1/tEMyca3Xvn4p8Z+Gqku3IYRWFH4RW3Pzdr84daqwDpPB1juIibwTP7HRcTs11OQ6DmPJSuw==",
-        "dependencies": {
-          "nlog": "5.2.5",
-          "rebus": "8.0.1"
-        }
-      },
-      "Rebus.SqlServer": {
-        "type": "Transitive",
-        "resolved": "8.4.2",
-        "contentHash": "bO3ZTFT0W0SFnG7HObSxMnvaci5sRlLSddYQvXYxjjL73w3JndDbi2g31eDRvuP9C53l2Y4JWUcIEnjtpJK8qA==",
-        "dependencies": {
-          "microsoft.data.sqlclient": "6.1.2",
-          "rebus": "8.9.0"
-        }
-      },
       "SimpleInjector": {
         "type": "Transitive",
         "resolved": "5.6.0",
@@ -1223,7 +1178,6 @@
         "dependencies": {
           "Ark.Tools.AspNetCore.HealthChecks.OTel": "[1.0.0, )",
           "Ark.Tools.OTel": "[1.0.0, )",
-          "Ark.Tools.Rebus": "[1.0.0, )",
           "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
           "OpenTelemetry.Instrumentation.Http": "[1.19.0, )",
@@ -1443,21 +1397,6 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Dapper": "[2.1.89, )",
           "morelinq": "[4.4.0, )"
-        }
-      },
-      "ark.tools.rebus": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "Ark.Tools.Core": "[1.0.0, )",
-          "Ark.Tools.SimpleInjector": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )",
-          "Azure.Messaging.ServiceBus": "[7.21.0, )",
-          "Rebus": "[8.9.5, )",
-          "Rebus.AzureBlobs": "[1.1.0, )",
-          "Rebus.AzureServiceBus": "[10.7.1, )",
-          "Rebus.NLog": "[6.0.0, )",
-          "Rebus.SqlServer": "[8.4.2, )"
         }
       },
       "ark.tools.simpleinjector": {

@@ -1448,7 +1448,6 @@
         "dependencies": {
           "Ark.Tools.AspNetCore.HealthChecks.OTel": "[1.0.0, )",
           "Ark.Tools.OTel": "[1.0.0, )",
-          "Ark.Tools.Rebus": "[1.0.0, )",
           "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
           "OpenTelemetry.Instrumentation.Http": "[1.19.0, )",
