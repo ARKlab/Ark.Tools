@@ -54,7 +54,7 @@ public static class NodaTimeDapperSqlServer
     }
 
     /// <summary>
-    /// Sets the SQL Server parameter types (<c>datetime2</c>, <c>date</c>, <c>time</c>) on the shared
+    /// Sets the SQL Server parameter types (<c>datetime2</c>, <c>date</c>, <c>time</c>, <c>datetimeoffset</c>) on the shared
     /// <c>Ark.Tools.Nodatime.Dapper</c> handler instances, without registering them with Dapper's <c>SqlMapper</c>.
     /// </summary>
     /// <remarks>
