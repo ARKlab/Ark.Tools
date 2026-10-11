@@ -16,9 +16,9 @@ namespace Ark.MediatorFramework.Sample.Core.Functions.Tests;
 public sealed class FunctionsIndexingTests
 {
     [TestMethod]
-    public void ApiIndexesOnlyHttpTriggers()
+    public async Task ApiIndexesOnlyHttpTriggers()
     {
-        var functions = _indexedFunctions("Api");
+        var functions = await _indexedFunctionsAsync("Api").ConfigureAwait(false);
 
         functions.Should().NotBeEmpty();
         functions.Select(static f => f.Trigger).Should().AllBe("httpTrigger");
@@ -28,12 +28,12 @@ public sealed class FunctionsIndexingTests
     [DataRow("Processor", "ark-mediator-sample")]
     [DataRow("Notifications", "sample-messaging-notification")]
     [DataRow("Audit", "sample-messaging-audit")]
-    public void ReceiverIndexesOnlyItsServiceBusTrigger(string app, string function)
+    public async Task ReceiverIndexesOnlyItsServiceBusTrigger(string app, string function)
     {
-        _indexedFunctions(app).Should().Equal(("serviceBusTrigger", function));
+        (await _indexedFunctionsAsync(app).ConfigureAwait(false)).Should().Equal(("serviceBusTrigger", function));
     }
 
-    private static List<(string Trigger, string Name)> _indexedFunctions(string app)
+    private static async Task<List<(string Trigger, string Name)>> _indexedFunctionsAsync(string app)
     {
         var metadata = typeof(FunctionsIndexingTests).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().ToList();
         var directory = metadata.Single(static a => a.Key == "FunctionsAppsDirectory").Value!;
@@ -41,7 +41,7 @@ public sealed class FunctionsIndexingTests
         var project = "Ark.MediatorFramework.Sample.Core.Functions." + app;
         var path = Path.Combine(directory, project, "bin", configuration, "net10.0", "linux-x64", "functions.metadata");
 
-        return JsonNode.Parse(File.ReadAllText(path))!.AsArray()
+        return JsonNode.Parse(await File.ReadAllTextAsync(path).ConfigureAwait(false))!.AsArray()
             .Select(static f => (f!["bindings"]![0]!["type"]!.GetValue<string>(), f["name"]!.GetValue<string>()))
             .ToList();
     }
