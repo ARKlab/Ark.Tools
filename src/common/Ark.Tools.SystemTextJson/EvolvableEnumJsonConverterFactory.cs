@@ -82,7 +82,8 @@ public sealed class EvolvableEnumJsonConverter<[DynamicallyAccessedMembers(Dynam
 /// </summary>
 /// <remarks>
 /// The Native AOT counterpart of <see cref="EvolvableEnumJsonConverterFactory"/> for enums with an explicit backing type;
-/// list it per enum in the source-generated context, as <see cref="EvolvableEnumJsonConverter{TEnum}"/>.
+/// list it per enum in the source-generated context, for example
+/// <c>[JsonSourceGenerationOptions(Converters = new[] { typeof(EvolvableEnumJsonConverter&lt;Status, byte&gt;) })]</c>.
 /// </remarks>
 /// <typeparam name="TEnum">The wrapped enum.</typeparam>
 /// <typeparam name="TBacking">The numeric backing type.</typeparam>

@@ -62,6 +62,7 @@ handlers or decorators.
    ```csharp
    public static IServiceCollection AddQuery<TQuery, TResult,
        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] THandler>(this IServiceCollection services)
+       where TQuery : IQuery<TResult>
        where THandler : class, IQueryHandler<TQuery, TResult>
    {
        services.AddScoped<THandler>();
