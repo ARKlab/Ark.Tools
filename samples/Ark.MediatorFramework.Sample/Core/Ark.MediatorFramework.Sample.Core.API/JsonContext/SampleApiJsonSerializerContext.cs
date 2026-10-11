@@ -36,7 +36,8 @@ namespace Ark.MediatorFramework.Sample.Core.API.JsonContext;
         typeof(LocalDateRangeConverter),
         typeof(LocalDateTimeRangeConverter),
         typeof(ZonedDateTimeRangeConverter),
-        // Vogen value objects: the source generator ignores their type-level [JsonConverter].
+        // Vogen value objects of this assembly: the source generator cannot see their [JsonConverter], which Vogen
+        // generates in the same compilation. Contexts in other assemblies, such as the application's, see it.
         typeof(Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory),
     })]
 [JsonSerializable(typeof(UploadResponse))]

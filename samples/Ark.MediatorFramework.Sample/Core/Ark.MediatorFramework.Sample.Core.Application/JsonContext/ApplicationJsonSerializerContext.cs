@@ -23,8 +23,6 @@ namespace Ark.MediatorFramework.Sample.Core.Application.JsonContext;
         typeof(LocalDateTimeConverter),
         typeof(ExtendedIsoOffsetDateTimeConverter),
         typeof(RoundtripPeriodConverter),
-        // Vogen value objects: the source generator ignores their type-level [JsonConverter].
-        typeof(Ark.Tools.SystemTextJson.ValueObjectJsonConverterFactory),
     })]
 [JsonSerializable(typeof(ProcessBookPrintProcessRequest))]
 [JsonSerializable(typeof(BookPrintCompleted))]

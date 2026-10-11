@@ -304,12 +304,14 @@ and the JSON converter on a contract type. A route or query value needs
 `TryParse` or the `TypeConverter`; with neither, the endpoint reports
 `ARKMF059`.
 
-- **JSON**: zero setup. `ConfigureArkDefaults()` registers
-  `ValueObjectJsonConverterFactory`, which applies Vogen's converter even
-  through a source-generated `JsonSerializerContext`, which cannot see it.
-  This covers HTTP bodies, native messaging, Rebus and Azure Functions. A
-  context used on its own, such as its `Default` instance, needs the factory in
-  `[JsonSourceGenerationOptions(Converters = ...)]`, plus
+- **JSON**: a source-generated `JsonSerializerContext` in another assembly,
+  such as the application project, sees Vogen's `[JsonConverter]` and needs no
+  converter setup. A context in the contracts assembly cannot see it, because
+  source generators cannot see each other's output: `ConfigureArkDefaults()`
+  registers `ValueObjectJsonConverterFactory` for it, and used on its own,
+  such as its `Default` instance, it needs the factory in
+  `[JsonSourceGenerationOptions(Converters = ...)]`. Keeping the contexts out
+  of the contracts assembly avoids this. Either way, a context needs
   `[JsonSerializable(typeof(int))]` (or `long`, `double`) for numeric value
   objects, because Vogen's converter reads the number through the options.
 - **Routes and query strings**: zero setup. Minimal API and Azure Functions
