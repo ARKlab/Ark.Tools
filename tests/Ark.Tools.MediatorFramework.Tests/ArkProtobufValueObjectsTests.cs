@@ -69,8 +69,11 @@ public class ArkProtobufValueObjectsTests
         [ProtoMember(1)]
         public Title Title { get; init; }
 
+        // The initializer is the point of the test: an absent field keeps an initialized member's value.
+#pragma warning disable PBN0022 // Field should use IsRequired because it is initialized to a non-default value
         [ProtoMember(2)]
         public Pages Pages { get; init; } = new Pages(7);
+#pragma warning restore PBN0022
 
         [ProtoMember(3)]
         public Title? Subtitle { get; init; }
