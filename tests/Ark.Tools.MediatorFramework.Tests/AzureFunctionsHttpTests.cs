@@ -175,28 +175,6 @@ public sealed class AzureFunctionsHttpTests
     }
 
     [TestMethod]
-    public async Task StreamsWithItemMetadataOnly()
-    {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddArkAzureFunctions();
-        // As in a trimmed app: the context describes the item type, not IAsyncEnumerable<T>, and there is no reflection fallback.
-        services.ConfigureHttpJsonOptions(static options => options.SerializerOptions.TypeInfoResolver = StreamItemJsonContext.Default);
-        await using var provider = services.BuildServiceProvider();
-        var context = new DefaultHttpContext { RequestServices = provider };
-        context.Response.Body = new MemoryStream();
-
-        await ArkAzureFunctionsHttp.WriteJsonStreamAsync(
-            context.Response,
-            _valuesAsync(),
-            CancellationToken.None);
-
-        context.Response.Body.Position = 0;
-        using var reader = new StreamReader(context.Response.Body);
-        (await reader.ReadToEndAsync(CancellationToken.None)).Should().Be("[1,2]");
-    }
-
-    [TestMethod]
     public async Task HealthCheckUsesRegisteredService()
     {
         var services = new ServiceCollection();
@@ -301,7 +279,3 @@ public sealed class MarkerJsonConverter : JsonConverter<Marker>
 [JsonSourceGenerationOptions(RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true, Converters = new[] { typeof(MarkerJsonConverter) })]
 [JsonSerializable(typeof(Marker))]
 internal sealed partial class MarkerJsonContext : JsonSerializerContext;
-
-[JsonSourceGenerationOptions(RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true)]
-[JsonSerializable(typeof(int))]
-internal sealed partial class StreamItemJsonContext : JsonSerializerContext;

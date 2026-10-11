@@ -135,25 +135,11 @@ public static class ArkAzureFunctionsHttp
         ArgumentNullException.ThrowIfNull(items);
 
         response.ContentType = "application/json; charset=utf-8";
-        // Writes the array itself so only the item metadata is needed: a trimmed app's context rarely lists IAsyncEnumerable<T>.
-        var typeInfo = _getTypeInfo<T>(response.HttpContext);
-        var writer = new System.Text.Json.Utf8JsonWriter(response.Body, new System.Text.Json.JsonWriterOptions
-        {
-            Encoder = typeInfo.Options.Encoder,
-            Indented = typeInfo.Options.WriteIndented,
-        });
-        await using (writer.ConfigureAwait(false))
-        {
-            writer.WriteStartArray();
-            await foreach (var item in items.WithCancellation(cancellationToken).ConfigureAwait(false))
-            {
-                System.Text.Json.JsonSerializer.Serialize(writer, item, typeInfo);
-                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-            }
-
-            writer.WriteEndArray();
-            await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-        }
+        await System.Text.Json.JsonSerializer.SerializeAsync(
+            response.Body,
+            items,
+            _getTypeInfo<IAsyncEnumerable<T>>(response.HttpContext),
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Executes registered health checks and returns their HTTP status result.</summary>
