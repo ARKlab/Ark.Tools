@@ -373,11 +373,6 @@
           "NLog": "6.1.4"
         }
       },
-      "NodaTime": {
-        "type": "Transitive",
-        "resolved": "3.3.5",
-        "contentHash": "0qtGKHOYhQGCeUItP4RN8KJktsKD9j/B4IqmoecUL+ymReq69O71qEpZY6x0aQPZa5KDLXY41aEOOHZ9T6Uqgw=="
-      },
       "NodaTime.Serialization.SystemTextJson": {
         "type": "Transitive",
         "resolved": "1.4.0",
@@ -455,18 +450,27 @@
       "ark.mediatorframework.aotsample.core.api": {
         "type": "Project",
         "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
-          "Ark.Tools.Solid": "[1.0.0, )"
+          "Ark.Tools.Solid": "[1.0.0, )",
+          "NodaTime": "[3.3.5, )",
+          "Vogen": "[8.0.7, )"
         }
       },
       "ark.mediatorframework.aotsample.core.application": {
         "type": "Project",
         "dependencies": {
           "Ark.MediatorFramework.AotSample.Core.API": "[6.6.6, )",
+          "Ark.Tools.Compliance.Dapper": "[999.9.9, )",
+          "Ark.Tools.Dapper": "[1.0.0, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
+          "Ark.Tools.Nodatime.Dapper": "[1.0.0, )",
+          "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )",
           "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
+          "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
+          "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Dapper": "[2.1.89, )",
           "Dapper.AOT": "[1.1.0, )",
           "Microsoft.Data.SqlClient": "[7.1.1, )"
@@ -510,6 +514,13 @@
           "Microsoft.Extensions.Compliance.Abstractions": "[10.10.0, )"
         }
       },
+      "ark.tools.compliance.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance": "[999.9.9, )",
+          "Dapper": "[2.1.89, )"
+        }
+      },
       "ark.tools.compliance.nlog": {
         "type": "Project",
         "dependencies": {
@@ -529,6 +540,13 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "NodaTime": "[3.3.5, )"
+        }
+      },
+      "ark.tools.dapper": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Dapper": "[2.1.89, )"
         }
       },
       "ark.tools.mediatorframework": {
@@ -682,6 +700,18 @@
         "requested": "[2.12.2, )",
         "resolved": "2.12.2",
         "contentHash": "ZkT7qiJe0Kj0+DTZOZo+xrDy1kNmdsWFQVPIQLNx9ZJ0T9cB2LG7r+Bi60so8/+yg1nkS7QCPadrzsTG4VPKrA=="
+      },
+      "NodaTime": {
+        "type": "CentralTransitive",
+        "requested": "[3.3.5, )",
+        "resolved": "3.3.5",
+        "contentHash": "0qtGKHOYhQGCeUItP4RN8KJktsKD9j/B4IqmoecUL+ymReq69O71qEpZY6x0aQPZa5KDLXY41aEOOHZ9T6Uqgw=="
+      },
+      "Vogen": {
+        "type": "CentralTransitive",
+        "requested": "[8.0.7, )",
+        "resolved": "8.0.7",
+        "contentHash": "0DrJ2ZPEGoJlzwqhum2LaZJ2FzJzgy5HP0km+XYL2MC/hS4Sn5/C35oRyob146Yjlf5xit2tmPx5xhI2BXkhLw=="
       }
     },
     "net10.0/linux-x64": {

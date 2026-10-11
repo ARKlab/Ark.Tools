@@ -6,12 +6,18 @@
   </PropertyGroup>
   <ItemGroup Label="Ark.Tools packages">
     <PackageVersion Include="Ark.Tools.Compliance" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Compliance.Dapper" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Dapper" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Messaging" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.Messaging.Azure" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.MediatorFramework.MinimalApi" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Nodatime.Dapper" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Nodatime.SystemTextJson" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Outbox" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Solid" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.Sql.SqlServer" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.SystemTextJson" Version="999.9.9" />
   </ItemGroup>
   <ItemGroup Label="Sample dependencies">
     <PackageVersion Include="Dapper" Version="2.1.89" />
@@ -19,6 +25,8 @@
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
     <!-- Transitive pin: aligns the version Ark.Tools.MediatorFramework.MinimalApi builds against. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
+    <PackageVersion Include="NodaTime" Version="3.3.5" />
+    <PackageVersion Include="Vogen" Version="8.0.7" />
   </ItemGroup>
   <ItemGroup Label="Testing packages">
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />

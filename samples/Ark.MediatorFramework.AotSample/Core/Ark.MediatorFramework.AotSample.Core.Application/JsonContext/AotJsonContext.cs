@@ -3,6 +3,9 @@
 
 using Ark.MediatorFramework.AotSample.Core.API;
 
+using Ark.Tools.Nodatime.SystemTextJson.Converters;
+using Ark.Tools.SystemTextJson;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +17,16 @@ namespace Ark.MediatorFramework.AotSample.Core.Application;
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     RespectNullableAnnotations = true,
-    RespectRequiredConstructorParameters = true)]
+    RespectRequiredConstructorParameters = true,
+    Converters = new Type[]
+    {
+        typeof(InstantConverter),
+        typeof(LocalDateConverter),
+        typeof(LocalDateTimeConverter),
+        typeof(LocalTimeConverter),
+        typeof(ExtendedIsoOffsetDateTimeConverter),
+        typeof(EvolvableEnumJsonConverter<Genre>),
+    })]
 [JsonSerializable(typeof(Book))]
 [JsonSerializable(typeof(Book_CreateRequest.V1), TypeInfoPropertyName = "Book_CreateRequest_V1")]
 [JsonSerializable(typeof(Book_GetQuery.V1), TypeInfoPropertyName = "Book_GetQuery_V1")]

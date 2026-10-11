@@ -2,9 +2,12 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.MediatorFramework.AotSample.Core.API;
+using Ark.MediatorFramework.AotSample.Core.Application;
 using Ark.MediatorFramework.AotSample.Core.Application.DAL;
 using Ark.MediatorFramework.AotSample.Core.Web.Hosting;
 using Ark.MediatorFramework.AotSample.Core.Web.WebInterface;
+
+using Ark.Tools.Compliance;
 
 using AwesomeAssertions;
 
@@ -12,6 +15,8 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
+using NodaTime;
 
 using System.Net;
 using System.Net.Http.Json;
@@ -49,10 +54,20 @@ public sealed class EndToEndTests
         await app.StartAsync(ctk).ConfigureAwait(false);
         using var http = app.GetTestClient();
 
-        using var created = await http.PostAsJsonAsync("/api/v1/books", new Book_CreateRequest.V1 { Title = "Book A" }, ctk).ConfigureAwait(false);
+        var request = new Book_CreateRequest.V1
+        {
+            Title = "Book A",
+            Genre = Genre.Fiction,
+            PublishedOn = new LocalDate(2026, 10, 11),
+            ReleasedAt = new OffsetDateTime(new LocalDateTime(2026, 10, 11, 9, 0), Offset.FromHours(2)),
+            PrintSlot = new LocalTime(8, 30),
+            Contact = EmailAddress.From("publisher@example.com"),
+        };
+        using var content = JsonContent.Create(request, AotJsonContext.Default.Book_CreateRequest_V1);
+        using var created = await http.PostAsync(new Uri("/api/v1/books", UriKind.Relative), content, ctk).ConfigureAwait(false);
         created.StatusCode.Should().Be(HttpStatusCode.OK);
-        var book = await created.Content.ReadFromJsonAsync<Book>(ctk).ConfigureAwait(false);
-        book!.Printed.Should().BeFalse();
+        var book = (await created.Content.ReadFromJsonAsync(AotJsonContext.Default.Book, ctk).ConfigureAwait(false))!;
+        book.Printed.Should().BeFalse();
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ctk);
         timeout.CancelAfter(TimeSpan.FromMinutes(1));
@@ -60,11 +75,16 @@ public sealed class EndToEndTests
         do
         {
             await Task.Delay(TimeSpan.FromMilliseconds(500), timeout.Token).ConfigureAwait(false);
-            read = await http.GetFromJsonAsync<Book>(new Uri("/api/v1/books/" + book.Id.ToString(CultureInfo.InvariantCulture), UriKind.Relative), timeout.Token).ConfigureAwait(false);
+            read = await http.GetFromJsonAsync(
+                new Uri("/api/v1/books/" + book.Id.Value.ToString("D", CultureInfo.InvariantCulture), UriKind.Relative), AotJsonContext.Default.Book, timeout.Token).ConfigureAwait(false);
         }
         while (read is not { Printed: true });
 
-        using var missing = await http.GetAsync(new Uri("/api/v1/books/0", UriKind.Relative), ctk).ConfigureAwait(false);
+        // Every Ark.Tools type survives JSON and SQL Server: the read is the created book plus the print.
+        read.Should().BeEquivalentTo(book with { Printed = true, PrintedAt = read.PrintedAt });
+        read.PrintedAt.Should().NotBeNull();
+
+        using var missing = await http.GetAsync(new Uri("/api/v1/books/" + Guid.Empty.ToString("D", CultureInfo.InvariantCulture), UriKind.Relative), ctk).ConfigureAwait(false);
         missing.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
         await app.StopAsync(ctk).ConfigureAwait(false);

@@ -11,6 +11,9 @@
   <ItemGroup>
     <PackageReference Include="Ark.Tools.MediatorFramework" />
     <PackageReference Include="Ark.Tools.Solid" />
+    <PackageReference Include="Ark.Tools.Compliance" />
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="Vogen" />
   </ItemGroup>
 
 </Project>

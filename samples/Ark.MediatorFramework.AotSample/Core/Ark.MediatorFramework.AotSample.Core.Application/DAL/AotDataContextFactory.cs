@@ -56,8 +56,15 @@ public sealed class AotDataContextFactory(string sql) : IOutboxAsyncContextFacto
     private const string _schema = """
         IF OBJECT_ID('[dbo].[Book]') IS NULL
             CREATE TABLE [dbo].[Book] (
-                [Id] INT IDENTITY(1,1) NOT NULL CONSTRAINT [PK_Book] PRIMARY KEY,
+                [Id] UNIQUEIDENTIFIER NOT NULL CONSTRAINT [PK_Book] PRIMARY KEY,
                 [Title] NVARCHAR(200) NOT NULL,
+                [Genre] NVARCHAR(50) NOT NULL,
+                [PublishedOn] DATE NOT NULL,
+                [ReleasedAt] DATETIMEOFFSET NOT NULL,
+                [PrintSlot] TIME NOT NULL,
+                [CreatedAt] DATETIME2 NOT NULL,
+                [PrintedAt] DATETIME2 NULL,
+                [Contact] NVARCHAR(320) NOT NULL,
                 [Printed] BIT NOT NULL CONSTRAINT [DF_Book_Printed] DEFAULT (0));
         IF OBJECT_ID('[dbo].[Outbox]') IS NULL
             CREATE TABLE [dbo].[Outbox] (

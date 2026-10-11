@@ -15,7 +15,13 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Ark.Tools.MediatorFramework" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
+    <PackageReference Include="Ark.Tools.Compliance.Dapper" />
+    <PackageReference Include="Ark.Tools.Dapper" />
+    <PackageReference Include="Ark.Tools.Nodatime.Dapper" />
+    <PackageReference Include="Ark.Tools.Nodatime.SystemTextJson" />
     <PackageReference Include="Ark.Tools.Outbox" />
+    <PackageReference Include="Ark.Tools.Sql.SqlServer" />
+    <PackageReference Include="Ark.Tools.SystemTextJson" />
     <PackageReference Include="Ark.Tools.Solid" />
     <PackageReference Include="Dapper" />
     <PackageReference Include="Dapper.AOT" />

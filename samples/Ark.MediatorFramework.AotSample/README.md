@@ -32,6 +32,12 @@ API. The findings behind it are in the
   calls Dapper from its own assembly, is not AOT-safe; the sample's
   [`AotDataContext`](Core/Ark.MediatorFramework.AotSample.Core.Application/DAL/AotDataContext.cs) implements the outbox
   itself. A Dapper `IL2104`/`IL3053` warning at publish means a call was left on reflection-based Dapper.
+- **Ark.Tools types end to end.** `Book` carries a Vogen `BookId`, an `EvolvableEnum<Genre>`, the five NodaTime types
+  Ark.Tools maps for Dapper and an `EmailAddress` sensitive value. Each crosses HTTP JSON, the message, SQL Server and
+  back. Dapper.AOT ignores `SqlMapper.AddTypeHandler`, which also crashes Native AOT, so
+  [`DbValueHandlers`](Core/Ark.MediatorFramework.AotSample.Core.Application/DAL/DbValueHandlers.cs) registers each type
+  with `[module: TypeHandler(...)]`, reusing the Ark.Tools handlers. `ApplicationComposition.ConfigureJson` adds the JSON
+  context's converters to the HTTP and messaging options, which do not inherit them.
 - **No database project.** The WebInterface and the tests create the database and its two tables at startup.
 - **JSON only.** Every participant uses the JSON codec with the source-generated `AotJsonContext`.
 - **No gRPC or MCP.** The gRPC host is not AOT-safe yet; see the investigation.

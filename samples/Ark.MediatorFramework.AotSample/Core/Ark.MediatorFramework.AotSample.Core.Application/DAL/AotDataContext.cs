@@ -8,6 +8,8 @@ using Dapper;
 
 using Microsoft.Data.SqlClient;
 
+using NodaTime;
+
 using System.Data;
 using System.Text.Json;
 
@@ -52,15 +54,20 @@ public sealed class AotDataContext : IOutboxAsyncContext
         }
     }
 
+    private const string _bookColumns = "[Id], [Title], [Genre], [PublishedOn], [ReleasedAt], [PrintSlot], [CreatedAt], [PrintedAt], [Contact], [Printed]";
+
     /// <summary>Inserts a book.</summary>
-    /// <param name="title">The title.</param>
+    /// <param name="book">The book.</param>
     /// <param name="ctk">The cancellation token.</param>
-    /// <returns>The new book.</returns>
-    public async Task<Book> InsertBookAsync(string title, CancellationToken ctk = default)
+    public async Task InsertBookAsync(Book book, CancellationToken ctk = default)
     {
-        return await _connection.QuerySingleAsync<Book>(
-            "INSERT INTO [dbo].[Book] ([Title]) OUTPUT INSERTED.[Id], INSERTED.[Title], INSERTED.[Printed] VALUES (@title)",
-            new { title, ctk },
+        ArgumentNullException.ThrowIfNull(book);
+        await _connection.ExecuteAsync(
+            """
+            INSERT INTO [dbo].[Book] ([Id], [Title], [Genre], [PublishedOn], [ReleasedAt], [PrintSlot], [CreatedAt], [Contact])
+            VALUES (@Id, @Title, @Genre, @PublishedOn, @ReleasedAt, @PrintSlot, @CreatedAt, @Contact)
+            """,
+            new { book.Id, book.Title, book.Genre, book.PublishedOn, book.ReleasedAt, book.PrintSlot, book.CreatedAt, book.Contact, ctk },
             _transaction).ConfigureAwait(false);
     }
 
@@ -68,23 +75,24 @@ public sealed class AotDataContext : IOutboxAsyncContext
     /// <param name="id">The identifier.</param>
     /// <param name="ctk">The cancellation token.</param>
     /// <returns>The book, or <see langword="null"/>.</returns>
-    public async Task<Book?> ReadBookAsync(int id, CancellationToken ctk = default)
+    public async Task<Book?> ReadBookAsync(BookId id, CancellationToken ctk = default)
     {
         return await _connection.QuerySingleOrDefaultAsync<Book>(
-            "SELECT [Id], [Title], [Printed] FROM [dbo].[Book] WHERE [Id] = @id",
+            "SELECT " + _bookColumns + " FROM [dbo].[Book] WHERE [Id] = @id",
             new { id, ctk },
             _transaction).ConfigureAwait(false);
     }
 
     /// <summary>Marks a book printed.</summary>
     /// <param name="id">The identifier.</param>
+    /// <param name="printedAt">When it was printed, in UTC.</param>
     /// <param name="ctk">The cancellation token.</param>
     /// <returns><see langword="true"/> when the book exists.</returns>
-    public async Task<bool> MarkPrintedAsync(int id, CancellationToken ctk = default)
+    public async Task<bool> MarkPrintedAsync(BookId id, LocalDateTime printedAt, CancellationToken ctk = default)
     {
         return await _connection.ExecuteAsync(
-            "UPDATE [dbo].[Book] SET [Printed] = 1 WHERE [Id] = @id",
-            new { id, ctk },
+            "UPDATE [dbo].[Book] SET [Printed] = 1, [PrintedAt] = @printedAt WHERE [Id] = @id",
+            new { id, printedAt, ctk },
             _transaction).ConfigureAwait(false) == 1;
     }
 

@@ -8,6 +8,8 @@ using Ark.Tools.Solid;
 
 using Microsoft.Extensions.Logging;
 
+using NodaTime;
+
 namespace Ark.MediatorFramework.AotSample.Core.Application.Handlers;
 
 /// <summary>Stores a book and, in the same transaction, queues its print command in the outbox.</summary>
@@ -19,7 +21,18 @@ public sealed class Book_CreateRequestHandler(AotDataContextFactory factory, IBu
         ArgumentNullException.ThrowIfNull(request);
         var context = await factory.OpenAsync(ctk).ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
-        var book = await context.InsertBookAsync(request.Title, ctk).ConfigureAwait(false);
+        var book = new Book
+        {
+            Id = BookId.From(Guid.NewGuid()),
+            Title = request.Title,
+            Genre = request.Genre,
+            PublishedOn = request.PublishedOn,
+            ReleasedAt = request.ReleasedAt,
+            PrintSlot = request.PrintSlot,
+            CreatedAt = SystemClock.Instance.GetCurrentInstant(),
+            Contact = request.Contact,
+        };
+        await context.InsertBookAsync(book, ctk).ConfigureAwait(false);
         var enlistment = bus as IBusOutboxEnlistment
             ?? throw new InvalidOperationException("The configured messaging bus does not support outbox enlistment.");
         using var scope = enlistment.Enlist(context);
@@ -31,16 +44,16 @@ public sealed class Book_CreateRequestHandler(AotDataContextFactory factory, IBu
 }
 
 /// <summary>Reads a book.</summary>
-public sealed class Book_GetQueryHandler(AotDataContextFactory factory) : IQueryHandler<Book_GetQuery.V1, Book>
+public sealed class Book_GetQueryHandler(AotDataContextFactory factory) : IQueryHandler<Book_GetQuery.V1, Book?>
 {
     /// <inheritdoc />
-    public async Task<Book> ExecuteAsync(Book_GetQuery.V1 query, CancellationToken ctk = default)
+    public async Task<Book?> ExecuteAsync(Book_GetQuery.V1 query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
         var context = await factory.OpenAsync(ctk).ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
         // A null result answers 404.
-        return (await context.ReadBookAsync(query.Id, ctk).ConfigureAwait(false))!;
+        return await context.ReadBookAsync(query.Id, ctk).ConfigureAwait(false);
     }
 }
 
@@ -53,12 +66,12 @@ public sealed partial class PrintBookCommandHandler(AotDataContextFactory factor
         ArgumentNullException.ThrowIfNull(command);
         var context = await factory.OpenAsync(ctk).ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
-        if (!await context.MarkPrintedAsync(command.BookId, ctk).ConfigureAwait(false))
-            throw new InvalidOperationException("Book " + command.BookId.ToString(CultureInfo.InvariantCulture) + " does not exist.");
+        if (!await context.MarkPrintedAsync(command.BookId, SystemClock.Instance.GetCurrentInstant().InUtc().LocalDateTime, ctk).ConfigureAwait(false))
+            throw new InvalidOperationException("Book " + command.BookId.Value.ToString("D", CultureInfo.InvariantCulture) + " does not exist.");
         await context.CommitAsync(ctk).ConfigureAwait(false);
         _logPrinted(logger, command.BookId);
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Printed book {BookId}")]
-    private static partial void _logPrinted(ILogger logger, int bookId);
+    private static partial void _logPrinted(ILogger logger, BookId bookId);
 }

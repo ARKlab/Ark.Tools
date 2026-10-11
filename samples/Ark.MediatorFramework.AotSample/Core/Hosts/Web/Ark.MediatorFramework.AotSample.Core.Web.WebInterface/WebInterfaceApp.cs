@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.MediatorFramework.AotSample.Core.Application;
+using Ark.MediatorFramework.AotSample.Core.Application.Host;
 using Ark.MediatorFramework.AotSample.Core.Web.Hosting;
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Generated;
@@ -18,8 +18,7 @@ public static class WebInterfaceApp
     {
         var builder = WebApplication.CreateSlimBuilder(args);
         builder.Services.AddArkRedaction();
-        builder.Services.ConfigureHttpJsonOptions(static options =>
-            options.SerializerOptions.TypeInfoResolverChain.Insert(0, AotJsonContext.Default));
+        builder.Services.ConfigureHttpJsonOptions(static options => ApplicationComposition.ConfigureJson(options.SerializerOptions));
         builder.Services.AddAuthorization();
         WebHosting.AddProducer(builder.Services, builder.Configuration);
         return builder;
