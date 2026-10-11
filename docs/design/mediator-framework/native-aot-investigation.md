@@ -43,9 +43,9 @@ in 45 to 65 MB of RSS.
   `ServiceProviderRequestProcessor` and `ServiceProviderCommandProcessor`, registered by
   `AddArkSolidServiceProviderProcessors()`. Their typed overloads resolve the closed handler without reflection;
   decorators are applied at registration, as the [composition comparison](aot-di-comparison.md) recommends.
-- **Generated Azure Functions streaming responses used the default JSON options.** `WriteJsonStreamAsync` now resolves
-  `JsonTypeInfo<IAsyncEnumerable<T>>` from the host's `JsonOptions`, so it honours the configured naming and works with
-  reflection-based JSON disabled.
+- **Generated Azure Functions streaming responses used the default JSON options.** `WriteJsonStreamAsync` now writes the array
+  item by item with the `JsonTypeInfo<T>` of the host's `JsonOptions`, so it honours the configured naming and works with
+  reflection-based JSON disabled when the context lists only the item type.
 - **`EvolvableEnum` failed Native AOT analysis.** Its static constructor used `Enum.GetValues(Type)`; the Dapper handlers
   lacked the trimming annotations; the JSON factory closes converters at run time. It now uses the generic `Enum` APIs,
   the handlers are annotated, and `EvolvableEnumJsonConverter<TEnum>` is a closed converter for source-generated contexts.
