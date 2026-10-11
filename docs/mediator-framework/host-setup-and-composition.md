@@ -385,6 +385,30 @@ Native `IBus` send and publish calls can enlist the application's existing
 because it starts no polling loop. The application
 transaction commits both state and validated envelopes, or rolls both back.
 
+Enlistment requires an outbox. When a participant is composed without
+`UseOutbox()`, `IBusOutboxEnlistment.Enlist` throws an
+`InvalidOperationException` that names the participant, instead of staging
+messages that nothing would send. A participant whose handlers never enlist
+needs no outbox.
+
+For local development of a host that has no outbox to drain, such as an Azure
+Functions-only deployment, select the pass-through:
+
+```csharp
+producer.UseOutbox(outbox => outbox.UseDevelopmentPassthrough());
+```
+
+`Enlist` then returns a scope that does nothing, and each send goes straight to
+the transport when the handler makes it. This is **not atomic**: the message is
+sent before the application transaction commits, so a failed commit leaves a
+message sent for a change that was not stored. The participant's startup check
+refuses to start the host unless its `IHostEnvironment` is `Development`; a host
+without a registered `IHostEnvironment` is refused too. Do not use it in
+production.
+
+`RebusMessagingBus` follows the same rule: pass `outboxEnabled: true` when its
+Rebus transport is configured with `Outbox(...)`; otherwise `Enlist` throws.
+
 An always-running custom process owns the complementary registration:
 
 ```csharp

@@ -357,6 +357,16 @@ claim-check, ownership, scheduling, and reserved-header validation all finish
 before the outbox row is staged. Disposing the scope without completing it
 stages nothing. Calls made without an enlisted scope continue to send directly.
 
+Without `UseOutbox()`, enlisting throws an `InvalidOperationException` naming
+the participant. Functions never drain the outbox, so the staged rows need a
+separate native outbox processor host. A Functions-only deployment either sends
+without enlisting or, during development, selects
+`UseOutbox(outbox => outbox.UseDevelopmentPassthrough())`: enlisting does nothing
+and each message goes straight to the transport, before the application
+transaction commits. The pass-through is not atomic, and the host refuses to
+start unless its environment is `Development`. See
+[Host the native SQL outbox processor separately](host-setup-and-composition.md#host-the-native-sql-outbox-processor-separately).
+
 The persisted row contains the exact validated payload and original envelope
 headers, including `amf1-msg-id` and `amf1-sender-identity`. Routing and optional
 due-time metadata use reserved `amf1-outbox-*` headers in the existing

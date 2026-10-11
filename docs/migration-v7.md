@@ -129,6 +129,11 @@ formatters or a required compatibility boundary. The
 [MVC migration guide](mediator-framework/migration-from-mvc.md) describes the
 endpoint model and parity checks.
 
+If you adopted native messaging during the v7 previews: a handler that calls
+`IBusOutboxEnlistment.Enlist` now needs its participant composed with
+`UseOutbox()`, or `Enlist` throws. `RebusMessagingBus` takes `outboxEnabled`.
+See [Host the native SQL outbox processor separately](mediator-framework/host-setup-and-composition.md#host-the-native-sql-outbox-processor-separately).
+
 ## 6. Replace Macross.Json.Extensions types
 
 `Ark.Tools.SystemTextJson` no longer depends on the unmaintained
