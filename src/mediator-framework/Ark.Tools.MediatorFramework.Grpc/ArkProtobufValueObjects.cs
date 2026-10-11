@@ -59,8 +59,9 @@ public static class ArkProtobufValueObjects
         lock (model)
         {
             ValueObjectSerializer<TValueObject, TPrimitive>._configure(from, value);
+            // Through the serializer's published conversions, so absent members use the same From as reads.
             _emptyValues.TryAdd(typeof(TValueObject), (
-                () => from(typeof(TPrimitive) == typeof(string) ? (TPrimitive)(object)string.Empty : default!),
+                static () => ValueObjectSerializer<TValueObject, TPrimitive>._from(typeof(TPrimitive) == typeof(string) ? (TPrimitive)(object)string.Empty : default!),
                 default(TValueObject)));
             // Add returns the existing MetaType of a type already known to the model.
             var metaType = model.Add(typeof(TValueObject), applyDefaultBehaviour: false);
@@ -190,6 +191,9 @@ internal sealed class ValueObjectSerializer<TValueObject, TPrimitive> : ISeriali
         var t when t == typeof(double) => SerializerFeatures.CategoryScalar | SerializerFeatures.WireTypeFixed64,
         _ => default(SerializerFeatures?),
     };
+
+    // The value object over a primitive, through the first registration's conversions.
+    internal static TValueObject _from(TPrimitive primitive) => _conversions!.From(primitive);
 
     internal static void _configure(Func<TPrimitive, TValueObject> from, Func<TValueObject, TPrimitive> value)
     {

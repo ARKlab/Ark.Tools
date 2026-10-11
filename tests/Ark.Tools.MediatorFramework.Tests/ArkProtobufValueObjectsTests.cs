@@ -197,6 +197,37 @@ public class ArkProtobufValueObjectsTests
         different.Should().Throw<InvalidOperationException>();
     }
 
+    private readonly record struct Note(string Value);
+
+    [ProtoContract]
+    private sealed class Page
+    {
+        [ProtoMember(1)]
+        public Note Note { get; init; }
+    }
+
+    [ProtoContract]
+    private sealed class EmptyPage
+    {
+    }
+
+    /// <summary>An absent member is created through the first registration's conversion, as a read field is.</summary>
+    [TestMethod]
+    public void InitializeAbsentValueObjects_ShouldUseTheFirstRegistrationsConversion()
+    {
+        var first = RuntimeTypeModel.Create();
+        var second = RuntimeTypeModel.Create();
+        ArkProtobufValueObjects.Register<Note, string>(first, static value => new Note("first:" + value), static value => value.Value);
+        ArkProtobufValueObjects.Register<Note, string>(second, static value => new Note("second:" + value), static value => value.Value);
+        ArkProtobufValueObjects.InitializeAbsentValueObjects<Page>(second, nameof(Page.Note));
+        using var stream = new MemoryStream();
+
+        second.Serialize(stream, new EmptyPage());
+        stream.Position = 0;
+
+        second.Deserialize<Page>(stream).Note.Should().Be(new Note("first:"));
+    }
+
     /// <summary>A member that is not a registered value object is rejected.</summary>
     [TestMethod]
     public void InitializeAbsentValueObjects_UnregisteredMember_ShouldThrow()
