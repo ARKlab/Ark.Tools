@@ -93,9 +93,10 @@ handlers or decorators.
 
 Use **Microsoft DI with a generic registration helper**:
 
-- Ark.Tools ships the helpers (`AddArkQuery<TQuery, TResult, THandler>`, and the request and command forms) with the
-  standard decorator chain, plus Microsoft DI processors that dispatch through the typed `ExecuteAsync<TQuery, TResult>`
-  overload. No new dependency.
+- Ark.Tools ships Microsoft DI processors that dispatch through the typed `ExecuteAsync<TQuery, TResult>` overload
+  (`AddArkSolidServiceProviderProcessors()`, done). It can later ship the helpers (`AddArkQuery<TQuery, TResult,
+  THandler>`, and the request and command forms) with the standard decorator chain; until then each application writes
+  them, as [`AotSample`](../../../samples/Ark.MediatorFramework.AotSample/README.md) does. No new dependency.
 - The per-handler line is hand-written at first. A registration generator can emit it later: the spike shows it works
   for hand-written handlers, the Ark case. A generator that emitted handlers would need its registrations emitted by the
   same generator.
