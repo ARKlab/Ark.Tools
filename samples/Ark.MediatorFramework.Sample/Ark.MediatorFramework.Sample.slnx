@@ -1,14 +1,4 @@
 <Solution>
-  <Folder Name="/Aot/">
-    <Project Path="Aot/Ark.MediatorFramework.Sample.Aot.Application/Ark.MediatorFramework.Sample.Aot.Application.csproj" />
-    <Project Path="Aot/Ark.MediatorFramework.Sample.Aot.Functions.Api/Ark.MediatorFramework.Sample.Aot.Functions.Api.csproj" />
-    <Project Path="Aot/Ark.MediatorFramework.Sample.Aot.Functions.HttpTriggers/Ark.MediatorFramework.Sample.Aot.Functions.HttpTriggers.csproj" />
-    <Project Path="Aot/Ark.MediatorFramework.Sample.Aot.Functions.Processor/Ark.MediatorFramework.Sample.Aot.Functions.Processor.csproj" />
-    <Project Path="Aot/Ark.MediatorFramework.Sample.Aot.Functions.ProcessorTriggers/Ark.MediatorFramework.Sample.Aot.Functions.ProcessorTriggers.csproj" />
-    <Project Path="Aot/Ark.MediatorFramework.Sample.Aot.Web.Api/Ark.MediatorFramework.Sample.Aot.Web.Api.csproj" />
-    <Project Path="Aot/Ark.MediatorFramework.Sample.Aot.Worker.Processor/Ark.MediatorFramework.Sample.Aot.Worker.Processor.csproj" />
-    <File Path="Aot/README.md" />
-  </Folder>
   <Folder Name="/Core/">
     <Project Path="Core/Ark.MediatorFramework.Sample.Core.API/Ark.MediatorFramework.Sample.Core.API.csproj" />
     <Project Path="Core/Ark.MediatorFramework.Sample.Core.Application/Ark.MediatorFramework.Sample.Core.Application.csproj" />

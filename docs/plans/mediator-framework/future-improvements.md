@@ -18,7 +18,7 @@ once FW-01/FW-02 and the generator diagnostics work stabilize — the MinimalApi
 AoT-viable one (Rebus/SimpleInjector are not trim-safe today). Schedule after SEC-01..SEC-04 to avoid
 changing the endpoint-emission shape twice.
 
-Update 2026-10: prototyped in `samples/Ark.MediatorFramework.Sample/Aot`; findings and the remaining framework gaps
+Update 2026-10: prototyped, now `samples/Ark.MediatorFramework.AotSample`; findings and the remaining framework gaps
 are in [native-aot-investigation.md](../../design/mediator-framework/native-aot-investigation.md).
 
 ## 3. JSON + PipeReader deserialization verification (N6)

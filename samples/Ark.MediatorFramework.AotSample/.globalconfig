@@ -1,0 +1,20 @@
+# This is a local override file for analyzer diagnostics specific to this project.
+# According to Microsoft documentation, .globalconfig files have higher priority than
+# other global analyzer config files (.netanalyzers.globalconfig, .meziantou.globalconfig).
+# This file is automatically discovered and imported by MSBuild - no need to reference it
+# in Directory.Build.props.
+#
+# Reference: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-files
+#
+# Use this file to:
+# - Override severity levels for specific rules in this project
+# - Disable rules that don't apply to this sample project
+# - Add project-specific analyzer configurations
+#
+# Example: To test that .globalconfig has precedence, uncomment the line below
+# (CA1000 is set to "none" in .netanalyzers.globalconfig, this would override it to "warning")
+# dotnet_diagnostic.CA1000.severity = warning
+
+is_global = true
+
+# Add your project-specific analyzer overrides below this line

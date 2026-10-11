@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PublishAot>true</PublishAot>
+    <!-- Not InvariantGlobalization: Microsoft.Data.SqlClient refuses to open a connection without ICU. -->
+    <!-- Pinned so that the referenced libraries restore without a runtime identifier. -->
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <!-- MessagePack, referenced by the messaging runtime, is not AOT-safe: keep its warnings visible but not fatal. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2104;IL3053</WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ark.Tools.Compliance" />
+    <ProjectReference Include="..\Ark.MediatorFramework.AotSample.Core.Web.Hosting\Ark.MediatorFramework.AotSample.Core.Web.Hosting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
