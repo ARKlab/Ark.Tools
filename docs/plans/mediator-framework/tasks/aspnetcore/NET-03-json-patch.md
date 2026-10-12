@@ -24,6 +24,9 @@ Newtonsoft), enabling a `[HttpEndpoint("PATCH", ...)]` design.
    untouched; invalid patch → 400; validation failure after apply → 400).
 5. Security: cap patch document size/operation count. Patches apply to the input model, which
    has no computed or output-only properties (#1090).
+6. Docs and skill: update `docs/mediator-framework/contract-design-checklist.md` §2 (partial-update
+   semantics: PATCH as an alternative to an intent-specific operation) and the `ark-mediator-framework`
+   skill checklist index in `agents-plugins/ark-csharp`.
 
 ## Outcomes
 
@@ -34,3 +37,4 @@ Newtonsoft), enabling a `[HttpEndpoint("PATCH", ...)]` design.
 - [ ] PATCH endpoint round-trip test (partial update) passes; invalid/oversized patch → 400.
 - [ ] PATCH + bus/gRPC combination produces a build diagnostic (or documented semantics with tests).
 - [ ] OpenAPI documents the patch request; full solution build + tests green.
+- [ ] Contract design checklist §2 and the `ark-mediator-framework` skill describe when to use PATCH.

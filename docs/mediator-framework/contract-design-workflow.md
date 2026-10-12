@@ -19,25 +19,11 @@ generator implementation work.
 
 ## Required contract brief
 
-Do not create or modify a contract until every applicable answer below is
-written down. "Not applicable" is an answer only when its reason is recorded.
-
-| Decision | Required answer |
-| --- | --- |
-| Purpose | What business operation or fact does this represent? |
-| Kind | Is it a query, request, command, event, or background message? |
-| Owner | Which application owns the contract and its compatibility policy? |
-| HTTP | Is it exposed as HTTP? If yes, which verb, exact route, version, status codes, and anonymous/authenticated behavior? |
-| Model | Which fields are required, optional, computed, output-only, write-once, immutable, or concurrency-controlled? |
-| Binding | Which values come from route, query, body, authenticated user, tenant, clock, or server context? |
-| Event | If it is an event, who publishes it, who subscribes, and what happens when a subscriber is unavailable? |
-| Background work | If it is a message, who sends it, who consumes it, which queue/participant owns it, and what is retry/dead-letter behavior? |
-| Validation | Which syntax, range, cross-field, state, and size rules belong in a `FluentValidation` validator? |
-| Authorization | Which `Ark.Tools.Authorization` policy or scope applies? Is the permission transport-agnostic or HTTP-only? |
-| Persistence | What transaction, lock, idempotency, outbox, and external-call boundaries does the handler own? |
-| Serialization | Which transports carry it, which serializers are required, and are JSON, MessagePack, protobuf, or native messaging metadata needed? |
-| Compatibility | Is the change additive, breaking, or a semantic change? Which version, route, protobuf numbers, logical names, and former names are affected? |
-| Testing | Which direct application, transport boundary, generated-surface, and eventual-message tests prove the decision? |
+Do not create or modify a contract until the
+[contract design checklist](contract-design-checklist.md) is answered and the
+brief is confirmed. The checklist covers fields and updatability, validation,
+business rules, failures, API design, authorization, versioning, privacy, and
+the remaining decisions; this page explains how the answers shape the contract.
 
 ## Decision tree
 
@@ -169,6 +155,7 @@ when the feature requires a new user-facing action.
 
 ## References
 
+- [Contract design checklist](contract-design-checklist.md)
 - [Contracts and handlers](contracts-and-handlers.md)
 - [Request and DTO best practices](request-and-dto-best-practices.md)
 - [Validation and authorization](validation-and-authorization.md)

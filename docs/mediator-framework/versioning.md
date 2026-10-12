@@ -50,7 +50,8 @@ contract version:
 | Add a required field | No | Introduce a replacement contract. |
 | Remove a field | No | Older clients or responses still depend on it. |
 | Change an optional field's default | No | Existing clients can observe different behavior without changing their payload. |
-| Add an enum entry | No | Strict clients may reject a value they do not know. |
+| Add a plain enum entry | No | Strict clients may reject a value they do not know. |
+| Add an `EvolvableEnum<T>` entry | Yes | Clients receive `Value == null` and take the fallback arm. |
 
 Additional practical rules:
 
