@@ -38,6 +38,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string ReferencedNetworksTrackingName = "RebusReferencedNetworks";
         private const string ReferencedLegacyEndpointsTrackingName = "RebusReferencedLegacyEndpoints";
         private const string HostModelTrackingName = "RebusHostModel";
+        private const string EmissionInputTrackingName = "RebusEmissionInput";
         private static readonly DiagnosticDescriptor InvalidOwnerQueue = new(
             "ARKMF004", "Invalid Rebus owner queue",
             "The Rebus owner queue for '{0}' must not be blank", "Rebus",
@@ -130,11 +131,15 @@ namespace Ark.Tools.MediatorFramework.Generators
                         cancellationToken));
                 })
                 .WithTrackingName(HostModelTrackingName);
-            var output = sourceEndpoints
-                .Combine(referencedEndpoints)
-                .Combine(hosts)
+            // The emitted source reads no locations or diagnostics, so an edit that only shifts lines leaves the
+            // emission input unchanged.
+            var output = sourceEndpoints.Select(static (endpoints, _) => ForEmission(endpoints))
+                .Combine(referencedEndpoints.Select(static (endpoints, _) => ForEmission(endpoints)))
+                .Combine(hosts.Select(static (models, _) => new EquatableArray<HostModel>(
+                    models.Values.Select(static host => host.ForEmission()).ToImmutableArray())))
                 .Combine(endpointMappings.Collect()
-                    .Select(static (mappings, _) => new EquatableArray<AssemblyMapping>(mappings)));
+                    .Select(static (mappings, _) => new EquatableArray<AssemblyMapping>(mappings)))
+                .WithTrackingName(EmissionInputTrackingName);
 
             context.RegisterSourceOutput(
                 output,
@@ -142,7 +147,21 @@ namespace Ark.Tools.MediatorFramework.Generators
                     spc,
                     item.Left.Left.Left.Values.AddRange(item.Left.Left.Right.Values),
                     item.Left.Right.Values));
+
+            // Diagnostics only: reported at the real source locations so #pragma and EditorConfig suppressions apply.
+            var diagnostics = sourceEndpoints
+                .Combine(referencedEndpoints)
+                .Combine(hosts);
+            context.RegisterSourceOutput(
+                diagnostics,
+                static (spc, item) => ReportDiagnostics(
+                    spc,
+                    item.Left.Left.Values.AddRange(item.Left.Right.Values),
+                    item.Right.Values));
         }
+
+        private static EquatableArray<EndpointModel> ForEmission(EquatableArray<EndpointModel> endpoints)
+            => new(endpoints.Values.Select(static endpoint => endpoint.ForEmission()).ToImmutableArray());
 
         private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
         {
@@ -690,7 +709,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             return builder.ToString();
         }
 
-        private static void Emit(
+        private static void ReportDiagnostics(
             SourceProductionContext spc,
             ImmutableArray<EndpointModel> items,
             ImmutableArray<HostModel> hosts)
@@ -714,16 +733,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                     invalidHost.Location,
                     invalidHost.Error));
             }
-            hosts = hosts
+            var validationItems = items.AddRange(hosts
                 .Where(static host => host.Error is null)
                 .OrderBy(static host => host.HostIdentity, StringComparer.Ordinal)
-                .ToImmutableArray();
-
-            var legacyRegistrationItems = items
-                .OrderBy(static item => item.TypeFullName, StringComparer.Ordinal)
-                .ToImmutableArray();
-            var validationItems = items.AddRange(hosts.SelectMany(static host =>
-                host.Routes.Values.AddRange(host.Adapters.Values).AddRange(host.LegacyEndpoints.Values)));
+                .SelectMany(static host =>
+                    host.Routes.Values.AddRange(host.Adapters.Values).AddRange(host.LegacyEndpoints.Values)));
             validationItems = validationItems.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
             foreach (var item in validationItems)
             {
@@ -755,6 +769,24 @@ namespace Ark.Tools.MediatorFramework.Generators
                     spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
                 }
             }
+        }
+
+        private static void Emit(
+            SourceProductionContext spc,
+            ImmutableArray<EndpointModel> items,
+            ImmutableArray<HostModel> hosts)
+        {
+            if (items.IsDefaultOrEmpty && hosts.IsDefaultOrEmpty)
+                return;
+
+            hosts = hosts
+                .Where(static host => host.Error is null)
+                .OrderBy(static host => host.HostIdentity, StringComparer.Ordinal)
+                .ToImmutableArray();
+
+            var legacyRegistrationItems = items
+                .OrderBy(static item => item.TypeFullName, StringComparer.Ordinal)
+                .ToImmutableArray();
             items = items
                 .Where(static item => item.IsValid)
                 .GroupBy(static item => item.TypeFullName)
@@ -1053,6 +1085,15 @@ namespace Ark.Tools.MediatorFramework.Generators
             string? Error,
             Location Location)
         {
+            // The emitted source reads neither locations nor diagnostics, so dropping them keeps it cached when lines shift.
+            public HostModel ForEmission() => this with
+            {
+                Location = Location.None,
+                Routes = ArkRebusEndpointGenerator.ForEmission(Routes),
+                Adapters = ArkRebusEndpointGenerator.ForEmission(Adapters),
+                LegacyEndpoints = ArkRebusEndpointGenerator.ForEmission(LegacyEndpoints),
+            };
+
             public static HostModel Invalid(string error, Location location)
             {
                 return new HostModel(
@@ -1114,10 +1155,12 @@ namespace Ark.Tools.MediatorFramework.Generators
             public string TypeName { get; }
             public string? Response { get; }
             public string? OwnerQueue { get; }
-            public EquatableArray<DiagnosticInfo> Diagnostics { get; }
+            public EquatableArray<DiagnosticInfo> Diagnostics { get; private init; }
             public bool IsCommand { get; }
-            public Location Location { get; }
+            public Location Location { get; private init; }
             public bool IsValid { get; }
+
+            public EndpointModel ForEmission() => this with { Location = Location.None, Diagnostics = EquatableArray<DiagnosticInfo>.Empty };
         }
 
         private readonly record struct DiagnosticInfo
@@ -1132,7 +1175,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public DiagnosticDescriptor Descriptor { get; }
             // Roslyn source locations compare by syntax tree and span, so edits in other files keep models equal
             // while reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
-            // Any edit in the declaring file creates a new syntax tree and reruns the output.
+            // Any edit in the declaring file reruns the diagnostics output; ForEmission drops them from the emission input.
             public Location Location { get; }
             public EquatableArray<string> Arguments { get; }
         }

@@ -25,6 +25,8 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
         "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHostAttribute";
     private const string _hostAttributeStage = "MessagingFunctionsHostAttributes";
     private const string _hostSpecStage = "MessagingFunctionsHostSpecs";
+    private const string _networkStage = "MessagingFunctionsNetworks";
+    private const string _referencedNetworksStage = "MessagingFunctionsReferencedNetworks";
     private const string _hostJsonStage = "MessagingFunctionsHostJson";
     private const string _specStage = "MessagingFunctionsSpecs";
     private const string _outputStage = "MessagingFunctionsOutput";
@@ -34,15 +36,53 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var hosts = context.SyntaxProvider.ForAttributeWithMetadataName(
+        var hostAssemblies = context.SyntaxProvider.ForAttributeWithMetadataName(
                 _hostAttribute,
                 static (_, _) => true,
                 static (attributeContext, cancellationToken) =>
-                    MessagingFunctionsParser._readHosts(attributeContext, cancellationToken))
+                    MessagingFunctionsParser._readHostAssemblies(attributeContext, cancellationToken))
             .WithTrackingName(_hostAttributeStage)
             .SelectMany(static (extracted, _) => extracted)
-            .WithTrackingName(_hostSpecStage)
-            .Collect();
+            .Collect()
+            .Select(static (names, _) => names
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(static name => name, StringComparer.Ordinal)
+                .ToImmutableArray()
+                ._toEquatableArray());
+        var sourceNetworks = context.SyntaxProvider.ForAttributeWithMetadataName(
+                MessagingFunctionsParser._networkAttribute,
+                static (_, _) => true,
+                static (attributeContext, _) => MessagingFunctionsParser._readNetwork(attributeContext))
+            .WithTrackingName(_networkStage)
+            .Where(static network => network is not null)
+            .Select(static (network, _) => network!.Value)
+            .Collect()
+            .Select(static (networks, _) => networks._toEquatableArray());
+        // Referenced networks read metadata symbols only, so they rerun when references change.
+        var referencedNetworks = context.CompilationProvider
+            .WithComparer(MetadataReferencesComparer.Instance)
+            .Combine(hostAssemblies)
+            .Select(static (pair, cancellationToken) => MessagingFunctionsParser._readReferencedNetworks(
+                pair.Left,
+                pair.Right,
+                cancellationToken))
+            .WithTrackingName(_referencedNetworksStage);
+        // Hosts resolve their network by metadata name instead of walking every type of the participant assembly.
+        var hosts = hostAssemblies
+            .Combine(sourceNetworks)
+            .Combine(referencedNetworks)
+            .Combine(context.CompilationProvider)
+            .Select(static (input, cancellationToken) =>
+            {
+                var (((assemblies, networks), referenced), compilation) = input;
+                return assemblies.IsEmpty
+                    ? EquatableArray<MessagingHostSpec>.Empty
+                    : MessagingFunctionsParser._readHosts(
+                        compilation,
+                        networks.Values.AddRange(referenced.Values),
+                        cancellationToken);
+            })
+            .WithTrackingName(_hostSpecStage);
         var hostJson = context.AdditionalTextsProvider
             .Where(static text => string.Equals(
                 Path.GetFileName(text.Path),
@@ -54,7 +94,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Collect();
         var specs = hosts.Combine(hostJson)
             .Select(static (pair, _) => new MessagingFunctionsAggregateSpec(
-                pair.Left
+                pair.Left.Values
                     .OrderBy(static host => host.ParticipantTypeName, StringComparer.Ordinal)
                     .ThenBy(static host => host.Binding)
                     .ToImmutableArray(),
