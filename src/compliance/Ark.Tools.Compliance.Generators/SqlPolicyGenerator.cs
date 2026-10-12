@@ -95,7 +95,7 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
             foreach (var member in current.GetMembers().Where(static m => !m.IsStatic && !m.IsImplicitlyDeclared
                          && m.Kind is SymbolKind.Property or SymbolKind.Field))
             {
-                var mapping = member.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == _columnPolicy);
+                var mapping = member.GetAttributes().FirstOrDefault(a => ComplianceSurfaceGenerator._isFullName(a.AttributeClass, _columnPolicy));
                 if (mapping is null)
                 {
                     continue;
@@ -221,7 +221,7 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
         {
             foreach (var attribute in attributes)
             {
-                if (attribute.AttributeClass?.ToDisplayString() == precedence.AttributeName)
+                if (ComplianceSurfaceGenerator._isFullName(attribute.AttributeClass, precedence.AttributeName))
                     return precedence.Classification;
             }
         }
@@ -235,7 +235,7 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
 
             for (var current = attribute.AttributeClass?.BaseType; current is not null; current = current.BaseType)
             {
-                if (current.ToDisplayString() == "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute")
+                if (ComplianceSurfaceGenerator._isFullName(current, "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute"))
                 {
                     return attribute.AttributeClass!.Name.Replace("Attribute", string.Empty);
                 }

@@ -416,7 +416,7 @@ public sealed partial class ComplianceSurfaceGenerator
     /// non-generic types: generic or nested types render with type arguments or the containing
     /// type in their display string, so they can never equal a plain dotted name.
     /// </summary>
-    private static bool _isFullName(INamedTypeSymbol? type, string fullName)
+    internal static bool _isFullName(INamedTypeSymbol? type, string fullName)
     {
         if (type is null || type.Arity != 0 || type.ContainingType is not null)
             return false;
