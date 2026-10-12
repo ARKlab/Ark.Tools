@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0-beta14] - 2026-10-12
+
 ### Added
 
 - `Ark.Tools.SystemTextJson`: `EvolvableEnumJsonConverter<TEnum>` and `EvolvableEnumJsonConverter<TEnum, TBacking>`, closed converters for `EvolvableEnum<TEnum>` and `EvolvableEnum<TEnum, TBacking>` that Native AOT apps list in their source-generated JSON context; `EvolvableEnumJsonConverterFactory` closes its converters at run time, which Native AOT cannot do.
