@@ -238,6 +238,19 @@ public sealed class GeneratorIncrementalityTests
                 public string Value { get; set; } = string.Empty;
             }
             """);
+        // Unmapped and unreferenced by any mapped assembly; its simple name would match the name fallback.
+        var unrelated = _createReference(
+            "GrpcScopeUnrelated",
+            """
+            using ProtoBuf;
+            namespace GrpcScopeUnrelated;
+            [ProtoContract]
+            public sealed class ScopedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
         const string host = """
             MapArkGrpcServicesFromAssembly<GrpcScopeEndpoints.Marker>();
             MapArkGrpcServicesFromAssembly<GrpcScopeOther.Marker>();
@@ -246,7 +259,7 @@ public sealed class GeneratorIncrementalityTests
         var compilation = CSharpCompilation.Create(
             "Incrementality",
             [hostTree],
-            _getReferences().Append(models).Append(endpoints).Append(other),
+            _getReferences().Append(models).Append(endpoints).Append(other).Append(unrelated),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new ArkGrpcEndpointGenerator().AsSourceGenerator()],
@@ -257,6 +270,9 @@ public sealed class GeneratorIncrementalityTests
         var original = _describeOutput(driver);
         // ScopedResponse lives in an assembly the mapped one references, not in a mapped assembly.
         original.Should().Contain("message ScopedResponse").And.Contain("message OtherResponse");
+        var scanned = _getStepOutputs(driver, "GrpcReferencedProtoContracts");
+        scanned.Should().Contain(static contract => contract.Contains("GrpcScopeModels.ScopedResponse", StringComparison.Ordinal))
+            .And.NotContain(static contract => contract.Contains("GrpcScopeUnrelated", StringComparison.Ordinal));
 
         compilation = compilation.ReplaceSyntaxTree(
             hostTree,
@@ -539,6 +555,16 @@ public sealed class GeneratorIncrementalityTests
         return steps[trackingName]
             .SelectMany(static step => step.Outputs)
             .Select(static output => output.Reason)
+            .ToArray();
+    }
+
+    private static string[] _getStepOutputs(GeneratorDriver driver, string trackingName)
+    {
+        return driver.GetRunResult().Results.Single().TrackedSteps[trackingName]
+            .SelectMany(static step => step.Outputs)
+            // The model types are private to the generator, so read the ImmutableEquatableArray items by reflection.
+            .SelectMany(static output => ((System.Collections.IEnumerable)output.Value.GetType().GetProperty("Items")!.GetValue(output.Value)!).Cast<object>())
+            .Select(static item => item.ToString() ?? string.Empty)
             .ToArray();
     }
 
