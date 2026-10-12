@@ -209,9 +209,10 @@ internal static class MessagingFunctionsParser
 
     private static string _metadataName(INamedTypeSymbol type)
     {
-        var name = type.MetadataName;
-        for (var parent = type.ContainingType; parent is not null; parent = parent.ContainingType)
-            name = parent.MetadataName + "+" + name;
+        var names = new Stack<string>();
+        for (var current = type; current is not null; current = current.ContainingType)
+            names.Push(current.MetadataName);
+        var name = string.Join("+", names);
         return type.ContainingNamespace is null or { IsGlobalNamespace: true }
             ? name
             : type.ContainingNamespace.ToDisplayString() + "." + name;
