@@ -40,9 +40,13 @@ public sealed class OutboxScope : IDisposable
     {
         get
         {
-            var scope = _current.Value;
+            var stored = _current.Value;
+            var scope = stored;
             while (scope is { _disposed: true })
                 scope = scope._parent;
+            // Drop the stale scope from this flow, so a long-lived worker does not keep it alive.
+            if (!ReferenceEquals(scope, stored))
+                _current.Value = scope;
             return scope;
         }
     }

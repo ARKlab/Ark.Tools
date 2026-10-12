@@ -44,14 +44,14 @@ CREATE TABLE dbo.Outbox (
 `CompleteAsync`. The handler needs no reference to the bus outbox API.
 
 ```csharp
-async Task ExecuteAsync()
+async Task ExecuteAsync(Something something)
 {
     using var ctx = _contextFactory();
     using var scope = new OutboxScope(ctx);
 
-    await ctx.SaveSomething(else);
+    await ctx.SaveSomething(something);
 
-    await _bus.Publish(new SomethingUpdatedEvent(else));
+    await _bus.Publish(new SomethingUpdatedEvent(something));
 
     // this must be completed before Committing
     await scope.CompleteAsync();

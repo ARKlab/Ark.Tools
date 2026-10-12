@@ -512,11 +512,13 @@ internal sealed record MessagingOutboxRegistration(MessagingOutboxMode Mode);
 /// constructed directly always uses <see cref="Enqueue"/>; <see cref="DevelopmentPassthrough"/> needs a composition,
 /// whose host checks the environment.
 /// </remarks>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "0 was the removed None; leaving it undefined makes a caller compiled against None fail validation instead of becoming Enqueue.")]
 public enum MessagingOutboxMode
 {
+    // Values kept from when None was 0: a caller compiled against them must not land on the pass-through.
     /// <summary>Sends are staged in the scope's application outbox. The default.</summary>
-    Enqueue,
+    Enqueue = 1,
 
     /// <summary>Development only: the scope stages nothing and sends go straight to the transport.</summary>
-    DevelopmentPassthrough,
+    DevelopmentPassthrough = 2,
 }

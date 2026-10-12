@@ -248,8 +248,11 @@ public sealed class MessagingFunctionsCompositionTests
     }
 
     /// <summary>The low-level Functions host rejects an undefined outbox mode instead of treating it as enqueue.</summary>
+    /// <param name="mode">The undefined value; 0 was the removed <c>None</c>.</param>
     [TestMethod]
-    public void LowLevelFunctionsHostRejectsUndefinedOutboxMode()
+    [DataRow(0)]
+    [DataRow(42)]
+    public void LowLevelFunctionsHostRejectsUndefinedOutboxMode(int mode)
     {
         var services = new ServiceCollection();
 
@@ -257,7 +260,7 @@ public sealed class MessagingFunctionsCompositionTests
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus, _descriptor(receives: false)),
             new InMemoryMessagingTransport(),
             _dataBus(),
-            outbox: (MessagingOutboxMode)42);
+            outbox: (MessagingOutboxMode)mode);
 
         action.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("outbox");
     }
