@@ -28,7 +28,7 @@ public sealed class GeneratorSymbolNamesTests
                 class UsesMissing : MissingType { }
                 """)],
             [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)]);
-        var types = compilation.GetSymbolsWithName(_ => true, SymbolFilter.Type).OfType<INamedTypeSymbol>()
+        var types = compilation.GetSymbolsWithName(static _ => true, SymbolFilter.Type).OfType<INamedTypeSymbol>()
             .Append(compilation.GetTypeByMetadataName("UsesMissing")!.BaseType!) // an error type
             .ToArray();
         string[] names =

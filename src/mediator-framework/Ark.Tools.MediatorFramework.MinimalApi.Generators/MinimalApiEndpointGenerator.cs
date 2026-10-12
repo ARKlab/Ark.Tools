@@ -113,15 +113,26 @@ namespace Ark.Tools.MediatorFramework.Generators
                     GetReferencedEndpoints(pair.Left, pair.Right.Values, cancellationToken)))
                 .WithTrackingName(ReferencedEndpointsTrackingName);
 
-            // The emitted source does not depend on the mapping calls' locations, so an edit to the host file that
-            // declares them leaves the emission input unchanged.
-            var emission = sourceEndpoints.Collect()
+            // The emitted source reads no locations or diagnostics, so an edit that only shifts lines (in a contract
+            // file or in the host file declaring the mapping calls) leaves the emission input unchanged.
+            var emission = sourceEndpoints
+                .Select(static (endpoint, _) => endpoint.ForEmission())
+                .Collect()
                 .Select(static (endpoints, _) => new EquatableArray<EndpointModel>(endpoints))
-                .Combine(referencedEndpoints)
+                .Combine(referencedEndpoints.Select(static (endpoints, _) =>
+                    new EquatableArray<EndpointModel>(endpoints.Values.Select(static endpoint => endpoint.ForEmission()).ToImmutableArray())))
                 .WithTrackingName(EmissionInputTrackingName);
             context.RegisterSourceOutput(
                 emission,
                 static (spc, pair) => Emit(spc, pair.Left.Values.AddRange(pair.Right.Values)));
+
+            // Diagnostics only: reported at the real source locations so #pragma and EditorConfig suppressions apply.
+            var endpointDiagnostics = sourceEndpoints.Collect()
+                .Select(static (endpoints, _) => new EquatableArray<EndpointModel>(endpoints))
+                .Combine(referencedEndpoints);
+            context.RegisterSourceOutput(
+                endpointDiagnostics,
+                static (spc, pair) => ReportEndpointDiagnostics(spc, pair.Left.Values.AddRange(pair.Right.Values)));
 
             // Diagnostics only: the mapping calls and the referenced contracts reported at them.
             var mappingDiagnostics = endpointMappings.Collect()
@@ -809,6 +820,81 @@ namespace Ark.Tools.MediatorFramework.Generators
             return match?.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         }
 
+        private static void ReportEndpointDiagnostics(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
+        {
+            if (items.IsDefaultOrEmpty)
+                return;
+
+            items = items.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
+            var maxVersion = items.Max(static x => Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1));
+            var operationGroups = new Dictionary<int, Dictionary<string, List<EndpointModel>>>();
+            foreach (var endpoint in items.Where(static item => item.IsValid))
+            {
+                spc.CancellationToken.ThrowIfCancellationRequested();
+                foreach (var version in ActiveVersions(endpoint, maxVersion))
+                {
+                    if (!operationGroups.TryGetValue(version, out var groups))
+                    {
+                        groups = new Dictionary<string, List<EndpointModel>>(StringComparer.Ordinal);
+                        operationGroups.Add(version, groups);
+                    }
+
+                    var operationName = OperationName(endpoint, version, maxVersion);
+                    if (!groups.TryGetValue(operationName, out var endpoints))
+                    {
+                        endpoints = new List<EndpointModel>();
+                        groups.Add(operationName, endpoints);
+                    }
+
+                    endpoints.Add(endpoint);
+                }
+            }
+            for (var version = 1; version <= maxVersion; version++)
+            {
+                spc.CancellationToken.ThrowIfCancellationRequested();
+                if (!operationGroups.TryGetValue(version, out var groups))
+                    continue;
+
+                foreach (var duplicate in groups.Where(static group => group.Value.Count > 1))
+                {
+                    var endpoints = duplicate.Value;
+                    for (var index = 0; index < endpoints.Count; index++)
+                    {
+                        var other = endpoints[(index + 1) % endpoints.Count];
+                        spc.ReportDiagnostic(Diagnostic.Create(
+                            DuplicateOperationName,
+                            endpoints[index].Location,
+                            endpoints[index].TypeFullName,
+                            other.TypeFullName,
+                            duplicate.Key,
+                            version));
+                    }
+                }
+            }
+            foreach (var e in items)
+            {
+                spc.CancellationToken.ThrowIfCancellationRequested();
+                // Diagnostics without a source location are reported at the host call by ReportMappingDiagnostics.
+                foreach (var diagnostic in e.Diagnostics.Where(static diagnostic => diagnostic.Location.IsInSource))
+                    spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
+                if (!e.IsValid)
+                    continue;
+                foreach (var property in e.SuspiciousProperties)
+                    spc.ReportDiagnostic(Diagnostic.Create(PossibleMassAssignment, e.Location, e.TypeName, property));
+
+                if (e.AttachmentCount > 1)
+                {
+                    spc.ReportDiagnostic(Diagnostic.Create(
+                        MultipleAttachments,
+                        e.Location,
+                        e.TypeName));
+                    continue;
+                }
+                foreach (var property in e.UnsupportedAttachmentCollections)
+                    spc.ReportDiagnostic(Diagnostic.Create(UnsupportedAttachmentCollection, e.Location, e.TypeName, property));
+            }
+        }
+
         private static void Emit(SourceProductionContext spc, ImmutableArray<EndpointModel> items)
         {
             if (items.IsDefaultOrEmpty)
@@ -859,74 +945,13 @@ namespace Ark.Tools.MediatorFramework.Generators
                 }
 
                 var maxVersion = items.Max(static x => Math.Max(x.HttpIntroducedIn, x.HttpRetiredIn > 0 ? x.HttpRetiredIn - 1 : 1));
-                var operationGroups = new Dictionary<int, Dictionary<string, List<EndpointModel>>>();
-                foreach (var endpoint in items.Where(static item => item.IsValid))
-                {
-                    spc.CancellationToken.ThrowIfCancellationRequested();
-                    foreach (var version in ActiveVersions(endpoint, maxVersion))
-                    {
-                        if (!operationGroups.TryGetValue(version, out var groups))
-                        {
-                            groups = new Dictionary<string, List<EndpointModel>>(StringComparer.Ordinal);
-                            operationGroups.Add(version, groups);
-                        }
-
-                        var operationName = OperationName(endpoint, version, maxVersion);
-                        if (!groups.TryGetValue(operationName, out var endpoints))
-                        {
-                            endpoints = new List<EndpointModel>();
-                            groups.Add(operationName, endpoints);
-                        }
-
-                        endpoints.Add(endpoint);
-                    }
-                }
-                for (var version = 1; version <= maxVersion; version++)
-                {
-                    spc.CancellationToken.ThrowIfCancellationRequested();
-                    if (!operationGroups.TryGetValue(version, out var groups))
-                        continue;
-
-                    foreach (var duplicate in groups.Where(static group => group.Value.Count > 1))
-                    {
-                        var endpoints = duplicate.Value;
-                        for (var index = 0; index < endpoints.Count; index++)
-                        {
-                            var other = endpoints[(index + 1) % endpoints.Count];
-                            spc.ReportDiagnostic(Diagnostic.Create(
-                                DuplicateOperationName,
-                                endpoints[index].Location,
-                                endpoints[index].TypeFullName,
-                                other.TypeFullName,
-                                duplicate.Key,
-                                version));
-                        }
-                    }
-                }
                 var endpointIndex = 0;
                 foreach (var e in items)
                 {
                     spc.CancellationToken.ThrowIfCancellationRequested();
                     var currentEndpointIndex = endpointIndex++;
-                    // Diagnostics without a source location are reported at the host call by ReportMappingDiagnostics.
-                    foreach (var diagnostic in e.Diagnostics.Where(static diagnostic => diagnostic.Location.IsInSource))
-                        spc.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
-                    if (!e.IsValid)
-                        continue;
-                    foreach (var property in e.SuspiciousProperties)
-                        spc.ReportDiagnostic(Diagnostic.Create(PossibleMassAssignment, e.Location, e.TypeName, property));
-
-                    if (e.AttachmentCount > 1)
-                    {
-                        spc.ReportDiagnostic(Diagnostic.Create(
-                            MultipleAttachments,
-                            e.Location,
-                            e.TypeName));
-                        continue;
-                    }
-                    foreach (var property in e.UnsupportedAttachmentCollections)
-                        spc.ReportDiagnostic(Diagnostic.Create(UnsupportedAttachmentCollection, e.Location, e.TypeName, property));
-                    if (e.UnsupportedAttachmentCollections.Count > 0)
+                    // ReportEndpointDiagnostics reports why these endpoints are skipped.
+                    if (!e.IsValid || e.AttachmentCount > 1 || e.UnsupportedAttachmentCollections.Count > 0)
                         continue;
 
                     var processorService = e.Kind == HandlerKind.Query
@@ -1744,7 +1769,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         // Locations stay Roslyn source locations: they compare by syntax tree and span, so edits in other files
         // keep models equal, and reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
-        // Any edit in the declaring file creates a new syntax tree and reruns the output.
+        // Any edit in the declaring file reruns the diagnostics output; ForEmission drops them from the emission input.
         private readonly record struct EndpointAssemblyMapping(EquatableArray<string> AssemblyNames, Location? InvalidVersionPrefixLocation, Location? Location);
 
         private readonly record struct EndpointModel
@@ -1891,10 +1916,13 @@ namespace Ark.Tools.MediatorFramework.Generators
             public bool AttachmentResponse { get; }
             public string? StreamElement { get; }
             public bool IsStreaming => StreamElement is not null;
-            public Location? Location { get; }
+            public Location? Location { get; private init; }
             public string AssemblyName { get; }
-            public EquatableArray<DiagnosticInfo> Diagnostics { get; }
+            public EquatableArray<DiagnosticInfo> Diagnostics { get; private init; }
             public bool IsValid { get; }
+
+            // The emitted source reads neither, so dropping them keeps the emission input equal when lines shift.
+            public EndpointModel ForEmission() => this with { Location = null, Diagnostics = EquatableArray<DiagnosticInfo>.Empty };
         }
 
         private readonly record struct DiagnosticInfo

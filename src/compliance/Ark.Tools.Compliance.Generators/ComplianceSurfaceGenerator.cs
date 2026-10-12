@@ -19,6 +19,7 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
     private const string RevealSpecsTrackingName = "ComplianceSurfaceRevealSpecs";
     private const string RegistrationSpecsTrackingName = "ComplianceSurfaceRegistrationSpecs";
     private const string SurfaceTrackingName = "ComplianceSurfaceModel";
+    private const string SurfaceTextTrackingName = "ComplianceSurfaceText";
 
     private static readonly DiagnosticDescriptor _drift = new(
         "ARKPII020", "Compliance surface changed",
@@ -77,10 +78,14 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
             .Collect()
             .Select(static (files, _) => new ImmutableEquatableArray<string?>(files));
 
-        context.RegisterSourceOutput(inventory.Combine(enabled), static (production, input) =>
+        // Only the text is emitted, so an edit that shifts member locations does not re-add identical source.
+        var text = inventory
+            .Select(static (surface, _) => surface.Text)
+            .WithTrackingName(SurfaceTextTrackingName);
+        context.RegisterSourceOutput(text.Combine(enabled), static (production, input) =>
         {
             if (input.Right)
-                production.AddSource("ArkComplianceSurface.g.cs", "/*\n" + input.Left.Text + "*/\n");
+                production.AddSource("ArkComplianceSurface.g.cs", "/*\n" + input.Left + "*/\n");
         });
         context.RegisterSourceOutput(inventory.Combine(baselines).Combine(enabled), static (production, input) =>
         {
