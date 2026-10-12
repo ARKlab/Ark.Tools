@@ -12,7 +12,7 @@ public static class OutboxConfigurationExtensions
     /// Decorates transport to save messages into an outbox.
     /// </summary>
     /// <remarks>
-    /// The messages are stored in an Outbox only if the bus.Send/Publish operation is performed when a IOutboxContext is present.
+    /// The messages are stored in an Outbox only if the bus.Send/Publish operation is performed when an <see cref="OutboxScope"/> is open or a IOutboxContext is enlisted.
     /// Otherwise are sent directly to the original Transport.
     /// </remarks>
     /// <param name="configurer"></param>

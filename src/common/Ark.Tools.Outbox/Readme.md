@@ -37,6 +37,28 @@ CREATE TABLE dbo.Outbox (
 )
 ```
 
+### Ambient OutboxScope (any bus)
+
+`OutboxScope` stages the messages sent while it is open, through any bus whose transport is outbox-aware
+(Rebus configured with `Outbox(...)`, or the Mediator Framework native bus), and writes them to the context on
+`CompleteAsync`. The handler needs no reference to the bus outbox API.
+
+```csharp
+async Task ExecuteAsync()
+{
+    using var ctx = _contextFactory();
+    using var scope = new OutboxScope(ctx);
+
+    await ctx.SaveSomething(else);
+
+    await _bus.Publish(new SomethingUpdatedEvent(else));
+
+    // this must be completed before Committing
+    await scope.CompleteAsync();
+    ctx.Commit();
+}
+```
+
 ### Safe Way (no hidden behaviours)
 
 ```csharp

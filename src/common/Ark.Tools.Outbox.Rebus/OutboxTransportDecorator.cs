@@ -36,6 +36,14 @@ internal sealed class OutboxTransportDecorator : ITransport
     public Task Send(
         [NotPersonalData("Destination queue address is infrastructure routing metadata, not personal data.")] string destinationAddress, TransportMessage message, ITransactionContext context)
     {
+        // an ambient OutboxScope takes precedence: it stores the messages when the application completes it
+        var scope = OutboxScope.Current;
+        if (scope != null)
+        {
+            scope.Add(_toOutboxMessage(destinationAddress, message));
+            return Task.CompletedTask;
+        }
+
         // if there is a IOutboxContext associated with this Send(), batch message and store them on commit
         var ctx = context.GetOrNull<IOutboxContextCore>(_outboxContextItemsKey);
         if (ctx != null)
@@ -50,22 +58,28 @@ internal sealed class OutboxTransportDecorator : ITransport
             });
 
 
-            outgoingMessages.Enqueue(new OutboxMessage
-            {
-                Body = message.Body,
-                // in case of multiple subscribers and with distributed subscription store (InMemory and few other Transports)
-                // the same TransportMessage is Send() to different 'destinationAddresses' thus the need to clone the Headers
-                Headers = new Dictionary<string, string>(message.Headers, System.StringComparer.Ordinal)
-                {
-                    {_outboxRecepientHeader,destinationAddress  }
-                }
-            });
+            outgoingMessages.Enqueue(_toOutboxMessage(destinationAddress, message));
 
             return Task.CompletedTask;
         }
 
         // otherwise, there isn't an associated Context, thus just write directly to transport
         return _inner.Send(destinationAddress, message, context);
+    }
+
+    private static OutboxMessage _toOutboxMessage(
+        [NotPersonalData("Destination queue address is infrastructure routing metadata, not personal data.")] string destinationAddress, TransportMessage message)
+    {
+        return new OutboxMessage
+        {
+            Body = message.Body,
+            // in case of multiple subscribers and with distributed subscription store (InMemory and few other Transports)
+            // the same TransportMessage is Send() to different 'destinationAddresses' thus the need to clone the Headers
+            Headers = new Dictionary<string, string>(message.Headers, System.StringComparer.Ordinal)
+            {
+                {_outboxRecepientHeader,destinationAddress  }
+            }
+        };
     }
 
 }
