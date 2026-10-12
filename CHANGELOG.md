@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Mediator Framework: a [contract design checklist](docs/mediator-framework/contract-design-checklist.md) covering fields and updatability, validation, business rules, failures, API design, authorization, versioning, privacy and more. The `ark-mediator-framework` agent skill now drafts a contract brief from it and asks for confirmation before writing code.
 - `Ark.Tools.Outbox`: `OutboxScope`, an ambient outbox transaction like Rebus's `RebusTransactionScope`. Messages sent through a bus while it is open are staged and written to the application outbox on `CompleteAsync`. It works with the Mediator Framework native bus and with Rebus configured with `Outbox(...)`; Rebus code that calls `bus.Enlist(context)` works as before, and that enlistment takes precedence over an enclosing scope.
 
 ### Changed
@@ -25,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `ValueObject<T>.GetHashCode()` no longer throws when the object has no atomic values. Hash codes are now computed with `HashCode`, so their values differ from earlier versions.
 - `Ark.Tools.AspNetCore.Auth0`: authorization-extension policy lookups reuse one `HttpClient` instead of creating one per cache miss, which could exhaust sockets under load.
+- The `ark-compliance` agent skill links to the documentation on the `master` branch; its links pointed to a branch that does not exist.
 
 ## [7.0.0-beta14] - 2026-10-12
 
