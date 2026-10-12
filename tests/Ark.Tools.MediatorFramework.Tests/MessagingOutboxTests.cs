@@ -239,10 +239,8 @@ public sealed partial class MessagingOutboxTests
             participantIdentity,
             utcNow: static () => DateTimeOffset.Parse(
                 "2024-01-01T00:00:00Z",
-                CultureInfo.InvariantCulture))
-        {
-            _outboxMode = outboxMode,
-        };
+                CultureInfo.InvariantCulture),
+            outboxMode: outboxMode);
     }
 
     private static Dictionary<string, string> _outboxHeaders(string messageId)

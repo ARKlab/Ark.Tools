@@ -231,6 +231,27 @@ public sealed class MessagingFunctionsCompositionTests
         services.Should().BeEmpty();
     }
 
+    /// <summary>The low-level Functions host takes the outbox mode its fluent counterpart selects with <c>UseOutbox</c>.</summary>
+    [TestMethod]
+    public async Task LowLevelFunctionsHostOutboxModeReachesTheBus()
+    {
+        var services = new ServiceCollection();
+        services.AddArkMessagingFunctionsHost(
+            _manifest(
+                MessagingFunctionsTriggerBinding.ServiceBus,
+                _descriptor(receives: false)),
+            new InMemoryMessagingTransport(),
+            _dataBus(),
+            outbox: MessagingOutboxMode.Enqueue);
+        await using var provider = services.BuildServiceProvider();
+        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        using var scope = provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+
+        provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
+    }
+
     /// <summary>Verifies Functions composition cannot be mixed with the native polling processor.</summary>
     [TestMethod]
     public void NativeOutboxProcessorIsRejectedBeforeOrAfterFunctionsComposition()

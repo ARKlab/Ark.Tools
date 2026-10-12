@@ -231,11 +231,9 @@ public static class MessagingServiceCollectionExtensions
                 participantIdentity,
                 serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
                 outgoingStepTypes,
-                utcNow: null)
-        {
-            // Read at resolve time: composition may register the outbox before or after the participant.
-            _outboxMode = serviceProvider.GetService<MessagingOutboxRegistration>()?.Mode ?? MessagingOutboxMode.None,
-        });
+                utcNow: null,
+                // Read at resolve time: composition may register the outbox before or after the participant.
+                outboxMode: serviceProvider.GetService<MessagingOutboxRegistration>()?.Mode ?? MessagingOutboxMode.None));
         services.AddSingleton<IBus>(
             static serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
         services.AddSingleton<IBusOutboxEnlistment>(
@@ -511,7 +509,11 @@ internal sealed class MessagingParticipantStartupValidator : IHostedService
 internal sealed record MessagingOutboxRegistration(MessagingOutboxMode Mode);
 
 /// <summary>How a native bus handles <see cref="IBusOutboxEnlistment.Enlist"/>.</summary>
-internal enum MessagingOutboxMode
+/// <remarks>
+/// The fluent composition sets it from <c>UseOutbox</c>. Pass it explicitly only when composing a bus directly;
+/// the Development-only check for <see cref="DevelopmentPassthrough"/> runs only in a composed host.
+/// </remarks>
+public enum MessagingOutboxMode
 {
     /// <summary>No outbox: enlisting throws.</summary>
     None,

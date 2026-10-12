@@ -594,14 +594,13 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
             _services._addMessagePackMessagingCodec();
         if (_protobuf)
             _services._addProtobufMessagingCodec();
-        if (_outbox.HasValue)
-            _services._addArkMessagingOutbox(_outbox.Value);
         _services.AddArkMessagingFunctionsHost(
             _configuration,
             manifest,
             dataBus,
             _transport.Value,
-            _storageQueueSettings);
+            _storageQueueSettings,
+            outbox: _outbox ?? MessagingOutboxMode.None);
     }
 
     private void _selectOutbox(MessagingOutboxMode mode)

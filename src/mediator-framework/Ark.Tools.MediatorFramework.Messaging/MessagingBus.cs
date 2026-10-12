@@ -39,6 +39,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     /// <param name="pipelineProcessor">The outgoing pipeline processor.</param>
     /// <param name="outgoingStepTypes">Optional outgoing pipeline steps.</param>
     /// <param name="utcNow">The clock used for message and scheduled-send timestamps.</param>
+    /// <param name="outboxMode">How <see cref="Enlist"/> behaves; <see cref="MessagingOutboxMode.None"/> makes it throw.</param>
     public MessagingBus(
         IMessagingTransport transport,
         MessagingNetworkOptions network,
@@ -48,7 +49,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         string participantIdentity,
         IMessagingPipelineProcessor? pipelineProcessor = null,
         IReadOnlyList<Type>? outgoingStepTypes = null,
-        Func<DateTimeOffset>? utcNow = null)
+        Func<DateTimeOffset>? utcNow = null,
+        MessagingOutboxMode outboxMode = MessagingOutboxMode.None)
     {
         _transport = transport ?? throw new ArgumentNullException(nameof(transport));
         _network = network ?? throw new ArgumentNullException(nameof(network));
@@ -65,6 +67,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
 
         _network.Validate(transport.Capabilities);
         _participantIdentity = participantIdentity;
+        _outboxMode = outboxMode;
         _pipelineProcessor = pipelineProcessor;
         _outgoingStepTypes = new ReadOnlyCollection<Type>(
             (outgoingStepTypes ?? Array.Empty<Type>()).ToArray());
@@ -162,7 +165,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
                 throw new InvalidOperationException(
                     string.Format(
                         CultureInfo.InvariantCulture,
-                        "Messaging participant '{0}' has no outbox, so nothing would send the enlisted messages. Call UseOutbox() in its messaging composition, or UseOutbox(outbox => outbox.UseDevelopmentPassthrough()) to send directly during development.",
+                        "Messaging participant '{0}' has no outbox, so nothing would send the enlisted messages. Call UseOutbox() in its messaging composition, or UseOutbox(outbox => outbox.UseDevelopmentPassthrough()) to send directly during development. A bus composed directly takes a MessagingOutboxMode.",
                         _participantIdentity));
             case MessagingOutboxMode.DevelopmentPassthrough:
                 return _passthroughScope;
@@ -173,8 +176,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         return scope;
     }
 
-    /// <summary>How <see cref="Enlist"/> behaves; set by the messaging composition from <c>UseOutbox</c>.</summary>
-    internal MessagingOutboxMode _outboxMode { get; init; }
+    /// <summary>How <see cref="Enlist"/> behaves.</summary>
+    internal MessagingOutboxMode _outboxMode { get; }
 
     /// <inheritdoc />
     public void Dispose()
