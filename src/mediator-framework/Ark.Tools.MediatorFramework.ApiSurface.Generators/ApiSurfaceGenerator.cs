@@ -540,13 +540,22 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         INamedTypeSymbol type,
         IReadOnlyDictionary<INamedTypeSymbol, string[]> networkMemberships)
     {
-        var http = Attribute(type, Http);
-        var grpc = Attribute(type, Grpc);
-        var rebus = Attribute(type, Rebus);
-        var message = Attribute(type, Message);
-        var @event = Attribute(type, Event);
-        var participant = Attribute(type, Participant);
-        var network = Attribute(type, Network);
+        // Name each attribute once; the first occurrence wins, as with FirstOrDefault.
+        var attributes = new Dictionary<string, AttributeData>(StringComparer.Ordinal);
+        foreach (var attribute in type.GetAttributes())
+        {
+            if (attribute.AttributeClass?.ToDisplayString() is { } attributeName && !attributes.ContainsKey(attributeName))
+                attributes.Add(attributeName, attribute);
+        }
+
+        AttributeData? Find(string name) => attributes.TryGetValue(name, out var attribute) ? attribute : null;
+        var http = Find(Http);
+        var grpc = Find(Grpc);
+        var rebus = Find(Rebus);
+        var message = Find(Message);
+        var @event = Find(Event);
+        var participant = Find(Participant);
+        var network = Find(Network);
         if (http is null && grpc is null && rebus is null
             && message is null && @event is null && participant is null && network is null)
             return;
@@ -557,11 +566,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             return;
         var result = ResultType(type);
         var metadata = new List<string>();
-        var group = StringArgument(Attribute(type, ApiGroup), 0) ?? "Ark";
-        var versioning = Attribute(type, Versioning);
+        var group = StringArgument(Find(ApiGroup), 0) ?? "Ark";
+        var versioning = Find(Versioning);
         var introduced = IntArgument(versioning, "Introduced", 1);
         var retired = IntArgument(versioning, "Retired", 0);
-        var grpcGroup = StringArgument(Attribute(type, GrpcService), 0);
+        var grpcGroup = StringArgument(Find(GrpcService), 0);
         if (grpcGroup is not null)
             metadata.Add($"grpc-group={grpcGroup}");
         if (http is not null)

@@ -210,7 +210,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             var result = ImmutableArray.CreateBuilder<AssemblySource>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var attribute in contextType.GetAttributes()
-                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkGenerateGrpcForAssemblyAttribute))
+                .Where(static attribute => IsAttribute(attribute, ArkGenerateGrpcForAssemblyAttribute)))
             {
                 if ((attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)?.ContainingAssembly?.Name
                     is not { } assemblyName || !seen.Add(assemblyName))
@@ -1001,13 +1001,9 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static ProtoContractModel? ExtractSourceProtoContract(GeneratorAttributeSyntaxContext context)
         {
-            var protoAttribute = context.SemanticModel.Compilation.GetTypeByMetadataName(ProtoContractAttribute);
-            if (protoAttribute is null || context.TargetSymbol is not INamedTypeSymbol type)
-                return null;
-
-            var protoContract = type.GetAttributes().FirstOrDefault(attribute =>
-                SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute));
-            return protoContract is null ? null : CreateProtoContract(type, protoContract);
+            return context.TargetSymbol is INamedTypeSymbol type
+                ? CreateProtoContract(type, context.Attributes[0])
+                : null;
         }
 
         private static ImmutableArray<ProtoContractModel> GetReferencedProtoContracts(
