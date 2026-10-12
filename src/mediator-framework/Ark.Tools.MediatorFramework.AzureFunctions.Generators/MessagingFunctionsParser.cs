@@ -290,8 +290,11 @@ internal static class MessagingFunctionsParser
         var networks = new List<(INamedTypeSymbol Type, AttributeData Attribute)>(1);
         foreach (var type in _allTypes(participant.ContainingAssembly.GlobalNamespace, cancellationToken))
         {
+            // This walk visits every type of the participant's assembly on each edit: the Name check
+            // avoids formatting a display string for every attribute.
             var attribute = type.GetAttributes().FirstOrDefault(static candidate =>
-                candidate.AttributeClass?.ToDisplayString() == _networkAttribute);
+                candidate.AttributeClass is { Name: "MessagingNetworkAttribute" } attributeClass
+                && attributeClass.ToDisplayString() == _networkAttribute);
             if (attribute is null)
                 continue;
             if (!_types(attribute, "Members").Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
