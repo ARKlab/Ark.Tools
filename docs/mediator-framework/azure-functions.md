@@ -103,7 +103,7 @@ Source: [`Program.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Fun
 builds the application container, and `AddApiProducer` composes the Api app: it
 calls `AddArkAzureFunctions`, `AddArkSolidProcessors` and
 `AddArkAzureFunctionsSimpleInjectorBridge`, and registers a native producer that
-enqueues through the outbox and receives nothing. A trigger app calls
+sends through the development outbox pass-through and receives nothing. A trigger app calls
 `FunctionsHosting.AddMessagingTrigger` with its generated manifest instead; see
 step 4. `AddArkSolidProcessors` bridges Microsoft DI-visible
 `IRequestProcessor`, `IQueryProcessor`, and `ICommandProcessor` back into the

@@ -340,7 +340,8 @@ Every step builds the root solution and passes the affected tests.
 ## Update: Functions-only messaging (2026-10)
 
 The Functions variant no longer has an `OutboxProcessor`: it runs on Azure Functions only and sends directly through
-`DirectSendBus`, accepting the loss of the outbox's atomicity. Each Functions app's `HttpHost` or
+the development outbox pass-through (`UseOutbox(outbox => outbox.UseDevelopmentPassthrough())`), accepting the loss of
+the outbox's atomicity; the apps start only in the Development environment. Each Functions app's `HttpHost` or
 `MessagingFunctionsHost` moved to a per-app `Triggers` library, because the Worker SDK source generators cannot see
 functions that the Ark generator emits in the same project. See the
 [Functions variant README](../../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Functions/README.md).
