@@ -30,6 +30,11 @@ the list of decisions.
    - Recommendation: B, because a 403 on a Guid discloses that the customer exists.
    ```
 
+   When the right choice depends on input you do not have yet (a business rule,
+   an owner, a retention period), still list the alternatives and give a
+   conditional recommendation ("if the rule is X, A; otherwise B"). A question
+   without alternatives and a recommendation is not ready to ask.
+
    For the legal items in [§15](#15-privacy-gdpr), list the alternatives (for
    example the lawful bases that could apply) and label the recommendation as a
    suggestion that the DPO must confirm.

@@ -26,7 +26,10 @@ ship, so they are made with the human before any code is written.
    design built on a wrong premise is wrong however complete it is.
 3. Ask the `ASK` items one at a time. Each question lists the valid
    alternatives with their consequences and a recommendation with its reason,
-   so the human chooses instead of designing from scratch. Purpose, lawful
+   so the human chooses instead of designing from scratch. When the choice
+   depends on input you lack (a business rule, an owner, a retention period),
+   still list the alternatives and make the recommendation conditional ("if X,
+   A; otherwise B"); never ask a bare question. Purpose, lawful
    basis, retention period and DPIA trigger are always `ASK`: they are decisions
    for the product owner and the DPO, and the brief records who decided them.
    Do not infer them from code; list the alternatives and label any
@@ -117,6 +120,7 @@ handler code. A send outside a scope goes straight to the transport.
 ## Red flags - stop
 
 - You are writing contract or handler code before the brief is confirmed.
+- A question in the brief has no alternatives or no recommendation.
 - You answered purpose, lawful basis, retention or DPIA yourself.
 - A public contract has a plain enum that is neither externally controlled nor `[Flags]`.
 - A personal-data field has no classification, or a sensitive field is in a message.
