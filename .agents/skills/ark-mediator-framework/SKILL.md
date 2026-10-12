@@ -24,9 +24,13 @@ ship, so they are made with the human before any code is written.
    facts the request states (types, existing fields, classification, available
    data) against the code and put any correction at the top of the brief: a
    design built on a wrong premise is wrong however complete it is.
-3. Ask the `ASK` items one at a time. Purpose, lawful basis, retention period and
-   DPIA trigger are always `ASK`: they are decisions for the product owner and the
-   DPO, and the brief records who decided them. Do not infer them from code.
+3. Ask the `ASK` items one at a time. Each question lists the valid
+   alternatives with their consequences and a recommendation with its reason,
+   so the human chooses instead of designing from scratch. Purpose, lawful
+   basis, retention period and DPIA trigger are always `ASK`: they are decisions
+   for the product owner and the DPO, and the brief records who decided them.
+   Do not infer them from code; list the alternatives and label any
+   recommendation as a suggestion the DPO must confirm.
 4. Present the completed brief and wait for explicit confirmation. If nobody is
    available to confirm, stop after the brief.
 5. Implement. Paste the brief into the pull request description. Put decisions

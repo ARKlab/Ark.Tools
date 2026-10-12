@@ -19,7 +19,20 @@ the list of decisions.
 2. **Tag the rest `ASK`.** Anything you cannot derive, or that is a business,
    legal, or product decision, is `ASK`. The legal items in
    [§15](#15-privacy-gdpr) are always `ASK`.
-3. **Ask one question at a time** and record the answer.
+3. **Ask one question at a time** and record the answer. Every question lists
+   the valid alternatives and a recommendation with its reason, so the answer
+   is a choice rather than an essay:
+
+   ```markdown
+   **Q3 (§12 Authorization): A support agent may not see Customer B. 403 or 404?**
+   - A) 403: simpler to diagnose; confirms the customer exists.
+   - B) 404: hides existence; the identifier is an unguessable Guid.
+   - Recommendation: B, because a 403 on a Guid discloses that the customer exists.
+   ```
+
+   For the legal items in [§15](#15-privacy-gdpr), list the alternatives (for
+   example the lawful bases that could apply) and label the recommendation as a
+   suggestion that the DPO must confirm.
 4. **Confirm.** Present the completed brief and wait for explicit confirmation.
    Do not write contract, handler, validator, or test code before it.
 5. **Record.** Paste the brief into the pull request description. Put every
@@ -313,4 +326,10 @@ Paste this into the pull request description and fill it in. Tag each answer
 ### 16. Audit and observability
 ### 17. Documentation
 ### 18. Tests
+
+## Open questions
+**Q1 (§n <section>): <question>**
+- A) <alternative>: <consequence>
+- B) <alternative>: <consequence>
+- Recommendation: <A/B>, because <reason>
 ```
