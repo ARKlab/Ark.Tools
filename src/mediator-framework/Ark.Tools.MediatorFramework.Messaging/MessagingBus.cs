@@ -235,8 +235,11 @@ public sealed class MessagingBus : IBus, IDisposable
                     .BuildOutgoingPayloadAsync(message, codec, _transport, context.Headers, cancellationToken)
                     .ConfigureAwait(false);
                 _validateHeaders(context.Headers);
-                var transportHeaders = new ReadOnlyDictionary<string, string>(
-                    new Dictionary<string, string>(context.Headers, StringComparer.Ordinal));
+                // Without outgoing steps nothing can change the headers after the send, so the transport can read them directly.
+                var transportHeaders = _outgoingStepTypes.Count == 0
+                    ? new ReadOnlyDictionary<string, string>(headers)
+                    : new ReadOnlyDictionary<string, string>(
+                        new Dictionary<string, string>(context.Headers, StringComparer.Ordinal));
                 if (publish)
                     await _transport.PublishAsync(
                         destination,

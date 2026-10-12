@@ -2,7 +2,7 @@
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
 
-public class MatrixSchemaFilter : ISchemaFilter
+public sealed class MatrixSchemaFilter : ISchemaFilter
 {
     public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {

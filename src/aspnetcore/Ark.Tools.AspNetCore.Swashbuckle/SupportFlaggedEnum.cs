@@ -5,7 +5,7 @@
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
 
-public class SupportFlaggedEnums : IOperationFilter
+public sealed class SupportFlaggedEnums : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {

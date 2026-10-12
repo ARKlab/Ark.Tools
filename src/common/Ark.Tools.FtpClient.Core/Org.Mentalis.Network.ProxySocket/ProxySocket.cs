@@ -25,7 +25,7 @@ public enum ProxyTypes
 /// Implements a Socket class that can connect trough a SOCKS proxy server.
 /// </summary>
 /// <remarks>This class implements SOCKS4[A] and SOCKS5.<br>It does not, however, implement the BIND commands, so you cannot .</br></remarks>
-public class ProxySocket : Socket
+public sealed class ProxySocket : Socket
 {
     /// <summary>
     /// Initializes a new instance of the ProxySocket class.

@@ -13,7 +13,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.ResourceWatcher.ApplicationInsights;
 
-public class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListenerBase
+public sealed class ResourceWatcherDiagnosticListener : ResourceWatcherDiagnosticListenerBase
 {
     private readonly TelemetryClient _client;
 

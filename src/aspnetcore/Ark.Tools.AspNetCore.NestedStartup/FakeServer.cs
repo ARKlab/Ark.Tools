@@ -30,11 +30,13 @@ public sealed class FakeServer : IServer
     public Task StartAsync<TContext>(IHttpApplication<TContext> application, CancellationToken cancellationToken) where TContext : notnull
     {
         var prop = typeof(TContext).GetProperty("HttpContext") ?? throw new InvalidOperationException("TContext do not expose HttpContext property");
+        var setHttpContext = prop.SetMethod?.CreateDelegate<Action<TContext, HttpContext>>()
+            ?? throw new InvalidOperationException("TContext HttpContext property has no setter");
 
         _process = async (HttpContext ctx) =>
         {
             var ccc = Activator.CreateInstance<TContext>();
-            prop.SetValue(ccc, ctx);
+            setHttpContext(ccc, ctx);
 
             await application.ProcessRequestAsync(ccc).ConfigureAwait(false);
         };

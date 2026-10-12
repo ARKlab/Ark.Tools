@@ -3,6 +3,6 @@
 
 namespace Ark.Tools.Nodatime;
 
-public class NullableLocalDateTimeConverter : NullableNodaTimeConverter<LocalDateTime>
+public sealed class NullableLocalDateTimeConverter : NullableNodaTimeConverter<LocalDateTime>
 {
 }

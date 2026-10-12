@@ -5,7 +5,7 @@ namespace Ark.Tools.Authorization.Requirement;
 /// Implements an <see cref="IAuthorizationHandler"/> and <see cref="IAuthorizationRequirement"/>
 /// which requires the current user must be authenticated.
 /// </summary>
-public class DenyAnonymousAuthorizationRequirement : AuthorizationHandler<DenyAnonymousAuthorizationRequirement>, IAuthorizationRequirement
+public sealed class DenyAnonymousAuthorizationRequirement : AuthorizationHandler<DenyAnonymousAuthorizationRequirement>, IAuthorizationRequirement
 {
     /// <summary>
     /// Makes a decision if authorization is allowed based on a specific requirement.

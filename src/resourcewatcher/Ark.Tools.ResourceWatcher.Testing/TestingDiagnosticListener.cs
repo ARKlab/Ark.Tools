@@ -10,7 +10,7 @@ namespace Ark.Tools.ResourceWatcher.Testing;
 /// A diagnostic listener that captures ResourceWatcher processing decisions for test assertions.
 /// Subscribe this listener explicitly in test setup to capture ProcessType, ResultType, and exceptions per resource.
 /// </summary>
-public class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
+public sealed class TestingDiagnosticListener : ResourceWatcherDiagnosticListenerBase
 {
     private readonly ConcurrentDictionary<string, ResourceProcessingResult> _results = new(StringComparer.Ordinal);
     private readonly ConcurrentQueue<RunResult> _runResults = new();

@@ -2,7 +2,7 @@
 
 namespace Ark.Tools.Rebus.Tests;
 
-public class InProcessMessageInspectorStep : IIncomingStep
+public sealed class InProcessMessageInspectorStep : IIncomingStep
 {
     private static int _count;
 

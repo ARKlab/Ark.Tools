@@ -4,6 +4,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace Ark.Tools.Solid;
@@ -32,8 +33,7 @@ public sealed class ServiceProviderQueryProcessor(IServiceProvider services) : I
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(query);
-        var handlerType = typeof(IQueryHandler<,>).MakeGenericType(query.GetType(), typeof(TResult));
-        return await ServiceProviderProcessorInvoker.InvokeAsync<TResult>(services, handlerType, query, ctk).ConfigureAwait(false);
+        return await ServiceProviderProcessorInvoker.InvokeAsync<TResult>(services, typeof(IQueryHandler<,>), query, ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -71,8 +71,7 @@ public sealed class ServiceProviderRequestProcessor(IServiceProvider services) :
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var handlerType = typeof(IRequestHandler<,>).MakeGenericType(request.GetType(), typeof(TResponse));
-        return await ServiceProviderProcessorInvoker.InvokeAsync<TResponse>(services, handlerType, request, ctk).ConfigureAwait(false);
+        return await ServiceProviderProcessorInvoker.InvokeAsync<TResponse>(services, typeof(IRequestHandler<,>), request, ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -109,10 +108,7 @@ public sealed class ServiceProviderCommandProcessor(IServiceProvider services) :
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(command);
-        var handlerType = typeof(ICommandHandler<>).MakeGenericType(command.GetType());
-        var handler = services.GetRequiredService(handlerType);
-        var task = (Task)handlerType.GetMethod(nameof(ICommandHandler<ICommand>.ExecuteAsync))!.Invoke(handler, BindingFlags.DoNotWrapExceptions, null, [command, ctk], null)!;
-        await task.ConfigureAwait(false);
+        await ServiceProviderProcessorInvoker.InvokeAsync(services, typeof(ICommandHandler<>), command, ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -148,12 +144,39 @@ public static class ServiceProviderProcessorsServiceCollectionExtensions
 
 internal static class ServiceProviderProcessorInvoker
 {
+    // Keyed by open handler type, message type and result type (null for commands); closing the type is the costly part.
+    private static readonly ConcurrentDictionary<(Type Open, Type Message, Type? Result), (Type HandlerType, MethodInfo Execute)> _handlers = new();
+
     [RequiresUnreferencedCode("Invokes the handler's ExecuteAsync through reflection.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public static async Task<TResult> InvokeAsync<TResult>(
-        IServiceProvider services, Type handlerType, object message, CancellationToken ctk)
+        IServiceProvider services, Type openHandlerType, object message, CancellationToken ctk)
     {
-        var handler = services.GetRequiredService(handlerType);
-        var task = (Task<TResult>)handlerType.GetMethod("ExecuteAsync")!.Invoke(handler, BindingFlags.DoNotWrapExceptions, null, [message, ctk], null)!;
+        var task = (Task<TResult>)_invoke(services, (openHandlerType, message.GetType(), typeof(TResult)), message, ctk);
         return await task.ConfigureAwait(false);
+    }
+
+    [RequiresUnreferencedCode("Invokes the handler's ExecuteAsync through reflection.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
+    public static async Task InvokeAsync(
+        IServiceProvider services, Type openHandlerType, object message, CancellationToken ctk)
+    {
+        await _invoke(services, (openHandlerType, message.GetType(), null), message, ctk).ConfigureAwait(false);
+    }
+
+    [RequiresUnreferencedCode("Invokes the handler's ExecuteAsync through reflection.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
+    private static Task _invoke(
+        IServiceProvider services, (Type Open, Type Message, Type? Result) key, object message, CancellationToken ctk)
+    {
+        var (handlerType, execute) = _handlers.GetOrAdd(key, static k =>
+        {
+            var handlerType = k.Result is null
+                ? k.Open.MakeGenericType(k.Message)
+                : k.Open.MakeGenericType(k.Message, k.Result);
+            return (handlerType, handlerType.GetMethod("ExecuteAsync")!);
+        });
+        var handler = services.GetRequiredService(handlerType);
+        return (Task)execute.Invoke(handler, BindingFlags.DoNotWrapExceptions, null, [message, ctk], null)!;
     }
 }

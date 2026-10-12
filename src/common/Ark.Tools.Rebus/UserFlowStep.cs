@@ -9,7 +9,7 @@ using System.Security.Claims;
 namespace Ark.Tools.Rebus;
 
 [StepDocumentation("Automatically flow UserId and UserEmail from context into a header if possible")]
-public class UserFlowStep : IOutgoingStep, IIncomingStep
+public sealed class UserFlowStep : IOutgoingStep, IIncomingStep
 {
     private readonly Container _container;
     private static readonly char[] _separator = [','];
@@ -28,7 +28,7 @@ public class UserFlowStep : IOutgoingStep, IIncomingStep
             var userId = userContext.Current.GetUserId();
             var userEmail = userContext.Current.GetUserEmail();
             var scopes = userContext.Current.FindFirst("scope")?.Value;
-            var roles = userContext.Current.FindAll(ClaimTypes.Role).Select(static x => x.Value) ?? Enumerable.Empty<string>();
+            var roles = string.Join(",", userContext.Current.FindAll(ClaimTypes.Role).Select(static x => x.Value));
 
             var message = context.Load<Message>();
 
@@ -52,9 +52,9 @@ public class UserFlowStep : IOutgoingStep, IIncomingStep
                 message.Headers["ark-user-scopes"] = scopes;
             }
 
-            if (roles.Any())
+            if (roles.Length > 0)
             {
-                message.Headers["ark-user-roles"] = string.Join(",", roles);
+                message.Headers["ark-user-roles"] = roles;
             }
         }
 

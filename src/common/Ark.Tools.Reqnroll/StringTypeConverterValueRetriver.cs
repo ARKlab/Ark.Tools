@@ -4,7 +4,7 @@ using System.ComponentModel;
 
 namespace Ark.Tools.Reqnroll;
 
-public class StringTypeConverterValueRetriver : IValueRetriever
+public sealed class StringTypeConverterValueRetriver : IValueRetriever
 {
     [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "Fallback to GetConverter for types not registered via TypeDescriptor.RegisterType. This is a test utility where TypeConverter types are preserved.")]
     [UnconditionalSuppressMessage("Trimming", "IL2067", Justification = "Fallback to GetConverter for types not registered via TypeDescriptor.RegisterType. This is a test utility where TypeConverter types are preserved.")]

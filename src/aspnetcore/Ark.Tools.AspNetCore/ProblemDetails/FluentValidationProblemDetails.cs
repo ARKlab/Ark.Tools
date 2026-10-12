@@ -5,7 +5,7 @@ using Hellang.Middleware.ProblemDetails;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
-public class FluentValidationProblemDetails : StatusCodeProblemDetails
+public sealed class FluentValidationProblemDetails : StatusCodeProblemDetails
 {
     public FluentValidationProblemDetails(FluentValidation.ValidationException ex, int statusCode) : base(statusCode)
     {
@@ -27,7 +27,7 @@ public class FluentValidationProblemDetails : StatusCodeProblemDetails
     public Dictionary<string, FluentValidationErrors[]> Errors { get; set; }
 }
 
-public record FluentValidationErrors
+public sealed record FluentValidationErrors
 {
     public string? ErrorMessage { get; init; }
     public object? AttemptedValue { get; init; }

@@ -8,7 +8,7 @@ using System.Collections;
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 
 
-public class CommaSeparatedConvention : IActionModelConvention
+public sealed class CommaSeparatedConvention : IActionModelConvention
 {
     public void Apply(ActionModel action)
     {

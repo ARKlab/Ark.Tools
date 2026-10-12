@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Solid.Authorization;
 
-public class PolicyAuthorizeCommandDecorator<TCommand> : ICommandHandler<TCommand>
+public sealed class PolicyAuthorizeCommandDecorator<TCommand> : ICommandHandler<TCommand>
     where TCommand : ICommand
 {
     private readonly IAuthorizationService _authSvc;

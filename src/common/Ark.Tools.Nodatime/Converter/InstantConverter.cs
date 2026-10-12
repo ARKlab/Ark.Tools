@@ -6,7 +6,7 @@ using System.ComponentModel;
 
 namespace Ark.Tools.Nodatime;
 
-public class InstantConverter : TypeConverter
+public sealed class InstantConverter : TypeConverter
 {
     private readonly InstantPattern _pattern = InstantPattern.ExtendedIso;
     private static readonly Type[] _supportedFrom =

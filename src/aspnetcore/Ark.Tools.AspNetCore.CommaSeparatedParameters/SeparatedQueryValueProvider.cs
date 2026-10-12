@@ -8,7 +8,7 @@ using System.Buffers;
 
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 
-public class SeparatedQueryValueProvider : QueryStringValueProvider
+public sealed class SeparatedQueryValueProvider : QueryStringValueProvider
 {
     private readonly SearchValues<char> _separatorSearchValues;
     private readonly char _separator;
@@ -35,7 +35,7 @@ public class SeparatedQueryValueProvider : QueryStringValueProvider
 
         var result = base.GetValue(key);
 
-        if (result != ValueProviderResult.None && result.Values.Any(x => x != null && x.AsSpan().IndexOfAny(_separatorSearchValues) > 0))
+        if (result != ValueProviderResult.None && _containsSeparator(result.Values))
         {
             var splitValues = new StringValues(result.Values
                 .SelectMany(x => x!.Split([_separator], StringSplitOptions.None)).ToArray());
@@ -43,5 +43,15 @@ public class SeparatedQueryValueProvider : QueryStringValueProvider
         }
 
         return result;
+    }
+
+    private bool _containsSeparator(StringValues values)
+    {
+        foreach (var value in values)
+        {
+            if (value != null && value.AsSpan().IndexOfAny(_separatorSearchValues) > 0)
+                return true;
+        }
+        return false;
     }
 }

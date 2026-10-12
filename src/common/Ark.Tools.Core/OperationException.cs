@@ -4,7 +4,7 @@ namespace Ark.Tools.Core;
 
 [SuppressMessage("Design", "MA0013:Types should not extend System.ApplicationException", Justification = "Historical mistake - public interface - Next Major")]
 [SuppressMessage("Design", "CA1058:Types should not extend certain base types", Justification = "Historical mistake - public interface - Next Major")]
-public class OperationException : ApplicationException
+public sealed class OperationException : ApplicationException
 {
     public OperationException(string message)
         : base(message)

@@ -54,6 +54,6 @@ public struct Resource : IEquatable<Resource>
 
     public override readonly string ToString()
     {
-        return string.Format(null, "{0}.{1}", Provider, Id);
+        return $"{Provider}.{Id}";
     }
 }

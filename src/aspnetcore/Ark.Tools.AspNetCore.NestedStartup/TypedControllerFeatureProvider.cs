@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Ark.Tools.AspNetCore.NestedStartup;
 
-public class TypedControllerFeatureProvider<TArea> : ControllerFeatureProvider where TArea : IArea
+public sealed class TypedControllerFeatureProvider<TArea> : ControllerFeatureProvider where TArea : IArea
 {
     protected override bool IsController(TypeInfo typeInfo)
     {

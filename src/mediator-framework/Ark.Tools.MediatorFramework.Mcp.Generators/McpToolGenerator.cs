@@ -89,7 +89,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 ToolAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol type
-                    ? CreateContract(type)
+                    ? CreateContract(type, attributeContext.Attributes[0])
                     : null)
             .WithTrackingName(ContractParserTrackingName)
             .Where(static contract => contract is not null)
@@ -431,17 +431,21 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         ImmutableArray<string> assemblyNames,
         CancellationToken cancellationToken)
     {
+        var toolAttributeType = compilation.GetTypeByMetadataName(ToolAttribute);
         var builder = ImmutableArray.CreateBuilder<AssemblyContracts>(assemblyNames.Length);
         foreach (var assemblyName in assemblyNames)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var contracts = compilation.SourceModule.ReferencedAssemblySymbols
-                .Where(assembly => string.Equals(assembly.Name, assemblyName, StringComparison.Ordinal))
-                .SelectMany(assembly => AllTypes(assembly.GlobalNamespace, cancellationToken))
-                .Where(type => type.GetAttributes().Any(attribute =>
-                    attribute.AttributeClass._isFullName(ToolAttribute)))
-                .Select(CreateContract)
-                .ToImmutableArray();
+            var contracts = toolAttributeType is null
+                ? ImmutableArray<ContractModel>.Empty
+                : compilation.SourceModule.ReferencedAssemblySymbols
+                    .Where(assembly => string.Equals(assembly.Name, assemblyName, StringComparison.Ordinal))
+                    .SelectMany(assembly => AllTypes(assembly.GlobalNamespace, cancellationToken))
+                    .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(attribute =>
+                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, toolAttributeType))))
+                    .Where(static item => item.Attribute is not null)
+                    .Select(static item => CreateContract(item.Type, item.Attribute!))
+                    .ToImmutableArray();
             builder.Add(new AssemblyContracts(assemblyName, contracts));
         }
 
@@ -478,10 +482,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     /// Reads everything a tool needs from the contract symbol. Validation diagnostics that do not depend
     /// on XML documentation are captured here; documentation is resolved at the output boundary.
     /// </summary>
-    private static ContractModel CreateContract(INamedTypeSymbol type)
+    private static ContractModel CreateContract(INamedTypeSymbol type, AttributeData toolAttribute)
     {
-        var toolAttribute = type.GetAttributes().First(attribute =>
-            attribute.AttributeClass._isFullName(ToolAttribute));
         var kind = GetHandlerKind(type, out var responseType);
         var location = toolAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation();
         var contractName = type.Name;

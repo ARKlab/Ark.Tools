@@ -5,7 +5,7 @@ namespace Ark.Tools.Outbox.SqlServer;
 /// <summary>
 /// Simple serializer that can be used to encode/decode headers to/from bytes
 /// </summary>
-public class HeaderSerializer
+public sealed class HeaderSerializer
 {
     private static readonly JsonSerializerOptions _options = new JsonSerializerOptions
     {

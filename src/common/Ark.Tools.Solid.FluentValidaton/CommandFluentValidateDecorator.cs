@@ -5,7 +5,7 @@ using FluentValidation;
 
 namespace Ark.Tools.Solid;
 
-public class CommandFluentValidateDecorator<TCommand>
+public sealed class CommandFluentValidateDecorator<TCommand>
     : ICommandHandler<TCommand>
     where TCommand : ICommand
 {

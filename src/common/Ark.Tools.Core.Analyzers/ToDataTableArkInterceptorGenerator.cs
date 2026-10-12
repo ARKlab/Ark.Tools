@@ -53,9 +53,9 @@ public sealed class ToDataTableArkInterceptorGenerator : IIncrementalGenerator
             .WithComparer(CallSiteModelArrayComparer._instance)
             .WithTrackingName(ToDataTableArkInterceptorTrackingNames._collectedCallSites);
 
-        var languageVersionSupported = context.CompilationProvider.Select(static (compilation, _) =>
-            compilation is CSharpCompilation csharpCompilation
-            && _supportsInterceptors(csharpCompilation.LanguageVersion));
+        var languageVersionSupported = context.ParseOptionsProvider.Select(static (options, _) =>
+            options is CSharpParseOptions csharpOptions
+            && _supportsInterceptors(csharpOptions.LanguageVersion));
 
         var interceptorsEnabled = context.AnalyzerConfigOptionsProvider
             .Select(static (options, _) =>

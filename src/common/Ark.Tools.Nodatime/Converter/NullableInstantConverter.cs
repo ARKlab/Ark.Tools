@@ -3,6 +3,6 @@
 
 namespace Ark.Tools.Nodatime;
 
-public class NullableInstantConverter : NullableNodaTimeConverter<Instant>
+public sealed class NullableInstantConverter : NullableNodaTimeConverter<Instant>
 {
 }

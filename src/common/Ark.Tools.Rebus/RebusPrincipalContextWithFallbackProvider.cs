@@ -5,7 +5,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Rebus;
 
-public class RebusPrincipalContextWithFallbackProvider : IContextProvider<ClaimsPrincipal>
+public sealed class RebusPrincipalContextWithFallbackProvider : IContextProvider<ClaimsPrincipal>
 {
     private readonly IMessageContextProvider _messageContextProvider;
     private readonly ClaimsPrincipal _fallback;

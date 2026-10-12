@@ -2,6 +2,7 @@ using Ark.Tools.Core;
 
 using Newtonsoft.Json;
 
+using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace Ark.Tools.NewtonsoftJson;
@@ -12,7 +13,14 @@ public sealed class ValueCollectionConverter : JsonConverter
         => objectType.IsGenericType
         && objectType.GetGenericTypeDefinition() == typeof(ValueCollection<>);
 
+    private static readonly ConcurrentDictionary<Type, JsonConverter> _converters = new();
+
     private static JsonConverter _getConverter(Type typeToConvert)
+    {
+        return _converters.GetOrAdd(typeToConvert, static t => _createConverter(t));
+    }
+
+    private static JsonConverter _createConverter(Type typeToConvert)
     {
         var elementType = typeToConvert.GetGenericArguments()[0];
 

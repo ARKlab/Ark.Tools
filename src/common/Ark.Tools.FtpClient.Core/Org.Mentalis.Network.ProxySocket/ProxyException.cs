@@ -8,7 +8,7 @@ namespace Org.Mentalis.Network.ProxySocket;
 /// </summary>
 [Serializable]
 [SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Constructors implemented as needed.")]
-public class ProxyException : Exception
+public sealed class ProxyException : Exception
 {
     /// <summary>
     /// Initializes a new instance of the ProxyException class.

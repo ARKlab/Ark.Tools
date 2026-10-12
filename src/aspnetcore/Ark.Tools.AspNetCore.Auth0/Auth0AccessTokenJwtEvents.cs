@@ -20,7 +20,7 @@ using System.Text.Json;
 namespace Ark.Tools.AspNetCore.Auth0;
 
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "AuthenticationApiClient is a HttpClient which is long-lived")]
-public class Auth0AccessTokenJwtEvents : JwtBearerEvents
+public sealed class Auth0AccessTokenJwtEvents : JwtBearerEvents
 {
     private readonly AuthenticationApiClient _auth0;
     public const string AuthorizationExtensionAudience = "urn:auth0-authz-api";
@@ -40,6 +40,12 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
             BackoffType = DelayBackoffType.Constant,
         })
         .Build();
+
+    // Shared so policy lookups reuse pooled connections instead of opening a socket per cache miss.
+    private static readonly HttpClient _httpClient = new(new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+    });
 
     public Auth0AccessTokenJwtEvents(string domain, string clientId, 
     [Secret]
@@ -136,12 +142,11 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
                             var authzToken = await _getAuthzTokenAsync(cache, ctk).ConfigureAwait(false);
                             var url = $"{_authzApiUrl}/api/users/{WebUtility.UrlEncode(userInfo.UserId)}/policy/{WebUtility.UrlEncode(_clientId)}";
 
-                            using var client = new HttpClient();
                             using var req = new HttpRequestMessage(HttpMethod.Post, url);
                             req.Content = new StringContent(policyPayload, Encoding.UTF8, "application/json");
                             req.Headers.Add("Authorization", "Bearer " + authzToken);
 
-                            var policyRes = await client.SendAsync(req, ctk).ConfigureAwait(false);
+                            using var policyRes = await _httpClient.SendAsync(req, ctk).ConfigureAwait(false);
 
                             if (policyRes.IsSuccessStatusCode)
                             {
@@ -200,9 +205,20 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
                 cid.AddClaim(new Claim(cid.NameClaimType, jwt.Subject));
             }
 
-            var scopes = cid.FindFirst(c => c.Type == "scope" && c.Issuer == _issuer)?.Value?.Split(' ');
+            string? scopes = null;
+            foreach (var claim in cid.Claims)
+            {
+                if (claim.Type == "scope" && claim.Issuer == _issuer)
+                {
+                    scopes = claim.Value;
+                    break;
+                }
+            }
             if (scopes != null)
-                cid.AddClaims(scopes.Select(r => new Claim(Auth0ClaimTypes.Scope, r, ClaimValueTypes.String, _issuer)));
+            {
+                foreach (var scope in scopes.Split(' '))
+                    cid.AddClaim(new Claim(Auth0ClaimTypes.Scope, scope, ClaimValueTypes.String, _issuer));
+            }
 
             //if (ctx.Options.SaveToken)
             //    cid.AddClaim(new Claim("id_token", token, ClaimValueTypes.String, "Auth0"));
@@ -257,8 +273,10 @@ public class Auth0AccessTokenJwtEvents : JwtBearerEvents
 
         if (entry.Policy != null)
         {
-            identity.AddClaims(entry.Policy.Roles.Select(r => new Claim(identity.RoleClaimType, r, ClaimValueTypes.String, _issuer)));
-            identity.AddClaims(entry.Policy.Permissions.Select(r => new Claim(Auth0ClaimTypes.Permission, r, ClaimValueTypes.String, _issuer)));
+            foreach (var role in entry.Policy.Roles)
+                identity.AddClaim(new Claim(identity.RoleClaimType, role, ClaimValueTypes.String, _issuer));
+            foreach (var permission in entry.Policy.Permissions)
+                identity.AddClaim(new Claim(Auth0ClaimTypes.Permission, permission, ClaimValueTypes.String, _issuer));
         }
     }
 }

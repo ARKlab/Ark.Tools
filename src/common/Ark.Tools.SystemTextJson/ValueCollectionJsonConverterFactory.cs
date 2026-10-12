@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace Ark.Tools.SystemTextJson;
 
-public class ValueCollectionJsonConverterFactory : JsonConverterFactory
+public sealed class ValueCollectionJsonConverterFactory : JsonConverterFactory
 {
     public override bool CanConvert(Type typeToConvert)
         => typeToConvert.IsGenericType

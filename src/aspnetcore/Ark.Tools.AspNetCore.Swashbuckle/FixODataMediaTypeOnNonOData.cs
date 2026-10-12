@@ -14,7 +14,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle;
 /// Adding OData support, cause this poisoning and if User doesn't change the Accept header when using SwaggerUI, the default Execute results in 406.
 /// Remove all OData MediaType from Endpoints with are not in OData Controller.
 /// </remarks>
-public class FixODataMediaTypeOnNonOData : IOperationFilter
+public sealed class FixODataMediaTypeOnNonOData : IOperationFilter
 {
     /// <summary>
     /// Applies the filter to the specified operation using the given context.

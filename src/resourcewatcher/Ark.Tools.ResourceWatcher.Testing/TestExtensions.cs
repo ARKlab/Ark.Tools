@@ -8,7 +8,7 @@ namespace Ark.Tools.ResourceWatcher.Testing;
 /// Example typed extension data for testing purposes.
 /// Demonstrates common properties used in resource state extensions.
 /// </summary>
-public record TestExtensions
+public sealed record TestExtensions
 {
     /// <summary>
     /// Gets or sets the last processed offset (for append-only or streaming resources).
@@ -47,6 +47,6 @@ public record TestExtensions
 #endif
 )]
 [JsonSerializable(typeof(TestExtensions))]
-public partial class TestExtensionsJsonContext : JsonSerializerContext
+public sealed partial class TestExtensionsJsonContext : JsonSerializerContext
 {
 }

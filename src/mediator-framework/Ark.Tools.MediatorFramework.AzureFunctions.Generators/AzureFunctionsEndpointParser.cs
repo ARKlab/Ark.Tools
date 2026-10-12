@@ -233,6 +233,7 @@ internal static class AzureFunctionsEndpointParser
         ImmutableArray<string> assemblyNames,
         CancellationToken cancellationToken)
     {
+        var endpointAttribute = compilation.GetTypeByMetadataName(_endpointAttribute);
         var builder = ImmutableArray.CreateBuilder<AssemblyEndpointsSpec>(assemblyNames.Length);
         foreach (var assemblyName in assemblyNames)
         {
@@ -240,7 +241,7 @@ internal static class AzureFunctionsEndpointParser
             var assembly = compilation.SourceModule.ReferencedAssemblySymbols.FirstOrDefault(candidate =>
                 string.Equals(candidate.Name, assemblyName, StringComparison.Ordinal));
             if (assembly is not null)
-                builder.Add(new AssemblyEndpointsSpec(assemblyName, _readMetadataEndpoints(assembly, cancellationToken)));
+                builder.Add(new AssemblyEndpointsSpec(assemblyName, _readMetadataEndpoints(assembly, endpointAttribute, cancellationToken)));
         }
 
         return builder.ToImmutable();
@@ -398,18 +399,25 @@ internal static class AzureFunctionsEndpointParser
                 .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic && !p.IsIndexer
                     && p.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
                     && (routeNames.Contains(p.Name) || p.GetAttributes().Any(static a =>
-                        (a.AttributeClass._isFullName(_httpRouteAttribute) || a.AttributeClass._isFullName(_httpQueryAttribute)))))
+                        a.AttributeClass is { Name: "HttpRouteAttribute" or "HttpQueryAttribute" } attributeClass
+                        && attributeClass.ToDisplayString() is _httpRouteAttribute or _httpQueryAttribute)))
                 .Select(static p => new UnsettablePropertySpec(p.Name, LocationSpec._from(p)))
                 .ToImmutableArray());
     }
 
-    private static EquatableArray<EndpointSpec> _readMetadataEndpoints(IAssemblySymbol assembly, CancellationToken cancellationToken)
+    private static EquatableArray<EndpointSpec> _readMetadataEndpoints(
+        IAssemblySymbol assembly,
+        INamedTypeSymbol? endpointAttribute,
+        CancellationToken cancellationToken)
     {
         var builder = ImmutableArray.CreateBuilder<EndpointSpec>();
+        if (endpointAttribute is null)
+            return builder.ToImmutable();
+
         foreach (var type in _allTypes(assembly.GlobalNamespace, cancellationToken))
         {
             var attribute = type.GetAttributes()
-                .FirstOrDefault(static item => item.AttributeClass._isFullName(_endpointAttribute));
+                .FirstOrDefault(item => SymbolEqualityComparer.Default.Equals(item.AttributeClass, endpointAttribute));
             if (attribute is null)
                 continue;
 
@@ -431,7 +439,9 @@ internal static class AzureFunctionsEndpointParser
             foreach (var selection in list)
             {
                 if (!SymbolEqualityComparer.Default.Equals(selection.ContainingAssembly, markerAssembly)
-                    || !selection.GetAttributes().Any(static attribute => attribute.AttributeClass._isFullName(_endpointAttribute)))
+                    || !selection.GetAttributes().Any(static attribute =>
+                        attribute.AttributeClass is { Name: "HttpEndpointAttribute" } attributeClass
+                        && attributeClass.ToDisplayString() == _endpointAttribute))
                 {
                     builder.Add(new HostSelectionSpec(selection.Name, name));
                 }

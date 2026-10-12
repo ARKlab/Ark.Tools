@@ -5,7 +5,7 @@ using Rebus.Transport;
 
 namespace Ark.Tools.Outbox.Rebus.Config;
 
-public class RebusOutboxProcessorConfigurer
+public sealed class RebusOutboxProcessorConfigurer
 {
     private readonly StandardConfigurer<ITransport> _configurer;
 

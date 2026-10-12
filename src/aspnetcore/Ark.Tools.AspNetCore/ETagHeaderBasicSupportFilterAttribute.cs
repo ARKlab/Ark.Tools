@@ -45,7 +45,7 @@ public sealed class ETagHeaderBasicSupportFilterAttribute : ActionFilterAttribut
             if (etag._ETag != null)
             {
                 //If is whitespace or empty I throw exception
-                if (etag._ETag.All(char.IsWhiteSpace) || string.IsNullOrEmpty(etag._ETag))
+                if (string.IsNullOrWhiteSpace(etag._ETag))
                     throw new InvalidOperationException("ETag value is empty or consists only of white-space characters");
 
                 context.HttpContext.Response.GetTypedHeaders().ETag = new EntityTagHeaderValue($"\"{etag._ETag}\"");

@@ -6,7 +6,7 @@ using Rebus.Retry.Simple;
 
 namespace Ark.Tools.Rebus.Retry;
 
-public class ArkDefaultRetryStrategy : IRetryStrategy
+public sealed class ArkDefaultRetryStrategy : IRetryStrategy
 {
     readonly RetryStrategySettings _retryStrategySettings;
     readonly IRebusLoggerFactory _rebusLoggerFactory;

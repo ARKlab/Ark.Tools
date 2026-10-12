@@ -242,7 +242,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 return ImmutableArray<string>.Empty;
 
             return contextType.GetAttributes()
-                .Where(attribute => attribute.AttributeClass._isFullName(ArkGenerateRebusForAssemblyAttribute))
+                .Where(attribute => attribute.AttributeClass is { Name: "ArkGenerateRebusForAssemblyAttribute" } attributeClass
+                    && attributeClass.ToDisplayString() == ArkGenerateRebusForAssemblyAttribute)
                 .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
                 .Where(static marker => marker?.ContainingAssembly?.Name is not null)
                 .Select(static marker => marker!.ContainingAssembly!.Name)
@@ -451,19 +452,18 @@ namespace Ark.Tools.MediatorFramework.Generators
             Compilation compilation,
             CancellationToken cancellationToken)
         {
-            var networkAttr = compilation.GetTypeByMetadataName(MessagingNetworkAttribute);
-            if (networkAttr is null)
+            var networkAttribute = compilation.GetTypeByMetadataName(MessagingNetworkAttribute);
+            if (networkAttribute is null)
                 return ImmutableArray<TypeReference>.Empty;
 
             var builder = ImmutableArray.CreateBuilder<TypeReference>();
-            // Only assemblies that reference the attribute's assembly can declare a network.
-            foreach (var assembly in _referencedAssemblies(compilation, networkAttr.ContainingAssembly))
+            foreach (var assembly in _referencedAssemblies(compilation, networkAttribute.ContainingAssembly))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
-                    if (type.GetAttributes().Any(
-                        attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, networkAttr)))
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (FindAttribute(type, networkAttribute) is not null)
                         builder.Add(new TypeReference(assembly.Name, GetMetadataName(type)));
                 }
             }
@@ -476,26 +476,32 @@ namespace Ark.Tools.MediatorFramework.Generators
             ImmutableArray<string> assemblyNames,
             CancellationToken cancellationToken)
         {
+            var rebusAttribute = compilation.GetTypeByMetadataName(RebusMessageAttribute);
             var builder = ImmutableArray.CreateBuilder<AssemblyEndpoints>();
             foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols
                 .Where(assembly => assemblyNames.Contains(assembly.Name, StringComparer.Ordinal)))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                builder.Add(new AssemblyEndpoints(assembly.Name, ReadLegacyEndpoints(assembly)));
+                builder.Add(new AssemblyEndpoints(assembly.Name, ReadLegacyEndpoints(assembly, rebusAttribute)));
             }
 
             return builder.ToImmutable();
         }
 
-        private static ImmutableArray<EndpointModel> ReadLegacyEndpoints(IAssemblySymbol assembly)
+        private static ImmutableArray<EndpointModel> ReadLegacyEndpoints(IAssemblySymbol assembly, INamedTypeSymbol? rebusAttribute)
             => _allTypes(assembly.GlobalNamespace)
-                .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
-                    attribute => attribute.AttributeClass._isFullName(RebusMessageAttribute))))
+                .Select(type => (Type: type, Attribute: FindAttribute(type, rebusAttribute)))
                 .Where(static item => item.Attribute is not null)
                 .Select(static item => Extract(item.Type, item.Attribute!))
                 .Where(static endpoint => endpoint is not null)
                 .Select(static endpoint => endpoint!.Value)
                 .ToImmutableArray();
+
+        private static AttributeData? FindAttribute(ISymbol symbol, INamedTypeSymbol? attributeType)
+            => attributeType is null
+                ? null
+                : symbol.GetAttributes().FirstOrDefault(
+                    attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, attributeType));
 
         private static ImmutableArray<HostModel> ReadHosts(
             Compilation compilation,
@@ -522,8 +528,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             LegacyEndpointIndex legacyEndpointIndex,
             CancellationToken cancellationToken)
         {
-            var hostAttribute = hostType.GetAttributes().FirstOrDefault(
-                attribute => attribute.AttributeClass._isFullName(ArkRebusHostAttribute));
+            var hostAttribute = FindAttribute(hostType, compilation.GetTypeByMetadataName(ArkRebusHostAttribute));
             if (hostAttribute?.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol participant)
                 return HostModel.Invalid(
                     "ArkRebusHostAttribute must reference a messaging participant.",
@@ -542,14 +547,14 @@ namespace Ark.Tools.MediatorFramework.Generators
                     "ArkRebusHostAttribute must target a top-level, non-generic sealed partial class.",
                     GetLocation(hostAttribute));
             }
-            var participantAttribute = participant.GetAttributes().FirstOrDefault(
-                attribute => attribute.AttributeClass._isFullName(MessagingParticipantAttribute));
+            var participantAttributeType = compilation.GetTypeByMetadataName(MessagingParticipantAttribute);
+            var participantAttribute = FindAttribute(participant, participantAttributeType);
             if (participantAttribute is null)
                 return HostModel.Invalid("The Rebus host binding must reference a messaging participant.", GetLocation(hostAttribute));
 
+            var networkAttributeType = compilation.GetTypeByMetadataName(MessagingNetworkAttribute);
             var networks = networkIndex.Resolve(compilation)
-                .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
-                    attribute => attribute.AttributeClass._isFullName(MessagingNetworkAttribute))))
+                .Select(type => (Type: type, Attribute: FindAttribute(type, networkAttributeType)))
                 .Where(item => item.Attribute is not null && _types(item.Attribute!, "Members")
                     .Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
                 .ToArray();
@@ -575,8 +580,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             var routes = ImmutableArray.CreateBuilder<EndpointModel>();
             foreach (var member in _types(networkAttribute, "Members"))
             {
-                var declaration = member.GetAttributes().FirstOrDefault(
-                    attribute => attribute.AttributeClass._isFullName(MessagingParticipantAttribute));
+                var declaration = FindAttribute(member, participantAttributeType);
                 if (declaration is null)
                     continue;
                 var owner = _string(declaration, "Identity")
@@ -1067,7 +1071,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         return referenced.Endpoints.Values;
                 }
 
-                return ReadLegacyEndpoints(assembly);
+                return ReadLegacyEndpoints(assembly, compilation.GetTypeByMetadataName(RebusMessageAttribute));
             }
         }
 

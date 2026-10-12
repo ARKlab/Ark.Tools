@@ -1,6 +1,6 @@
 namespace Ark.Tools.Activity.Messages;
 
-public class CoolDownMessage
+public sealed class CoolDownMessage
 {
     public Resource Resource { get; set; }
 

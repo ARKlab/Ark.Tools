@@ -200,7 +200,17 @@ therefore Roslyn 5.x. Central pins for `Microsoft.CodeAnalysis.CSharp`,
 `Microsoft.CodeAnalysis.Workspaces.Common` must be `5.0.0` or higher if your
 solution uses central package transitive pinning.
 
-## 8. Validate the migration
+## 8. Stop deriving from sealed Ark.Tools types
+
+Public classes and records that Ark.Tools does not derive from and that declare
+no `virtual` members are now `sealed`. They include the Rebus steps and
+decorators, the Solid decorators and processors, the JSON and type converters,
+the MessagePack formatters, the authorization handlers and requirements, the
+Swashbuckle filters, and the `Ark.Tools.Core` exceptions. A class that derives
+from one of them no longer compiles (`CS0509`). Wrap the type and delegate to
+it, or register your own implementation of the interface it implements.
+
+## 9. Validate the migration
 
 ```bash
 dotnet restore

@@ -6,7 +6,7 @@ using System.ComponentModel;
 
 namespace Ark.Tools.Nodatime;
 
-public class LocalTimeConverter : TypeConverter
+public sealed class LocalTimeConverter : TypeConverter
 {
     private readonly LocalTimePattern _pattern = LocalTimePattern.ExtendedIso;
 

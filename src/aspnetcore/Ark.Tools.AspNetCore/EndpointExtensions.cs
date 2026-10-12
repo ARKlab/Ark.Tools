@@ -37,4 +37,4 @@ public static class EndpointExtensions
         return endpoints;
     }
 }
-public record Redirective(string From, string To, bool Permanent = false);
+public sealed record Redirective(string From, string To, bool Permanent = false);

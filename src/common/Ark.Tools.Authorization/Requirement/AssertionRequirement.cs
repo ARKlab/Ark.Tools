@@ -5,7 +5,7 @@ namespace Ark.Tools.Authorization.Requirement;
 /// Implements an <see cref="IAuthorizationHandler"/> and <see cref="IAuthorizationRequirement"/>
 /// that takes a user specified assertion.
 /// </summary>
-public class AssertionRequirement : IAuthorizationHandler, IAuthorizationRequirement
+public sealed class AssertionRequirement : IAuthorizationHandler, IAuthorizationRequirement
 {
     /// <summary>
     /// Function that is called to handle this requirement.

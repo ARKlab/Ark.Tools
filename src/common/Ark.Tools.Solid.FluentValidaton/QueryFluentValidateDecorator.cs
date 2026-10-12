@@ -5,7 +5,7 @@ using FluentValidation;
 
 namespace Ark.Tools.Solid;
 
-public class QueryFluentValidateDecorator<TQuery, TResponse>
+public sealed class QueryFluentValidateDecorator<TQuery, TResponse>
     : IQueryHandler<TQuery, TResponse> where TQuery : IQuery<TResponse>
 {
     private readonly IQueryHandler<TQuery, TResponse> _decorated;

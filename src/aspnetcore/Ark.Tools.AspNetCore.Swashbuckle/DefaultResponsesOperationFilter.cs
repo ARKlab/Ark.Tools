@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
 
-public class DefaultResponsesOperationFilter : IOperationFilter
+public sealed class DefaultResponsesOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {

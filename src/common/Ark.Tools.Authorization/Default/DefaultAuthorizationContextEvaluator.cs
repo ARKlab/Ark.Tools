@@ -1,10 +1,10 @@
 
 namespace Ark.Tools.Authorization;
 
-public class DefaultAuthorizationContextEvaluator : IAuthorizationContextEvaluator
+public sealed class DefaultAuthorizationContextEvaluator : IAuthorizationContextEvaluator
 {
     public (bool authorized, IList<string> messages) Evaluate(AuthorizationContext authContext)
     {
-        return (authContext.HasSucceeded, authContext.Messages.Select(static s => s.Value).ToList());
+        return (authContext.HasSucceeded, new List<string>(authContext.Messages.Values));
     }
 }

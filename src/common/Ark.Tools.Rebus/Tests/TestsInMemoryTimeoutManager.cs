@@ -10,7 +10,7 @@ namespace Ark.Tools.Rebus.Tests;
 /// <summary>
 /// Implementation of <see cref="ITimeoutManager"/> that "persists" timeouts in memory.
 /// </summary>
-public class TestsInMemoryTimeoutManager
+public sealed class TestsInMemoryTimeoutManager
     : ITimeoutManager
     , IEnumerable<TestsInMemoryTimeoutManager.DeferredMessage>
 {

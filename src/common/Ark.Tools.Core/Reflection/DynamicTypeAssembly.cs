@@ -8,7 +8,7 @@ namespace Ark.Tools.Core.Reflection;
 /// <summary>
 /// Generates new Types with dynamically added properties.
 /// </summary>
-public class DynamicTypeAssembly
+public sealed class DynamicTypeAssembly
 {
     private readonly AssemblyBuilder _assemblyBuilder;
     private readonly ModuleBuilder _moduleBuilder;
