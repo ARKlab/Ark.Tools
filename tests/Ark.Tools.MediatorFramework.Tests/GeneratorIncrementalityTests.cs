@@ -358,6 +358,49 @@ public sealed class GeneratorIncrementalityTests
             expectedOutput: ["global::FunctionsContracts.GetReferenced", "api/v1/referenced"]);
     }
 
+    [TestMethod]
+    public void MessagingFunctionsGeneratorReusesCachedOutputOnUnrelatedEdit()
+    {
+        var contracts = _createReference(
+            "MessagingContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace MessagingContracts;
+            [Message(Name = "orders.process")]
+            public sealed class ProcessOrder : ICommand<ProcessOrder> { }
+            [MessagingParticipant(
+                Identity = "orders",
+                Processes = new[] { typeof(ProcessOrder) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed class OrdersParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(OrdersParticipant) })]
+            public sealed class OrdersNetwork { }
+            """);
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(MessagingContracts.OrdersParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus,
+                ConnectionConfigurationKey = "OrdersMessaging")]
+            [MessagingParticipant]
+            public sealed class LocalParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(LocalParticipant) })]
+            public sealed class LocalNetwork { }
+            """;
+
+        _assertReusesCachedOutput(
+            new AzureFunctions.Generators.MessagingFunctionsGenerator(),
+            source,
+            source.Replace("\"OrdersMessaging\"", "\"UpdatedMessaging\"", StringComparison.Ordinal),
+            [contracts, MetadataReference.CreateFromFile(typeof(AzureFunctions.MessagingFunctionsHostAttribute).Assembly.Location)],
+            cachedSteps: ["MessagingFunctionsReferencedNetworks"],
+            unchangedSteps: ["MessagingFunctionsHostAttributes", "MessagingFunctionsNetworks", "MessagingFunctionsHostSpecs", "MessagingFunctionsSpecs"],
+            expectedOutput: ["typeof(global::MessagingContracts.OrdersNetwork)", "\"OrdersMessaging\""]);
+    }
+
     private static void _assertReusesCachedOutput(
         IIncrementalGenerator generator,
         string source,

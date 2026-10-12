@@ -28,6 +28,15 @@ internal readonly record struct MessagingSubscriptionSpec(string Topic, string N
 /// <param name="OwnerIdentity">The publishing participant identity.</param>
 internal readonly record struct MessagingTopicSpec(string ContractTypeName, string Name, string OwnerIdentity);
 
+/// <summary>A symbol-free reference to a messaging network declared by an assembly.</summary>
+/// <param name="AssemblyName">The name of the assembly declaring the network.</param>
+/// <param name="MetadataName">The network metadata name.</param>
+/// <param name="Members">The metadata names of the network members.</param>
+internal readonly record struct MessagingNetworkReference(
+    string AssemblyName,
+    string MetadataName,
+    EquatableArray<string> Members);
+
 /// <summary>A symbol-free description of an Azure Functions messaging host.</summary>
 /// <param name="ParticipantTypeName">The fully qualified participant type.</param>
 /// <param name="ParticipantDisplayName">The participant display name used by diagnostics.</param>
@@ -82,7 +91,10 @@ internal static class MessagingFunctionsParser
 {
     private const string _participantAttribute =
         "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
-    private const string _networkAttribute =
+    private const string _hostAttribute =
+        "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHostAttribute";
+    /// <summary>The messaging network attribute metadata name.</summary>
+    internal const string _networkAttribute =
         "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
     private const string _messageAttribute =
         "Ark.Tools.MediatorFramework.MessageAttribute";
@@ -93,33 +105,124 @@ internal static class MessagingFunctionsParser
     private const int _serviceBusBinding = 0;
     private const int _storageQueueBinding = 1;
 
-    /// <summary>Reads and analyzes every messaging host declared by an assembly attribute list.</summary>
+    /// <summary>Reads the participant assembly names of the messaging hosts declared by an assembly attribute list.</summary>
     /// <param name="context">The attribute context.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The host specifications.</returns>
-    public static ImmutableArray<MessagingHostSpec> _readHosts(
+    /// <returns>The participant assembly names.</returns>
+    public static EquatableArray<string> _readHostAssemblies(
         GeneratorAttributeSyntaxContext context,
         CancellationToken cancellationToken)
     {
-        var hosts = ImmutableArray.CreateBuilder<MessagingHostSpec>();
+        var assemblies = ImmutableArray.CreateBuilder<string>();
         foreach (var attribute in context.Attributes)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (attribute.ConstructorArguments.Length < 2
-                || attribute.ConstructorArguments[0].Value is not INamedTypeSymbol participant
-                || attribute.ConstructorArguments[1].Value is not int binding)
+            if (_hostParticipant(attribute) is { } host)
+                assemblies.Add(host.Participant.ContainingAssembly?.Name ?? string.Empty);
+        }
+
+        return assemblies.ToImmutable();
+    }
+
+    /// <summary>Reads a messaging network declared in source.</summary>
+    /// <param name="context">The attribute context.</param>
+    /// <returns>The network reference, or <see langword="null"/> when the target is not a type.</returns>
+    public static MessagingNetworkReference? _readNetwork(GeneratorAttributeSyntaxContext context)
+    {
+        return context.TargetSymbol is INamedTypeSymbol network
+            ? _networkReference(network, context.Attributes.FirstOrDefault())
+            : null;
+    }
+
+    /// <summary>Reads the messaging networks declared by the referenced participant assemblies.</summary>
+    /// <param name="compilation">The compilation; only its metadata references are read.</param>
+    /// <param name="assemblyNames">The participant assembly names.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The network references.</returns>
+    public static EquatableArray<MessagingNetworkReference> _readReferencedNetworks(
+        Compilation compilation,
+        EquatableArray<string> assemblyNames,
+        CancellationToken cancellationToken)
+    {
+        var networkAttribute = compilation.GetTypeByMetadataName(_networkAttribute);
+        if (networkAttribute is null || assemblyNames.IsEmpty)
+            return EquatableArray<MessagingNetworkReference>.Empty;
+
+        var networks = ImmutableArray.CreateBuilder<MessagingNetworkReference>();
+        foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols
+            .Where(assembly => assemblyNames.Values.Contains(assembly.Name, StringComparer.Ordinal)))
+        {
+            foreach (var type in _allTypes(assembly.GlobalNamespace, cancellationToken))
+            {
+                var attribute = type.GetAttributes().FirstOrDefault(candidate =>
+                    SymbolEqualityComparer.Default.Equals(candidate.AttributeClass, networkAttribute));
+                if (attribute is not null)
+                    networks.Add(_networkReference(type, attribute));
+            }
+        }
+
+        return networks.ToImmutable();
+    }
+
+    /// <summary>Reads and analyzes every messaging host declared by the compilation assembly.</summary>
+    /// <param name="compilation">The compilation.</param>
+    /// <param name="networks">The networks declared in source and in the referenced participant assemblies.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The host specifications.</returns>
+    public static EquatableArray<MessagingHostSpec> _readHosts(
+        Compilation compilation,
+        ImmutableArray<MessagingNetworkReference> networks,
+        CancellationToken cancellationToken)
+    {
+        var hostAttribute = compilation.GetTypeByMetadataName(_hostAttribute);
+        var networkAttribute = compilation.GetTypeByMetadataName(_networkAttribute);
+        var hosts = ImmutableArray.CreateBuilder<MessagingHostSpec>();
+        foreach (var attribute in compilation.Assembly.GetAttributes())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, hostAttribute)
+                || _hostParticipant(attribute) is not { } host)
                 continue;
 
-            hosts.Add(_analyze(attribute, participant, binding, cancellationToken));
+            hosts.Add(_analyze(attribute, host.Participant, host.Binding, networks, networkAttribute, cancellationToken));
         }
 
         return hosts.ToImmutable();
+    }
+
+    private static (INamedTypeSymbol Participant, int Binding)? _hostParticipant(AttributeData attribute)
+    {
+        return attribute.ConstructorArguments.Length >= 2
+            && attribute.ConstructorArguments[0].Value is INamedTypeSymbol participant
+            && attribute.ConstructorArguments[1].Value is int binding
+            ? (participant, binding)
+            : null;
+    }
+
+    private static MessagingNetworkReference _networkReference(INamedTypeSymbol network, AttributeData? attribute)
+    {
+        return new MessagingNetworkReference(
+            network.ContainingAssembly?.Name ?? string.Empty,
+            _metadataName(network),
+            _types(attribute, "Members").Select(_metadataName).ToImmutableArray());
+    }
+
+    private static string _metadataName(INamedTypeSymbol type)
+    {
+        var name = type.MetadataName;
+        for (var parent = type.ContainingType; parent is not null; parent = parent.ContainingType)
+            name = parent.MetadataName + "+" + name;
+        return type.ContainingNamespace is null or { IsGlobalNamespace: true }
+            ? name
+            : type.ContainingNamespace.ToDisplayString() + "." + name;
     }
 
     private static MessagingHostSpec _analyze(
         AttributeData attribute,
         INamedTypeSymbol participant,
         int binding,
+        ImmutableArray<MessagingNetworkReference> networkReferences,
+        INamedTypeSymbol? networkAttributeType,
         CancellationToken cancellationToken)
     {
         var location = LocationSpec._from(attribute.ApplicationSyntaxReference);
@@ -158,7 +261,7 @@ internal static class MessagingFunctionsParser
             return spec with { ParseDiagnostics = diagnostics.ToImmutable() };
         }
 
-        var networks = _findNetworks(participant, cancellationToken);
+        var networks = _findNetworks(participant, networkReferences, networkAttributeType, cancellationToken);
         if (networks.Count == 0)
         {
             diagnostics.Add(_diagnostic(MessagingFunctionsDiagnostics._missingNetwork, location, participantDisplayName));
@@ -285,13 +388,23 @@ internal static class MessagingFunctionsParser
 
     private static List<(INamedTypeSymbol Type, AttributeData Attribute)> _findNetworks(
         INamedTypeSymbol participant,
+        ImmutableArray<MessagingNetworkReference> candidates,
+        INamedTypeSymbol? networkAttribute,
         CancellationToken cancellationToken)
     {
         var networks = new List<(INamedTypeSymbol Type, AttributeData Attribute)>(1);
-        foreach (var type in _allTypes(participant.ContainingAssembly.GlobalNamespace, cancellationToken))
+        var assembly = participant.ContainingAssembly;
+        var participantName = _metadataName(participant);
+        foreach (var candidate in candidates)
         {
-            var attribute = type.GetAttributes().FirstOrDefault(static candidate =>
-                candidate.AttributeClass?.ToDisplayString() == _networkAttribute);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!string.Equals(candidate.AssemblyName, assembly.Name, StringComparison.Ordinal)
+                || !candidate.Members.Values.Contains(participantName, StringComparer.Ordinal)
+                || assembly.GetTypeByMetadataName(candidate.MetadataName) is not { } type)
+                continue;
+
+            var attribute = type.GetAttributes().FirstOrDefault(declaration =>
+                SymbolEqualityComparer.Default.Equals(declaration.AttributeClass, networkAttribute));
             if (attribute is null)
                 continue;
             if (!_types(attribute, "Members").Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
