@@ -218,7 +218,7 @@ A deviation needs a reason.
 | Retry and dead-letter | State the retry policy and who handles dead-lettered messages. |
 | Outbox | A handler that changes state and sends or publishes enlists the outbox. |
 | Time to live | Every queue, dead-letter queue and outbox has an intrinsic TTL; state it. |
-| Audience | Cross-application or internal to the application? This decides what personal data it may carry ([§15](#15-privacy-gdpr)). |
+| Audience | Cross-service, or internal to one service? A service is the boundary, not the process: the web host, workers and Functions of the same service (for example its Core) are internal to each other. This decides what personal data the message may carry ([§15](#15-privacy-gdpr)). |
 
 ## 14. Versioning and compatibility
 
@@ -247,7 +247,7 @@ verify the conclusions with your DPO or legal team before relying on them.
 | Is a DPIA needed? | `ASK` |
 | Minimisation | Each personal field is needed for the stated purpose. |
 | Exposure | List the outputs, transports, logs, telemetry and third parties it reaches. Logs and telemetry carry no personal data. |
-| Messages and events | Cross-application events and messages carry identifiers only, no personal data. Internal messages (same application, owned queue) may carry classified personal data. Sensitive and special-category data never travel in a message. |
+| Messages and events | Events and messages that cross a service boundary carry identifiers only, no personal data. Messages between the processes of the same service (owned queue) may carry classified personal data. Sensitive and special-category data never travel in a message. |
 | Storage | Platform encryption at rest is the baseline. State whether per-message or per-column encryption is needed on top. Every queue, dead-letter queue and outbox has a TTL ([§13](#13-messaging)). |
 | Erasure | How the data is erased or anonymised, including temporal history tables, audit records, and message stores. |
 | Access and export | How the data is found and exported for a data subject. |

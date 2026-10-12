@@ -59,7 +59,7 @@ plus Versioning and Privacy every time. "N/A" needs a reason.
 12. Authorization — `Ark.Tools.Authorization` policy on the contract; instance checks; 403 by default, 404 when 403 discloses an unguessable id (GUID); list scoping; separate output models for restricted fields.
 13. Messaging — publisher and every subscriber; sender, consumer, queue; retry, dead-letter, outbox; stable logical names; intrinsic TTL on every queue, dead-letter queue and outbox.
 14. Versioning and compatibility — additive first, new version only with a reason; `EvolvableEnum<T>` with `NOT_SET = 0` on public contracts except externally controlled or `[Flags]` enums; reserved wire ids.
-15. Privacy (GDPR) — personal-data class per field; purpose, lawful basis, retention, DPIA always `ASK`; cross-application messages carry identifiers only; internal messages may carry classified personal data; sensitive or special-category data never in a message; Ark.Tools.Compliance or manual checks.
+15. Privacy (GDPR) — personal-data class per field; purpose, lawful basis, retention, DPIA always `ASK`; messages crossing a service boundary carry identifiers only; messages between processes of the same service may carry classified personal data; sensitive or special-category data never in a message; Ark.Tools.Compliance or manual checks.
 16. Audit and observability — audited changes persist who, when, what; telemetry and log tags never carry personal data.
 17. Documentation — XML docs on contract and every property; remarks for decisions code cannot show.
 18. Tests — application, transport-boundary, messaging and compatibility tests that prove each decision.
@@ -124,7 +124,7 @@ handler code. A send outside a scope goes straight to the transport.
 - You answered purpose, lawful basis, retention or DPIA yourself.
 - A public contract has a plain enum that is neither externally controlled nor `[Flags]`.
 - A personal-data field has no classification, or a sensitive field is in a message.
-- A cross-application event or message carries personal data.
+- An event or message that crosses a service boundary carries personal data.
 - A `PUT` leaves absent fields untouched.
 - A business rule throws a generic exception instead of a named violation.
 - You chose 403 or 404 for an instance without looking at the identifier type.
