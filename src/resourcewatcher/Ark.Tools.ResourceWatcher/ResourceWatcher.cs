@@ -560,9 +560,11 @@ public class ProcessContext<TExtensions>
         {
             if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Count != 0)
             {
+                // One pass: a new source wins over an updated one, so remember the first update and keep scanning for new sources.
+                (string? source, LocalDateTime? current, LocalDateTime? last)? firstUpdated = null;
                 foreach (var source in CurrentInfo.ModifiedSources)
                 {
-                    if (!LastState.ModifiedSources.ContainsKey(source.Key))
+                    if (!LastState.ModifiedSources.TryGetValue(source.Key, out var last))
                     {
                         //New State contains new sources modified for the resource
                         changed = (
@@ -573,26 +575,14 @@ public class ProcessContext<TExtensions>
 
                         return true;
                     }
+
+                    //One or more sources have an updated modified respect the corrisponding source into last state ModifiedSources
+                    if (firstUpdated is null && source.Value > last)
+                        firstUpdated = (source.Key, source.Value, last);
                 }
 
-                foreach (var source in CurrentInfo.ModifiedSources)
-                {
-                    var last = LastState.ModifiedSources[source.Key];
-                    if (source.Value > last)
-                    {
-                        //One or more sources have an updated modified respect the corrisponding source into last state ModifiedSources
-                        changed = (
-                                        source: source.Key,
-                                        current: source.Value,
-                                        last: last
-                                    );
-
-                        return true;
-                    }
-                }
-
-                changed = default;
-                return false;
+                changed = firstUpdated ?? default;
+                return firstUpdated is not null;
             }
             else if (LastState?.Modified != null && LastState.Modified != default)
             {
