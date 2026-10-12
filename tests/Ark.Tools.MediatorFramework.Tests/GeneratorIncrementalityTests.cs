@@ -185,6 +185,95 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorScansProtoContractsOnlyFromMappedAssembliesAndIgnoresMappingOrder()
+    {
+        var models = _createReference(
+            "GrpcScopeModels",
+            """
+            using ProtoBuf;
+            namespace GrpcScopeModels;
+            [ProtoContract]
+            public sealed class ScopedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+        var endpoints = _createReference(
+            "GrpcScopeEndpoints",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            namespace GrpcScopeEndpoints;
+            public sealed class Marker { }
+            [GrpcMethod("GetScoped")]
+            [ProtoContract]
+            public sealed class GetScoped : IQuery<GrpcScopeModels.ScopedResponse>
+            {
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            """,
+            models);
+        var other = _createReference(
+            "GrpcScopeOther",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            namespace GrpcScopeOther;
+            public sealed class Marker { }
+            [GrpcMethod("GetOther")]
+            [ProtoContract]
+            public sealed class GetOther : IQuery<OtherResponse>
+            {
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class OtherResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+        const string host = """
+            MapArkGrpcServicesFromAssembly<GrpcScopeEndpoints.Marker>();
+            MapArkGrpcServicesFromAssembly<GrpcScopeOther.Marker>();
+            """;
+        var hostTree = CSharpSyntaxTree.ParseText(host, path: "Host.cs");
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [hostTree],
+            _getReferences().Append(models).Append(endpoints).Append(other),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ArkGrpcEndpointGenerator().AsSourceGenerator()],
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        driver = driver.RunGenerators(compilation);
+        var original = _describeOutput(driver);
+        // ScopedResponse lives in an assembly the mapped one references, not in a mapped assembly.
+        original.Should().Contain("message ScopedResponse").And.Contain("message OtherResponse");
+
+        compilation = compilation.ReplaceSyntaxTree(
+            hostTree,
+            CSharpSyntaxTree.ParseText(
+                """
+                MapArkGrpcServicesFromAssembly<GrpcScopeOther.Marker>();
+                MapArkGrpcServicesFromAssembly<GrpcScopeEndpoints.Marker>();
+                """,
+                path: "Host.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        _getStepReasons(driver, "GrpcReferencedProtoContracts").Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
+        _describeOutput(driver).Should().Be(original);
+    }
+
+    [TestMethod]
     public void RebusGeneratorReusesCachedOutputOnUnrelatedEdit()
     {
         var contracts = _createReference(
@@ -453,12 +542,12 @@ public sealed class GeneratorIncrementalityTests
             .ToArray();
     }
 
-    private static MetadataReference _createReference(string assemblyName, string source)
+    private static MetadataReference _createReference(string assemblyName, string source, params MetadataReference[] references)
     {
         var compilation = CSharpCompilation.Create(
             assemblyName,
             [CSharpSyntaxTree.ParseText(source)],
-            _getReferences(),
+            _getReferences().Concat(references),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         using var stream = new MemoryStream();
         var emit = compilation.Emit(stream);

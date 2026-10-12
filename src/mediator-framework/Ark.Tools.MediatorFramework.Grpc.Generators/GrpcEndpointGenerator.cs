@@ -91,9 +91,17 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Select(static (contract, _) => contract!)
                 .Collect()
                 .Select(static (contracts, _) => new ImmutableEquatableArray<ProtoContractModel>(contracts));
+            // Sorted and distinct so that reordering mapping calls does not rescan; any source endpoint widens the scope.
+            var protoContractScope = endpointAssemblies
+                .Select(static (assemblies, _) => new ImmutableEquatableArray<string>(assemblies.Items
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(static name => name, StringComparer.Ordinal)
+                    .ToImmutableArray()))
+                .Combine(sourceEndpoints.Collect().Select(static (endpoints, _) => !endpoints.IsEmpty));
             var referencedProtoContracts = referenceScope
-                .Select(static (compilation, cancellationToken) => new ImmutableEquatableArray<ProtoContractModel>(
-                    GetReferencedProtoContracts(compilation, cancellationToken)))
+                .Combine(protoContractScope)
+                .Select(static (pair, cancellationToken) => new ImmutableEquatableArray<ProtoContractModel>(
+                    GetReferencedProtoContracts(pair.Left, pair.Right.Left.Items, pair.Right.Right, cancellationToken)))
                 .WithTrackingName(ReferencedProtoContractsTrackingName);
             var compilationModel = sourceProtoContracts
                 .Combine(referencedProtoContracts)
@@ -1012,27 +1020,53 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static ImmutableArray<ProtoContractModel> GetReferencedProtoContracts(
             Compilation compilation,
+            ImmutableArray<string> endpointAssemblies,
+            bool hasSourceEndpoints,
             CancellationToken cancellationToken)
         {
             var protoAttribute = compilation.GetTypeByMetadataName(ProtoContractAttribute);
             if (protoAttribute is null)
                 return ImmutableArray<ProtoContractModel>.Empty;
 
+            // A contract an endpoint reaches lives in the endpoint's assembly or one it references. Source
+            // endpoints, or a mapping of this assembly, can reach every reference.
+            var scope = hasSourceEndpoints || endpointAssemblies.Contains(compilation.AssemblyName ?? string.Empty, StringComparer.Ordinal)
+                ? null
+                : _referenceClosure(compilation, endpointAssemblies);
             var result = ImmutableArray.CreateBuilder<ProtoContractModel>();
-            foreach (var assembly in _referencedAssemblies(compilation, protoAttribute.ContainingAssembly))
+            foreach (var assembly in _referencedAssemblies(compilation, protoAttribute.ContainingAssembly)
+                .Where(assembly => scope is null || scope.Contains(assembly)))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                foreach (var type in _allTypes(assembly.GlobalNamespace)
-                    .Where(type => type.GetAttributes().Any(attribute =>
-                        SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute))))
+                foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    var protoContract = type.GetAttributes().First(attribute =>
+                    var protoContract = type.GetAttributes().FirstOrDefault(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute));
-                    result.Add(CreateProtoContract(type, protoContract));
+                    if (protoContract is not null)
+                        result.Add(CreateProtoContract(type, protoContract));
                 }
             }
             return result.ToImmutable();
+        }
+
+        private static HashSet<IAssemblySymbol> _referenceClosure(Compilation compilation, ImmutableArray<string> assemblyNames)
+        {
+            var closure = new HashSet<IAssemblySymbol>(SymbolEqualityComparer.Default);
+            var pending = new Stack<IAssemblySymbol>(compilation.SourceModule.ReferencedAssemblySymbols
+                .Where(assembly => assemblyNames.Contains(assembly.Name, StringComparer.Ordinal)));
+            while (pending.Count > 0)
+            {
+                var assembly = pending.Pop();
+                if (!closure.Add(assembly))
+                    continue;
+                foreach (var module in assembly.Modules)
+                {
+                    foreach (var reference in module.ReferencedAssemblySymbols)
+                        pending.Push(reference);
+                }
+            }
+            return closure;
         }
 
         private static ProtoMemberModel CreateProtoMember(INamedTypeSymbol type, IPropertySymbol property, AttributeData protoMember)
