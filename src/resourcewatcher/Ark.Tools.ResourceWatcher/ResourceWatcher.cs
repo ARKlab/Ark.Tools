@@ -221,18 +221,21 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
 
         try
         {
-            var infos = await _getResourcesInfo(ctk).ConfigureAwait(false);
+            // Materialize once: the provider's sequence may be lazy or expensive to enumerate.
+            var list = (await _getResourcesInfo(ctk).ConfigureAwait(false)).ToList();
 
-            var bad = infos.GroupBy(static x => x.ResourceId, StringComparer.Ordinal).FirstOrDefault(static x => x.Count() > 1);
-            if (bad != null)
-                _diagnosticSource.ThrowDuplicateResourceIdRetrived(bad.Key);
+            var resourceIds = new HashSet<string>(list.Count, StringComparer.Ordinal);
+            foreach (var info in list)
+            {
+                if (!resourceIds.Add(info.ResourceId))
+                    _diagnosticSource.ThrowDuplicateResourceIdRetrived(info.ResourceId);
+            }
 
             if (_config.SkipResourcesOlderThanDays.HasValue)
-                infos = infos
-                        .Where(x => _getEarliestModified(x).Date > LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value))
-                        ;
-
-            var list = infos.ToList();
+            {
+                var cutoff = LocalDateTime.FromDateTime(now).Date.PlusDays(-(int)_config.SkipResourcesOlderThanDays.Value);
+                list.RemoveAll(x => _getEarliestModified(x).Date <= cutoff);
+            }
 
             _diagnosticSource.GetResourcesSuccessful(activityResource, list.Count);
             return list;
@@ -261,21 +264,12 @@ public abstract class ResourceWatcher<T, TExtensions> : IDisposable
              {
                  x.ProcessType = ProcessType.Retry;
              }
-             else if (x.LastState.RetryCount > _config.MaxRetries
-                 && x.IsResourceUpdated(out _)
-                 && x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()
-                 // BAN expired and new version                
-                 )
+             else if (x.LastState.RetryCount > _config.MaxRetries && x.IsResourceUpdated(out _))
              {
-                 x.ProcessType = ProcessType.RetryAfterBan;
-             }
-             else if (x.LastState.RetryCount > _config.MaxRetries
-                 && x.IsResourceUpdated(out _)
-                 && !(x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant())
-                 // BAN               
-                 )
-             {
-                 x.ProcessType = ProcessType.Banned;
+                 // new version: retry once the BAN has expired, otherwise stay banned
+                 x.ProcessType = x.LastState.LastEvent + _config.BanDuration < SystemClock.Instance.GetCurrentInstant()
+                     ? ProcessType.RetryAfterBan
+                     : ProcessType.Banned;
              }
              else
                  x.ProcessType = ProcessType.NothingToDo;
@@ -566,55 +560,59 @@ public class ProcessContext<TExtensions>
         {
             if (LastState?.ModifiedSources != null && LastState.ModifiedSources.Count != 0)
             {
-                if (CurrentInfo.ModifiedSources.Any(x => !LastState.ModifiedSources.ContainsKey(x.Key)))
+                foreach (var source in CurrentInfo.ModifiedSources)
                 {
-                    //New State contains new sources modified for the resource
-                    var firstNewSource = CurrentInfo.ModifiedSources.First(x => !LastState.ModifiedSources.ContainsKey(x.Key));
-                    changed = (
-                                    source: firstNewSource.Key,
-                                    current: firstNewSource.Value,
-                                    last: null
-                                );
+                    if (!LastState.ModifiedSources.ContainsKey(source.Key))
+                    {
+                        //New State contains new sources modified for the resource
+                        changed = (
+                                        source: source.Key,
+                                        current: source.Value,
+                                        last: null
+                                    );
 
-                    return true;
+                        return true;
+                    }
                 }
-                else if (CurrentInfo.ModifiedSources.Any(x => x.Value > LastState.ModifiedSources[x.Key]))
-                {
-                    //One or more sources have an updated modified respect the corrisponding source into last state ModifiedSources
-                    var firstUpdatedSource = CurrentInfo.ModifiedSources.First(x => x.Value > LastState.ModifiedSources[x.Key]);
-                    changed = (
-                                    source: firstUpdatedSource.Key,
-                                    current: firstUpdatedSource.Value,
-                                    last: LastState.ModifiedSources[firstUpdatedSource.Key]
-                                );
 
-                    return true;
-                }
-                else
+                foreach (var source in CurrentInfo.ModifiedSources)
                 {
-                    changed = default;
-                    return false;
+                    var last = LastState.ModifiedSources[source.Key];
+                    if (source.Value > last)
+                    {
+                        //One or more sources have an updated modified respect the corrisponding source into last state ModifiedSources
+                        changed = (
+                                        source: source.Key,
+                                        current: source.Value,
+                                        last: last
+                                    );
+
+                        return true;
+                    }
                 }
+
+                changed = default;
+                return false;
             }
             else if (LastState?.Modified != null && LastState.Modified != default)
             {
-                if (CurrentInfo.ModifiedSources.Any(x => x.Value > LastState.Modified))
+                foreach (var source in CurrentInfo.ModifiedSources)
                 {
-                    //One or more sources have an updated modify respect to Modified
-                    var firstUpdatedSource = CurrentInfo.ModifiedSources.First(x => x.Value > LastState.Modified);
-                    changed = (
-                                    source: firstUpdatedSource.Key,
-                                    current: firstUpdatedSource.Value,
-                                    last: LastState.Modified
-                                );
+                    if (source.Value > LastState.Modified)
+                    {
+                        //One or more sources have an updated modify respect to Modified
+                        changed = (
+                                        source: source.Key,
+                                        current: source.Value,
+                                        last: LastState.Modified
+                                    );
 
-                    return true;
+                        return true;
+                    }
                 }
-                else
-                {
-                    changed = default;
-                    return false;
-                }
+
+                changed = default;
+                return false;
             }
             else if (LastState == null)
             {
