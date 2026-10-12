@@ -117,6 +117,96 @@ public sealed class SqlBuildTargetTests
         }
     }
 
+    /// <summary>
+    /// An unchanged build skips the template task, and with it the inline task compilation, but still lists the
+    /// scripts; changing a token value runs the task again.
+    /// </summary>
+    [TestMethod]
+    public async Task UnchangedInputsSkipTheTaskButStillListScripts()
+    {
+        var directory = Path.Join(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));
+        var generatorDirectory = Path.Join(directory, "generated", "Ark.Tools.Compliance.Generators",
+            "Ark.Tools.Compliance.Generators.SqlPolicyGenerator");
+        Directory.CreateDirectory(generatorDirectory);
+        try
+        {
+            await File.WriteAllTextAsync(Path.Join(generatorDirectory, "ArkComplianceSql.manifest.g.cs"),
+                "// ArkComplianceSqlTemplate:" + _fileName + ":"
+                + Convert.ToBase64String(Encoding.UTF8.GetBytes("ALTER TABLE [$(Schema)].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');"))
+                + "\n").ConfigureAwait(false);
+            var project = new XDocument(new XElement("Project",
+                new XElement("PropertyGroup",
+                    new XElement("TargetFramework", "net10.0"),
+                    new XElement("EnableArkToolsCompliance", "true"),
+                    new XElement("IntermediateOutputPath", "obj/"),
+                    new XElement("CompilerGeneratedFilesOutputPath", "generated")),
+                new XElement("ItemGroup",
+                    new XElement("ArkComplianceSqlToken", new XAttribute("Include", "Schema"), new XAttribute("Value", "$(SchemaValue)"))),
+                new XElement("Import", new XAttribute("Project",
+                    Path.Join(AppContext.BaseDirectory, "Fixtures", "Ark.Tools.Compliance.Sql.targets"))),
+                new XElement("Target", new XAttribute("Name", "List"), new XAttribute("AfterTargets", "ArkGenerateComplianceSql"),
+                    new XElement("WriteLinesToFile",
+                        new XAttribute("File", "outputs.txt"),
+                        new XAttribute("Lines", "@(ArkComplianceSqlScript)"),
+                        new XAttribute("Overwrite", "true")))));
+            var projectPath = Path.Join(directory, "app.proj");
+            project.Save(projectPath);
+            var script = Path.Join(directory, "obj", "ArkCompliance.Sql", _fileName);
+            const string skipped = "Skipping target \"_ArkWriteComplianceSql\"";
+
+            var first = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-p:SchemaValue=one", "-v:d").ConfigureAwait(false);
+            first.ExitCode.Should().Be(0, first.Log);
+            first.Log.Should().NotContain(skipped);
+            (await File.ReadAllTextAsync(script).ConfigureAwait(false)).Should().Contain("[one]");
+
+            var second = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-p:SchemaValue=one", "-v:d").ConfigureAwait(false);
+            second.ExitCode.Should().Be(0, second.Log);
+            second.Log.Should().Contain(skipped);
+            (await File.ReadAllLinesAsync(Path.Join(directory, "outputs.txt")).ConfigureAwait(false))
+                .Should().ContainSingle().Which.Should().EndWith(_fileName);
+
+            var third = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-p:SchemaValue=two", "-v:d").ConfigureAwait(false);
+            third.ExitCode.Should().Be(0, third.Log);
+            third.Log.Should().NotContain(skipped);
+            (await File.ReadAllTextAsync(script).ConfigureAwait(false)).Should().Contain("[two]");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    /// <summary>A compliance-enabled project without SQL policies builds, and its rebuild skips the task too.</summary>
+    [TestMethod]
+    public async Task ProjectWithoutPoliciesBuildsIncrementally()
+    {
+        var directory = Path.Join(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var project = new XDocument(new XElement("Project",
+                new XElement("PropertyGroup",
+                    new XElement("TargetFramework", "net10.0"),
+                    new XElement("EnableArkToolsCompliance", "true"),
+                    new XElement("IntermediateOutputPath", "obj/"),
+                    new XElement("CompilerGeneratedFilesOutputPath", "generated")),
+                new XElement("Import", new XAttribute("Project",
+                    Path.Join(AppContext.BaseDirectory, "Fixtures", "Ark.Tools.Compliance.Sql.targets")))));
+            var projectPath = Path.Join(directory, "app.proj");
+            project.Save(projectPath);
+
+            var first = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-v:d").ConfigureAwait(false);
+            first.ExitCode.Should().Be(0, first.Log);
+            var second = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-v:d").ConfigureAwait(false);
+            second.ExitCode.Should().Be(0, second.Log);
+            second.Log.Should().Contain("Skipping target \"_ArkWriteComplianceSql\"");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static async Task<(int ExitCode, string Log, string Sql)> _runAsync(string template, (string Name, string Value)[] tokens)
     {
         var directory = Path.Join(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));

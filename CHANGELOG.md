@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Breaking:** Mediator Framework handlers open an `OutboxScope` instead of casting `IBus` to `IBusOutboxEnlistment`: replace `((IBusOutboxEnlistment)bus).Enlist(context)` with the new `bus.Enlist(context)` extension, which opens an `OutboxScope` like the Rebus helper of the same name. Every native bus stages the sends made in an open scope, so `UseOutbox()` is optional again; `UseOutbox(outbox => outbox.UseDevelopmentPassthrough())` still sends directly during development without changing the handlers. `RebusMessagingBus` with `outboxEnabled: false` throws when a message is sent in an open scope.
 - `Ark.Tools.Compliance`: the compliance surface generator does no work in projects where the surface gate (`ArkComplianceSurfaceEnabled`) is off, which is the default. Those projects no longer analyse every type on each build and edit, and `ArkComplianceSurface.g.cs` is generated only when the gate is on.
 - `Ark.Tools.MediatorFramework.Rebus`: the Rebus endpoint generator looks for messaging networks only in referenced assemblies that depend on `Ark.Tools.MediatorFramework`, instead of in every referenced assembly, which speeds up builds of Rebus hosts.
+- `Ark.Tools.Compliance.Sql`: builds skip regenerating the SQL policy scripts when the generated policies and `ArkComplianceSqlToken` values are unchanged, saving the 1–2 seconds MSBuild spent compiling the inline task in each build.
 
 ### Removed
 
