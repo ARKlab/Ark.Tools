@@ -39,7 +39,11 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     /// <param name="pipelineProcessor">The outgoing pipeline processor.</param>
     /// <param name="outgoingStepTypes">Optional outgoing pipeline steps.</param>
     /// <param name="utcNow">The clock used for message and scheduled-send timestamps.</param>
-    /// <param name="outboxMode">How <see cref="Enlist"/> behaves; <see cref="MessagingOutboxMode.None"/> makes it throw.</param>
+    /// <param name="outboxMode">
+    /// How <see cref="Enlist"/> behaves: <see cref="MessagingOutboxMode.None"/> makes it throw and
+    /// <see cref="MessagingOutboxMode.Enqueue"/> stages the sends in the application outbox. The development
+    /// pass-through is available only through <c>UseOutbox</c>, whose host checks the environment.
+    /// </param>
     public MessagingBus(
         IMessagingTransport transport,
         MessagingNetworkOptions network,
@@ -66,6 +70,11 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
             throw new ArgumentException("The registry and network identities must match.", nameof(registry));
 
         _network.Validate(transport.Capabilities);
+        if (outboxMode is not (MessagingOutboxMode.None or MessagingOutboxMode.Enqueue))
+            throw new ArgumentOutOfRangeException(
+                nameof(outboxMode),
+                outboxMode,
+                "A bus composed directly supports MessagingOutboxMode.None or Enqueue; the development pass-through needs UseOutbox(), whose host checks the environment.");
         _participantIdentity = participantIdentity;
         _outboxMode = outboxMode;
         _pipelineProcessor = pipelineProcessor;
@@ -177,7 +186,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     }
 
     /// <summary>How <see cref="Enlist"/> behaves.</summary>
-    internal MessagingOutboxMode _outboxMode { get; }
+    internal MessagingOutboxMode _outboxMode { get; init; }
 
     /// <inheritdoc />
     public void Dispose()

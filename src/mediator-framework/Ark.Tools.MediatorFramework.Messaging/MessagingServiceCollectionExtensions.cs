@@ -231,9 +231,12 @@ public static class MessagingServiceCollectionExtensions
                 participantIdentity,
                 serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
                 outgoingStepTypes,
-                utcNow: null,
-                // Read at resolve time: composition may register the outbox before or after the participant.
-                outboxMode: serviceProvider.GetService<MessagingOutboxRegistration>()?.Mode ?? MessagingOutboxMode.None));
+                utcNow: null)
+        {
+            // Read at resolve time: composition may register the outbox before or after the participant.
+            // Set past the constructor, which refuses the pass-through outside a host that checks the environment.
+            _outboxMode = serviceProvider.GetService<MessagingOutboxRegistration>()?.Mode ?? MessagingOutboxMode.None,
+        });
         services.AddSingleton<IBus>(
             static serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
         services.AddSingleton<IBusOutboxEnlistment>(
@@ -510,8 +513,8 @@ internal sealed record MessagingOutboxRegistration(MessagingOutboxMode Mode);
 
 /// <summary>How a native bus handles <see cref="IBusOutboxEnlistment.Enlist"/>.</summary>
 /// <remarks>
-/// The fluent composition sets it from <c>UseOutbox</c>. Pass it explicitly only when composing a bus directly;
-/// the Development-only check for <see cref="DevelopmentPassthrough"/> runs only in a composed host.
+/// The fluent composition sets it from <c>UseOutbox</c>. A bus constructed directly takes <see cref="None"/> or
+/// <see cref="Enqueue"/>; <see cref="DevelopmentPassthrough"/> needs a composition, whose host checks the environment.
 /// </remarks>
 public enum MessagingOutboxMode
 {

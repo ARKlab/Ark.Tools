@@ -204,6 +204,30 @@ public sealed partial class MessagingOutboxTests
         (await _countAsync(factory).ConfigureAwait(false)).Should().Be(0);
     }
 
+    [TestMethod]
+    [DataRow(MessagingOutboxMode.DevelopmentPassthrough)]
+    [DataRow((MessagingOutboxMode)42)]
+    public void DirectConstructionRejectsPassthroughAndUndefinedModes(MessagingOutboxMode outboxMode)
+    {
+        var network = new MessagingNetworkOptions(
+            typeof(MessagingOutboxTests),
+            new MessagingNetworkAttribute { Requires = MessagingCapabilities.SendReceive });
+        var create = () => new MessagingBus(
+            new RecordingTransport(),
+            network,
+            new TestContractRegistry(network.NetworkIdentity),
+            new MessagingCodecRegistry([new JsonMessagingCodec(new JsonSerializerOptions { RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true })]),
+            new MessagingPayloadSender(
+                new InMemoryMessagingDataBus(NodaTime.SystemClock.Instance, NodaTime.Duration.FromDays(2)),
+                network,
+                CompressionAlgorithm.None,
+                0),
+            "sender",
+            outboxMode: outboxMode);
+
+        create.Should().Throw<ArgumentOutOfRangeException>().WithParameterName(nameof(outboxMode));
+    }
+
     private static MessagingBus _createBus(
         IMessagingTransport transport,
         string participantIdentity = "sender",
@@ -239,8 +263,10 @@ public sealed partial class MessagingOutboxTests
             participantIdentity,
             utcNow: static () => DateTimeOffset.Parse(
                 "2024-01-01T00:00:00Z",
-                CultureInfo.InvariantCulture),
-            outboxMode: outboxMode);
+                CultureInfo.InvariantCulture))
+        {
+            _outboxMode = outboxMode,
+        };
     }
 
     private static Dictionary<string, string> _outboxHeaders(string messageId)
