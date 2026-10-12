@@ -33,7 +33,7 @@ Success criteria:
 | Enums | `EvolvableEnum<T>` with `NOT_SET = 0` on every public contract. Exceptions: enums controlled externally (e.g. a third-party interface adapter) and `[Flags]` enums; the brief names the exception. |
 | Breaking changes | Avoid them. The checklist asks for the additive path first (optional field with default, new operation); a new `[Versioning]` contract needs a written reason the additive path is impossible. |
 | GDPR scope | Full privacy-by-design: purpose, lawful basis, retention period and DPIA trigger are answered before coding. They are always `ASK`, owned by a human, and must be verified with the DPO/legal; the agent never decides them. |
-| Personal data in messages | Classified personal data may be carried in messages and events. Sensitive personal data and special-category data (GDPR Art. 9/10) never. Every queue, dead-letter queue and outbox has an intrinsic TTL; the brief records it. Platform encryption at rest is the baseline; per-message or per-column encryption is an additional measure the brief decides on. |
+| Personal data in messages | Split by audience. Public/cross-application events and messages carry identifiers only; personal data is not allowed. Internal background messages (same application, owned queue) may carry classified personal data. Sensitive personal data and special-category data (GDPR Art. 9/10) never. Every queue, dead-letter queue and outbox has an intrinsic TTL; the brief records it. Platform encryption at rest is the baseline; per-message or per-column encryption is an additional measure the brief decides on. |
 | Single source | The doc is canonical. The skill links it via the raw GitHub URL and keeps a ~30-line index of section names and hard defaults so the gate works if the fetch fails. |
 | Skill description | Stays scoped to consuming Mediator Framework; it gains design/review triggers but no generic API-design or GDPR triggers. |
 
@@ -90,9 +90,10 @@ New file `docs/mediator-framework/contract-design-checklist.md`:
 15. **Privacy (GDPR).** Personal-data class per field (personal, special
     category Art. 9, pseudonymous, not personal); purpose, lawful basis,
     retention, DPIA trigger (`ASK`, DPO-verified); minimisation; exposure across
-    outputs, transports, logs, telemetry and third parties; messages and events
-    may carry classified personal data but never sensitive or special-category
-    data, and every queue and outbox they reach has a TTL; per-message or
+    outputs, transports, logs, telemetry and third parties; cross-application
+    events and messages carry identifiers only, internal messages may carry
+    classified personal data, sensitive or special-category data never, and
+    every queue and outbox they reach has a TTL; per-message or
     per-column encryption on top of platform encryption at rest; erasure including temporal history and
     audit; access and export. Sub-section mapping each answer to
     Ark.Tools.Compliance (classification attributes, sensitive value objects,
