@@ -146,7 +146,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
         // Diff surface lines against the baseline; independent of contract locations.
         var diffProvider = linesProvider.Combine(baselineSpecProvider)
-            .Select(static (pair, _) => Diff(pair.Left, pair.Right))
+            .Select(static (pair, cancellationToken) => Diff(pair.Left, pair.Right, cancellationToken))
             .WithTrackingName(DiffStage);
 
         // Emit per-contract diagnostics when baseline drifts
@@ -205,14 +205,18 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             return new ApiSurfaceBaselineSpec(isEnabled, baselineFiles.Length, null, EquatableArray<SnapshotEntry>.Empty);
 
         var baselineText = baselineFiles[0].GetText(cancellationToken)?.ToString() ?? string.Empty;
-        var parsed = ParseSnapshotLines(baselineText);
+        var parsed = ParseSnapshotLines(baselineText, cancellationToken);
         return parsed.IsValid
             ? new ApiSurfaceBaselineSpec(true, 1, null, ToEntries(parsed))
             : new ApiSurfaceBaselineSpec(true, 1, parsed.InvalidLine, EquatableArray<SnapshotEntry>.Empty);
     }
 
-    private static ApiSurfaceDiffSpec Diff(EquatableArray<string> currentLines, ApiSurfaceBaselineSpec baseline)
+    private static ApiSurfaceDiffSpec Diff(
+        EquatableArray<string> currentLines,
+        ApiSurfaceBaselineSpec baseline,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (!baseline.IsEnabled || baseline.Count != 1 || baseline.InvalidLine is not null)
         {
             return new ApiSurfaceDiffSpec(
@@ -227,13 +231,14 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             static entry => entry.Key,
             static entry => entry.Owner,
             StringComparer.Ordinal);
-        var currentSnapshot = ParseSnapshotLines(string.Join("\n", currentLines));
+        var currentSnapshot = ParseSnapshotLines(string.Join("\n", currentLines), cancellationToken);
         var currentSet = currentSnapshot.Lines;
 
         var changedOwners = new SortedSet<string>(StringComparer.Ordinal);
         foreach (var line in currentSet.Except(baselineNames.Keys, StringComparer.Ordinal)
             .Concat(baselineNames.Keys.Except(currentSet, StringComparer.Ordinal)))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (currentSnapshot.EntryNames.TryGetValue(line, out var currentName))
                 changedOwners.Add(currentName);
             else if (baselineNames.TryGetValue(line, out var baselineName))
@@ -345,7 +350,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             locations.Values.OrderBy(static location => location.Key, StringComparer.Ordinal).ToImmutableArray());
     }
 
-    private static SnapshotParseResult ParseSnapshotLines(string text)
+    private static SnapshotParseResult ParseSnapshotLines(string text, CancellationToken cancellationToken)
     {
         var lines = text.TrimStart('\ufeff')
             .Split('\n')
@@ -360,6 +365,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
         for (var index = 0; index < lines.Length; index++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var line = lines[index];
             if (!TryGetMessagingKind(line, out var kind))
             {
