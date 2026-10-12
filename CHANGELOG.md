@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Breaking:** Mediator Framework handlers open an `OutboxScope` instead of casting `IBus` to `IBusOutboxEnlistment`: replace `((IBusOutboxEnlistment)bus).Enlist(context)` with the new `bus.Enlist(context)` extension, which opens an `OutboxScope` like the Rebus helper of the same name. Every native bus stages the sends made in an open scope, so `UseOutbox()` is optional again; `UseOutbox(outbox => outbox.UseDevelopmentPassthrough())` still sends directly during development without changing the handlers. `RebusMessagingBus` with `outboxEnabled: false` throws when a message is sent in an open scope.
+- Mediator Framework, Compliance and `Ark.Tools.Core` source generators do less work on each edit, which keeps the IDE more responsive in large solutions; generated code is unchanged.
 - The MCP tool generator keeps only the XML documentation entries its tools use and no longer reparses documentation files when an unrelated XML file changes, which uses less memory and keeps the IDE more responsive.
 - The Azure Functions messaging generator no longer scans every type of the participant assembly on each edit to find its messaging network, keeping the IDE responsive in large projects.
 - The Mediator Framework API surface generator no longer regenerates `ArkApiSurface.g.cs` or re-compares the `ArkApiSurface.txt` baseline when an edit only moves contracts to other lines, keeping the IDE more responsive.
