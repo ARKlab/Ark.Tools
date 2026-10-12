@@ -20,7 +20,10 @@ ship, so they are made with the human before any code is written.
    If it cannot be fetched, use the index below; it carries the defaults.
 2. Draft the brief from the checklist's brief template. Answer what you can
    derive from the request, the existing contracts and code, and the guides, and
-   tag each answer `derived (<source>)`. Tag everything else `ASK`.
+   tag each answer `derived (<source>)`. Tag everything else `ASK`. Check the
+   facts the request states (types, existing fields, classification, available
+   data) against the code and put any correction at the top of the brief: a
+   design built on a wrong premise is wrong however complete it is.
 3. Ask the `ASK` items one at a time. Purpose, lawful basis, retention period and
    DPIA trigger are always `ASK`: they are decisions for the product owner and the
    DPO, and the brief records who decided them. Do not infer them from code.
@@ -36,7 +39,7 @@ plus Versioning and Privacy every time. "N/A" needs a reason.
 ## Checklist index
 
 1. Operation — purpose, kind (`IQuery`/`IRequest`/`ICommand`/event/message), owner; background work is a separate internal message.
-2. Fields and updatability — per-field table; labels Updatable (`Input`), Create-only (`Create : Input`), Output-only (`Output`), Context-supplied (never in the body), Identity (envelope); PUT replaces everything and absent means default; partial update is its own operation.
+2. Fields and updatability — per-field table with every field of each touched model, changed or not; labels Updatable (`Input`), Create-only (`Create : Input`), Output-only (`Output`), Context-supplied (never in the body), Identity (envelope); PUT replaces everything and absent means default; partial update is its own operation.
 3. Types and representation — value objects for domain primitives; NodaTime, never `DateTime`; explicit precision, unit, currency.
 4. Validation — stateless FluentValidation, 400/`InvalidArgument`; every collection and page has a maximum; unknown `EvolvableEnum` input is rejected.
 5. Business rules — stateful rules in the handler; each one a named `BusinessRuleViolation` subclass documented on the contract.

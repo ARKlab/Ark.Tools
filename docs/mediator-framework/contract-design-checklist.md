@@ -12,7 +12,9 @@ the list of decisions.
 ## 0. How to use this checklist
 
 1. **Draft.** Fill in every applicable answer you can derive from the request, the
-   existing contracts, the code, and these guides. Tag each answer
+   existing contracts, the code, and these guides. Check the facts the request
+   states (types, existing fields, classification, available data) against the
+   code, and record any correction at the top of the brief. Tag each answer
    `derived (<source>)`, naming the file, contract, or guide it came from.
 2. **Tag the rest `ASK`.** Anything you cannot derive, or that is a business,
    legal, or product decision, is `ASK`. The legal items in
@@ -44,7 +46,8 @@ and [§15](#15-privacy-gdpr), which every change must answer.
 
 ## 2. Fields and updatability
 
-Write one table per model the contract touches:
+Write one table per model the contract touches, with a row for every field,
+including the fields the change does not modify:
 
 | Field | Type | Updatability | Required | Null meaning | Default | Concurrency | Validation | Personal-data class |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
