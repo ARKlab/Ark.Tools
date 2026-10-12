@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.Compliance`: when the surface gate (`ArkComplianceSurfaceEnabled`) is off, which is the default, the compliance surface generator skips the semantic analysis of every type and SimpleInjector registration on each build and edit, and does not generate `ArkComplianceSurface.g.cs`.
 - `Ark.Tools.Compliance.Sql`: builds skip regenerating the SQL policy scripts when the generated policies and `ArkComplianceSqlToken` values are unchanged, saving the 1–2 seconds MSBuild spent compiling the inline task in each build.
 - Mediator Framework generators match attributes without formatting a display string for every attribute they inspect, so their work grows less with the number of contracts and members.
+- `Ark.Tools.Compliance`: with the surface gate on, the compliance surface generator does less work per member on each build and edit, classifying each value type once instead of once per member, which roughly halves its allocations.
 
 ### Removed
 
