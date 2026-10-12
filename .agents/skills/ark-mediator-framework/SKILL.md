@@ -63,7 +63,7 @@ A documentation-only change needs only Documentation. "N/A" needs a reason.
 12. Authorization — `Ark.Tools.Authorization` policy on the contract; instance checks; 403 by default, 404 when 403 discloses an unguessable id (GUID); list scoping; separate output models for restricted fields.
 13. Messaging — publisher and every subscriber; sender, consumer, queue; retry, dead-letter, outbox; stable logical names; queues have a TTL where the broker supports it; every dead-letter queue and outbox has an explicit retention and cleanup mechanism.
 14. Versioning and compatibility — additive first, new version only with a reason; `EvolvableEnum<T>` with `NOT_SET = 0` on public contracts except externally controlled or `[Flags]` enums; reserved wire ids.
-15. Privacy (GDPR) — personal-data class per field; purpose, lawful basis, retention, DPIA always `ASK` when personal data changes; messages crossing a service boundary carry only `[Pseudonymous]` identifiers, no direct identifiers or other personal attributes; messages between processes of the same service may carry classified personal data; sensitive or special-category data never in a message; Ark.Tools.Compliance or manual checks.
+15. Privacy (GDPR) — personal-data class per field; purpose, lawful basis, retention, DPIA always `ASK` when personal data changes; messages crossing a service boundary carry only `[Pseudonymous]` identifiers, no direct identifiers or other personal attributes; messages between processes of the same service may carry classified personal data; special-category (Art. 9) and criminal-offence (Art. 10) data never in any message; Ark.Tools.Compliance or manual checks.
 16. Audit and observability — audited changes persist who, when, what; telemetry and log tags never carry personal data.
 17. Documentation — XML docs on contract and every property; remarks for decisions code cannot show.
 18. Tests — application, transport-boundary, messaging and compatibility tests that prove each decision.
@@ -127,7 +127,7 @@ handler code. A send outside a scope goes straight to the transport.
 - A question in the brief has no alternatives or no recommendation.
 - You answered purpose, lawful basis, retention or DPIA yourself.
 - A public contract has a plain enum that is neither externally controlled nor `[Flags]`.
-- A personal-data field has no classification, or a sensitive field is in a message.
+- A personal-data field has no classification, or special-category (Art. 9) or criminal-offence (Art. 10) data is in a message.
 - An event or message that crosses a service boundary carries a direct identifier or a personal attribute (only `[Pseudonymous]` ids may cross).
 - A `PUT` leaves absent fields untouched.
 - A business rule throws a generic exception instead of a named violation.

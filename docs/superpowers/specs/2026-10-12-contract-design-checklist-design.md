@@ -33,7 +33,7 @@ Success criteria:
 | Enums | `EvolvableEnum<T>` with `NOT_SET = 0` on every public contract. Exceptions: enums controlled externally (e.g. a third-party interface adapter) and `[Flags]` enums; the brief names the exception. |
 | Breaking changes | Avoid them. The checklist asks for the additive path first (optional field with default, new operation); a new `[Versioning]` contract needs a written reason the additive path is impossible. |
 | GDPR scope | Full privacy-by-design: purpose, lawful basis, retention period and DPIA trigger are answered before coding. They are `ASK` whenever the contract carries personal data and the change adds or alters a personal field, its exposure, transport or purpose (otherwise "N/A: no personal-data change"), owned by a human, and must be verified with the DPO/legal; the agent never decides them. |
-| Personal data in messages | Split by audience. Events and messages that cross a service boundary carry only `[Pseudonymous]` identifiers: no direct identifiers and no other personal attributes. Messages between the processes of one service (for example its web host and workers, owned queue) may carry classified personal data. The boundary is the service, not the process. Sensitive personal data and special-category data (GDPR Art. 9/10) never. Queues have a TTL where the broker supports it; every dead-letter queue and outbox has an explicit retention and cleanup mechanism (drain job, scheduled purge) with a stated retention period; the brief records each value. Platform encryption at rest is the baseline; per-message or per-column encryption is an additional measure the brief decides on. |
+| Personal data in messages | Split by audience. Events and messages that cross a service boundary carry only `[Pseudonymous]` identifiers: no direct identifiers and no other personal attributes. Messages between the processes of one service (for example its web host and workers, owned queue) may carry classified personal data. The boundary is the service, not the process. Special-category (GDPR Art. 9) and criminal-offence (Art. 10) data never. Queues have a TTL where the broker supports it; every dead-letter queue and outbox has an explicit retention and cleanup mechanism (drain job, scheduled purge) with a stated retention period; the brief records each value. Platform encryption at rest is the baseline; per-message or per-column encryption is an additional measure the brief decides on. |
 | Single source | The doc is canonical. The skill links it via the raw GitHub URL and keeps a ~30-line index of section names and hard defaults so the gate works if the fetch fails. |
 | Skill description | Stays scoped to consuming Mediator Framework; it gains design/review triggers but no generic API-design or GDPR triggers. |
 
@@ -155,7 +155,7 @@ Edits to existing docs:
   2. Add `Status` (Draft/Published/Archived) to Book and publish a
      `BookArchived` event consumed by other applications.
   3. Rename `Book.Author` to an `Authors` list in the v1 contract.
-- Assertions: all 18 sections present; every answer tagged; legal items `ASK`;
+- Assertions: all 18 sections present; every answer tagged; legal items `ASK` (each prompt changes personal data);
   per-field table with updatability labels; `EvolvableEnum` chosen; named
   violations; 403/404 reasoned from id type; no code written.
 - Review through the skill-creator static viewer; iterate until accepted;

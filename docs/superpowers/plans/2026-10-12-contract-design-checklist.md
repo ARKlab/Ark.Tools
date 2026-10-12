@@ -167,7 +167,7 @@ git commit -m "feat(ark-csharp): gate mediator contracts on the design checklist
 - [ ] **Step 3: While they run, add assertions to `eval_metadata.json` and `evals.json`:**
   - `all-sections-present`: 18/18 headings in brief.md
   - `answers-tagged`: every answer is tagged `derived` or `ASK`
-  - `legal-items-ask`: purpose, lawful basis, retention and DPIA are all `ASK`
+  - `legal-items-ask`: purpose, lawful basis, retention and DPIA are all `ASK` (all three prompts change personal data; otherwise `N/A: no personal-data change` is correct)
   - `field-table`: a field table with the 5 updatability labels
   - `no-code-written`: no `.cs` files in outputs
   - `crm-contact-update`: `pii-classified` (email and phone classified), `deny-by-id-type` (403/404 reasoned from the id type)
