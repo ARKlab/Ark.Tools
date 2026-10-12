@@ -6305,6 +6305,58 @@ public sealed class GeneratorSnapshotTests
         unsupported.Generated.Should().BeEmpty();
     }
 
+    [TestMethod]
+    public void MessagingFunctionsGeneratorReportsParticipantInTwoSourceNetworks()
+    {
+        var result = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [MessagingParticipant]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed partial class FirstNetwork { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed partial class SecondNetwork { }
+            """);
+
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF036");
+        result.Generated.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public void MessagingFunctionsGeneratorReportsParticipantInTwoReferencedNetworks()
+    {
+        var contracts = _createMetadataReference(
+            "MessagingContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            namespace MessagingContracts;
+            [MessagingParticipant]
+            public sealed class PrintingParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed class FirstNetwork { }
+            [MessagingNetwork(Members = new[] { typeof(PrintingParticipant) })]
+            public sealed class SecondNetwork { }
+            """);
+
+        var result = _runGeneratorResult<MessagingFunctionsGenerator>(
+            """
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(MessagingContracts.PrintingParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            """,
+            [],
+            contracts);
+
+        result.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMF036");
+        result.Generated.Should().BeEmpty();
+    }
+
     private static (string Generated, ImmutableArray<Diagnostic> Diagnostics) _runApiSurfaceGeneratorResult(
         string source,
         string? baseline,
