@@ -100,12 +100,14 @@ public sealed class OpenTelemetryOutgoingStep : IMessagingOutgoingStep
         if (Activity.Current is { Id: not null } activity)
         {
             context._setReservedHeader(MessagingHeaders.DiagnosticId, activity.Id);
-            var baggage = string.Join(
-                ",",
-                activity.Baggage.Select(static item =>
-                    $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value ?? string.Empty)}"));
-            if (baggage.Length > 0)
+            if (activity.Baggage.Any())
+            {
+                var baggage = string.Join(
+                    ",",
+                    activity.Baggage.Select(static item =>
+                        $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value ?? string.Empty)}"));
                 context._setReservedHeader("baggage", baggage);
+            }
         }
 
         await next().ConfigureAwait(false);

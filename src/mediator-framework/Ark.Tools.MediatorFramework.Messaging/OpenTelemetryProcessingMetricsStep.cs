@@ -366,9 +366,8 @@ public static class MessagingMetrics
 
         try
         {
-            _clientOperationDuration.Record(
-                Math.Max(0, duration.TotalSeconds),
-                _attributes(headers, operation, destination));
+            var attributes = _attributes(headers, operation, destination);
+            _clientOperationDuration.Record(Math.Max(0, duration.TotalSeconds), in attributes);
         }
         catch (Exception exception) when (_isInstrumentationException(exception))
         {
@@ -406,14 +405,13 @@ public static class MessagingMetrics
         try
         {
             var attributes = _attributes(headers, "process", destination);
-            Array.Resize(ref attributes, attributes.Length + 1);
-            attributes[^1] = new KeyValuePair<string, object?>("messaging.process.result", outcome);
-            _processDuration.Record(Math.Max(0, duration.TotalSeconds), attributes);
-            _processedMessages.Add(1, attributes);
+            attributes.Add("messaging.process.result", outcome);
+            _processDuration.Record(Math.Max(0, duration.TotalSeconds), in attributes);
+            _processedMessages.Add(1, in attributes);
             if (deliveryCount > 0)
-                _deliveryAttempts.Record(deliveryCount, attributes);
+                _deliveryAttempts.Record(deliveryCount, in attributes);
             if (_tryGetSentTime(headers, out var sentTime) && now is not null)
-                _timeInQueue.Record(Math.Max(0, (now.Value - sentTime - duration).TotalSeconds), attributes);
+                _timeInQueue.Record(Math.Max(0, (now.Value - sentTime - duration).TotalSeconds), in attributes);
         }
         catch (Exception exception) when (_isInstrumentationException(exception))
         {
@@ -425,37 +423,38 @@ public static class MessagingMetrics
         }
     }
 
-    private static KeyValuePair<string, object?>[] _attributes(
+    // TagList keeps up to 8 tags inline; the most this builds is 8 (7 here plus the process result).
+    private static TagList _attributes(
         IReadOnlyDictionary<string, string> headers,
         string operation,
         string? destination)
     {
-        var attributes = new List<KeyValuePair<string, object?>>(6)
+        var attributes = new TagList
         {
-            new("messaging.system", "ark.mediatorframework"),
-            new("messaging.operation.name", operation),
+            { "messaging.system", "ark.mediatorframework" },
+            { "messaging.operation.name", operation },
         };
         if (!string.IsNullOrWhiteSpace(destination))
         {
-            attributes.Add(new("messaging.destination.name", destination));
-            attributes.Add(new(
+            attributes.Add("messaging.destination.name", destination);
+            attributes.Add(
                 "messaging.destination.kind",
-                string.Equals(operation, "publish", StringComparison.Ordinal) ? "topic" : "queue"));
+                string.Equals(operation, "publish", StringComparison.Ordinal) ? "topic" : "queue");
         }
-        _add(headers, MessagingHeaders.Network, "messaging.network.name", attributes);
-        _add(headers, MessagingHeaders.SenderIdentity, "messaging.source.name", attributes);
-        _add(headers, MessagingHeaders.MessageType, "messaging.message.type", attributes);
-        return attributes.ToArray();
+        _add(headers, MessagingHeaders.Network, "messaging.network.name", ref attributes);
+        _add(headers, MessagingHeaders.SenderIdentity, "messaging.source.name", ref attributes);
+        _add(headers, MessagingHeaders.MessageType, "messaging.message.type", ref attributes);
+        return attributes;
     }
 
     private static void _add(
         IReadOnlyDictionary<string, string> headers,
         string key,
         string attribute,
-        ICollection<KeyValuePair<string, object?>> values)
+        ref TagList values)
     {
         if (headers.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value))
-            values.Add(new(attribute, value));
+            values.Add(attribute, value);
     }
 
     private static bool _tryGetSentTime(

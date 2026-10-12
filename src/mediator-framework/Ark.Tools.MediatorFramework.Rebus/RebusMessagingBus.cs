@@ -120,9 +120,8 @@ public sealed class RebusMessagingBus : IBus
         var headers = additionalHeaders is null
             ? new Dictionary<string, string>(StringComparer.Ordinal)
             : new Dictionary<string, string>(additionalHeaders, StringComparer.Ordinal);
-        if (headers.ContainsKey(_senderIdentityHeader))
+        if (!headers.TryAdd(_senderIdentityHeader, _senderIdentity))
             throw new ArgumentException("The Rebus sender identity header is reserved.", nameof(additionalHeaders));
-        headers[_senderIdentityHeader] = _senderIdentity;
         return headers;
     }
 }
