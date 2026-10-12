@@ -20,10 +20,11 @@ public sealed class ClaimsAuthorizationRequirement : AuthorizationHandler<Claims
     public ClaimsAuthorizationRequirement(string claimType, IEnumerable<string>? allowedValues)
     {
         ClaimType = claimType ?? throw new ArgumentNullException(nameof(claimType));
-        AllowedValues = allowedValues;
         if (allowedValues is not null)
         {
+            // One snapshot backs both the public property and the check, so they cannot disagree.
             var values = new HashSet<string>(allowedValues, StringComparer.Ordinal);
+            AllowedValues = values;
             if (values.Count > 0)
                 _allowedValues = values;
         }

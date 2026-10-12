@@ -65,7 +65,7 @@ public class EvolvableEnumParsingTests
 
         var act = () => converter.ConvertFromInvariantString("300");
 
-        act.Should().Throw<Exception>().Which.Should().NotBeOfType<System.Reflection.TargetInvocationException>();
+        act.Should().ThrowExactly<FormatException>();
     }
 
     /// <summary>Verifies ordinary enum switching through the nullable Value property.</summary>
