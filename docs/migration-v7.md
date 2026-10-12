@@ -130,7 +130,7 @@ formatters or a required compatibility boundary. The
 endpoint model and parity checks.
 
 If you adopted native messaging during the v7 previews: replace
-`((IBusOutboxEnlistment)bus).Enlist(context)` with `new OutboxScope(context)`
+`((IBusOutboxEnlistment)bus).Enlist(context)` with `bus.Enlist(context)`
 and remove the `IBusOutboxEnlistment` registrations; `UseOutbox()` is optional.
 `RebusMessagingBus` takes `outboxEnabled`.
 See [Host the native SQL outbox processor separately](mediator-framework/host-setup-and-composition.md#host-the-native-sql-outbox-processor-separately).

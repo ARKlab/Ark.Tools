@@ -3,7 +3,6 @@
 
 using Ark.Tools.Solid;
 using Ark.Tools.Core;
-using Ark.Tools.Outbox;
 
 using NodaTime;
 
@@ -141,7 +140,7 @@ public sealed class ProcessBookPrintProcessHandler :
         await context.WriteAuditAsync(_createAudit(process.Id), ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
         {
-            using var scope = new OutboxScope(context.OutboxContext);
+            using var scope = _bus.Enlist(context.OutboxContext);
             await _bus.Publish(new BookPrintCompleted { BookId = process.BookId }, cancellationToken: ctk).ConfigureAwait(false);
             await scope.CompleteAsync(ctk).ConfigureAwait(false);
         }

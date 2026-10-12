@@ -27,7 +27,7 @@ public sealed partial class MessagingOutboxTests
         var factory = new InMemoryOutboxContextFactory();
         var context = await factory.CreateAsync().ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
-        using (var scope = new OutboxScope(context))
+        using (var scope = bus.Enlist(context))
         {
             await bus.Send(
                 new TestMessage { Value = "send" },

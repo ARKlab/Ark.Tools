@@ -395,20 +395,21 @@ Rebus topology is a separate all-Rebus deployment, as in the `WebRebus` variant.
 
 ## Host the native SQL outbox processor separately
 
-A handler opens an `OutboxScope` (from `Ark.Tools.Outbox`) over the
-application's `IOutboxContextCore`, sends or publishes through `IBus`, completes
-the scope, and then commits. The application transaction commits both state and
+A handler enlists the application's `IOutboxContextCore` with `_bus.Enlist(context)`,
+which opens an `OutboxScope` (from `Ark.Tools.Outbox`), sends or publishes through
+`IBus`, completes the scope, and then commits. The application transaction commits both state and
 validated envelopes, or rolls both back:
 
 ```csharp
-using var scope = new OutboxScope(context.OutboxContext);
+using var scope = _bus.Enlist(context.OutboxContext);
 await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }, cancellationToken: ctk);
 await scope.CompleteAsync(ctk);
 await context.CommitAsync(ctk);
 ```
 
-The scope is ambient, like Rebus's `RebusTransactionScope`: open it in the method
-that sends. Every bus honors it, because the outbox wraps the transport, not the
+`Enlist` reads like `Ark.Tools.Outbox.Rebus`'s `bus.Enlist(context)` and is the
+same as `new OutboxScope(context)`. The scope is ambient, like Rebus's
+`RebusTransactionScope`: open it in the method that sends. Every bus honors it, because the outbox wraps the transport, not the
 bus: a send made in an open scope is staged in the scope instead of reaching the
 transport. Disposing the scope without completing it discards the staged
 messages; sends made outside a scope go straight to the transport. Handlers need

@@ -43,7 +43,7 @@ public sealed class RebusMessagingBusOutboxTests
         var context = await factory.CreateAsync().ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
 
-        using (var scope = new OutboxScope(context))
+        using (var scope = bus.Enlist(context))
         {
             await bus.Send("message").ConfigureAwait(false);
             await scope.CompleteAsync().ConfigureAwait(false);

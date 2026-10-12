@@ -3,7 +3,6 @@
 
 using Ark.Tools.Solid;
 using Ark.Tools.Core;
-using Ark.Tools.Outbox;
 using Ark.Tools.Core.BusinessRuleViolation;
 
 using NodaTime;
@@ -55,7 +54,7 @@ public sealed class CreateBookPrintProcessHandler :
         if (!await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
             throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
         await context.WriteAuditAsync(_createAudit(process.Id, nameof(CreateBookPrintProcessRequest)), ctk).ConfigureAwait(false);
-        using var scope = new OutboxScope(context.OutboxContext);
+        using var scope = _bus.Enlist(context.OutboxContext);
         await _bus.Send(
             new ProcessBookPrintProcessRequest { Id = process.Id },
             cancellationToken: ctk).ConfigureAwait(false);
