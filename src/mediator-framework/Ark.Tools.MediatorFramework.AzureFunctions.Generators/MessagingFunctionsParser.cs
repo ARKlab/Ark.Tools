@@ -151,7 +151,7 @@ internal static class MessagingFunctionsParser
             false);
 
         var participantAttribute = participant.GetAttributes().FirstOrDefault(static candidate =>
-            candidate.AttributeClass?.ToDisplayString() == _participantAttribute);
+            candidate.AttributeClass._isFullName(_participantAttribute));
         if (participantAttribute is null)
         {
             diagnostics.Add(_diagnostic(MessagingFunctionsDiagnostics._invalidParticipant, location, participantDisplayName));
@@ -196,7 +196,7 @@ internal static class MessagingFunctionsParser
         {
             cancellationToken.ThrowIfCancellationRequested();
             var memberAttribute = member.GetAttributes().FirstOrDefault(static candidate =>
-                candidate.AttributeClass?.ToDisplayString() == _participantAttribute);
+                candidate.AttributeClass._isFullName(_participantAttribute));
             if (memberAttribute is null)
                 continue;
             foreach (var contract in _types(memberAttribute, "Publishes"))
@@ -290,11 +290,8 @@ internal static class MessagingFunctionsParser
         var networks = new List<(INamedTypeSymbol Type, AttributeData Attribute)>(1);
         foreach (var type in _allTypes(participant.ContainingAssembly.GlobalNamespace, cancellationToken))
         {
-            // This walk visits every type of the participant's assembly on each edit: the Name check
-            // avoids formatting a display string for every attribute.
             var attribute = type.GetAttributes().FirstOrDefault(static candidate =>
-                candidate.AttributeClass is { Name: "MessagingNetworkAttribute" } attributeClass
-                && attributeClass.ToDisplayString() == _networkAttribute);
+                candidate.AttributeClass._isFullName(_networkAttribute));
             if (attribute is null)
                 continue;
             if (!_types(attribute, "Members").Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
@@ -322,7 +319,7 @@ internal static class MessagingFunctionsParser
     {
         var members = _types(networkAttribute, "Members")
             .Select(static member => (Type: member, Attribute: member.GetAttributes().FirstOrDefault(static attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _participantAttribute)))
+                attribute.AttributeClass._isFullName(_participantAttribute))))
             .Where(static item => item.Attribute is not null)
             .ToArray();
         var subscriptions = ImmutableArray.CreateBuilder<MessagingSubscriptionSpec>();
@@ -381,7 +378,7 @@ internal static class MessagingFunctionsParser
         {
             cancellationToken.ThrowIfCancellationRequested();
             var participant = member.GetAttributes().FirstOrDefault(static attribute =>
-                attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+                attribute.AttributeClass._isFullName(_participantAttribute));
             if (participant is null)
                 continue;
             var ownerIdentity = _string(participant, "Identity") ?? _identity(member);
@@ -454,11 +451,11 @@ internal static class MessagingFunctionsParser
     private static string _contractName(INamedTypeSymbol contract)
     {
         var attribute = contract.GetAttributes().FirstOrDefault(static candidate =>
-            candidate.AttributeClass?.ToDisplayString() is _messageAttribute or _eventAttribute);
+            (candidate.AttributeClass._isFullName(_messageAttribute) || candidate.AttributeClass._isFullName(_eventAttribute)));
         if (_string(attribute, "Name") is { } explicitName)
             return explicitName;
         var group = contract.GetAttributes()
-            .FirstOrDefault(static candidate => candidate.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
+            .FirstOrDefault(static candidate => candidate.AttributeClass._isFullName(_apiGroupAttribute))
             ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
         return _normalizeLogical(group) + "." + _normalizeLogical(contract.Name);
     }

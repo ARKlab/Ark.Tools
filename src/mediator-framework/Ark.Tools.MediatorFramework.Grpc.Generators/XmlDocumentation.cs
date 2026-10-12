@@ -29,7 +29,7 @@ internal static class XmlDocumentation
     private static bool TryGetDescription(ISymbol symbol, out string? description)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
-            candidate.AttributeClass?.ToDisplayString() == "System.ComponentModel.DescriptionAttribute");
+            candidate.AttributeClass._isFullName("System.ComponentModel.DescriptionAttribute"));
         description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
         if (description is not null)
             description = string.Join(' ', description.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));

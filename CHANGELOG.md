@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.Compliance`: the compliance surface generator does no work in projects where the surface gate (`ArkComplianceSurfaceEnabled`) is off, which is the default. Those projects no longer analyse every type on each build and edit, and `ArkComplianceSurface.g.cs` is generated only when the gate is on.
 - `Ark.Tools.MediatorFramework.Rebus`: the Rebus endpoint generator looks for messaging networks only in referenced assemblies that depend on `Ark.Tools.MediatorFramework`, instead of in every referenced assembly, which speeds up builds of Rebus hosts.
 - `Ark.Tools.Compliance.Sql`: builds skip regenerating the SQL policy scripts when the generated policies and `ArkComplianceSqlToken` values are unchanged, saving the 1–2 seconds MSBuild spent compiling the inline task in each build.
+- Mediator Framework generators match attributes without formatting a display string for every attribute they inspect, so their work grows less with the number of contracts and members.
 
 ### Removed
 

@@ -371,7 +371,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 .Where(assembly => string.Equals(assembly.Name, assemblyName, StringComparison.Ordinal))
                 .SelectMany(assembly => AllTypes(assembly.GlobalNamespace, cancellationToken))
                 .Where(type => type.GetAttributes().Any(attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == ToolAttribute))
+                    attribute.AttributeClass._isFullName(ToolAttribute)))
                 .Select(CreateContract)
                 .ToImmutableArray();
             builder.Add(new AssemblyContracts(assemblyName, contracts));
@@ -413,7 +413,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static ContractModel CreateContract(INamedTypeSymbol type)
     {
         var toolAttribute = type.GetAttributes().First(attribute =>
-            attribute.AttributeClass?.ToDisplayString() == ToolAttribute);
+            attribute.AttributeClass._isFullName(ToolAttribute));
         var kind = GetHandlerKind(type, out var responseType);
         var location = toolAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation();
         var contractName = type.Name;
@@ -424,13 +424,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
         var name = GetString(toolAttribute, "Name") ?? contractName;
         var apiGroup = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == ApiGroupAttribute);
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ApiGroupAttribute));
         var groupName = apiGroup?.ConstructorArguments.FirstOrDefault().Value as string;
         if (!string.IsNullOrWhiteSpace(groupName))
             name = groupName + "." + name;
         var version = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString()
-                == "Ark.Tools.MediatorFramework.VersioningAttribute");
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName("Ark.Tools.MediatorFramework.VersioningAttribute"));
         var introduced = version is null ? 1 : GetInt(version, "Introduced");
         var retired = version is null ? 0 : GetInt(version, "Retired");
 
@@ -455,7 +454,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(MissingConstructor, location, contractName));
 
         var httpEndpoint = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == HttpEndpointAttribute);
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(HttpEndpointAttribute));
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? GetBool(toolAttribute, "AllowAnonymous", false)
             : GetBool(httpEndpoint, "AllowAnonymous", false);
@@ -729,7 +728,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static bool TryGetDescription(ISymbol symbol, out string? description)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
-            candidate.AttributeClass?.ToDisplayString() == "System.ComponentModel.DescriptionAttribute");
+            candidate.AttributeClass._isFullName("System.ComponentModel.DescriptionAttribute"));
         description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
         return attribute is not null;
     }

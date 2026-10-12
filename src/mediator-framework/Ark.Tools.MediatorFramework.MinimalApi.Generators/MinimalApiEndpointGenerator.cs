@@ -272,7 +272,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 return ImmutableArray<string>.Empty;
 
             return contextType.GetAttributes()
-                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkGenerateMinimalApiForAssemblyAttribute)
+                .Where(attribute => attribute.AttributeClass._isFullName(ArkGenerateMinimalApiForAssemblyAttribute))
                 .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
                 .Where(static marker => marker?.ContainingAssembly?.Name is not null)
                 .Select(static marker => marker!.ContainingAssembly!.Name)

@@ -223,7 +223,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 return ImmutableArray<string>.Empty;
 
             return contextType.GetAttributes()
-                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == ArkGenerateRebusForAssemblyAttribute)
+                .Where(attribute => attribute.AttributeClass._isFullName(ArkGenerateRebusForAssemblyAttribute))
                 .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
                 .Where(static marker => marker?.ContainingAssembly?.Name is not null)
                 .Select(static marker => marker!.ContainingAssembly!.Name)
@@ -471,7 +471,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static ImmutableArray<EndpointModel> ReadLegacyEndpoints(IAssemblySymbol assembly)
             => _allTypes(assembly.GlobalNamespace)
                 .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
-                    attribute => attribute.AttributeClass?.ToDisplayString() == RebusMessageAttribute)))
+                    attribute => attribute.AttributeClass._isFullName(RebusMessageAttribute))))
                 .Where(static item => item.Attribute is not null)
                 .Select(static item => Extract(item.Type, item.Attribute!))
                 .Where(static endpoint => endpoint is not null)
@@ -504,7 +504,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             CancellationToken cancellationToken)
         {
             var hostAttribute = hostType.GetAttributes().FirstOrDefault(
-                attribute => attribute.AttributeClass?.ToDisplayString() == ArkRebusHostAttribute);
+                attribute => attribute.AttributeClass._isFullName(ArkRebusHostAttribute));
             if (hostAttribute?.ConstructorArguments.FirstOrDefault().Value is not INamedTypeSymbol participant)
                 return HostModel.Invalid(
                     "ArkRebusHostAttribute must reference a messaging participant.",
@@ -524,13 +524,13 @@ namespace Ark.Tools.MediatorFramework.Generators
                     GetLocation(hostAttribute));
             }
             var participantAttribute = participant.GetAttributes().FirstOrDefault(
-                attribute => attribute.AttributeClass?.ToDisplayString() == MessagingParticipantAttribute);
+                attribute => attribute.AttributeClass._isFullName(MessagingParticipantAttribute));
             if (participantAttribute is null)
                 return HostModel.Invalid("The Rebus host binding must reference a messaging participant.", GetLocation(hostAttribute));
 
             var networks = networkIndex.Resolve(compilation)
                 .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(
-                    attribute => attribute.AttributeClass?.ToDisplayString() == MessagingNetworkAttribute)))
+                    attribute => attribute.AttributeClass._isFullName(MessagingNetworkAttribute))))
                 .Where(item => item.Attribute is not null && _types(item.Attribute!, "Members")
                     .Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
                 .ToArray();
@@ -557,7 +557,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             foreach (var member in _types(networkAttribute, "Members"))
             {
                 var declaration = member.GetAttributes().FirstOrDefault(
-                    attribute => attribute.AttributeClass?.ToDisplayString() == MessagingParticipantAttribute);
+                    attribute => attribute.AttributeClass._isFullName(MessagingParticipantAttribute));
                 if (declaration is null)
                     continue;
                 var owner = _string(declaration, "Identity")

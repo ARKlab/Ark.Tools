@@ -226,7 +226,7 @@ internal static class HttpStringBinding
         for (var current = type; current is not null; current = current.BaseType)
         {
             if (current.GetAttributes().Any(static attribute =>
-                attribute.AttributeClass?.ToDisplayString() == "System.ComponentModel.TypeConverterAttribute"))
+                attribute.AttributeClass._isFullName("System.ComponentModel.TypeConverterAttribute")))
                 return true;
         }
 

@@ -903,10 +903,10 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static bool IsGeneratedSurface(ISymbol symbol) =>
         symbol.GetAttributes().Any(attribute =>
-            attribute.AttributeClass?.ToDisplayString() == GeneratedSurface);
+            attribute.AttributeClass._isFullName(GeneratedSurface));
 
     private static AttributeData? Attribute(ISymbol symbol, string name) =>
-        symbol.GetAttributes().FirstOrDefault(x => x.AttributeClass?.ToDisplayString() == name);
+        symbol.GetAttributes().FirstOrDefault(x => x.AttributeClass._isFullName(name));
 
     private static string? StringArgument(AttributeData? attribute, int index) =>
         attribute is not null && attribute.ConstructorArguments.Length > index

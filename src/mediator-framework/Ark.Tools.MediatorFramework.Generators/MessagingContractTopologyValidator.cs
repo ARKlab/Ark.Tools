@@ -60,7 +60,7 @@ public static class MessagingContractTopologyValidator
     internal static bool _hasMessagePackAttribute(INamedTypeSymbol contract)
     {
         return contract.GetAttributes().Any(static attribute =>
-            attribute.AttributeClass?.ToDisplayString() == "MessagePack.MessagePackObjectAttribute");
+            attribute.AttributeClass._isFullName("MessagePack.MessagePackObjectAttribute"));
     }
 
     internal static bool _hasGoogleProtobufShape(INamedTypeSymbol contract)
