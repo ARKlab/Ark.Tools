@@ -130,6 +130,27 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorReusesEmittedSourceOnContractLineShift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/source")]
+            public sealed record CreateSource : ICommand
+            {
+                public string TenantId { get; set; } = string.Empty;
+            }
+            """;
+
+        _assertEmissionCachedOnLineShift(
+            new ArkMinimalApiEndpointGenerator(),
+            source,
+            "MinimalApiEmissionInput",
+            expectedOutput: "global::CreateSource",
+            expectedDiagnostic: "ARKMF003");
+    }
+
+    [TestMethod]
     public void GrpcGeneratorReusesCachedOutputOnUnrelatedEdit()
     {
         var contracts = _createReference(
@@ -338,6 +359,26 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void RebusGeneratorReusesEmittedSourceOnLineShift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [RebusMessage(OwnerQueue = "source")]
+            public sealed class SourceCommand : ICommand { }
+            [RebusMessage(OwnerQueue = " ")]
+            public sealed class BlankQueueCommand : ICommand { }
+            """;
+
+        _assertEmissionCachedOnLineShift(
+            new ArkRebusEndpointGenerator(),
+            source,
+            "RebusEmissionInput",
+            expectedOutput: "typeBased.Map<global::SourceCommand>(\"source\")",
+            expectedDiagnostic: "ARKMF004");
+    }
+
+    [TestMethod]
     public void McpGeneratorReusesCachedOutputOnUnrelatedEdit()
     {
         var contracts = _createReference(
@@ -380,6 +421,28 @@ public sealed class GeneratorIncrementalityTests
             unchangedSteps: ["McpMarkerParser", "McpContractParser", "McpDocumentationParser", "McpModel"],
             expectedOutput: ["Description(\"Lists orders.\")", "Description(\"Creates an order.\")", "global::McpContracts.ListOrders(", "global::CreateOrder("],
             additionalTexts: [documentation]);
+    }
+
+    [TestMethod]
+    public void McpGeneratorReusesEmittedSourceOnLineShift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            [ArkGenerateMcpToolsForAssembly(typeof(SourceMarker))]
+            public partial class McpContext { }
+            public sealed class SourceMarker { }
+            [McpTool]
+            public sealed class CreateOrder : ICommand { }
+            """;
+
+        _assertEmissionCachedOnLineShift(
+            new McpToolGenerator(),
+            source,
+            "McpEmissionInput",
+            expectedOutput: "global::CreateOrder(",
+            expectedDiagnostic: "ARKMF055");
     }
 
     [TestMethod]
@@ -527,6 +590,55 @@ public sealed class GeneratorIncrementalityTests
 
         _getOutputReasons(driver).Should().Contain(IncrementalStepRunReason.Modified);
         _describeOutput(driver).Should().NotBe(original);
+    }
+
+    private static void _assertEmissionCachedOnLineShift(
+        IIncrementalGenerator generator,
+        string source,
+        string emissionStep,
+        string expectedOutput,
+        string expectedDiagnostic)
+    {
+        var sourceTree = CSharpSyntaxTree.ParseText(source, path: "Contracts.cs");
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [sourceTree],
+            _getReferences(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [generator.AsSourceGenerator()],
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        driver = driver.RunGenerators(compilation);
+        var original = driver.GetRunResult().Results.Single();
+        var originalSources = _describeSources(original);
+        originalSources.Should().Contain(expectedOutput);
+        var originalLine = original.Diagnostics.Should().ContainSingle(diagnostic => diagnostic.Id == expectedDiagnostic)
+            .Which.Location.GetLineSpan().StartLinePosition.Line;
+
+        // Shifts every declaration by two lines, so locations change while the emitted source does not.
+        compilation = compilation.ReplaceSyntaxTree(
+            sourceTree,
+            CSharpSyntaxTree.ParseText("\n\n" + source, path: "Contracts.cs"));
+        driver = driver.RunGenerators(compilation);
+        var shifted = driver.GetRunResult().Results.Single();
+
+        _getStepReasons(driver, emissionStep).Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached
+                || reason == IncrementalStepRunReason.Unchanged);
+        _describeSources(shifted).Should().Be(originalSources);
+        shifted.Diagnostics.Select(static diagnostic => diagnostic.Id)
+            .Should().Equal(original.Diagnostics.Select(static diagnostic => diagnostic.Id));
+        shifted.Diagnostics.Should().ContainSingle(diagnostic => diagnostic.Id == expectedDiagnostic)
+            .Which.Location.GetLineSpan().StartLinePosition.Line.Should().Be(originalLine + 2);
+    }
+
+    private static string _describeSources(GeneratorRunResult result)
+    {
+        return string.Join(
+            "\n---\n",
+            result.GeneratedSources.Select(static generated => generated.HintName + "\n" + generated.SourceText));
     }
 
     private static string _describeOutput(GeneratorDriver driver)

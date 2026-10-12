@@ -22,14 +22,14 @@ package APIs or changing analyzer severity.
 
 Read only the next guide needed:
 
-- [Overview](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/compliance/README.md)
-- [Getting started](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/compliance/getting-started.md)
-- [Classifying data](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/compliance/classifying-data.md)
-- [Sensitive value objects](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/compliance/sensitive-value-objects.md)
-- [Analyzer diagnostics and baselines](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/compliance/analyzers.md)
-- [SQL storage policies](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/compliance/sql-policies.md)
-- [Runtime redaction](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/compliance/runtime-redaction.md)
-- [Configuration reference](https://raw.githubusercontent.com/ARKlab/Ark.Tools/main/docs/compliance/configuration.md)
+- [Overview](https://raw.githubusercontent.com/ARKlab/Ark.Tools/master/docs/compliance/README.md)
+- [Getting started](https://raw.githubusercontent.com/ARKlab/Ark.Tools/master/docs/compliance/getting-started.md)
+- [Classifying data](https://raw.githubusercontent.com/ARKlab/Ark.Tools/master/docs/compliance/classifying-data.md)
+- [Sensitive value objects](https://raw.githubusercontent.com/ARKlab/Ark.Tools/master/docs/compliance/sensitive-value-objects.md)
+- [Analyzer diagnostics and baselines](https://raw.githubusercontent.com/ARKlab/Ark.Tools/master/docs/compliance/analyzers.md)
+- [SQL storage policies](https://raw.githubusercontent.com/ARKlab/Ark.Tools/master/docs/compliance/sql-policies.md)
+- [Runtime redaction](https://raw.githubusercontent.com/ARKlab/Ark.Tools/master/docs/compliance/runtime-redaction.md)
+- [Configuration reference](https://raw.githubusercontent.com/ARKlab/Ark.Tools/master/docs/compliance/configuration.md)
 
 ## Guardrails
 
