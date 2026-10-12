@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Breaking:** Mediator Framework handlers open an `OutboxScope` instead of casting `IBus` to `IBusOutboxEnlistment`: replace `((IBusOutboxEnlistment)bus).Enlist(context)` with the new `bus.Enlist(context)` extension, which opens an `OutboxScope` like the Rebus helper of the same name. Every native bus stages the sends made in an open scope, so `UseOutbox()` is optional again; `UseOutbox(outbox => outbox.UseDevelopmentPassthrough())` still sends directly during development without changing the handlers. `RebusMessagingBus` with `outboxEnabled: false` throws when a message is sent in an open scope.
+- The Minimal API, Rebus and MCP source generators of `Ark.Tools.MediatorFramework` and the `Ark.Tools.Compliance` surface generator no longer regenerate code when an edit only moves declarations to other lines, which keeps the IDE responsive while editing.
 
 ### Removed
 
