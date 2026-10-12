@@ -194,7 +194,8 @@ public sealed class SqlBuildTargetTests
 
     /// <summary>
     /// Token sets that would read the same as <c>name=value</c> text still invalidate the skipped task: renaming token
-    /// <c>Schema</c> with value <c>one=two</c> to an invalid <c>Schema=one</c> with value <c>two</c> is reported.
+    /// <c>Schema</c> with value <c>one=two</c> to an invalid <c>Schema=one</c> with value <c>two</c> is reported, and
+    /// one value holding the hash separator U+2028 does not pass for the two tokens it spells out.
     /// </summary>
     [TestMethod]
     public async Task TokenChangesThatReadAlikeStillRunTheTask()
@@ -216,7 +217,9 @@ public sealed class SqlBuildTargetTests
                     new XElement("IntermediateOutputPath", "obj/"),
                     new XElement("CompilerGeneratedFilesOutputPath", "generated")),
                 new XElement("ItemGroup",
-                    new XElement("ArkComplianceSqlToken", new XAttribute("Include", "$(TokenName)"), new XAttribute("Value", "$(TokenValue)"))),
+                    new XElement("ArkComplianceSqlToken", new XAttribute("Include", "$(TokenName)"), new XAttribute("Value", "$(TokenValue)")),
+                    new XElement("ArkComplianceSqlToken", new XAttribute("Include", "$(OtherName)"), new XAttribute("Value", "$(OtherValue)"),
+                        new XAttribute("Condition", "'$(OtherName)' != ''"))),
                 new XElement("Import", new XAttribute("Project",
                     Path.Join(AppContext.BaseDirectory, "Fixtures", "Ark.Tools.Compliance.Sql.targets")))));
             var projectPath = Path.Join(directory, "app.proj");
@@ -230,6 +233,16 @@ public sealed class SqlBuildTargetTests
                 "-p:TokenName=Schema=one", "-p:TokenValue=two").ConfigureAwait(false);
             invalid.ExitCode.Should().NotBe(0, invalid.Log);
             invalid.Log.Should().Contain("Invalid or duplicate ArkComplianceSqlToken");
+
+            var two = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql",
+                "-p:TokenName=Schema", "-p:TokenValue=x", "-p:OtherName=Other", "-p:OtherValue=y").ConfigureAwait(false);
+            two.ExitCode.Should().Be(0, two.Log);
+            var spelled = "Other\u2028x\u2028y";
+            var one = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql",
+                "-p:TokenName=Schema", "-p:TokenValue=" + spelled).ConfigureAwait(false);
+            one.ExitCode.Should().Be(0, one.Log);
+            (await File.ReadAllTextAsync(Path.Join(directory, "obj", "ArkCompliance.Sql", _fileName)).ConfigureAwait(false))
+                .Should().Contain("[" + spelled + "]");
         }
         finally
         {
