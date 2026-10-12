@@ -839,6 +839,12 @@ before the producer completes and that client disconnect cancels the handler
 `ClientDisconnectCancelsStreamingHandler`). Responses stream through the
 ASP.NET Core integration without buffering the complete payload.
 
+System.Text.Json serializes the stream with the host's JSON options. In a
+trimmed app with reflection-based JSON disabled, add the stream type itself, not
+only its item type, to the source-generated context passed to
+`AddArkAzureFunctions`, for example
+`[JsonSerializable(typeof(IAsyncEnumerable<Book>))]`.
+
 ## 9. Test the boundary
 
 Application tests should dispatch contracts directly. A Functions boundary test
@@ -908,3 +914,7 @@ builder.Services.AddArkAzureFunctions(ApiJsonContext.Default);
 The Functions worker and its ASP.NET Core integration report trimming warnings of
 their own, so test a trimmed app before deploying it. Dapper and SimpleInjector
 are not trim compatible.
+
+A trimmed app also needs workarounds for the Functions worker, which bootstraps through reflection: the
+[Native AOT investigation](../design/mediator-framework/native-aot-investigation.md) lists them, and its prototype
+runs a trimmed, ReadyToRun Functions app end to end. Native AOT publishing succeeds, but the worker fails at startup.

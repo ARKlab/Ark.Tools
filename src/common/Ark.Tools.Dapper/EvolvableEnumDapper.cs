@@ -20,7 +20,7 @@ public static class EvolvableEnumDapper
     /// </summary>
     /// <typeparam name="TEnum">The wrapped enum type.</typeparam>
     /// <param name="format">The SQL wire format: symbolic name (default) or numeric value.</param>
-    public static void Register<TEnum>(EvolvableEnumWireFormat format = EvolvableEnumWireFormat.Name)
+    public static void Register<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(EvolvableEnumWireFormat format = EvolvableEnumWireFormat.Name)
         where TEnum : struct, Enum
         => SqlMapper.AddTypeHandler(new EvolvableEnumTypeHandler<TEnum>(format));
 
@@ -28,7 +28,7 @@ public static class EvolvableEnumDapper
     /// <typeparam name="TEnum">The wrapped enum type.</typeparam>
     /// <typeparam name="TBacking">The enum's exact integral backing type.</typeparam>
     /// <param name="format">The SQL wire format: symbolic name (default) or numeric value.</param>
-    public static void Register<TEnum, TBacking>(
+    public static void Register<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum, TBacking>(
         EvolvableEnumWireFormat format = EvolvableEnumWireFormat.Name)
         where TEnum : struct, Enum
         where TBacking : struct, System.Numerics.IBinaryInteger<TBacking>

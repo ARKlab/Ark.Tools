@@ -180,6 +180,10 @@ internal static class AzureFunctionsEndpointParser
     private const string _eTagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";
     private const string _arkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
     private const string _asyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
+    // Keeps `?` on a nullable reference result: the generated ExecuteAsync<TQuery, TResult> call must match the contract.
+    private static readonly SymbolDisplayFormat _annotatedFormat =
+        SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
     private const string _solidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
     private const string _solidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
     private const string _solidCommand = "global::Ark.Tools.Solid.ICommand";
@@ -273,14 +277,14 @@ internal static class AzureFunctionsEndpointParser
             if (definition == _solidRequest)
             {
                 kind = HandlerKind.Request;
-                responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                responseType = iface.TypeArguments[0].ToDisplayString(_annotatedFormat);
                 responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }
             if (definition == _solidQuery)
             {
                 kind = HandlerKind.Query;
-                responseType = iface.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                responseType = iface.TypeArguments[0].ToDisplayString(_annotatedFormat);
                 responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }

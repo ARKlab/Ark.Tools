@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
@@ -76,27 +76,6 @@ public sealed class GetBookQueryHandler : IQueryHandler<GetBookQuery, Book>
     {
         ArgumentNullException.ThrowIfNull(query);
         return await Task.FromResult(new Book { Id = query.Id, Code = BookCode.From("B-1"), Related = [query.Id] }).ConfigureAwait(false);
-    }
-}
-
-/// <summary>Dispatches the one query of this app without reflection.</summary>
-public sealed class BookQueryProcessor(IQueryHandler<GetBookQuery, Book> handler) : IQueryProcessor
-{
-    /// <inheritdoc />
-    [Obsolete("Use ExecuteAsync instead.", error: true)]
-    public TResult Execute<TResult>(IQuery<TResult> query) => throw new NotSupportedException();
-
-    /// <inheritdoc />
-    [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Not used: the generated endpoints call the typed overload.")]
-    public Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default) => throw new NotSupportedException();
-
-    /// <inheritdoc />
-    public async Task<TResult> ExecuteAsync<TQuery, TResult>(IQuery<TQuery, TResult> query, CancellationToken ctk = default)
-        where TQuery : class, IQuery<TQuery, TResult>
-    {
-        return query is GetBookQuery book
-            ? (TResult)(object)await handler.ExecuteAsync(book, ctk).ConfigureAwait(false)
-            : throw new NotSupportedException();
     }
 }
 

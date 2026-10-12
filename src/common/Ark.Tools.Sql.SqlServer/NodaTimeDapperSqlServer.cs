@@ -52,4 +52,17 @@ public static class NodaTimeDapperSqlServer
     {
         NodaTimeDapper.Setup();
     }
+
+    /// <summary>
+    /// Sets the SQL Server parameter types (<c>datetime2</c>, <c>date</c>, <c>time</c>, <c>datetimeoffset</c>) on the shared
+    /// <c>Ark.Tools.Nodatime.Dapper</c> handler instances, without registering them with Dapper's <c>SqlMapper</c>.
+    /// </summary>
+    /// <remarks>
+    /// For Native AOT apps whose Dapper.AOT handlers reuse those instances: <see cref="Setup"/> registers the handlers
+    /// with <c>SqlMapper.AddTypeHandler</c>, which is not Native AOT compatible.
+    /// </remarks>
+    public static void ConfigureParameterTypes()
+    {
+        // The static constructor does the work; calling a member is what runs it.
+    }
 }

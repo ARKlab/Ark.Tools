@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The tests run the three processes in-process (JIT); publish the apps to exercise Native AOT. -->
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <None Include="..\Ark.MediatorFramework.AotSample.Core.Web.WebInterface\appsettings.json" CopyToOutputDirectory="PreserveNewest" Link="appsettings.json" />
+    <ProjectReference Include="..\Ark.MediatorFramework.AotSample.Core.Web.WebInterface\Ark.MediatorFramework.AotSample.Core.Web.WebInterface.csproj" />
+  </ItemGroup>
+
+</Project>

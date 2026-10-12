@@ -7,6 +7,7 @@ using Ark.Tools.Core;
 using System.Collections.Frozen;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -41,6 +42,78 @@ public class EvolvableEnumIntegerJsonConverterFactory : JsonConverterFactory
             options.Encoder ?? JavaScriptEncoder.Default);
 }
 
+/// <summary>
+/// Serializes <see cref="EvolvableEnum{TEnum}"/> by symbolic name, without reflection.
+/// </summary>
+/// <remarks>
+/// <see cref="EvolvableEnumJsonConverterFactory"/> closes its converters at run time, which Native AOT cannot do. In an
+/// AOT app, list this converter per enum in the source-generated context instead, for example
+/// <c>[JsonSourceGenerationOptions(Converters = new[] { typeof(EvolvableEnumJsonConverter&lt;Genre&gt;) })]</c>.
+/// </remarks>
+/// <typeparam name="TEnum">The wrapped enum.</typeparam>
+public sealed class EvolvableEnumJsonConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum> :
+    JsonConverter<EvolvableEnum<TEnum>>
+    where TEnum : struct, Enum
+{
+    private readonly ConditionalWeakTable<JavaScriptEncoder, JsonConverter<EvolvableEnum<TEnum>>> _converters = new();
+
+    /// <inheritdoc />
+    public override EvolvableEnum<TEnum> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return _getConverter(options).Read(ref reader, typeToConvert, options);
+    }
+
+    /// <inheritdoc />
+    public override void Write(Utf8JsonWriter writer, EvolvableEnum<TEnum> value, JsonSerializerOptions options)
+    {
+        _getConverter(options).Write(writer, value, options);
+    }
+
+    // Like the factory, encodes names with the options' encoder. One instance can serve several options, so the
+    // inner converter is cached per encoder.
+    private JsonConverter<EvolvableEnum<TEnum>> _getConverter(JsonSerializerOptions options)
+    {
+        return _converters.GetValue(options.Encoder ?? JavaScriptEncoder.Default, EvolvableEnumJsonConverter.CreateByName<TEnum>);
+    }
+}
+
+/// <summary>
+/// Serializes <see cref="EvolvableEnum{TEnum, TBacking}"/> by symbolic name, without reflection.
+/// </summary>
+/// <remarks>
+/// The Native AOT counterpart of <see cref="EvolvableEnumJsonConverterFactory"/> for enums with an explicit backing type;
+/// list it per enum in the source-generated context, for example
+/// <c>[JsonSourceGenerationOptions(Converters = new[] { typeof(EvolvableEnumJsonConverter&lt;Status, byte&gt;) })]</c>.
+/// </remarks>
+/// <typeparam name="TEnum">The wrapped enum.</typeparam>
+/// <typeparam name="TBacking">The numeric backing type.</typeparam>
+public sealed class EvolvableEnumJsonConverter<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum,
+    TBacking> :
+    JsonConverter<EvolvableEnum<TEnum, TBacking>>
+    where TEnum : struct, Enum
+    where TBacking : struct, IBinaryInteger<TBacking>
+{
+    private readonly ConditionalWeakTable<JavaScriptEncoder, JsonConverter<EvolvableEnum<TEnum, TBacking>>> _converters = new();
+
+    /// <inheritdoc />
+    public override EvolvableEnum<TEnum, TBacking> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return _getConverter(options).Read(ref reader, typeToConvert, options);
+    }
+
+    /// <inheritdoc />
+    public override void Write(Utf8JsonWriter writer, EvolvableEnum<TEnum, TBacking> value, JsonSerializerOptions options)
+    {
+        _getConverter(options).Write(writer, value, options);
+    }
+
+    private JsonConverter<EvolvableEnum<TEnum, TBacking>> _getConverter(JsonSerializerOptions options)
+    {
+        return _converters.GetValue(options.Encoder ?? JavaScriptEncoder.Default, EvolvableEnumJsonConverter.CreateByName<TEnum, TBacking>);
+    }
+}
+
 internal static class EvolvableEnumJsonConverter
 {
     public static bool IsSupported(Type type)
@@ -51,6 +124,18 @@ internal static class EvolvableEnumJsonConverter
         var definition = type.GetGenericTypeDefinition();
         return definition == typeof(EvolvableEnum<>) || definition == typeof(EvolvableEnum<,>);
     }
+
+    public static JsonConverter<EvolvableEnum<TEnum>> CreateByName<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(JavaScriptEncoder encoder)
+        where TEnum : struct, Enum
+        => new DefaultConverter<TEnum>(EvolvableEnumWireFormat.Name, encoder);
+
+    public static JsonConverter<EvolvableEnum<TEnum, TBacking>> CreateByName<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum,
+        TBacking>(JavaScriptEncoder encoder)
+        where TEnum : struct, Enum
+        where TBacking : struct, IBinaryInteger<TBacking>
+        => new Converter<TEnum, TBacking>(EvolvableEnumWireFormat.Name, encoder);
 
     [UnconditionalSuppressMessage("Trimming", "IL2055:MakeGenericType", Justification = "Arguments come from a closed EvolvableEnum type.")]
     public static JsonConverter Create(Type type, EvolvableEnumWireFormat format, JavaScriptEncoder encoder)

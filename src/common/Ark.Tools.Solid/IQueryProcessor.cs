@@ -9,6 +9,7 @@ public interface IQueryProcessor
     TResult Execute<TResult>(IQuery<TResult> query);
 
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default);
 
     /// <summary>

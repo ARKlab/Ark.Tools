@@ -654,6 +654,58 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorKeepsNullableQueryResult()
+    {
+        // A nullable result answers 404: the generated call must keep the annotation or it fails with CS8631.
+        const string source =
+            """
+            #nullable enable
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            public sealed record Greeting(string Name);
+            [HttpEndpoint("GET", "/greetings/{id}")]
+            public sealed record GetGreeting : IQuery<GetGreeting, Greeting?>
+            {
+                [HttpRoute] public int Id { get; init; }
+            }
+            """;
+        var (driver, compilation) = _runGeneratorDriver<AzureFunctionsEndpointGenerator>(source, []);
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+
+        string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
+            .Should().Contain("ExecuteAsync<global::GetGreeting, global::Greeting?>");
+        generatedCompilation.GetDiagnostics().Should().NotContain(static diagnostic => diagnostic.Id == "CS8631");
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorKeepsNullableQueryResult()
+    {
+        // A nullable result answers 404: the generated call must keep the annotation or it fails with CS8631.
+        const string source =
+            """
+            #nullable enable
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed record Greeting(string Name);
+            [HttpEndpoint("GET", "/greetings/{id}")]
+            public sealed record GetGreeting : IQuery<GetGreeting, Greeting?>
+            {
+                [HttpRoute] public int Id { get; init; }
+            }
+            [Ark.Tools.MediatorFramework.MinimalApi.ArkGenerateMinimalApiForAssembly(typeof(GetGreeting))]
+            public partial class Endpoints;
+            """;
+        var (driver, compilation) = _runGeneratorDriver<ArkMinimalApiEndpointGenerator>(source, []);
+        driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+
+        string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()))
+            .Should().Contain("ExecuteAsync<global::GetGreeting, global::Greeting?>");
+        generatedCompilation.GetDiagnostics().Should().NotContain(static diagnostic => diagnostic.Id == "CS8631");
+    }
+
+    [TestMethod]
     public void AzureFunctionsGeneratorEmitsAnonymousHealthCheck()
     {
         var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
@@ -875,8 +927,8 @@ public sealed class GeneratorSnapshotTests
             public sealed class PostRequest : IRequest<string> { }
             """);
 
-        result.Generated.Should().Contain("Results.Json(_result, statusCode: 200");
-        result.Generated.Should().Contain("Results.Json(_result, statusCode: 201");
+        result.Generated.Should().Contain("ArkAzureFunctionsHttp.Json(request.HttpContext, _result, 200);");
+        result.Generated.Should().Contain("ArkAzureFunctionsHttp.Json(request.HttpContext, _result, 201);");
         result.Generated.Should().Contain("Results.StatusCode(404)");
         result.Generated.Should().Contain("Results.StatusCode(200)");
     }

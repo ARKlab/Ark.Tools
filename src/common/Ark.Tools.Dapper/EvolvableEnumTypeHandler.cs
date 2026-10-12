@@ -12,10 +12,17 @@ namespace Ark.Tools.Dapper;
 
 /// <summary>Dapper handler for an <see cref="int"/>-backed evolvable enum.</summary>
 /// <typeparam name="TEnum">The wrapped <see cref="int"/>-backed enum.</typeparam>
-public sealed class EvolvableEnumTypeHandler<TEnum> : SqlMapper.TypeHandler<EvolvableEnum<TEnum>>
+public sealed class EvolvableEnumTypeHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum> : SqlMapper.TypeHandler<EvolvableEnum<TEnum>>
     where TEnum : struct, Enum
 {
     private readonly EvolvableEnumWireFormat _format;
+
+    /// <summary>Initializes a handler that stores the symbolic name.</summary>
+    /// <remarks>Dapper.AOT requires a public parameterless constructor to use this handler from <c>[TypeHandler]</c>.</remarks>
+    public EvolvableEnumTypeHandler()
+        : this(EvolvableEnumWireFormat.Name)
+    {
+    }
 
     /// <summary>Initializes a handler using the selected SQL representation.</summary>
     public EvolvableEnumTypeHandler(EvolvableEnumWireFormat format = EvolvableEnumWireFormat.Name)
@@ -52,12 +59,19 @@ public sealed class EvolvableEnumTypeHandler<TEnum> : SqlMapper.TypeHandler<Evol
 /// <summary>Dapper handler for an evolvable enum using its exact integral backing type.</summary>
 /// <typeparam name="TEnum">The wrapped enum.</typeparam>
 /// <typeparam name="TBacking">The enum's exact integral backing type.</typeparam>
-public sealed class EvolvableEnumTypeHandler<TEnum, TBacking> :
+public sealed class EvolvableEnumTypeHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum, TBacking> :
     SqlMapper.TypeHandler<EvolvableEnum<TEnum, TBacking>>
     where TEnum : struct, Enum
     where TBacking : struct, IBinaryInteger<TBacking>
 {
     private readonly EvolvableEnumWireFormat _format;
+
+    /// <summary>Initializes a handler that stores the symbolic name.</summary>
+    /// <remarks>Dapper.AOT requires a public parameterless constructor to use this handler from <c>[TypeHandler]</c>.</remarks>
+    public EvolvableEnumTypeHandler()
+        : this(EvolvableEnumWireFormat.Name)
+    {
+    }
 
     /// <summary>Initializes a handler using the selected SQL representation.</summary>
     public EvolvableEnumTypeHandler(EvolvableEnumWireFormat format = EvolvableEnumWireFormat.Name)

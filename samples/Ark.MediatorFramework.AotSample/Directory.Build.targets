@@ -1,0 +1,11 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
+
+
+  <ItemGroup Label="Testing Platform Settings" Condition="'$(IsTestProject)' == 'true'">
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+    <PackageReference Include="MSTest.Analyzers" />
+    <PackageReference Include="AwesomeAssertions" />
+  </ItemGroup>
+</Project>

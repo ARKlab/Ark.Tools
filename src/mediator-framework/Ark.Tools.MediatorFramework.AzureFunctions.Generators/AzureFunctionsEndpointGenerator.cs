@@ -415,7 +415,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.Append("        ").Append(endpoint.FullyQualifiedType).AppendLine("? _bodyNullable;");
             source.AppendLine("        try");
             source.AppendLine("        {");
-            source.Append("            _bodyNullable = await global::Microsoft.AspNetCore.Http.HttpRequestJsonExtensions.ReadFromJsonAsync<").Append(endpoint.FullyQualifiedType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
+            source.Append("            _bodyNullable = await global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.ReadJsonAsync<").Append(endpoint.FullyQualifiedType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("        }");
             source.AppendLine("        catch (global::System.Text.Json.JsonException ex)");
             source.AppendLine("        {");
@@ -430,7 +430,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             source.Append("        ").Append(endpoint.BodyType).AppendLine("? _bodyNullable;");
             source.AppendLine("        try");
             source.AppendLine("        {");
-            source.Append("            _bodyNullable = await global::Microsoft.AspNetCore.Http.HttpRequestJsonExtensions.ReadFromJsonAsync<").Append(endpoint.BodyType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
+            source.Append("            _bodyNullable = await global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.ReadJsonAsync<").Append(endpoint.BodyType).AppendLine(">(request, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("        }");
             source.AppendLine("        catch (global::System.Text.Json.JsonException ex)");
             source.AppendLine("        {");
@@ -685,7 +685,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
     private static void _emitResponse(StringBuilder source, EndpointSpec endpoint)
     {
-        if (endpoint.ResponseType == "global::Ark.Tools.MediatorFramework.IArkAttachment")
+        if (endpoint.ResponseType.TrimEnd('?') == "global::Ark.Tools.MediatorFramework.IArkAttachment")
         {
             source.AppendLine("        await global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteAttachmentAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
@@ -697,7 +697,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         else
         {
-            source.Append("        return global::Microsoft.AspNetCore.Http.Results.Json(_result, statusCode: ")
+            source.Append("        return global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.Json(request.HttpContext, _result, ")
                 .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(");");
         }
     }
