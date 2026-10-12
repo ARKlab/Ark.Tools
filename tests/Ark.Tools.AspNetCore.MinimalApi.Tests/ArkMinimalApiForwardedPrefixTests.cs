@@ -28,7 +28,8 @@ public sealed class ArkMinimalApiForwardedPrefixTests
     [DataRow("/ok%25")]
     public async Task ValidPrefix_IsAppliedToPathBase(string prefix)
     {
-        using var response = await _sendAsync(prefix).ConfigureAwait(false);
+        await using var container = new Container();
+        using var response = await _sendAsync(container, prefix).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadAsStringAsync().ConfigureAwait(false)).Should().Be(prefix);
@@ -59,14 +60,14 @@ public sealed class ArkMinimalApiForwardedPrefixTests
     [DataRow("/a%7F")]
     public async Task InvalidPrefix_IsRejected(string prefix)
     {
-        using var response = await _sendAsync(prefix).ConfigureAwait(false);
+        await using var container = new Container();
+        using var response = await _sendAsync(container, prefix).ConfigureAwait(false);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
-    private static async Task<HttpResponseMessage> _sendAsync(string prefix)
+    private static async Task<HttpResponseMessage> _sendAsync(Container container, string prefix)
     {
-        using var container = new Container();
         using var host = new HostBuilder()
             .ConfigureWebHost(web =>
             {

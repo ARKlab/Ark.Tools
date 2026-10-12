@@ -3,7 +3,7 @@ apm_version: 0.33.0
 dependencies:
 - repo_url: _local/ark-csharp
   name: ark-csharp
-  version: 1.5.1
+  version: 1.4.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/ark-compliance
