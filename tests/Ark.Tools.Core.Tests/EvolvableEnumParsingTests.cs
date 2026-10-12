@@ -57,6 +57,17 @@ public class EvolvableEnumParsingTests
         converter.CanConvertTo(typeof(int)).Should().BeFalse();
     }
 
+    /// <summary>Verifies that a parse failure surfaces the original exception, not a reflection wrapper.</summary>
+    [TestMethod]
+    public void TypeConverter_InvalidString_ShouldThrowUnwrappedException()
+    {
+        var converter = TypeDescriptor.GetConverter(typeof(EvolvableEnum<CompactStatus, byte>));
+
+        var act = () => converter.ConvertFromInvariantString("300");
+
+        act.Should().Throw<Exception>().Which.Should().NotBeOfType<System.Reflection.TargetInvocationException>();
+    }
+
     /// <summary>Verifies ordinary enum switching through the nullable Value property.</summary>
     [TestMethod]
     public void Value_ShouldSupportExhaustiveEnumSwitchingWithUnknownFallback()
