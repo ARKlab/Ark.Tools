@@ -24,6 +24,7 @@ public class SimpleInjectorRequestProcessor : IRequestProcessor
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task<TResponse> ExecuteAsync<TResponse>(IRequest<TResponse> request, CancellationToken ctk = default)
     {
         return await RequestHandlerInvokerCache<TResponse>.ExecuteAsync(_container, request, ctk).ConfigureAwait(false);

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsAotCompatible>true</IsAotCompatible>
+    <!-- Dapper.AOT replaces the Dapper calls of this project with generated code. -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Dapper.AOT</InterceptorsNamespaces>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ProblemDetails, in the JSON context, needs ASP.NET Core. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Ark.Tools.MediatorFramework" />
+    <PackageReference Include="Ark.Tools.MediatorFramework.Messaging" />
+    <PackageReference Include="Ark.Tools.Compliance.Dapper" />
+    <PackageReference Include="Ark.Tools.Dapper" />
+    <PackageReference Include="Ark.Tools.Nodatime.Dapper" />
+    <PackageReference Include="Ark.Tools.Nodatime.SystemTextJson" />
+    <PackageReference Include="Ark.Tools.Outbox" />
+    <PackageReference Include="Ark.Tools.Sql.SqlServer" />
+    <PackageReference Include="Ark.Tools.SystemTextJson" />
+    <PackageReference Include="Ark.Tools.Solid" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Dapper.AOT" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <ProjectReference Include="../../../../src/mediator-framework/Ark.Tools.MediatorFramework.Generators/Ark.Tools.MediatorFramework.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Ark.MediatorFramework.AotSample.Core.API\Ark.MediatorFramework.AotSample.Core.API.csproj" />
+  </ItemGroup>
+
+</Project>

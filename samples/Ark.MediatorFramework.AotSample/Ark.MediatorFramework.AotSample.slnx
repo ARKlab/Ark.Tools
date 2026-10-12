@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/Core/">
+    <Project Path="Core/Ark.MediatorFramework.AotSample.Core.API/Ark.MediatorFramework.AotSample.Core.API.csproj" />
+    <Project Path="Core/Ark.MediatorFramework.AotSample.Core.Application/Ark.MediatorFramework.AotSample.Core.Application.csproj" />
+  </Folder>
+  <Folder Name="/Core/Hosts/Web/">
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.AotSample.Core.Web.Hosting/Ark.MediatorFramework.AotSample.Core.Web.Hosting.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.AotSample.Core.Web.WebInterface/Ark.MediatorFramework.AotSample.Core.Web.WebInterface.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.AotSample.Core.Web.Processor/Ark.MediatorFramework.AotSample.Core.Web.Processor.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.AotSample.Core.Web.OutboxProcessor/Ark.MediatorFramework.AotSample.Core.Web.OutboxProcessor.csproj" />
+    <Project Path="Core/Hosts/Web/Ark.MediatorFramework.AotSample.Core.Web.Tests/Ark.MediatorFramework.AotSample.Core.Web.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>

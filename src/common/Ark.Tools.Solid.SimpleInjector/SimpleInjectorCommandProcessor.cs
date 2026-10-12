@@ -24,6 +24,7 @@ public class SimpleInjectorCommandProcessor : ICommandProcessor
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task ExecuteAsync(ICommand command, CancellationToken ctk = default)
     {
         await CommandHandlerInvokerCache.ExecuteAsync(_container, command, ctk).ConfigureAwait(false);

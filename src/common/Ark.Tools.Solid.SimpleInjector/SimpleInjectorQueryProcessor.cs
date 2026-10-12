@@ -24,6 +24,7 @@ public class SimpleInjectorQueryProcessor : IQueryProcessor
 
     [DebuggerStepThrough]
     [RequiresUnreferencedCode("Uses dynamic invocation for handler dispatch. Handler types must be preserved.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public async Task<TResult> ExecuteAsync<TResult>(IQuery<TResult> query, CancellationToken ctk = default)
     {
         return await QueryHandlerInvokerCache<TResult>.ExecuteAsync(_container, query, ctk).ConfigureAwait(false);

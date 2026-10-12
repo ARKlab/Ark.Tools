@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
+﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.Tools.Core;
 using Ark.Tools.MediatorFramework.Generated;
@@ -103,8 +103,8 @@ internal static class Program
         builder.Services.ConfigureHttpJsonOptions(static options => _jsonOptions(options.SerializerOptions));
         builder.Services.AddAuthorization(static options =>
             options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAssertion(static _ => true).Build());
-        builder.Services.AddSingleton<IQueryHandler<GetBookQuery, Book>, GetBookQueryHandler>();
-        builder.Services.AddSingleton<IQueryProcessor, BookQueryProcessor>();
+        builder.Services.AddScoped<IQueryHandler<GetBookQuery, Book>, GetBookQueryHandler>();
+        builder.Services.AddArkSolidServiceProviderProcessors();
 
         var app = builder.Build();
         await using var __app = app.ConfigureAwait(false);

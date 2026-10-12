@@ -16,6 +16,7 @@ internal static class QueryHandlerInvokerCache<TResult>
     private static readonly ConcurrentDictionary<Type, Func<Container, object, CancellationToken, Task<TResult>>> _invokers = new();
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public static Task<TResult> ExecuteAsync(Container container, IQuery<TResult> query, CancellationToken cancellationToken)
     {
         var invoker = _invokers.GetOrAdd(query.GetType(), static queryType => _createInvoker(queryType));
@@ -23,6 +24,7 @@ internal static class QueryHandlerInvokerCache<TResult>
     }
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     private static Func<Container, object, CancellationToken, Task<TResult>> _createInvoker(Type queryType)
     {
         var handlerType = typeof(IQueryHandler<,>).MakeGenericType(queryType, typeof(TResult));
@@ -53,6 +55,7 @@ internal static class RequestHandlerInvokerCache<TResponse>
     private static readonly ConcurrentDictionary<Type, Func<Container, object, CancellationToken, Task<TResponse>>> _invokers = new();
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public static Task<TResponse> ExecuteAsync(Container container, IRequest<TResponse> request, CancellationToken cancellationToken)
     {
         var invoker = _invokers.GetOrAdd(request.GetType(), static requestType => _createInvoker(requestType));
@@ -60,6 +63,7 @@ internal static class RequestHandlerInvokerCache<TResponse>
     }
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     private static Func<Container, object, CancellationToken, Task<TResponse>> _createInvoker(Type requestType)
     {
         var handlerType = typeof(IRequestHandler<,>).MakeGenericType(requestType, typeof(TResponse));
@@ -90,6 +94,7 @@ internal static class CommandHandlerInvokerCache
     private static readonly ConcurrentDictionary<Type, Func<Container, object, CancellationToken, Task>> _invokers = new();
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     public static Task ExecuteAsync(Container container, ICommand command, CancellationToken cancellationToken)
     {
         var invoker = _invokers.GetOrAdd(command.GetType(), static commandType => _createInvoker(commandType));
@@ -97,6 +102,7 @@ internal static class CommandHandlerInvokerCache
     }
 
     [RequiresUnreferencedCode("Builds a runtime handler invoker. Handler types must be preserved by the processor contract.")]
+    [RequiresDynamicCode("Closes the handler type at run time with MakeGenericType.")]
     private static Func<Container, object, CancellationToken, Task> _createInvoker(Type commandType)
     {
         var handlerType = typeof(ICommandHandler<>).MakeGenericType(commandType);

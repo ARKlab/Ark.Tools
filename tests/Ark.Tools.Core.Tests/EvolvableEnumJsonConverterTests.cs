@@ -3,6 +3,8 @@
 
 using AwesomeAssertions;
 
+using System.Runtime.Serialization;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace Ark.Tools.Core.Tests;
@@ -15,6 +17,37 @@ namespace Ark.Tools.Core.Tests;
 [TestClass]
 public class EvolvableEnumJsonConverterTests
 {
+    private static readonly JsonSerializerOptions _byteStatusOptions = new()
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+        Converters = { new SystemTextJson.EvolvableEnumJsonConverter<ByteStatus, byte>() },
+    };
+
+    private static readonly SystemTextJson.EvolvableEnumJsonConverter<Comparison> _sharedComparisonConverter = new();
+
+    private static readonly JsonSerializerOptions _relaxedOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+        Converters = { _sharedComparisonConverter },
+    };
+
+    private static readonly JsonSerializerOptions _defaultEncoderOptions = new()
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+        Converters = { _sharedComparisonConverter },
+    };
+
+    private enum Comparison
+    {
+        NOT_SET = 0,
+        [EnumMember(Value = "a<b")]
+        Less = 1,
+    }
+
     private enum Status
     {
         NOT_SET = 0,
@@ -55,6 +88,49 @@ public class EvolvableEnumJsonConverterTests
         };
         options.Converters.Add(new SystemTextJson.EvolvableEnumIntegerJsonConverterFactory());
         return options;
+    }
+
+    /// <summary>Verifies that the closed converter for Native AOT reads and writes names like the factory.</summary>
+    [TestMethod]
+    public void ClosedConverter_ShouldRoundTripLikeTheFactory()
+    {
+        var options = new JsonSerializerOptions { RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true };
+        options.Converters.Add(new SystemTextJson.EvolvableEnumJsonConverter<Status>());
+
+        var json = JsonSerializer.Serialize(EvolvableEnum<Status>.FromValue(Status.Active), options);
+
+        json.Should().Be(JsonSerializer.Serialize(EvolvableEnum<Status>.FromValue(Status.Active), _createDefaultOptions()));
+        JsonSerializer.Deserialize<EvolvableEnum<Status>>(json, options).Should().Be(EvolvableEnum<Status>.FromValue(Status.Active));
+        JsonSerializer.Deserialize<EvolvableEnum<Status>>("\"Unknown\"", options).Name.Should().Be("Unknown");
+    }
+
+    /// <summary>Verifies that the closed two-parameter converter reads and writes names like the factory.</summary>
+    [TestMethod]
+    public void ClosedBackingConverter_ShouldRoundTripLikeTheFactory()
+    {
+        var value = EvolvableEnum<ByteStatus, byte>.FromValue(ByteStatus.Active);
+
+        var json = JsonSerializer.Serialize(value, _byteStatusOptions);
+
+        json.Should().Be(JsonSerializer.Serialize(value, _createDefaultOptions()));
+        JsonSerializer.Deserialize<EvolvableEnum<ByteStatus, byte>>(json, _byteStatusOptions).Should().Be(value);
+        JsonSerializer.Deserialize<EvolvableEnum<ByteStatus, byte>>("\"Unknown\"", _byteStatusOptions).Name.Should().Be("Unknown");
+    }
+
+    /// <summary>Verifies that the closed converter honours the encoder of the options it serializes with.</summary>
+    [TestMethod]
+    public void ClosedConverter_ShouldUseTheOptionsEncoder()
+    {
+        JsonSerializer.Serialize(EvolvableEnum<Comparison>.FromValue(Comparison.Less), _relaxedOptions).Should().Be("\"a<b\"");
+    }
+
+    /// <summary>Verifies that one closed converter instance shared by two options uses each options' encoder.</summary>
+    [TestMethod]
+    public void ClosedConverter_ShouldUseEachOptionsEncoderWhenShared()
+    {
+        var value = EvolvableEnum<Comparison>.FromValue(Comparison.Less);
+        JsonSerializer.Serialize(value, _relaxedOptions).Should().Be("\"a<b\"");
+        JsonSerializer.Serialize(value, _defaultEncoderOptions).Should().Be("\"a\\u003Cb\"");
     }
 
     /// <summary>Verifies that a defined value is serialized as its symbolic name by default.</summary>
