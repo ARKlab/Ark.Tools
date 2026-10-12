@@ -41,7 +41,10 @@ ship, so they are made with the human before any code is written.
    what an attribute already states (route, verb, version, scope).
 
 A new contract answers every section. A change answers the sections it affects,
-plus Versioning and Privacy every time. "N/A" needs a reason.
+plus Versioning and Privacy every time. The legal items are `ASK` only when the
+contract carries personal data and the change touches a personal field, its
+exposure, transport or purpose; otherwise answer "N/A: no personal-data change".
+A documentation-only change needs only Documentation. "N/A" needs a reason.
 
 ## Checklist index
 

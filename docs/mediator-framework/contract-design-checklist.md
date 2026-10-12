@@ -51,7 +51,12 @@ brief, stop after drafting it.
 
 **Scope.** A new contract needs every section. A change to an existing contract
 needs the sections whose answers it changes, plus [§14](#14-versioning-and-compatibility)
-and [§15](#15-privacy-gdpr), which every change must answer.
+and [§15](#15-privacy-gdpr), which every change must answer. The §15 legal items
+(purpose, lawful basis, retention, DPIA) are `ASK` only when the contract carries
+personal data and the change adds or alters a personal field, its exposure, its
+transport, or its purpose; otherwise answer them "N/A: no personal-data change"
+with the §2 classification as the source. A documentation-only change needs only
+[§17](#17-documentation).
 
 ## 1. Operation
 
@@ -139,7 +144,7 @@ List every failure a caller can observe. Defaults from [Errors](errors.md):
 | --- | --- | --- |
 | Validation | 400 | `InvalidArgument` |
 | Business rule violation (named) | 400 | `FailedPrecondition` |
-| Authorization | 403 (or 404, see [§12](#12-authorization)) | `PermissionDenied` |
+| Authorization | 403 / `PermissionDenied`, or 404 / `NotFound` when [§12](#12-authorization) chooses 404 | `PermissionDenied` or `NotFound` |
 | Not found | 404 | `NotFound` |
 | Optimistic concurrency conflict | 409 | `Aborted` |
 | ETag precondition mismatch | 412 | `FailedPrecondition` |
@@ -154,6 +159,7 @@ that a client can branch on.
 | Can two callers update the same resource concurrently? | Use an ETag (`If-Match`, 412) or a version field (409). State which. |
 | Is a retried `POST` safe? | State how a duplicate create is detected (client key, natural key) or why duplicates are acceptable. |
 | Can a message be delivered twice? | Handlers are idempotent; name the deduplication key. |
+| Transaction, lock and external-call boundaries? | State what the handler commits atomically, what it locks, and which external calls happen inside or outside the transaction. |
 
 ## 8. API design
 
@@ -203,7 +209,7 @@ A deviation needs a reason.
 | --- | --- |
 | Operation permission? | An `Ark.Tools.Authorization` policy or scope on the contract, shared by every transport. |
 | Can this caller act on this instance (owner, tenant, assignment)? | State where it is enforced (policy or handler). |
-| Denied on a specific instance: 403 or 404? | Decide per contract. Prefer 403, unless 403 discloses that the resource exists: unguessable identifiers (GUIDs) return 404; guessable sequential identifiers (integers) can return 403. Record the identifier type and the reason. |
+| Denied on a specific instance: 403 or 404? | Decide per contract. Prefer 403, unless 403 discloses that the resource exists: unguessable identifiers (GUIDs) return 404; guessable sequential identifiers (integers) can return 403. Record the identifier type and the reason. A policy failure always returns 403 / `PermissionDenied`, so a 404 denial is enforced in the handler (return `null` or throw `EntityNotFoundException`), not by a policy. |
 | Does a list return only rows the caller may see? | State the filter. |
 | Are some fields visible only to some callers? | Use a separate output model rather than nulling fields. |
 | Background messages and events | State the identity they run under and whether permission is checked again on consume. |
@@ -227,6 +233,7 @@ See [Versioning](versioning.md).
 | Question | Default / rule |
 | --- | --- |
 | Is the change additive? | Prefer an additive path: an optional field with a default, or a new operation. |
+| Does it change semantics, authorization or error behaviour? | Breaking even when the shape is unchanged; see [Versioning](versioning.md). |
 | Breaking? | A new `[Versioning]` contract only with a written reason the additive path is impossible; keep the old version during migration and test both. |
 | Enums | `EvolvableEnum<T>` with `NOT_SET = 0` on every public contract. Exceptions, named in the brief: an enum controlled externally (for example a third-party interface adapter) and `[Flags]` enums. |
 | Wire identifiers | Released protobuf numbers and logical names stay reserved. |
@@ -241,10 +248,10 @@ verify the conclusions with your DPO or legal team before relying on them.
 | Question | Default / rule |
 | --- | --- |
 | Which fields are personal data, and of which class? | Fill the §2 Personal-data class column: personal, sensitive (special category, GDPR Art. 9 and 10), pseudonymous, credentials, or not personal. Free-text fields that may contain personal data are personal. |
-| Purpose | `ASK` |
-| Lawful basis | `ASK` |
-| Retention period | `ASK` |
-| Is a DPIA needed? | `ASK` |
+| Purpose | `ASK`, unless there is no personal-data change (see [§0](#0-how-to-use-this-checklist)) |
+| Lawful basis | `ASK`, unless there is no personal-data change (see [§0](#0-how-to-use-this-checklist)) |
+| Retention period | `ASK`, unless there is no personal-data change (see [§0](#0-how-to-use-this-checklist)) |
+| Is a DPIA needed? | `ASK`, unless there is no personal-data change (see [§0](#0-how-to-use-this-checklist)) |
 | Minimisation | Each personal field is needed for the stated purpose. |
 | Exposure | List the outputs, transports, logs, telemetry and third parties it reaches. Logs and telemetry carry no personal data. |
 | Messages and events | Events and messages that cross a service boundary carry identifiers only, no personal data. Messages between the processes of the same service (owned queue) may carry classified personal data. Sensitive and special-category data never travel in a message. |
