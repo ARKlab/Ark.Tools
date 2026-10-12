@@ -444,6 +444,81 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorUsesFirstXmlDocumentationFileByPathForTheSameAssembly()
+    {
+        var contracts = _createMetadataReference(
+            "McpContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            namespace McpContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class ListOrders : ICommand { }
+            """);
+
+        // Passed in reverse path order so the result depends on path ordering, not input order.
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            [ArkGenerateMcpToolsForAssembly(typeof(McpContracts.Marker))]
+            public partial class McpContext { }
+            """,
+            [
+                new TestAdditionalText(
+                    "/b/McpContracts.xml",
+                    """<doc><members><member name="T:McpContracts.ListOrders"><summary>Lists orders from b.</summary></member></members></doc>"""),
+                new TestAdditionalText(
+                    "/a/McpContracts.xml",
+                    """<doc><members><member name="T:McpContracts.ListOrders"><summary>Lists orders from a.</summary></member></members></doc>"""),
+            ],
+            contracts);
+
+        result.Generated.Should().Contain("Description(\"Lists orders from a.\")");
+        result.Generated.Should().NotContain("Lists orders from b.");
+    }
+
+    [TestMethod]
+    public async Task McpGeneratorFallsBackToReferencedXmlDocumentationWhenFirstAdditionalFileIsMalformed()
+    {
+        var contracts = await _createMetadataReferenceWithXmlAsync(
+            "MalformedMcpContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            namespace MalformedMcpContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class ListOrders : ICommand { }
+            """,
+            """
+            <doc><members><member name="T:MalformedMcpContracts.ListOrders"><summary>Lists referenced orders.</summary></member></members></doc>
+            """).ConfigureAwait(false);
+
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            [ArkGenerateMcpToolsForAssembly(typeof(MalformedMcpContracts.Marker))]
+            public partial class McpContext { }
+            """,
+            [
+                new TestAdditionalText("/a/MalformedMcpContracts.xml", "<doc><members>"),
+                new TestAdditionalText(
+                    "/b/MalformedMcpContracts.xml",
+                    """<doc><members><member name="T:MalformedMcpContracts.ListOrders"><summary>Lists orders from b.</summary></member></members></doc>"""),
+            ],
+            contracts);
+
+        // The malformed first-by-path file wins its assembly, so later additional files are not consulted.
+        result.Generated.Should().Contain("Description(\"Lists referenced orders.\")");
+        result.Generated.Should().NotContain("Lists orders from b.");
+    }
+
+    [TestMethod]
     public void McpGeneratorEmitsValidGlobalNestedAndGenericContexts()
     {
         const string source =
