@@ -49,7 +49,7 @@ try
         ArkGeneratedMessagingFunctions.Manifest,
         container,
         dataBus => dataBus.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration)),
-        // The print worker publishes from an enlisted handler and nothing drains an outbox on Functions.
+        // The print worker publishes in an outbox scope and nothing drains an outbox on Functions.
         static outbox => outbox.UseDevelopmentPassthrough());
     builder.Services.AddArkHealthChecks();
 

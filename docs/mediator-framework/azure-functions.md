@@ -109,8 +109,8 @@ step 4. `AddArkSolidProcessors` bridges Microsoft DI-visible
 `IRequestProcessor`, `IQueryProcessor`, and `ICommandProcessor` back into the
 same SimpleInjector application container; it does not replace handler
 registrations or decorators. `AddArkAzureFunctionsSimpleInjectorBridge`
-bridges the reverse direction, exposing Microsoft DI's `IBus`,
-`IBusOutboxEnlistment`, and `IContextProvider<ClaimsPrincipal>` (when native
+bridges the reverse direction, exposing Microsoft DI's `IBus` and
+`IContextProvider<ClaimsPrincipal>` (when native
 messaging or Functions HTTP registers them) into the SimpleInjector container
 for handlers that depend on them. Call it after `AddArkAzureFunctions` and, if
 using native messaging, after `ConfigureArkMessagingFunctions`/
@@ -364,21 +364,20 @@ SimpleInjector remains authoritative for the application graph.
 processing a delivery and reuses the ambient scope for nested sends, publishes,
 or mediator dispatches inside that same message flow.
 
-`UseOutbox()` enables the native transaction boundary without starting
-background work. A handler enlists its `IOutboxContextCore`, sends or
-publishes through `IBus`, completes the bus scope, and then commits the
+A handler opens an `OutboxScope` over its `IOutboxContextCore`, sends or
+publishes through `IBus`, completes the scope, and then commits the
 application context. Serialization, outgoing pipeline steps, compression,
 claim-check, ownership, scheduling, and reserved-header validation all finish
 before the outbox row is staged. Disposing the scope without completing it
-stages nothing. Calls made without an enlisted scope continue to send directly.
+stages nothing. Calls made outside a scope send directly. `UseOutbox()` is
+optional and starts no background work.
 
-Without `UseOutbox()`, enlisting throws an `InvalidOperationException` naming
-the participant. Functions never drain the outbox, so the staged rows need a
-separate native outbox processor host. A Functions-only deployment either sends
-without enlisting or, during development, selects
-`UseOutbox(outbox => outbox.UseDevelopmentPassthrough())`: enlisting does nothing
-and each message goes straight to the transport, before the application
-transaction commits. The pass-through is not atomic, and the host refuses to
+Functions never drain the outbox, so the staged rows need a separate native
+outbox processor host. A Functions-only deployment either sends outside a scope
+or, during development, selects
+`UseOutbox(outbox => outbox.UseDevelopmentPassthrough())`: handlers keep their
+scope, but it stages nothing and each message goes straight to the transport,
+before the application transaction commits. The pass-through is not atomic, and the host refuses to
 start unless its environment is `Development`. See
 [Host the native SQL outbox processor separately](host-setup-and-composition.md#host-the-native-sql-outbox-processor-separately).
 

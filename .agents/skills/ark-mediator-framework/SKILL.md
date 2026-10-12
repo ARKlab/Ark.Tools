@@ -67,6 +67,24 @@ Generated output is inspection evidence only. Use a handwritten adapter only
 after checking the documented escape hatches and documenting why metadata cannot
 express the requirement.
 
+## Transactional messaging
+
+A handler that changes state and sends or publishes enlists its application
+context in the outbox, completes the scope, then commits:
+
+```csharp
+using var scope = _bus.Enlist(context.OutboxContext);
+await _bus.Publish(new BookPrintCompleted { BookId = id }, cancellationToken: ctk);
+await scope.CompleteAsync(ctk);
+await context.CommitAsync(ctk);
+```
+
+`_bus.Enlist` opens an ambient `OutboxScope`; the outbox wraps the transport,
+so every bus honors it and the handler never checks whether an outbox is
+configured. Whether the messages are staged, drained by a processor, or sent
+directly by the development pass-through is a host decision (`UseOutbox`), not
+handler code. A send outside a scope goes straight to the transport.
+
 ## Guardrails
 
 - Authorization uses `Ark.Tools.Authorization` policies and decorators; do not
@@ -88,6 +106,8 @@ express the requirement.
 - You added an event without naming its publisher and every subscriber.
 - You added a message without naming its consumer, queue/participant, retry, and
   outbox behavior.
+- A handler sends or publishes next to a state change without `_bus.Enlist`
+  completed before the commit, or casts `IBus` to reach the outbox.
 - You used Microsoft ASP.NET authorization for an operation policy.
 - You are adding bindings because the generator output is inconvenient.
 

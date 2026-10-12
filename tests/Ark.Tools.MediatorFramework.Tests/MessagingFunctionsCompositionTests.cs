@@ -52,7 +52,7 @@ public sealed class MessagingFunctionsCompositionTests
 
         provider.GetRequiredService<IMessagingTransport>()
             .Should().BeOfType<ServiceBusMessagingTransport>();
-        provider.GetRequiredService<IBusOutboxEnlistment>().Should().NotBeNull();
+        provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
     }
 
     /// <summary>Verifies the fluent Functions entry point rejects incomplete composition.</summary>
@@ -120,7 +120,6 @@ public sealed class MessagingFunctionsCompositionTests
         await using var provider = services.BuildServiceProvider();
 
         var bus = provider.GetRequiredService<IBus>();
-        provider.GetRequiredService<IBusOutboxEnlistment>().Should().BeSameAs(bus);
         await bus.Send(new CompositionMessage(), default, default).ConfigureAwait(false);
 
         provider.GetService<MessagingDispatcher>().Should().BeNull();
@@ -244,17 +243,16 @@ public sealed class MessagingFunctionsCompositionTests
             _dataBus(),
             outbox: MessagingOutboxMode.Enqueue);
         await using var provider = services.BuildServiceProvider();
-        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
-        await using var __context = context.ConfigureAwait(false);
-
-        using var scope = provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
 
         provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
     }
 
     /// <summary>The low-level Functions host rejects an undefined outbox mode instead of treating it as enqueue.</summary>
+    /// <param name="mode">The undefined value; 0 was the removed <c>None</c>.</param>
     [TestMethod]
-    public void LowLevelFunctionsHostRejectsUndefinedOutboxMode()
+    [DataRow(0)]
+    [DataRow(42)]
+    public void LowLevelFunctionsHostRejectsUndefinedOutboxMode(int mode)
     {
         var services = new ServiceCollection();
 
@@ -262,7 +260,7 @@ public sealed class MessagingFunctionsCompositionTests
             _manifest(MessagingFunctionsTriggerBinding.ServiceBus, _descriptor(receives: false)),
             new InMemoryMessagingTransport(),
             _dataBus(),
-            outbox: (MessagingOutboxMode)42);
+            outbox: (MessagingOutboxMode)mode);
 
         action.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("outbox");
     }
@@ -412,37 +410,29 @@ public sealed class MessagingFunctionsCompositionTests
             .Should().BeNull();
     }
 
-    /// <summary>Without <c>UseOutbox</c>, enlisting fails instead of staging messages nothing sends.</summary>
+    /// <summary>Without <c>UseOutbox</c>, the bus still stages the sends made in an outbox scope.</summary>
     [TestMethod]
-    public async Task FunctionsCompositionWithoutOutboxRejectsEnlistment()
+    public async Task FunctionsCompositionWithoutOutboxStagesInScope()
     {
-        await using var provider = _composeFunctionsProducer(Environments.Development, configureOutbox: null);
-        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
-        await using var __context = context.ConfigureAwait(false);
+        await using var provider = _composeFunctionsProducer(Environments.Production, configureOutbox: null);
+        await _startValidatorAsync(provider).ConfigureAwait(false);
 
-        var enlist = () => provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
-
-        enlist.Should().Throw<InvalidOperationException>()
-            .WithMessage("Messaging participant 'composition' has no outbox*UseOutbox()*");
+        provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
     }
 
-    /// <summary><c>UseOutbox</c> keeps enlisting in the application outbox in any environment.</summary>
+    /// <summary><c>UseOutbox</c> stages in the application outbox in any environment.</summary>
     [TestMethod]
-    public async Task FunctionsCompositionWithOutboxEnlists()
+    public async Task FunctionsCompositionWithOutboxStagesInScope()
     {
         await using var provider = _composeFunctionsProducer(
             Environments.Production,
             static messaging => messaging.UseOutbox());
         await _startValidatorAsync(provider).ConfigureAwait(false);
-        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
-        await using var __context = context.ConfigureAwait(false);
-
-        using var scope = provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
 
         provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
     }
 
-    /// <summary>The development pass-through starts in Development and its enlistment is a no-op.</summary>
+    /// <summary>The development pass-through starts in Development and its outbox scope stages nothing.</summary>
     [TestMethod]
     public async Task FunctionsDevelopmentPassthroughStartsInDevelopment()
     {
@@ -453,8 +443,10 @@ public sealed class MessagingFunctionsCompositionTests
         var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
 
-        using var scope = provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+        using var scope = new Ark.Tools.Outbox.OutboxScope(context);
         await scope.CompleteAsync().ConfigureAwait(false);
+
+        provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.DevelopmentPassthrough);
 
         (await context.CountAsync().ConfigureAwait(false)).Should().Be(0);
     }

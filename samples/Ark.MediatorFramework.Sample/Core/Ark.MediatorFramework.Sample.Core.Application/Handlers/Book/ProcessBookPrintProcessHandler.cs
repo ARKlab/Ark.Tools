@@ -140,9 +140,7 @@ public sealed class ProcessBookPrintProcessHandler :
         await context.WriteAuditAsync(_createAudit(process.Id), ctk).ConfigureAwait(false);
         if (process.Status == BookPrintProcessStatus.Completed)
         {
-            var enlistment = _bus as IBusOutboxEnlistment
-                ?? throw new InvalidOperationException("The configured messaging bus does not support outbox enlistment.");
-            using var scope = enlistment.Enlist(context.OutboxContext);
+            using var scope = _bus.Enlist(context.OutboxContext);
             await _bus.Publish(new BookPrintCompleted { BookId = process.BookId }, cancellationToken: ctk).ConfigureAwait(false);
             await scope.CompleteAsync(ctk).ConfigureAwait(false);
         }

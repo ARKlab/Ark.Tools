@@ -63,38 +63,13 @@ public sealed class FluentMessagingResourceManagementTests
         act.Should().Throw<InvalidOperationException>().WithMessage("*resource lifecycle management*");
     }
 
-    /// <summary>A producer composed without <c>UseOutbox</c> refuses enlistment, naming itself.</summary>
+    /// <summary>A producer composed without <c>UseOutbox</c> stages the sends made in an outbox scope.</summary>
     [TestMethod]
-    public async Task ProducerWithoutOutboxRejectsEnlistment()
+    public async Task ProducerWithoutOutboxStagesInScope()
     {
         await using var provider = _composeInMemoryProducer(static _ => { });
-        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
-        await using var __context = context.ConfigureAwait(false);
 
-        var enlist = () => provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
-
-        enlist.Should().Throw<InvalidOperationException>()
-            .WithMessage("Messaging participant 'test-publisher' has no outbox*UseOutbox()*");
-    }
-
-    /// <summary>A separately registered outbox processor does not opt a participant into enlistment.</summary>
-    [TestMethod]
-    public async Task OutboxProcessorAloneDoesNotEnableEnlistment()
-    {
-        var services = new ServiceCollection();
-        services.Configure<JsonSerializerOptions>(
-            static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
-        services.ConfigureArkMessaging<TestNetwork>(static b => b.Producer<TestPublisher>(static p =>
-            p.UseInMemoryTransport().UseInMemoryDataBus()));
-        services.AddArkMessagingOutboxProcessor(new Ark.Tools.Outbox.InMemoryOutboxContextFactory());
-        await using var provider = services.BuildServiceProvider();
-        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
-        await using var __context = context.ConfigureAwait(false);
-
-        var enlist = () => provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
-
-        enlist.Should().Throw<InvalidOperationException>()
-            .WithMessage("Messaging participant 'test-publisher' has no outbox*UseOutbox()*");
+        provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
     }
 
     /// <summary>Each outbox choice of the fluent builder reaches the composed bus.</summary>

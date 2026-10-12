@@ -129,8 +129,8 @@ public static class FunctionsHosting
     /// with the other apps; an in-memory instance shared by every process in tests.
     /// </param>
     /// <param name="outbox">
-    /// Selects the outbox of an app whose handlers enlist one, or <see langword="null"/> for an app whose handlers
-    /// never send, which then rejects enlistment.
+    /// Selects the outbox of an app whose handlers open an outbox scope, or <see langword="null"/> for an app whose
+    /// handlers never send.
     /// </param>
     public static void AddMessagingTrigger(
         IServiceCollection services,
@@ -169,7 +169,7 @@ public static class FunctionsHosting
     /// <remarks>
     /// The outgoing user is the HTTP user that <c>AddArkAzureFunctions</c> registers, unless the
     /// caller registered another <see cref="IContextProvider{TItem}"/> of <see cref="ClaimsPrincipal"/> first.
-    /// Nothing drains an outbox in a Functions-only deployment, so the handlers' enlistment is the pass-through,
+    /// Nothing drains an outbox in a Functions-only deployment, so the handlers' outbox scope is the pass-through,
     /// which is not atomic and starts only in the Development environment.
     /// </remarks>
     /// <param name="services">The Functions service collection.</param>

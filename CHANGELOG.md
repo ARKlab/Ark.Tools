@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Ark.Tools.Outbox`: `OutboxScope`, an ambient outbox transaction like Rebus's `RebusTransactionScope`. Messages sent through a bus while it is open are staged and written to the application outbox on `CompleteAsync`. It works with the Mediator Framework native bus and with Rebus configured with `Outbox(...)`; Rebus code that calls `bus.Enlist(context)` works as before, and that enlistment takes precedence over an enclosing scope.
+
+### Changed
+
+- **Breaking:** Mediator Framework handlers open an `OutboxScope` instead of casting `IBus` to `IBusOutboxEnlistment`: replace `((IBusOutboxEnlistment)bus).Enlist(context)` with the new `bus.Enlist(context)` extension, which opens an `OutboxScope` like the Rebus helper of the same name. Every native bus stages the sends made in an open scope, so `UseOutbox()` is optional again; `UseOutbox(outbox => outbox.UseDevelopmentPassthrough())` still sends directly during development without changing the handlers. `RebusMessagingBus` with `outboxEnabled: false` throws when a message is sent in an open scope.
+
+### Removed
+
+- **Breaking:** `IBusOutboxEnlistment`, `IBusOutboxScope` and `MessagingOutboxMode.None`. The `outboxMode` parameter of the public `MessagingBus` constructor is removed: a bus constructed directly always stages the sends made in an open `OutboxScope`. Remove the `IBusOutboxEnlistment` registrations from your containers.
+
 ## [7.0.0-beta14] - 2026-10-12
 
 ### Added

@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Outbox;
-using Ark.Tools.Outbox.Rebus;
 
 using RebusBus = Rebus.Bus.IBus;
 
@@ -11,7 +10,7 @@ using System.Collections.Frozen;
 namespace Ark.Tools.MediatorFramework.Rebus;
 
 /// <summary>Adapts a Rebus bus to the transport-neutral one-way messaging API.</summary>
-public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
+public sealed class RebusMessagingBus : IBus
 {
     private const string _senderIdentityHeader = "ark-sender-identity";
     private readonly RebusBus _bus;
@@ -24,8 +23,9 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
     /// <param name="senderIdentity">The identity of the sending participant.</param>
     /// <param name="publishedTypes">The event types the participant publishes.</param>
     /// <param name="outboxEnabled">
-    /// Whether the Rebus transport is configured with the Ark outbox (<c>transport.Outbox(...)</c>). Without it,
-    /// <see cref="Enlist"/> throws, because enlisted sends would not be stored atomically with the application change.
+    /// Whether the Rebus transport is configured with the Ark outbox (<c>transport.Outbox(...)</c>), which stages the
+    /// sends made in an open <see cref="OutboxScope"/>. Without it, sending in an open scope throws, because the message
+    /// would not be stored atomically with the application change.
     /// </param>
     public RebusMessagingBus(RebusBus bus, string senderIdentity, IEnumerable<Type> publishedTypes, bool outboxEnabled)
     {
@@ -46,6 +46,7 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
     {
         ArgumentNullException.ThrowIfNull(message);
         cancellationToken.ThrowIfCancellationRequested();
+        _throwIfScopeWithoutOutbox();
         await _bus.Send(message, _headers(additionalHeaders)).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
     }
@@ -61,6 +62,7 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
         ArgumentNullException.ThrowIfNull(message);
         ArgumentOutOfRangeException.ThrowIfLessThan(delay, TimeSpan.Zero);
         cancellationToken.ThrowIfCancellationRequested();
+        _throwIfScopeWithoutOutbox();
         await _bus.Defer(delay, message, _headers(additionalHeaders)).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
     }
@@ -98,22 +100,19 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
         }
 
         cancellationToken.ThrowIfCancellationRequested();
+        _throwIfScopeWithoutOutbox();
         await _bus.Publish(@event, _headers(additionalHeaders)).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
     }
 
-    /// <inheritdoc />
-    /// <exception cref="InvalidOperationException">The bus was created without <c>outboxEnabled</c>.</exception>
-    public IBusOutboxScope Enlist(IOutboxContextCore context)
+    private void _throwIfScopeWithoutOutbox()
     {
-        ArgumentNullException.ThrowIfNull(context);
-        if (!_outboxEnabled)
+        if (!_outboxEnabled && OutboxScope.Current is not null)
             throw new InvalidOperationException(
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    "Rebus participant '{0}' has no outbox, so the enlisted messages would not be stored with the application change. Configure the Rebus transport with Outbox(...) and create RebusMessagingBus with outboxEnabled: true.",
+                    "Rebus participant '{0}' has no outbox, so a message sent in an OutboxScope would not be stored with the application change. Configure the Rebus transport with Outbox(...) and create RebusMessagingBus with outboxEnabled: true.",
                     _senderIdentity));
-        return new RebusOutboxScope(_bus.Enlist(context));
     }
 
     private Dictionary<string, string> _headers(IReadOnlyDictionary<string, string>? additionalHeaders)
@@ -125,26 +124,5 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
             throw new ArgumentException("The Rebus sender identity header is reserved.", nameof(additionalHeaders));
         headers[_senderIdentityHeader] = _senderIdentity;
         return headers;
-    }
-
-    private sealed class RebusOutboxScope : IBusOutboxScope
-    {
-        private readonly global::Rebus.Transport.RebusTransactionScope _scope;
-
-        public RebusOutboxScope(global::Rebus.Transport.RebusTransactionScope scope)
-        {
-            _scope = scope;
-        }
-
-        public async Task CompleteAsync(CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await _scope.CompleteAsync().ConfigureAwait(false);
-        }
-
-        public void Dispose()
-        {
-            _scope.Dispose();
-        }
     }
 }

@@ -55,10 +55,7 @@ public sealed class ParticipantProcess : IAsyncDisposable
         try
         {
             if (bridgeBus)
-            {
                 container.RegisterSingleton<IBus>(() => provider.GetRequiredService<IBus>());
-                container.RegisterSingleton<IBusOutboxEnlistment>(() => provider.GetRequiredService<IBusOutboxEnlistment>());
-            }
             container.Verify();
             var process = new ParticipantProcess(container, provider);
             foreach (var hosted in process._hosted)

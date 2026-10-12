@@ -54,9 +54,7 @@ public sealed class CreateBookPrintProcessHandler :
         if (!await context.TrySaveBookPrintProcessAsync(process, ctk).ConfigureAwait(false))
             throw new BusinessRuleViolationException(new BookPrintingProcessAlreadyRunningViolation(request.BookId));
         await context.WriteAuditAsync(_createAudit(process.Id, nameof(CreateBookPrintProcessRequest)), ctk).ConfigureAwait(false);
-        var enlistment = _bus as IBusOutboxEnlistment
-            ?? throw new InvalidOperationException("The configured messaging bus does not support outbox enlistment.");
-        using var scope = enlistment.Enlist(context.OutboxContext);
+        using var scope = _bus.Enlist(context.OutboxContext);
         await _bus.Send(
             new ProcessBookPrintProcessRequest { Id = process.Id },
             cancellationToken: ctk).ConfigureAwait(false);

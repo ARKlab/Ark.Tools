@@ -82,7 +82,6 @@ public static class RebusHosting
             requirements.PublishedEventTypes,
             outboxEnabled: true));
         container.RegisterSingleton<IBus>(() => container.GetInstance<RebusMessagingBus>());
-        container.RegisterSingleton<IBusOutboxEnlistment>(() => container.GetInstance<RebusMessagingBus>());
         container.ConfigureRebus(cfg =>
         {
             cfg.Transport(t =>
@@ -105,7 +104,7 @@ public static class RebusHosting
     }
 
     /// <summary>
-    /// Configures the Rebus outbox. Every process enlists through it; only the process that sets
+    /// Configures the Rebus outbox. Every process stages its scoped sends through it; only the process that sets
     /// <paramref name="startProcessor"/> drains it.
     /// </summary>
     private static void _configureOutbox(

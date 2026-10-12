@@ -33,9 +33,7 @@ public sealed class Book_CreateRequestHandler(AotDataContextFactory factory, IBu
             Contact = request.Contact,
         };
         await context.InsertBookAsync(book, ctk).ConfigureAwait(false);
-        var enlistment = bus as IBusOutboxEnlistment
-            ?? throw new InvalidOperationException("The configured messaging bus does not support outbox enlistment.");
-        using var scope = enlistment.Enlist(context);
+        using var scope = bus.Enlist(context);
         await bus.Send(new PrintBookCommand { BookId = book.Id }, cancellationToken: ctk).ConfigureAwait(false);
         await scope.CompleteAsync(ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);

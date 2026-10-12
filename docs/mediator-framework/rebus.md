@@ -183,8 +183,8 @@ RebusHosting.Configure<GreetingRebusHost>(
 ```
 Source: [`Program.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/WebRebus/Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface/Program.cs)
 
-The WebRebus WebInterface uses this pattern. It enlists its sends in the outbox, and the
-Processor, a separate deployment, drains it.
+The WebRebus WebInterface uses this pattern. Its handlers send in an `OutboxScope`, so the
+Rebus outbox stages the messages, and the Processor, a separate deployment, drains it.
 
 ## 6. Use source-generated JSON and NLog
 

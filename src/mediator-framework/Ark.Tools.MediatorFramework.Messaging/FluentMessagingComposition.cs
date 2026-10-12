@@ -300,8 +300,8 @@ public sealed class MessagingOutboxBuilder
     }
 
     /// <summary>
-    /// Development only: <see cref="IBusOutboxEnlistment.Enlist"/> returns a scope that does nothing, and every send
-    /// goes straight to the transport.
+    /// Development only: an open <see cref="Ark.Tools.Outbox.OutboxScope"/> stages nothing, and every send goes
+    /// straight to the transport. Handlers keep using the scope unchanged.
     /// </summary>
     /// <remarks>
     /// Not atomic: a message is sent when the handler sends it, before the application transaction commits, so a
@@ -315,7 +315,7 @@ public sealed class MessagingOutboxBuilder
         return this;
     }
 
-    /// <summary>Enables outbox enlistment without hosting a processor.</summary>
+    /// <summary>Stages the sends made in an outbox scope, the default, without hosting a processor.</summary>
     /// <returns>This builder.</returns>
     public MessagingOutboxBuilder UseEnqueue()
     {
@@ -546,7 +546,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return this;
     }
 
-    /// <summary>Enables outbox enlistment without hosting a processor.</summary>
+    /// <summary>Stages the sends made in an outbox scope, the default, without hosting a processor.</summary>
     /// <returns>This builder.</returns>
     public MessagingModeBuilder<TNetwork, TParticipant> UseOutbox()
     {
@@ -555,7 +555,7 @@ public abstract class MessagingModeBuilder<TNetwork, TParticipant>
         return this;
     }
 
-    /// <summary>Enables native outbox enqueue and processing.</summary>
+    /// <summary>Stages the sends made in an outbox scope and hosts the native outbox processor.</summary>
     /// <param name="contextFactory">The durable outbox context factory.</param>
     /// <param name="batchSize">The maximum batch size.</param>
     /// <returns>This builder.</returns>

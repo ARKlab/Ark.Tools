@@ -21,7 +21,7 @@ namespace Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 /// <see cref="IRequestProcessor"/>, <see cref="IQueryProcessor"/>, and <see cref="ICommandProcessor"/>
 /// from Microsoft dependency injection (bridge those with
 /// <c>Ark.Tools.Solid.SimpleInjector.AddArkSolidProcessors</c>) and registers
-/// <see cref="IBus"/>/<see cref="IBusOutboxEnlistment"/>/<see cref="IContextProvider{TItem}"/> of
+/// <see cref="IBus"/>/<see cref="IContextProvider{TItem}"/> of
 /// <see cref="ClaimsPrincipal"/> directly in the Microsoft service collection. Application handlers
 /// composed with SimpleInjector need those services surfaced inside their own container: this class
 /// provides that opt-in cross-wiring.
@@ -29,8 +29,8 @@ namespace Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 public static class ArkAzureFunctionsSimpleInjectorBridgeExtensions
 {
     /// <summary>
-    /// Registers a bridge that exposes the Azure Functions <see cref="IBus"/>,
-    /// <see cref="IBusOutboxEnlistment"/>, and <see cref="IContextProvider{TItem}"/> of
+    /// Registers a bridge that exposes the Azure Functions <see cref="IBus"/> and
+    /// <see cref="IContextProvider{TItem}"/> of
     /// <see cref="ClaimsPrincipal"/> Microsoft dependency injection registrations into the supplied
     /// SimpleInjector container.
     /// </summary>
@@ -64,9 +64,6 @@ public static class ArkAzureFunctionsSimpleInjectorBridgeExtensions
         if (services.Any(static service => service.ServiceType == typeof(IBus)))
             container.RegisterSingleton<IBus>(() => bridge.GetBus());
 
-        if (services.Any(static service => service.ServiceType == typeof(IBusOutboxEnlistment)))
-            container.RegisterSingleton<IBusOutboxEnlistment>(() => bridge.GetEnlistment());
-
         services.AddSingleton<IHostedService>(serviceProvider =>
         {
             bridge.SetServiceProvider(serviceProvider);
@@ -92,11 +89,6 @@ public static class ArkAzureFunctionsSimpleInjectorBridgeExtensions
         public IBus GetBus()
         {
             return _resolvedServiceProvider().GetRequiredService<IBus>();
-        }
-
-        public IBusOutboxEnlistment GetEnlistment()
-        {
-            return _resolvedServiceProvider().GetRequiredService<IBusOutboxEnlistment>();
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
