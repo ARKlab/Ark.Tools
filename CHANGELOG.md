@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Breaking:** `IBusOutboxEnlistment`, `IBusOutboxScope` and `MessagingOutboxMode.None`. The `outboxMode` parameter of the public `MessagingBus` constructor is removed: a bus constructed directly always stages the sends made in an open `OutboxScope`. Remove the `IBusOutboxEnlistment` registrations from your containers.
 
+### Fixed
+
+- The `ark-compliance` agent skill links to the documentation on the `master` branch; its links pointed to a branch that does not exist.
+
 ## [7.0.0-beta14] - 2026-10-12
 
 ### Added
