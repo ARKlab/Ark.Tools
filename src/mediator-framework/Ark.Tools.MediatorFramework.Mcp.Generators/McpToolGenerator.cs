@@ -115,21 +115,28 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 return CreateGroups(markerModels.Values, source.Values, referenced.Values, assemblyName, cancellationToken);
             })
             .WithTrackingName(ModelTrackingName);
-        var documentationAssemblies = groups
-            .Select(static (model, _) => model.DocumentationAssemblyNames);
+        var documentationRequest = groups
+            .Select(static (model, _) => CreateDocumentationRequest(model));
+        // Each relevant XML file is parsed on its own, keeping only the members the emitter looks up,
+        // so editing one file or an unrelated one does not reparse the others.
         var additionalDocumentation = context.AdditionalTextsProvider
             .Where(static text => string.Equals(Path.GetExtension(text.Path), ".xml", StringComparison.OrdinalIgnoreCase))
-            .Select(static (text, cancellationToken) => GetDocumentationFile(text, cancellationToken))
+            .Combine(documentationRequest)
+            .Where(static pair => !pair.Right.MemberIds.IsEmpty && pair.Right.AssemblyNames.Values.Contains(
+                Path.GetFileNameWithoutExtension(pair.Left.Path), StringComparer.Ordinal))
+            .Select(static (pair, cancellationToken) => GetDocumentationFile(pair.Left, pair.Right.MemberIds.Values, cancellationToken))
             .WithTrackingName(DocumentationParserTrackingName)
             .Collect()
-            .Combine(documentationAssemblies)
-            .Select(static (pair, cancellationToken) => new EquatableArray<DocumentationAssembly>(
-                GetAdditionalDocumentation(pair.Left, pair.Right.Values, cancellationToken)));
+            .Select(static (files, _) => new EquatableArray<DocumentationAssembly>(GetAdditionalDocumentation(files)));
+        var additionalDocumentationAssemblies = additionalDocumentation
+            .Select(static (documentation, _) => new EquatableArray<string>(documentation.Values
+                .Select(static assembly => assembly.AssemblyName)
+                .ToImmutableArray()));
         var referencedDocumentation = referenceScope
-            .Combine(documentationAssemblies)
-            .Combine(additionalDocumentation)
+            .Combine(documentationRequest)
+            .Combine(additionalDocumentationAssemblies)
             .Select(static (input, cancellationToken) => new EquatableArray<DocumentationAssembly>(
-                GetReferencedDocumentation(input.Left.Left, input.Left.Right.Values, input.Right.Values, cancellationToken)))
+                GetReferencedDocumentation(input.Left.Left, input.Left.Right, input.Right.Values, cancellationToken)))
             .WithTrackingName(ReferencedDocumentationTrackingName);
 
         // The emitted source reads no locations or diagnostics, so an edit that only shifts lines leaves the
@@ -255,12 +262,48 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 new LinePosition(location.StartLine, location.StartCharacter),
                 new LinePosition(location.EndLine, location.EndCharacter)));
 
-    private static DocumentationFileModel GetDocumentationFile(AdditionalText text, CancellationToken cancellationToken)
+    private static DocumentationFileModel GetDocumentationFile(
+        AdditionalText text,
+        ImmutableArray<string> memberIds,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return new DocumentationFileModel(
-            NormalizePath(text.Path),
-            text.GetText(cancellationToken)?.ToString() ?? string.Empty);
+        var path = NormalizePath(text.Path);
+        var assemblyName = Path.GetFileNameWithoutExtension(text.Path);
+        try
+        {
+            var document = XDocument.Parse(text.GetText(cancellationToken)?.ToString() ?? string.Empty, LoadOptions.None);
+            return new DocumentationFileModel(path, assemblyName, GetDocumentationMembers(document, memberIds));
+        }
+        catch (XmlException)
+        {
+            return new DocumentationFileModel(path, assemblyName, null);
+        }
+    }
+
+    // Mirrors CreateTool: only members without in-source XML or a DescriptionAttribute are looked up
+    // in documentation files by the emitter.
+    private static DocumentationRequest CreateDocumentationRequest(McpModel model)
+    {
+        var memberIds = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var contract in model.Groups.SelectMany(static group => group.Contracts))
+        {
+            if (!contract.HasDescriptionAttribute)
+            {
+                AddDocumentationId(memberIds, contract.Documentation);
+                AddDocumentationId(memberIds, contract.ContainingTypeDocumentation);
+            }
+            foreach (var property in contract.Properties.Where(static property => !property.HasDescriptionAttribute))
+                AddDocumentationId(memberIds, property.Documentation);
+        }
+
+        return new DocumentationRequest(model.DocumentationAssemblyNames, memberIds.ToImmutableArray());
+    }
+
+    private static void AddDocumentationId(SortedSet<string> memberIds, DocumentationSource? source)
+    {
+        if (source is { DocumentationId: { } documentationId } documentation && string.IsNullOrWhiteSpace(documentation.Xml))
+            memberIds.Add(documentationId);
     }
 
     private static McpModel CreateGroups(
@@ -604,53 +647,27 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return null;
     }
 
+    // Per assembly, the first file by path wins; a malformed winner leaves the assembly to referenced documentation.
     private static ImmutableArray<DocumentationAssembly> GetAdditionalDocumentation(
-        ImmutableArray<DocumentationFileModel> additionalDocumentationFiles,
-        ImmutableArray<string> assemblyNames,
-        CancellationToken cancellationToken)
-    {
-        var documentationFiles = ImmutableArray.CreateBuilder<DocumentationAssembly>();
-        foreach (var assemblyName in assemblyNames)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var documentationFile = additionalDocumentationFiles
-                .Where(file => string.Equals(
-                    Path.GetFileNameWithoutExtension(file.Path),
-                    assemblyName,
-                    StringComparison.Ordinal))
-                .OrderBy(static file => file.Path, StringComparer.Ordinal)
-                .Select(static file => (DocumentationFileModel?)file)
-                .FirstOrDefault();
-            if (!documentationFile.HasValue)
-                continue;
-
-            try
-            {
-                documentationFiles.Add(new DocumentationAssembly(
-                    assemblyName,
-                    GetDocumentationMembers(XDocument.Parse(documentationFile.Value.Content, LoadOptions.None))));
-            }
-            catch (XmlException)
-            {
-                continue;
-            }
-        }
-
-        return documentationFiles.ToImmutable();
-    }
+        ImmutableArray<DocumentationFileModel> additionalDocumentationFiles)
+        => additionalDocumentationFiles
+            .GroupBy(static file => file.AssemblyName, StringComparer.Ordinal)
+            .Select(static files => files.OrderBy(static file => file.Path, StringComparer.Ordinal).First())
+            .Where(static file => file.Members is not null)
+            .OrderBy(static file => file.AssemblyName, StringComparer.Ordinal)
+            .Select(static file => new DocumentationAssembly(file.AssemblyName, file.Members!.Value))
+            .ToImmutableArray();
 
     private static ImmutableArray<DocumentationAssembly> GetReferencedDocumentation(
         Compilation compilation,
-        ImmutableArray<string> assemblyNames,
-        ImmutableArray<DocumentationAssembly> additionalDocumentation,
+        DocumentationRequest request,
+        ImmutableArray<string> additionalDocumentationAssemblies,
         CancellationToken cancellationToken)
     {
-        var selectedAssemblyNames = new HashSet<string>(assemblyNames, StringComparer.Ordinal);
-        var loadedAssemblyNames = new HashSet<string>(
-            additionalDocumentation.Select(static documentation => documentation.AssemblyName),
-            StringComparer.Ordinal);
+        var selectedAssemblyNames = new HashSet<string>(request.AssemblyNames, StringComparer.Ordinal);
+        var loadedAssemblyNames = new HashSet<string>(additionalDocumentationAssemblies, StringComparer.Ordinal);
         var documentationFiles = ImmutableArray.CreateBuilder<DocumentationAssembly>();
-        if (selectedAssemblyNames.Count == 0)
+        if (selectedAssemblyNames.Count == 0 || request.MemberIds.IsEmpty)
             return documentationFiles.ToImmutable();
 
         foreach (var reference in compilation.References)
@@ -684,7 +701,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             {
                 documentationFiles.Add(new DocumentationAssembly(
                     assembly.Name,
-                    GetDocumentationMembers(XDocument.Load(documentationFile))));
+                    GetDocumentationMembers(XDocument.Load(documentationFile), request.MemberIds.Values)));
                 loadedAssemblyNames.Add(assembly.Name);
             }
             catch (IOException)
@@ -700,17 +717,18 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return documentationFiles.ToImmutable();
     }
 
-    private static ImmutableArray<DocumentationMember> GetDocumentationMembers(XDocument document)
+    private static ImmutableArray<DocumentationMember> GetDocumentationMembers(XDocument document, ImmutableArray<string> memberIds)
     {
         var members = ImmutableArray.CreateBuilder<DocumentationMember>();
         var names = new HashSet<string>(StringComparer.Ordinal);
+        var wanted = new HashSet<string>(memberIds, StringComparer.Ordinal);
         var membersElement = document.Root?.Element("members");
         if (membersElement is not null)
         {
             foreach (var member in membersElement.Elements("member"))
             {
                 var name = member.Attribute("name")?.Value;
-                if (name is not null && names.Add(name))
+                if (name is not null && wanted.Contains(name) && names.Add(name))
                     members.Add(new DocumentationMember(name, member.ToString(SaveOptions.DisableFormatting)));
             }
         }
@@ -1001,7 +1019,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static string Literal(string value)
         => SyntaxFactory.Literal(value).ToFullString();
 
-    private readonly record struct DocumentationFileModel(string Path, string Content);
+    private readonly record struct DocumentationFileModel(string Path, string AssemblyName, EquatableArray<DocumentationMember>? Members);
+    private sealed record DocumentationRequest(EquatableArray<string> AssemblyNames, EquatableArray<string> MemberIds);
     private readonly record struct DocumentationMember(string Id, string Xml);
     private sealed record DocumentationAssembly(string AssemblyName, EquatableArray<DocumentationMember> Members);
     private readonly record struct DocumentationSource(string Xml, string AssemblyName, string? DocumentationId);
