@@ -114,15 +114,18 @@
     <ItemGroup>
       <FileWrites Include="$(_ArkComplianceSqlTokensCache)" />
     </ItemGroup>
-    <!-- The stamp lists the scripts the last run wrote: if one of them is gone, drop the stamp so the scripts are written again. -->
+    <!-- The stamp lists the scripts the last run wrote: if one of them is gone, or the folder holds a script it did not
+         write, drop the stamp so the task runs, writes the scripts again and deletes the stray ones. -->
     <ReadLinesFromFile File="$(_ArkComplianceSqlStamp)" Condition="Exists('$(_ArkComplianceSqlStamp)')">
       <Output TaskParameter="Lines" ItemName="_ArkComplianceSqlStamped" />
     </ReadLinesFromFile>
     <ItemGroup>
       <_ArkComplianceSqlMissing Include="%(_ArkComplianceSqlStamped.Identity)"
                                 Condition="'%(_ArkComplianceSqlStamped.Identity)' != '' and !Exists('$(ArkComplianceSqlOutputPath)/%(_ArkComplianceSqlStamped.Identity)')" />
+      <_ArkComplianceSqlPresent Include="$(ArkComplianceSqlOutputPath)/policy-*.compliance.sql" />
+      <_ArkComplianceSqlStray Include="@(_ArkComplianceSqlPresent->'%(Filename)%(Extension)')" Exclude="@(_ArkComplianceSqlStamped)" />
     </ItemGroup>
-    <Delete Files="$(_ArkComplianceSqlStamp)" Condition="'@(_ArkComplianceSqlMissing)' != ''" />
+    <Delete Files="$(_ArkComplianceSqlStamp)" Condition="'@(_ArkComplianceSqlMissing)' != '' or '@(_ArkComplianceSqlStray)' != ''" />
   </Target>
 
   <!-- The inline task is compiled by RoslynCodeTaskFactory on first use in each MSBuild node, which costs seconds:

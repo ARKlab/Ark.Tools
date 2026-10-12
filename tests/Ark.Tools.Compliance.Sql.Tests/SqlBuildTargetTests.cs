@@ -172,6 +172,15 @@ public sealed class SqlBuildTargetTests
             restored.Log.Should().NotContain(skipped);
             (await File.ReadAllTextAsync(script).ConfigureAwait(false)).Should().Contain("[one]");
 
+            // A stray policy script the last run did not write is deleted, not listed.
+            var stray = Path.Join(directory, "obj", "ArkCompliance.Sql", "policy-" + new string('b', 64) + ".compliance.sql");
+            await File.WriteAllTextAsync(stray, "-- stale").ConfigureAwait(false);
+            var cleaned = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-p:SchemaValue=one", "-v:d").ConfigureAwait(false);
+            cleaned.ExitCode.Should().Be(0, cleaned.Log);
+            File.Exists(stray).Should().BeFalse();
+            (await File.ReadAllLinesAsync(Path.Join(directory, "outputs.txt")).ConfigureAwait(false))
+                .Should().ContainSingle().Which.Should().EndWith(_fileName);
+
             var third = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-p:SchemaValue=two", "-v:d").ConfigureAwait(false);
             third.ExitCode.Should().Be(0, third.Log);
             third.Log.Should().NotContain(skipped);
