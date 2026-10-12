@@ -432,14 +432,19 @@ namespace Ark.Tools.MediatorFramework.Generators
             Compilation compilation,
             CancellationToken cancellationToken)
         {
+            var networkAttr = compilation.GetTypeByMetadataName(MessagingNetworkAttribute);
+            if (networkAttr is null)
+                return ImmutableArray<TypeReference>.Empty;
+
             var builder = ImmutableArray.CreateBuilder<TypeReference>();
-            foreach (var assembly in compilation.SourceModule.ReferencedAssemblySymbols)
+            // Only assemblies that reference the attribute's assembly can declare a network.
+            foreach (var assembly in _referencedAssemblies(compilation, networkAttr.ContainingAssembly))
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 foreach (var type in _allTypes(assembly.GlobalNamespace))
                 {
                     if (type.GetAttributes().Any(
-                        attribute => attribute.AttributeClass?.ToDisplayString() == MessagingNetworkAttribute))
+                        attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, networkAttr)))
                         builder.Add(new TypeReference(assembly.Name, GetMetadataName(type)));
                 }
             }
