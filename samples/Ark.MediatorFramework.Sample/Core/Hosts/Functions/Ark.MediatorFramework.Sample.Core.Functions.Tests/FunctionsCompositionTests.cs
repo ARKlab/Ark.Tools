@@ -6,7 +6,6 @@ extern alias Notifications;
 extern alias Processor;
 
 using Ark.MediatorFramework.Sample.Core.Functions.Hosting;
-using Ark.Tools.MediatorFramework;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Outbox;
@@ -42,7 +41,7 @@ public sealed class FunctionsCompositionTests
         })
         .Build();
 
-    /// <summary>The Api app hosts a producer: it receives nothing and enlists through the development pass-through.</summary>
+    /// <summary>The Api app hosts a producer: it receives nothing and sends through the development pass-through.</summary>
     [TestMethod]
     public async Task ApiAppIsProducerOnly()
     {
@@ -58,7 +57,6 @@ public sealed class FunctionsCompositionTests
 
         services.Should().NotContain(static service => service.ServiceType == typeof(MessagingTriggeredHostMarker));
         provider.GetServices<IHostedService>().OfType<MessagingProcessorHost>().Should().BeEmpty();
-        await _enlistAsync(provider).ConfigureAwait(false);
     }
 
     /// <summary>Each trigger app is generated for exactly one participant.</summary>
@@ -72,7 +70,7 @@ public sealed class FunctionsCompositionTests
 
     /// <summary>
     /// Each trigger app finds every generated handler and never polls the outbox. Only the Processor, whose handler
-    /// publishes, enlists (through the development pass-through); the subscribers send nothing and reject enlistment.
+    /// publishes, selects the development pass-through; the subscribers send nothing.
     /// </summary>
     /// <param name="app">The trigger app.</param>
     [TestMethod]
@@ -106,11 +104,6 @@ public sealed class FunctionsCompositionTests
         var hosted = provider.GetServices<IHostedService>().ToArray();
         hosted.OfType<MessagingProcessorHost>().Should().BeEmpty();
         hosted.OfType<MessagingOutboxProcessor>().Should().BeEmpty();
-        var enlist = async () => await _enlistAsync(provider).ConfigureAwait(false);
-        if (processor)
-            await enlist.Should().NotThrowAsync().ConfigureAwait(false);
-        else
-            await enlist.Should().ThrowAsync<InvalidOperationException>().WithMessage("*has no outbox*").ConfigureAwait(false);
     }
 
     /// <summary>Bridges the Processor app's container into Microsoft DI for scoped processor dispatch.</summary>
@@ -140,15 +133,6 @@ public sealed class FunctionsCompositionTests
         recorder.Observations[0].OuterScopeId.Should().Be(recorder.Observations[0].InnerScopeId);
         recorder.Observations[1].OuterScopeId.Should().Be(recorder.Observations[1].InnerScopeId);
         recorder.Observations[0].OuterScopeId.Should().NotBe(recorder.Observations[1].OuterScopeId);
-    }
-
-    // Enlists and completes an empty scope, as a handler that sends nothing would.
-    private static async Task _enlistAsync(IServiceProvider provider)
-    {
-        var context = await new InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
-        await using var __context = context.ConfigureAwait(false);
-        using var scope = provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
-        await scope.CompleteAsync().ConfigureAwait(false);
     }
 
     private static ApplicationOptions _inMemoryOptions()

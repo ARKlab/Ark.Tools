@@ -91,7 +91,7 @@ Injector, with the processor bridge exposing them to the Functions host.
 `Ark.Tools.MediatorFramework.AzureFunctions` itself is container-agnostic and
 resolves processors from Microsoft dependency injection only; bridge it into
 SimpleInjector with `AddArkSolidProcessors` and, for the reverse direction
-(`IBus`/`IBusOutboxEnlistment`/`IContextProvider<ClaimsPrincipal>`),
+(`IBus`/`IContextProvider<ClaimsPrincipal>`),
 `Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector`'s
 `AddArkAzureFunctionsSimpleInjectorBridge`.
 
@@ -109,8 +109,8 @@ builder.Services.AddArkAzureFunctionsSimpleInjectorBridge(container);
 ```
 
 The Functions entry point rejects in-memory receive transport and hosted native
-outbox processing. `UseOutbox()` enables enqueue enlistment only; polling remains
-owned by a separate native host.
+outbox processing. The bus stages the sends made in an `OutboxScope` with or
+without `UseOutbox()`; polling remains owned by a separate native host.
 
 ## Layer responsibilities
 
@@ -374,7 +374,7 @@ pipeline steps, dispatcher, settlement, and resource lifecycle against
 Microsoft dependency injection. It rejects receive-capable InMemory composition
 and transport/manifest drift. Applications composed with SimpleInjector bridge
 handlers and processors with `Ark.Tools.Solid.SimpleInjector` and, for
-`IBus`/`IBusOutboxEnlistment`, with
+`IBus`, with
 `Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector`.
 
 The connection key accepts either a scalar connection string/namespace or the
@@ -395,16 +395,28 @@ Rebus topology is a separate all-Rebus deployment, as in the `WebRebus` variant.
 
 ## Host the native SQL outbox processor separately
 
-Native `IBus` send and publish calls can enlist the application's existing
-`IOutboxContextCore`. `UseOutbox` is safe in sender and Functions processes
-because it starts no polling loop. The application
-transaction commits both state and validated envelopes, or rolls both back.
+A handler opens an `OutboxScope` (from `Ark.Tools.Outbox`) over the
+application's `IOutboxContextCore`, sends or publishes through `IBus`, completes
+the scope, and then commits. The application transaction commits both state and
+validated envelopes, or rolls both back:
 
-Enlistment requires an outbox. When a participant is composed without
-`UseOutbox()`, `IBusOutboxEnlistment.Enlist` throws an
-`InvalidOperationException` that names the participant, instead of staging
-messages that nothing would send. A participant whose handlers never enlist
-needs no outbox.
+```csharp
+using var scope = new OutboxScope(context.OutboxContext);
+await _bus.Send(new ProcessBookPrintProcessRequest { Id = process.Id }, cancellationToken: ctk);
+await scope.CompleteAsync(ctk);
+await context.CommitAsync(ctk);
+```
+
+The scope is ambient, like Rebus's `RebusTransactionScope`: open it in the method
+that sends. Every bus honors it, because the outbox wraps the transport, not the
+bus: a send made in an open scope is staged in the scope instead of reaching the
+transport. Disposing the scope without completing it discards the staged
+messages; sends made outside a scope go straight to the transport. Handlers need
+no outbox-specific dependency and no check that the bus supports one.
+
+`UseOutbox()` is optional and starts no polling loop, so it is safe in sender and
+Functions processes. Staged rows need an outbox processor host that drains the
+same outbox store.
 
 For local development of a host that has no outbox to drain, such as an Azure
 Functions-only deployment, select the pass-through:
@@ -413,16 +425,20 @@ Functions-only deployment, select the pass-through:
 producer.UseOutbox(outbox => outbox.UseDevelopmentPassthrough());
 ```
 
-`Enlist` then returns a scope that does nothing, and each send goes straight to
-the transport when the handler makes it. This is **not atomic**: the message is
+Handlers keep opening and completing their `OutboxScope` unchanged, but the scope
+stages nothing, and each send goes straight to the transport when the handler
+makes it. This is **not atomic**: the message is
 sent before the application transaction commits, so a failed commit leaves a
 message sent for a change that was not stored. The participant's startup check
 refuses to start the host unless its `IHostEnvironment` is `Development`; a host
 without a registered `IHostEnvironment` is refused too. Do not use it in
 production.
 
-`RebusMessagingBus` follows the same rule: pass `outboxEnabled: true` when its
-Rebus transport is configured with `Outbox(...)`; otherwise `Enlist` throws.
+Under Rebus the outbox is Rebus's transport decorator, `Outbox(...)`, which stages
+the sends made in an open `OutboxScope`. Pass `outboxEnabled: true` to
+`RebusMessagingBus` when its transport is configured with it; otherwise a send
+made in an open scope throws, instead of reaching the broker before the
+application commits.
 
 An always-running custom process owns the complementary registration:
 
@@ -431,8 +447,8 @@ services.AddSingleton<IMessagingTransport>(transport);
 services.AddArkMessagingOutboxProcessor(outboxContextFactory, batchSize: 10);
 ```
 
-Registering the processor does not opt a participant into enlistment: each
-participant whose handlers enlist still calls `UseOutbox()`.
+`UseOutbox(contextFactory, batchSize)` registers the same processor from the
+participant's composition.
 
 The registered `MessagingOutboxProcessor` is the single `IHostedService` for the
 reserved `outbox-processor` identity. It uses the existing

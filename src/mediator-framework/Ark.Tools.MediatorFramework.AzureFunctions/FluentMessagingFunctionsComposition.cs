@@ -182,7 +182,7 @@ public sealed class MessagingFunctionsCompositionBuilder
         return this;
     }
 
-    /// <summary>Enables transactional outbox enlistment without hosting a processor.</summary>
+    /// <summary>Stages the sends made in an outbox scope, the default, without hosting a processor.</summary>
     /// <returns>This builder.</returns>
     public MessagingFunctionsCompositionBuilder UseOutbox()
     {
@@ -340,8 +340,8 @@ public sealed class MessagingFunctionsOutboxBuilder
     }
 
     /// <summary>
-    /// Development only: <see cref="IBusOutboxEnlistment.Enlist"/> returns a scope that does nothing, and every send
-    /// goes straight to the transport.
+    /// Development only: an open <see cref="Ark.Tools.Outbox.OutboxScope"/> stages nothing, and every send goes
+    /// straight to the transport. Handlers keep using the scope unchanged.
     /// </summary>
     /// <remarks>
     /// Not atomic: a message is sent when the handler sends it, before the application transaction commits, so a
@@ -355,7 +355,7 @@ public sealed class MessagingFunctionsOutboxBuilder
         return this;
     }
 
-    /// <summary>Enables transactional outbox enlistment.</summary>
+    /// <summary>Stages the sends made in an outbox scope, the default.</summary>
     /// <returns>This builder.</returns>
     public MessagingFunctionsOutboxBuilder UseEnqueue()
     {
@@ -548,7 +548,7 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
             "Azure Functions cannot host the native messaging outbox processor.");
     }
 
-    /// <summary>Enables transactional outbox enlistment without hosting a processor.</summary>
+    /// <summary>Stages the sends made in an outbox scope, the default, without hosting a processor.</summary>
     /// <returns>This builder.</returns>
     public MessagingFunctionsCompositionBuilder<TNetwork, TParticipant, THost> UseOutbox()
     {
@@ -600,7 +600,7 @@ public sealed class MessagingFunctionsCompositionBuilder<TNetwork, TParticipant,
             dataBus,
             _transport.Value,
             _storageQueueSettings,
-            outbox: _outbox ?? MessagingOutboxMode.None);
+            outbox: _outbox ?? MessagingOutboxMode.Enqueue);
     }
 
     private void _selectOutbox(MessagingOutboxMode mode)

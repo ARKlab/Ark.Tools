@@ -5,7 +5,7 @@ compose their application with SimpleInjector.
 
 `Ark.Tools.MediatorFramework.AzureFunctions` is container-agnostic: it resolves
 `IRequestProcessor`/`IQueryProcessor`/`ICommandProcessor` and pipeline steps from Microsoft
-dependency injection, and registers `IBus`/`IBusOutboxEnlistment` directly in the Functions
+dependency injection, and registers `IBus` directly in the Functions
 `IServiceCollection` when composing native messaging. Applications that keep SimpleInjector as
 their handler/decorator container need those services surfaced inside their own container too.
 
@@ -21,7 +21,7 @@ builder.Services
     {
         host.UseAzureServiceBus();
     })
-    .AddArkAzureFunctionsSimpleInjectorBridge(container); // exposes IBus/IBusOutboxEnlistment/IContextProvider<ClaimsPrincipal> to `container`
+    .AddArkAzureFunctionsSimpleInjectorBridge(container); // exposes IBus/IContextProvider<ClaimsPrincipal> to `container`
 ```
 
 Call `AddArkAzureFunctionsSimpleInjectorBridge` last, after `AddArkAzureFunctions` and any

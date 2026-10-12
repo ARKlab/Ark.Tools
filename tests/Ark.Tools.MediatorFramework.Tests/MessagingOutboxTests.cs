@@ -20,14 +20,14 @@ namespace Ark.Tools.MediatorFramework.Tests;
 public sealed partial class MessagingOutboxTests
 {
     [TestMethod]
-    public async Task EnlistedOperationsPersistValidatedEnvelopesOnCompletion()
+    public async Task ScopedOperationsPersistValidatedEnvelopesOnCompletion()
     {
         var transport = new RecordingTransport();
         using var bus = _createBus(transport);
         var factory = new InMemoryOutboxContextFactory();
         var context = await factory.CreateAsync().ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
-        using (var scope = ((IBusOutboxEnlistment)bus).Enlist(context))
+        using (var scope = new OutboxScope(context))
         {
             await bus.Send(
                 new TestMessage { Value = "send" },
@@ -75,7 +75,7 @@ public sealed partial class MessagingOutboxTests
         var factory = new InMemoryOutboxContextFactory();
         var context = await factory.CreateAsync().ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
-        using (((IBusOutboxEnlistment)bus).Enlist(context))
+        using (new OutboxScope(context))
             await bus.Send(new TestMessage { Value = "discarded" }).ConfigureAwait(false);
         await context.CommitAsync().ConfigureAwait(false);
 
@@ -172,20 +172,31 @@ public sealed partial class MessagingOutboxTests
     }
 
     [TestMethod]
-    public async Task EnlistWithoutOutboxFailsNamingTheParticipantAndUseOutbox()
+    public async Task OneScopeStagesTheSendsOfEveryBus()
     {
-        using var bus = _createBus(new RecordingTransport(), outboxMode: MessagingOutboxMode.None);
-        var context = await new InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        var first = new RecordingTransport();
+        var second = new RecordingTransport();
+        using var firstBus = _createBus(first);
+        using var secondBus = _createBus(second, participantIdentity: "other");
+        var factory = new InMemoryOutboxContextFactory();
+        var context = await factory.CreateAsync().ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
 
-        var enlist = () => ((IBusOutboxEnlistment)bus).Enlist(context);
+        using (var scope = new OutboxScope(context))
+        {
+            await firstBus.Send(new TestMessage { Value = "first" }).ConfigureAwait(false);
+            await secondBus.Send(new TestMessage { Value = "second" }).ConfigureAwait(false);
+            await scope.CompleteAsync().ConfigureAwait(false);
+        }
+        await context.CommitAsync().ConfigureAwait(false);
 
-        enlist.Should().Throw<InvalidOperationException>()
-            .WithMessage("Messaging participant 'sender' has no outbox*UseOutbox()*");
+        first.Sends.Should().BeEmpty();
+        second.Sends.Should().BeEmpty();
+        (await _countAsync(factory).ConfigureAwait(false)).Should().Be(2);
     }
 
     [TestMethod]
-    public async Task DevelopmentPassthroughEnlistIsNoOpAndSendsDirectly()
+    public async Task DevelopmentPassthroughScopeIsNoOpAndSendsDirectly()
     {
         var transport = new RecordingTransport();
         using var bus = _createBus(transport, outboxMode: MessagingOutboxMode.DevelopmentPassthrough);
@@ -193,7 +204,7 @@ public sealed partial class MessagingOutboxTests
         var context = await factory.CreateAsync().ConfigureAwait(false);
         await using var __context = context.ConfigureAwait(false);
 
-        using (var scope = ((IBusOutboxEnlistment)bus).Enlist(context))
+        using (var scope = new OutboxScope(context))
         {
             await bus.Send(new TestMessage { Value = "direct" }).ConfigureAwait(false);
             transport.Sends.Should().ContainSingle();
@@ -202,30 +213,6 @@ public sealed partial class MessagingOutboxTests
         await context.CommitAsync().ConfigureAwait(false);
 
         (await _countAsync(factory).ConfigureAwait(false)).Should().Be(0);
-    }
-
-    [TestMethod]
-    [DataRow(MessagingOutboxMode.DevelopmentPassthrough)]
-    [DataRow((MessagingOutboxMode)42)]
-    public void DirectConstructionRejectsPassthroughAndUndefinedModes(MessagingOutboxMode outboxMode)
-    {
-        var network = new MessagingNetworkOptions(
-            typeof(MessagingOutboxTests),
-            new MessagingNetworkAttribute { Requires = MessagingCapabilities.SendReceive });
-        var create = () => new MessagingBus(
-            new RecordingTransport(),
-            network,
-            new TestContractRegistry(network.NetworkIdentity),
-            new MessagingCodecRegistry([new JsonMessagingCodec(new JsonSerializerOptions { RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true })]),
-            new MessagingPayloadSender(
-                new InMemoryMessagingDataBus(NodaTime.SystemClock.Instance, NodaTime.Duration.FromDays(2)),
-                network,
-                CompressionAlgorithm.None,
-                0),
-            "sender",
-            outboxMode: outboxMode);
-
-        create.Should().Throw<ArgumentOutOfRangeException>().WithParameterName(nameof(outboxMode));
     }
 
     private static MessagingBus _createBus(
@@ -261,12 +248,12 @@ public sealed partial class MessagingOutboxTests
                 CompressionAlgorithm.None,
                 0),
             participantIdentity,
+            pipelineProcessor: null,
+            outgoingStepTypes: null,
             utcNow: static () => DateTimeOffset.Parse(
                 "2024-01-01T00:00:00Z",
-                CultureInfo.InvariantCulture))
-        {
-            _outboxMode = outboxMode,
-        };
+                CultureInfo.InvariantCulture),
+            outboxMode);
     }
 
     private static Dictionary<string, string> _outboxHeaders(string messageId)

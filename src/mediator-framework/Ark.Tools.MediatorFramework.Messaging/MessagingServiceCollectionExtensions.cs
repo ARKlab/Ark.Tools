@@ -66,7 +66,7 @@ public static class MessagingServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>Registers how the participant's bus handles outbox enlistment.</summary>
+    /// <summary>Registers how the participant's bus handles an open outbox scope.</summary>
     /// <param name="services">The service collection.</param>
     /// <param name="mode">The selected outbox mode.</param>
     /// <returns>The same service collection.</returns>
@@ -231,15 +231,10 @@ public static class MessagingServiceCollectionExtensions
                 participantIdentity,
                 serviceProvider.GetRequiredService<IMessagingPipelineProcessor>(),
                 outgoingStepTypes,
-                utcNow: null)
-        {
-            // Read at resolve time: composition may register the outbox before or after the participant.
-            // Set past the constructor, which refuses the pass-through outside a host that checks the environment.
-            _outboxMode = serviceProvider.GetService<MessagingOutboxRegistration>()?.Mode ?? MessagingOutboxMode.None,
-        });
+                utcNow: null,
+                // Read at resolve time: composition may register the outbox before or after the participant.
+                serviceProvider.GetService<MessagingOutboxRegistration>()?.Mode ?? MessagingOutboxMode.Enqueue));
         services.AddSingleton<IBus>(
-            static serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
-        services.AddSingleton<IBusOutboxEnlistment>(
             static serviceProvider => serviceProvider.GetRequiredService<MessagingBus>());
         return services;
     }
@@ -511,19 +506,17 @@ internal sealed class MessagingParticipantStartupValidator : IHostedService
 
 internal sealed record MessagingOutboxRegistration(MessagingOutboxMode Mode);
 
-/// <summary>How a native bus handles <see cref="IBusOutboxEnlistment.Enlist"/>.</summary>
+/// <summary>How a native bus handles sends made while an <see cref="Ark.Tools.Outbox.OutboxScope"/> is open.</summary>
 /// <remarks>
-/// The fluent composition sets it from <c>UseOutbox</c>. A bus constructed directly takes <see cref="None"/> or
-/// <see cref="Enqueue"/>; <see cref="DevelopmentPassthrough"/> needs a composition, whose host checks the environment.
+/// The fluent composition sets it from <c>UseOutbox</c>; without it the bus uses <see cref="Enqueue"/>. A bus
+/// constructed directly always uses <see cref="Enqueue"/>; <see cref="DevelopmentPassthrough"/> needs a composition,
+/// whose host checks the environment.
 /// </remarks>
 public enum MessagingOutboxMode
 {
-    /// <summary>No outbox: enlisting throws.</summary>
-    None,
-
-    /// <summary>Enlisted sends are staged in the application outbox.</summary>
+    /// <summary>Sends are staged in the scope's application outbox. The default.</summary>
     Enqueue,
 
-    /// <summary>Development only: enlisting is a no-op and sends go straight to the transport.</summary>
+    /// <summary>Development only: the scope stages nothing and sends go straight to the transport.</summary>
     DevelopmentPassthrough,
 }

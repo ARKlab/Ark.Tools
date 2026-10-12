@@ -186,6 +186,5 @@ public static class WebHosting
         ArgumentNullException.ThrowIfNull(container);
         ArgumentNullException.ThrowIfNull(services);
         container.RegisterSingleton<IBus>(() => services().GetRequiredService<IBus>());
-        container.RegisterSingleton<IBusOutboxEnlistment>(() => services().GetRequiredService<IBusOutboxEnlistment>());
     }
 }

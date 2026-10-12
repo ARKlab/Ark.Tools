@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.AotSample.Core.API;
 using Ark.MediatorFramework.AotSample.Core.Application.DAL;
 using Ark.Tools.MediatorFramework;
+using Ark.Tools.Outbox;
 using Ark.Tools.Solid;
 
 using Microsoft.Extensions.Logging;
@@ -33,9 +34,7 @@ public sealed class Book_CreateRequestHandler(AotDataContextFactory factory, IBu
             Contact = request.Contact,
         };
         await context.InsertBookAsync(book, ctk).ConfigureAwait(false);
-        var enlistment = bus as IBusOutboxEnlistment
-            ?? throw new InvalidOperationException("The configured messaging bus does not support outbox enlistment.");
-        using var scope = enlistment.Enlist(context);
+        using var scope = new OutboxScope(context);
         await bus.Send(new PrintBookCommand { BookId = book.Id }, cancellationToken: ctk).ConfigureAwait(false);
         await scope.CompleteAsync(ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);

@@ -43,7 +43,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// Entity-shaping options for Service Bus provisioning, or <see langword="null"/> for the
     /// defaults. Bind these from configuration to reshape a deployment without a rebuild.
     /// </param>
-    /// <param name="outbox">How the participant's bus handles outbox enlistment.</param>
+    /// <param name="outbox">How the participant's bus handles sends made in an open outbox scope.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingFunctionsHost(
         this IServiceCollection services,
@@ -53,7 +53,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         MessagingFunctionsRuntimeTransport transport,
         StorageQueueFunctionsHostSettings? storageQueueHostSettings = null,
         ServiceBusMessagingOptions? serviceBusOptions = null,
-        MessagingOutboxMode outbox = MessagingOutboxMode.None)
+        MessagingOutboxMode outbox = MessagingOutboxMode.Enqueue)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -88,7 +88,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// <param name="management">Optional resource-management seam.</param>
     /// <param name="queueServiceClient">The Queue service client used by Storage Queue settlement.</param>
     /// <param name="storageQueueHostSettings">Effective Queue host settings, when applicable.</param>
-    /// <param name="outbox">How the participant's bus handles outbox enlistment.</param>
+    /// <param name="outbox">How the participant's bus handles sends made in an open outbox scope.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingFunctionsHost(
         this IServiceCollection services,
@@ -98,7 +98,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         IMessagingTransportManagement? management = null,
         QueueServiceClient? queueServiceClient = null,
         StorageQueueFunctionsHostSettings? storageQueueHostSettings = null,
-        MessagingOutboxMode outbox = MessagingOutboxMode.None)
+        MessagingOutboxMode outbox = MessagingOutboxMode.Enqueue)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(manifest);
@@ -111,21 +111,19 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             throw new InvalidOperationException(
                 "Azure Functions cannot host the native messaging outbox processor.");
         }
-        if (services.Any(static service =>
-            service.ServiceType == typeof(IBus) || service.ServiceType == typeof(IBusOutboxEnlistment)))
+        if (services.Any(static service => service.ServiceType == typeof(IBus)))
         {
             throw new InvalidOperationException(
-                "Azure Functions native messaging cannot be mixed with another bus outbox adapter.");
+                "Azure Functions native messaging cannot be mixed with another bus adapter.");
         }
 
         _validateManifest(manifest, transport);
-        if (outbox != MessagingOutboxMode.None)
-            services._addArkMessagingOutbox(outbox);
         var descriptor = manifest.Descriptor!;
         _validateHandlers(services, descriptor);
         _registerSteps(services, manifest.IncomingSteps);
         _registerSteps(services, manifest.OutgoingSteps);
         management ??= transport as IMessagingTransportManagement;
+        services._addArkMessagingOutbox(outbox);
         services._addArkMessagingParticipant(
             descriptor,
             transport,
