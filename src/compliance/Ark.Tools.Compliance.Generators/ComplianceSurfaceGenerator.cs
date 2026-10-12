@@ -33,25 +33,33 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var members = context.SyntaxProvider.CreateSyntaxProvider(
+        var enabled = context.AnalyzerConfigOptionsProvider.Select(static (options, _) =>
+            !(options.GlobalOptions.TryGetValue("build_property.EnableArkToolsCompliance", out var compliance)
+                && string.Equals(compliance, "false", StringComparison.OrdinalIgnoreCase))
+            && options.GlobalOptions.TryGetValue("build_property.ArkComplianceSurfaceEnabled", out var value)
+            && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase));
+        var members = _whenEnabled(context.SyntaxProvider.CreateSyntaxProvider(
                 static (node, _) => node is Microsoft.CodeAnalysis.CSharp.Syntax.BaseTypeDeclarationSyntax,
-                static (syntaxContext, token) => _parseType(syntaxContext, token))
+                static (syntaxContext, _) => syntaxContext), enabled)
+            .Select(static (syntaxContext, token) => _parseType(syntaxContext, token))
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!)
             .WithTrackingName(MemberSpecsTrackingName)
             .Collect()
             .Select(static (specs, _) => new ImmutableEquatableArray<TypeSpec>(specs));
-        var reveals = context.SyntaxProvider.CreateSyntaxProvider(
+        var reveals = _whenEnabled(context.SyntaxProvider.CreateSyntaxProvider(
                 static (node, _) => _isRevealCandidate(node),
-                static (syntaxContext, token) => _parseReveal(syntaxContext, token))
+                static (syntaxContext, _) => syntaxContext), enabled)
+            .Select(static (syntaxContext, token) => _parseReveal(syntaxContext, token))
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!.Value)
             .WithTrackingName(RevealSpecsTrackingName)
             .Collect()
             .Select(static (specs, _) => new ImmutableEquatableArray<RevealSpec>(specs));
-        var registrations = context.SyntaxProvider.CreateSyntaxProvider(
+        var registrations = _whenEnabled(context.SyntaxProvider.CreateSyntaxProvider(
                 static (node, _) => _isRegistrationCandidate(node),
-                static (syntaxContext, token) => _parseRegistration(syntaxContext, token))
+                static (syntaxContext, _) => syntaxContext), enabled)
+            .Select(static (syntaxContext, token) => _parseRegistration(syntaxContext, token))
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!)
             .WithTrackingName(RegistrationSpecsTrackingName)
@@ -68,19 +76,27 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
             .Select(static (file, token) => file.GetText(token)?.ToString())
             .Collect()
             .Select(static (files, _) => new ImmutableEquatableArray<string?>(files));
-        var enabled = context.AnalyzerConfigOptionsProvider.Select(static (options, _) =>
-            !(options.GlobalOptions.TryGetValue("build_property.EnableArkToolsCompliance", out var compliance)
-                && string.Equals(compliance, "false", StringComparison.OrdinalIgnoreCase))
-            && options.GlobalOptions.TryGetValue("build_property.ArkComplianceSurfaceEnabled", out var value)
-            && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase));
 
-        context.RegisterSourceOutput(inventory, static (production, surface) =>
-            production.AddSource("ArkComplianceSurface.g.cs", "/*\n" + surface.Text + "*/\n"));
+        context.RegisterSourceOutput(inventory.Combine(enabled), static (production, input) =>
+        {
+            if (input.Right)
+                production.AddSource("ArkComplianceSurface.g.cs", "/*\n" + input.Left.Text + "*/\n");
+        });
         context.RegisterSourceOutput(inventory.Combine(baselines).Combine(enabled), static (production, input) =>
         {
             var ((surface, files), isEnabled) = input;
             if (isEnabled)
                 _verify(production, surface, files);
         });
+    }
+
+    // The semantic parse runs only after the gate: a disabled surface must not bind every type on each edit.
+    private static IncrementalValuesProvider<GeneratorSyntaxContext> _whenEnabled(
+        IncrementalValuesProvider<GeneratorSyntaxContext> candidates,
+        IncrementalValueProvider<bool> enabled)
+    {
+        return candidates.Combine(enabled)
+            .Where(static candidate => candidate.Right)
+            .Select(static (candidate, _) => candidate.Left);
     }
 }
