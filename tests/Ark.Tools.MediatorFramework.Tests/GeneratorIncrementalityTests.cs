@@ -333,6 +333,61 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void McpGeneratorReusesOutputWhenAnUnrequestedDocumentationMemberChanges()
+    {
+        var contracts = _createReference(
+            "McpContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace McpContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class ListOrders : IQuery<string>
+            {
+                public string Filter { get; set; } = string.Empty;
+            }
+            """);
+        const string ListOrdersMember = "<member name=\"T:McpContracts.ListOrders\"><summary>Lists orders.</summary></member>";
+        var documentation = new TestAdditionalText(
+            "/documentation/McpContracts.xml",
+            "<doc><members>" + ListOrdersMember + "<member name=\"T:McpContracts.Marker\"><summary>Old.</summary></member></members></doc>");
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [CSharpSyntaxTree.ParseText("""
+                using Ark.Tools.MediatorFramework.Mcp;
+                [ArkGenerateMcpToolsForAssembly(typeof(McpContracts.Marker))]
+                public partial class McpContext { }
+                """, path: "Contracts.cs")],
+            _getReferences().Append(contracts),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new McpToolGenerator().AsSourceGenerator()],
+            additionalTexts: [documentation],
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+
+        driver = driver.RunGenerators(compilation);
+        var original = _describeOutput(driver);
+        original.Should().Contain("Description(\"Lists orders.\")");
+
+        driver = driver
+            .ReplaceAdditionalText(documentation, new TestAdditionalText(
+                "/documentation/McpContracts.xml",
+                "<doc><members>" + ListOrdersMember + "<member name=\"T:McpContracts.Marker\"><summary>New.</summary></member></members></doc>"))
+            .RunGenerators(compilation);
+
+        _describeOutput(driver).Should().Be(original);
+        _getStepReasons(driver, "McpDocumentationParser").Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Unchanged);
+        _getStepReasons(driver, "McpReferencedDocumentation").Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
+        _getOutputReasons(driver).Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorReusesCachedOutputOnUnrelatedEdit()
     {
         const string source = """
