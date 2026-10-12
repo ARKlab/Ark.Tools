@@ -40,6 +40,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private const string ReferencedContractsTrackingName = "McpReferencedContracts";
     private const string ReferencedDocumentationTrackingName = "McpReferencedDocumentation";
     private const string ModelTrackingName = "McpModel";
+    private const string EmissionInputTrackingName = "McpEmissionInput";
 
     private static readonly DiagnosticDescriptor InvalidName = new(
         "ARKMF050", "Use a valid MCP tool name", "MCP tool name '{0}' is invalid; rename the tool to a valid MCP identifier",
@@ -131,13 +132,29 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 GetReferencedDocumentation(input.Left.Left, input.Left.Right.Values, input.Right.Values, cancellationToken)))
             .WithTrackingName(ReferencedDocumentationTrackingName);
 
+        // The emitted source reads no locations or diagnostics, so an edit that only shifts lines leaves the
+        // emission input unchanged.
+        context.RegisterSourceOutput(
+            groups.Select(static (model, _) => model.ForEmission())
+                .Combine(additionalDocumentation)
+                .Combine(referencedDocumentation)
+                .WithTrackingName(EmissionInputTrackingName),
+            static (sourceProductionContext, input) =>
+                Emit(
+                    sourceProductionContext,
+                    input.Left.Left,
+                    input.Left.Right.Values.AddRange(input.Right.Values),
+                    diagnosticsOnly: false));
+
+        // Diagnostics only: reported at the real source locations so #pragma and EditorConfig suppressions apply.
         context.RegisterSourceOutput(
             groups.Combine(additionalDocumentation).Combine(referencedDocumentation),
             static (sourceProductionContext, input) =>
                 Emit(
                     sourceProductionContext,
                     input.Left.Left,
-                    input.Left.Right.Values.AddRange(input.Right.Values)));
+                    input.Left.Right.Values.AddRange(input.Right.Values),
+                    diagnosticsOnly: true));
     }
 
     private static EquatableArray<MarkerModel> GetMarkers(GeneratorAttributeSyntaxContext context)
@@ -301,7 +318,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static void Emit(
         SourceProductionContext context,
         McpModel model,
-        ImmutableArray<DocumentationAssembly> documentation)
+        ImmutableArray<DocumentationAssembly> documentation,
+        bool diagnosticsOnly)
     {
         if (model.Groups.IsEmpty)
             return;
@@ -323,6 +341,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             context.CancellationToken.ThrowIfCancellationRequested();
             if (group.InvalidLocation is not null)
             {
+                if (!diagnosticsOnly)
+                    continue;
                 context.ReportDiagnostic(Diagnostic.Create(
                     new DiagnosticDescriptor("ARKMF056", "Declare the MCP context as partial", "MCP context and containing types must be declared partial",
                         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
@@ -332,17 +352,22 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             }
 
             var contracts = group.Contracts
-                .Select(contract => CreateTool(contract, documentationFiles, context))
+                .Select(contract => CreateTool(contract, documentationFiles, context, diagnosticsOnly))
                 .Where(static tool => tool is not null)
                 .Select(static tool => tool!)
                 .OrderBy(static tool => tool.Contract.Name, StringComparer.Ordinal)
                 .ToImmutableArray();
 
-            var names = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var contract in contracts)
+            if (diagnosticsOnly)
             {
-                if (!names.Add(contract.Contract.Name))
-                    context.ReportDiagnostic(Diagnostic.Create(DuplicateName, contract.Contract.Location, contract.Contract.Name));
+                var names = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var contract in contracts)
+                {
+                    if (!names.Add(contract.Contract.Name))
+                        context.ReportDiagnostic(Diagnostic.Create(DuplicateName, contract.Contract.Location, contract.Contract.Name));
+                }
+
+                continue;
             }
 
             var source = Render(group.Context, contracts);
@@ -516,9 +541,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static ToolModel? CreateTool(
         ContractModel contract,
         IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> documentationFiles,
-        SourceProductionContext context)
+        SourceProductionContext context,
+        bool reportDiagnostics)
     {
-        foreach (var diagnostic in contract.Diagnostics)
+        foreach (var diagnostic in reportDiagnostics ? contract.Diagnostics : EquatableArray<DiagnosticInfo>.Empty)
             context.ReportDiagnostic(Diagnostic.Create(diagnostic.Descriptor, diagnostic.Location, diagnostic.Arguments.Cast<object>().ToArray()));
         if (!contract.IsValid)
             return null;
@@ -536,7 +562,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             : remarks is null
                 ? summary
                 : summary + " " + remarks;
-        if (description.Length == 0)
+        if (description.Length == 0 && reportDiagnostics)
             context.ReportDiagnostic(Diagnostic.Create(MissingDescription, contract.Location, contract.Name));
 
         var propertyDescriptions = contract.Properties
@@ -996,13 +1022,25 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         int StartCharacter,
         int EndLine,
         int EndCharacter);
-    private sealed record ContextGroup(ContextModel Context, MarkerLocation? InvalidLocation, EquatableArray<ContractModel> Contracts);
-    private sealed record McpModel(EquatableArray<ContextGroup> Groups, EquatableArray<string> DocumentationAssemblyNames);
+    private sealed record ContextGroup(ContextModel Context, MarkerLocation? InvalidLocation, EquatableArray<ContractModel> Contracts)
+    {
+        // Emission only needs to know the context is invalid, not where.
+        public ContextGroup ForEmission() => this with
+        {
+            InvalidLocation = InvalidLocation is null ? null : default(MarkerLocation),
+            Contracts = Contracts.Values.Select(static contract => contract.ForEmission()).ToImmutableArray(),
+        };
+    }
+    private sealed record McpModel(EquatableArray<ContextGroup> Groups, EquatableArray<string> DocumentationAssemblyNames)
+    {
+        // The emitted source reads neither locations nor diagnostics, so dropping them keeps it cached when lines shift.
+        public McpModel ForEmission() => this with { Groups = Groups.Values.Select(static group => group.ForEmission()).ToImmutableArray() };
+    }
     private sealed record AssemblyContracts(string AssemblyName, EquatableArray<ContractModel> Contracts);
 
     // Roslyn source locations compare by syntax tree and span, so edits in other files keep models equal while
     // reported diagnostics keep honoring #pragma and per-file EditorConfig suppressions.
-    // Any edit in the declaring file creates a new syntax tree and reruns the output.
+    // Any edit in the declaring file reruns the diagnostics output; ForEmission drops them from the emission input.
     private readonly record struct DiagnosticInfo
     {
         public DiagnosticInfo(DiagnosticDescriptor descriptor, Location? location, params string[] arguments)
@@ -1051,6 +1089,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         Location? Location)
     {
         public bool IsSelfTyped { get; init; }
+
+        public ContractModel ForEmission() => this with { Location = null, Diagnostics = EquatableArray<DiagnosticInfo>.Empty };
 
         public static ContractModel Invalid(
             string typeFullName,
