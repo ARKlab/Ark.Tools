@@ -43,6 +43,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// Entity-shaping options for Service Bus provisioning, or <see langword="null"/> for the
     /// defaults. Bind these from configuration to reshape a deployment without a rebuild.
     /// </param>
+    /// <param name="outbox">How the participant's bus handles outbox enlistment.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingFunctionsHost(
         this IServiceCollection services,
@@ -51,24 +52,28 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         IMessagingDataBus dataBus,
         MessagingFunctionsRuntimeTransport transport,
         StorageQueueFunctionsHostSettings? storageQueueHostSettings = null,
-        ServiceBusMessagingOptions? serviceBusOptions = null)
+        ServiceBusMessagingOptions? serviceBusOptions = null,
+        MessagingOutboxMode outbox = MessagingOutboxMode.None)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(dataBus);
+        if (!Enum.IsDefined(outbox))
+            throw new ArgumentOutOfRangeException(nameof(outbox), outbox, "Unknown messaging outbox mode.");
 
         return transport switch
         {
             MessagingFunctionsRuntimeTransport.AzureServiceBus =>
-                _addServiceBus(services, configuration, manifest, dataBus, serviceBusOptions),
+                _addServiceBus(services, configuration, manifest, dataBus, serviceBusOptions, outbox),
             MessagingFunctionsRuntimeTransport.AzureStorageQueue =>
                 _addStorageQueue(
                     services,
                     configuration,
                     manifest,
                     dataBus,
-                    storageQueueHostSettings),
+                    storageQueueHostSettings,
+                    outbox),
             _ => throw new ArgumentOutOfRangeException(nameof(transport))
         };
     }
@@ -83,6 +88,7 @@ internal static class MessagingFunctionsServiceCollectionExtensions
     /// <param name="management">Optional resource-management seam.</param>
     /// <param name="queueServiceClient">The Queue service client used by Storage Queue settlement.</param>
     /// <param name="storageQueueHostSettings">Effective Queue host settings, when applicable.</param>
+    /// <param name="outbox">How the participant's bus handles outbox enlistment.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddArkMessagingFunctionsHost(
         this IServiceCollection services,
@@ -91,12 +97,15 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         IMessagingDataBus dataBus,
         IMessagingTransportManagement? management = null,
         QueueServiceClient? queueServiceClient = null,
-        StorageQueueFunctionsHostSettings? storageQueueHostSettings = null)
+        StorageQueueFunctionsHostSettings? storageQueueHostSettings = null,
+        MessagingOutboxMode outbox = MessagingOutboxMode.None)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(dataBus);
+        if (!Enum.IsDefined(outbox))
+            throw new ArgumentOutOfRangeException(nameof(outbox), outbox, "Unknown messaging outbox mode.");
         if (services.Any(static service => service.ServiceType == typeof(MessagingOutboxProcessor)))
         {
             throw new InvalidOperationException(
@@ -110,6 +119,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         }
 
         _validateManifest(manifest, transport);
+        if (outbox != MessagingOutboxMode.None)
+            services._addArkMessagingOutbox(outbox);
         var descriptor = manifest.Descriptor!;
         _validateHandlers(services, descriptor);
         _registerSteps(services, manifest.IncomingSteps);
@@ -179,7 +190,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
         IMessagingDataBus dataBus,
-        ServiceBusMessagingOptions? serviceBusOptions)
+        ServiceBusMessagingOptions? serviceBusOptions,
+        MessagingOutboxMode outbox)
     {
         serviceBusOptions ??= new ServiceBusMessagingOptions();
         serviceBusOptions.Validate();
@@ -222,7 +234,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             manifest,
             transport,
             dataBus,
-            new ServiceBusTransportManagement(administration, serviceBusOptions));
+            new ServiceBusTransportManagement(administration, serviceBusOptions),
+            outbox: outbox);
         services.AddSingleton<IHostedService>(_ => new ServiceBusTransportLifetime(transport));
         return services;
 #pragma warning restore CA2000
@@ -233,7 +246,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         IConfiguration configuration,
         MessagingFunctionsManifest manifest,
         IMessagingDataBus dataBus,
-        StorageQueueFunctionsHostSettings? hostSettings)
+        StorageQueueFunctionsHostSettings? hostSettings,
+        MessagingOutboxMode outbox)
     {
         var connection = configuration[manifest.ConnectionConfigurationKey];
         var queueServiceUri = configuration[
@@ -293,7 +307,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
             dataBus,
             transport,
             client,
-            hostSettings);
+            hostSettings,
+            outbox);
     }
 
     private static void _validateManifest(

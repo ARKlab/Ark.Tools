@@ -231,6 +231,42 @@ public sealed class MessagingFunctionsCompositionTests
         services.Should().BeEmpty();
     }
 
+    /// <summary>The low-level Functions host takes the outbox mode its fluent counterpart selects with <c>UseOutbox</c>.</summary>
+    [TestMethod]
+    public async Task LowLevelFunctionsHostOutboxModeReachesTheBus()
+    {
+        var services = new ServiceCollection();
+        services.AddArkMessagingFunctionsHost(
+            _manifest(
+                MessagingFunctionsTriggerBinding.ServiceBus,
+                _descriptor(receives: false)),
+            new InMemoryMessagingTransport(),
+            _dataBus(),
+            outbox: MessagingOutboxMode.Enqueue);
+        await using var provider = services.BuildServiceProvider();
+        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        using var scope = provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+
+        provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
+    }
+
+    /// <summary>The low-level Functions host rejects an undefined outbox mode instead of treating it as enqueue.</summary>
+    [TestMethod]
+    public void LowLevelFunctionsHostRejectsUndefinedOutboxMode()
+    {
+        var services = new ServiceCollection();
+
+        var action = () => services.AddArkMessagingFunctionsHost(
+            _manifest(MessagingFunctionsTriggerBinding.ServiceBus, _descriptor(receives: false)),
+            new InMemoryMessagingTransport(),
+            _dataBus(),
+            outbox: (MessagingOutboxMode)42);
+
+        action.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("outbox");
+    }
+
     /// <summary>Verifies Functions composition cannot be mixed with the native polling processor.</summary>
     [TestMethod]
     public void NativeOutboxProcessorIsRejectedBeforeOrAfterFunctionsComposition()
@@ -374,6 +410,127 @@ public sealed class MessagingFunctionsCompositionTests
         MessagingFunctionsServiceCollectionExtensions
             ._serviceBusAdministrationConnectionString(configuration, "CompositionConnection")
             .Should().BeNull();
+    }
+
+    /// <summary>Without <c>UseOutbox</c>, enlisting fails instead of staging messages nothing sends.</summary>
+    [TestMethod]
+    public async Task FunctionsCompositionWithoutOutboxRejectsEnlistment()
+    {
+        await using var provider = _composeFunctionsProducer(Environments.Development, configureOutbox: null);
+        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        var enlist = () => provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+
+        enlist.Should().Throw<InvalidOperationException>()
+            .WithMessage("Messaging participant 'composition' has no outbox*UseOutbox()*");
+    }
+
+    /// <summary><c>UseOutbox</c> keeps enlisting in the application outbox in any environment.</summary>
+    [TestMethod]
+    public async Task FunctionsCompositionWithOutboxEnlists()
+    {
+        await using var provider = _composeFunctionsProducer(
+            Environments.Production,
+            static messaging => messaging.UseOutbox());
+        await _startValidatorAsync(provider).ConfigureAwait(false);
+        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        using var scope = provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+
+        provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
+    }
+
+    /// <summary>The development pass-through starts in Development and its enlistment is a no-op.</summary>
+    [TestMethod]
+    public async Task FunctionsDevelopmentPassthroughStartsInDevelopment()
+    {
+        await using var provider = _composeFunctionsProducer(
+            Environments.Development,
+            static messaging => messaging.UseOutbox(static outbox => outbox.UseDevelopmentPassthrough()));
+        await _startValidatorAsync(provider).ConfigureAwait(false);
+        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        using var scope = provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+        await scope.CompleteAsync().ConfigureAwait(false);
+
+        (await context.CountAsync().ConfigureAwait(false)).Should().Be(0);
+    }
+
+    /// <summary>The development pass-through refuses to start outside Development.</summary>
+    /// <param name="environment">The host environment, or <see langword="null"/> when none is registered.</param>
+    [TestMethod]
+    [DataRow("Production")]
+    [DataRow("Staging")]
+    [DataRow(null)]
+    public async Task FunctionsDevelopmentPassthroughRefusesToStartOutsideDevelopment(string? environment)
+    {
+        await using var provider = _composeFunctionsProducer(
+            environment,
+            static messaging => messaging.UseOutbox(static outbox => outbox.UseDevelopmentPassthrough()));
+
+        var start = async () => await _startValidatorAsync(provider).ConfigureAwait(false);
+
+        await start.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Messaging participant 'composition' uses the development outbox pass-through*Development*")
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>The pass-through is one outbox choice, so it cannot be combined with <c>UseOutbox</c>.</summary>
+    [TestMethod]
+    public void FunctionsCompositionRejectsPassthroughWithOutbox()
+    {
+        var act = static () => _composeFunctionsProducer(
+            Environments.Development,
+            static messaging => messaging
+                .UseOutbox()
+                .UseOutbox(static outbox => outbox.UseDevelopmentPassthrough()));
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*outbox is already selected*");
+    }
+
+    /// <summary>Composes a producer-only Functions participant over a Service Bus transport that is never contacted.</summary>
+    private static ServiceProvider _composeFunctionsProducer(
+        string? environment,
+        Action<MessagingFunctionsCompositionBuilder>? configureOutbox)
+    {
+        var services = new ServiceCollection();
+        services.Configure<JsonSerializerOptions>(
+            static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+        if (environment is not null)
+            services.AddSingleton<IHostEnvironment>(new TestHostEnvironment(environment));
+        services.ConfigureArkMessagingFunctions(
+            _configuration(new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["CompositionConnection"] = _dataPlaneConnection,
+            }),
+            _manifest(MessagingFunctionsTriggerBinding.ServiceBus, _descriptor(receives: false)),
+            messaging =>
+            {
+                messaging.UseAzureServiceBus().UseDataBus(_dataBus());
+                configureOutbox?.Invoke(messaging);
+            });
+        return services.BuildServiceProvider();
+    }
+
+    private static async Task _startValidatorAsync(IServiceProvider provider)
+    {
+        await provider.GetServices<IHostedService>().OfType<MessagingParticipantStartupValidator>().Single()
+            .StartAsync(CancellationToken.None).ConfigureAwait(false);
+    }
+
+    private sealed class TestHostEnvironment(string environmentName) : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = environmentName;
+
+        public string ApplicationName { get; set; } = "composition-tests";
+
+        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
+            new Microsoft.Extensions.FileProviders.NullFileProvider();
     }
 
     private static IConfiguration _configuration(Dictionary<string, string?> values)

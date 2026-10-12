@@ -79,7 +79,8 @@ public static class RebusHosting
         container.RegisterSingleton(() => new RebusMessagingBus(
             container.GetInstance<global::Rebus.Bus.IBus>(),
             requirements.Identity,
-            requirements.PublishedEventTypes));
+            requirements.PublishedEventTypes,
+            outboxEnabled: true));
         container.RegisterSingleton<IBus>(() => container.GetInstance<RebusMessagingBus>());
         container.RegisterSingleton<IBusOutboxEnlistment>(() => container.GetInstance<RebusMessagingBus>());
         container.ConfigureRebus(cfg =>

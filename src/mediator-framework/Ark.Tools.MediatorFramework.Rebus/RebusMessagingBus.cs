@@ -17,15 +17,24 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
     private readonly RebusBus _bus;
     private readonly string _senderIdentity;
     private readonly FrozenSet<Type> _publishedTypes;
+    private readonly bool _outboxEnabled;
 
     /// <summary>Creates a transport-neutral adapter over Rebus.</summary>
-    public RebusMessagingBus(RebusBus bus, string senderIdentity, IEnumerable<Type> publishedTypes)
+    /// <param name="bus">The Rebus bus.</param>
+    /// <param name="senderIdentity">The identity of the sending participant.</param>
+    /// <param name="publishedTypes">The event types the participant publishes.</param>
+    /// <param name="outboxEnabled">
+    /// Whether the Rebus transport is configured with the Ark outbox (<c>transport.Outbox(...)</c>). Without it,
+    /// <see cref="Enlist"/> throws, because enlisted sends would not be stored atomically with the application change.
+    /// </param>
+    public RebusMessagingBus(RebusBus bus, string senderIdentity, IEnumerable<Type> publishedTypes, bool outboxEnabled)
     {
         _bus = bus ?? throw new ArgumentNullException(nameof(bus));
         ArgumentException.ThrowIfNullOrEmpty(senderIdentity);
         ArgumentNullException.ThrowIfNull(publishedTypes);
         _senderIdentity = senderIdentity;
         _publishedTypes = publishedTypes.ToFrozenSet();
+        _outboxEnabled = outboxEnabled;
     }
 
     /// <inheritdoc />
@@ -94,9 +103,16 @@ public sealed class RebusMessagingBus : IBus, IBusOutboxEnlistment
     }
 
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">The bus was created without <c>outboxEnabled</c>.</exception>
     public IBusOutboxScope Enlist(IOutboxContextCore context)
     {
         ArgumentNullException.ThrowIfNull(context);
+        if (!_outboxEnabled)
+            throw new InvalidOperationException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "Rebus participant '{0}' has no outbox, so the enlisted messages would not be stored with the application change. Configure the Rebus transport with Outbox(...) and create RebusMessagingBus with outboxEnabled: true.",
+                    _senderIdentity));
         return new RebusOutboxScope(_bus.Enlist(context));
     }
 

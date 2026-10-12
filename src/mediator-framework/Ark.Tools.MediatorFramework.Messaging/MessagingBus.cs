@@ -25,6 +25,7 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     private readonly IMessagingPipelineProcessor? _pipelineProcessor;
     private readonly IReadOnlyList<Type> _outgoingStepTypes;
     private readonly Func<DateTimeOffset> _utcNow;
+    private static readonly PassthroughOutboxScope _passthroughScope = new();
     private readonly AsyncLocal<MessagingOutboxScope?> _outboxScope = new();
     private int _disposed;
 
@@ -38,6 +39,11 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     /// <param name="pipelineProcessor">The outgoing pipeline processor.</param>
     /// <param name="outgoingStepTypes">Optional outgoing pipeline steps.</param>
     /// <param name="utcNow">The clock used for message and scheduled-send timestamps.</param>
+    /// <param name="outboxMode">
+    /// How <see cref="Enlist"/> behaves: <see cref="MessagingOutboxMode.None"/> makes it throw and
+    /// <see cref="MessagingOutboxMode.Enqueue"/> stages the sends in the application outbox. The development
+    /// pass-through is available only through <c>UseOutbox</c>, whose host checks the environment.
+    /// </param>
     public MessagingBus(
         IMessagingTransport transport,
         MessagingNetworkOptions network,
@@ -47,7 +53,8 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
         string participantIdentity,
         IMessagingPipelineProcessor? pipelineProcessor = null,
         IReadOnlyList<Type>? outgoingStepTypes = null,
-        Func<DateTimeOffset>? utcNow = null)
+        Func<DateTimeOffset>? utcNow = null,
+        MessagingOutboxMode outboxMode = MessagingOutboxMode.None)
     {
         _transport = transport ?? throw new ArgumentNullException(nameof(transport));
         _network = network ?? throw new ArgumentNullException(nameof(network));
@@ -63,7 +70,13 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
             throw new ArgumentException("The registry and network identities must match.", nameof(registry));
 
         _network.Validate(transport.Capabilities);
+        if (outboxMode is not (MessagingOutboxMode.None or MessagingOutboxMode.Enqueue))
+            throw new ArgumentOutOfRangeException(
+                nameof(outboxMode),
+                outboxMode,
+                "A bus composed directly supports MessagingOutboxMode.None or Enqueue; the development pass-through needs UseOutbox(), whose host checks the environment.");
         _participantIdentity = participantIdentity;
+        _outboxMode = outboxMode;
         _pipelineProcessor = pipelineProcessor;
         _outgoingStepTypes = new ReadOnlyCollection<Type>(
             (outgoingStepTypes ?? Array.Empty<Type>()).ToArray());
@@ -150,14 +163,30 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     }
 
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">The participant was composed without an outbox.</exception>
     public IBusOutboxScope Enlist(IOutboxContextCore context)
     {
         _throwIfDisposed();
         ArgumentNullException.ThrowIfNull(context);
+        switch (_outboxMode)
+        {
+            case MessagingOutboxMode.None:
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Messaging participant '{0}' has no outbox, so nothing would send the enlisted messages. Call UseOutbox() in its messaging composition, or UseOutbox(outbox => outbox.UseDevelopmentPassthrough()) to send directly during development. A bus composed directly takes a MessagingOutboxMode.",
+                        _participantIdentity));
+            case MessagingOutboxMode.DevelopmentPassthrough:
+                return _passthroughScope;
+        }
+
         var scope = new MessagingOutboxScope(this, context, _outboxScope.Value);
         _outboxScope.Value = scope;
         return scope;
     }
+
+    /// <summary>How <see cref="Enlist"/> behaves.</summary>
+    internal MessagingOutboxMode _outboxMode { get; init; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -341,6 +370,19 @@ public sealed class MessagingBus : IBus, IBusOutboxEnlistment, IDisposable
     private void _throwIfDisposed()
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+    }
+
+    // Nothing is staged, so the sends made while it is open already went to the transport.
+    private sealed class PassthroughOutboxScope : IBusOutboxScope
+    {
+        public async Task CompleteAsync(CancellationToken cancellationToken = default)
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class MessagingOutboxScope : IBusOutboxScope

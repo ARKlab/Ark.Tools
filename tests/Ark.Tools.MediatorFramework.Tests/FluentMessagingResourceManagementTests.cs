@@ -63,6 +63,78 @@ public sealed class FluentMessagingResourceManagementTests
         act.Should().Throw<InvalidOperationException>().WithMessage("*resource lifecycle management*");
     }
 
+    /// <summary>A producer composed without <c>UseOutbox</c> refuses enlistment, naming itself.</summary>
+    [TestMethod]
+    public async Task ProducerWithoutOutboxRejectsEnlistment()
+    {
+        await using var provider = _composeInMemoryProducer(static _ => { });
+        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        var enlist = () => provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+
+        enlist.Should().Throw<InvalidOperationException>()
+            .WithMessage("Messaging participant 'test-publisher' has no outbox*UseOutbox()*");
+    }
+
+    /// <summary>A separately registered outbox processor does not opt a participant into enlistment.</summary>
+    [TestMethod]
+    public async Task OutboxProcessorAloneDoesNotEnableEnlistment()
+    {
+        var services = new ServiceCollection();
+        services.Configure<JsonSerializerOptions>(
+            static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+        services.ConfigureArkMessaging<TestNetwork>(static b => b.Producer<TestPublisher>(static p =>
+            p.UseInMemoryTransport().UseInMemoryDataBus()));
+        services.AddArkMessagingOutboxProcessor(new Ark.Tools.Outbox.InMemoryOutboxContextFactory());
+        await using var provider = services.BuildServiceProvider();
+        var context = await new Ark.Tools.Outbox.InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        var enlist = () => provider.GetRequiredService<IBusOutboxEnlistment>().Enlist(context);
+
+        enlist.Should().Throw<InvalidOperationException>()
+            .WithMessage("Messaging participant 'test-publisher' has no outbox*UseOutbox()*");
+    }
+
+    /// <summary>Each outbox choice of the fluent builder reaches the composed bus.</summary>
+    /// <param name="choice">The outbox call made on the builder.</param>
+    /// <param name="passthrough">Whether the bus is expected to use the development pass-through.</param>
+    [TestMethod]
+    [DataRow("UseOutbox", false)]
+    [DataRow("UseEnqueue", false)]
+    [DataRow("UseProcessor", false)]
+    [DataRow("UseDevelopmentPassthrough", true)]
+    public async Task ProducerOutboxChoiceReachesTheBus(string choice, bool passthrough)
+    {
+        var expected = passthrough ? MessagingOutboxMode.DevelopmentPassthrough : MessagingOutboxMode.Enqueue;
+        var factory = new Ark.Tools.Outbox.InMemoryOutboxContextFactory();
+        await using var provider = _composeInMemoryProducer(p => _ = choice switch
+        {
+            "UseOutbox" => p.UseOutbox(),
+            "UseEnqueue" => p.UseOutbox(static outbox => outbox.UseEnqueue()),
+            "UseProcessor" => p.UseOutbox(outbox => outbox.UseProcessor(factory)),
+            _ => p.UseOutbox(static outbox => outbox.UseDevelopmentPassthrough()),
+        });
+
+        provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(expected);
+    }
+
+    /// <summary>The pass-through is one outbox choice, so a second one is rejected.</summary>
+    [TestMethod]
+    public void PassthroughCannotFollowAnotherOutbox()
+    {
+        var services = new ServiceCollection();
+
+        var act = () => services.ConfigureArkMessaging<TestNetwork>(static b => b.Producer<TestPublisher>(static p => p
+            .UseInMemoryTransport()
+            .UseInMemoryDataBus()
+            .UseOutbox()
+            .UseOutbox(static outbox => outbox.UseDevelopmentPassthrough())));
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*outbox is already selected*");
+    }
+
     /// <summary>An explicit seam provisions the topics a producer publishes.</summary>
     [TestMethod]
     public async Task ExplicitManagementSeamProvisionsPublishedTopics()
@@ -188,6 +260,17 @@ public sealed class FluentMessagingResourceManagementTests
         var provider = services.BuildServiceProvider();
         await using (provider.ConfigureAwait(false))
             provider.GetRequiredService<IMessagingTransport>().Should().BeOfType<ServiceBusMessagingTransport>();
+    }
+
+    private static ServiceProvider _composeInMemoryProducer(
+        Action<MessagingModeBuilder<TestNetwork, TestPublisher>> configureOutbox)
+    {
+        var services = new ServiceCollection();
+        services.Configure<JsonSerializerOptions>(
+            static options => options.TypeInfoResolver = new DefaultJsonTypeInfoResolver());
+        services.ConfigureArkMessaging<TestNetwork>(b => b.Producer<TestPublisher>(p =>
+            configureOutbox(p.UseInMemoryTransport().UseInMemoryDataBus())));
+        return services.BuildServiceProvider();
     }
 
     private static async Task _runAsync(Action<MessagingCompositionBuilder<TestNetwork>> configure)

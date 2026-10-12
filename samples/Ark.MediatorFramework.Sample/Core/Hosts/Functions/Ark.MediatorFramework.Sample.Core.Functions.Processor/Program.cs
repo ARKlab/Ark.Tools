@@ -48,7 +48,9 @@ try
         builder.Configuration,
         ArkGeneratedMessagingFunctions.Manifest,
         container,
-        dataBus => dataBus.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration)));
+        dataBus => dataBus.UseAzureBlob(FunctionsHosting.DataBusOptions(builder.Configuration)),
+        // The print worker publishes from an enlisted handler and nothing drains an outbox on Functions.
+        static outbox => outbox.UseDevelopmentPassthrough());
     builder.Services.AddArkHealthChecks();
 
     await builder.Build().RunAsync().ConfigureAwait(false);
