@@ -87,6 +87,7 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
         }
 
         var policy = context.Attributes[0];
+        var columnPolicy = context.SemanticModel.Compilation.GetTypeByMetadataName(_columnPolicy);
         var columns = new List<SqlColumnSpec>();
         var diagnostics = new List<SqlDiagnosticSpec>();
         for (var current = type; current is not null; current = current.BaseType)
@@ -95,7 +96,9 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
             foreach (var member in current.GetMembers().Where(static m => !m.IsStatic && !m.IsImplicitlyDeclared
                          && m.Kind is SymbolKind.Property or SymbolKind.Field))
             {
-                var mapping = member.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == _columnPolicy);
+                var mapping = columnPolicy is null
+                    ? null
+                    : member.GetAttributes().FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, columnPolicy));
                 if (mapping is null)
                 {
                     continue;
@@ -217,13 +220,11 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
             return _classification(nullable.TypeArguments[0]);
         }
         var attributes = symbol.GetAttributes();
+        var attributeNames = attributes.Select(static attribute => attribute.AttributeClass?.ToDisplayString()).ToArray();
         foreach (var precedence in _classificationPrecedence)
         {
-            foreach (var attribute in attributes)
-            {
-                if (attribute.AttributeClass?.ToDisplayString() == precedence.AttributeName)
-                    return precedence.Classification;
-            }
+            if (Array.IndexOf(attributeNames, precedence.AttributeName) >= 0)
+                return precedence.Classification;
         }
         foreach (var attribute in attributes)
         {
