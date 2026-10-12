@@ -108,12 +108,15 @@
       <_ArkSqlGenerated Include="$(CompilerGeneratedFilesOutputPath)/**/Ark.Tools.Compliance.Generators.SqlPolicyGenerator/ArkComplianceSql.manifest.g.cs" />
     </ItemGroup>
     <!-- Token values are item metadata, not files: this cache changes only when they do, so it can be an input. Hash
-         joins items with U+2028, which a value may hold, so each name's values are hashed apart (batched on the name)
-         and the result is hashed with the names: no name/value split, ';' or U+2028 can make two token sets collide. -->
+         joins items with U+2028, which names and values may hold, so per name (batched on it) its names and its values
+         are hashed apart, and only those hex hashes are hashed together: no raw text can make two token sets collide. -->
+    <Hash ItemsToHash="@(ArkComplianceSqlToken->'%(Identity)')" Condition="'%(ArkComplianceSqlToken.Identity)' != ''">
+      <Output TaskParameter="HashResult" ItemName="_ArkComplianceSqlTokenNameHash" />
+    </Hash>
     <Hash ItemsToHash="@(ArkComplianceSqlToken->'%(Value)')" Condition="'%(ArkComplianceSqlToken.Identity)' != ''">
       <Output TaskParameter="HashResult" ItemName="_ArkComplianceSqlTokenValueHash" />
     </Hash>
-    <Hash ItemsToHash="@(ArkComplianceSqlToken->'%(Identity)');@(_ArkComplianceSqlTokenValueHash)">
+    <Hash ItemsToHash="@(_ArkComplianceSqlTokenNameHash);@(_ArkComplianceSqlTokenValueHash)">
       <Output TaskParameter="HashResult" PropertyName="_ArkComplianceSqlTokensHash" />
     </Hash>
     <WriteLinesToFile File="$(_ArkComplianceSqlTokensCache)" Lines="$(_ArkComplianceSqlTokensHash)"

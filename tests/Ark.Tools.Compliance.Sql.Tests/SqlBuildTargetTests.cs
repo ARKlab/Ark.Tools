@@ -195,7 +195,8 @@ public sealed class SqlBuildTargetTests
     /// <summary>
     /// Token sets that would read the same as <c>name=value</c> text still invalidate the skipped task: renaming token
     /// <c>Schema</c> with value <c>one=two</c> to an invalid <c>Schema=one</c> with value <c>two</c> is reported, and
-    /// one value holding the hash separator U+2028 does not pass for the two tokens it spells out.
+    /// one value holding the hash separator U+2028 does not pass for the two tokens it spells out, and neither does one
+    /// name that spells out the names and a value hash of a valid set.
     /// </summary>
     [TestMethod]
     public async Task TokenChangesThatReadAlikeStillRunTheTask()
@@ -220,6 +221,10 @@ public sealed class SqlBuildTargetTests
                     new XElement("ArkComplianceSqlToken", new XAttribute("Include", "$(TokenName)"), new XAttribute("Value", "$(TokenValue)")),
                     new XElement("ArkComplianceSqlToken", new XAttribute("Include", "$(OtherName)"), new XAttribute("Value", "$(OtherValue)"),
                         new XAttribute("Condition", "'$(OtherName)' != ''"))),
+                new XElement("Target", new XAttribute("Name", "HashOf"),
+                    new XElement("Hash", new XAttribute("ItemsToHash", "$(HashInput)"),
+                        new XElement("Output", new XAttribute("TaskParameter", "HashResult"), new XAttribute("PropertyName", "HashOfInput"))),
+                    new XElement("WriteLinesToFile", new XAttribute("File", "hash.txt"), new XAttribute("Lines", "$(HashOfInput)"), new XAttribute("Overwrite", "true"))),
                 new XElement("Import", new XAttribute("Project",
                     Path.Join(AppContext.BaseDirectory, "Fixtures", "Ark.Tools.Compliance.Sql.targets")))));
             var projectPath = Path.Join(directory, "app.proj");
@@ -243,6 +248,17 @@ public sealed class SqlBuildTargetTests
             one.ExitCode.Should().Be(0, one.Log);
             (await File.ReadAllTextAsync(Path.Join(directory, "obj", "ArkCompliance.Sql", _fileName)).ConfigureAwait(false))
                 .Should().Contain("[" + spelled + "]");
+
+            var hashOfX = await _runMsBuildAsync(directory, projectPath, "-t:HashOf", "-p:HashInput=x").ConfigureAwait(false);
+            hashOfX.ExitCode.Should().Be(0, hashOfX.Log);
+            var again = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql",
+                "-p:TokenName=Schema", "-p:TokenValue=x", "-p:OtherName=Other", "-p:OtherValue=y").ConfigureAwait(false);
+            again.ExitCode.Should().Be(0, again.Log);
+            var crafted = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql",
+                "-p:TokenName=Schema\u2028Other\u2028" + (await File.ReadAllTextAsync(Path.Join(directory, "hash.txt")).ConfigureAwait(false)).Trim(),
+                "-p:TokenValue=y").ConfigureAwait(false);
+            crafted.ExitCode.Should().NotBe(0, crafted.Log);
+            crafted.Log.Should().Contain("Invalid or duplicate ArkComplianceSqlToken");
         }
         finally
         {
