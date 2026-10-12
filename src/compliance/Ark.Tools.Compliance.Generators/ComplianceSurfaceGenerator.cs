@@ -41,8 +41,9 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
             && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase));
         var members = _whenEnabled(context.SyntaxProvider.CreateSyntaxProvider(
                 static (node, _) => node is Microsoft.CodeAnalysis.CSharp.Syntax.BaseTypeDeclarationSyntax,
-                static (syntaxContext, _) => syntaxContext), enabled)
-            .Select(static (syntaxContext, token) => _parseType(syntaxContext, token))
+                static (syntaxContext, _) => syntaxContext.Node), enabled, context.CompilationProvider)
+            .Select(static (candidate, token) => _parseType(
+                candidate.Compilation.GetSemanticModel(candidate.Node.SyntaxTree), candidate.Node, token))
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!)
             .WithTrackingName(MemberSpecsTrackingName)
@@ -50,8 +51,9 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
             .Select(static (specs, _) => new ImmutableEquatableArray<TypeSpec>(specs));
         var reveals = _whenEnabled(context.SyntaxProvider.CreateSyntaxProvider(
                 static (node, _) => _isRevealCandidate(node),
-                static (syntaxContext, _) => syntaxContext), enabled)
-            .Select(static (syntaxContext, token) => _parseReveal(syntaxContext, token))
+                static (syntaxContext, _) => syntaxContext.Node), enabled, context.CompilationProvider)
+            .Select(static (candidate, token) => _parseReveal(
+                candidate.Compilation.GetSemanticModel(candidate.Node.SyntaxTree), candidate.Node, token))
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!.Value)
             .WithTrackingName(RevealSpecsTrackingName)
@@ -59,8 +61,9 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
             .Select(static (specs, _) => new ImmutableEquatableArray<RevealSpec>(specs));
         var registrations = _whenEnabled(context.SyntaxProvider.CreateSyntaxProvider(
                 static (node, _) => _isRegistrationCandidate(node),
-                static (syntaxContext, _) => syntaxContext), enabled)
-            .Select(static (syntaxContext, token) => _parseRegistration(syntaxContext, token))
+                static (syntaxContext, _) => syntaxContext.Node), enabled, context.CompilationProvider)
+            .Select(static (candidate, token) => _parseRegistration(
+                candidate.Compilation.GetSemanticModel(candidate.Node.SyntaxTree), candidate.Node, token))
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!)
             .WithTrackingName(RegistrationSpecsTrackingName)
@@ -95,13 +98,17 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
         });
     }
 
-    // The semantic parse runs only after the gate: a disabled surface must not bind every type on each edit.
-    private static IncrementalValuesProvider<GeneratorSyntaxContext> _whenEnabled(
-        IncrementalValuesProvider<GeneratorSyntaxContext> candidates,
-        IncrementalValueProvider<bool> enabled)
+    // The semantic parse runs only after the gate: a disabled surface must not bind every type on each edit. Only
+    // syntax nodes cross the gate, so a disabled surface keeps no semantic model or compilation in its tables.
+    private static IncrementalValuesProvider<(SyntaxNode Node, Compilation Compilation)> _whenEnabled(
+        IncrementalValuesProvider<SyntaxNode> candidates,
+        IncrementalValueProvider<bool> enabled,
+        IncrementalValueProvider<Compilation> compilation)
     {
         return candidates.Combine(enabled)
             .Where(static candidate => candidate.Right)
-            .Select(static (candidate, _) => candidate.Left);
+            .Select(static (candidate, _) => candidate.Left)
+            .Combine(compilation)
+            .Select(static (candidate, _) => (candidate.Left, candidate.Right));
     }
 }

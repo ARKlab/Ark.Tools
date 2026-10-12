@@ -17,10 +17,10 @@ namespace Ark.Tools.Compliance.Generators;
 
 public sealed partial class ComplianceSurfaceGenerator
 {
-    private static TypeSpec? _parseType(GeneratorSyntaxContext context, CancellationToken token)
+    private static TypeSpec? _parseType(SemanticModel model, SyntaxNode node, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        if (context.SemanticModel.GetDeclaredSymbol(context.Node, token) is not INamedTypeSymbol type)
+        if (model.GetDeclaredSymbol(node, token) is not INamedTypeSymbol type)
             return null;
 
         string? typeName = null;
@@ -231,12 +231,11 @@ public sealed partial class ComplianceSurfaceGenerator
         };
     }
 
-    private static RevealSpec? _parseReveal(GeneratorSyntaxContext context, CancellationToken token)
+    private static RevealSpec? _parseReveal(SemanticModel model, SyntaxNode node, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        var invocation = (InvocationExpressionSyntax)context.Node;
+        var invocation = (InvocationExpressionSyntax)node;
         var access = (MemberAccessExpressionSyntax)invocation.Expression;
-        var model = context.SemanticModel;
         var compliancePurposeType = model.Compilation.GetTypeByMetadataName(Prefix + "CompliancePurpose");
         var compliancePurposeCategoryType = model.Compilation.GetTypeByMetadataName(Prefix + "CompliancePurposeCategory");
         if (model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol revealMethod
@@ -284,11 +283,10 @@ public sealed partial class ComplianceSurfaceGenerator
             && _invocationName(invocation) is "Register" or "RegisterBuiltIn";
     }
 
-    private static RegistrationSpec? _parseRegistration(GeneratorSyntaxContext context, CancellationToken token)
+    private static RegistrationSpec? _parseRegistration(SemanticModel model, SyntaxNode node, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        var invocation = (InvocationExpressionSyntax)context.Node;
-        var model = context.SemanticModel;
+        var invocation = (InvocationExpressionSyntax)node;
         if (model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method)
             return null;
 
