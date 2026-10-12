@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0-beta15] - 2026-10-12
+
 ### Added
 
 - Mediator Framework: a [contract design checklist](docs/mediator-framework/contract-design-checklist.md) covering fields and updatability, validation, business rules, failures, API design, authorization, versioning, privacy and more. The `ark-mediator-framework` agent skill now drafts a contract brief from it and asks for confirmation before writing code.
