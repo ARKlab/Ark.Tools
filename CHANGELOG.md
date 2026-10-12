@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Breaking:** Mediator Framework handlers open an `OutboxScope` instead of casting `IBus` to `IBusOutboxEnlistment`: replace `((IBusOutboxEnlistment)bus).Enlist(context)` with the new `bus.Enlist(context)` extension, which opens an `OutboxScope` like the Rebus helper of the same name. Every native bus stages the sends made in an open scope, so `UseOutbox()` is optional again; `UseOutbox(outbox => outbox.UseDevelopmentPassthrough())` still sends directly during development without changing the handlers. `RebusMessagingBus` with `outboxEnabled: false` throws when a message is sent in an open scope.
 - The MCP tool generator keeps only the XML documentation entries its tools use and no longer reparses documentation files when an unrelated XML file changes, which uses less memory and keeps the IDE more responsive.
+- The Azure Functions messaging generator no longer scans every type of the participant assembly on each edit to find its messaging network, keeping the IDE responsive in large projects.
+- The Mediator Framework API surface generator no longer regenerates `ArkApiSurface.g.cs` or re-compares the `ArkApiSurface.txt` baseline when an edit only moves contracts to other lines, keeping the IDE more responsive.
+- The Mediator Framework messaging network and gRPC generators do less work while you type: moving code around no longer rebuilds messaging files, and after an edit the generated files it does not affect are reused instead of rebuilt.
+- Mediator Framework: in a host project that declares no `[GrpcMethod]` contracts itself, the gRPC generator reads `[ProtoContract]` types only from the assemblies its mapping calls select and the assemblies they reference, so the IDE rescans less after you edit a referenced project, and reordering mapping calls no longer triggers a rescan.
 - The Minimal API, Rebus and MCP source generators of `Ark.Tools.MediatorFramework` and the `Ark.Tools.Compliance` surface generator no longer regenerate code when an edit only moves declarations to other lines, which keeps the IDE responsive while editing.
 
 ### Removed
