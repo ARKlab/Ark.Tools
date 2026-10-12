@@ -317,7 +317,7 @@ public sealed class GeneratorIncrementalityTests
             source,
             source.Replace("CompressionMinimumSizeBytes = 1024", "CompressionMinimumSizeBytes = 2048", StringComparison.Ordinal),
             [],
-            cachedSteps: ["MessagingNetworkSpecs", "MessagingNetworkOutput"],
+            cachedSteps: ["MessagingNetworkDiagnostics", "MessagingNetworkSpecs", "MessagingNetworkOutput", "MessagingParticipantOutput"],
             unchangedSteps: ["MessagingNetworkParser", "MessagingParticipantParser"],
             expectedOutput:
             [
@@ -328,6 +328,64 @@ public sealed class GeneratorIncrementalityTests
                 "ARKMSG008",
                 "ARKMSG027",
             ]);
+    }
+
+    [TestMethod]
+    public void MessagingNetworkGeneratorReusesEmittedSourceOnLineShift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Message(Name = "books.print_book")]
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            [MessagingParticipant(
+                Processes = new[] { typeof(PrintBook) },
+                Subscribes = new[] { typeof(PrintBook) },
+                Serializers = new[] { SerializationProtocol.Json },
+                DefaultSerializer = SerializationProtocol.Json)]
+            public sealed partial class PrintingParticipant { }
+            [MessagingNetwork(
+                Members = new[] { typeof(PrintingParticipant) },
+                Requires = MessagingCapabilities.SendReceive | MessagingCapabilities.PubSub)]
+            public sealed partial class BookMessagingNetwork { }
+            """;
+        var sourceTree = CSharpSyntaxTree.ParseText(source, path: "Contracts.cs");
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [sourceTree],
+            _getReferences(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new MessagingNetworkGenerator().AsSourceGenerator()],
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        driver = driver.RunGenerators(compilation);
+        var original = driver.GetRunResult().Results.Single();
+        original.Diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKMSG008");
+
+        // Shifts every declaration, so locations change while the generated files do not.
+        compilation = compilation.ReplaceSyntaxTree(
+            sourceTree,
+            CSharpSyntaxTree.ParseText("\n\n" + source, path: "Contracts.cs"));
+        driver = driver.RunGenerators(compilation);
+        var shifted = driver.GetRunResult().Results.Single();
+
+        _getStepReasons(driver, "MessagingNetworkDiagnostics").Should().Contain(IncrementalStepRunReason.Modified);
+        foreach (var step in new[] { "MessagingNetworkSpecs", "MessagingNetworkOutput", "MessagingParticipantOutput" })
+        {
+            _getStepReasons(driver, step).Should().NotBeEmpty()
+                .And.OnlyContain(
+                    static reason => reason == IncrementalStepRunReason.Cached
+                        || reason == IncrementalStepRunReason.Unchanged,
+                    "step {0} must not re-render for a line shift",
+                    step);
+        }
+        shifted.GeneratedSources.Select(static generated => generated.HintName + "\n" + generated.SourceText)
+            .Should().Equal(original.GeneratedSources.Select(static generated => generated.HintName + "\n" + generated.SourceText));
+        var diagnostic = shifted.Diagnostics.Single(static diagnostic => diagnostic.Id == "ARKMSG008");
+        diagnostic.Location.GetLineSpan().StartLinePosition.Line.Should().Be(
+            original.Diagnostics.Single(static diagnostic => diagnostic.Id == "ARKMSG008").Location.GetLineSpan().StartLinePosition.Line + 2);
     }
 
     [TestMethod]

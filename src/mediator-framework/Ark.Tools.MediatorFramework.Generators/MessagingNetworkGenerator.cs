@@ -43,6 +43,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private const string _exceptionInfo = "Ark.Tools.MediatorFramework.MessagingExceptionInfo";
     private const string _specStage = "MessagingNetworkSpecs";
     private const string _outputStage = "MessagingNetworkOutput";
+    private const string _participantOutputStage = "MessagingParticipantOutput";
+    private const string _diagnosticStage = "MessagingNetworkDiagnostics";
     private const string _networkStage = "MessagingNetworkParser";
     private const string _participantStage = "MessagingParticipantParser";
     private const int _sendReceive = 1;
@@ -163,42 +165,45 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         var compilationFacts = context.CompilationProvider
             .Select(static (compilation, _) => _readCompilationFacts(compilation));
 
-        var specs = networks.Combine(participants).Combine(compilationFacts)
+        var inputs = networks.Combine(participants);
+        // Validation keeps real source locations, so only diagnostics rerun when declarations move.
+        var diagnostics = inputs
             .Select(static (input, cancellationToken) =>
             {
-                var ((networkSpecs, participantSpecs), facts) = input;
                 var sink = new GenerationSink(cancellationToken);
-                _emit(
-                    sink,
-                    networkSpecs.Distinct(),
-                    participantSpecs.Distinct(),
-                    facts);
+                _validate(sink, input.Left.Distinct(), input.Right.Distinct());
                 return sink._toSpec();
             })
-            .WithTrackingName(_specStage);
-        var output = specs
-            .Select(static (spec, _) => spec)
-            .WithTrackingName(_outputStage);
-
-        context.RegisterSourceOutput(output, static (productionContext, spec) =>
+            .WithTrackingName(_diagnosticStage);
+        context.RegisterSourceOutput(diagnostics, static (productionContext, values) =>
         {
-            foreach (var diagnostic in spec.Diagnostics)
-            {
-                productionContext.ReportDiagnostic(Diagnostic.Create(
-                    _descriptor(diagnostic.DescriptorId),
-                    LocationSpec._toLocation(diagnostic.Location),
-                    diagnostic.Arguments.Values.Cast<object?>().ToArray()));
-            }
-            foreach (var source in spec.Sources)
-                productionContext.AddSource(source.HintName, source.Source);
+            foreach (var diagnostic in values)
+                productionContext.ReportDiagnostic(diagnostic._toDiagnostic(_descriptor));
         });
+
+        // Emission models carry no locations and are split per type, so only changed files re-render.
+        var models = inputs.Combine(compilationFacts)
+            .Select(static (input, cancellationToken) => _buildModels(
+                input.Left.Left.Distinct(),
+                input.Left.Right.Distinct(),
+                input.Right,
+                cancellationToken))
+            .WithTrackingName(_specStage);
+        context.RegisterSourceOutput(
+            models.Select(static (model, _) => model.Metadata),
+            static (productionContext, networks) => _emitMetadata(productionContext, networks));
+        context.RegisterSourceOutput(
+            models.SelectMany(static (model, _) => model.Networks).WithTrackingName(_outputStage),
+            static (productionContext, model) => _emitNetwork(productionContext, model.Network, model.Facts));
+        context.RegisterSourceOutput(
+            models.SelectMany(static (model, _) => model.Participants).WithTrackingName(_participantOutputStage),
+            static (productionContext, model) => _emitParticipant(productionContext, model.Participant, model.NetworkMembers, model.Facts));
     }
 
-    private static void _emit(
+    private static void _validate(
         GenerationSink context,
         IEnumerable<Network> networkSpecs,
-        IEnumerable<Participant> participantSpecs,
-        CompilationFacts facts)
+        IEnumerable<Participant> participantSpecs)
     {
         context.CancellationToken.ThrowIfCancellationRequested();
         var networks = networkSpecs
@@ -206,11 +211,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .ToArray();
         var participantNetworks = new Dictionary<TypeSpec, List<Network>>();
         var allContracts = new Dictionary<ContractSpec, HashSet<TypeSpec>>();
-        // A participant belonging to several networks is reported; its descriptor uses the first one.
-        var networkMembers = new Dictionary<TypeSpec, List<Participant>>();
 
         foreach (var network in networks)
         {
+            context.CancellationToken.ThrowIfCancellationRequested();
             var seen = new HashSet<TypeSpec>();
             var participants = new List<Participant>();
             foreach (var member in network.Members)
@@ -241,11 +245,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             }
 
             _validateNetwork(context, network, participants);
-            foreach (var participant in participants)
-            {
-                if (!networkMembers.ContainsKey(participant.Symbol))
-                    networkMembers.Add(participant.Symbol, participants);
-            }
         }
 
         foreach (var membership in participantNetworks.Where(static pair => pair.Value.Count > 1))
@@ -254,19 +253,63 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _report(context, _crossNetworkContract, contract.Key, contract.Key.DisplayName);
 
         _validateContractNames(context, allContracts.Keys);
-        _emitMetadata(context, networks);
         foreach (var network in networks)
-            _emitNetwork(context, network, facts);
-
+            _validateDeclaringType(context, network.Symbol, "MessagingNetwork");
         foreach (var participant in participantSpecs
             .OrderBy(static participant => participant.Symbol.DisplayName, StringComparer.Ordinal))
         {
-            _emitParticipant(
-                context,
-                participant,
-                networkMembers.TryGetValue(participant.Symbol, out var members) ? members : new List<Participant>(),
-                facts);
+            _validateDeclaringType(context, participant.Symbol, "MessagingParticipant");
         }
+    }
+
+    private static EmitModels _buildModels(
+        IEnumerable<Network> networkSpecs,
+        IEnumerable<Participant> participantSpecs,
+        CompilationFacts facts,
+        CancellationToken cancellationToken)
+    {
+        var networks = networkSpecs
+            .Select(_withoutLocation)
+            .OrderBy(static network => network.Symbol.DisplayName, StringComparer.Ordinal)
+            .ToArray();
+        // A participant belonging to several networks is reported; its descriptor uses the first one.
+        var networkMembers = new Dictionary<TypeSpec, EquatableArray<Participant>>();
+        foreach (var network in networks)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var seen = new HashSet<TypeSpec>();
+            var participants = network.Members
+                .Where(member => seen.Add(member.Symbol) && member.Participant is not null)
+                .Select(static member => member.Participant!.Value)
+                .ToImmutableArray();
+            foreach (var participant in participants)
+            {
+                if (!networkMembers.ContainsKey(participant.Symbol))
+                    networkMembers.Add(participant.Symbol, participants);
+            }
+        }
+
+        var participantModels = ImmutableArray.CreateBuilder<ParticipantModel>();
+        foreach (var participant in participantSpecs
+            .Select(_withoutLocation)
+            .OrderBy(static participant => participant.Symbol.DisplayName, StringComparer.Ordinal))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!participant.Symbol.IsValidDeclaringType)
+                continue;
+            participantModels.Add(new ParticipantModel(
+                participant,
+                networkMembers.TryGetValue(participant.Symbol, out var members) ? members : EquatableArray<Participant>.Empty,
+                facts));
+        }
+
+        return new EmitModels(
+            networks.ToImmutableArray(),
+            networks
+                .Where(static network => network.Symbol.IsValidDeclaringType)
+                .Select(network => new NetworkModel(network, facts))
+                .ToImmutableArray(),
+            participantModels.ToImmutable());
     }
 
     private static void _validateNetwork(
@@ -719,13 +762,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     }
 
     private static void _emitNetwork(
-        GenerationSink context,
+        SourceProductionContext context,
         Network network,
         CompilationFacts facts)
     {
-        if (!_validateDeclaringType(context, network.Symbol, "MessagingNetwork"))
-            return;
-
+        context.CancellationToken.ThrowIfCancellationRequested();
         var participants = network.Members
             .Select(static member => member.Participant)
             .Where(static participant => participant is not null)
@@ -996,18 +1037,16 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
         context.AddSource(
             _safeIdentifier(network.Symbol.DisplayName) + "_" + _stableHash(network.Symbol.DisplayName) + ".Registry.g.cs",
-            source.ToString());
+            source._toGeneratedSource());
     }
 
     private static void _emitParticipant(
-        GenerationSink context,
+        SourceProductionContext context,
         Participant participant,
         IReadOnlyList<Participant> networkMembers,
         CompilationFacts facts)
     {
-        if (!_validateDeclaringType(context, participant.Symbol, "MessagingParticipant"))
-            return;
-
+        context.CancellationToken.ThrowIfCancellationRequested();
         var source = new StringBuilder()
             .AppendLine("// <auto-generated />");
         if (participant.Symbol.Namespace is not null)
@@ -1266,20 +1305,16 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         source.AppendLine("}");
         context.AddSource(
             _safeIdentifier(participant.Symbol.DisplayName) + "_" + _stableHash(participant.Symbol.DisplayName) + ".Participant.g.cs",
-            source.ToString());
+            source._toGeneratedSource());
     }
 
-    private static bool _validateDeclaringType(
+    private static void _validateDeclaringType(
         GenerationSink context,
         TypeSpec symbol,
         string attributeName)
     {
         if (!symbol.IsValidDeclaringType)
-        {
             _report(context, _nonPartialDeclaringType, symbol, symbol.DisplayName, attributeName);
-            return false;
-        }
-        return true;
     }
 
     private static bool _isValidDeclaringType(INamedTypeSymbol symbol)
@@ -1333,7 +1368,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         return member?.Name ?? "None";
     }
 
-    private static void _emitMetadata(GenerationSink context, IReadOnlyList<Network> networks)
+    private static void _emitMetadata(SourceProductionContext context, IReadOnlyList<Network> networks)
     {
         var source = new StringBuilder()
             .AppendLine("// <auto-generated />")
@@ -1350,7 +1385,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 .AppendLine(" };")
                 .AppendLine("}");
         }
-        context.AddSource("ArkMessagingMetadata.g.cs", source.ToString());
+        context.AddSource("ArkMessagingMetadata.g.cs", source._toGeneratedSource());
     }
 
     private static string _safeIdentifier(string value)
@@ -1518,9 +1553,48 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         };
     }
 
+    private static TypeSpec _withoutLocation(TypeSpec symbol)
+    {
+        return symbol with { Location = null };
+    }
+
+    private static ContractSpec _withoutLocation(ContractSpec contract)
+    {
+        return contract with { Symbol = _withoutLocation(contract.Symbol) };
+    }
+
+    private static EquatableArray<ContractSpec> _withoutLocation(EquatableArray<ContractSpec> contracts)
+    {
+        return contracts.Select(_withoutLocation).ToImmutableArray();
+    }
+
+    private static Participant _withoutLocation(Participant participant)
+    {
+        return participant with
+        {
+            Symbol = _withoutLocation(participant.Symbol),
+            Processes = _withoutLocation(participant.Processes),
+            Publishes = _withoutLocation(participant.Publishes),
+            Subscribes = _withoutLocation(participant.Subscribes),
+            Contracts = _withoutLocation(participant.Contracts),
+        };
+    }
+
+    private static Network _withoutLocation(Network network)
+    {
+        return network with
+        {
+            Symbol = _withoutLocation(network.Symbol),
+            Members = network.Members
+                .Select(static member => new NetworkMember(
+                    _withoutLocation(member.Symbol),
+                    member.Participant is null ? null : _withoutLocation(member.Participant.Value)))
+                .ToImmutableArray(),
+        };
+    }
+
     private sealed class GenerationSink
     {
-        private readonly List<GeneratedSourceSpec> _sources = new();
         private readonly List<DiagnosticSpec> _diagnostics = new();
 
         public GenerationSink(CancellationToken cancellationToken)
@@ -1529,13 +1603,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
 
         public CancellationToken CancellationToken { get; }
-
-        public void AddSource(string hintName, string source)
-        {
-            _sources.Add(new GeneratedSourceSpec(
-                hintName,
-                source.Replace("\r\n", "\n").Replace('\r', '\n')));
-        }
 
         public void _report(DiagnosticDescriptor descriptor, LocationSpec? location, params object[] arguments)
         {
@@ -1547,19 +1614,24 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                     .ToImmutableArray()));
         }
 
-        public MessagingNetworkAggregateSpec _toSpec()
+        public EquatableArray<DiagnosticSpec> _toSpec()
         {
-            return new MessagingNetworkAggregateSpec(
-                _sources.OrderBy(static source => source.HintName, StringComparer.Ordinal).ToImmutableArray(),
-                _diagnostics.ToImmutableArray());
+            return _diagnostics.ToImmutableArray();
         }
     }
 
-    private sealed record MessagingNetworkAggregateSpec(
-        EquatableArray<GeneratedSourceSpec> Sources,
-        EquatableArray<DiagnosticSpec> Diagnostics);
+    /// <summary>The location-free emission inputs, split so each generated file caches on its own.</summary>
+    private sealed record EmitModels(
+        EquatableArray<Network> Metadata,
+        EquatableArray<NetworkModel> Networks,
+        EquatableArray<ParticipantModel> Participants);
 
-    private readonly record struct GeneratedSourceSpec(string HintName, string Source);
+    private readonly record struct NetworkModel(Network Network, CompilationFacts Facts);
+
+    private readonly record struct ParticipantModel(
+        Participant Participant,
+        EquatableArray<Participant> NetworkMembers,
+        CompilationFacts Facts);
 
     /// <summary>The symbol facts of a network, participant or contract type.</summary>
     private sealed record TypeSpec(
