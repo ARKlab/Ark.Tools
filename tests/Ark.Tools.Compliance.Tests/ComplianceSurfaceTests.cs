@@ -161,6 +161,41 @@ public sealed class ComplianceSurfaceTests
             .Should().Contain("CLASSIFIED\tExample.Customer\tEmail\tArk:SensitivePersonalData");
     }
 
+    /// <summary>A line shift keeps the emitted text cached while diagnostics follow the moved member.</summary>
+    [TestMethod]
+    public void Surface_LineShiftKeepsEmittedTextCachedAndMovesDiagnostics()
+    {
+        var tree = CSharpSyntaxTree.ParseText(_personalMember, path: "Customer.cs");
+        var compilation = _createCompilation(tree);
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ComplianceSurfaceGenerator().AsSourceGenerator()],
+            additionalTexts: [new BaselineText("ArkComplianceSurface.txt", "COMPLIANCE-SURFACE 1\n")],
+            optionsProvider: new OptionsProvider(enabled: true, complianceEnabled: true),
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+
+        driver = driver.RunGenerators(compilation);
+        var original = driver.GetRunResult().Results.Single();
+        var originalLine = original.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKPII021")
+            .Which.Location.GetLineSpan().StartLinePosition.Line;
+        compilation = compilation.ReplaceSyntaxTree(
+            tree,
+            CSharpSyntaxTree.ParseText("\n\n" + _personalMember, path: "Customer.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        var result = driver.GetRunResult().Results.Single();
+        result.TrackedSteps["ComplianceSurfaceText"]
+            .SelectMany(static step => step.Outputs)
+            .Should().NotBeEmpty()
+            .And.OnlyContain(static output =>
+                output.Reason == IncrementalStepRunReason.Cached || output.Reason == IncrementalStepRunReason.Unchanged);
+        result.GeneratedSources.Single().SourceText.ToString()
+            .Should().Be(original.GeneratedSources.Single().SourceText.ToString());
+        result.Diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKPII021")
+            .Which.Location.GetLineSpan().StartLinePosition.Line.Should().Be(originalLine + 2);
+    }
+
     /// <summary>A missing baseline fails only when the gate is enabled and classified members exist.</summary>
     [TestMethod]
     public void Surface_MissingBaselineIsGatedAndEmptyCompilationIsAllowed()
