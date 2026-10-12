@@ -20,7 +20,7 @@ public sealed class OutboxScope : IDisposable
     private readonly OutboxScope? _parent;
     private readonly List<OutboxMessage> _messages = [];
     private bool _completed;
-    private bool _disposed;
+    private volatile bool _disposed;
 
     /// <summary>Opens an outbox scope over <paramref name="context"/> and makes it the ambient scope.</summary>
     /// <param name="context">The application outbox context, part of the application transaction.</param>
@@ -32,7 +32,20 @@ public sealed class OutboxScope : IDisposable
     }
 
     /// <summary>Gets the ambient outbox scope, or <see langword="null"/> when none is open.</summary>
-    public static OutboxScope? Current => _current.Value;
+    /// <remarks>
+    /// Skips disposed scopes: a long-lived worker started while a scope was open (e.g. a bus started lazily inside a
+    /// handler) inherits it, and must not stage its sends there once the handler is done.
+    /// </remarks>
+    public static OutboxScope? Current
+    {
+        get
+        {
+            var scope = _current.Value;
+            while (scope is { _disposed: true })
+                scope = scope._parent;
+            return scope;
+        }
+    }
 
     /// <summary>Gets the application outbox context the staged messages are written to.</summary>
     public IOutboxContextCore Context { get; }

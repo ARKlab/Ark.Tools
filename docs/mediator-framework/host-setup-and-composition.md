@@ -438,7 +438,9 @@ Under Rebus the outbox is Rebus's transport decorator, `Outbox(...)`, which stag
 the sends made in an open `OutboxScope`. Pass `outboxEnabled: true` to
 `RebusMessagingBus` when its transport is configured with it; otherwise a send
 made in an open scope throws, instead of reaching the broker before the
-application commits.
+application commits. Rebus-only code that enlists explicitly with
+`bus.Enlist(context)` keeps working unchanged, and its enlistment takes
+precedence over an enclosing `OutboxScope`.
 
 An always-running custom process owns the complementary registration:
 

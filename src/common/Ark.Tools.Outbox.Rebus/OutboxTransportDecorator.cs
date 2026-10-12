@@ -36,16 +36,19 @@ internal sealed class OutboxTransportDecorator : ITransport
     public Task Send(
         [NotPersonalData("Destination queue address is infrastructure routing metadata, not personal data.")] string destinationAddress, TransportMessage message, ITransactionContext context)
     {
-        // an ambient OutboxScope takes precedence: it stores the messages when the application completes it
-        var scope = OutboxScope.Current;
-        if (scope != null)
-        {
-            scope.Add(_toOutboxMessage(destinationAddress, message));
-            return Task.CompletedTask;
-        }
-
         // if there is a IOutboxContext associated with this Send(), batch message and store them on commit
+        // an explicit bus.Enlist() takes precedence, so Rebus-only code behaves as before inside an OutboxScope
         var ctx = context.GetOrNull<IOutboxContextCore>(_outboxContextItemsKey);
+        if (ctx == null)
+        {
+            // otherwise an ambient OutboxScope stores the messages when the application completes it
+            var scope = OutboxScope.Current;
+            if (scope != null)
+            {
+                scope.Add(_toOutboxMessage(destinationAddress, message));
+                return Task.CompletedTask;
+            }
+        }
         if (ctx != null)
         {
             var outgoingMessages = context.GetOrAdd(_outgoingMessagesItemsKey, () =>

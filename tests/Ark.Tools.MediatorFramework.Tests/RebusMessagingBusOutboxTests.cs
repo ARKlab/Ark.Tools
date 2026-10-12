@@ -3,6 +3,7 @@
 
 using Ark.Tools.MediatorFramework.Rebus;
 using Ark.Tools.Outbox;
+using Ark.Tools.Outbox.Rebus;
 
 using AwesomeAssertions;
 
@@ -55,6 +56,74 @@ public sealed class RebusMessagingBusOutboxTests
         var messages = (await inspection.PeekLockMessagesAsync().ConfigureAwait(false)).ToList();
         messages.Should().ContainSingle()
             .Which.Headers.Should().Contain("rbs2-outbox-recipient", _queue);
+    }
+
+    [TestMethod]
+    public async Task RebusOnlyEnlistStillStoresOnCompletion()
+    {
+        var network = new InMemNetwork();
+        using var activator = new BuiltinHandlerActivator();
+        var bus = _startBus(activator, network, outbox: true);
+        var factory = new InMemoryOutboxContextFactory();
+        var context = await factory.CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+
+        using (var scope = bus.Enlist(context))
+        {
+            await bus.Send("message").ConfigureAwait(false);
+            await scope.CompleteAsync().ConfigureAwait(false);
+        }
+        await context.CommitAsync().ConfigureAwait(false);
+
+        network.Count(_queue).Should().Be(0);
+        (await _countAsync(factory).ConfigureAwait(false)).Should().Be(1);
+    }
+
+    [TestMethod]
+    public async Task RebusOnlyEnlistWinsOverAnEnclosingOutboxScope()
+    {
+        using var activator = new BuiltinHandlerActivator();
+        var bus = _startBus(activator, new InMemNetwork(), outbox: true);
+        var scopeFactory = new InMemoryOutboxContextFactory();
+        var enlistedFactory = new InMemoryOutboxContextFactory();
+        var scopeContext = await scopeFactory.CreateAsync().ConfigureAwait(false);
+        await using var __scopeContext = scopeContext.ConfigureAwait(false);
+        var enlistedContext = await enlistedFactory.CreateAsync().ConfigureAwait(false);
+        await using var __enlistedContext = enlistedContext.ConfigureAwait(false);
+
+        using (var outboxScope = new OutboxScope(scopeContext))
+        {
+            using (var rebusScope = bus.Enlist(enlistedContext))
+            {
+                await bus.Send("message").ConfigureAwait(false);
+                await rebusScope.CompleteAsync().ConfigureAwait(false);
+            }
+            await outboxScope.CompleteAsync().ConfigureAwait(false);
+        }
+        await enlistedContext.CommitAsync().ConfigureAwait(false);
+        await scopeContext.CommitAsync().ConfigureAwait(false);
+
+        (await _countAsync(enlistedFactory).ConfigureAwait(false)).Should().Be(1);
+        (await _countAsync(scopeFactory).ConfigureAwait(false)).Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task RebusOnlySendWithoutEnlistOrScopeGoesToTheQueue()
+    {
+        var network = new InMemNetwork();
+        using var activator = new BuiltinHandlerActivator();
+        var bus = _startBus(activator, network, outbox: true);
+
+        await bus.Send("message").ConfigureAwait(false);
+
+        network.Count(_queue).Should().Be(1);
+    }
+
+    private static async Task<int> _countAsync(IOutboxAsyncContextFactory factory)
+    {
+        var context = await factory.CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+        return await context.CountAsync().ConfigureAwait(false);
     }
 
     private const string _queue = "rebus-outbox-tests";

@@ -25,6 +25,28 @@ public sealed class OutboxScopeTests
     }
 
     [TestMethod]
+    public async Task FlowThatOutlivesTheScopeNoLongerSeesIt()
+    {
+        var context = await new InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);
+        await using var __context = context.ConfigureAwait(false);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task<OutboxScope?> worker;
+        using (new OutboxScope(context))
+        {
+            // A long-lived worker started inside the scope inherits it, like a bus started lazily by a handler.
+            worker = Task.Run(async () =>
+            {
+                await release.Task.ConfigureAwait(false);
+                return OutboxScope.Current;
+            });
+        }
+
+        release.SetResult();
+
+        (await worker.ConfigureAwait(false)).Should().BeNull();
+    }
+
+    [TestMethod]
     public async Task CompletedScopeRejectsMoreMessagesAndASecondCompletion()
     {
         var context = await new InMemoryOutboxContextFactory().CreateAsync().ConfigureAwait(false);

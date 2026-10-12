@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `Ark.Tools.Outbox`: `OutboxScope`, an ambient outbox transaction like Rebus's `RebusTransactionScope`. Messages sent through a bus while it is open are staged and written to the application outbox on `CompleteAsync`. It works with the Mediator Framework native bus and with Rebus configured with `Outbox(...)`.
+- `Ark.Tools.Outbox`: `OutboxScope`, an ambient outbox transaction like Rebus's `RebusTransactionScope`. Messages sent through a bus while it is open are staged and written to the application outbox on `CompleteAsync`. It works with the Mediator Framework native bus and with Rebus configured with `Outbox(...)`; Rebus code that calls `bus.Enlist(context)` works as before, and that enlistment takes precedence over an enclosing scope.
 
 ### Changed
 
