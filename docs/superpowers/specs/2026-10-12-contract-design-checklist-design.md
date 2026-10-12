@@ -33,7 +33,7 @@ Success criteria:
 | Enums | `EvolvableEnum<T>` with `NOT_SET = 0` on every public contract. Exceptions: enums controlled externally (e.g. a third-party interface adapter) and `[Flags]` enums; the brief names the exception. |
 | Breaking changes | Avoid them. The checklist asks for the additive path first (optional field with default, new operation); a new `[Versioning]` contract needs a written reason the additive path is impossible. |
 | GDPR scope | Full privacy-by-design: purpose, lawful basis, retention period and DPIA trigger are answered before coding. They are always `ASK`, owned by a human, and must be verified with the DPO/legal; the agent never decides them. |
-| Personal data in messages | Split by audience. Public/cross-application events carry identifiers only by default; carrying personal data needs a reason. Internal background messages may carry classified personal data. Either way, the brief records retention and purge for every store it reaches: queue TTL, dead-letter handling, outbox cleanup, audit. Ark.Tools.Compliance does not encrypt payloads, so classification alone does not make queued copies erasable. |
+| Personal data in messages | Classified personal data may be carried in messages and events. Sensitive personal data and special-category data (GDPR Art. 9/10) never. Every queue, dead-letter queue and outbox has an intrinsic TTL; the brief records it. Platform encryption at rest is the baseline; per-message or per-column encryption is an additional measure the brief decides on. |
 | Single source | The doc is canonical. The skill links it via the raw GitHub URL and keeps a ~30-line index of section names and hard defaults so the gate works if the fetch fails. |
 | Skill description | Stays scoped to consuming Mediator Framework; it gains design/review triggers but no generic API-design or GDPR triggers. |
 
@@ -69,33 +69,40 @@ New file `docs/mediator-framework/contract-design-checklist.md`:
 8. **API design.** Defaults: `/api/v{version}/<plural-kebab-resource>/{id}/<sub-resource>`;
    non-CRUD actions as sub-paths; list query shape (paging, sort, filter); status
    per operation kind; gRPC service = plural resource, method = `VerbNoun`;
-   event/message naming; upload size/count/content types. Deviations need a
-   reason.
-9. **Transport exposure and serialization.** Which of HTTP, gRPC, MCP, Azure
-   Functions, MessagePack and why; STJ source-generated context; protobuf field
-   numbers; MCP tool description and whether the operation is destructive.
-10. **Authorization.** Operation policy (`Ark.Tools.Authorization`); resource-level
+   event/message naming. Deviations need a reason.
+9. **Lists, streaming and files.** Paging, sort and filter shape and maximum
+   page size, or an `IAsyncEnumerable` stream instead; attachments: size,
+   count, content types, download disposition.
+10. **Limits and abuse.** Maximum body, page, attachment and stream sizes; rate
+    limiting (host route group); expensive queries and how they are bounded.
+11. **Transport exposure and serialization.** Which of HTTP, gRPC, MCP, Azure
+    Functions, MessagePack and why; STJ source-generated context; protobuf field
+    numbers; MCP tool description and whether the operation is destructive.
+12. **Authorization.** Operation policy (`Ark.Tools.Authorization`); resource-level
     check with the 403/404 rule above; list scoping; field visibility; identity
     for background messages and re-check on consume.
-11. **Messaging.** Publisher and subscribers; logical names and `FormerNames`;
-    retry, dead-letter, outbox, idempotency.
-12. **Versioning and compatibility.** Additive first; enum rule; reserved
+13. **Messaging.** Publisher and subscribers; logical names and `FormerNames`;
+    retry, dead-letter, outbox, idempotency; intrinsic TTL of every queue,
+    dead-letter queue and outbox.
+14. **Versioning and compatibility.** Additive first; enum rule; reserved
     protobuf numbers and logical names; API-surface snapshot, OpenAPI and proto
     diffs reviewed.
-13. **Privacy (GDPR).** Personal-data class per field (personal, special
+15. **Privacy (GDPR).** Personal-data class per field (personal, special
     category Art. 9, pseudonymous, not personal); purpose, lawful basis,
     retention, DPIA trigger (`ASK`, DPO-verified); minimisation; exposure across
-    outputs, transports, logs, telemetry and third parties; messages by audience
-    with retention/purge per store; erasure including temporal history and
+    outputs, transports, logs, telemetry and third parties; messages and events
+    may carry classified personal data but never sensitive or special-category
+    data, and every queue and outbox they reach has a TTL; per-message or
+    per-column encryption on top of platform encryption at rest; erasure including temporal history and
     audit; access and export. Sub-section mapping each answer to
     Ark.Tools.Compliance (classification attributes, sensitive value objects,
     `ARKPII*`, `ArkComplianceSurface.txt`, SQL policies) and the manual checks
     when it is not used.
-14. **Audit and observability.** Persisted audit (who, when, what); telemetry and
+16. **Audit and observability.** Persisted audit (who, when, what); telemetry and
     log tags without personal data; metrics.
-15. **Documentation.** XML docs on contract and every property (feeds OpenAPI,
+17. **Documentation.** XML docs on contract and every property (feeds OpenAPI,
     MCP, gRPC); documented failures.
-16. **Tests.** Application, transport-boundary and messaging tests proving each
+18. **Tests.** Application, transport-boundary and messaging tests proving each
     decision.
 - **Brief template.** Markdown for the PR description.
 
@@ -107,6 +114,9 @@ Edits to existing docs:
 - `versioning.md`: the "Add an enum entry" row distinguishes plain enums
   (breaking) from `EvolvableEnum` (compatible).
 - `README.md`: add the checklist to learning-path step 3a.
+- `docs/plans/mediator-framework/tasks/aspnetcore/NET-03-json-patch.md`: add a
+  step and acceptance item to update the checklist (fields and updatability)
+  and the skill when PATCH ships.
 - `CHANGELOG.md`: one entry under `## [Unreleased]`.
 
 ## Part 2 — skill
@@ -121,7 +131,7 @@ Edits to existing docs:
   checklist, draft and tag, ask `ASK` items one at a time (legal items always
   `ASK`), confirm, implement, put the brief in the PR and decisions in XML docs.
   Without a human to answer, stop after the brief.
-- "Checklist index": the 16 section names with their hard defaults.
+- "Checklist index": the 18 section names with their hard defaults.
 - Keep, trimmed: workflow, generator boundary, transactional messaging,
   guardrails.
 - New red flags: plain enum on a public contract; unclassified personal-data
@@ -142,7 +152,7 @@ Edits to existing docs:
   2. Add `Status` (Draft/Published/Archived) to Book and publish a
      `BookArchived` event consumed by other applications.
   3. Rename `Book.Author` to an `Authors` list in the v1 contract.
-- Assertions: all 16 sections present; every answer tagged; legal items `ASK`;
+- Assertions: all 18 sections present; every answer tagged; legal items `ASK`;
   per-field table with updatability labels; `EvolvableEnum` chosen; named
   violations; 403/404 reasoned from id type; no code written.
 - Review through the skill-creator static viewer; iterate until accepted;
@@ -152,9 +162,18 @@ Edits to existing docs:
 
 ## Out of scope
 
-- Payload encryption or crypto-shredding for messages (framework feature gap,
-  noted in the checklist).
-- PATCH support (NET-03).
-- Generator diagnostics enforcing the API conventions.
-- Separate checklist sections for lists/streaming/files and limits/abuse; their
-  key items are rows under Validation and API design.
+- PATCH support. NET-03 owns it and now updates the checklist and the skill.
+- New generator and analyzer diagnostics. Existing ones already enforce part of
+  the checklist: `ARKMF020` (version prefix without the version token),
+  `ARKMF003` (mass assignment), `ARKMF012`/`ARKMF059` (route and query binding),
+  `ARKMF016` (duplicate operation name), `ARKMF055` (MCP tool documentation),
+  `ARKCORE001`-`004` (evolvable enum shape), `ARKPII001` (unclassified
+  personal-data names) and `ARKAPI002` (API surface changed). Candidate
+  follow-ups that would turn checklist defaults into diagnostics:
+  - a plain enum on a public contract member (suggest `EvolvableEnum<T>`);
+  - a `[SensitivePersonalData]` member reachable from a `[Message]` or `[Event]`
+    contract;
+  - a route that does not match `/api/v{version}/<plural-kebab-resource>`;
+  - a gRPC method name that is not `VerbNoun`;
+  - a public contract or property without XML documentation (today only MCP
+    tools are checked, by `ARKMF055`).
