@@ -161,10 +161,12 @@ public sealed class ArkTelemetryFileCollector : IDisposable
         Justification = "The anonymous payload is created in this method and only contains JSON scalar values and collections.")]
     private void _write(StreamWriter writer, object value)
     {
+        // Serialize outside the lock so concurrent writers only contend on the file write.
+        var line = JsonSerializer.Serialize(value);
         lock (_gate)
         {
             if (!_disposed)
-                writer.WriteLine(JsonSerializer.Serialize(value));
+                writer.WriteLine(line);
         }
     }
 

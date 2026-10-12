@@ -34,10 +34,21 @@ public sealed class ArkComplianceRedactionProcessor : BaseProcessor<Activity>
         if (!_scanner.IsEnabled)
             return;
 
-        foreach (var tag in data.TagObjects.ToArray())
+        // Collect changes first: SetTag mutates the tag list being enumerated. Scan returns the same instance when nothing is redacted.
+        List<KeyValuePair<string, string>>? redacted = null;
+        foreach (var tag in data.TagObjects)
         {
             if (tag.Value is string text)
-                data.SetTag(tag.Key, _scanner.Scan(text));
+            {
+                var scanned = _scanner.Scan(text);
+                if (!ReferenceEquals(scanned, text))
+                    (redacted ??= []).Add(new(tag.Key, scanned));
+            }
+        }
+        if (redacted is not null)
+        {
+            foreach (var tag in redacted)
+                data.SetTag(tag.Key, tag.Value);
         }
         data.DisplayName = _scanner.Scan(data.DisplayName);
         if (data.StatusDescription is not null)
