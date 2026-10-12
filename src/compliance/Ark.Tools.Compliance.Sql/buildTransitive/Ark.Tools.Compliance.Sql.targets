@@ -114,6 +114,15 @@
     <ItemGroup>
       <FileWrites Include="$(_ArkComplianceSqlTokensCache)" />
     </ItemGroup>
+    <!-- The stamp lists the scripts the last run wrote: if one of them is gone, drop the stamp so the scripts are written again. -->
+    <ReadLinesFromFile File="$(_ArkComplianceSqlStamp)" Condition="Exists('$(_ArkComplianceSqlStamp)')">
+      <Output TaskParameter="Lines" ItemName="_ArkComplianceSqlStamped" />
+    </ReadLinesFromFile>
+    <ItemGroup>
+      <_ArkComplianceSqlMissing Include="%(_ArkComplianceSqlStamped.Identity)"
+                                Condition="'%(_ArkComplianceSqlStamped.Identity)' != '' and !Exists('$(ArkComplianceSqlOutputPath)/%(_ArkComplianceSqlStamped.Identity)')" />
+    </ItemGroup>
+    <Delete Files="$(_ArkComplianceSqlStamp)" Condition="'@(_ArkComplianceSqlMissing)' != ''" />
   </Target>
 
   <!-- The inline task is compiled by RoslynCodeTaskFactory on first use in each MSBuild node, which costs seconds:
@@ -122,8 +131,11 @@
           Inputs="@(_ArkSqlGenerated);$(_ArkComplianceSqlTokensCache);$(MSBuildThisFileFullPath)"
           Outputs="$(_ArkComplianceSqlStamp)">
     <ArkWriteComplianceSqlTemplates GeneratedFiles="@(_ArkSqlGenerated)" Tokens="@(ArkComplianceSqlToken)"
-                                    OutputDirectory="$(ArkComplianceSqlOutputPath)" />
+                                    OutputDirectory="$(ArkComplianceSqlOutputPath)">
+      <Output TaskParameter="OutputFiles" ItemName="_ArkComplianceSqlWritten" />
+    </ArkWriteComplianceSqlTemplates>
     <MakeDir Directories="$(ArkComplianceSqlOutputPath)" />
+    <WriteLinesToFile File="$(_ArkComplianceSqlStamp)" Lines="@(_ArkComplianceSqlWritten->'%(Filename)%(Extension)')" Overwrite="true" />
     <Touch Files="$(_ArkComplianceSqlStamp)" AlwaysCreate="true" />
   </Target>
 

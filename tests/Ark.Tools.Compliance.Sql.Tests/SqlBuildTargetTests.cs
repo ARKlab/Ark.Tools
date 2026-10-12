@@ -165,6 +165,13 @@ public sealed class SqlBuildTargetTests
             (await File.ReadAllLinesAsync(Path.Join(directory, "outputs.txt")).ConfigureAwait(false))
                 .Should().ContainSingle().Which.Should().EndWith(_fileName);
 
+            // A deleted script is written again even though no input changed.
+            File.Delete(script);
+            var restored = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-p:SchemaValue=one", "-v:d").ConfigureAwait(false);
+            restored.ExitCode.Should().Be(0, restored.Log);
+            restored.Log.Should().NotContain(skipped);
+            (await File.ReadAllTextAsync(script).ConfigureAwait(false)).Should().Contain("[one]");
+
             var third = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql", "-p:SchemaValue=two", "-v:d").ConfigureAwait(false);
             third.ExitCode.Should().Be(0, third.Log);
             third.Log.Should().NotContain(skipped);
