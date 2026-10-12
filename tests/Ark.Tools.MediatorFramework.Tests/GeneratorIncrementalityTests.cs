@@ -130,6 +130,48 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void MinimalApiGeneratorDoesNotRescanReferencesOnDuplicateMapping()
+    {
+        var contracts = _createReference(
+            "MinimalApiDuplicateContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace MinimalApiDuplicateContracts;
+            public sealed class Marker { }
+            [HttpEndpoint("GET", "/referenced")]
+            public sealed class GetReferenced : IQuery<string> { }
+            """);
+        const string source = """
+            MapArkEndpointsFromAssembly<MinimalApiDuplicateContracts.Marker>();
+            """;
+        var tree = CSharpSyntaxTree.ParseText(source, path: "Program.cs");
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [tree],
+            _getReferences().Append(contracts),
+            new CSharpCompilationOptions(OutputKind.ConsoleApplication));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ArkMinimalApiEndpointGenerator().AsSourceGenerator()],
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        driver = driver.RunGenerators(compilation);
+        var original = _describeOutput(driver);
+        original.Should().Contain("global::MinimalApiDuplicateContracts.GetReferenced");
+
+        // A second mapping of the same assembly selects nothing new, so the scan must not run again.
+        compilation = compilation.ReplaceSyntaxTree(
+            tree,
+            CSharpSyntaxTree.ParseText(source + "\n" + source, path: "Program.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        _getStepReasons(driver, "MinimalApiReferencedEndpoints").Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
+        _describeOutput(driver).Should().Be(original);
+    }
+
+    [TestMethod]
     public void GrpcGeneratorReusesCachedOutputOnUnrelatedEdit()
     {
         var contracts = _createReference(
