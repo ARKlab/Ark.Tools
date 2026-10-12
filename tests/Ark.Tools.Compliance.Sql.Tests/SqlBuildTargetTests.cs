@@ -192,6 +192,51 @@ public sealed class SqlBuildTargetTests
         }
     }
 
+    /// <summary>
+    /// Token sets that would read the same as <c>name=value</c> text still invalidate the skipped task: renaming token
+    /// <c>Schema</c> with value <c>one=two</c> to an invalid <c>Schema=one</c> with value <c>two</c> is reported.
+    /// </summary>
+    [TestMethod]
+    public async Task TokenChangesThatReadAlikeStillRunTheTask()
+    {
+        var directory = Path.Join(AppContext.BaseDirectory, "SqlTargetRuns", Guid.NewGuid().ToString("N"));
+        var generatorDirectory = Path.Join(directory, "generated", "Ark.Tools.Compliance.Generators",
+            "Ark.Tools.Compliance.Generators.SqlPolicyGenerator");
+        Directory.CreateDirectory(generatorDirectory);
+        try
+        {
+            await File.WriteAllTextAsync(Path.Join(generatorDirectory, "ArkComplianceSql.manifest.g.cs"),
+                "// ArkComplianceSqlTemplate:" + _fileName + ":"
+                + Convert.ToBase64String(Encoding.UTF8.GetBytes("ALTER TABLE [$(Schema)].[Customers] ALTER COLUMN [email] ADD MASKED WITH (FUNCTION = 'email()');"))
+                + "\n").ConfigureAwait(false);
+            var project = new XDocument(new XElement("Project",
+                new XElement("PropertyGroup",
+                    new XElement("TargetFramework", "net10.0"),
+                    new XElement("EnableArkToolsCompliance", "true"),
+                    new XElement("IntermediateOutputPath", "obj/"),
+                    new XElement("CompilerGeneratedFilesOutputPath", "generated")),
+                new XElement("ItemGroup",
+                    new XElement("ArkComplianceSqlToken", new XAttribute("Include", "$(TokenName)"), new XAttribute("Value", "$(TokenValue)"))),
+                new XElement("Import", new XAttribute("Project",
+                    Path.Join(AppContext.BaseDirectory, "Fixtures", "Ark.Tools.Compliance.Sql.targets")))));
+            var projectPath = Path.Join(directory, "app.proj");
+            project.Save(projectPath);
+
+            var valid = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql",
+                "-p:TokenName=Schema", "-p:TokenValue=one=two").ConfigureAwait(false);
+            valid.ExitCode.Should().Be(0, valid.Log);
+
+            var invalid = await _runMsBuildAsync(directory, projectPath, "-t:ArkGenerateComplianceSql",
+                "-p:TokenName=Schema=one", "-p:TokenValue=two").ConfigureAwait(false);
+            invalid.ExitCode.Should().NotBe(0, invalid.Log);
+            invalid.Log.Should().Contain("Invalid or duplicate ArkComplianceSqlToken");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     /// <summary>A compliance-enabled project without SQL policies builds, and its rebuild skips the task too.</summary>
     [TestMethod]
     public async Task ProjectWithoutPoliciesBuildsIncrementally()
