@@ -337,6 +337,27 @@ public sealed class DeclarationAnalyzerTests
         diagnostics.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Repeated references to a type that is not a service collection never count as service setup, also when the
+    /// answer for that type comes from the per-type cache.
+    /// </summary>
+    [TestMethod]
+    public async Task MicrosoftTelemetryWithRepeatedNonServiceReferencesIsAccepted()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            namespace Microsoft.Extensions.DependencyInjection
+            {
+                public interface IServiceCollection { }
+            }
+            class Startup { void Configure(object services) { services.ToString(); services.GetHashCode(); } }
+            """,
+            references: [_telemetryReference()],
+            outputKind: OutputKind.ConsoleApplication).ConfigureAwait(false);
+
+        diagnostics.Should().BeEmpty();
+    }
+
     /// <summary>Microsoft telemetry consumers configuring a service collection must register Ark redaction.</summary>
     [TestMethod]
     public async Task MicrosoftTelemetryWithServiceCollectionWithoutArkRedactionIsRejected()
