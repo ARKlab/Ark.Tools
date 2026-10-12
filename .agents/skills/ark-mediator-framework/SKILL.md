@@ -49,18 +49,18 @@ A documentation-only change needs only Documentation. "N/A" needs a reason.
 ## Checklist index
 
 1. Operation — purpose, kind (`IQuery`/`IRequest`/`ICommand`/event/message), owner; background work is a separate internal message.
-2. Fields and updatability — per-field table with every field of each touched model, changed or not; labels Updatable (`Input`), Create-only (`Create : Input`), Output-only (`Output`), Context-supplied (never in the body), Identity (envelope); PUT replaces everything and absent means default; partial update is its own operation.
+2. Fields and updatability — per-field table (`Field | Type | Updatability | Required | Null meaning | Default | Concurrency | Validation | Personal-data class`) with every field of each touched model, changed or not; labels Updatable (`Input`), Create-only (`Create : Input`), Output-only (`Output`), Context-supplied (never in the body), Identity (envelope); PUT replaces everything and absent means default; partial update is its own operation.
 3. Types and representation — value objects for domain primitives; NodaTime, never `DateTime`; explicit precision, unit, currency.
 4. Validation — stateless FluentValidation, 400/`InvalidArgument`; every collection and page has a maximum; unknown `EvolvableEnum` input is rejected.
 5. Business rules — stateful rules in the handler; each one a named `BusinessRuleViolation` subclass documented on the contract.
 6. Failure contract — every failure with Problem Details type: 400 validation and rule, 403, 404, 409 concurrency, 412 ETag.
 7. Concurrency and idempotency — ETag or version field; retry-safe POST; idempotent message handlers with a deduplication key.
-8. API design — `/api/v{version}/<plural-kebab-resource>/{id}/<sub-resource>`; actions as sub-paths; gRPC `Service` = plural resource, `Method` = `VerbNoun`; deviations need a reason.
+8. API design — `/api/v{version}/<plural-kebab-resource>/{id}/<sub-resource>`; actions as sub-path verbs; status 200 read (404 on null), 201 create, 202 accepted background work, 204 command without value; contract names `<Resource>_<Verb>Request`/`Query`, events in the past tense; gRPC `Service` = plural resource, `Method` = `VerbNoun`; deviations need a reason.
 9. Lists, streaming and files — paging, sort, filter and maximum page size, or `IAsyncEnumerable`; upload size, count, content types; download disposition.
 10. Limits and abuse — body, page, attachment and stream limits; rate limiting in the host; bounded expensive queries.
 11. Transport exposure and serialization — only transports with a named consumer; source-generated JSON; stable protobuf numbers; MCP description and destructiveness.
 12. Authorization — `Ark.Tools.Authorization` policy on the contract; instance checks; 403 by default, 404 when 403 discloses an unguessable id (GUID); list scoping; separate output models for restricted fields.
-13. Messaging — publisher and every subscriber; sender, consumer, queue; retry, dead-letter, outbox; stable logical names; intrinsic TTL on every queue, dead-letter queue and outbox.
+13. Messaging — publisher and every subscriber; sender, consumer, queue; retry, dead-letter, outbox; stable logical names; every queue, dead-letter queue and outbox must have a TTL.
 14. Versioning and compatibility — additive first, new version only with a reason; `EvolvableEnum<T>` with `NOT_SET = 0` on public contracts except externally controlled or `[Flags]` enums; reserved wire ids.
 15. Privacy (GDPR) — personal-data class per field; purpose, lawful basis, retention, DPIA always `ASK`; messages crossing a service boundary carry identifiers only; messages between processes of the same service may carry classified personal data; sensitive or special-category data never in a message; Ark.Tools.Compliance or manual checks.
 16. Audit and observability — audited changes persist who, when, what; telemetry and log tags never carry personal data.

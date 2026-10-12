@@ -117,7 +117,7 @@ A failure returns HTTP 400 / gRPC `InvalidArgument`.
 | Presence, length, range, format, pattern of each field? | One row per field in the §2 table's Validation column. |
 | Collection sizes? | Every collection has a maximum. |
 | Cross-field rules? | Listed and implemented in the validator. |
-| Unknown `EvolvableEnum` values on input? | Rejected (`Value == null` fails validation). |
+| Unknown `EvolvableEnum` values on input? | Rejected (`Value == null` fails validation). `NOT_SET` on a required field also fails validation. |
 | Paging? | `Limit` has a maximum; `Skip` ≥ 0. |
 
 ## 5. Business rules
@@ -169,11 +169,11 @@ A deviation needs a reason.
 | Concern | Default |
 | --- | --- |
 | Route | `/api/v{version}/<plural-kebab-resource>/{id}/<sub-resource>`, for example `/api/v{version}/books/{bookId}/reviews` |
-| Non-CRUD action | a sub-path verb, for example `POST /api/v{version}/books/bulk` |
-| Status per kind | read `200` (`404` on `null`); update returning a value `200`; create `201` (`SuccessStatusCode = 201`); accepted background work `202`; command without value `204`; see [HTTP endpoints](http-endpoints.md) |
+| Non-CRUD action | a sub-path action verb, for example `POST /api/v{version}/books/editions/describe` |
+| Status per kind | read `200` (`404` on `null`); update returning a value `200`; create `201` (`SuccessStatusCode = 201`); accepted background work `202` (`SuccessStatusCode = 202`); command without value `204`; see [HTTP endpoints](http-endpoints.md) |
 | Binding | route keys `[HttpRoute]`, filters `[HttpQuery]`, payload `[HttpBody]` composing a model |
 | gRPC | `[GrpcService("Books")]` (plural resource) and `[GrpcMethod("DownloadBookCover")]` (`VerbNoun`) |
-| Contract names | `<Resource>_<Verb>Request`, `<Resource>_<Verb>Query`; events in the past tense (`BookArchived`) |
+| Contract names | `<Resource>_<Verb>Request`, `<Resource>_<Verb>Query` for new contracts (older sample contracts such as `GetAuditsQuery` predate this convention); events in the past tense (`BookArchived`) |
 | Anonymous access | explicit `AllowAnonymous`, with the reason |
 
 ## 9. Lists, streaming and files
@@ -223,7 +223,7 @@ A deviation needs a reason.
 | Logical names | Stable; keep `FormerNames` when renaming. |
 | Retry and dead-letter | State the retry policy and who handles dead-lettered messages. |
 | Outbox | A handler that changes state and sends or publishes enlists the outbox. |
-| Time to live | Every queue, dead-letter queue and outbox has an intrinsic TTL; state it. |
+| Time to live | Every queue, dead-letter queue and outbox must have a TTL; state its value. |
 | Audience | Cross-service, or internal to one service? A service is the boundary, not the process: the web host, workers and Functions of the same service (for example its Core) are internal to each other. This decides what personal data the message may carry ([§15](#15-privacy-gdpr)). |
 
 ## 14. Versioning and compatibility
@@ -255,7 +255,7 @@ verify the conclusions with your DPO or legal team before relying on them.
 | Minimisation | Each personal field is needed for the stated purpose. |
 | Exposure | List the outputs, transports, logs, telemetry and third parties it reaches. Logs and telemetry carry no personal data. |
 | Messages and events | Events and messages that cross a service boundary carry identifiers only, no personal data. Messages between the processes of the same service (owned queue) may carry classified personal data. Sensitive and special-category data never travel in a message. |
-| Storage | Platform encryption at rest is the baseline. State whether per-message or per-column encryption is needed on top. Every queue, dead-letter queue and outbox has a TTL ([§13](#13-messaging)). |
+| Storage | Platform encryption at rest is the baseline. State whether per-message or per-column encryption is needed on top. Every queue, dead-letter queue and outbox must have a TTL ([§13](#13-messaging)). |
 | Erasure | How the data is erased or anonymised, including temporal history tables, audit records, and message stores. |
 | Access and export | How the data is found and exported for a data subject. |
 
