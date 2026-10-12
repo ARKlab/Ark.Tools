@@ -216,7 +216,7 @@ public sealed class ComplianceSurfaceTests
         _run(_personalMember, "invalid baseline", enabled: true, complianceEnabled: false).Diagnostics.Should().BeEmpty();
     }
 
-    /// <summary>A disabled surface parses no members and emits no inventory, so it costs nothing per edit.</summary>
+    /// <summary>A disabled surface binds no members and emits no inventory; only the syntax predicates still run per edit.</summary>
     [TestMethod]
     public void Surface_DisabledGateSkipsParsingAndOutput()
     {
