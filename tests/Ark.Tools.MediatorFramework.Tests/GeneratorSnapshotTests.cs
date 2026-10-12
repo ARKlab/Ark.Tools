@@ -4995,6 +4995,62 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorReusesSnapshotAndDiffOnLineShift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
+            """;
+        var tree = CSharpSyntaxTree.ParseText(source, path: "Contracts.cs");
+        var compilation = CSharpCompilation.Create(
+            "ApiSurfaceIncrementality",
+            [tree],
+            _platformReferences.Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            ]),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator().AsSourceGenerator()],
+            additionalTexts: [new TestAdditionalText(
+                "ArkApiSurface.txt",
+                "/*\nCONTRACT GetItem -> string [group=Ark] [http=GET /other] [version=1+]\n*/\n")],
+            optionsProvider: new TestAnalyzerConfigOptionsProvider(
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["build_property.ArkApiSurfaceEnabled"] = "true",
+                }),
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        driver = driver.RunGenerators(compilation);
+        var original = _getGeneratedSource(driver);
+        var originalLine = _getItemChangedLine(driver);
+
+        // Shifts the contract down two lines: its location changes, its surface does not.
+        compilation = compilation.ReplaceSyntaxTree(tree, CSharpSyntaxTree.ParseText("\n\n" + source, path: "Contracts.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        _assertRunReasons(driver, "ApiSurfaceOutput", isUnrelatedEdit: false);
+        _assertRunReasons(driver, "ApiSurfaceLines", isUnrelatedEdit: true);
+        _assertRunReasons(driver, "ApiSurfaceBaseline", isUnrelatedEdit: true);
+        _assertRunReasons(driver, "ApiSurfaceDiff", isUnrelatedEdit: true);
+        _getGeneratedSource(driver).Should().Be(original);
+        _getItemChangedLine(driver).Should().Be(originalLine + 2);
+    }
+
+    private static int _getItemChangedLine(GeneratorDriver driver)
+    {
+        return driver.GetRunResult().Diagnostics
+            .Single(static d => d.Id == "ARKAPI002"
+                && d.GetMessage(System.Globalization.CultureInfo.InvariantCulture).Contains("'GetItem'", StringComparison.Ordinal))
+            .Location.GetLineSpan().StartLinePosition.Line;
+    }
+
+    [TestMethod]
     public void ApiSurfaceGeneratorEmitsMessagingEntriesAndTracksDrift()
     {
         const string source = """
