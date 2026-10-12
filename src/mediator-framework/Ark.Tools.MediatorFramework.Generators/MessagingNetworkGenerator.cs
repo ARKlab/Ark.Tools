@@ -141,7 +141,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 _networkAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol symbol
-                    ? _readNetwork(symbol, attributeContext.SemanticModel.Compilation)
+                    ? _readNetwork(symbol)
                     : (Network?)null)
             .WithTrackingName(_networkStage)
             .Where(static network => network is not null)
@@ -153,7 +153,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
                 _participantAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol symbol
-                    ? _readParticipant(symbol, attributeContext.SemanticModel.Compilation)
+                    ? _readParticipant(symbol)
                     : null)
             .WithTrackingName(_participantStage)
             .Where(static participant => participant is not null)
@@ -427,7 +427,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         }
     }
 
-    private static Network _readNetwork(INamedTypeSymbol symbol, Compilation compilation)
+    private static Network _readNetwork(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().First(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _networkAttribute);
@@ -436,7 +436,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _readType(symbol),
             symbol.ToDisplayString(),
             members
-                .Select(member => new NetworkMember(_readType(member), _readParticipant(member, compilation)))
+                .Select(static member => new NetworkMember(_readType(member), _readParticipant(member)))
                 .ToImmutableArray(),
             _enum(attribute, "Requires"),
             _optionalInt(attribute, "MaximumDecompressedPayloadBytes"),
@@ -445,7 +445,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             _optionalInt(attribute, "ResourceLifecycle"));
     }
 
-    private static Participant? _readParticipant(INamedTypeSymbol symbol, Compilation compilation)
+    private static Participant? _readParticipant(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(static attribute =>
             attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
@@ -473,7 +473,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             serializers,
             _enum(attribute, "DefaultSerializer"),
             compression,
-            _compressionName(compilation, compression),
             compressionMinimumSizeBytes,
             retryType is null ? null : _typeName(retryType),
             retry,
@@ -531,7 +530,13 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             && compilation.GetTypeByMetadataName(_failFastException) is not null
             && compilation.GetTypeByMetadataName(_failFastReason) is not null
             && compilation.GetTypeByMetadataName(_commandInterface) is not null;
+        var compressionNames = compilation.GetTypeByMetadataName("Ark.Tools.MediatorFramework.CompressionAlgorithm")?.GetMembers()
+            .OfType<IFieldSymbol>()
+            .Where(static field => field.HasConstantValue && field.ConstantValue is int)
+            .Select(static field => ((int)field.ConstantValue!, field.Name))
+            .ToImmutableArray() ?? ImmutableArray<(int Value, string Name)>.Empty;
         return new CompilationFacts(
+            compressionNames,
             compilation.GetTypeByMetadataName(_networkOptions) is not null,
             compilation.GetTypeByMetadataName(_contractRegistry) is not null,
             canEmitBinder,
@@ -1033,7 +1038,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .AppendLine("    /// <summary>Gets the sender-side compression algorithm.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const global::Ark.Tools.MediatorFramework.CompressionAlgorithm Compression = global::Ark.Tools.MediatorFramework.CompressionAlgorithm.")
-            .Append(participant.CompressionName).AppendLine(";")
+            .Append(_compressionName(facts, participant.Compression)).AppendLine(";")
             .AppendLine("    /// <summary>Gets the minimum payload size eligible for compression.</summary>")
             .AppendLine("    [global::Ark.Tools.MediatorFramework.MessagingGeneratedSurface]")
             .Append("    public const int CompressionMinimumSizeBytes = ")
@@ -1324,13 +1329,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         };
     }
 
-    private static string _compressionName(Compilation compilation, int compression)
+    private static string _compressionName(CompilationFacts facts, int compression)
     {
-        var enumType = compilation.GetTypeByMetadataName("Ark.Tools.MediatorFramework.CompressionAlgorithm");
-        var member = enumType?.GetMembers()
-            .OfType<IFieldSymbol>()
-            .FirstOrDefault(field => field.HasConstantValue && field.ConstantValue is int value && value == compression);
-        return member?.Name ?? "None";
+        return facts.CompressionNames.FirstOrDefault(member => member.Value == compression).Name ?? "None";
     }
 
     private static void _emitMetadata(GenerationSink context, IReadOnlyList<Network> networks)
@@ -1596,6 +1597,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     /// <summary>The runtime types available to the compilation that gate optional generated members.</summary>
     private readonly record struct CompilationFacts(
+        EquatableArray<(int Value, string Name)> CompressionNames,
         bool HasNetworkOptions,
         bool HasContractRegistry,
         bool CanEmitBinder,
@@ -1625,7 +1627,6 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         EquatableArray<int> Serializers,
         int DefaultSerializer,
         int Compression,
-        string CompressionName,
         int CompressionMinimumSizeBytes,
         string? RetryTypeName,
         RetryPolicy? Retry,
