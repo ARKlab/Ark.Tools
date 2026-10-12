@@ -121,7 +121,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var additionalDocumentation = context.AdditionalTextsProvider
             .Where(static text => string.Equals(Path.GetExtension(text.Path), ".xml", StringComparison.OrdinalIgnoreCase))
             .Combine(documentationRequest)
-            .Where(static pair => pair.Right.AssemblyNames.Values.Contains(
+            .Where(static pair => !pair.Right.MemberIds.IsEmpty && pair.Right.AssemblyNames.Values.Contains(
                 Path.GetFileNameWithoutExtension(pair.Left.Path), StringComparer.Ordinal))
             .Select(static (pair, cancellationToken) => GetDocumentationFile(pair.Left, pair.Right.MemberIds.Values, cancellationToken))
             .WithTrackingName(DocumentationParserTrackingName)
@@ -264,15 +264,19 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         }
     }
 
-    // Only members without in-source XML are looked up in documentation files by the emitter.
+    // Mirrors CreateTool: only members without in-source XML or a DescriptionAttribute are looked up
+    // in documentation files by the emitter.
     private static DocumentationRequest CreateDocumentationRequest(McpModel model)
     {
         var memberIds = new SortedSet<string>(StringComparer.Ordinal);
         foreach (var contract in model.Groups.SelectMany(static group => group.Contracts))
         {
-            AddDocumentationId(memberIds, contract.Documentation);
-            AddDocumentationId(memberIds, contract.ContainingTypeDocumentation);
-            foreach (var property in contract.Properties)
+            if (!contract.HasDescriptionAttribute)
+            {
+                AddDocumentationId(memberIds, contract.Documentation);
+                AddDocumentationId(memberIds, contract.ContainingTypeDocumentation);
+            }
+            foreach (var property in contract.Properties.Where(static property => !property.HasDescriptionAttribute))
                 AddDocumentationId(memberIds, property.Documentation);
         }
 
@@ -637,7 +641,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var selectedAssemblyNames = new HashSet<string>(request.AssemblyNames, StringComparer.Ordinal);
         var loadedAssemblyNames = new HashSet<string>(additionalDocumentationAssemblies, StringComparer.Ordinal);
         var documentationFiles = ImmutableArray.CreateBuilder<DocumentationAssembly>();
-        if (selectedAssemblyNames.Count == 0)
+        if (selectedAssemblyNames.Count == 0 || request.MemberIds.IsEmpty)
             return documentationFiles.ToImmutable();
 
         foreach (var reference in compilation.References)
