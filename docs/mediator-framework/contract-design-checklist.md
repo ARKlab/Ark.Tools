@@ -18,7 +18,8 @@ the list of decisions.
    `derived (<source>)`, naming the file, contract, or guide it came from.
 2. **Tag the rest `ASK`.** Anything you cannot derive, or that is a business,
    legal, or product decision, is `ASK`. The legal items in
-   [§15](#15-privacy-gdpr) are always `ASK`.
+   [§15](#15-privacy-gdpr) are always `ASK` when the change touches personal
+   data (see Scope below).
 3. **Ask one question at a time** and record the answer. Every question lists
    the valid alternatives and a recommendation with its reason, so the answer
    is a choice rather than an essay:
@@ -144,7 +145,7 @@ List every failure a caller can observe. Defaults from [Errors](errors.md):
 | --- | --- | --- |
 | Validation | 400 | `InvalidArgument` |
 | Business rule violation (named) | 400 | `FailedPrecondition` |
-| Authorization | 403 / `PermissionDenied`, or 404 / `NotFound` when [§12](#12-authorization) chooses 404 | `PermissionDenied` or `NotFound` |
+| Authorization | 403, or 404 when [§12](#12-authorization) chooses 404 | `PermissionDenied`, or `NotFound` when §12 chooses 404 |
 | Not found | 404 | `NotFound` |
 | Optimistic concurrency conflict | 409 | `Aborted` |
 | ETag precondition mismatch | 412 | `FailedPrecondition` |
@@ -223,7 +224,7 @@ A deviation needs a reason.
 | Logical names | Stable; keep `FormerNames` when renaming. |
 | Retry and dead-letter | State the retry policy and who handles dead-lettered messages. |
 | Outbox | A handler that changes state and sends or publishes enlists the outbox. |
-| Time to live | Every queue, dead-letter queue and outbox must have a TTL; state its value. |
+| Retention | Queues have a TTL where the broker supports it; every dead-letter queue and outbox has an explicit retention and cleanup mechanism (drain job, scheduled purge) with a stated retention period. State each value. |
 | Audience | Cross-service, or internal to one service? A service is the boundary, not the process: the web host, workers and Functions of the same service (for example its Core) are internal to each other. This decides what personal data the message may carry ([§15](#15-privacy-gdpr)). |
 
 ## 14. Versioning and compatibility
@@ -247,15 +248,15 @@ verify the conclusions with your DPO or legal team before relying on them.
 
 | Question | Default / rule |
 | --- | --- |
-| Which fields are personal data, and of which class? | Fill the §2 Personal-data class column: personal, sensitive (special category, GDPR Art. 9 and 10), pseudonymous, credentials, or not personal. Free-text fields that may contain personal data are personal. |
+| Which fields are personal data, and of which class? | Fill the §2 Personal-data class column: personal, sensitive (special category, GDPR Art. 9), criminal-offence data (GDPR Art. 10), pseudonymous, credentials, or not personal. Free-text fields that may contain personal data are personal. |
 | Purpose | `ASK`, unless there is no personal-data change (see [§0](#0-how-to-use-this-checklist)) |
 | Lawful basis | `ASK`, unless there is no personal-data change (see [§0](#0-how-to-use-this-checklist)) |
 | Retention period | `ASK`, unless there is no personal-data change (see [§0](#0-how-to-use-this-checklist)) |
 | Is a DPIA needed? | `ASK`, unless there is no personal-data change (see [§0](#0-how-to-use-this-checklist)) |
 | Minimisation | Each personal field is needed for the stated purpose. |
 | Exposure | List the outputs, transports, logs, telemetry and third parties it reaches. Logs and telemetry carry no personal data. |
-| Messages and events | Events and messages that cross a service boundary carry identifiers only, no personal data. Messages between the processes of the same service (owned queue) may carry classified personal data. Sensitive and special-category data never travel in a message. |
-| Storage | Platform encryption at rest is the baseline. State whether per-message or per-column encryption is needed on top. Every queue, dead-letter queue and outbox must have a TTL ([§13](#13-messaging)). |
+| Messages and events | Events and messages that cross a service boundary carry only `[Pseudonymous]` identifiers: no direct identifiers (name, email, phone) and no other personal attributes. Messages between the processes of the same service (owned queue) may carry classified personal data. Special-category and criminal-offence data never travel in a message. |
+| Storage | Platform encryption at rest is the baseline. State whether per-message or per-column encryption is needed on top. Queue TTL, dead-letter and outbox retention as in [§13](#13-messaging). |
 | Erasure | How the data is erased or anonymised, including temporal history tables, audit records, and message stores. |
 | Access and export | How the data is found and exported for a data subject. |
 
@@ -266,7 +267,8 @@ See the [Compliance guide](../compliance/README.md).
 | Answer | Implementation |
 | --- | --- |
 | Personal | `[PersonalData]` or a sensitive value object such as `EmailAddress` |
-| Sensitive / special category | `[SensitivePersonalData]` |
+| Sensitive / special category (Art. 9) | `[SensitivePersonalData]` |
+| Criminal-offence data (Art. 10) | no dedicated attribute; ask the DPO and record the classification used |
 | Pseudonymous | `[Pseudonymous]` |
 | Credentials | `[UserCredentials]` |
 | Not personal despite the name | `[NotPersonalData("reason")]` |
@@ -334,7 +336,11 @@ Paste this into the pull request description and fill it in. Tag each answer
 ### 13. Messaging
 ### 14. Versioning and compatibility
 ### 15. Privacy (GDPR)
-- Purpose / lawful basis / retention / DPIA: decided by <name>, verified with DPO: <yes/no>
+- Purpose: <answer or N/A: no personal-data change>
+- Lawful basis: <answer>
+- Retention period: <answer>
+- DPIA needed: <yes/no, reason>
+- Decided by <name>, verified with DPO: <yes/no>
 ### 16. Audit and observability
 ### 17. Documentation
 ### 18. Tests
