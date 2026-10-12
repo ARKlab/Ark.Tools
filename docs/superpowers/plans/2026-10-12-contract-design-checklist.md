@@ -53,7 +53,7 @@
 
 - [ ] **Step 2: Verify the headings**
 
-Run: `grep -c '^## ' docs/mediator-framework/contract-design-checklist.md`
+Run: `awk '/^```/{f=!f} !f && /^## /' docs/mediator-framework/contract-design-checklist.md | wc -l` (skips the fenced brief template)
 Expected: `20`
 
 - [ ] **Step 3: Verify the links** (this check is reused in later tasks; `FILES` lists the files touched)
@@ -130,7 +130,7 @@ Expected: `skill-snapshot/SKILL.md` exists and matches `git show HEAD:...`.
 
 Run:
 ```bash
-diff <(grep -oP '^## \d+\. \K.*' docs/mediator-framework/contract-design-checklist.md) \
+diff <(grep -oP '^## \d+\. \K.*' docs/mediator-framework/contract-design-checklist.md | grep -v '^How to use') \
      <(grep -oP '^\d+\. \K.*?(?= — )' agents-plugins/ark-csharp/.apm/skills/ark-mediator-framework/SKILL.md)
 ```
 Expected: no output (section 0 is not in the index; the 18 names match).
