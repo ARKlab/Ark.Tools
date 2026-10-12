@@ -7,7 +7,7 @@ using NodaTime;
 
 namespace Ark.Tools.Nodatime.Json;
 
-public class LocalDateRangeConverter : JsonConverter
+public sealed class LocalDateRangeConverter : JsonConverter
 {
     private static readonly Type _type = typeof(LocalDateRange);
     private static readonly Type _nullableType = typeof(LocalDateRange?);

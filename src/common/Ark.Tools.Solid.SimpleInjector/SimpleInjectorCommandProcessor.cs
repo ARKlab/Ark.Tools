@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.Solid.SimpleInjector;
 
-public class SimpleInjectorCommandProcessor : ICommandProcessor
+public sealed class SimpleInjectorCommandProcessor : ICommandProcessor
 {
     private readonly Container _container;
 

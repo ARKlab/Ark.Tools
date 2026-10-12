@@ -9,7 +9,7 @@ using SliceReady = Ark.Tools.Activity.Messages.SliceReady;
 
 namespace Ark.Tools.Activity.Processor;
 
-public class SliceSplitter
+public sealed class SliceSplitter
     : IHandleMessages<ResourceSliceReady>
     , IHandleMessages<Tasks.Messages.ResourceSliceReady>
 {

@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.Solid.SimpleInjector;
 
-public class SimpleInjectorQueryProcessor : IQueryProcessor
+public sealed class SimpleInjectorQueryProcessor : IQueryProcessor
 {
     private readonly Container _container;
 

@@ -2,7 +2,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Authorization;
 
-public class DefaultAuthorizationContextFactory : IAuthorizationContextFactory
+public sealed class DefaultAuthorizationContextFactory : IAuthorizationContextFactory
 {
     public AuthorizationContext Create(IAuthorizationPolicy policy, ClaimsPrincipal user, object? resource)
     {

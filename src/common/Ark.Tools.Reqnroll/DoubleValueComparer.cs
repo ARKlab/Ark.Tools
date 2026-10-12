@@ -2,7 +2,7 @@ using Reqnroll.Assist;
 
 namespace Ark.Tools.Reqnroll;
 
-public class DoubleValueComparer : IValueComparer
+public sealed class DoubleValueComparer : IValueComparer
 {
     public bool CanCompare(object actualValue)
     {

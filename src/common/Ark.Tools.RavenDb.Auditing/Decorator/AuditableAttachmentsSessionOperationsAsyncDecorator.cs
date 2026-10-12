@@ -5,7 +5,7 @@ using Raven.Client.Documents.Session;
 namespace Ark.Tools.RavenDb.Auditing;
 
 
-public class AuditableAttachmentsSessionOperationsAsyncDecorator : IAttachmentsSessionOperationsAsync
+public sealed class AuditableAttachmentsSessionOperationsAsyncDecorator : IAttachmentsSessionOperationsAsync
 {
     private readonly IAttachmentsSessionOperationsAsync _inner;
 

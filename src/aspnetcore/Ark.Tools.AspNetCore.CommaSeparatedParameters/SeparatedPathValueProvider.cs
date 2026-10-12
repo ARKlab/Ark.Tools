@@ -8,7 +8,7 @@ using System.Buffers;
 
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 
-public class SeparatedPathValueProvider : RouteValueProvider
+public sealed class SeparatedPathValueProvider : RouteValueProvider
 {
     private readonly SearchValues<char> _separatorSearchValues;
     private readonly char _separator;

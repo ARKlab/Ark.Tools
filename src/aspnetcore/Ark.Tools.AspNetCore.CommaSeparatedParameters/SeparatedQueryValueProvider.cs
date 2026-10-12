@@ -8,7 +8,7 @@ using System.Buffers;
 
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 
-public class SeparatedQueryValueProvider : QueryStringValueProvider
+public sealed class SeparatedQueryValueProvider : QueryStringValueProvider
 {
     private readonly SearchValues<char> _separatorSearchValues;
     private readonly char _separator;

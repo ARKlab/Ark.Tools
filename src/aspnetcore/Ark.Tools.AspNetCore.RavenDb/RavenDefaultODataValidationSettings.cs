@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.OData.Query.Validator;
 
 namespace Ark.Tools.AspNetCore.RavenDb;
 
-public class RavenDefaultODataValidationSettings : ODataValidationSettings
+public sealed class RavenDefaultODataValidationSettings : ODataValidationSettings
 {
     public RavenDefaultODataValidationSettings()
     {

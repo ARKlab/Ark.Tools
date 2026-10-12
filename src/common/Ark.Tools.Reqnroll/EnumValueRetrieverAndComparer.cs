@@ -3,7 +3,7 @@ using Reqnroll.Assist;
 
 namespace Ark.Tools.Reqnroll;
 
-public class EnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
+public sealed class EnumValueRetrieverAndComparer : IValueRetriever, IValueComparer
 {
     private static object? _getValue(string value, Type enumType)
     {

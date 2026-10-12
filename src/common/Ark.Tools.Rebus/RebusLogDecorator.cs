@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.Rebus;
 
-public class RebusLogDecorator<T> : IHandleMessages<T>
+public sealed class RebusLogDecorator<T> : IHandleMessages<T>
 {
     private readonly IHandleMessages<T> _inner;
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();

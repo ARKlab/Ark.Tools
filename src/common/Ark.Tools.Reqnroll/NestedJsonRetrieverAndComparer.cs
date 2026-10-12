@@ -13,7 +13,7 @@ using Reqnroll.Assist;
 
 namespace Ark.Tools.Reqnroll;
 
-public class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComparer
+public sealed class NestedJsonRetrieverAndComparer<TType> : IValueRetriever, IValueComparer
 {
     private static readonly JsonSerializerSettings _settings;
 

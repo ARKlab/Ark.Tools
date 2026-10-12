@@ -5,7 +5,7 @@ using Reqnroll.Assist;
 
 namespace Ark.Tools.Reqnroll;
 
-public class NodaTimeValueRetriverAndComparer : IValueRetriever, IValueComparer
+public sealed class NodaTimeValueRetriverAndComparer : IValueRetriever, IValueComparer
 {
     private readonly Type[] _types = [typeof(LocalDate), typeof(LocalDateTime), typeof(Instant), typeof(LocalTime), typeof(OffsetDateTime), typeof(ZonedDateTime)];
     private readonly Type[] _nullableTypes = [typeof(LocalDate?), typeof(LocalDateTime?), typeof(Instant?), typeof(LocalTime?), typeof(OffsetDateTime?), typeof(ZonedDateTime)];

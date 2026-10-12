@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Ark.Tools.Solid.SimpleInjector;
 
-public class SimpleInjectorRequestProcessor : IRequestProcessor
+public sealed class SimpleInjectorRequestProcessor : IRequestProcessor
 {
     private readonly Container _container;
 

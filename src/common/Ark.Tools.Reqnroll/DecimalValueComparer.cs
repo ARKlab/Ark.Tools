@@ -2,7 +2,7 @@ using Reqnroll.Assist;
 
 namespace Ark.Tools.Reqnroll;
 
-public class DecimalValueComparer : IValueComparer
+public sealed class DecimalValueComparer : IValueComparer
 {
     public bool CanCompare(object actualValue)
     {

@@ -9,7 +9,7 @@ using System.Security.Claims;
 namespace Ark.Tools.Rebus;
 
 [StepDocumentation("Automatically flow UserId and UserEmail from context into a header if possible")]
-public class UserFlowStep : IOutgoingStep, IIncomingStep
+public sealed class UserFlowStep : IOutgoingStep, IIncomingStep
 {
     private readonly Container _container;
     private static readonly char[] _separator = [','];

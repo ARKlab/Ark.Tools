@@ -3,7 +3,7 @@ using Slack.Webhooks;
 
 namespace Ark.Tools.NLog.Slack;
 
-public class SlackMessageBuilder
+public sealed class SlackMessageBuilder
 {
     private readonly SlackMessage _slackMessage;
 #pragma warning disable MA0046 // Use EventHandler<T> to declare events

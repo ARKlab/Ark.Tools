@@ -6,7 +6,7 @@ namespace Ark.Tools.Authorization.Requirement;
 /// which requires at least one instance of the specified claim type, and, if allowed values are specified, 
 /// the claim value must be any of the allowed values.
 /// </summary>
-public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthorizationRequirement>, IAuthorizationRequirement
+public sealed class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthorizationRequirement>, IAuthorizationRequirement
 {
     // Null when any claim value is allowed.
     private readonly HashSet<string>? _allowedValues;

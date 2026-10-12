@@ -7,7 +7,7 @@ using Ark.Tools.Nodatime.Intervals;
 
 namespace Ark.Tools.Nodatime.TimeSeries;
 
-public class UniformTimeSequence
+public sealed class UniformTimeSequence
     : IEnumerable<TimeInterval>
 {
     private readonly ZonedDateTimeRange _range;

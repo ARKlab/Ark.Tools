@@ -5,7 +5,7 @@ using FluentValidation;
 
 namespace Ark.Tools.Solid;
 
-public class RequestFluentValidateDecorator<TRequest, TResponse>
+public sealed class RequestFluentValidateDecorator<TRequest, TResponse>
     : IRequestHandler<TRequest, TResponse> where TRequest : IRequest<TResponse>
 {
     private readonly IRequestHandler<TRequest, TResponse> _decorated;

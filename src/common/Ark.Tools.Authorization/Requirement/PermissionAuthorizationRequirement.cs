@@ -71,7 +71,7 @@ public interface IUserPermissionsProvider<TPermissionEnum>
 /// Requires an implementation of <see cref="IUserPermissionsProvider{TPermissionEnum}"/>.
 /// </summary>
 /// <typeparam name="TPermissionEnum">The enum of possible permissions.</typeparam>
-public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHandler
+public sealed class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHandler
     where TPermissionEnum : Enum
 {
     private readonly IUserPermissionsProvider<TPermissionEnum> _provider;

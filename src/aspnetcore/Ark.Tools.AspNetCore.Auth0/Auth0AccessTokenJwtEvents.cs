@@ -20,7 +20,7 @@ using System.Text.Json;
 namespace Ark.Tools.AspNetCore.Auth0;
 
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable", Justification = "AuthenticationApiClient is a HttpClient which is long-lived")]
-public class Auth0AccessTokenJwtEvents : JwtBearerEvents
+public sealed class Auth0AccessTokenJwtEvents : JwtBearerEvents
 {
     private readonly AuthenticationApiClient _auth0;
     public const string AuthorizationExtensionAudience = "urn:auth0-authz-api";

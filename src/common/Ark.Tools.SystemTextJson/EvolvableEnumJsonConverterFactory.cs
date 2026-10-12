@@ -15,7 +15,7 @@ using System.Text.Json.Serialization;
 namespace Ark.Tools.SystemTextJson;
 
 /// <summary>Serializes evolvable enums by symbolic name.</summary>
-public class EvolvableEnumJsonConverterFactory : JsonConverterFactory
+public sealed class EvolvableEnumJsonConverterFactory : JsonConverterFactory
 {
     /// <inheritdoc />
     public override bool CanConvert(Type typeToConvert) => EvolvableEnumJsonConverter.IsSupported(typeToConvert);
@@ -29,7 +29,7 @@ public class EvolvableEnumJsonConverterFactory : JsonConverterFactory
 }
 
 /// <summary>Serializes evolvable enums using their exact numeric backing type.</summary>
-public class EvolvableEnumIntegerJsonConverterFactory : JsonConverterFactory
+public sealed class EvolvableEnumIntegerJsonConverterFactory : JsonConverterFactory
 {
     /// <inheritdoc />
     public override bool CanConvert(Type typeToConvert) => EvolvableEnumJsonConverter.IsSupported(typeToConvert);

@@ -66,7 +66,8 @@ public sealed class ArkMinimalApiForwardedPrefixTests
 
     private static async Task<HttpResponseMessage> _sendAsync(string prefix)
     {
-        await using var container = new Container();
+        var container = new Container();
+        await using var containerScope = container.ConfigureAwait(false);
         using var host = new HostBuilder()
             .ConfigureWebHost(web =>
             {

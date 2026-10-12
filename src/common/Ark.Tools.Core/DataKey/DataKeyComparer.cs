@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace Ark.Tools.Core.DataKey;
 
-public class DataKeyComparer<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T> : IEqualityComparer<T>
+public sealed class DataKeyComparer<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T> : IEqualityComparer<T>
     where T : class
 {
     private static readonly PropertyInfo[] _keyProperties = typeof(T).GetProperties()

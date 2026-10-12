@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Ark.Tools.SystemTextJson;
 
-public class NullableStructSerializerFactory : JsonConverterFactory
+public sealed class NullableStructSerializerFactory : JsonConverterFactory
 {
     public override bool CanConvert(Type typeToConvert)
     {

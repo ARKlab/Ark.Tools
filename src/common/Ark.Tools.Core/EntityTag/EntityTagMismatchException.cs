@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 namespace Ark.Tools.Core.EntityTag;
 
-public class EntityTagMismatchException : Exception
+public sealed class EntityTagMismatchException : Exception
 {
     public EntityTagMismatchException(string message)
         : base(message)

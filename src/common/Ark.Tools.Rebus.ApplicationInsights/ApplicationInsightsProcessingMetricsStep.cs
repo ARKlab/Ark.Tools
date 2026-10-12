@@ -16,7 +16,7 @@ namespace Ark.Tools.Rebus;
 /// Collects Rebus queue and handler processing metrics.
 /// </summary>
 [StepDocumentation("ApplicationInsights Metric tracking: TimeInQueue (success-only) and ProcessingTime")]
-public class ApplicationInsightsProcessingMetricsStep : IIncomingStep
+public sealed class ApplicationInsightsProcessingMetricsStep : IIncomingStep
 {
     private readonly Container _container;
     private readonly IRebusTime _time;

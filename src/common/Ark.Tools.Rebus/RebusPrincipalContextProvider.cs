@@ -5,7 +5,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Rebus;
 
-public class RebusPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
+public sealed class RebusPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
 {
     private readonly IMessageContextProvider _messageContextProvider;
     public RebusPrincipalContextProvider(IMessageContextProvider messageContextProvider)

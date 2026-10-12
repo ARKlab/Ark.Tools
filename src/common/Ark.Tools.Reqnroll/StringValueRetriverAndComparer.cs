@@ -3,7 +3,7 @@ using Reqnroll.Assist;
 
 namespace Ark.Tools.Reqnroll;
 
-public class StringValueRetriverAndComparer : IValueRetriever, IValueComparer
+public sealed class StringValueRetriverAndComparer : IValueRetriever, IValueComparer
 {
     public bool CanCompare(object actualValue)
     {

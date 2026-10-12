@@ -5,7 +5,7 @@
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
 
-public class SetVersionInPaths : IDocumentFilter
+public sealed class SetVersionInPaths : IDocumentFilter
 {
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {

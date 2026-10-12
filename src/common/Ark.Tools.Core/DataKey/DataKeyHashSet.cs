@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 namespace Ark.Tools.Core.DataKey;
 
-public class DataKeyHashSet<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T> : HashSet<T> where T : class
+public sealed class DataKeyHashSet<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T> : HashSet<T> where T : class
 {
     public DataKeyHashSet() : base(new DataKeyComparer<T>())
     { }

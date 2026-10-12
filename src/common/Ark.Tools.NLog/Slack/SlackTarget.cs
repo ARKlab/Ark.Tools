@@ -12,7 +12,7 @@ using System.Collections.Frozen;
 namespace Ark.Tools.NLog.Slack;
 
 [Target(NLogConfigurer.SlackTarget)]
-public class SlackTarget : TargetWithContext
+public sealed class SlackTarget : TargetWithContext
 {
     internal Func<object?, string?>? _valueRedactor;
     internal Layout? _exceptionLayout;

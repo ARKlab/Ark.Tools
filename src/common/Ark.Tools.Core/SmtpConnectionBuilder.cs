@@ -4,7 +4,7 @@ using Ark.Tools.Compliance;
 
 namespace Ark.Tools;
 
-public class SmtpConnectionBuilder
+public sealed class SmtpConnectionBuilder
 {
     public SmtpConnectionBuilder()
     { }

@@ -13,7 +13,7 @@ using System.Diagnostics;
 namespace Ark.Tools.Rebus;
 
 [StepDocumentation("ApplicationInsights Tracking compatible with native AI DependencyTracking instrumentation")]
-public class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
+public sealed class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
 {
     private const string _activityName = "Rebus.Process";
     private readonly Container _container;

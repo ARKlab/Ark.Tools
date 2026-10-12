@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
 
-public class MessagePackOutputFormatter : OutputFormatter
+public sealed class MessagePackOutputFormatter : OutputFormatter
 {
     const string _contentType = "application/x-msgpack";
 

@@ -5,7 +5,7 @@ namespace Ark.Tools.Authorization.Requirement;
 /// Implements an <see cref="IAuthorizationHandler"/> and <see cref="IAuthorizationRequirement"/>
 /// which requires at least one role claim whose value must be any of the allowed roles.
 /// </summary>
-public class RolesAuthorizationRequirement : AuthorizationHandler<RolesAuthorizationRequirement>, IAuthorizationRequirement
+public sealed class RolesAuthorizationRequirement : AuthorizationHandler<RolesAuthorizationRequirement>, IAuthorizationRequirement
 {
     /// <summary>
     /// Creates a new instance of <see cref="RolesAuthorizationRequirement"/>.

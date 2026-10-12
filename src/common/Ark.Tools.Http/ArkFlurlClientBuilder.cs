@@ -9,7 +9,7 @@ namespace Ark.Tools.Http;
 /// <summary>
 /// Default implementation of IFlurlClientBuilder.
 /// </summary>
-public class ArkFlurlClientBuilder : FlurlClientBuilder
+public sealed class ArkFlurlClientBuilder : FlurlClientBuilder
 {
     static readonly FieldInfo? _factoryField =
             typeof(FlurlClientBuilder)

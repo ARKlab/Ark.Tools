@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 
-public class SeparatedQueryValueProviderFactory : IValueProviderFactory
+public sealed class SeparatedQueryValueProviderFactory : IValueProviderFactory
 {
     private readonly char _separator;
     private readonly string? _key;

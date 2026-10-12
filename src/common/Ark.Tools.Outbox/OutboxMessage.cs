@@ -2,7 +2,7 @@
 namespace Ark.Tools.Outbox;
 
 
-public record OutboxMessage
+public sealed record OutboxMessage
 {
     /// <summary>
     /// Headers set by the Producer and used by the Consumer to propage the message to the Broker
