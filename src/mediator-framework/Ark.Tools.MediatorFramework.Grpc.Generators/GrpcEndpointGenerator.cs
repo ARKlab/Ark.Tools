@@ -63,9 +63,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static mapping => mapping is not null)
                 .Select(static (mapping, _) => mapping!.Value);
             var endpointAssemblies = endpointMappings
-                .SelectMany(static (mapping, _) => mapping.Assemblies.Items.Select(static assembly => assembly.Name))
+                .SelectMany(static (mapping, _) => mapping.Assemblies.Values.Select(static assembly => assembly.Name))
                 .Collect()
-                .Select(static (assemblies, _) => new ImmutableEquatableArray<string>(assemblies));
+                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies));
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     GrpcMethodAttribute,
                     static (node, _) => node is TypeDeclarationSyntax,
@@ -79,8 +79,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .WithComparer(MetadataReferencesComparer.Instance);
             var referencedEndpoints = referenceScope
                 .Combine(endpointAssemblies)
-                .Select(static (pair, cancellationToken) => new ImmutableEquatableArray<EndpointModel>(
-                    GetReferencedEndpoints(pair.Left, pair.Right.Items, cancellationToken)))
+                .Select(static (pair, cancellationToken) => new EquatableArray<EndpointModel>(
+                    GetReferencedEndpoints(pair.Left, pair.Right.Values, cancellationToken)))
                 .WithTrackingName(ReferencedEndpointsTrackingName);
             var sourceProtoContracts = context.SyntaxProvider.ForAttributeWithMetadataName(
                     ProtoContractAttribute,
@@ -90,9 +90,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static contract => contract is not null)
                 .Select(static (contract, _) => contract!)
                 .Collect()
-                .Select(static (contracts, _) => new ImmutableEquatableArray<ProtoContractModel>(contracts));
+                .Select(static (contracts, _) => new EquatableArray<ProtoContractModel>(contracts));
             var referencedProtoContracts = referenceScope
-                .Select(static (compilation, cancellationToken) => new ImmutableEquatableArray<ProtoContractModel>(
+                .Select(static (compilation, cancellationToken) => new EquatableArray<ProtoContractModel>(
                     GetReferencedProtoContracts(compilation, cancellationToken)))
                 .WithTrackingName(ReferencedProtoContractsTrackingName);
             var compilationModel = sourceProtoContracts
@@ -100,18 +100,18 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Combine(context.CompilationProvider.Select(static (compilation, _) => GetProtoNamespace(compilation)))
                 .Select(static (pair, _) => new CompilationModel(
                     pair.Right,
-                    new ImmutableEquatableArray<ProtoContractModel>(
-                        pair.Left.Left.Items.AddRange(pair.Left.Right.Items))));
+                    new EquatableArray<ProtoContractModel>(
+                        pair.Left.Left.Values.AddRange(pair.Left.Right.Values))));
             var collectedMappings = endpointMappings.Collect()
-                .Select(static (mappings, _) => new ImmutableEquatableArray<AssemblyMapping>(mappings));
+                .Select(static (mappings, _) => new EquatableArray<AssemblyMapping>(mappings));
 
             var output = sourceEndpoints.Collect()
-                .Select(static (endpoints, _) => new ImmutableEquatableArray<EndpointModel>(endpoints))
+                .Select(static (endpoints, _) => new EquatableArray<EndpointModel>(endpoints))
                 .Combine(referencedEndpoints)
                 .Combine(collectedMappings)
                 .Combine(compilationModel)
                 .Select(static (pair, cancellationToken) => BuildOutput(
-                    pair.Left.Left.Left.Items.AddRange(pair.Left.Left.Right.Items),
+                    pair.Left.Left.Left.Values.AddRange(pair.Left.Left.Right.Values),
                     pair.Left.Right,
                     pair.Right,
                     cancellationToken))
@@ -432,7 +432,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 genericMessage,
                 type.ContainingAssembly.Name,
                 LocationSpec.Create(GetLocation(grpc)),
-                ImmutableEquatableArray<DiagnosticInfo>.Empty);
+                EquatableArray<DiagnosticInfo>.Empty);
         }
 
         private static int NamedInt(AttributeData attribute, string name, int defaultValue)
@@ -504,7 +504,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         // Also returns, per contract, the value object members to initialize when a message leaves them absent.
         private static (List<(string Type, string Primitive, bool IsSensitive)> ValueObjects, SortedDictionary<string, SortedSet<string>> AbsentMembers) CollectValueObjects(
             ImmutableArray<EndpointModel> items,
-            ImmutableEquatableArray<AssemblyMapping> mappings,
+            EquatableArray<AssemblyMapping> mappings,
             ProtoContractLookup contractLookup,
             List<DiagnosticInfo> diagnostics)
         {
@@ -518,7 +518,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 AddReachable(item.IsStreaming ? item.StreamElement! : item.Response, contractLookup, reachable);
                 foreach (var contract in reachable.Select(type => contractLookup.ByType[type]).OrderBy(static contract => contract.TypeFullName, StringComparer.Ordinal))
                 {
-                    foreach (var member in contract.Members.Items)
+                    foreach (var member in contract.Members.Values)
                     {
                         if (member.ExportIssue is not null)
                         {
@@ -526,7 +526,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                             {
                                 var location = item.Location != default
                                     ? item.Location
-                                    : mappings.Items.SelectMany(static mapping => mapping.Assemblies.Items)
+                                    : mappings.Values.SelectMany(static mapping => mapping.Assemblies.Values)
                                         .FirstOrDefault(assembly => string.Equals(assembly.Name, item.AssemblyName, StringComparison.Ordinal))
                                         .Location;
                                 diagnostics.Add(new DiagnosticInfo(
@@ -556,15 +556,15 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static GrpcOutput BuildOutput(
             ImmutableArray<EndpointModel> items,
-            ImmutableEquatableArray<AssemblyMapping> mappings,
+            EquatableArray<AssemblyMapping> mappings,
             CompilationModel compilation,
             CancellationToken cancellationToken)
         {
             if (items.IsDefaultOrEmpty)
-                return new GrpcOutput(null, ImmutableEquatableArray<DiagnosticInfo>.Empty);
+                return new GrpcOutput(null, EquatableArray<DiagnosticInfo>.Empty);
 
             items = items.OrderBy(static item => item.TypeFullName, StringComparer.Ordinal).ToImmutableArray();
-            var diagnosticsBuilder = items.SelectMany(static item => item.Diagnostics.Items).ToList();
+            var diagnosticsBuilder = items.SelectMany(static item => item.Diagnostics.Values).ToList();
             var contractLookup = CreateContractLookup(compilation);
             var bindable = ImmutableArray.CreateBuilder<EndpointModel>();
             foreach (var item in items.Where(static item => item.IsValid))
@@ -579,7 +579,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 // A referenced contract has no source location: report at the call or attribute that selected its assembly.
                 var location = item.Location != default
                     ? item.Location
-                    : mappings.Items.SelectMany(static mapping => mapping.Assemblies.Items)
+                    : mappings.Values.SelectMany(static mapping => mapping.Assemblies.Values)
                         .FirstOrDefault(assembly => string.Equals(assembly.Name, item.AssemblyName, StringComparison.Ordinal))
                         .Location;
                 diagnosticsBuilder.Add(new DiagnosticInfo(
@@ -593,7 +593,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
             items = bindable.ToImmutable();
             var (valueObjects, absentMembers) = CollectValueObjects(items, mappings, contractLookup, diagnosticsBuilder);
-            var diagnostics = new ImmutableEquatableArray<DiagnosticInfo>(diagnosticsBuilder.ToImmutableArray());
+            var diagnostics = new EquatableArray<DiagnosticInfo>(diagnosticsBuilder.ToImmutableArray());
 
             var sb = new StringBuilder();
             sb.AppendLine("// <auto-generated/>");
@@ -780,12 +780,12 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static void Emit(SourceProductionContext context, GrpcOutput output)
         {
-            foreach (var diagnostic in output.Diagnostics.Items)
+            foreach (var diagnostic in output.Diagnostics.Values)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     diagnostic.Descriptor,
                     diagnostic.Location.ToLocation(),
-                    diagnostic.Arguments.Items.ToArray<object?>()));
+                    diagnostic.Arguments.Values.ToArray<object?>()));
             }
 
             if (output.Source is not null)
@@ -833,7 +833,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("    /// <summary>Source-generated protobuf assets for the discovered gRPC contracts.</summary>");
             sb.AppendLine("    public static class ArkGeneratedProtos");
             sb.AppendLine("    {");
-            var contracts = compilation.ProtoContracts.Items;
+            var contracts = compilation.ProtoContracts.Values;
             var entries = new List<string>();
             var content = new StringBuilder();
             var wellKnownImports = new StringBuilder();
@@ -975,14 +975,14 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             WriteComment(sb, contract.Summary);
             sb.Append("message ").Append(contract.Name).AppendLine(" {");
-            foreach (var include in contract.Includes.Items)
+            foreach (var include in contract.Includes.Values)
             {
                 sb.Append("  ").Append(SimpleName(include.TypeName)).Append(' ')
                     .Append(SnakeCase(SimpleName(include.TypeName))).Append(" = ")
                     .Append(include.Number).AppendLine(";");
             }
 
-            foreach (var member in contract.Members.Items
+            foreach (var member in contract.Members.Values
                 .Where(member => !isRequest || !member.Type.Contains("IArkAttachment", StringComparison.Ordinal))
                 .OrderBy(static member => member.Number))
             {
@@ -1155,8 +1155,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 string.IsNullOrWhiteSpace(name) ? GeneratedName(type) : name!,
                 XmlDocumentation.Summary(type),
-                new ImmutableEquatableArray<ProtoMemberModel>(members),
-                new ImmutableEquatableArray<ProtoIncludeModel>(includes));
+                new EquatableArray<ProtoMemberModel>(members),
+                new EquatableArray<ProtoIncludeModel>(includes));
         }
 
         private static void AddReachable(
@@ -1173,9 +1173,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (contract is null || !reachable.Add(contract.TypeFullName))
                 return;
 
-            foreach (var member in contract.Members.Items)
+            foreach (var member in contract.Members.Values)
                 AddReachable(member.Type, contractLookup, reachable);
-            foreach (var include in contract.Includes.Items)
+            foreach (var include in contract.Includes.Values)
                 AddReachable(include.TypeName, contractLookup, reachable);
         }
 
@@ -1254,7 +1254,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             var contractsByType = new Dictionary<string, ProtoContractModel>(StringComparer.Ordinal);
             var contractsByName = new Dictionary<string, ProtoContractModel>(StringComparer.Ordinal);
-            foreach (var contract in compilation.ProtoContracts.Items)
+            foreach (var contract in compilation.ProtoContracts.Values)
             {
                 contractsByType.TryAdd(contract.TypeFullName, contract);
                 contractsByName.TryAdd(contract.Name, contract);
@@ -1411,10 +1411,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             Collection = 2,
         }
 
-        private readonly record struct AssemblyMapping(ImmutableEquatableArray<AssemblySource> Assemblies)
+        private readonly record struct AssemblyMapping(EquatableArray<AssemblySource> Assemblies)
         {
             public AssemblyMapping(ImmutableArray<AssemblySource> assemblies)
-                : this(new ImmutableEquatableArray<AssemblySource>(assemblies))
+                : this(new EquatableArray<AssemblySource>(assemblies))
             {
             }
         }
@@ -1423,7 +1423,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private readonly record struct EndpointModel
         {
-            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, string? summary, string? remarks, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, string? streamElement, AttachmentRequestKind attachmentRequest, string? attachmentPropertyName, bool messageIsGenericContract, string assemblyName, LocationSpec location, ImmutableEquatableArray<DiagnosticInfo> diagnostics)
+            public EndpointModel(string typeFullName, string typeName, string grpcMethod, string serviceGroup, string response, string? summary, string? remarks, HandlerKind kind, int grpcIntroducedIn, int grpcRetiredIn, bool attachmentResponse, string? streamElement, AttachmentRequestKind attachmentRequest, string? attachmentPropertyName, bool messageIsGenericContract, string assemblyName, LocationSpec location, EquatableArray<DiagnosticInfo> diagnostics)
             {
                 TypeFullName = typeFullName;
                 TypeName = typeName;
@@ -1443,7 +1443,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 AssemblyName = assemblyName;
                 Location = location;
                 Diagnostics = diagnostics;
-                IsValid = diagnostics.Items.IsEmpty;
+                IsValid = diagnostics.Values.IsEmpty;
             }
 
             private EndpointModel(INamedTypeSymbol type, DiagnosticInfo diagnostic)
@@ -1451,7 +1451,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 TypeFullName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 TypeName = GeneratedName(type);
                 AssemblyName = type.ContainingAssembly.Name;
-                Diagnostics = new ImmutableEquatableArray<DiagnosticInfo>(ImmutableArray.Create(diagnostic));
+                Diagnostics = new EquatableArray<DiagnosticInfo>(ImmutableArray.Create(diagnostic));
                 IsValid = false;
                 GrpcMethod = string.Empty;
                 ServiceGroup = string.Empty;
@@ -1485,7 +1485,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             public bool MessageIsGenericContract { get; }
             public string AssemblyName { get; }
             public LocationSpec Location { get; }
-            public ImmutableEquatableArray<DiagnosticInfo> Diagnostics { get; }
+            public EquatableArray<DiagnosticInfo> Diagnostics { get; }
             public bool IsValid { get; }
         }
 
@@ -1495,12 +1495,12 @@ namespace Ark.Tools.MediatorFramework.Generators
             {
                 Descriptor = descriptor;
                 Location = location;
-                Arguments = new ImmutableEquatableArray<string>(ImmutableArray.Create(arguments));
+                Arguments = new EquatableArray<string>(ImmutableArray.Create(arguments));
             }
 
             public DiagnosticDescriptor Descriptor { get; }
             public LocationSpec Location { get; }
-            public ImmutableEquatableArray<string> Arguments { get; }
+            public EquatableArray<string> Arguments { get; }
         }
 
         private static string GeneratedName(INamedTypeSymbol type)
@@ -1519,8 +1519,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             string TypeFullName,
             string Name,
             string? Summary,
-            ImmutableEquatableArray<ProtoMemberModel> Members,
-            ImmutableEquatableArray<ProtoIncludeModel> Includes);
+            EquatableArray<ProtoMemberModel> Members,
+            EquatableArray<ProtoIncludeModel> Includes);
 
         private readonly record struct ProtoMemberModel(
             string Name,
@@ -1542,11 +1542,11 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private sealed record CompilationModel(
             string ProtoNamespace,
-            ImmutableEquatableArray<ProtoContractModel> ProtoContracts);
+            EquatableArray<ProtoContractModel> ProtoContracts);
 
         private readonly record struct GrpcOutput(
             string? Source,
-            ImmutableEquatableArray<DiagnosticInfo> Diagnostics);
+            EquatableArray<DiagnosticInfo> Diagnostics);
 
         private readonly record struct LocationSpec(
             string FilePath,
@@ -1589,37 +1589,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                         new LinePositionSpan(
                             new LinePosition(StartLine, StartCharacter),
                             new LinePosition(EndLine, EndCharacter)));
-            }
-        }
-
-        private readonly struct ImmutableEquatableArray<T> : IEquatable<ImmutableEquatableArray<T>>
-        {
-            public static ImmutableEquatableArray<T> Empty { get; } =
-                new(ImmutableArray<T>.Empty);
-
-            public ImmutableEquatableArray(ImmutableArray<T> items)
-            {
-                Items = items;
-            }
-
-            public ImmutableArray<T> Items { get; }
-
-            public bool Equals(ImmutableEquatableArray<T> other)
-            {
-                return Items.SequenceEqual(other.Items);
-            }
-
-            public override bool Equals(object? obj)
-            {
-                return obj is ImmutableEquatableArray<T> other && Equals(other);
-            }
-
-            public override int GetHashCode()
-            {
-                var hash = 17;
-                foreach (var item in Items)
-                    hash = unchecked((hash * 397) ^ EqualityComparer<T>.Default.GetHashCode(item!));
-                return hash;
             }
         }
     }
