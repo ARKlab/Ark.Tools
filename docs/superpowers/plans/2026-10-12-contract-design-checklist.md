@@ -16,8 +16,8 @@
 - No .NET code changes, so no `dotnet build`/`test`. Validate Markdown links and run the APM checks instead (AGENTS.md).
 - Do not hand-edit generated agent files (`.claude/`, `.agents/`, `.github/skills/`, `agents-plugins/published/`); regenerate them with APM.
 - Skill description stays scoped to consuming Ark.Tools.MediatorFramework.
-- Legal items (purpose, lawful basis, retention period, DPIA trigger) are always `ASK`, owned by a human, and verified with the DPO/legal.
-- Personal data in messages: cross-application events and messages carry identifiers only; internal messages may carry classified personal data; sensitive or special-category data never. Every queue, dead-letter queue and outbox has an intrinsic TTL. Platform encryption at rest is the baseline; per-message or per-column encryption is on top.
+- Legal items (purpose, lawful basis, retention period, DPIA trigger) are `ASK` whenever personal data is carried and changed (otherwise "N/A: no personal-data change"), owned by a human, and verified with the DPO/legal.
+- Personal data in messages: messages crossing a service boundary carry only `[Pseudonymous]` identifiers; messages between processes of the same service may carry classified personal data; special-category (Art. 9) and criminal-offence (Art. 10) data never. Queues have a TTL where the broker supports it; every dead-letter queue and outbox has explicit retention and cleanup. Platform encryption at rest is the baseline; per-message or per-column encryption is on top.
 - Examples use placeholders ("Customer A"), never real personal data.
 - Commits: Conventional Commits, footer `Assisted-by: Claude`, no `Co-authored-by`.
 - `ark-csharp` plugin version becomes `1.5.0`.

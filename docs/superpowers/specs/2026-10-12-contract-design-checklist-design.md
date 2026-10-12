@@ -32,7 +32,7 @@ Success criteria:
 | Resource-level denial | Decided per contract. Prefer `403` unless it discloses existence: unguessable ids (GUIDs) → `404`; guessable sequential ids (int) → `403` is harmless. The brief records the id type and the reason. |
 | Enums | `EvolvableEnum<T>` with `NOT_SET = 0` on every public contract. Exceptions: enums controlled externally (e.g. a third-party interface adapter) and `[Flags]` enums; the brief names the exception. |
 | Breaking changes | Avoid them. The checklist asks for the additive path first (optional field with default, new operation); a new `[Versioning]` contract needs a written reason the additive path is impossible. |
-| GDPR scope | Full privacy-by-design: purpose, lawful basis, retention period and DPIA trigger are answered before coding. They are always `ASK`, owned by a human, and must be verified with the DPO/legal; the agent never decides them. |
+| GDPR scope | Full privacy-by-design: purpose, lawful basis, retention period and DPIA trigger are answered before coding. They are `ASK` whenever the contract carries personal data and the change adds or alters a personal field, its exposure, transport or purpose (otherwise "N/A: no personal-data change"), owned by a human, and must be verified with the DPO/legal; the agent never decides them. |
 | Personal data in messages | Split by audience. Events and messages that cross a service boundary carry only `[Pseudonymous]` identifiers: no direct identifiers and no other personal attributes. Messages between the processes of one service (for example its web host and workers, owned queue) may carry classified personal data. The boundary is the service, not the process. Sensitive personal data and special-category data (GDPR Art. 9/10) never. Queues have a TTL where the broker supports it; every dead-letter queue and outbox has an explicit retention and cleanup mechanism (drain job, scheduled purge) with a stated retention period; the brief records each value. Platform encryption at rest is the baseline; per-message or per-column encryption is an additional measure the brief decides on. |
 | Single source | The doc is canonical. The skill links it via the raw GitHub URL and keeps a ~30-line index of section names and hard defaults so the gate works if the fetch fails. |
 | Skill description | Stays scoped to consuming Mediator Framework; it gains design/review triggers but no generic API-design or GDPR triggers. |
@@ -82,8 +82,9 @@ New file `docs/mediator-framework/contract-design-checklist.md`:
     check with the 403/404 rule above; list scoping; field visibility; identity
     for background messages and re-check on consume.
 13. **Messaging.** Publisher and subscribers; logical names and `FormerNames`;
-    retry, dead-letter, outbox, idempotency; intrinsic TTL of every queue,
-    dead-letter queue and outbox.
+    retry, dead-letter, outbox, idempotency; queue TTL where the broker
+    supports it, explicit retention and cleanup for every dead-letter queue and
+    outbox.
 14. **Versioning and compatibility.** Additive first; enum rule; reserved
     protobuf numbers and logical names; API-surface snapshot, OpenAPI and proto
     diffs reviewed.
