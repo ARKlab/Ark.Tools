@@ -1032,7 +1032,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             // endpoints, or a mapping of this assembly, can reach every reference.
             var scope = hasSourceEndpoints || endpointAssemblies.Contains(compilation.AssemblyName ?? string.Empty, StringComparer.Ordinal)
                 ? null
-                : _referenceClosure(compilation, endpointAssemblies);
+                : _referenceClosure(compilation, endpointAssemblies, cancellationToken);
             var result = ImmutableArray.CreateBuilder<ProtoContractModel>();
             foreach (var assembly in _referencedAssemblies(compilation, protoAttribute.ContainingAssembly)
                 .Where(assembly => scope is null || scope.Contains(assembly)))
@@ -1050,13 +1050,14 @@ namespace Ark.Tools.MediatorFramework.Generators
             return result.ToImmutable();
         }
 
-        private static HashSet<IAssemblySymbol> _referenceClosure(Compilation compilation, ImmutableArray<string> assemblyNames)
+        private static HashSet<IAssemblySymbol> _referenceClosure(Compilation compilation, ImmutableArray<string> assemblyNames, CancellationToken cancellationToken)
         {
             var closure = new HashSet<IAssemblySymbol>(SymbolEqualityComparer.Default);
             var pending = new Stack<IAssemblySymbol>(compilation.SourceModule.ReferencedAssemblySymbols
                 .Where(assembly => assemblyNames.Contains(assembly.Name, StringComparer.Ordinal)));
             while (pending.Count > 0)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var assembly = pending.Pop();
                 if (!closure.Add(assembly))
                     continue;
