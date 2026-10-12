@@ -8,8 +8,8 @@ Functions app, and nothing else runs outside Azure Functions. The apps share
 ## No outbox
 
 The variant runs on Azure Functions only, so it has no outbox: Functions never
-poll the outbox, and there is no separate process to dispatch it. The handlers
-still enlist their data context's outbox, as in every variant:
+poll the outbox, and there is no separate process to dispatch it. Each app
+selects what its handlers need:
 
 - The Api and Processor apps, whose handlers send and publish, select
   `UseOutbox(outbox => outbox.UseDevelopmentPassthrough())`. Enlisting is a
