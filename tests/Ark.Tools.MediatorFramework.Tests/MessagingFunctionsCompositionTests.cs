@@ -252,6 +252,21 @@ public sealed class MessagingFunctionsCompositionTests
         provider.GetRequiredService<MessagingBus>()._outboxMode.Should().Be(MessagingOutboxMode.Enqueue);
     }
 
+    /// <summary>The low-level Functions host rejects an undefined outbox mode instead of treating it as enqueue.</summary>
+    [TestMethod]
+    public void LowLevelFunctionsHostRejectsUndefinedOutboxMode()
+    {
+        var services = new ServiceCollection();
+
+        var action = () => services.AddArkMessagingFunctionsHost(
+            _manifest(MessagingFunctionsTriggerBinding.ServiceBus, _descriptor(receives: false)),
+            new InMemoryMessagingTransport(),
+            _dataBus(),
+            outbox: (MessagingOutboxMode)42);
+
+        action.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("outbox");
+    }
+
     /// <summary>Verifies Functions composition cannot be mixed with the native polling processor.</summary>
     [TestMethod]
     public void NativeOutboxProcessorIsRejectedBeforeOrAfterFunctionsComposition()

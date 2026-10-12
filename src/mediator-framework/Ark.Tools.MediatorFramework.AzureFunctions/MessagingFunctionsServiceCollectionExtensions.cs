@@ -59,6 +59,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(dataBus);
+        if (!Enum.IsDefined(outbox))
+            throw new ArgumentOutOfRangeException(nameof(outbox), outbox, "Unknown messaging outbox mode.");
 
         return transport switch
         {
@@ -102,6 +104,8 @@ internal static class MessagingFunctionsServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(manifest);
         ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(dataBus);
+        if (!Enum.IsDefined(outbox))
+            throw new ArgumentOutOfRangeException(nameof(outbox), outbox, "Unknown messaging outbox mode.");
         if (services.Any(static service => service.ServiceType == typeof(MessagingOutboxProcessor)))
         {
             throw new InvalidOperationException(
