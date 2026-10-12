@@ -279,3 +279,40 @@ internal static class GeneratedSourceText
     public static string _toGeneratedSource(this StringBuilder builder)
         => builder.Replace("\r\n", "\n").Replace('\r', '\n').ToString();
 }
+
+/// <summary>Compares symbol names without formatting display strings.</summary>
+internal static class SymbolNames
+{
+    /// <summary>
+    /// Allocation-free equivalent of <c>type.ToDisplayString() == fullName</c> for a non-generic type (nested types
+    /// included), such as an attribute class. Generators match the attributes of every member they visit, and
+    /// formatting a display string for each attribute was most of that cost. Generic types never match.
+    /// </summary>
+    /// <param name="type">The type to test, usually <see cref="AttributeData.AttributeClass"/>.</param>
+    /// <param name="fullName">The namespace-qualified name, for example <c>Ark.Tools.MediatorFramework.MessageAttribute</c>.</param>
+    /// <returns><see langword="true"/> when the type has exactly that name.</returns>
+    public static bool _isFullName(this INamedTypeSymbol? type, string fullName)
+    {
+        if (type is null)
+            return false;
+
+        // Match each containing type, then each namespace, from the end of the name backwards.
+        var end = fullName.Length;
+        for (ISymbol? symbol = type; symbol is not null and not INamespaceSymbol { IsGlobalNamespace: true }; symbol = symbol.ContainingSymbol)
+        {
+            if (symbol is INamedTypeSymbol { Arity: > 0 })
+                return false;
+
+            var name = symbol.Name;
+            var start = end - name.Length;
+            if (start < 0 || string.CompareOrdinal(fullName, start, name, 0, name.Length) != 0)
+                return false;
+
+            end = start - 1;
+            if (end >= 0 && fullName[end] != '.')
+                return false;
+        }
+
+        return end == -1;
+    }
+}

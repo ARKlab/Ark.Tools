@@ -494,13 +494,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
         var name = GetString(toolAttribute, "Name") ?? contractName;
         var apiGroup = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == ApiGroupAttribute);
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ApiGroupAttribute));
         var groupName = apiGroup?.ConstructorArguments.FirstOrDefault().Value as string;
         if (!string.IsNullOrWhiteSpace(groupName))
             name = groupName + "." + name;
         var version = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString()
-                == "Ark.Tools.MediatorFramework.VersioningAttribute");
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName("Ark.Tools.MediatorFramework.VersioningAttribute"));
         var introduced = version is null ? 1 : GetInt(version, "Introduced");
         var retired = version is null ? 0 : GetInt(version, "Retired");
 
@@ -525,7 +524,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(MissingConstructor, location, contractName));
 
         var httpEndpoint = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass?.ToDisplayString() == HttpEndpointAttribute);
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(HttpEndpointAttribute));
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? GetBool(toolAttribute, "AllowAnonymous", false)
             : GetBool(httpEndpoint, "AllowAnonymous", false);
@@ -775,7 +774,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static bool TryGetDescription(ISymbol symbol, out string? description)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
-            candidate.AttributeClass?.ToDisplayString() == "System.ComponentModel.DescriptionAttribute");
+            candidate.AttributeClass._isFullName("System.ComponentModel.DescriptionAttribute"));
         description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
         return attribute is not null;
     }

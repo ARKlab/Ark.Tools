@@ -1154,7 +1154,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             {
                 foreach (var attribute in attributes)
                 {
-                    if (attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.CompatibilityLevelAttribute"
+                    if (attribute.AttributeClass._isFullName("ProtoBuf.CompatibilityLevelAttribute")
                         && attribute.ConstructorArguments.Length == 1
                         && attribute.ConstructorArguments[0].Value is int level)
                         return level;
@@ -1181,7 +1181,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 {
                     Property = property,
                     Attribute = property.GetAttributes().FirstOrDefault(attribute =>
-                        attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoMemberAttribute"),
+                        attribute.AttributeClass._isFullName("ProtoBuf.ProtoMemberAttribute")),
                 })
                 .Where(item => item.Attribute is not null)
                 .Select(item => CreateProtoMember(type, item.Property, item.Attribute!))
@@ -1189,7 +1189,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .ToImmutableArray();
 
             var includes = type.GetAttributes()
-                .Where(attribute => attribute.AttributeClass?.ToDisplayString() == "ProtoBuf.ProtoIncludeAttribute")
+                .Where(attribute => attribute.AttributeClass._isFullName("ProtoBuf.ProtoIncludeAttribute"))
                 .Select(attribute => new
                 {
                     Type = attribute.ConstructorArguments.ElementAtOrDefault(1).Value as INamedTypeSymbol,

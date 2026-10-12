@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -75,16 +76,19 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
             }
 
             var isTestProject = _isTestProject(start.Compilation, start.Options.AnalyzerConfigOptionsProvider.GlobalOptions);
+            // Every string literal asks whether its file is test code: answer once per file.
+            var testTrees = new ConcurrentDictionary<SyntaxTree, bool>();
             start.RegisterOperationAction(operationContext =>
             {
                 // Compiler-synthesized literals (caller-info and omitted default arguments) are not authored test data.
-                // Checked before the path test, which allocates and would run for every literal.
+                // Checked before the path test, so it never runs for them.
                 if (operationContext.Operation is not ILiteralOperation { IsImplicit: false, ConstantValue: { HasValue: true, Value: string value } } literal)
                 {
                     return;
                 }
 
-                if (!isTestProject && !_isTestPath(operationContext.Operation.Syntax.SyntaxTree.FilePath))
+                if (!isTestProject
+                    && !testTrees.GetOrAdd(operationContext.Operation.Syntax.SyntaxTree, static tree => _isTestPath(tree.FilePath)))
                 {
                     return;
                 }

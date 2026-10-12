@@ -98,20 +98,66 @@
     </Task>
   </UsingTask>
 
-  <Target Name="ArkGenerateComplianceSql" AfterTargets="CoreCompile"
-          Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' != '' and '$(EnableArkToolsCompliance)' == 'true'">
+  <Target Name="_ArkPrepareComplianceSql">
     <PropertyGroup>
       <ArkComplianceSqlOutputPath Condition="'$(ArkComplianceSqlOutputPath)' == ''">$(IntermediateOutputPath)ArkCompliance.Sql</ArkComplianceSqlOutputPath>
+      <_ArkComplianceSqlStamp>$(ArkComplianceSqlOutputPath)/.ark-compliance-sql.stamp</_ArkComplianceSqlStamp>
+      <_ArkComplianceSqlTokensCache>$(IntermediateOutputPath)ArkComplianceSql.tokens.cache</_ArkComplianceSqlTokensCache>
     </PropertyGroup>
     <ItemGroup>
       <_ArkSqlGenerated Include="$(CompilerGeneratedFilesOutputPath)/**/Ark.Tools.Compliance.Generators.SqlPolicyGenerator/ArkComplianceSql.manifest.g.cs" />
     </ItemGroup>
+    <!-- Token values are item metadata, not files: this cache changes only when they do, so it can be an input. Hash
+         joins items with U+2028, which names and values may hold, so per name (batched on it) its names and its values
+         are hashed apart, and only those hex hashes are hashed together: no raw text can make two token sets collide. -->
+    <Hash ItemsToHash="@(ArkComplianceSqlToken->'%(Identity)')" Condition="'%(ArkComplianceSqlToken.Identity)' != ''">
+      <Output TaskParameter="HashResult" ItemName="_ArkComplianceSqlTokenNameHash" />
+    </Hash>
+    <Hash ItemsToHash="@(ArkComplianceSqlToken->'%(Value)')" Condition="'%(ArkComplianceSqlToken.Identity)' != ''">
+      <Output TaskParameter="HashResult" ItemName="_ArkComplianceSqlTokenValueHash" />
+    </Hash>
+    <Hash ItemsToHash="@(_ArkComplianceSqlTokenNameHash);@(_ArkComplianceSqlTokenValueHash)">
+      <Output TaskParameter="HashResult" PropertyName="_ArkComplianceSqlTokensHash" />
+    </Hash>
+    <WriteLinesToFile File="$(_ArkComplianceSqlTokensCache)" Lines="$(_ArkComplianceSqlTokensHash)"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_ArkComplianceSqlTokensCache)" />
+    </ItemGroup>
+    <!-- The stamp lists the scripts the last run wrote: if one of them is gone, or the folder holds a script it did not
+         write, drop the stamp so the task runs, writes the scripts again and deletes the stray ones. -->
+    <ReadLinesFromFile File="$(_ArkComplianceSqlStamp)" Condition="Exists('$(_ArkComplianceSqlStamp)')">
+      <Output TaskParameter="Lines" ItemName="_ArkComplianceSqlStamped" />
+    </ReadLinesFromFile>
+    <ItemGroup>
+      <_ArkComplianceSqlMissing Include="%(_ArkComplianceSqlStamped.Identity)"
+                                Condition="'%(_ArkComplianceSqlStamped.Identity)' != '' and !Exists('$(ArkComplianceSqlOutputPath)/%(_ArkComplianceSqlStamped.Identity)')" />
+      <_ArkComplianceSqlPresent Include="$(ArkComplianceSqlOutputPath)/policy-*.compliance.sql" />
+      <_ArkComplianceSqlStray Include="@(_ArkComplianceSqlPresent->'%(Filename)%(Extension)')" Exclude="@(_ArkComplianceSqlStamped)" />
+    </ItemGroup>
+    <Delete Files="$(_ArkComplianceSqlStamp)" Condition="'@(_ArkComplianceSqlMissing)' != '' or '@(_ArkComplianceSqlStray)' != ''" />
+  </Target>
+
+  <!-- The inline task is compiled by RoslynCodeTaskFactory on first use in each MSBuild node, which costs seconds:
+       skipping this target when nothing changed avoids that compilation too. -->
+  <Target Name="_ArkWriteComplianceSql" DependsOnTargets="_ArkPrepareComplianceSql"
+          Inputs="@(_ArkSqlGenerated);$(_ArkComplianceSqlTokensCache);$(MSBuildThisFileFullPath)"
+          Outputs="$(_ArkComplianceSqlStamp)">
     <ArkWriteComplianceSqlTemplates GeneratedFiles="@(_ArkSqlGenerated)" Tokens="@(ArkComplianceSqlToken)"
                                     OutputDirectory="$(ArkComplianceSqlOutputPath)">
-      <Output TaskParameter="OutputFiles" ItemName="ArkComplianceSqlScript" />
+      <Output TaskParameter="OutputFiles" ItemName="_ArkComplianceSqlWritten" />
     </ArkWriteComplianceSqlTemplates>
+    <MakeDir Directories="$(ArkComplianceSqlOutputPath)" />
+    <WriteLinesToFile File="$(_ArkComplianceSqlStamp)" Lines="@(_ArkComplianceSqlWritten->'%(Filename)%(Extension)')" Overwrite="true" />
+    <Touch Files="$(_ArkComplianceSqlStamp)" AlwaysCreate="true" />
+  </Target>
+
+  <Target Name="ArkGenerateComplianceSql" AfterTargets="CoreCompile" DependsOnTargets="_ArkWriteComplianceSql"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(TargetFramework)' != '' and '$(EnableArkToolsCompliance)' == 'true'">
+    <!-- Globbed, not taken from the task, so the scripts are listed whether or not the task ran. -->
     <ItemGroup>
-      <FileWrites Include="@(ArkComplianceSqlScript)" />
+      <ArkComplianceSqlScript Include="$(ArkComplianceSqlOutputPath)/policy-*.compliance.sql" />
+      <FileWrites Include="@(ArkComplianceSqlScript);$(_ArkComplianceSqlStamp)" />
     </ItemGroup>
   </Target>
 
@@ -121,7 +167,7 @@
       <ArkComplianceSqlOutputPath Condition="'$(ArkComplianceSqlOutputPath)' == ''">$(IntermediateOutputPath)ArkCompliance.Sql</ArkComplianceSqlOutputPath>
     </PropertyGroup>
     <ItemGroup>
-      <_ArkDisabledSql Include="$(ArkComplianceSqlOutputPath)/policy-*.compliance.sql" />
+      <_ArkDisabledSql Include="$(ArkComplianceSqlOutputPath)/policy-*.compliance.sql;$(ArkComplianceSqlOutputPath)/.ark-compliance-sql.stamp" />
     </ItemGroup>
     <Delete Files="@(_ArkDisabledSql)" />
   </Target>

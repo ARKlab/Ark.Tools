@@ -260,7 +260,7 @@ internal static class AzureFunctionsEndpointParser
             return null;
 
         var versioning = type.GetAttributes()
-            .FirstOrDefault(static item => item.AttributeClass?.ToDisplayString() == _versioningAttribute);
+            .FirstOrDefault(static item => item.AttributeClass._isFullName(_versioningAttribute));
         var introduced = _getNamedInt(versioning, "Introduced", 1);
         var retired = _getNamedInt(versioning, "Retired", 0);
         var messagePack = _getNamedBool(attribute, "AcceptsMessagePack");
@@ -313,12 +313,12 @@ internal static class AzureFunctionsEndpointParser
             .Select(p =>
             {
                 var routeAttr = p.GetAttributes()
-                    .FirstOrDefault(static a => a.AttributeClass?.ToDisplayString() == _httpRouteAttribute);
+                    .FirstOrDefault(static a => a.AttributeClass._isFullName(_httpRouteAttribute));
                 var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
                 var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
-                var isQuery = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _httpQueryAttribute);
-                var isBody = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _httpBodyAttribute);
-                var isETag = p.GetAttributes().Any(static a => a.AttributeClass?.ToDisplayString() == _eTagAttribute);
+                var isQuery = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(_httpQueryAttribute));
+                var isBody = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(_httpBodyAttribute));
+                var isETag = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(_eTagAttribute));
                 var isString = p.Type.SpecialType == SpecialType.System_String;
                 var isAttachment = p.Type.ToDisplayString() == _arkAttachment;
                 var isAttachmentCollection = p.Type is INamedTypeSymbol collection
@@ -361,7 +361,7 @@ internal static class AzureFunctionsEndpointParser
             ? null
             : _allProperties(responseSymbol)
                 .FirstOrDefault(static property => property.GetAttributes().Any(static attribute =>
-                    attribute.AttributeClass?.ToDisplayString() == _eTagAttribute))
+                    attribute.AttributeClass._isFullName(_eTagAttribute)))
                 ?.Name;
         var bodyProperty = properties.FirstOrDefault(static property => property.IsBody);
 

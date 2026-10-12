@@ -89,6 +89,7 @@ public sealed class ComplianceSurfaceTests
             trackIncrementalGeneratorSteps: true);
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new ComplianceSurfaceGenerator().AsSourceGenerator()],
+            optionsProvider: new OptionsProvider(enabled: true, complianceEnabled: true),
             driverOptions: options);
 
         driver = driver.RunGenerators(compilation);
@@ -138,6 +139,7 @@ public sealed class ComplianceSurfaceTests
             trackIncrementalGeneratorSteps: true);
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new ComplianceSurfaceGenerator().AsSourceGenerator()],
+            optionsProvider: new OptionsProvider(enabled: true, complianceEnabled: true),
             driverOptions: options);
 
         driver = driver.RunGenerators(compilation);
@@ -202,7 +204,7 @@ public sealed class ComplianceSurfaceTests
     {
         _run(_personalMember, enabled: true).Diagnostics.Should().ContainSingle()
             .Which.Id.Should().Be("ARKPII020");
-        _run(_personalMember).Diagnostics.Should().BeEmpty();
+        _run(_personalMember, enabled: false).Diagnostics.Should().BeEmpty();
         _run("public class Empty { }", enabled: true).Diagnostics.Should().BeEmpty();
     }
 
@@ -212,6 +214,25 @@ public sealed class ComplianceSurfaceTests
     {
         _run(_personalMember, enabled: true, complianceEnabled: false).Diagnostics.Should().BeEmpty();
         _run(_personalMember, "invalid baseline", enabled: true, complianceEnabled: false).Diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>A disabled surface binds no members and emits no inventory; only the syntax predicates still run per edit.</summary>
+    [TestMethod]
+    public void Surface_DisabledGateSkipsParsingAndOutput()
+    {
+        var compilation = _createCompilation(CSharpSyntaxTree.ParseText(_personalMember, path: "Customer.cs"));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ComplianceSurfaceGenerator().AsSourceGenerator()],
+            optionsProvider: new OptionsProvider(enabled: false, complianceEnabled: true),
+            driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: true));
+
+        var result = driver.RunGenerators(compilation).GetRunResult().Results.Single();
+
+        result.GeneratedSources.Should().BeEmpty();
+        var parsed = result.TrackedSteps.TryGetValue("ComplianceSurfaceMemberSpecs", out var steps)
+            ? steps.SelectMany(static step => step.Outputs).ToArray()
+            : [];
+        parsed.Should().BeEmpty("no type may be bound while the gate is off");
     }
 
     /// <summary>A reviewed snapshot accepts the same compilation, including CRLF baselines.</summary>
@@ -604,7 +625,7 @@ public sealed class ComplianceSurfaceTests
     }
 
     private static (string Text, ImmutableArray<Diagnostic> Diagnostics) _run(string source,
-        string? baseline = null, bool enabled = false, bool duplicateBaseline = false,
+        string? baseline = null, bool enabled = true, bool duplicateBaseline = false,
         bool complianceEnabled = true)
     {
         var compilation = _createCompilation(
@@ -620,7 +641,10 @@ public sealed class ComplianceSurfaceTests
         var result = driver.GetRunResult();
         result.Results.Should().OnlyContain(static generator => generator.Exception == null);
         output.GetDiagnostics().Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
-        var generated = result.Results.Single().GeneratedSources.Single().SourceText.ToString();
+        var sources = result.Results.Single().GeneratedSources;
+        if (sources.IsEmpty)
+            return (string.Empty, result.Diagnostics);
+        var generated = sources.Single().SourceText.ToString();
         generated.Should().StartWith("/*\n").And.EndWith("*/\n");
         return (generated[3..^3], result.Diagnostics);
     }

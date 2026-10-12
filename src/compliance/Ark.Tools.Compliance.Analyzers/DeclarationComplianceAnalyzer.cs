@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
@@ -71,6 +72,8 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
             {
                 var serviceCollectionType = start.Compilation.GetTypeByMetadataName(
                     "Microsoft.Extensions.DependencyInjection.IServiceCollection");
+                // Until the first match every property and parameter reference asks about its type: answer once per type.
+                var serviceCollectionTypes = new ConcurrentDictionary<ITypeSymbol, bool>(SymbolEqualityComparer.Default);
                 start.RegisterOperationAction(operationContext =>
                 {
                     operationContext.CancellationToken.ThrowIfCancellationRequested();
@@ -91,7 +94,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                             return;
                         operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var creation = (Microsoft.CodeAnalysis.Operations.IObjectCreationOperation)operationContext.Operation;
-                        if (_isServiceCollection(creation.Type, serviceCollectionType, operationContext.CancellationToken))
+                        if (_isServiceCollection(creation.Type, serviceCollectionType, serviceCollectionTypes, operationContext.CancellationToken))
                         {
                             Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
                         }
@@ -102,7 +105,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                             return;
                         operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var property = (Microsoft.CodeAnalysis.Operations.IPropertyReferenceOperation)operationContext.Operation;
-                        if (_isServiceCollection(property.Type, serviceCollectionType, operationContext.CancellationToken))
+                        if (_isServiceCollection(property.Type, serviceCollectionType, serviceCollectionTypes, operationContext.CancellationToken))
                         {
                             Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
                         }
@@ -113,7 +116,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                             return;
                         operationContext.CancellationToken.ThrowIfCancellationRequested();
                         var parameter = (Microsoft.CodeAnalysis.Operations.IParameterReferenceOperation)operationContext.Operation;
-                        if (_isServiceCollection(parameter.Type, serviceCollectionType, operationContext.CancellationToken))
+                        if (_isServiceCollection(parameter.Type, serviceCollectionType, serviceCollectionTypes, operationContext.CancellationToken))
                         {
                             Interlocked.Exchange(ref hasServiceCollectionSetup, 1);
                         }
@@ -150,6 +153,26 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 }
             }, SymbolKind.Property, SymbolKind.Field, SymbolKind.Method, SymbolKind.NamedType);
         });
+    }
+
+    private static bool _isServiceCollection(
+        ITypeSymbol? type,
+        INamedTypeSymbol serviceCollectionType,
+        ConcurrentDictionary<ITypeSymbol, bool> cache,
+        CancellationToken cancellationToken)
+    {
+        if (type is null)
+        {
+            return false;
+        }
+
+        if (!cache.TryGetValue(type, out var result))
+        {
+            result = _isServiceCollection(type, serviceCollectionType, cancellationToken);
+            cache.TryAdd(type, result);
+        }
+
+        return result;
     }
 
     private static bool _isServiceCollection(

@@ -483,7 +483,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static Network _readNetwork(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().First(static attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _networkAttribute);
+            attribute.AttributeClass._isFullName(_networkAttribute));
         var members = _types(attribute, "Members");
         return new Network(
             _readType(symbol),
@@ -501,7 +501,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static Participant? _readParticipant(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(static attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _participantAttribute);
+            attribute.AttributeClass._isFullName(_participantAttribute));
         if (attribute is null)
             return null;
 
@@ -677,9 +677,9 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         _contractAttributes(INamedTypeSymbol symbol)
     {
         var message = symbol.GetAttributes().FirstOrDefault(static attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _messageAttribute);
+            attribute.AttributeClass._isFullName(_messageAttribute));
         var @event = symbol.GetAttributes().FirstOrDefault(static attribute =>
-            attribute.AttributeClass?.ToDisplayString() == _eventAttribute);
+            attribute.AttributeClass._isFullName(_eventAttribute));
         var source = message ?? @event;
         return (message, @event, _string(source, "Name"), _strings(source, "FormerNames"));
     }
@@ -708,7 +708,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static string _defaultContractName(INamedTypeSymbol symbol)
     {
         var group = symbol.GetAttributes()
-            .FirstOrDefault(static attribute => attribute.AttributeClass?.ToDisplayString() == _apiGroupAttribute)
+            .FirstOrDefault(static attribute => attribute.AttributeClass._isFullName(_apiGroupAttribute))
             ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
         return _normalizeLogical(group) + "." + _normalizeLogical(symbol.Name);
     }

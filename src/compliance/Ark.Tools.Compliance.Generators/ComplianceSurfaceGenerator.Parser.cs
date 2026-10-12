@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
@@ -17,15 +18,22 @@ namespace Ark.Tools.Compliance.Generators;
 
 public sealed partial class ComplianceSurfaceGenerator
 {
-    private static TypeSpec? _parseType(GeneratorSyntaxContext context, CancellationToken token)
+    // What a value type contributes depends only on that type, and a few types (string, int, Guid...) back most
+    // members: classify each named type once, without keeping its compilation alive.
+    private static readonly ConditionalWeakTable<INamedTypeSymbol, string[]> _valueTypeClassifications = new();
+
+    private static TypeSpec? _parseType(SemanticModel model, SyntaxNode node, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        if (context.SemanticModel.GetDeclaredSymbol(context.Node, token) is not INamedTypeSymbol type)
+        if (model.GetDeclaredSymbol(node, token) is not INamedTypeSymbol type)
             return null;
 
         string? typeName = null;
         SortedSet<string>? typeClassifications = null;
         var members = new List<MemberSpec>();
+        // Parameters of one method come in a row: format the method signature once for all of them.
+        ISymbol? method = null;
+        string? methodName = null;
         foreach (var member in _members(type))
         {
             token.ThrowIfCancellationRequested();
@@ -38,7 +46,13 @@ public sealed partial class ComplianceSurfaceGenerator
                 _classifications(type, typeClassifications);
             }
 
-            members.Add(_parseMember(member, type, typeName, typeClassifications, token));
+            if (member is IParameterSymbol { ContainingSymbol: var containing } && !ReferenceEquals(containing, method))
+            {
+                method = containing;
+                methodName = containing.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+            }
+
+            members.Add(_parseMember(member, type, typeName, typeClassifications, methodName, token));
         }
 
         return members.Count == 0
@@ -83,18 +97,30 @@ public sealed partial class ComplianceSurfaceGenerator
         INamedTypeSymbol type,
         string typeName,
         SortedSet<string> typeClassifications,
+        string? methodName,
         CancellationToken token)
     {
-        var classifications = new SortedSet<string>(StringComparer.Ordinal);
-        _classifications(member, classifications);
-        foreach (var classification in typeClassifications)
-            classifications.Add(classification);
+        // Most members carry no classification: build the set only when one of the sources has any.
+        SortedSet<string>? classifications = null;
+        if (member.GetAttributes().Length > 0 || member is IPropertySymbol { OverriddenProperty: not null })
+        {
+            classifications = new SortedSet<string>(StringComparer.Ordinal);
+            _classifications(member, classifications);
+        }
+
         var valueType = _valueType(member);
-        _typeClassifications(valueType, classifications, null);
-        classifications.Remove("Ark:InfrastructureSecret");
-        var name = _memberName(member);
+        var valueClassifications = _valueTypeClassificationsOf(valueType);
+        if (typeClassifications.Count > 0 || valueClassifications.Length > 0)
+        {
+            classifications ??= new SortedSet<string>(StringComparer.Ordinal);
+            classifications.UnionWith(typeClassifications);
+            classifications.UnionWith(valueClassifications);
+        }
+
+        classifications?.Remove("Ark:InfrastructureSecret");
+        var name = _memberName(member, methodName);
         var key = typeName + "\t" + name;
-        if (classifications.Count == 0)
+        if (classifications is null || classifications.Count == 0)
         {
             return new MemberSpec(
                 key,
@@ -185,6 +211,26 @@ public sealed partial class ComplianceSurfaceGenerator
         };
     }
 
+    private static string[] _valueTypeClassificationsOf(ITypeSymbol? type)
+    {
+        if (type is not INamedTypeSymbol named)
+        {
+            if (type is null)
+                return Array.Empty<string>();
+
+            var output = new SortedSet<string>(StringComparer.Ordinal);
+            _typeClassifications(type, output, null);
+            return output.Count == 0 ? Array.Empty<string>() : output.ToArray();
+        }
+
+        return _valueTypeClassifications.GetValue(named, static key =>
+        {
+            var output = new SortedSet<string>(StringComparer.Ordinal);
+            _typeClassifications(key, output, null);
+            return output.Count == 0 ? Array.Empty<string>() : output.ToArray();
+        });
+    }
+
     private static void _typeClassifications(ITypeSymbol? type, SortedSet<string> output, HashSet<ITypeSymbol>? seen)
     {
         if (type is null || seen?.Add(type) == false)
@@ -231,12 +277,11 @@ public sealed partial class ComplianceSurfaceGenerator
         };
     }
 
-    private static RevealSpec? _parseReveal(GeneratorSyntaxContext context, CancellationToken token)
+    private static RevealSpec? _parseReveal(SemanticModel model, SyntaxNode node, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        var invocation = (InvocationExpressionSyntax)context.Node;
+        var invocation = (InvocationExpressionSyntax)node;
         var access = (MemberAccessExpressionSyntax)invocation.Expression;
-        var model = context.SemanticModel;
         var compliancePurposeType = model.Compilation.GetTypeByMetadataName(Prefix + "CompliancePurpose");
         var compliancePurposeCategoryType = model.Compilation.GetTypeByMetadataName(Prefix + "CompliancePurposeCategory");
         if (model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol revealMethod
@@ -284,11 +329,10 @@ public sealed partial class ComplianceSurfaceGenerator
             && _invocationName(invocation) is "Register" or "RegisterBuiltIn";
     }
 
-    private static RegistrationSpec? _parseRegistration(GeneratorSyntaxContext context, CancellationToken token)
+    private static RegistrationSpec? _parseRegistration(SemanticModel model, SyntaxNode node, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        var invocation = (InvocationExpressionSyntax)context.Node;
-        var model = context.SemanticModel;
+        var invocation = (InvocationExpressionSyntax)node;
         if (model.GetSymbolInfo(invocation, token).Symbol is not IMethodSymbol method)
             return null;
 
@@ -416,7 +460,7 @@ public sealed partial class ComplianceSurfaceGenerator
     /// non-generic types: generic or nested types render with type arguments or the containing
     /// type in their display string, so they can never equal a plain dotted name.
     /// </summary>
-    private static bool _isFullName(INamedTypeSymbol? type, string fullName)
+    internal static bool _isFullName(INamedTypeSymbol? type, string fullName)
     {
         if (type is null || type.Arity != 0 || type.ContainingType is not null)
             return false;
@@ -464,10 +508,10 @@ public sealed partial class ComplianceSurfaceGenerator
         return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat).Replace("global::", string.Empty);
     }
 
-    private static string _memberName(ISymbol member)
+    private static string _memberName(ISymbol member, string? methodName = null)
     {
         return member is IParameterSymbol parameter
-            ? parameter.ContainingSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat) + ":" + parameter.Name
+            ? (methodName ?? parameter.ContainingSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)) + ":" + parameter.Name
             : member is IPropertySymbol { IsIndexer: true } property
                 ? property.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)
             : member.MetadataName;

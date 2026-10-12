@@ -236,7 +236,7 @@ public sealed class SqlPolicyGenerator : IIncrementalGenerator
 
             for (var current = attribute.AttributeClass?.BaseType; current is not null; current = current.BaseType)
             {
-                if (current.ToDisplayString() == "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute")
+                if (ComplianceSurfaceGenerator._isFullName(current, "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute"))
                 {
                     return attribute.AttributeClass!.Name.Replace("Attribute", string.Empty);
                 }
