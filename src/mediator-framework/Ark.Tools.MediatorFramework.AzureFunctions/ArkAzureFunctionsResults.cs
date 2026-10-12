@@ -70,13 +70,17 @@ public static class ArkAzureFunctionsResults
         if (!conditionalGet)
             return null;
 
-        var matches = context.Request.Headers.IfNoneMatch
-            .ToString()
-            .Split(',', StringSplitOptions.TrimEntries)
-            .Select(static value => value.StartsWith("W/", StringComparison.Ordinal) ? value[2..] : value)
-            .Select(_unquote)
-            .Any(value => value == "*" || string.Equals(value, token, StringComparison.Ordinal));
-        return matches ? TypedResults.StatusCode(StatusCodes.Status304NotModified) : null;
+        var ifNoneMatch = context.Request.Headers.IfNoneMatch.ToString();
+        if (ifNoneMatch.Length == 0)
+            return null;
+
+        foreach (var value in ifNoneMatch.Split(',', StringSplitOptions.TrimEntries))
+        {
+            var candidate = _unquote(value.StartsWith("W/", StringComparison.Ordinal) ? value[2..] : value);
+            if (candidate == "*" || string.Equals(candidate, token, StringComparison.Ordinal))
+                return TypedResults.StatusCode(StatusCodes.Status304NotModified);
+        }
+        return null;
     }
 
     /// <summary>Determines whether a token can safely be emitted as an HTTP header value.</summary>
