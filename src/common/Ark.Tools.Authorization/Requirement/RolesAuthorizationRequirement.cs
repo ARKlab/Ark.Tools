@@ -32,11 +32,13 @@ public class RolesAuthorizationRequirement : AuthorizationHandler<RolesAuthoriza
     {
         if (context.User != null)
         {
-            bool found = requirement.AllowedRoles.Any(r => context.User.IsInRole(r));
-
-            if (found)
+            foreach (var role in requirement.AllowedRoles)
             {
-                context.Succeed(requirement);
+                if (context.User.IsInRole(role))
+                {
+                    context.Succeed(requirement);
+                    break;
+                }
             }
         }
         return Task.CompletedTask;

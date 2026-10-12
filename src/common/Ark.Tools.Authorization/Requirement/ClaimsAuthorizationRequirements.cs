@@ -8,6 +8,9 @@ namespace Ark.Tools.Authorization.Requirement;
 /// </summary>
 public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthorizationRequirement>, IAuthorizationRequirement
 {
+    // Null when any claim value is allowed.
+    private readonly HashSet<string>? _allowedValues;
+
     /// <summary>
     /// Creates a new instance of <see cref="ClaimsAuthorizationRequirement"/>.
     /// </summary>
@@ -18,6 +21,12 @@ public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthori
     {
         ClaimType = claimType ?? throw new ArgumentNullException(nameof(claimType));
         AllowedValues = allowedValues;
+        if (allowedValues is not null)
+        {
+            var values = new HashSet<string>(allowedValues, StringComparer.Ordinal);
+            if (values.Count > 0)
+                _allowedValues = values;
+        }
     }
 
     /// <summary>
@@ -41,13 +50,14 @@ public class ClaimsAuthorizationRequirement : AuthorizationHandler<ClaimsAuthori
     {
         if (context.User != null)
         {
-            var found = requirement.AllowedValues == null || !requirement.AllowedValues.Any()
-                ? context.User.Claims.Any(c => string.Equals(c.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase))
-                : context.User.Claims.Any(c => string.Equals(c.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
-                                                    && requirement.AllowedValues.Contains(c.Value, StringComparer.Ordinal));
-            if (found)
+            foreach (var claim in context.User.Claims)
             {
-                context.Succeed(requirement);
+                if (string.Equals(claim.Type, requirement.ClaimType, StringComparison.OrdinalIgnoreCase)
+                    && (requirement._allowedValues is null || requirement._allowedValues.Contains(claim.Value)))
+                {
+                    context.Succeed(requirement);
+                    break;
+                }
             }
         }
         return Task.CompletedTask;
