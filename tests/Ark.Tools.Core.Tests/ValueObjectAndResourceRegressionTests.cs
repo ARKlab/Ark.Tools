@@ -30,6 +30,18 @@ public sealed class ValueObjectAndResourceRegressionTests
         longer.Equals(shorter).Should().BeFalse();
     }
 
+    [TestMethod]
+    public void ValueObject_GetHashCode_WithoutAtomicValues_DoesNotThrow()
+    {
+        new TestValueObject().GetHashCode().Should().Be(new TestValueObject().GetHashCode());
+    }
+
+    [TestMethod]
+    public void ValueObject_GetHashCode_MatchesForEqualValues()
+    {
+        new TestValueObject(1, 2).GetHashCode().Should().Be(new TestValueObject(1, 2).GetHashCode());
+    }
+
     private sealed class TestValueObject(params int[] values) : ValueObject<TestValueObject>
     {
         protected override IEnumerable<object> GetAtomicValues()
