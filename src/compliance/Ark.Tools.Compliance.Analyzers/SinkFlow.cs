@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 using Microsoft.CodeAnalysis;
@@ -14,6 +15,12 @@ namespace Ark.Tools.Compliance.Analyzers;
 
 internal sealed class SinkFlow
 {
+    // Self-protection depends only on a type's own attributes and interfaces, and a flow walk asks about the
+    // same types again and again: cache the answer per symbol without keeping the compilation alive.
+    private static readonly ConditionalWeakTable<INamedTypeSymbol, object> _selfProtecting = new();
+    private static readonly object _protected = new();
+    private static readonly object _unprotected = new();
+
     private readonly CancellationToken _cancellationToken;
     private readonly int _maxNodes;
     private readonly int _maxDepth;
@@ -56,6 +63,18 @@ internal sealed class SinkFlow
             return false;
         }
 
+        if (_selfProtecting.TryGetValue(named, out var cached))
+        {
+            return cached == _protected;
+        }
+
+        var result = _computeSelfProtecting(named, cancellationToken);
+        _selfProtecting.GetValue(named, _ => result ? _protected : _unprotected);
+        return result;
+    }
+
+    private static bool _computeSelfProtecting(INamedTypeSymbol named, CancellationToken cancellationToken)
+    {
         foreach (var attribute in named.GetAttributes())
         {
             cancellationToken.ThrowIfCancellationRequested();
