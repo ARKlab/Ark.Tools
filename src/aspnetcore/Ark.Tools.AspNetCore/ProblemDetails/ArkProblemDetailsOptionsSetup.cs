@@ -22,7 +22,7 @@ using ProblemDetailsOptions = Hellang.Middleware.ProblemDetails.ProblemDetailsOp
 
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
-public class ArkProblemDetailsOptionsSetup
+public sealed class ArkProblemDetailsOptionsSetup
     : IConfigureOptions<ProblemDetailsOptions>
     , IPostConfigureOptions<ProblemDetailsOptions>
 {

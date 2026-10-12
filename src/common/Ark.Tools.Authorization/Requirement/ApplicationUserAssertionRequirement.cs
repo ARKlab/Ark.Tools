@@ -27,7 +27,7 @@ public abstract class ApplicationUserAssertionRequirement<TUser> : IAuthorizatio
 /// Use of this kind of requirement, require a paired implementation of <see cref="IUserProfileProvider{TUser}"/>.
 /// </summary>
 /// <typeparam name="TUser">The user profile type.</typeparam>
-public class FuncApplicationUserAssertionRequirement<TUser> : ApplicationUserAssertionRequirement<TUser>
+public sealed class FuncApplicationUserAssertionRequirement<TUser> : ApplicationUserAssertionRequirement<TUser>
 {
     private readonly Func<AuthorizationContext, TUser, Task<bool>> _handler;
 
@@ -60,7 +60,7 @@ public class FuncApplicationUserAssertionRequirement<TUser> : ApplicationUserAss
 /// Requires an implementation of <see cref="IUserProfileProvider{TUser}"/>.
 /// </summary>
 /// <typeparam name="TUser">The user profile type.</typeparam>
-public class ApplicationUserAssertionHandler<TUser> : IAuthorizationHandler
+public sealed class ApplicationUserAssertionHandler<TUser> : IAuthorizationHandler
 {
     private readonly IUserProfileProvider<TUser> _provider;
 

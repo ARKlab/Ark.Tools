@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace Ark.Tools.Nodatime.SystemTextJson;
 
-public class LocalDateTimeRangeConverter : JsonConverter<LocalDateTimeRange>
+public sealed class LocalDateTimeRangeConverter : JsonConverter<LocalDateTimeRange>
 {
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
         Justification = "The Surrogate type is a private class defined in this converter with only LocalDateTime properties. NodaTime types are explicitly supported by NodaTime.Serialization.SystemTextJson and will not be trimmed.")]

@@ -3,7 +3,6 @@
 
 using System.ComponentModel;
 using System.Reflection;
-using System.Runtime.ExceptionServices;
 
 namespace Ark.Tools.Core;
 
@@ -12,9 +11,9 @@ public sealed class EvolvableEnumTypeConverter : TypeConverter
 {
     private readonly Type _wrapperType;
     private readonly Type _backingType;
-    private readonly MethodInfo _parse;
-    private readonly MethodInfo _fromNumber;
-    private readonly MethodInfo _toNumber;
+    private readonly MethodInvoker _parse;
+    private readonly MethodInvoker _fromNumber;
+    private readonly MethodInvoker _toNumber;
 
     /// <summary>Initializes a converter for a closed evolvable enum type.</summary>
     /// <param name="type">The closed evolvable enum type.</param>
@@ -28,9 +27,9 @@ public sealed class EvolvableEnumTypeConverter : TypeConverter
 
         _wrapperType = type;
         _backingType = arguments.Length == 1 ? typeof(int) : arguments[1];
-        _parse = type.GetMethod("Parse", [typeof(string)])!;
-        _fromNumber = type.GetMethod("FromNumber", [_backingType])!;
-        _toNumber = type.GetMethod("ToNumber", Type.EmptyTypes)!;
+        _parse = MethodInvoker.Create(type.GetMethod("Parse", [typeof(string)])!);
+        _fromNumber = MethodInvoker.Create(type.GetMethod("FromNumber", [_backingType])!);
+        _toNumber = MethodInvoker.Create(type.GetMethod("ToNumber", Type.EmptyTypes)!);
     }
 
     /// <inheritdoc />
@@ -49,9 +48,9 @@ public sealed class EvolvableEnumTypeConverter : TypeConverter
     {
         ArgumentNullException.ThrowIfNull(value);
         if (value is string text)
-            return _parse.Invoke(null, [text]);
+            return _parse.Invoke(null, text);
         if (value.GetType() == _backingType)
-            return _fromNumber.Invoke(null, [value]);
+            return _fromNumber.Invoke(null, value);
 
         return base.ConvertFrom(context, culture, value);
     }
@@ -69,16 +68,7 @@ public sealed class EvolvableEnumTypeConverter : TypeConverter
             if (destinationType == typeof(string))
                 return value.ToString();
             if (destinationType == _backingType)
-            {
-                try
-                {
-                    return _toNumber.Invoke(value, null);
-                }
-                catch (TargetInvocationException exception) when (exception.InnerException is not null)
-                {
-                    ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
-                }
-            }
+                return _toNumber.Invoke(value);
         }
 
         return base.ConvertTo(context, culture, value, destinationType);

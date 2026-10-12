@@ -8,7 +8,7 @@ using System.Net;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
-public class ProblemDetailsRouterProvider : IProblemDetailsRouterProvider
+public sealed class ProblemDetailsRouterProvider : IProblemDetailsRouterProvider
 {
     private readonly string _template;
 

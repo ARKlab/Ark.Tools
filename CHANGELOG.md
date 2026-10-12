@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Breaking:** public classes and records that nothing in Ark.Tools derives from and that declare no `virtual` members are now `sealed`, so the JIT can devirtualize calls to them. Types such as the Rebus steps and decorators, the Solid decorators, the JSON converters, the MessagePack formatters, the authorization handlers, the Swashbuckle filters and the exceptions in `Ark.Tools.Core` can no longer be subclassed; wrap or decorate them instead.
+- `EvolvableEnumTypeConverter` throws the parser's own exception for an invalid value instead of wrapping it in a `TargetInvocationException`.
+- Lower per-call overhead on hot paths: messaging send, receive and metrics, Rebus steps, outbox polling, authorization handlers, Minimal API forwarded-prefix and ETag handling, comma-separated value providers, ResourceWatcher runs, OTel redaction and file export, RavenDB auditing, `ServiceProvider*Processor` untyped dispatch and the Newtonsoft `ValueCollectionConverter`. ResourceWatcher and `WorkerHost` now enumerate a provider's resource sequence once per run.
 - **Breaking:** Mediator Framework handlers open an `OutboxScope` instead of casting `IBus` to `IBusOutboxEnlistment`: replace `((IBusOutboxEnlistment)bus).Enlist(context)` with the new `bus.Enlist(context)` extension, which opens an `OutboxScope` like the Rebus helper of the same name. Every native bus stages the sends made in an open scope, so `UseOutbox()` is optional again; `UseOutbox(outbox => outbox.UseDevelopmentPassthrough())` still sends directly during development without changing the handlers. `RebusMessagingBus` with `outboxEnabled: false` throws when a message is sent in an open scope.
 - Mediator Framework, Compliance and `Ark.Tools.Core` source generators do less work on each edit, which keeps the IDE more responsive in large solutions; generated code is unchanged.
 - The MCP tool generator keeps only the XML documentation entries its tools use and no longer reparses documentation files when an unrelated XML file changes, which uses less memory and keeps the IDE more responsive.
@@ -28,6 +31,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `ValueObject<T>.GetHashCode()` no longer throws when the object has no atomic values. Hash codes are now computed with `HashCode`, so their values differ from earlier versions.
+- `Ark.Tools.AspNetCore.Auth0`: authorization-extension policy lookups reuse one `HttpClient` instead of creating one per cache miss, which could exhaust sockets under load.
 - The `ark-compliance` agent skill links to the documentation on the `master` branch; its links pointed to a branch that does not exist.
 
 ## [7.0.0-beta14] - 2026-10-12

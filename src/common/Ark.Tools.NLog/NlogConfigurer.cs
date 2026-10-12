@@ -85,7 +85,7 @@ public static class NLogConfigurer
                     ;
     }
 
-    public record Config(
+    public sealed record Config(
         [Secret] string? SQLConnectionString = null,
         string? SQLTableName = null,
         [Secret] string? SmtpConnectionString = null,

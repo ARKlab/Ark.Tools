@@ -38,6 +38,42 @@ Feature: Resource Watcher State Transitions
         Then the resource "resource-003" should be processed as "Updated"
         And the result type should be "Normal"
 
+    @updated-state @modified-sources
+    Scenario: Resource with a newer ModifiedSource is processed as Updated
+        Given a resource "resource-020" with Modified "2024-01-15T10:00:00"
+        And the resource has ModifiedSource "source-a" at "2024-01-15T09:00:00"
+        And the resource was previously processed with Modified "2024-01-15T10:00:00"
+        And the previous state had ModifiedSource "source-a" at "2024-01-14T09:00:00"
+        When the ResourceWatcher runs
+        Then the resource "resource-020" should be processed as "Updated"
+
+    @updated-state @modified-sources
+    Scenario: Resource with a new ModifiedSource is processed as Updated
+        Given a resource "resource-021" with Modified "2024-01-15T10:00:00"
+        And the resource has ModifiedSource "source-a" at "2024-01-14T09:00:00"
+        And the resource has ModifiedSource "source-b" at "2024-01-14T09:00:00"
+        And the resource was previously processed with Modified "2024-01-15T10:00:00"
+        And the previous state had ModifiedSource "source-a" at "2024-01-14T09:00:00"
+        When the ResourceWatcher runs
+        Then the resource "resource-021" should be processed as "Updated"
+
+    @updated-state @modified-sources
+    Scenario: Resource with a ModifiedSource newer than the previous Modified is processed as Updated
+        Given a resource "resource-022" with Modified "2024-01-15T10:00:00"
+        And the resource has ModifiedSource "source-a" at "2024-01-16T09:00:00"
+        And the resource was previously processed with Modified "2024-01-15T10:00:00"
+        When the ResourceWatcher runs
+        Then the resource "resource-022" should be processed as "Updated"
+
+    @nothing-to-do @modified-sources
+    Scenario: Resource with unchanged ModifiedSources is skipped
+        Given a resource "resource-023" with Modified "2024-01-15T10:00:00"
+        And the resource has ModifiedSource "source-a" at "2024-01-14T09:00:00"
+        And the resource was previously processed with Modified "2024-01-15T10:00:00"
+        And the previous state had ModifiedSource "source-a" at "2024-01-14T09:00:00"
+        When the ResourceWatcher runs
+        Then the diagnostic should show "NothingToDo" for "resource-023"
+
     # ===== NOTHING TO DO STATE =====
     @nothing-to-do
     Scenario: Resource with same Modified timestamp is skipped

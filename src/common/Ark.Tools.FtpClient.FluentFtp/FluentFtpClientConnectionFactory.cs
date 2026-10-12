@@ -6,7 +6,7 @@ using Ark.Tools.FtpClient.Core;
 
 namespace Ark.Tools.FtpClient.FluentFtp;
 
-public class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
+public sealed class FluentFtpClientConnectionFactory : IFtpClientConnectionFactory
 {
     private readonly Action<string, FluentFTP.FtpConfig>? _configureClient;
 

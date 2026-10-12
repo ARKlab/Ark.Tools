@@ -13,7 +13,7 @@ using System.Diagnostics;
 namespace Ark.Tools.Rebus;
 
 [StepDocumentation("ApplicationInsights Tracking compatible with native AI DependencyTracking instrumentation")]
-public class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
+public sealed class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
 {
     private const string _activityName = "Rebus.Process";
     private readonly Container _container;
@@ -112,7 +112,7 @@ public class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
 
     static bool _tryExtractContext(TransportMessage transportMessage, out IList<KeyValuePair<string, string>> context)
     {
-        context = new List<KeyValuePair<string, string>>();
+        context = Array.Empty<KeyValuePair<string, string>>();
         var ctxStr = transportMessage.Headers.GetValueOrNull("Correlation-Context");
 
         if (string.IsNullOrEmpty(ctxStr))
@@ -125,6 +125,8 @@ public class ApplicationInsightsStep : IIncomingStep, IOutgoingStep
         {
             return false;
         }
+
+        context = new List<KeyValuePair<string, string>>(ctxList.Length);
 
         foreach (string item in ctxList)
         {

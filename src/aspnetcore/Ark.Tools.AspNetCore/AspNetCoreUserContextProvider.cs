@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.AspNetCore;
 
-public class AspNetCoreUserContextProvider : IContextProvider<ClaimsPrincipal>
+public sealed class AspNetCoreUserContextProvider : IContextProvider<ClaimsPrincipal>
 {
     private readonly IHttpContextAccessor _accessor;
 

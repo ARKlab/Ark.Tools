@@ -19,7 +19,7 @@ namespace Ark.Tools.Sql;
 /// ]]>
 /// </code>
 /// </example>
-public class SqlConnectionManagerLeakDecorator : IDbConnectionManager
+public sealed class SqlConnectionManagerLeakDecorator : IDbConnectionManager
 {
     private readonly IDbConnectionManager _inner;
 

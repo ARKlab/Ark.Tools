@@ -8,7 +8,7 @@ using NodaTime;
 namespace Ark.Tools.Nodatime.Json;
 
 
-public class ZonedDateTimeRangeConverter : JsonConverter
+public sealed class ZonedDateTimeRangeConverter : JsonConverter
 {
     private static readonly Type _type = typeof(ZonedDateTimeRange);
     private static readonly Type _nullableType = typeof(ZonedDateTimeRange?);

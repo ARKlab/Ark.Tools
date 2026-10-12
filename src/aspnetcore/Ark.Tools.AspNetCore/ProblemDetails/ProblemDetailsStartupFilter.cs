@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
-public class ProblemDetailsStartupFilter : IStartupFilter
+public sealed class ProblemDetailsStartupFilter : IStartupFilter
 {
     private readonly IProblemDetailsRouterProvider _routeProvider;
 

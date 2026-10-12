@@ -15,7 +15,7 @@ using System.Security.Cryptography;
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
 
 
-public class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata, FtpFilter, FtpResourceExtensions>
+public sealed class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpMetadata, FtpFilter, FtpResourceExtensions>
 {
     public FtpWorkerHost(IFtpHostConfig config)
         : base(config)

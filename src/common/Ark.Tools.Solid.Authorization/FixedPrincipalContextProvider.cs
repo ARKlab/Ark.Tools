@@ -2,7 +2,7 @@ using System.Security.Claims;
 
 namespace Ark.Tools.Solid.Authorization;
 
-public class FixedPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
+public sealed class FixedPrincipalContextProvider : IContextProvider<ClaimsPrincipal>
 {
     private readonly Func<ClaimsPrincipal> _getter;
 

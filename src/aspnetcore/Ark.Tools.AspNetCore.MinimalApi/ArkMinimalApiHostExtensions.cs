@@ -195,15 +195,16 @@ public static class ArkMinimalApiHostExtensions
             return false;
         }
 
-        var segments = value.Split('/');
-        for (var segmentIndex = 1; segmentIndex < segments.Length; segmentIndex++)
+        var path = value.AsSpan(1);
+        foreach (var range in path.Split('/'))
         {
-            var segment = segments[segmentIndex];
+            var segment = path[range];
             if (segment.Length == 0 || segment is "." or "..")
             {
                 return false;
             }
 
+            var escaped = false;
             for (var index = 0; index < segment.Length; index++)
             {
                 if (segment[index] == '%')
@@ -215,6 +216,7 @@ public static class ArkMinimalApiHostExtensions
                         return false;
                     }
 
+                    escaped = true;
                     index += 2;
                 }
                 else if (char.IsWhiteSpace(segment[index]) || char.IsControl(segment[index]))
@@ -223,12 +225,17 @@ public static class ArkMinimalApiHostExtensions
                 }
             }
 
+            // Without escapes the decoded segment equals the raw one, which the checks above already cover.
+            if (!escaped)
+            {
+                continue;
+            }
+
             var decodedSegment = Uri.UnescapeDataString(segment);
             if (decodedSegment is "." or ".."
                 || decodedSegment.Contains('/', StringComparison.Ordinal)
                 || decodedSegment.Contains('\\', StringComparison.Ordinal)
-                || decodedSegment.Any(char.IsWhiteSpace)
-                || decodedSegment.Any(char.IsControl))
+                || _containsWhiteSpaceOrControl(decodedSegment))
             {
                 return false;
             }
@@ -236,6 +243,16 @@ public static class ArkMinimalApiHostExtensions
 
         prefix = value;
         return true;
+    }
+
+    private static bool _containsWhiteSpaceOrControl(string value)
+    {
+        foreach (var character in value)
+        {
+            if (char.IsWhiteSpace(character) || char.IsControl(character))
+                return true;
+        }
+        return false;
     }
 
     private sealed class SimpleInjectorVerificationHostedService : IHostedService

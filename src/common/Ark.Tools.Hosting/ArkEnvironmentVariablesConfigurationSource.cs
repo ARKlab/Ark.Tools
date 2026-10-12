@@ -3,7 +3,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables;
 /// <summary>
 /// Represents environment variables as an <see cref="IConfigurationSource"/>.
 /// </summary>
-public class ArkEnvironmentVariablesConfigurationSource : IConfigurationSource
+public sealed class ArkEnvironmentVariablesConfigurationSource : IConfigurationSource
 {
     /// <summary>
     /// A prefix used to filter environment variables.

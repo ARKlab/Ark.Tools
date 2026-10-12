@@ -6,7 +6,7 @@ namespace Ark.Tools.Authorization;
 /// <summary>
 /// Used for building policies during application startup.
 /// </summary>
-public class AuthorizationPolicyBuilder
+public sealed class AuthorizationPolicyBuilder
 {
     private readonly string _name;
     private readonly IList<IAuthorizationRequirement> _requirements = new List<IAuthorizationRequirement>();

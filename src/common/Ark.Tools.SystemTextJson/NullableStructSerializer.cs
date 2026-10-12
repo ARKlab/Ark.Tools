@@ -12,7 +12,7 @@ namespace Ark.Tools.SystemTextJson;
 /// and proper null handling for all scenarios.
 /// </remarks>
 /// <typeparam name="TStruct">The nullable value type to convert.</typeparam>
-public class NullableStructSerializer<TStruct> : JsonConverter<TStruct?>
+public sealed class NullableStructSerializer<TStruct> : JsonConverter<TStruct?>
     where TStruct : struct
 {
     [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",

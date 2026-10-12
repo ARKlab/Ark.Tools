@@ -15,7 +15,7 @@ using System.Linq.Expressions;
 namespace Ark.Tools.RavenDb.Auditing;
 
 
-public class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSessionOperations
+public sealed class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdvancedSessionOperations
 {
     private readonly IAsyncAdvancedSessionOperations _inner;
     private readonly object? _audit;

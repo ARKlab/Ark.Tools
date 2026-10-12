@@ -6,7 +6,7 @@ using Ark.Tools.Compliance;
 
 namespace Ark.Tools.FtpClient.FtpProxy;
 
-public class FtpClientPoolProxyFactory : IFtpClientPoolFactory
+public sealed class FtpClientPoolProxyFactory : IFtpClientPoolFactory
 {
     private readonly IFtpClientProxyConfig _config;
     [Secret]

@@ -7,7 +7,7 @@ using Ark.Tools.Nodatime.Intervals;
 
 namespace Ark.Tools.Nodatime.TimeSeries;
 
-public class UniformDateSequence
+public sealed class UniformDateSequence
     : IEnumerable<Intervals.DateInterval>
 {
     private LocalDateRange _range;

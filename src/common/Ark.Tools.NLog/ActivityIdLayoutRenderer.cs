@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace Ark.Tools.NLog;
 
 [LayoutRenderer("ark.activityid")]
-public class ActivityIdLayoutRenderer : LayoutRenderer
+public sealed class ActivityIdLayoutRenderer : LayoutRenderer
 {
     /// <summary>
     /// Renders the machine name and appends it to the specified <see cref="StringBuilder" />.

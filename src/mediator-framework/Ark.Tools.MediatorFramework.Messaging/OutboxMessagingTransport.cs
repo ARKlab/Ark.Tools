@@ -71,11 +71,12 @@ internal sealed class OutboxMessagingTransport : IMessagingTransport
         if (scope is null)
             return false;
 
-        var outboxHeaders = new Dictionary<string, string>(headers, StringComparer.Ordinal)
-        {
-            [MessagingHeaders.OutboxDestinationKind] = destinationKind,
-            [MessagingHeaders.OutboxDestination] = destination,
-        };
+        // Sized for the copied headers plus the up to three outbox keys added below.
+        var outboxHeaders = new Dictionary<string, string>(headers.Count + 3, StringComparer.Ordinal);
+        foreach (var pair in headers)
+            outboxHeaders.Add(pair.Key, pair.Value);
+        outboxHeaders[MessagingHeaders.OutboxDestinationKind] = destinationKind;
+        outboxHeaders[MessagingHeaders.OutboxDestination] = destination;
         if (dueTime is not null)
             outboxHeaders[MessagingHeaders.OutboxDueTime] = dueTime.Value.ToString("O", CultureInfo.InvariantCulture);
         MessagingBus._validateHeaders(outboxHeaders);

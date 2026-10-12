@@ -294,7 +294,8 @@ public class WorkerHost<TResource, TMetadata, TQueryFilter, TExtensions> : Worke
         protected override async Task<IEnumerable<IResourceMetadata<TExtensions>>> _getResourcesInfo(CancellationToken ctk = default)
         {
             var filter = _buildFilter();
-            var meta = await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter, TExtensions>>().GetMetadata(filter, ctk).ConfigureAwait(false);
+            // Materialized so the validation below and the filters don't enumerate the provider's sequence twice.
+            IEnumerable<TMetadata> meta = (await _container.GetInstance<IResourceProvider<TMetadata, TResource, TQueryFilter, TExtensions>>().GetMetadata(filter, ctk).ConfigureAwait(false)).ToList();
 
             InvalidOperationException.ThrowIf(meta.Any(static x => x.Modified == default && (x.ModifiedSources == null || x.ModifiedSources.Count == 0)), "At least one field between Modified and ModifiedSources must be populated");
 

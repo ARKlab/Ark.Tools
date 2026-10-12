@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 namespace Ark.Tools.AspNetCore.MessagePackFormatter;
 
 
-public class LZ4MessagePackOutputFormatter : OutputFormatter
+public sealed class LZ4MessagePackOutputFormatter : OutputFormatter
 {
     const string _contentType = "application/x.msgpacklz4";
 

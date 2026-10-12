@@ -4,7 +4,7 @@ using Flurl.Http.Configuration;
 
 namespace Ark.Tools.Http;
 
-public class ArkFlurlClientFactory : IArkFlurlClientFactory
+public sealed class ArkFlurlClientFactory : IArkFlurlClientFactory
 {
     private readonly IFlurlClientFactory _clientFactory;
 

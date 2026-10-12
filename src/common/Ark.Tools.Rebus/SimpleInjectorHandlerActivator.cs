@@ -7,7 +7,7 @@ using SimpleInjector;
 
 namespace Ark.Tools.Rebus;
 
-public class SimpleInjectorHandlerActivator : IHandlerActivator
+public sealed class SimpleInjectorHandlerActivator : IHandlerActivator
 {
     readonly Container _container;
     public SimpleInjectorHandlerActivator(Container container) { _container = container; }

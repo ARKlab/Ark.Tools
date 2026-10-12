@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 namespace Ark.Tools.NewtonsoftJson;
 
 // for quick retrocompatibility
-public class ArkDefaultJsonSerializerSettings : ArkJsonSerializerSettings
+public sealed class ArkDefaultJsonSerializerSettings : ArkJsonSerializerSettings
 {
     [RequiresUnreferencedCode("JSON serialization and deserialization might require types that cannot be statically analyzed.")]
     public ArkDefaultJsonSerializerSettings() : base()

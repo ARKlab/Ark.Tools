@@ -11,7 +11,7 @@ namespace Ark.Tools.AspNetCore.Swashbuckle;
 /// </summary>
 /// <remarks>This <see cref="IOperationFilter"/> is only required due to bugs in the <see cref="SwaggerGenerator"/>.
 /// Once they are fixed and published, this class can be removed.</remarks>
-public class SwaggerDefaultValues : IOperationFilter
+public sealed class SwaggerDefaultValues : IOperationFilter
 {
     /// <summary>
     /// Applies the filter to the specified operation using the given context.

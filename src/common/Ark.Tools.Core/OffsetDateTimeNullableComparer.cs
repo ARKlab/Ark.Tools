@@ -5,7 +5,7 @@ using NodaTime;
 
 namespace Ark.Tools.Core;
 
-public class OffsetDateTimeNullableComparer : IComparer<OffsetDateTime?>, IEqualityComparer<OffsetDateTime?>
+public sealed class OffsetDateTimeNullableComparer : IComparer<OffsetDateTime?>, IEqualityComparer<OffsetDateTime?>
 {
     public static readonly OffsetDateTimeNullableComparer Instance = new();
 

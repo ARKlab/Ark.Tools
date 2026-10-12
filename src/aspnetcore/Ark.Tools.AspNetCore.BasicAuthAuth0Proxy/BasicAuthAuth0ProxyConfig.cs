@@ -4,7 +4,7 @@ using Ark.Tools.Compliance;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAuth0Proxy;
 
-public class BasicAuthAuth0ProxyConfig
+public sealed class BasicAuthAuth0ProxyConfig
 {
     public BasicAuthAuth0ProxyConfig(string audience, string proxyClientId, string domain, [Secret] string proxySecret)
     {

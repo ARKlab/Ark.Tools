@@ -4,7 +4,7 @@ using Ark.Tools.Compliance;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy;
 
-public class BasicAuthAzureActiveDirectoryProxyConfig
+public sealed class BasicAuthAzureActiveDirectoryProxyConfig
 {
     public BasicAuthAzureActiveDirectoryProxyConfig(string tenant, string resource, string proxyClientId, [Secret] string proxyClientSecret)
     {

@@ -6,7 +6,7 @@ using System.ComponentModel;
 
 namespace Ark.Tools.Nodatime;
 
-public class OffsetDateTimeConverter : TypeConverter
+public sealed class OffsetDateTimeConverter : TypeConverter
 {
     private readonly OffsetDateTimePattern _pattern = OffsetDateTimePattern.ExtendedIso;
     private static readonly Type[] _supportedFrom =

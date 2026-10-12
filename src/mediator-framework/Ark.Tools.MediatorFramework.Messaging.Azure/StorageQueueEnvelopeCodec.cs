@@ -122,11 +122,19 @@ public static class StorageQueueEnvelopeCodec
                 "The completed Storage Queue envelope exceeds its canonical size limit.");
 
         var rented = ArrayPool<byte>.Shared.Rent(Math.Max(canonicalSize, 1));
+        var headerCount = headers.Count;
+        var sortedHeaders = ArrayPool<KeyValuePair<string, string>>.Shared.Rent(headerCount);
         try
         {
+            var index = 0;
+            foreach (var pair in headers)
+                sortedHeaders[index++] = pair;
+            var ordered = sortedHeaders.AsSpan(0, headerCount);
+            ordered.Sort(static (left, right) => string.CompareOrdinal(left.Key, right.Key));
+
             var canonical = new FixedBufferWriter(rented);
-            _writeVarInt(canonical, headers.Count);
-            foreach (var pair in headers.OrderBy(static pair => pair.Key, StringComparer.Ordinal))
+            _writeVarInt(canonical, headerCount);
+            foreach (var pair in ordered)
             {
                 _writeUtf8(canonical, pair.Key);
                 _writeUtf8(canonical, pair.Value);
@@ -145,6 +153,7 @@ public static class StorageQueueEnvelopeCodec
         {
             Array.Clear(rented, 0, canonicalSize);
             ArrayPool<byte>.Shared.Return(rented);
+            ArrayPool<KeyValuePair<string, string>>.Shared.Return(sortedHeaders, clearArray: true);
         }
     }
 

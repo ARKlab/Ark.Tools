@@ -173,8 +173,9 @@ public abstract class OutboxProcessorBase
         var context = await CreateContextAsync(ctk).ConfigureAwait(false);
         try
         {
-            var messages = (await context.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk)
-                .ConfigureAwait(false)).ToList();
+            var peeked = await context.PeekLockMessagesAsync(_topMessagesToRetrieve, ctk)
+                .ConfigureAwait(false);
+            var messages = peeked as IReadOnlyList<OutboxMessage> ?? peeked.ToList();
             if (messages.Count == 0)
             {
                 await CommitContextAsync(context, ctk).ConfigureAwait(false);

@@ -71,7 +71,7 @@ public interface IUserPermissionsProvider<TPermissionEnum>
 /// Requires an implementation of <see cref="IUserPermissionsProvider{TPermissionEnum}"/>.
 /// </summary>
 /// <typeparam name="TPermissionEnum">The enum of possible permissions.</typeparam>
-public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHandler
+public sealed class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHandler
     where TPermissionEnum : Enum
 {
     private readonly IUserPermissionsProvider<TPermissionEnum> _provider;
@@ -101,20 +101,26 @@ public class PermissionAuthorizationHandler<TPermissionEnum> : IAuthorizationHan
         if (context.Resource != null)
             permissionType = ResourceRequirementTypeCache.Get(context.Resource.GetType());
 
-        var requirements = context.Policy.Requirements
-            .Where(t => permissionType == typeof(PermissionAuthorizationRequirement<TPermissionEnum>)
-                ? t.GetType() == permissionType
-                : permissionType.IsAssignableFrom(t.GetType()))
-            .Cast<PermissionAuthorizationRequirement<TPermissionEnum>>()
-            .ToArray();
-        if (requirements.Length == 0) return;
+        var exactType = permissionType == typeof(PermissionAuthorizationRequirement<TPermissionEnum>);
+        List<PermissionAuthorizationRequirement<TPermissionEnum>>? requirements = null;
+        foreach (var requirement in context.Policy.Requirements)
+        {
+            var requirementType = requirement.GetType();
+            if (exactType ? requirementType == permissionType : permissionType.IsAssignableFrom(requirementType))
+                (requirements ??= []).Add((PermissionAuthorizationRequirement<TPermissionEnum>)requirement);
+        }
+        if (requirements is null) return;
 
         var permissions = await _provider.GetPermissions(context).ConfigureAwait(false);
-        if (permissions == null || !permissions.Any()) return;
+        if (permissions == null) return;
+
+        // Enumerate the provider's sequence once; it may be lazy.
+        var granted = permissions as IReadOnlySet<TPermissionEnum> ?? new HashSet<TPermissionEnum>(permissions);
+        if (granted.Count == 0) return;
 
         foreach (var req in requirements)
         {
-            if (permissions.Contains(req.Permission))
+            if (granted.Contains(req.Permission))
                 context.Succeed(req);
         }
     }

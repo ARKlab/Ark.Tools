@@ -73,13 +73,13 @@ public static class ArkETag
         if (ifNoneMatch.Length == 0)
             return null;
 
-        var matches = ifNoneMatch
-            .Split(',', StringSplitOptions.TrimEntries)
-            .Select(static value => value.StartsWith("W/", StringComparison.Ordinal)
-                ? _unquote(value[2..])
-                : _unquote(value))
-            .Any(value => value == "*" || string.Equals(value, token, StringComparison.Ordinal));
-        return matches ? TypedResults.StatusCode(StatusCodes.Status304NotModified) : null;
+        foreach (var value in ifNoneMatch.Split(',', StringSplitOptions.TrimEntries))
+        {
+            var candidate = _unquote(value.StartsWith("W/", StringComparison.Ordinal) ? value[2..] : value);
+            if (candidate == "*" || string.Equals(candidate, token, StringComparison.Ordinal))
+                return TypedResults.StatusCode(StatusCodes.Status304NotModified);
+        }
+        return null;
     }
 
     private static string _unquote(string value)

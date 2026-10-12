@@ -5,7 +5,7 @@ namespace Microsoft.Extensions.Configuration.EnvironmentVariables;
 /// <summary>
 /// An environment variable based <see cref="ConfigurationProvider"/>.
 /// </summary>
-public class ArkEnvironmentVariablesConfigurationProvider : ConfigurationProvider
+public sealed class ArkEnvironmentVariablesConfigurationProvider : ConfigurationProvider
 {
     private const string _mySqlServerPrefix = "MYSQLCONNSTR_";
     private const string _sqlAzureServerPrefix = "SQLAZURECONNSTR_";

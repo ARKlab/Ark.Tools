@@ -3,7 +3,7 @@ using Ark.Tools.Compliance;
 
 namespace Ark.Tools.RavenDb.Auditing;
 
-public class Audit
+public sealed class Audit
 {
     public Guid AuditId { get; set; }
     public string Id => AuditId.ToString();
@@ -15,7 +15,7 @@ public class Audit
     public HashSet<EntityInfo> EntityInfo { get; set; } = new HashSet<EntityInfo>();
 }
 
-public class EntityInfo
+public sealed class EntityInfo
 {
     public string? EntityId { get; set; }
     public string? CollectionName { get; set; }

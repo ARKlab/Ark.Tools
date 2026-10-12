@@ -26,7 +26,7 @@ public readonly struct ZonedDateTimeRange
     }
     public override readonly string ToString()
     {
-        return string.Format(CultureInfo.InvariantCulture, "Start:{0} | End:{1}", _start, _end);
+        return string.Create(CultureInfo.InvariantCulture, $"Start:{_start} | End:{_end}");
     }
 
 

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace Ark.Tools.AspNetCore.Swashbuckle;
 
-public class PrettifyOperationIdOperationFilter : IOperationFilter
+public sealed class PrettifyOperationIdOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {

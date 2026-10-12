@@ -11,7 +11,7 @@ namespace Ark.Tools.NLog;
 [LayoutRenderer("ark.hostname")]
 [AppDomainFixedOutput]
 [ThreadAgnostic]
-public class HostNameLayoutRenderer : LayoutRenderer
+public sealed class HostNameLayoutRenderer : LayoutRenderer
 {
     internal string? _hostName { get; private set; }
 

@@ -5,7 +5,7 @@ namespace Ark.Tools.Authorization;
 /// Infrastructre class which allows an <see cref="IAuthorizationRequirement"/> to
 /// be its own <see cref="IAuthorizationHandler"/>.
 /// </summary>
-public class PassThroughAuthorizationHandler : IAuthorizationHandler
+public sealed class PassThroughAuthorizationHandler : IAuthorizationHandler
 {
     /// <summary>
     /// Makes a decision if authorization is allowed.

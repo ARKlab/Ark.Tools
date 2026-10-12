@@ -9,7 +9,7 @@ using System.Net.Http.Headers;
 namespace Ark.Tools.Http;
 
 
-public class MessagePackMediaTypeFormatter : MediaTypeFormatter
+public sealed class MessagePackMediaTypeFormatter : MediaTypeFormatter
 {
     private readonly MessagePackSerializerOptions _options;
 

@@ -3,6 +3,6 @@
 
 namespace Ark.Tools.Nodatime;
 
-public class NullableOffsetDateTimeConverter : NullableNodaTimeConverter<OffsetDateTime>
+public sealed class NullableOffsetDateTimeConverter : NullableNodaTimeConverter<OffsetDateTime>
 {
 }

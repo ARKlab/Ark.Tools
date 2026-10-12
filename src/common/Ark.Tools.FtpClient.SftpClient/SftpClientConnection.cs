@@ -11,7 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 namespace Ark.Tools.FtpClient.SftpClient;
 
 
-public class SftpClientConnection : FtpClientConnectionBase
+public sealed class SftpClientConnection : FtpClientConnectionBase
 {
 
     private readonly Renci.SshNet.SftpClient _client;

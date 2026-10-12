@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Ark.Tools.AspNetCore;
 
-public class CompatibleOldQueryFormatFilter : FormatFilter
+public sealed class CompatibleOldQueryFormatFilter : FormatFilter
 {
     public CompatibleOldQueryFormatFilter(IOptions<MvcOptions> options, ILoggerFactory loggerFactory) : base(options, loggerFactory)
     {

@@ -1,7 +1,7 @@
 
 namespace Ark.Tools.Activity.Messages;
 
-public class SliceReady : IEquatable<SliceReady>
+public sealed class SliceReady : IEquatable<SliceReady>
 {
     public Resource Resource { get; set; }
 
@@ -44,7 +44,7 @@ public class SliceReady : IEquatable<SliceReady>
 
     public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object? obj)
     {
-        if (obj is not SliceReady other || other.GetType() != GetType())
+        if (obj is not SliceReady other)
             return false;
 
         return Equals(other);

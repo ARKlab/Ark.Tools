@@ -3,7 +3,7 @@ using System.Net.Http.Formatting;
 
 namespace Ark.Tools.Http;
 
-public class BufferedJsonMediaTypeFormatter : JsonMediaTypeFormatter
+public sealed class BufferedJsonMediaTypeFormatter : JsonMediaTypeFormatter
 {
     public override async Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger, CancellationToken cancellationToken)
     {

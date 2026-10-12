@@ -3,7 +3,7 @@ using Ark.Tools.Authorization;
 
 namespace Ark.Tools.Solid.Authorization;
 
-public class ContainerAuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
+public sealed class ContainerAuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
 {
     public ContainerAuthorizationPolicyProvider(IEnumerable<IAuthorizationPolicy> policies)
     {

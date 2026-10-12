@@ -7,7 +7,7 @@ namespace Ark.Tools.AspNetCore.ProblemDetails;
 /// <summary>
 ///     Apply <see cref="ProblemDetailsResultAttribute" /> to all Api controllers
 /// </summary>
-public class ProblemDetailsResultApiConvention : ApiConventionBase
+public sealed class ProblemDetailsResultApiConvention : ApiConventionBase
 {
     protected override void ApplyControllerConvention(ControllerModel controller)
     {

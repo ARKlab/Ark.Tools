@@ -6,7 +6,7 @@ public interface IAuditableTypeProvider
     List<Type> TypeList { get; }
 }
 
-public class AuditableTypeProvider : IAuditableTypeProvider
+public sealed class AuditableTypeProvider : IAuditableTypeProvider
 {
     public AuditableTypeProvider(List<Type> typeList)
     {

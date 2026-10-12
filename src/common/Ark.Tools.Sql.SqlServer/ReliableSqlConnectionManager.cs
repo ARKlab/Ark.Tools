@@ -6,7 +6,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Ark.Tools.Sql.SqlServer;
 
-public class ReliableSqlConnectionManager : SqlConnectionManager
+public sealed class ReliableSqlConnectionManager : SqlConnectionManager
 {
     protected override SqlConnection Build(
         [Secret] string connectionString)

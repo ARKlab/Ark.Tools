@@ -17,6 +17,8 @@ public sealed class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSessi
     private readonly IAsyncDocumentSession _inner;
     private readonly IContextProvider<ClaimsPrincipal> _principalProvider;
     private Audit? _audit;
+    // Entity ids already recorded in _audit, so each store stays O(1) instead of scanning EntityInfo.
+    private readonly HashSet<string> _auditedEntityIds = new(StringComparer.Ordinal);
 
     public AuditableAsyncDocumentSessionDecorator(IAsyncDocumentSession inner, IContextProvider<ClaimsPrincipal> principalProvider)
     {
@@ -230,6 +232,7 @@ public sealed class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSessi
         if (_audit == null)
         {
             _audit = new Audit() { AuditId = Guid.NewGuid() };
+            _auditedEntityIds.Clear();
             return true;
         }
 
@@ -258,7 +261,7 @@ public sealed class AuditableAsyncDocumentSessionDecorator : IAsyncDocumentSessi
         audit.UserId = _principalProvider.Current?.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? throw new InvalidOperationException("UserId not found: audit requires an identified claims principal");
 
-        if (!audit.EntityInfo.Any(s => s.EntityId == entityId))
+        if (_auditedEntityIds.Add(entityId))
         {
             audit.EntityInfo.Add(new EntityInfo
             {
