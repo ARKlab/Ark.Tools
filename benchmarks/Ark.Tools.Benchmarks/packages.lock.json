@@ -28,9 +28,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.296, )",
-        "resolved": "3.0.296",
-        "contentHash": "1Yp/6OK/Ev66hE2YLe9UvIgtJrKOX/xvoGDe0UbdtuG2ZxUoDoyONdEn+HWCDuy02Mu8SmglHEd/9SGPrM1qYg=="
+        "requested": "[3.0.302, )",
+        "resolved": "3.0.302",
+        "contentHash": "TFZ1kdGhqVhYNvX/6Mdmdh6oaAVxOIodY3974y8x64yILAG0tdRUN5hSSre520EELaE/KoTNcbUC7Suxyqg0NQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -46,9 +46,9 @@
       },
       "Polyfill": {
         "type": "Direct",
-        "requested": "[11.4.3, )",
-        "resolved": "11.4.3",
-        "contentHash": "5wRvX7eIi9MYIfziPsSyxMVsV13LqKXT4REsp21SFHvH9HEaMOM8NjhDfxltjeXi8bleUX5t0Gcy0ZGywnlHtw=="
+        "requested": "[11.4.5, )",
+        "resolved": "11.4.5",
+        "contentHash": "dIAO1ecvukEGrfbJDEmVtkxM7uZtwHfLJxTwFft92L4DjEKeyNbAQiq8WiFHwefiOQdeaNDhkHM8j7VPKKggkA=="
       },
       "ReferenceTrimmer": {
         "type": "Direct",
@@ -202,13 +202,13 @@
       },
       "MessagePack.Annotations": {
         "type": "Transitive",
-        "resolved": "3.1.11",
-        "contentHash": "yZaUj+IQBgqE/W5JTgo/ORaM+zt861LkDns/EHBgaMZ0t9rQWtxO/qwkbU5pqvaQhfL/E/en5G/6AHLgDNNFeg=="
+        "resolved": "3.1.12",
+        "contentHash": "LdI67sY7F3KK+JsrG02+DP1XFkowaZSoyfL2M88hjm1MOOsjf8amBLAJolV+zxoPUZf3uGbKzq1cMQD8PlpSpA=="
       },
       "MessagePackAnalyzer": {
         "type": "Transitive",
-        "resolved": "3.1.11",
-        "contentHash": "C8dO8dqEkjxwSz8pM6pr1nIRZ6fm6LWtagEOVz/tzJgG8JWNKcUGSSy5tQM+0ALWsh6fFhS8bhzLpnsrPUmSkw=="
+        "resolved": "3.1.12",
+        "contentHash": "iNSNatPh6bafRUbkQKlClExjpPpd8hiZgfZsodGf7bheIlkizGbMzsJ2mPui8jOHRe4Ky9eg5ou/fFzI7CT3fg=="
       },
       "Microsoft.AspNet.WebApi.Client": {
         "type": "Transitive",
@@ -930,7 +930,7 @@
           "Asp.Versioning.OData.ApiExplorer": "[10.2.1, )",
           "DotNetDiag.HealthChecks.UI": "[10.0.16, )",
           "DotNetDiag.HealthChecks.UI.InMemory.Storage": "[10.0.16, )",
-          "FluentValidation": "[12.1.1, )",
+          "FluentValidation": "[12.2.0, )",
           "Hellang.Middleware.ProblemDetails": "[6.5.1, )",
           "Microsoft.AspNetCore.OData": "[10.0.0-preview.2, )",
           "NetEscapades.AspNetCore.SecurityHeaders": "[1.3.1, )",
@@ -969,7 +969,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "MessagePack": "[3.1.11, )"
+          "MessagePack": "[3.1.12, )"
         }
       },
       "ark.tools.aspnetcore.nestedstartup": {
@@ -981,7 +981,7 @@
           "Ark.Tools.Authorization": "[1.0.0, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
-          "FluentValidation": "[12.1.1, )"
+          "FluentValidation": "[12.2.0, )"
         }
       },
       "ark.tools.aspnetcore.swashbuckle": {
@@ -1084,7 +1084,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.5.10, )"
+          "MessagePack.NodaTime": "[3.5.11, )"
         }
       },
       "ark.tools.mediatorframework": {
@@ -1102,7 +1102,7 @@
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Google.Protobuf": "[3.36.2, )",
-          "MessagePack": "[3.1.11, )",
+          "MessagePack": "[3.1.12, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, )",
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.12, )",
           "Microsoft.Extensions.Options": "[10.0.12, )",
@@ -1117,8 +1117,8 @@
           "Ark.Tools.Compliance.OpenApi": "[999.9.9, )",
           "Ark.Tools.MediatorFramework": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "MessagePack": "[3.1.11, )",
-          "MessagePack.NodaTime": "[3.5.10, )",
+          "MessagePack": "[3.1.12, )",
+          "MessagePack.NodaTime": "[3.5.11, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
         }
       },
@@ -1126,7 +1126,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "MessagePack": "[3.1.11, )"
+          "MessagePack": "[3.1.12, )"
         }
       },
       "ark.tools.newtonsoftjson": {
@@ -1244,7 +1244,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Solid": "[1.0.0, )",
-          "FluentValidation": "[12.1.1, )"
+          "FluentValidation": "[12.2.0, )"
         }
       },
       "ark.tools.solid.simpleinjector": {
@@ -1458,9 +1458,9 @@
       },
       "FluentValidation": {
         "type": "CentralTransitive",
-        "requested": "[12.1.1, )",
-        "resolved": "12.1.1",
-        "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
+        "requested": "[12.2.0, )",
+        "resolved": "12.2.0",
+        "contentHash": "DR3lFbdnKucaaj1/8zMNOACMz/64igzox1yVZSFVsLxYB5mxAB+wFP1WZ8fjwrZnbU1KA1DoMzHKYKxUfuZ4wQ=="
       },
       "Flurl.Http": {
         "type": "CentralTransitive",
@@ -1514,22 +1514,22 @@
       },
       "MessagePack": {
         "type": "CentralTransitive",
-        "requested": "[3.1.11, )",
-        "resolved": "3.1.11",
-        "contentHash": "NmWf3ZELELB67gjUFcb2PNO0S2QhohTSd6lTarWUCZlhjXz4bxECxPt6N2GYmtGGgUkvBKEpPT5s6r0wlurDZA==",
+        "requested": "[3.1.12, )",
+        "resolved": "3.1.12",
+        "contentHash": "m1QEsd59gUj82ji5tEQbZiyjV6y0F7cYfGVhil6pAlNZpyzR7ze9TucMu4lPpi8cZAV8aNl3D9/T9J1HbFz15Q==",
         "dependencies": {
-          "MessagePack.Annotations": "3.1.11",
-          "MessagePackAnalyzer": "3.1.11",
+          "MessagePack.Annotations": "3.1.12",
+          "MessagePackAnalyzer": "3.1.12",
           "Microsoft.NET.StringTools": "17.11.4"
         }
       },
       "MessagePack.NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.5.10, )",
-        "resolved": "3.5.10",
-        "contentHash": "9iSOjl/mrhaC50y7n+v2WbAKtC6Ca9S1X1RsAapylp2gzfABP/9HwieK6vwSI41Rm0hLnqoPzQdbo8cdvqDxuw==",
+        "requested": "[3.5.11, )",
+        "resolved": "3.5.11",
+        "contentHash": "J2s7eR5BRG/jTekw2fuH2gRQ6qikUaGUhN/vrUJPNsRUINY4oeDdPSq8Sd2Gqi3rCLIRptfzAcdpZ11XD6/8OA==",
         "dependencies": {
-          "MessagePack": "3.1.11",
+          "MessagePack": "3.1.12",
           "NodaTime": "3.3.5"
         }
       },
@@ -1826,20 +1826,20 @@
       },
       "Microsoft.Identity.Client": {
         "type": "CentralTransitive",
-        "requested": "[4.90.1, )",
-        "resolved": "4.90.1",
-        "contentHash": "GLsf4cfEfIZD4pBkmBc8kCjfE811PKsM29T9nMZQDS2px/buM/Ha8jVYiGPdiA7cqjYNIX+G5d0S12TtGZS6RA==",
+        "requested": "[4.91.0, )",
+        "resolved": "4.91.0",
+        "contentHash": "u+j8hdM/Eez1j0rQVodY+4MRfsLgmsskjMgVkf74xkLWssbW4mqSgz0Tx4H0CJTtrDes00M5s4545rbLN61/uw==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "8.14.0"
         }
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "CentralTransitive",
-        "requested": "[4.90.1, )",
-        "resolved": "4.90.1",
-        "contentHash": "M9ZpVpizd9F0z5JKk5P3i0YjAYQpkdoC6Q4V7RXkL9uFd/4o5VasR5lyx+l2fxlDDA0eBSwaVxkOlxhx/3TmTg==",
+        "requested": "[4.91.0, )",
+        "resolved": "4.91.0",
+        "contentHash": "6MGkonDQNMggRh1AGvzjlmnn0NLwrYq8EOBhSGSkPhL5/1Tajwe0YUbtDjbcxvFIhbGd0+DpwxFmphgUHm31Og==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.90.1",
+          "Microsoft.Identity.Client": "4.91.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
       },
