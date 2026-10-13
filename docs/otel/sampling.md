@@ -99,7 +99,7 @@ rate-limited sampler. Exporters that read the attribute weight the spans correct
 
 ```json
 {
-  "ApplicationInsights": {
+  "OTel": {
     "ArkAdaptiveSampler": {
       "TracesPerSecond": 1.0,
       "MovingAverageRatio": 0.5,
@@ -118,6 +118,13 @@ callers that use a different sampler, such as the classic Application Insights S
 decide for the service. Traces that cross services which decide differently can then be
 incomplete; failure promotion applies either way. Set it to `true` to follow the W3C sampled
 flag of the remote parent instead: such spans then carry no sample rate (itemCount 1).
+
+`OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
+(`AddArkAzureMonitorOpenTelemetry`). The legacy `ApplicationInsights:ArkAdaptiveSampler`
+section is still read for compatibility; values in `OTel:ArkAdaptiveSampler` take
+precedence. The Application Insights v3 compatibility path
+(`AddArkApplicationInsightsCustomizations`) reads only
+`ApplicationInsights:ArkAdaptiveSampler`.
 
 ## Operational checks
 
