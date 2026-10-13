@@ -439,7 +439,8 @@
           "Ark.Tools.OTel.Azure": "[1.0.0, )",
           "Microsoft.ApplicationInsights": "[3.2.0, )",
           "Microsoft.Extensions.Options": "[10.0.12, )",
-          "OpenTelemetry.Extensions.Hosting": "[1.19.1, )"
+          "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
+          "OpenTelemetry.Resources.Azure": "[1.19.1-beta.2, )"
         }
       },
       "ark.tools.applicationinsights.hostedservice": {

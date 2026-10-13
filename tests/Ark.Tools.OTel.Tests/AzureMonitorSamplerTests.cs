@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
+using OpenTelemetry;
 using OpenTelemetry.Trace;
 
 using System.Diagnostics;
@@ -113,6 +114,29 @@ public sealed class AzureMonitorSamplerTests
         options.TracesPerSecond.Should().Be(5, "the OTel section is canonical");
         options.MaxOperationBuckets.Should().Be(7, "the legacy section still applies where OTel is silent");
         options.EnablePerOperationBucketing.Should().BeTrue("the application callback wins over both sections");
+    }
+
+    [TestMethod]
+    public void AddArkAzureOpenTelemetry_OnAppService_KeepsArkServiceNameAndAddsTheInstance()
+    {
+        Environment.SetEnvironmentVariable("WEBSITE_SITE_NAME", "orders-site");
+        Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", "instance-1");
+        try
+        {
+            using var serviceProvider = _buildServiceProvider(azureMonitorTarget: null);
+
+            var attributes = serviceProvider.GetRequiredService<TracerProvider>().GetResource().Attributes
+                .ToDictionary(static a => a.Key, static a => a.Value, StringComparer.Ordinal);
+
+            attributes["service.name"].Should().Be(Assembly.GetEntryAssembly()!.GetName().Name);
+            attributes["service.instance.id"].Should().Be("instance-1");
+            attributes["cloud.platform"].Should().Be("azure.app_service");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEBSITE_SITE_NAME", null);
+            Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", null);
+        }
     }
 
     private static ServiceProvider _buildServiceProvider(

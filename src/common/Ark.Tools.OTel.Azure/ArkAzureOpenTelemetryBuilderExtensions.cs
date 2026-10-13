@@ -15,6 +15,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 using System.Diagnostics;
+using System.Reflection;
 
 namespace Ark.Tools.OTel.Azure;
 
@@ -106,10 +107,19 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
         builder
             .AddArkAzureSdkInstrumentation()
             // Cloud role instance and Azure attributes when running on App Service, a VM or Container Apps.
-            .ConfigureResource(static resource => resource
-                .AddAzureAppServiceDetector()
-                .AddAzureVMDetector()
-                .AddAzureContainerAppsDetector());
+            .ConfigureResource(static resource =>
+            {
+                resource
+                    .AddAzureAppServiceDetector()
+                    .AddAzureVMDetector()
+                    .AddAzureContainerAppsDetector();
+
+                // The detectors set service.name to the site or app name: keep Ark's entry assembly name, which tells
+                // apart the processes of one site, such as a web app and its WebJobs.
+                var serviceName = Assembly.GetEntryAssembly()?.GetName().Name;
+                if (!string.IsNullOrWhiteSpace(serviceName))
+                    resource.AddAttributes([new("service.name", serviceName)]);
+            });
 
         var connectionString = configuration?["ApplicationInsights:ConnectionString"]
             ?? configuration?["APPLICATIONINSIGHTS_CONNECTION_STRING"]

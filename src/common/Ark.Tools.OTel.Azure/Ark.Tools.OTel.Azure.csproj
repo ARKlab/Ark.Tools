@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
-    <PackageReference Include="OpenTelemetry.Resources.Azure" />
+    <PackageReference Include="OpenTelemetry.Resources.Azure" NoWarn="NU5104" />
   </ItemGroup>
 
   <ItemGroup>

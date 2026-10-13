@@ -183,7 +183,8 @@ Everything Azure-specific lives in `Ark.Tools.OTel.Azure`, for any host:
   `HttpClient` filter still applies. Its sampling filter drops Service Bus receives before they
   use the sampler budget.
 - `AddArkAzureOpenTelemetry(configuration)` adds it to an Ark setup, with the Azure App Service,
-  Virtual Machine and Container Apps resource detectors, and, when an Application Insights
+  Virtual Machine and Container Apps resource detectors (instance ID, region, resource ID; the
+  entry assembly name stays `service.name`, so processes sharing a site stay apart), and, when an Application Insights
   connection string is configured, exports traces, metrics and error logs to Azure Monitor with
   `Azure.Monitor.OpenTelemetry.Exporter`. Use it in workers:
   `services.AddOpenTelemetry().AddArkOpenTelemetry(configuration: configuration).AddArkAzureOpenTelemetry(configuration)`.

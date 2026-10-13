@@ -61,6 +61,15 @@
           "OpenTelemetry": "1.19.1"
         }
       },
+      "OpenTelemetry.Resources.Azure": {
+        "type": "Direct",
+        "requested": "[1.19.1-beta.2, )",
+        "resolved": "1.19.1-beta.2",
+        "contentHash": "Kd/j40oO/gwPYDGMK9fMo+smH2hfAIbTmQAZ1W515FdP0DDkXCtqtTp4QtwbIcf4QsjLGDwzil/hp0hgMDObXA==",
+        "dependencies": {
+          "OpenTelemetry": "[1.19.1, 2.0.0)"
+        }
+      },
       "Polyfill": {
         "type": "Direct",
         "requested": "[11.4.5, )",
@@ -382,15 +391,6 @@
           "Microsoft.Extensions.Configuration": "10.0.0",
           "Microsoft.Extensions.Options": "10.0.0",
           "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
-        }
-      },
-      "OpenTelemetry.Resources.Azure": {
-        "type": "CentralTransitive",
-        "requested": "[1.19.1-beta.2, )",
-        "resolved": "1.19.1-beta.2",
-        "contentHash": "Kd/j40oO/gwPYDGMK9fMo+smH2hfAIbTmQAZ1W515FdP0DDkXCtqtTp4QtwbIcf4QsjLGDwzil/hp0hgMDObXA==",
-        "dependencies": {
-          "OpenTelemetry": "[1.19.1, 2.0.0)"
         }
       }
     }
