@@ -46,7 +46,7 @@ public sealed class DataKeyComparer<[DynamicallyAccessedMembers(DynamicallyAcces
         {
             int hash = 17;
             foreach (var prop in _keyProperties)
-                hash = hash * 23 + prop.GetValue(obj)?.GetHashCode() ?? 0;
+                hash = hash * 23 + (prop.GetValue(obj)?.GetHashCode() ?? 0);
 
             return hash;
         }
