@@ -17,10 +17,12 @@ namespace Ark.Tools.OTel;
 /// </para>
 /// <list type="bullet">
 /// <item><description><b>Failure preservation</b>: spans with error status or exception events are always exported.</description></item>
-/// <item><description><b>Per-operation token buckets</b>: each distinct operation gets an independent rate limit,
+/// <item><description><b>Per-operation token buckets</b>: each distinct operation gets its own token bucket,
 /// ensuring rare code paths are sampled fairly relative to high-frequency ones.</description></item>
-/// <item><description><b>Adaptive rate control</b>: the token bucket refill rate is periodically adjusted based on
-/// observed traffic to keep exported telemetry near the configured <see cref="ArkAdaptiveSamplerOptions.TracesPerSecond"/> target.</description></item>
+/// <item><description><b>Adaptive rate control</b>: the refill rates are periodically adjusted from the observed
+/// traffic so that the buckets together export about <see cref="ArkAdaptiveSamplerOptions.TracesPerSecond"/> roots
+/// per second. The budget is shared max-min fairly: operations slower than the fair share keep all their roots
+/// and the rest of the budget is split evenly among the busier operations.</description></item>
 /// </list>
 /// <para>
 /// Spans that do not pass the rate limit receive <see cref="SamplingDecision.RecordOnly"/> (not <c>Drop</c>),
@@ -47,9 +49,7 @@ public sealed class ArkAdaptiveSampler : Sampler
     private readonly ConcurrentDictionary<string, OperationBucket> _buckets;
     private readonly TimeProvider _timeProvider;
 
-    // Stats for adaptive rate controller
-    private long _totalSeen;
-    private long _totalSampled;
+    // Adaptive rate controller state; _currentRate is the fair share given to new and idle buckets.
     private long _lastAdjustment;
     private double _currentRate;
     private readonly Lock _adjustLock = new();
@@ -126,11 +126,8 @@ public sealed class ArkAdaptiveSampler : Sampler
         var operationName = samplingParameters.Name ?? "unknown";
         var bucket = _getOrCreateBucket(operationName);
 
-        Interlocked.Increment(ref _totalSeen);
-
         if (bucket.TryConsume(out var sampleRate))
         {
-            Interlocked.Increment(ref _totalSampled);
             return new SamplingResult(SamplingDecision.RecordAndSample, [new(_sampleRateTag, sampleRate)]);
         }
 
@@ -198,7 +195,7 @@ public sealed class ArkAdaptiveSampler : Sampler
         }
     }
 
-    /// <summary>Recomputes the sampling rate from the traffic seen since the last adjustment.</summary>
+    /// <summary>Recomputes the bucket rates from the traffic seen since the last adjustment.</summary>
     internal void _adjustRate()
     {
         lock (_adjustLock)
@@ -209,29 +206,51 @@ public sealed class ArkAdaptiveSampler : Sampler
             if (elapsed <= 0)
                 return;
 
-            var totalSeen = Interlocked.Exchange(ref _totalSeen, 0);
-            var totalSampled = Interlocked.Exchange(ref _totalSampled, 0);
+            var buckets = _buckets.Values.Select(static b => (Bucket: b, Counts: b.TakeCounts())).ToList();
+            var active = buckets.Where(static b => b.Counts.Seen > 0).ToList();
 
-            if (totalSeen == 0)
+            if (active.Count == 0)
                 return;
 
-            var observedRatePerSecond = totalSeen / elapsed;
-            var targetSamplingRatio = _options.TracesPerSecond / observedRatePerSecond;
-            targetSamplingRatio = Math.Clamp(targetSamplingRatio, 0.0001, 1.0);
+            var share = _fairShare(active.Select(b => b.Counts.Seen / elapsed).ToList(), _options.TracesPerSecond);
 
-            var currentSamplingRatio = totalSeen > 0 ? (double)totalSampled / totalSeen : 1.0;
+            foreach (var (bucket, (seen, sampled)) in buckets)
+            {
+                if (seen == 0)
+                {
+                    bucket.UpdateRate(share);
+                    continue;
+                }
 
-            // Apply moving average for smooth transitions.
-            var α = _options.MovingAverageRatio;
-            var newSamplingRatio = (α * currentSamplingRatio) + ((1.0 - α) * targetSamplingRatio);
-            _currentRate = observedRatePerSecond * newSamplingRatio;
-            _currentRate = Math.Max(0.0001, _currentRate);
+                // Apply moving average for smooth transitions.
+                var targetRate = Math.Min(seen / elapsed, share);
+                var currentRate = sampled / elapsed;
+                var α = _options.MovingAverageRatio;
+                bucket.UpdateRate(Math.Max(0.0001, (α * currentRate) + ((1.0 - α) * targetRate)));
+            }
 
-            // Push updated rate to all buckets.
-            foreach (var bucket in _buckets.Values)
-                bucket.UpdateRate(_currentRate);
-
+            _currentRate = share;
             _lastAdjustment = now;
         }
+    }
+
+    /// <summary>
+    /// Returns the max-min fair share of <paramref name="budget"/>: the per-bucket rate at which
+    /// the buckets slower than it keep all their traffic and the others split the rest evenly.
+    /// Returns <paramref name="budget"/> when all the traffic fits in it.
+    /// </summary>
+    private static double _fairShare(List<double> rates, double budget)
+    {
+        rates.Sort();
+        var remaining = budget;
+        for (var i = 0; i < rates.Count; i++)
+        {
+            var share = remaining / (rates.Count - i);
+            if (rates[i] >= share)
+                return share;
+            remaining -= rates[i];
+        }
+
+        return budget;
     }
 }

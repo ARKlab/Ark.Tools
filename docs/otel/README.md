@@ -36,8 +36,8 @@ of Ark instrumentation. The main goals are:
 
 The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 
-- **Adaptive rate control**: Dynamically adjusts sampling percentage to hit a target telemetry rate (default: 1 trace/second)
-- **Per-operation token buckets**: Each operation (HTTP route, message handler, etc.) gets its own rate budget, ensuring fair representation
+- **Adaptive rate control**: Dynamically adjusts sampling to hit a total target rate of root traces (default: 1 trace/second)
+- **Per-operation token buckets**: Each operation (HTTP route, message handler, etc.) gets a fair share of the budget, so rare operations are still represented
 - **Failure preservation**: All spans with error status, exceptions, or HTTP 5xx status codes are **always sampled** regardless of the rate limit
 
 ### Pre-filtering (Noise Reduction)
@@ -210,10 +210,10 @@ framework support before adding them to the default registration.
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `TracesPerSecond` | `1.0` | Target number of traces to export per second (per operation bucket when bucketing is enabled) |
+| `TracesPerSecond` | `1.0` | Target number of root traces to export per second, in total across operation buckets |
 | `MovingAverageRatio` | `0.5` | Smoothing factor for rate adjustment (0 = no smoothing, 1 = no adjustment) |
 | `SamplingPercentageDecreaseTimeout` | `00:01:00` | How often to evaluate and adjust the sampling rate |
-| `EnablePerOperationBucketing` | `true` | Whether each operation gets its own token bucket |
+| `EnablePerOperationBucketing` | `true` | Whether each operation gets its own token bucket and a max-min fair share of `TracesPerSecond` |
 | `MaxOperationBuckets` | `100` | Maximum distinct operations to track (prevents memory unbounded growth) |
 
 ### Snapshot Collector

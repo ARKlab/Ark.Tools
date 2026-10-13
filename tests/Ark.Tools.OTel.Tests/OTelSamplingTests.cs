@@ -447,7 +447,61 @@ public class ArkAdaptiveSamplerTests
             "OP_B has its own bucket and must not be affected by OP_A exhaustion");
     }
 
-    // ── behaviour: sample rate (Azure Monitor itemCount) ──────────────────
+    // ── behaviour: total budget across operation buckets ──────────────────
+
+    /// <summary>
+    /// <see cref="ArkAdaptiveSamplerOptions.TracesPerSecond"/> is the total budget: with many
+    /// busy operations the exported roots converge to it instead of to one budget per bucket,
+    /// a rare operation is still sampled in full, and the item counts still add up to the roots seen.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_ManyOperations_TotalExportedRateConvergesToTracesPerSecond()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = true,
+            MaxOperationBuckets = 100,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        // 20 busy operations at 5 roots/s each and one rare operation every 30 s, for ten one-minute windows.
+        var busyOperations = Enumerable.Range(0, 20).Select(static i => $"BUSY_{i}").ToList();
+        var seen = 0;
+        var itemCount = 0.0;
+        var sampledInLastWindow = 0;
+        var rareSampledInLastWindow = 0;
+        for (var window = 0; window < 10; window++)
+        {
+            sampledInLastWindow = 0;
+            rareSampledInLastWindow = 0;
+            for (var tick = 0; tick < 300; tick++)
+            {
+                time.Advance(TimeSpan.FromMilliseconds(200));
+                var operations = tick % 150 == 0 ? busyOperations.Append("RARE") : busyOperations;
+                foreach (var operation in operations)
+                {
+                    var result = _sampleRoot(sampler, operation);
+                    seen++;
+                    if (result.Decision != SamplingDecision.RecordAndSample)
+                        continue;
+                    itemCount += 100.0 / _sampleRate(result);
+                    sampledInLastWindow++;
+                    if (operation == "RARE")
+                        rareSampledInLastWindow++;
+                }
+            }
+
+            sampler._adjustRate();
+        }
+
+        sampledInLastWindow.Should().BeInRange(48, 75, "the total budget is 1 trace/s, so about 60 roots per minute");
+        rareSampledInLastWindow.Should().Be(2, "an operation below the fair share is sampled in full");
+        itemCount.Should().BeApproximately(seen, seen * 0.05, "each bucket's unsampled tail is the only volume not counted");
+    }
+
 
     private static ArkAdaptiveSamplerOptions _oneTracePerSecondOptions() => new()
     {

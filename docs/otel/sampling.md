@@ -49,9 +49,13 @@ the status of expected client errors, such as Azure Storage 404 or 409, in the s
 ## Root rate control
 
 Root spans use a token bucket keyed by operation name. The default burst capacity is two
-seconds of tokens. `TracesPerSecond` controls the target, while the moving-average
-controller adjusts the rate periodically using observed traffic. `MaxOperationBuckets`
-limits memory when operation names are dynamic; overflow shares one bucket.
+seconds of tokens, and at least one token. `TracesPerSecond` is the total target for all
+buckets. Every `SamplingPercentageDecreaseTimeout`, the moving-average controller measures
+the traffic of each bucket and shares the budget max-min fairly: operations slower than the
+fair share keep all their roots, and the busier operations split the rest evenly. New and
+idle operations start at the current fair share, so the total can exceed the target until
+the next adjustment. `MaxOperationBuckets` limits memory when operation names are dynamic;
+overflow shares one bucket.
 
 ## Sample rate and item counts
 

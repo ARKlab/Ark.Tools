@@ -9,9 +9,15 @@ namespace Ark.Tools.OTel;
 public sealed class ArkAdaptiveSamplerOptions
 {
     /// <summary>
-    /// Gets or sets the target number of traces to export per second per operation bucket.
-    /// Default is 1.0.
+    /// Gets or sets the target number of root traces to export per second, in total across all
+    /// operation buckets. Default is 1.0.
     /// </summary>
+    /// <remarks>
+    /// Spans kept because a parent was sampled or because their trace failed are not limited by
+    /// this budget. The adaptive controller converges to it within a few
+    /// <see cref="SamplingPercentageDecreaseTimeout"/> periods; until the first adjustment each
+    /// bucket may export up to this rate.
+    /// </remarks>
     public double TracesPerSecond { get; set; } = 1.0;
 
     /// <summary>
@@ -28,14 +34,20 @@ public sealed class ArkAdaptiveSamplerOptions
 
     /// <summary>
     /// Gets or sets whether to use per-operation token buckets for fair sampling.
-    /// When <see langword="true"/>, each distinct operation name gets its own rate budget.
+    /// When <see langword="true"/>, each distinct operation name gets its own token bucket and
+    /// <see cref="TracesPerSecond"/> is shared max-min fairly among the operations seen in the last
+    /// <see cref="SamplingPercentageDecreaseTimeout"/> period: an operation slower than the fair share
+    /// keeps all its roots, and the rest of the budget is split evenly among the busier operations.
+    /// New and idle operations get the current fair share.
+    /// When <see langword="false"/>, all roots share one bucket and busy operations can crowd out rare ones.
     /// Default is <see langword="true"/>.
     /// </summary>
     public bool EnablePerOperationBucketing { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the maximum number of distinct operation buckets to maintain.
-    /// Prevents unbounded memory growth when operation names are dynamic.
+    /// Prevents unbounded memory growth when operation names are dynamic: operations beyond the
+    /// limit share one overflow bucket, which counts as one operation for the fair share.
     /// Default is 100.
     /// </summary>
     public int MaxOperationBuckets { get; set; } = 100;
