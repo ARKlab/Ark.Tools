@@ -145,11 +145,8 @@ public static class ArkOpenTelemetryBuilderExtensions
         if (sqlQueryLabelsToSkip is null)
             return labels;
 
-        foreach (var label in sqlQueryLabelsToSkip)
-        {
-            if (!string.IsNullOrWhiteSpace(label))
-                labels.Add(label.Trim());
-        }
+        foreach (var label in sqlQueryLabelsToSkip.Where(static label => !string.IsNullOrWhiteSpace(label)))
+            labels.Add(label.Trim());
 
         return labels;
     }

@@ -40,7 +40,8 @@ public sealed class ApplicationInsightsTests
     [TestMethod]
     public void ClassifiesClientAndServerSpans()
     {
-        using var processor = new WebApi4xxAsSuccessProcessor();
+        // Qualified: the enclosing Ark.Tools.OTel namespace has an OpenTelemetry processor with the same name.
+        using var processor = new Ark.Tools.AspNetCore.ApplicationInsights.WebApi4xxAsSuccessProcessor();
         using var source = new ActivitySource(Guid.NewGuid().ToString());
         using var listener = _createListener(source);
         using var request = _createActivity(source, ActivityKind.Server, 404);
