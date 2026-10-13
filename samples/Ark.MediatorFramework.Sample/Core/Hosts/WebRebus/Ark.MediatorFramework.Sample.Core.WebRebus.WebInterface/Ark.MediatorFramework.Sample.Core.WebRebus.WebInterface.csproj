@@ -14,6 +14,7 @@
     <!-- Direct reference: the sample applies the Rebus host generator only to direct references. -->
     <PackageReference Include="Ark.Tools.MediatorFramework.Rebus" />
     <PackageReference Include="Ark.Tools.AspNetCore.OTel" />
+    <PackageReference Include="Ark.Tools.OTel.Azure" />
     <PackageReference Include="Ark.Tools.AspNetCore.MinimalApi" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
     <PackageReference Include="Azure.Identity" />

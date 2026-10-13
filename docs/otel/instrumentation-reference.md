@@ -7,24 +7,31 @@ semantic conventions for the provider version in use.
 
 ## Setup profiles
 
-### ASP.NET Core Azure Monitor OTel
+### ASP.NET Core on Azure
 
 Registration:
 
 ```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+builder.Services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration)
+    .AddArkAzureOpenTelemetry(builder.Configuration);
 ```
 
-Implemented by `Ark.Tools.AspNetCore.OTel`.
+Implemented by `Ark.Tools.AspNetCore.OTel` (ASP.NET Core instrumentation) and
+`Ark.Tools.OTel.Azure` (Azure SDK tracing, Azure resource detection and Azure Monitor export).
 
 | Signal | Default registration | Notes |
 |---|---|---|
 | Resource | `AddArkTelemetryResource()` | Sets `service.name` to the entry assembly name. |
 | Traces | `ark.tools.rebus` source | The source must also be used by Rebus through `UseOpenTelemetry`. |
+| Traces | `ark.tools.outbox` source | Outbox batch spans emitted by `OutboxProcessorBase`. |
+| Traces | ASP.NET Core instrumentation | Server spans for incoming requests. |
 | Traces | `HttpClient` instrumentation | Captures outbound `HttpClient` requests, including Flurl clients built on `HttpClient`. |
-| Traces | `Microsoft.Data.SqlClient` instrumentation | SQL spans; `RecordException = true`. |
-| Traces | `Azure.Messaging.ServiceBus` source | Captures SDK spans when the Azure experimental ActivitySource switch is enabled before client creation. |
+| Traces | `Microsoft.Data.SqlClient` instrumentation | SQL spans; `RecordException = true`. Spans to the NLog database are dropped. |
+| Traces | `Azure.*` sources | Azure SDK spans, Service Bus included, with or without a connection string. The setup enables the Azure experimental ActivitySource switch unless the application already set it, and drops the `HttpClient` span nested under an Azure SDK span. |
 | Metrics | `ark.tools.rebus` meter | Rebus metrics are emitted only when `UseOpenTelemetryMetrics` is installed in the Rebus pipeline. |
+| Metrics | `ark.tools.outbox` meter | Outbox metrics. |
+| Metrics | `System.Net.Http`, `Microsoft.AspNetCore.Hosting`, `System.Runtime` meters | HTTP client and server metrics, .NET runtime and process metrics. |
 | Metrics | SQL Client instrumentation | Provider SQL client duration metrics. |
 | Logs | OpenTelemetry logger provider | Only `Error` and `Critical` records are enabled for OTel export. |
 
@@ -54,8 +61,9 @@ builder.Services.AddOpenTelemetry()
     .AddArkOutboxOpenTelemetry();
 ```
 
-Implemented by `Ark.Tools.Outbox.OTel`. This registration is opt-in and is
-independent of Rebus. The signals are emitted by `OutboxProcessorBase`, so
+Implemented by `Ark.Tools.Outbox.OTel`. `AddArkOpenTelemetry` and the setups built
+on it already collect the Outbox source and meter; use this registration in a
+custom chain. It is independent of Rebus. The signals are emitted by `OutboxProcessorBase`, so
 other outbox implementations can use the same contract.
 
 ### Exporter-neutral ResourceWatcher
@@ -67,8 +75,8 @@ builder.Services.AddOpenTelemetry()
     .AddArkResourceWatcherOpenTelemetry();
 ```
 
-`AddArkOpenTelemetryForWorkerHost` is the equivalent worker-host convenience
-extension. This registration is opt-in.
+`AddArkOpenTelemetryForWorkerHost` is the worker-host convenience extension: it
+also adds the Ark pipeline (`AddArkOpenTelemetry`). This registration is opt-in.
 
 ## Instrumentation contracts
 
@@ -79,9 +87,12 @@ Registration: `AddHttpClientInstrumentation()`.
 | Signal | Name/source | Attributes |
 |---|---|---|
 | Span | Provider `HttpClient` instrumentation | Provider-generated HTTP client semantic-convention attributes, such as method, URL/route, status, server address/port, and error details. |
-| Meter | None registered by `AddArkAspNetCoreOpenTelemetry` | Add a provider metrics registration separately if HTTP client metrics are required. |
+| Meter | `System.Net.Http`, registered by `AddArkOpenTelemetry` | Native .NET HTTP client metrics. |
 
-Ark.Tools does not add a custom HTTP span or meter.
+Ark.Tools does not add a custom HTTP span or meter. `AddArkAzureOpenTelemetry`,
+like the Azure Monitor Distro, drops an `HttpClient` span whose parent comes from the
+`Azure.Core.Http` source, because the Azure SDK span already describes the same
+call; an application `FilterHttpRequestMessage` still applies.
 
 ### Microsoft SQL Server client
 
@@ -104,8 +115,11 @@ Ark.Tools adds the following span behavior:
 
 `ArkSqlClientSpanProcessor` performs query-label extraction and query-text
 redaction on span completion, after the provider has populated database tags.
-`ArkSqlDependencyFilterProcessor` is a separate optional processor for the
-Application Insights customization path. It matches SQL Server spans by:
+`ArkSqlDependencyFilterProcessor` drops the SQL spans of NLog's own database writes.
+`AddArkOpenTelemetry` adds it when given configuration, using the
+`ConnectionStrings:NLog.Database` connection string (also read as `NLog:Database`
+or `NLog_Database`); the Application Insights customization path uses it too. It
+matches SQL Server spans by:
 
 ```text
 db.system.name = microsoft.sql_server
@@ -114,8 +128,10 @@ server.address = <Data Source host>
 ```
 
 It also accepts older SQL system values and equivalent legacy tags. A configured
-`Data Source` containing a port is compared by host, so `localhost,1433`
-matches `server.address = localhost`.
+`Data Source` is compared by host, without a protocol prefix, port or instance
+name, so `tcp:localhost,1433` matches `server.address = localhost`. With a named
+instance the instrumentation reports `db.namespace = <instance>.<database>`, which
+also matches.
 
 ### Rebus
 
@@ -237,31 +253,41 @@ retains its legacy diagnostic listener for non-OTel consumers.
 
 ### Azure Service Bus
 
-Ark.Tools registers the Azure SDK source
-`Azure.Messaging.ServiceBus`; the SDK creates the producer/consumer spans.
-Ark.Tools does not add a custom meter or custom tags. Enable
-`Azure.Experimental.EnableActivitySource` before constructing Service Bus
-clients. Provider-generated messaging attributes and propagation follow the
+`AddArkAzureSdkInstrumentation` (from `Ark.Tools.OTel.Azure`, also used by
+`AddArkAzureOpenTelemetry`) collects the Service Bus
+producer/consumer spans through the `Azure.*` sources, with or without a connection string, and
+drops receive spans (`ServiceBusReceiver.Receive`) before they use the sampler budget; settlement and lock renewal spans run inside message processing and follow its sampling decision. Azure SDK tracing for
+Service Bus and Event Hubs is still experimental and needs
+`Azure.Experimental.EnableActivitySource`; most other Azure SDK libraries released since
+November 2023 trace without it. Azure.Core reads the switch once, when the first Azure SDK
+client starts, so `Ark.Tools.OTel.Azure` sets it in the application's runtime
+configuration through a `buildTransitive` props file (set the MSBuild property
+`ArkEnableAzureSdkActivitySource` to `false` to opt out), and the setup sets it again for
+project references unless the application already did. The other setups do not collect
+Azure SDK spans. Ark.Tools does not add a custom meter
+or custom tags. Provider-generated messaging attributes and propagation follow the
 Azure SDK and OpenTelemetry semantic conventions.
 
 ## Adaptive sampler
 
 The `ArkAdaptiveSampler` is always installed by Ark's OpenTelemetry setup. The
-exporter-neutral `AddArkAspNetCoreOpenTelemetry` and the Azure Monitor
-`AddArkAzureMonitorOpenTelemetry` paths install it with the
-`ArkFailurePromotionProcessor`. The Azure Monitor path binds
-`OTel:ArkAdaptiveSampler` (falling back to the legacy
-`ApplicationInsights:ArkAdaptiveSampler`); the exporter-neutral path uses the
-documented defaults. The Application Insights v3 compatibility path installs
-the same sampler through `AddArkApplicationInsightsCustomizations`, which binds
-only `ApplicationInsights:ArkAdaptiveSampler`.
+exporter-neutral `AddArkOpenTelemetry` (also called by `AddArkAspNetCoreOpenTelemetry`
+and `AddArkOpenTelemetryForWorkerHost`) installs it with the
+`ArkFailurePromotionProcessor`. When given an `IConfiguration`
+(the worker host passes the host configuration), it binds `OTel:ArkAdaptiveSampler`; otherwise it uses
+the documented defaults. `AddArkAzureOpenTelemetry(configuration)` also reads the legacy
+`ApplicationInsights:ArkAdaptiveSampler` section, which `OTel:ArkAdaptiveSampler`
+overrides. A `configureAdaptiveSampler` callback runs after the binding.
+The Application Insights v3 compatibility path installs the same sampler through
+`AddArkApplicationInsightsCustomizations`, which binds only
+`ApplicationInsights:ArkAdaptiveSampler`.
 
 The sampler and `ArkFailurePromotionProcessor` must share one
 `FailedTraceRegistry` for whole-operation failure promotion.
 
-`UseAzureMonitor` installs its own sampler. When a connection string is
-configured, `AddArkAzureMonitorOpenTelemetry` sets `ArkAdaptiveSampler` again
-after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
+The Azure Monitor exporter installs its own sampler. When a connection string is
+configured, `AddArkAzureOpenTelemetry` sets `ArkAdaptiveSampler` again
+after adding the exporter, so the Azure Monitor `TracesPerSecond` and
 `SamplingRatio` options have no effect. Configure sampling with
 `OTel:ArkAdaptiveSampler` instead.
 
@@ -269,7 +295,7 @@ after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
 
 | Condition | Decision |
 |---|---|
-| Span marked `ark.filtered=true` | `Drop` |
+| Span marked `ark.filtered=true`, or matching the pre-filter rules or `ArkAdaptiveSamplerOptions.Filter` on its name and creation tags | `Drop`, without using the budget |
 | Local parent is recorded | `RecordAndSample` |
 | Local parent is not recorded | `RecordOnly` |
 | Parent is remote | Decided as a root (as a local parent when `RespectRemoteParentSampling` is `true`) |
@@ -311,7 +337,9 @@ failure promotion, register it before calling the Ark setup:
 ```csharp
 services.ConfigureOpenTelemetryTracerProvider(tracing =>
     tracing.AddProcessor(new ExpectedStorageErrorsProcessor()));
-services.AddArkAzureMonitorOpenTelemetry(configuration);
+services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(configuration: configuration)
+    .AddArkAzureOpenTelemetry(configuration);
 ```
 
 ### Rate control
@@ -356,9 +384,9 @@ Example:
 }
 ```
 
-`OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
-(`AddArkAzureMonitorOpenTelemetry`). The legacy `ApplicationInsights:ArkAdaptiveSampler`
-section is still read for compatibility; values in `OTel:ArkAdaptiveSampler` take
+`OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup.
+`AddArkAzureOpenTelemetry(configuration)` still reads the legacy
+`ApplicationInsights:ArkAdaptiveSampler` section for compatibility; values in `OTel:ArkAdaptiveSampler` take
 precedence. The Application Insights v3 compatibility path
 (`AddArkApplicationInsightsCustomizations`) reads only
 `ApplicationInsights:ArkAdaptiveSampler`.
@@ -367,6 +395,8 @@ precedence. The Application Insights v3 compatibility path
 
 | Contract | Source |
 |---|---|
+| Host-agnostic setup | `src/common/Ark.Tools.OTel/ArkOpenTelemetryBuilderExtensions.cs` |
+| Azure SDK tracing and Azure Monitor export | `src/common/Ark.Tools.OTel.Azure/ArkAzureOpenTelemetryBuilderExtensions.cs`, `AzureSamplingFilters.cs` |
 | ASP.NET Core setup | `src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ex.cs` |
 | SQL redaction and labels | `src/common/Ark.Tools.OTel/ArkSqlClientSpanProcessor.cs`, `ArkSqlQueryLabel.cs` |
 | SQL target filtering | `src/common/Ark.Tools.OTel/ArkSqlDependencyFilterProcessor.cs` |

@@ -18,6 +18,7 @@
     <PackageReference Include="Ark.Tools.MediatorFramework.Messaging.OTel" />
     <PackageReference Include="Ark.Tools.MediatorFramework.Mcp" />
     <PackageReference Include="Ark.Tools.AspNetCore.OTel" />
+    <PackageReference Include="Ark.Tools.OTel.Azure" />
     <PackageReference Include="Ark.Tools.AspNetCore.HealthChecks" />
     <PackageReference Include="Ark.Tools.AspNetCore.MinimalApi" />
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />

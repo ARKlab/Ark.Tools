@@ -46,6 +46,7 @@ public static class ArkApplicationInsightsExtensions
     /// </param>
     /// <returns>The same <paramref name="services"/> for chaining.</returns>
     [RequiresUnreferencedCode("Binding ArkAdaptiveSamplerOptions from configuration uses reflection.")]
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The tracing provider owns and disposes registered processors.")]
     public static IServiceCollection AddArkApplicationInsightsCustomizations(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -64,6 +65,16 @@ public static class ArkApplicationInsightsExtensions
         // Allow override from configuration.
         services.Configure<ArkAdaptiveSamplerOptions>(
             configuration.GetSection("ApplicationInsights:ArkAdaptiveSampler"));
+
+        // Service Bus receives and NLog database writes are dropped before they use the sampler budget.
+        var sqlDependencyFilter = new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter);
+        services.PostConfigure<ArkAdaptiveSamplerOptions>(options =>
+        {
+            var filter = options.Filter;
+            options.Filter = p => !ServiceBusReceiveSamplingFilter.IsServiceBusReceive(p)
+                && !sqlDependencyFilter.ShouldDrop(p)
+                && (filter is null || filter(p));
+        });
 
         // Register the OTel pipeline customizations via IConfigureOptions<TelemetryConfiguration>.
         // This must run AFTER AddApplicationInsightsTelemetry registers its own IConfigureOptions.
@@ -85,21 +96,25 @@ public static class ArkApplicationInsightsExtensions
                     {
                         builder.WithTracing(tracerBuilder =>
                         {
+                            // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
+                            // The filter processors give it back the budget of the spans they drop after sampling.
+                            var sampler = new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry);
+                            sqlDependencyFilter._sampler = sampler;
+
                             // Pre-filter processor runs first to drop noisy spans before sampling.
-                            tracerBuilder.AddProcessor(new ArkPreFilterProcessor());
+                            tracerBuilder.AddProcessor(new ArkPreFilterProcessor { _sampler = sampler });
                             tracerBuilder.AddArkComplianceRedaction();
 
-                            // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
-                            tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry));
+                            tracerBuilder.SetSampler(sampler);
 
                             // Failure promotion: promotes rate-limited spans (and their parent chain /
                             // in-flight siblings) to exported when a failure is detected anywhere in
                             // the operation.
                             tracerBuilder.AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry));
 
-                            // Optional: SQL dependency filter for the NLog audit database.
-                            if (!string.IsNullOrWhiteSpace(sqlConnectionStringToFilter))
-                                tracerBuilder.AddProcessor(new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter));
+                            // SQL dependency filter for the NLog audit database (no-op without a connection string),
+                            // for spans whose tags are set after sampling.
+                            tracerBuilder.AddProcessor(sqlDependencyFilter);
                         });
                         builder.ConfigureResource(static resource => resource.AddArkTelemetryResource());
                     });

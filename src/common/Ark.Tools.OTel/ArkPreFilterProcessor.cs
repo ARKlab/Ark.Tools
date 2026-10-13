@@ -22,7 +22,6 @@ namespace Ark.Tools.OTel;
 /// </para>
 /// <list type="bullet">
 /// <item><description>Successful HTTP <c>OPTIONS</c> requests (CORS preflight noise).</description></item>
-/// <item><description>Successful Azure Service Bus <c>Receive</c> / <c>ServiceBusReceiver.*</c> operations.</description></item>
 /// <item><description>Successful SQL <c>Commit</c> operations.</description></item>
 /// </list>
 /// </remarks>
@@ -31,21 +30,32 @@ public sealed class ArkPreFilterProcessor : BaseProcessor<Activity>
     /// <inheritdoc/>
     public override void OnStart(Activity data)
     {
-        if (_shouldFilter(data))
+        if (data.IsAllDataRequested && _shouldFilter(data))
         {
             data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             data.IsAllDataRequested = false;
+            _sampler?._release(data);
         }
     }
 
+    // Set by AddArkOpenTelemetry: a span filtered here, after sampling, gives its budget back.
+    internal ArkAdaptiveSampler? _sampler;
+
     private static bool _shouldFilter(Activity activity)
     {
-        var displayName = activity.DisplayName;
+        return _isNoise(
+            activity.DisplayName,
+            activity.GetTagItem("http.request.method") as string,
+            activity.GetTagItem("db.operation") as string
+                ?? activity.GetTagItem("db.operation.name") as string);
+    }
 
+    // Shared with ArkAdaptiveSampler, which applies the same rules to the name and creation tags before sampling.
+    internal static bool _isNoise(string? displayName, string? httpMethod, string? dbOperation)
+    {
         // --- HTTP OPTIONS requests ---
         // Span name for ASP.NET Core is "HTTP {METHOD} {ROUTE}" or similar.
         // The http.request.method tag contains the method.
-        var httpMethod = activity.GetTagItem("http.request.method") as string;
         if (!string.IsNullOrEmpty(httpMethod) &&
             string.Equals(httpMethod, "OPTIONS", StringComparison.OrdinalIgnoreCase))
         {
@@ -60,31 +70,7 @@ public sealed class ArkPreFilterProcessor : BaseProcessor<Activity>
             displayName.StartsWith("OPTIONS ", StringComparison.OrdinalIgnoreCase))
             return true;
 
-        // --- Azure Service Bus Receive ---
-        var messagingOperation = activity.GetTagItem("messaging.operation") as string
-                               ?? activity.GetTagItem("messaging.operation.name") as string;
-        var messagingSystem = activity.GetTagItem("messaging.system") as string;
-
-        if (messagingSystem != null &&
-            messagingSystem.Equals("servicebus", StringComparison.OrdinalIgnoreCase) &&
-            messagingOperation != null &&
-            messagingOperation.Equals("receive", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        // Legacy: span name like "ServiceBusReceiver.Receive" or "Receive"
-        if (displayName != null)
-        {
-            if (displayName.StartsWith("ServiceBusReceiver.", StringComparison.OrdinalIgnoreCase))
-                return true;
-            if (string.Equals(displayName, "Receive", StringComparison.OrdinalIgnoreCase) &&
-                messagingSystem != null &&
-                messagingSystem.Equals("servicebus", StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-
         // --- SQL Commit ---
-        var dbOperation = activity.GetTagItem("db.operation") as string
-                       ?? activity.GetTagItem("db.operation.name") as string;
         if (dbOperation != null &&
             dbOperation.Equals("Commit", StringComparison.OrdinalIgnoreCase))
             return true;

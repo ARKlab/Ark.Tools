@@ -17,15 +17,22 @@
 
     <IsTrimmable>true</IsTrimmable>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Source-generated Bind keeps the ArkAdaptiveSamplerOptions binding trim-safe. -->
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
   <!--===============================================================================-->
 
   <ItemGroup>
     <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Ark.Tools.OTel.Tests" />
+    <!-- Its setup wires the sampler to the Ark filter processors, as AddArkOpenTelemetry does. -->
+    <InternalsVisibleTo Include="Ark.Tools.ApplicationInsights" />
   </ItemGroup>
 
   <ItemGroup>

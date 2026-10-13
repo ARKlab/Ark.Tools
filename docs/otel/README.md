@@ -42,11 +42,13 @@ The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 
 ### Pre-filtering (Noise Reduction)
 
-`ArkPreFilterProcessor` drops known-noisy, low-value spans before the sampler sees them:
+`ArkAdaptiveSampler` drops known-noisy, low-value spans before sampling, from their name and
+creation tags, so they do not use its budget; `ArkPreFilterProcessor` drops the ones recognized
+only after they start:
 
 - `OPTIONS` requests (CORS preflight) – successful only
-- Azure Service Bus `Receive` operations – successful only  
 - SQL `Commit` operations – successful only
+- Azure Service Bus `Receive` operations, through the `Ark.Tools.OTel.Azure` sampling filter
 - Empty outbox polling cycles do not create spans
 - Outbox SQL polling commands are filtered by default
 - Optional: specific SQL server/database combinations (for NLog database)
@@ -68,14 +70,21 @@ OpenTelemetry resource configuration.
 ### ASP.NET Core (recommended)
 
 ```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry();
+builder.Services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration)
+    .AddArkAzureOpenTelemetry(builder.Configuration);
 ```
 
-The extension is provided by `Ark.Tools.AspNetCore.OTel` and uses the Azure Monitor
-OpenTelemetry Distro. Set `APPLICATIONINSIGHTS_CONNECTION_STRING` or configure an
-alternative exporter in the application.
+`AddArkAspNetCoreOpenTelemetry` (`Ark.Tools.AspNetCore.OTel`) adds the Ark pipeline and the
+ASP.NET Core instrumentation only. A host running on Azure also calls
+`AddArkAzureOpenTelemetry` (`Ark.Tools.OTel.Azure`), as a worker does: it adds Azure SDK tracing
+and Azure resource detection, and exports to Azure Monitor with
+`Azure.Monitor.OpenTelemetry.Exporter` when `APPLICATIONINSIGHTS_CONNECTION_STRING` or
+`ApplicationInsights:ConnectionString` is set. Other exporters can be added instead. Ark does not use
+the Azure Monitor OpenTelemetry Distro: unlike the Distro, Ark keeps the OpenTelemetry redaction of URL query strings, and
+does not add the Application Insights profiler tagging or the Azure SDK log forwarder.
 
-The Distro also registers an OpenTelemetry logger provider. Ark configures that
+The Azure Monitor exporter also registers an OpenTelemetry logger provider. Ark configures that
 provider in code to export only `Error` and `Critical` records; NLog remains
 available as a separate logging provider for console, database, mail, and Slack
 targets.
@@ -102,8 +111,13 @@ on a general Ark hosting package to register it.
 
 ### Worker Service / Hosted Service
 
-Use `Ark.Tools.ResourceWatcher.OTel` for ResourceWatcher source and meter registration,
-then add the exporter selected by the application. The legacy
+Call `AddArkOpenTelemetry()` from `Ark.Tools.OTel` on the OpenTelemetry builder. It
+registers the same sampler, processors and client instrumentations as the ASP.NET Core
+setup, without the ASP.NET Core dependency. For a ResourceWatcher worker,
+`AddArkOpenTelemetryForWorkerHost()` from `Ark.Tools.ResourceWatcher.OTel` calls it and
+adds the ResourceWatcher source and meter. Then add the exporter selected by the
+application. A worker that uses Azure SDKs or exports to Azure Monitor adds
+`AddArkAzureOpenTelemetry(configuration)` from `Ark.Tools.OTel.Azure` (see below). The legacy
 `Ark.Tools.ResourceWatcher.ApplicationInsights` package remains available for
 applications that still use the SDK.
 
@@ -120,15 +134,23 @@ The recommended environment variable is:
 APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=https://...
 ```
 
-`AddArkAzureMonitorOpenTelemetry` also reads
+`AddArkAzureOpenTelemetry` also reads
 `ApplicationInsights:ConnectionString` from application configuration.
 
 ### Core client instrumentations
 
-`AddArkAzureMonitorOpenTelemetry` registers the stable OpenTelemetry .NET
-instrumentations for `HttpClient` and `Microsoft.Data.SqlClient`. Flurl clients
-created by `Ark.Tools.Http` use `HttpClient`, so their outbound requests are
-captured automatically; no Flurl-specific hook is required.
+`AddArkOpenTelemetry`, which `AddArkAspNetCoreOpenTelemetry` and
+`AddArkOpenTelemetryForWorkerHost` call, registers the
+stable OpenTelemetry .NET instrumentations for `HttpClient` and
+`Microsoft.Data.SqlClient`. Flurl clients created by `Ark.Tools.Http` use
+`HttpClient`, so their outbound requests are captured automatically; no
+Flurl-specific hook is required. It also collects `HttpClient` metrics
+(`System.Net.Http`), .NET runtime and process metrics (`System.Runtime`) and the
+Outbox source and meter. `AddArkAspNetCoreOpenTelemetry` adds ASP.NET Core server
+spans and request metrics (`Microsoft.AspNetCore.Hosting`).
+
+When given configuration, `AddArkOpenTelemetry` drops the SQL spans of NLog's own
+database writes, matching the `ConnectionStrings:NLog.Database` server and database.
 
 SQL spans redact the large `db.query.text` attribute by default. A command can
 carry a `-- otel-query-label: ...` linting comment; its trimmed, sanitized value
@@ -138,36 +160,54 @@ client duration meter is enabled by default. Applications can extend the Ark
 defaults and opt into query text only for controlled diagnostics:
 
 ```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry(
-    builder.Configuration,
-    sql => sql.Filter = command => true,
-    configureArkOtel: otel =>
-    {
-        otel.IncludeSqlQueryText = true;
-        otel.SqlQueryLabelsToSkip = ["health-check"];
-    });
+builder.Services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(
+        sql => sql.Filter = command => true,
+        configureArkOtel: otel =>
+        {
+            otel.IncludeSqlQueryText = true;
+            otel.SqlQueryLabelsToSkip = ["health-check"];
+        },
+        configuration: builder.Configuration)
+    .AddArkAzureOpenTelemetry(builder.Configuration);
 ```
 
 The SQL Server outbox polling command uses this label instead of matching SQL
 hints, so unrelated commands containing hints remain visible.
 
-Azure Service Bus uses the tracing `ActivitySource` emitted by the
-`Azure.Messaging.ServiceBus` SDK. Ark registers that source
-(`Azure.Messaging.ServiceBus`) so sender and receiver spans flow through the
-same provider. Because Azure SDK ActivitySource support is experimental,
-applications that use Service Bus must enable it before constructing clients:
+Everything Azure-specific lives in `Ark.Tools.OTel.Azure`, for any host:
 
-```csharp
-AppContext.SetSwitch("Azure.Experimental.EnableActivitySource", true);
-builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
-```
+- `AddArkAzureSdkInstrumentation()` collects Azure SDK spans, Azure Service Bus included,
+  through the `Azure.*` sources; like the Azure Monitor Distro, it drops the `HttpClient` span
+  nested under an Azure SDK span, so a call is not reported twice, and an application
+  `HttpClient` filter still applies. Its sampling filter drops Service Bus receives before they
+  use the sampler budget.
+- `AddArkAzureOpenTelemetry(configuration)` adds it to an Ark setup, with the Azure App Service,
+  Virtual Machine and Container Apps resource detectors (instance ID, region, resource ID; the
+  entry assembly name stays `service.name`, so processes sharing a site stay apart), and, when an Application Insights
+  connection string is configured, exports traces, metrics and error logs to Azure Monitor with
+  `Azure.Monitor.OpenTelemetry.Exporter`. Use it in workers:
+  `services.AddOpenTelemetry().AddArkOpenTelemetry(configuration: configuration).AddArkAzureOpenTelemetry(configuration)`.
+- ASP.NET Core hosts call it after `AddArkAspNetCoreOpenTelemetry`, see
+  [ASP.NET Core](#aspnet-core-recommended).
+
+Azure SDK tracing for Service Bus and Event Hubs is experimental and needs the
+`Azure.Experimental.EnableActivitySource` switch, which Azure.Core reads only once, when the
+first Azure SDK client starts. The `Ark.Tools.OTel.Azure` package therefore sets it in the
+application's runtime configuration, before Key Vault or App Configuration clients can start
+(set the MSBuild property `ArkEnableAzureSdkActivitySource` to `false` to opt out). Azure.Core
+reads that switch before the `AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE` environment variable,
+so the variable has no effect in an application that references the package; use the MSBuild
+property instead. With a project reference, which does not import the props file,
+`AddArkAzureSdkInstrumentation()` sets the switch unless the application or the environment
+variable already did.
+The other setups do not collect Azure SDK spans.
 
 Applications should use the current Azure Service Bus SDK rather than adding a
 separate, unsupported Service Bus instrumentation package.
 
-The Azure Monitor distro can also register some of these instrumentations.
-Applications should verify their exporter setup does not register the same
-instrumentation twice.
+Applications that add their own exporter setup, such as the Azure Monitor Distro, should
+verify it does not register the same instrumentation twice.
 
 ### Further instrumentation candidates
 
@@ -212,8 +252,9 @@ framework support before adding them to the default registration.
 ```
 
 The Azure Monitor connection string stays under `ApplicationInsights`. The sampler
-reads `OTel:ArkAdaptiveSampler`; the legacy `ApplicationInsights:ArkAdaptiveSampler`
-section is still read for compatibility, and `OTel` values take precedence. The
+reads `OTel:ArkAdaptiveSampler`; `AddArkAzureOpenTelemetry` also reads the
+legacy `ApplicationInsights:ArkAdaptiveSampler` section for compatibility, and
+`OTel` values take precedence. The
 Application Insights v3 compatibility path (`AddArkApplicationInsightsCustomizations`)
 reads only `ApplicationInsights:ArkAdaptiveSampler`.
 
@@ -267,17 +308,18 @@ HTTP Request / Message / SQL / etc.
           │
           ▼
   [OpenTelemetry SDK - ActivitySource]
+          │ Activity created
+          ▼
+  [ArkAdaptiveSampler.ShouldSample]
+  • Check: is it filtered? (name and creation tags: OPTIONS, SQL Commit,
+    ArkAdaptiveSamplerOptions.Filter such as NLog database and Service Bus receive) → Drop, no budget used
+  • Check: is parent already sampled? → propagate
+  • Check: does an unsampled parent exist? → RecordOnly
+  • Check: root per-op token bucket → RecordAndSample or RecordOnly
           │ Activity started
           ▼
   [ArkPreFilterProcessor.OnStart]
-  Filter noise (OPTIONS, SB Receive, SQL Commit)
-          │ (not filtered)
-          ▼
-  [ArkAdaptiveSampler.ShouldSample]
-  • Check: is parent already sampled? → propagate
-  • Check: is it pre-filtered? (span tag set by processor) → Drop
-  • Check: does an unsampled parent exist? → RecordOnly
-  • Check: root per-op token bucket → RecordAndSample or RecordOnly
+  Filter noise recognized only after start; give the budget back
           │
           ▼
   [ResourceBuilder.AddArkTelemetryResource]
@@ -307,8 +349,8 @@ Lines to:
 - `otel-metrics.jsonl` — `long` and `double` measurements with meter,
   instrument, unit, value, and tags.
 
-Azure Monitor remains isolated because `AddArkAzureMonitorOpenTelemetry` calls
-`UseAzureMonitor` only when `ApplicationInsights:ConnectionString` or
+Azure Monitor remains isolated because `AddArkAzureOpenTelemetry` adds the
+Azure Monitor exporter only when `ApplicationInsights:ConnectionString` or
 `APPLICATIONINSIGHTS_CONNECTION_STRING` is non-empty. Keep those values unset
 for local diagnostics and tests. Empty Application Insights settings in the
 sample integration-test configuration are safe.

@@ -189,6 +189,142 @@ public class ArkAdaptiveSamplerTests
     }
 
     /// <summary>
+    /// Noise recognized from the name or the creation tags, such as a Service Bus receive or a write to the
+    /// NLog database, is dropped before sampling and does not use a token of the budget.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_FilteredNoise_DoesNotUseTheBudget()
+    {
+        using var nlogDatabase = new ArkSqlDependencyFilterProcessor("Server=tcp:logs.example.com,1433;Database=Logs");
+        var options = _singleTokenOptions();
+        options.Filter = p => !Azure.AzureSamplingFilters.IsServiceBusReceive(p) && !nlogDatabase.ShouldDrop(p);
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry());
+
+        SamplingDecision sample(string name, params KeyValuePair<string, object?>[] tags)
+        {
+            var parameters = new SamplingParameters(
+                default, ActivityTraceId.CreateRandom(), name, ActivityKind.Client, tags, null);
+            return sampler.ShouldSample(in parameters).Decision;
+        }
+
+        sample("ServiceBusReceiver.Receive").Should().Be(SamplingDecision.Drop);
+        sample("receive", new("messaging.system", "servicebus"), new("messaging.operation.name", "receive"))
+            .Should().Be(SamplingDecision.Drop);
+        sample(
+                "INSERT",
+                new("db.system.name", "microsoft.sql_server"),
+                new("server.address", "logs.example.com"),
+                new("db.namespace", "Logs"))
+            .Should().Be(SamplingDecision.Drop);
+
+        sample("OP").Should().Be(SamplingDecision.RecordAndSample, "the filtered spans left the only token");
+        sample("OP").Should().Be(SamplingDecision.RecordOnly);
+    }
+
+    /// <summary>
+    /// A root dropped by a filter after sampling, such as a SQL query label skipped by the SqlClient filter,
+    /// gives its token back.
+    /// </summary>
+    [TestMethod]
+    public void Release_ReturnsTheTokenOfARootFilteredAfterSampling()
+    {
+        var sampler = new ArkAdaptiveSampler(_singleTokenOptions(), new FailedTraceRegistry(), new ManualTimeProvider());
+        using var pipeline = new TestPipeline(nameof(Release_ReturnsTheTokenOfARootFilteredAfterSampling), sampler);
+
+        using (var filtered = pipeline.StartRoot("OP"))
+        {
+            filtered!.Recorded.Should().BeTrue("the root took the only token");
+            sampler._release(filtered);
+        }
+
+        using var next = pipeline.StartRoot("OP");
+        next!.Recorded.Should().BeTrue("the filtered root gave its token back");
+    }
+
+    /// <summary>
+    /// A root that an Ark processor filters after sampling, because its tags were set after it started,
+    /// gives its token back.
+    /// </summary>
+    [TestMethod]
+    public void Processor_FilteringAfterSampling_ReturnsTheToken()
+    {
+        var sampler = new ArkAdaptiveSampler(_singleTokenOptions(), new FailedTraceRegistry(), new ManualTimeProvider());
+        using var nlogDatabase = new ArkSqlDependencyFilterProcessor("Server=tcp:logs.example.com,1433;Database=Logs")
+        {
+            _sampler = sampler,
+        };
+        using var pipeline = new TestPipeline(nameof(Processor_FilteringAfterSampling_ReturnsTheToken), sampler, nlogDatabase);
+
+        using (var nlogWrite = pipeline.StartRoot("INSERT", ActivityKind.Client))
+        {
+            nlogWrite!.Recorded.Should().BeTrue("the root took the only token");
+            nlogWrite.SetTag("db.system.name", "microsoft.sql_server");
+            nlogWrite.SetTag("server.address", "logs.example.com");
+            nlogWrite.SetTag("db.namespace", "Logs");
+        }
+
+        using var next = pipeline.StartRoot("OP");
+        next!.Recorded.Should().BeTrue("the processor gave the filtered root's token back");
+    }
+
+    /// <summary>
+    /// A failing root the sampler did not sample, promoted and then dropped by the NLog database processor,
+    /// returns no token: it never took one.
+    /// </summary>
+    [TestMethod]
+    public void Processor_FilteringAPromotedRoot_ReturnsNoToken()
+    {
+        var registry = new FailedTraceRegistry();
+        var sampler = new ArkAdaptiveSampler(_singleTokenOptions(), registry, new ManualTimeProvider());
+        using var promotion = new ArkFailurePromotionProcessor(registry);
+        using var nlogDatabase = new ArkSqlDependencyFilterProcessor("Server=tcp:logs.example.com,1433;Database=Logs")
+        {
+            _sampler = sampler,
+        };
+        using var pipeline = new TestPipeline(
+            nameof(Processor_FilteringAPromotedRoot_ReturnsNoToken), sampler, promotion, nlogDatabase);
+
+        using (var sampled = pipeline.StartRoot("OP"))
+            sampled!.Recorded.Should().BeTrue("the root took the only token");
+
+        using (var nlogWrite = pipeline.StartRoot("OP", ActivityKind.Client))
+        {
+            nlogWrite!.Recorded.Should().BeFalse("no token is left");
+            nlogWrite.SetTag("db.system.name", "microsoft.sql_server");
+            nlogWrite.SetTag("server.address", "logs.example.com");
+            nlogWrite.SetTag("db.namespace", "Logs");
+            nlogWrite.SetStatus(ActivityStatusCode.Error);
+        }
+
+        using var next = pipeline.StartRoot("OP");
+        next!.Recorded.Should().BeFalse("the promoted NLog write had no token to give back");
+    }
+
+    /// <summary>An application filter that throws keeps the span instead of failing the code that starts it.</summary>
+    [TestMethod]
+    public void ShouldSample_ThrowingFilter_KeepsTheSpan()
+    {
+        var options = _singleTokenOptions();
+        options.Filter = static _ => throw new InvalidOperationException("faulty filter");
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), new ManualTimeProvider());
+        var parameters = new SamplingParameters(
+            default, ActivityTraceId.CreateRandom(), "OP", ActivityKind.Internal, null, null);
+
+        sampler.ShouldSample(in parameters).Decision.Should().Be(SamplingDecision.RecordAndSample);
+    }
+
+    // 0.5 trace/s: the initial burst of two seconds holds one token, and the frozen clock adds none.
+    private static ArkAdaptiveSamplerOptions _singleTokenOptions()
+    {
+        return new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 0.5,
+            EnablePerOperationBucketing = false,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+    }
+
+    /// <summary>
     /// The adaptive controller measures the observed traffic rate on the injected
     /// <see cref="TimeProvider"/> timeline and pushes the new rate to the buckets.
     /// </summary>
@@ -897,12 +1033,21 @@ public class ArkPreFilterProcessorTests
     // ── Azure Service Bus Receive ──────────────────────────────────────────
 
     /// <summary>
-    /// Azure Service Bus <c>Receive</c> spans must be filtered (high-frequency noise).
+    /// Azure Service Bus <c>Receive</c> spans (high-frequency noise) are dropped by the Azure sampling filter,
+    /// not by the generic pre-filter.
     /// </summary>
     [TestMethod]
-    public void PreFilter_ServiceBusReceive_IsFiltered()
+    public void AzureSamplingFilter_ServiceBusReceive_IsFiltered()
     {
-        using var pipeline = _buildPipeline(nameof(PreFilter_ServiceBusReceive_IsFiltered));
+        var opts = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 10_000,
+            Filter = static p => !Azure.AzureSamplingFilters.IsServiceBusReceive(p),
+        };
+        using var pipeline = new TestPipeline(
+            nameof(AzureSamplingFilter_ServiceBusReceive_IsFiltered),
+            new ArkAdaptiveSampler(opts),
+            new ArkPreFilterProcessor());
 
         using var act = pipeline.StartWithTags(
             "Receive",
@@ -910,7 +1055,27 @@ public class ArkPreFilterProcessorTests
             _tags("messaging.system", "servicebus", "messaging.operation", "receive"));
         act?.Stop();
 
-        pipeline.Exported.Should().BeEmpty("Service Bus Receive spans must be pre-filtered");
+        pipeline.Exported.Should().BeEmpty("Service Bus Receive spans must be filtered");
+    }
+
+    /// <summary>
+    /// Only the receive span is noise: settlement and lock renewal run inside message processing, and the
+    /// application calls peek and deferred receives explicitly.
+    /// </summary>
+    [TestMethod]
+    [DataRow("ServiceBusReceiver.Receive", true)]
+    [DataRow("ServiceBusReceiver.Complete", false)]
+    [DataRow("ServiceBusReceiver.DeadLetter", false)]
+    [DataRow("ServiceBusReceiver.RenewMessageLock", false)]
+    [DataRow("ServiceBusReceiver.Peek", false)]
+    [DataRow("ServiceBusReceiver.ReceiveDeferred", false)]
+    public void AzureSamplingFilter_DropsOnlyTheServiceBusReceive(string name, bool expectDropped)
+    {
+        // Azure.Core tags peek and deferred receives with the receive operation too.
+        var tags = _tags("messaging.system", "servicebus", "messaging.operation", "receive");
+        var parameters = new SamplingParameters(default, ActivityTraceId.CreateRandom(), name, ActivityKind.Client, tags, null);
+
+        Azure.AzureSamplingFilters.IsServiceBusReceive(in parameters).Should().Be(expectDropped);
     }
 
     /// <summary>

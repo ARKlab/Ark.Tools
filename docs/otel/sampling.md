@@ -29,6 +29,22 @@ record-only data that can still be promoted when troubleshooting needs it.
 `RecordOnly` is deliberate. It preserves the activity long enough for the completion
 processor to inspect status, exception events, and response codes.
 
+Only the roots that the bucket logic decides count in the budget: dropped and filtered spans do
+not. The sampler applies the pre-filter rules (HTTP `OPTIONS`, SQL commits) and every
+`ArkAdaptiveSamplerOptions.Filter` (the NLog database filter, and the Service Bus receive rule of
+`Ark.Tools.OTel.Azure`) to the span name and creation tags, and drops matching spans before they
+reach a bucket. `Filter` returns `false` to drop a span; the Ark setups compose their rules onto it
+from `PostConfigure`, so an application filter set with `configureAdaptiveSampler` or
+`services.Configure<ArkAdaptiveSamplerOptions>` is kept. Spans that an Ark filter recognizes only after sampling, such as SQL commands
+skipped by query label (`outbox.peek-lock` and `SqlQueryLabelsToSkip`) or by an application
+SqlClient filter, and spans the pre-filter or NLog processors drop when they start or end, give
+back the token and the traffic they counted. Spans dropped after sampling by other processors
+or instrumentation filters, such as an application `HttpClient` filter, still count. HTTP `OPTIONS` requests are recognized before sampling when ASP.NET Core passes the request
+method at creation: by default from ASP.NET Core 11, and with `AddArkAspNetCoreOpenTelemetry`
+on .NET 10, which sets the
+`Microsoft.AspNetCore.Hosting.SuppressActivityOpenTelemetryData` switch to `false` unless the
+application already set it.
+
 ## Failure-first troubleshooting
 
 At completion, `ArkFailurePromotionProcessor`:
@@ -120,9 +136,10 @@ incomplete; failure promotion applies either way. Set it to `true` to follow the
 flag of the remote parent instead: such spans then carry no sample rate (itemCount 1).
 
 `OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
-(`AddArkAzureMonitorOpenTelemetry`). The legacy `ApplicationInsights:ArkAdaptiveSampler`
-section is still read for compatibility; values in `OTel:ArkAdaptiveSampler` take
-precedence. The Application Insights v3 compatibility path
+(`AddArkOpenTelemetry` or `AddArkAspNetCoreOpenTelemetry` when given an `IConfiguration`,
+and `AddArkOpenTelemetryForWorkerHost`). `AddArkAzureOpenTelemetry(configuration)` also reads
+the legacy `ApplicationInsights:ArkAdaptiveSampler` section for compatibility; values
+in `OTel:ArkAdaptiveSampler` take precedence. The Application Insights v3 compatibility path
 (`AddArkApplicationInsightsCustomizations`) reads only
 `ApplicationInsights:ArkAdaptiveSampler`.
 

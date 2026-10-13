@@ -43,13 +43,13 @@ public sealed class RebusInstrumentationNameTests
         source.HasListeners().Should().BeTrue();
         probe.Enabled.Should().BeTrue();
     }
+}
 
-    // Metric instruments are enabled only while a reader is attached.
-    private sealed class NoopMetricExporter : BaseExporter<Metric>
+// Metric instruments are enabled only while a reader is attached.
+internal sealed class NoopMetricExporter : BaseExporter<Metric>
+{
+    public override ExportResult Export(in Batch<Metric> batch)
     {
-        public override ExportResult Export(in Batch<Metric> batch)
-        {
-            return ExportResult.Success;
-        }
+        return ExportResult.Success;
     }
 }

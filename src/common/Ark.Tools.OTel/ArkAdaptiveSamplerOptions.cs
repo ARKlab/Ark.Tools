@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using OpenTelemetry.Trace;
+
 namespace Ark.Tools.OTel;
 
 /// <summary>
@@ -70,4 +72,15 @@ public sealed class ArkAdaptiveSamplerOptions
     /// Failure promotion applies either way.
     /// </remarks>
     public bool RespectRemoteParentSampling { get; set; }
+
+    /// <summary>
+    /// Gets or sets a filter applied before sampling: return <see langword="false"/> to drop the span, so it
+    /// does not use the budget. Default is <see langword="null"/> (no filter).
+    /// </summary>
+    /// <remarks>
+    /// The filter runs when the span is created, so it sees its name, kind, parent and creation tags.
+    /// Compose with the current value, as the Ark setups do from <c>PostConfigure</c>, rather than replacing it:
+    /// <c>var previous = options.Filter; options.Filter = p =&gt; Keep(p) &amp;&amp; (previous is null || previous(p));</c>
+    /// </remarks>
+    public Func<SamplingParameters, bool>? Filter { get; set; }
 }

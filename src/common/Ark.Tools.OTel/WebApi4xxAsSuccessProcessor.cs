@@ -5,10 +5,10 @@ using OpenTelemetry;
 
 using System.Diagnostics;
 
-namespace Ark.Tools.AspNetCore.OTel;
+namespace Ark.Tools.OTel;
 
 /// <summary>
-/// Marks ASP.NET Core server spans for HTTP 4xx responses as non-errors.
+/// Marks HTTP server spans for 4xx responses as non-errors.
 /// </summary>
 public sealed class WebApi4xxAsSuccessProcessor : BaseProcessor<Activity>
 {

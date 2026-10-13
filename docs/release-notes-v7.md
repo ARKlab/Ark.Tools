@@ -98,7 +98,8 @@ integration coverage passes. See
 
 Ark instrumentation now targets OpenTelemetry. For new ASP.NET Core hosts,
 reference `Ark.Tools.AspNetCore.OTel` and register
-`AddArkAzureMonitorOpenTelemetry`. Azure Monitor remains supported through its
+`AddArkAspNetCoreOpenTelemetry`; on Azure, also reference `Ark.Tools.OTel.Azure` and
+chain `AddArkAzureOpenTelemetry`. Azure Monitor remains supported through its
 OpenTelemetry exporter.
 
 Application Insights v3 is an explicit compatibility route for applications

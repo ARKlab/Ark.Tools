@@ -107,6 +107,14 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
 
     private static void _promoteSpan(Activity activity)
     {
+        // Keep the sampler's decision for ArkAdaptiveSampler._release: the tag below no longer reflects it.
+        if (activity.GetCustomProperty(ArkAdaptiveSampler._bucketSampleRateProperty) is null)
+        {
+            activity.SetCustomProperty(
+                ArkAdaptiveSampler._bucketSampleRateProperty,
+                activity.GetTagItem(ArkAdaptiveSampler._sampleRateTag) as double? ?? 0.0);
+        }
+
         activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
         activity.IsAllDataRequested = true;
 

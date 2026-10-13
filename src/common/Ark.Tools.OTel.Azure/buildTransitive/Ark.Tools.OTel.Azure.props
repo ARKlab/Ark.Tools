@@ -1,0 +1,14 @@
+<Project>
+  <!--
+    Azure SDK tracing for Service Bus and Event Hubs is still experimental, and Azure.Core reads this switch only once,
+    when the first Azure SDK client starts. Setting it in the runtime configuration turns it on before any code runs,
+    even when Key Vault or App Configuration clients start before the Ark Azure setup.
+    Set ArkEnableAzureSdkActivitySource to false to opt out: the switch is then set to false, so neither the Ark setup
+    nor the AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE environment variable turns it on. Azure.Core reads the switch
+    before the environment variable, which therefore has no effect while this file sets it.
+  -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Azure.Experimental.EnableActivitySource"
+                                    Value="$([MSBuild]::ValueOrDefault('$(ArkEnableAzureSdkActivitySource)', 'true'))" />
+  </ItemGroup>
+</Project>

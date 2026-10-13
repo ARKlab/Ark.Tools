@@ -33,7 +33,8 @@ public static class Ex
     }
 
     /// <summary>
-    /// Enables ResourceWatcher activities in the host OpenTelemetry providers.
+    /// Adds the Ark OpenTelemetry pipeline (see <see cref="ArkOpenTelemetryBuilderExtensions.AddArkOpenTelemetry"/>)
+    /// and the ResourceWatcher activities and metrics to the host OpenTelemetry providers.
     /// </summary>
     /// <param name="builder">The host builder.</param>
     /// <returns>The original host builder.</returns>
@@ -41,9 +42,13 @@ public static class Ex
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return builder.ConfigureServices(static (_, services) =>
+        return builder.ConfigureServices(static (context, services) =>
         {
-            services.AddOpenTelemetry().AddArkResourceWatcherOpenTelemetry();
+            // AddArkOpenTelemetry already adds the resource and the redaction processor.
+            services.AddOpenTelemetry()
+                .AddArkOpenTelemetry(configuration: context.Configuration)
+                .WithTracing(static tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
+                .WithMetrics(static metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
         });
     }
 }

@@ -79,7 +79,7 @@ Conventional Commits, and `async`/`await` in asynchronous methods.
 
 The Web variant's `SampleHost` registers the custom application source in
 addition to the Ark ASP.NET Core instrumentation. Azure Monitor is conditional: the
-shared setup calls `UseAzureMonitor` only when an Application Insights
+shared setup adds the Azure Monitor exporter only when an Application Insights
 connection string is configured. Leave that setting empty for local runs.
 
 Set `ARK_OTEL_FILE_DIRECTORY` to capture all process-local spans and numeric

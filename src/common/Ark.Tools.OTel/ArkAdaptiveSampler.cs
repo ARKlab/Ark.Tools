@@ -101,16 +101,9 @@ public sealed class ArkAdaptiveSampler : Sampler
     /// <inheritdoc/>
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        // If the tag ark.filtered was set by the pre-filter processor, drop immediately.
-        // Note: tags may include initial tags passed at span creation time.
-        if (samplingParameters.Tags != null)
-        {
-            foreach (var tag in samplingParameters.Tags)
-            {
-                if (tag.Key == _filteredTag && tag.Value is true)
-                    return new SamplingResult(SamplingDecision.Drop);
-            }
-        }
+        // Filtered noise is dropped before it reaches a bucket, so it does not use the TracesPerSecond budget.
+        if (_isFiltered(samplingParameters))
+            return new SamplingResult(SamplingDecision.Drop);
 
         // Parent decisions are authoritative for local traces. A sampled parent keeps
         // the chain intact; an unsampled parent must not be contradicted by sampling
@@ -149,8 +142,66 @@ public sealed class ArkAdaptiveSampler : Sampler
     /// <summary>Gets the tag name used to mark pre-filtered spans.</summary>
     public static string FilteredTagName => _filteredTag;
 
+    /// <summary>
+    /// Gives back what a root span counted in its bucket when a filter drops it after sampling,
+    /// so filtered noise does not use the TracesPerSecond budget.
+    /// </summary>
+    internal void _release(Activity activity)
+    {
+        // Only roots go through a bucket: see ShouldSample.
+        if (activity.ParentSpanId != default && (_options.RespectRemoteParentSampling || !activity.HasRemoteParent))
+            return;
+
+        // Failure promotion overwrites the tag and keeps the sampler's rate aside.
+        var sampleRate = (activity.GetCustomProperty(_bucketSampleRateProperty) ?? activity.GetTagItem(_sampleRateTag))
+            is double rate ? rate : 0;
+        _getOrCreateBucket(activity.OperationName).Refund(sampleRate);
+    }
+
+    // The name and creation tags of a span: the pre-filter rules and the options filter, applied before sampling.
+    private bool _isFiltered(in SamplingParameters samplingParameters)
+    {
+        string? httpMethod = null, dbOperation = null;
+        if (samplingParameters.Tags != null)
+        {
+            foreach (var tag in samplingParameters.Tags)
+            {
+                switch (tag.Key)
+                {
+                    case _filteredTag when tag.Value is true:
+                        return true;
+                    case "http.request.method":
+                        httpMethod = tag.Value as string;
+                        break;
+                    case "db.operation" or "db.operation.name":
+                        dbOperation ??= tag.Value as string;
+                        break;
+                }
+            }
+        }
+
+        return ArkPreFilterProcessor._isNoise(samplingParameters.Name, httpMethod, dbOperation)
+            || _isFilteredByOptions(samplingParameters);
+    }
+
+    private bool _isFilteredByOptions(in SamplingParameters samplingParameters)
+    {
+        try
+        {
+            return _options.Filter?.Invoke(samplingParameters) == false;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // Fail open: a faulty application filter must not break the code that starts the span.
+            return false;
+        }
+    }
+
     /// <summary>The Azure Monitor attribute holding the sample rate (0–100] of an exported span.</summary>
     internal const string _sampleRateTag = "microsoft.sample_rate";
+
+    /// <summary>The custom property holding the sampler's sample rate of a span whose tag was overwritten.</summary>
+    internal const string _bucketSampleRateProperty = "ark.sampler.sample_rate";
 
     private OperationBucket _getOrCreateBucket(string operationName)
     {
