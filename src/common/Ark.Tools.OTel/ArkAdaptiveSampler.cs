@@ -55,7 +55,7 @@ public sealed class ArkAdaptiveSampler : Sampler
     // Once the budget is shared out, a new bucket starts with a token even if its share is below 0.5/s.
     private long _lastAdjustment;
     private double _currentRate;
-    private volatile bool _hasAdjusted;
+    private bool _hasAdjusted;
     private readonly Lock _adjustLock = new();
 
     /// <summary>
@@ -154,7 +154,7 @@ public sealed class ArkAdaptiveSampler : Sampler
     private OperationBucket _getOrCreateBucket(string operationName)
     {
         if (!_options.EnablePerOperationBucketing)
-            return _buckets.GetOrAdd("__global__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider, state.AllowFirstItem), (Rate: _currentRate, TimeProvider: _timeProvider, AllowFirstItem: _hasAdjusted));
+            return _getOrAddBucket("__global__");
 
         // Look up first: ConcurrentDictionary.Count takes every internal lock, so keep it off the common path.
         if (_buckets.TryGetValue(operationName, out var existing))
@@ -163,9 +163,22 @@ public sealed class ArkAdaptiveSampler : Sampler
         // If we've reached the bucket limit, use the global bucket for overflow.
         // Look up again first: another thread may have added this operation's bucket meanwhile.
         if (_buckets.Count >= _options.MaxOperationBuckets)
-            return _buckets.TryGetValue(operationName, out existing) ? existing : _buckets.GetOrAdd("__overflow__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider, state.AllowFirstItem), (Rate: _currentRate, TimeProvider: _timeProvider, AllowFirstItem: _hasAdjusted));
+            return _buckets.TryGetValue(operationName, out existing) ? existing : _getOrAddBucket("__overflow__");
 
-        return _buckets.GetOrAdd(operationName, static (_, state) => new OperationBucket(state.Rate, state.TimeProvider, state.AllowFirstItem), (Rate: _currentRate, TimeProvider: _timeProvider, AllowFirstItem: _hasAdjusted));
+        return _getOrAddBucket(operationName);
+    }
+
+    private OperationBucket _getOrAddBucket(string key)
+    {
+        if (_buckets.TryGetValue(key, out var bucket))
+            return bucket;
+
+        // Serialized with _adjustRate, so a new bucket starts at the current share and no rate update misses it.
+        // Each bucket is created once, so the lock stays off the common path.
+        lock (_adjustLock)
+        {
+            return _buckets.GetOrAdd(key, new OperationBucket(_currentRate, _timeProvider, _hasAdjusted));
+        }
     }
 
     private async Task _runAdaptiveControllerAsync()

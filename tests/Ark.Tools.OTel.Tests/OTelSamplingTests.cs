@@ -498,6 +498,26 @@ public class ArkAdaptiveSamplerTests
             "OP_B has its own bucket and must not be affected by OP_A exhaustion");
     }
 
+    /// <summary>
+    /// Operations beyond <see cref="ArkAdaptiveSamplerOptions.MaxOperationBuckets"/> share one
+    /// overflow bucket, while operations that got their own bucket keep it.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_BeyondMaxOperationBuckets_OperationsShareOverflowBucket()
+    {
+        var time = new ManualTimeProvider();
+        var options = _oneTracePerSecondOptions();
+        options.EnablePerOperationBucketing = true;
+        options.MaxOperationBuckets = 1;
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        _sampleRoot(sampler, "OWN").Decision.Should().Be(SamplingDecision.RecordAndSample);
+        _sampleRoot(sampler, "OVERFLOW_A").Decision.Should().Be(SamplingDecision.RecordAndSample);
+        _sampleRoot(sampler, "OVERFLOW_B").Decision.Should().Be(SamplingDecision.RecordAndSample);
+        _sampleRoot(sampler, "OVERFLOW_A").Decision.Should().Be(SamplingDecision.RecordOnly, "OVERFLOW_A and OVERFLOW_B drained the shared two-token burst");
+        _sampleRoot(sampler, "OWN").Decision.Should().Be(SamplingDecision.RecordAndSample, "OWN keeps its own bucket");
+    }
+
     // ── behaviour: total budget across operation buckets ──────────────────
 
     /// <summary>
