@@ -268,8 +268,12 @@ public sealed class ArkAdaptiveSampler : Sampler
             var buckets = _buckets.Values.Select(static b => (Bucket: b, Counts: b.TakeCounts())).ToList();
             var active = buckets.Where(static b => b.Counts.Seen > 0).ToList();
 
+            // Restart the window anyway: a longer one would understate the next traffic of rare operations.
             if (active.Count == 0)
+            {
+                _lastAdjustment = now;
                 return;
+            }
 
             var share = _fairShare(active.Select(b => b.Counts.Seen / elapsed).ToList(), _options.TracesPerSecond);
 

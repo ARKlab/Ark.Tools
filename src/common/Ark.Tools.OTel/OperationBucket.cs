@@ -87,6 +87,8 @@ internal sealed class OperationBucket
     {
         lock (_lock)
         {
+            // Credit the tokens earned at the old rate: a bucket idle at a rate of 0 keeps them.
+            _refill();
             _rate = newRate;
             // Clamp now: _refill does not when no time has passed, and a lower rate must not keep older tokens.
             _tokens = Math.Min(_tokens, Math.Max(1.0, newRate * 2.0));
