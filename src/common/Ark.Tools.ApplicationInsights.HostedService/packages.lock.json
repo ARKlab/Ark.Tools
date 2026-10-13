@@ -103,16 +103,6 @@
           "System.Memory.Data": "10.0.10"
         }
       },
-      "Azure.Monitor.OpenTelemetry.Exporter": {
-        "type": "Transitive",
-        "resolved": "1.10.0",
-        "contentHash": "39Vc71fy1KYqU70j3sbGOqUU6wT5/eKskEuoW8R+H+J+srIyCewN6ooMTj+6lU4yFpJ0x5da2jx1GK9h48g6iw==",
-        "dependencies": {
-          "Azure.Core": "1.63.0",
-          "OpenTelemetry.Extensions.Hosting": "1.18.0",
-          "OpenTelemetry.PersistentStorage.FileSystem": "1.1.1"
-        }
-      },
       "Azure.Security.KeyVault.Secrets": {
         "type": "Transitive",
         "resolved": "4.11.0",
@@ -459,7 +449,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "Ark.Tools.OTel": "[1.0.0, )",
+          "Ark.Tools.OTel.Azure": "[1.0.0, )",
           "Microsoft.ApplicationInsights": "[3.2.0, )",
           "Microsoft.Extensions.Options": "[10.0.12, )",
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )"
@@ -557,6 +547,13 @@
           "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
         }
       },
+      "ark.tools.otel.azure": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.OTel": "[1.0.0, )",
+          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )"
+        }
+      },
       "ark.tools.systemtextjson": {
         "type": "Project",
         "dependencies": {
@@ -583,6 +580,17 @@
         "contentHash": "GeFv8sGwRKvDKwI2WFy8r0mhmlxEVZg24Sit2NogTjiSO8RVjllWM65OT6e1sKjOvG8V74y7hAbaELUUPjZQSw==",
         "dependencies": {
           "Azure.Core": "1.53.0"
+        }
+      },
+      "Azure.Monitor.OpenTelemetry.Exporter": {
+        "type": "CentralTransitive",
+        "requested": "[1.10.0, )",
+        "resolved": "1.10.0",
+        "contentHash": "39Vc71fy1KYqU70j3sbGOqUU6wT5/eKskEuoW8R+H+J+srIyCewN6ooMTj+6lU4yFpJ0x5da2jx1GK9h48g6iw==",
+        "dependencies": {
+          "Azure.Core": "1.63.0",
+          "OpenTelemetry.Extensions.Hosting": "1.18.0",
+          "OpenTelemetry.PersistentStorage.FileSystem": "1.1.1"
         }
       },
       "DistributedLock.Core": {

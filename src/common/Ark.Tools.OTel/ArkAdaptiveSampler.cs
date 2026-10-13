@@ -51,6 +51,7 @@ public sealed class ArkAdaptiveSampler : Sampler
     private readonly FailedTraceRegistry _failedTraceRegistry;
     private readonly ConcurrentDictionary<string, OperationBucket> _buckets;
     private readonly TimeProvider _timeProvider;
+    private readonly IArkSamplingFilter[] _samplingFilters = [];
 
     // Adaptive rate controller state; _currentRate is the spare budget given to new buckets.
     // Once the budget is shared out, a new bucket starts with a token even if its share is below 0.5/s.
@@ -77,6 +78,20 @@ public sealed class ArkAdaptiveSampler : Sampler
     public ArkAdaptiveSampler(ArkAdaptiveSamplerOptions options, FailedTraceRegistry failedTraceRegistry)
         : this(options, failedTraceRegistry, TimeProvider.System)
     {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="ArkAdaptiveSampler"/> that also drops the spans recognized by
+    /// <paramref name="samplingFilters"/> before sampling, so they do not use its budget.
+    /// </summary>
+    public ArkAdaptiveSampler(
+        ArkAdaptiveSamplerOptions options,
+        FailedTraceRegistry failedTraceRegistry,
+        IEnumerable<IArkSamplingFilter> samplingFilters)
+        : this(options, failedTraceRegistry)
+    {
+        ArgumentNullException.ThrowIfNull(samplingFilters);
+        _samplingFilters = [.. samplingFilters];
     }
 
     /// <summary>
@@ -142,9 +157,6 @@ public sealed class ArkAdaptiveSampler : Sampler
     /// <summary>Gets the tag name used to mark pre-filtered spans.</summary>
     public static string FilteredTagName => _filteredTag;
 
-    /// <summary>Drops the spans to the NLog database before sampling, as the processor does after it.</summary>
-    internal ArkSqlDependencyFilterProcessor? _sqlDependencyFilter { get; init; }
-
     /// <summary>
     /// Gives back what a root span counted in its bucket when a filter drops it after sampling,
     /// so filtered noise does not use the TracesPerSecond budget.
@@ -159,11 +171,10 @@ public sealed class ArkAdaptiveSampler : Sampler
         _getOrCreateBucket(activity.OperationName).Refund(sampleRate);
     }
 
-    // The creation tags of a span: the pre-filter and NLog database rules, applied before sampling.
+    // The name and creation tags of a span: the pre-filter rules and the sampling filters, applied before sampling.
     private bool _isFiltered(in SamplingParameters samplingParameters)
     {
-        string? httpMethod = null, messagingSystem = null, messagingOperation = null, dbOperation = null;
-        string? dbSystem = null, peerName = null, dbName = null;
+        string? httpMethod = null, dbOperation = null;
         if (samplingParameters.Tags != null)
         {
             foreach (var tag in samplingParameters.Tags)
@@ -175,30 +186,23 @@ public sealed class ArkAdaptiveSampler : Sampler
                     case "http.request.method":
                         httpMethod = tag.Value as string;
                         break;
-                    case "messaging.system":
-                        messagingSystem = tag.Value as string;
-                        break;
-                    case "messaging.operation" or "messaging.operation.name":
-                        messagingOperation ??= tag.Value as string;
-                        break;
                     case "db.operation" or "db.operation.name":
                         dbOperation ??= tag.Value as string;
-                        break;
-                    case "db.system" or "db.system.name":
-                        dbSystem ??= tag.Value as string;
-                        break;
-                    case "server.address" or "net.peer.name" or "peer.service":
-                        peerName ??= tag.Value as string;
-                        break;
-                    case "db.name" or "db.namespace":
-                        dbName ??= tag.Value as string;
                         break;
                 }
             }
         }
 
-        return ArkPreFilterProcessor._isNoise(samplingParameters.Name, httpMethod, messagingSystem, messagingOperation, dbOperation)
-            || _sqlDependencyFilter?._matches(dbSystem, peerName, dbName) == true;
+        if (ArkPreFilterProcessor._isNoise(samplingParameters.Name, httpMethod, dbOperation))
+            return true;
+
+        foreach (var filter in _samplingFilters)
+        {
+            if (filter.ShouldDrop(in samplingParameters))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>The Azure Monitor attribute holding the sample rate (0–100] of an exported span.</summary>

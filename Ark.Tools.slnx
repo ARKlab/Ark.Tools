@@ -22,6 +22,7 @@
     <Project Path="src/common/Ark.Tools.ApplicationInsights.HostedService/Ark.Tools.ApplicationInsights.HostedService.csproj" />
     <Project Path="src/common/Ark.Tools.ApplicationInsights/Ark.Tools.ApplicationInsights.csproj" />
     <Project Path="src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
+    <Project Path="src/common/Ark.Tools.OTel.Azure/Ark.Tools.OTel.Azure.csproj" />
     <Project Path="src/common/Ark.Tools.Auth0/Ark.Tools.Auth0.csproj" />
     <Project Path="src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
     <Project Path="src/common/Ark.Tasks/Ark.Tasks.csproj" />

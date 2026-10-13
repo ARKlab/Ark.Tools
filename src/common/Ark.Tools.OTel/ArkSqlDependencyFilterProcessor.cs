@@ -4,6 +4,7 @@
 using Ark.Tools.Compliance;
 
 using OpenTelemetry;
+using OpenTelemetry.Trace;
 
 using System.Data.Common;
 using System.Diagnostics;
@@ -13,9 +14,13 @@ namespace Ark.Tools.OTel;
 /// <summary>
 /// An OpenTelemetry <see cref="BaseProcessor{T}"/> that filters out SQL dependency spans
 /// targeting a specific database server and database (typically the NLog audit/log database).
+/// As an <see cref="IArkSamplingFilter"/>, it also drops them before <see cref="ArkAdaptiveSampler"/> samples them.
 /// </summary>
-public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
+public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>, IArkSamplingFilter
 {
+    // Set by AddArkOpenTelemetry: a span filtered here, after sampling, gives its budget back.
+    internal ArkAdaptiveSampler? _sampler;
+
     private readonly string? _configuredServer;
     private readonly string? _database;
     // SqlClient instrumentation reports db.namespace as "{instance}.{database}" for a named instance.
@@ -77,9 +82,36 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
         _filter(data);
     }
 
+    /// <inheritdoc/>
+    public bool ShouldDrop(in SamplingParameters samplingParameters)
+    {
+        // SqlClient instrumentation passes these tags when it creates the span.
+        if (!_enabled || samplingParameters.Kind != ActivityKind.Client || samplingParameters.Tags is null)
+            return false;
+
+        string? dbSystem = null, peerName = null, dbName = null;
+        foreach (var tag in samplingParameters.Tags)
+        {
+            switch (tag.Key)
+            {
+                case "db.system" or "db.system.name":
+                    dbSystem ??= tag.Value as string;
+                    break;
+                case "server.address" or "net.peer.name" or "peer.service":
+                    peerName ??= tag.Value as string;
+                    break;
+                case "db.name" or "db.namespace":
+                    dbName ??= tag.Value as string;
+                    break;
+            }
+        }
+
+        return _matches(dbSystem, peerName, dbName);
+    }
+
     private void _filter(Activity data)
     {
-        if (_matches(
+        if (data.IsAllDataRequested && _matches(
                 data.GetTagItem("db.system") as string ?? data.GetTagItem("db.system.name") as string,
                 data.GetTagItem("server.address") as string
                     ?? data.GetTagItem("net.peer.name") as string
@@ -88,11 +120,11 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
         {
             data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
             data.IsAllDataRequested = false;
+            _sampler?._release(data);
         }
     }
 
-    // Shared with ArkAdaptiveSampler, which matches the creation tags before sampling.
-    internal bool _matches(string? dbSystem, string? peerName, string? dbName)
+    private bool _matches(string? dbSystem, string? peerName, string? dbName)
     {
         if (!_enabled)
             return false;

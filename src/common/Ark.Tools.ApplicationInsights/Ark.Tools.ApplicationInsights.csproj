@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
+    <ProjectReference Include="../Ark.Tools.OTel.Azure/Ark.Tools.OTel.Azure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.AspNetCore.OTel;
+using Ark.Tools.OTel.Azure;
 
 using AwesomeAssertions;
 
@@ -15,8 +16,10 @@ using System.Diagnostics;
 namespace Ark.Tools.OTel.Tests;
 
 /// <summary>
-/// Verifies the HttpClient filter of <see cref="Ex.AddArkAzureMonitorOpenTelemetry"/>, with and without Azure Monitor:
-/// HttpClient spans that duplicate an Azure SDK client span are dropped, and an application filter still applies.
+/// Verifies the HttpClient filter of the Azure setups, <see cref="Ex.AddArkAzureMonitorOpenTelemetry"/> (ASP.NET Core,
+/// Distro) and <see cref="ArkAzureOpenTelemetryBuilderExtensions.AddArkAzureOpenTelemetry"/> (any host, exporter), with
+/// and without Azure Monitor: HttpClient spans that duplicate an Azure SDK client span are dropped, and an application
+/// filter still applies.
 /// </summary>
 [TestClass]
 // HttpClient spans are process-wide: a parallel test's tracer provider would also collect this request.
@@ -29,16 +32,21 @@ public sealed class HttpClientDeduplicationTests
         + "IngestionEndpoint=http://127.0.0.1:1/;LiveEndpoint=http://127.0.0.1:1/";
 
     [TestMethod]
-    [DataRow("Azure.Core.Http", false, true)]
-    [DataRow("Ark.Tools.OTel.Tests.Dedup", true, true)]
-    [DataRow("Azure.Core.Http", false, false)]
-    [DataRow("Ark.Tools.OTel.Tests.Dedup", true, false)]
-    public async Task AddArkAzureMonitorOpenTelemetry_FiltersHttpClientSpanUnderAzureSdkSpan(
+    [DataRow("Azure.Core.Http", false, true, true)]
+    [DataRow("Ark.Tools.OTel.Tests.Dedup", true, true, true)]
+    [DataRow("Azure.Core.Http", false, false, true)]
+    [DataRow("Ark.Tools.OTel.Tests.Dedup", true, false, true)]
+    [DataRow("Azure.Core.Http", false, true, false)]
+    [DataRow("Ark.Tools.OTel.Tests.Dedup", true, true, false)]
+    [DataRow("Azure.Core.Http", false, false, false)]
+    [DataRow("Ark.Tools.OTel.Tests.Dedup", true, false, false)]
+    public async Task AzureSetup_FiltersHttpClientSpanUnderAzureSdkSpan(
         string parentSourceName,
         bool expectHttpClientSpan,
-        bool withAzureMonitor)
+        bool withAzureMonitor,
+        bool aspNetCore)
     {
-        var httpSpans = await _collectHttpClientSpans(parentSourceName, withAzureMonitor, applicationFilter: null);
+        var httpSpans = await _collectHttpClientSpans(parentSourceName, withAzureMonitor, aspNetCore, applicationFilter: null);
 
         httpSpans.Should().HaveCount(expectHttpClientSpan ? 1 : 0);
         AppContext.TryGetSwitch("Azure.Experimental.EnableActivitySource", out var azureSdkTracing).Should().BeTrue();
@@ -46,13 +54,16 @@ public sealed class HttpClientDeduplicationTests
     }
 
     [TestMethod]
-    [DataRow(true)]
-    [DataRow(false)]
-    public async Task AddArkAzureMonitorOpenTelemetry_KeepsApplicationHttpClientFilter(bool withAzureMonitor)
+    [DataRow(true, true)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(false, false)]
+    public async Task AzureSetup_KeepsApplicationHttpClientFilter(bool withAzureMonitor, bool aspNetCore)
     {
         var httpSpans = await _collectHttpClientSpans(
             "Ark.Tools.OTel.Tests.Dedup.ApplicationFilter",
             withAzureMonitor,
+            aspNetCore,
             static _ => false);
 
         httpSpans.Should().BeEmpty("UseAzureMonitor must not replace the application filter");
@@ -61,6 +72,7 @@ public sealed class HttpClientDeduplicationTests
     private async Task<IReadOnlyList<Activity>> _collectHttpClientSpans(
         string parentSourceName,
         bool withAzureMonitor,
+        bool aspNetCore,
         Func<HttpRequestMessage, bool>? applicationFilter)
     {
         using var collector = new CollectingProcessor();
@@ -78,7 +90,10 @@ public sealed class HttpClientDeduplicationTests
                 .AddHttpClientInstrumentation(options => options.FilterHttpRequestMessage = applicationFilter));
         }
 
-        services.AddArkAzureMonitorOpenTelemetry(configuration);
+        if (aspNetCore)
+            services.AddArkAzureMonitorOpenTelemetry(configuration);
+        else
+            services.AddOpenTelemetry().AddArkOpenTelemetry(configuration: configuration).AddArkAzureOpenTelemetry(configuration);
         services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
             .AddSource(parentSourceName)
             .AddProcessor(collector));

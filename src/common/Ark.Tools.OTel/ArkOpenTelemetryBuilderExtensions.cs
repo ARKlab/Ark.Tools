@@ -63,6 +63,7 @@ public static class ArkOpenTelemetryBuilderExtensions
         var failedTraceRegistry = new FailedTraceRegistry();
         // No-op when no NLog database is configured.
         var nlogDatabaseFilter = new ArkSqlDependencyFilterProcessor(_getNLogConnectionString(configuration));
+        var preFilter = new ArkPreFilterProcessor();
         ArkAdaptiveSampler? sampler = null;
 
         return builder
@@ -75,14 +76,18 @@ public static class ArkOpenTelemetryBuilderExtensions
                         configuration?.GetSection(_adaptiveSamplerSection).Bind(options);
                         configureAdaptiveSampler?.Invoke(options);
                     });
-                    services.AddSingleton(sp => sampler = new ArkAdaptiveSampler(
-                        sp.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
-                        failedTraceRegistry)
+                    services.AddSingleton(sp =>
                     {
-                        _sqlDependencyFilter = nlogDatabaseFilter,
+                        sampler = new ArkAdaptiveSampler(
+                            sp.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
+                            failedTraceRegistry,
+                            [nlogDatabaseFilter, .. sp.GetServices<IArkSamplingFilter>()]);
+                        preFilter._sampler = sampler;
+                        nlogDatabaseFilter._sampler = sampler;
+                        return sampler;
                     });
                 })
-                .AddProcessor(new ArkPreFilterProcessor())
+                .AddProcessor(preFilter)
                 .SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>())
                 .AddSource(_rebusInstrumentationName)
                 .AddSource(_mediatorMessagingInstrumentationName)

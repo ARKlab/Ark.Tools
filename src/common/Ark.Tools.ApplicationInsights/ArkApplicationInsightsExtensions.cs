@@ -11,6 +11,7 @@ using OpenTelemetry.Trace;
 
 using Ark.Tools.Compliance;
 using Ark.Tools.OTel;
+using Ark.Tools.OTel.Azure;
 
 namespace Ark.Tools.ApplicationInsights;
 
@@ -90,16 +91,21 @@ public static class ArkApplicationInsightsExtensions
                             tracerBuilder.AddArkComplianceRedaction();
 
                             // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
-                            tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry));
+                            // Service Bus receives and NLog database writes are dropped before they use its budget.
+                            var sqlDependencyFilter = new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter);
+                            tracerBuilder.SetSampler(new ArkAdaptiveSampler(
+                                samplerOptions,
+                                failedTraceRegistry,
+                                [new AzureServiceBusReceiveSamplingFilter(), sqlDependencyFilter]));
 
                             // Failure promotion: promotes rate-limited spans (and their parent chain /
                             // in-flight siblings) to exported when a failure is detected anywhere in
                             // the operation.
                             tracerBuilder.AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry));
 
-                            // Optional: SQL dependency filter for the NLog audit database.
-                            if (!string.IsNullOrWhiteSpace(sqlConnectionStringToFilter))
-                                tracerBuilder.AddProcessor(new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter));
+                            // SQL dependency filter for the NLog audit database (no-op without a connection string),
+                            // for spans whose tags are set after sampling.
+                            tracerBuilder.AddProcessor(sqlDependencyFilter);
                         });
                         builder.ConfigureResource(static resource => resource.AddArkTelemetryResource());
                     });

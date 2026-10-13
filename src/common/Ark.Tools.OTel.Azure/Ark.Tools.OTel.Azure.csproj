@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- the other props are defined in Directory.Build.props -->
+  <!--===================Configuration for Nuget Package=========================-->
+  <PropertyGroup>
+
+    <Description>Azure SDK tracing and Azure Monitor export for the Ark.Tools OpenTelemetry setups, on any host.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;OpenTelemetry;OTel;Azure;AzureMonitor</PackageTags>
+
+    <!--Update these information when releasing a new version of the NugetPackage-->
+    <PackageReleaseNotes></PackageReleaseNotes>
+
+    <Version>$(ArkToolsCoreVersion)</Version>
+    <VersionSuffix>$(ArkToolsCoreVersionSuffix)</VersionSuffix>
+
+    <Version Condition=" '$(VersionSuffix)' != '' ">$(Version)-$(VersionSuffix)</Version>
+
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+  <!--===============================================================================-->
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
+    <None Include="buildTransitive/Ark.Tools.OTel.Azure.props" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+
+</Project>

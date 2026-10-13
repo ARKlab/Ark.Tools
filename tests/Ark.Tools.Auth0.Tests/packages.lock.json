@@ -179,16 +179,6 @@
           "System.Memory.Data": "10.0.10"
         }
       },
-      "Azure.Monitor.OpenTelemetry.Exporter": {
-        "type": "Transitive",
-        "resolved": "1.10.0",
-        "contentHash": "39Vc71fy1KYqU70j3sbGOqUU6wT5/eKskEuoW8R+H+J+srIyCewN6ooMTj+6lU4yFpJ0x5da2jx1GK9h48g6iw==",
-        "dependencies": {
-          "Azure.Core": "1.63.0",
-          "OpenTelemetry.Extensions.Hosting": "1.18.0",
-          "OpenTelemetry.PersistentStorage.FileSystem": "1.1.1"
-        }
-      },
       "Castle.Core": {
         "type": "Transitive",
         "resolved": "5.2.1",
@@ -446,6 +436,17 @@
           "Auth0.AuthenticationApi": "7.49.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
           "Portable.System.DateTimeOnly": "9.0.1"
+        }
+      },
+      "Azure.Monitor.OpenTelemetry.Exporter": {
+        "type": "CentralTransitive",
+        "requested": "[1.10.0, )",
+        "resolved": "1.10.0",
+        "contentHash": "39Vc71fy1KYqU70j3sbGOqUU6wT5/eKskEuoW8R+H+J+srIyCewN6ooMTj+6lU4yFpJ0x5da2jx1GK9h48g6iw==",
+        "dependencies": {
+          "Azure.Core": "1.63.0",
+          "OpenTelemetry.Extensions.Hosting": "1.18.0",
+          "OpenTelemetry.PersistentStorage.FileSystem": "1.1.1"
         }
       },
       "JWT": {
