@@ -73,6 +73,27 @@ public class EvolvableEnumJsonConverterTests
         Large = ulong.MaxValue,
     }
 
+    private enum LongNamed
+    {
+        NOT_SET = 0,
+        [EnumMember(Value = _longName)]
+        Long = 1,
+    }
+
+    private enum BlankNamed
+    {
+        NOT_SET = 0,
+        [EnumMember(Value = " ")]
+        Blank = 1,
+    }
+
+    // Longer than the converters' 128-char stack buffer, so it is read through the allocating path.
+    private const string _longName = "long-"
+        + "0123456789012345678901234567890123456789"
+        + "0123456789012345678901234567890123456789"
+        + "0123456789012345678901234567890123456789"
+        + "0123456789012345678901234567890123456789";
+
     private static JsonSerializerOptions _createDefaultOptions() => new JsonSerializerOptions
     {
         RespectNullableAnnotations = true,
@@ -179,6 +200,79 @@ public class EvolvableEnumJsonConverterTests
         result.IsDefined.Should().BeFalse();
         result.Name.Should().Be("FutureMember");
         json.Should().Be("\"FutureMember\"");
+    }
+
+    /// <summary>Verifies that exact and escaped declared names are read as the declared value, with both converters.</summary>
+    [TestMethod]
+    [DataRow("\"Active\"")]
+    [DataRow("\"\\u0041ctive\"")]
+    public void DefaultFormat_ShouldReadExactAndEscapedNames(string json)
+    {
+        // Act
+        var result = JsonSerializer.Deserialize<EvolvableEnum<Status>>(json, _createDefaultOptions());
+        var backed = JsonSerializer.Deserialize<EvolvableEnum<ByteStatus, byte>>(json, _byteStatusOptions);
+
+        // Assert
+        result.Value.Should().Be(Status.Active);
+        backed.Value.Should().Be(ByteStatus.Active);
+    }
+
+    /// <summary>Verifies that case-mismatched and escaped unknown names are preserved as unknown names.</summary>
+    [TestMethod]
+    [DataRow("\"active\"", "active")]
+    [DataRow("\"Future\\u0041\"", "FutureA")]
+    public void DefaultFormat_ShouldPreserveCaseMismatchedAndEscapedUnknownNames(string json, string name)
+    {
+        // Act
+        var result = JsonSerializer.Deserialize<EvolvableEnum<Status>>(json, _createDefaultOptions());
+
+        // Assert
+        result.IsDefined.Should().BeFalse();
+        result.Name.Should().Be(name);
+    }
+
+    /// <summary>Verifies that names longer than the stack buffer are read like short ones.</summary>
+    [TestMethod]
+    public void DefaultFormat_ShouldReadNamesLongerThanTheStackBuffer()
+    {
+        // Arrange
+        var options = _createDefaultOptions();
+        var unknown = new string('x', 200);
+
+        // Act
+        var known = JsonSerializer.Deserialize<EvolvableEnum<LongNamed>>("\"" + _longName + "\"", options);
+        var preserved = JsonSerializer.Deserialize<EvolvableEnum<LongNamed>>("\"" + unknown + "\"", options);
+
+        // Assert
+        known.Value.Should().Be(LongNamed.Long);
+        preserved.Name.Should().Be(unknown);
+    }
+
+    /// <summary>Verifies that member names other than the written name, and members written as blank, are still read.</summary>
+    [TestMethod]
+    public void DefaultFormat_ShouldReadMemberNamesThatAreNotTheWrittenName()
+    {
+        // Arrange
+        var options = _createDefaultOptions();
+
+        // Act
+        var alias = JsonSerializer.Deserialize<EvolvableEnum<LongNamed>>("\"Long\"", options);
+        var blank = JsonSerializer.Deserialize<EvolvableEnum<BlankNamed>>("\"Blank\"", options);
+
+        // Assert
+        alias.Value.Should().Be(LongNamed.Long);
+        blank.Value.Should().Be(BlankNamed.Blank);
+    }
+
+    /// <summary>Verifies that an empty name is still rejected.</summary>
+    [TestMethod]
+    public void DefaultFormat_EmptyName_ShouldThrow()
+    {
+        // Act
+        var act = static () => JsonSerializer.Deserialize<EvolvableEnum<Status>>("\"\"", _createDefaultOptions());
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
     }
 
     /// <summary>Verifies that the default converter defensively accepts a numeric JSON token too.</summary>

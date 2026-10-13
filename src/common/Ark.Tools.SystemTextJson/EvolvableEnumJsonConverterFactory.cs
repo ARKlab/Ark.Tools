@@ -158,11 +158,13 @@ internal static class EvolvableEnumJsonConverter
     {
         private readonly EvolvableEnumWireFormat _format;
         private readonly FrozenDictionary<string, JsonEncodedText> _encodedNames;
+        private readonly FrozenDictionary<string, EvolvableEnum<TEnum>>.AlternateLookup<ReadOnlySpan<char>> _knownNames;
 
         public DefaultConverter(EvolvableEnumWireFormat format, JavaScriptEncoder encoder)
         {
             _format = format;
             _encodedNames = _createEncodedNames<TEnum, int>(encoder);
+            _knownNames = _createKnownNames(_encodedNames, EvolvableEnum<TEnum>.FromName);
         }
 
         public override EvolvableEnum<TEnum> Read(
@@ -170,7 +172,7 @@ internal static class EvolvableEnumJsonConverter
             Type typeToConvert,
             JsonSerializerOptions options) => reader.TokenType switch
             {
-                JsonTokenType.String => EvolvableEnum<TEnum>.FromName(reader.GetString()!),
+                JsonTokenType.String => _readName(ref reader, _knownNames, EvolvableEnum<TEnum>.FromName),
                 JsonTokenType.Number => EvolvableEnum<TEnum>.FromNumber(reader.GetInt32()),
                 _ => throw _unexpectedToken<TEnum>(reader.TokenType),
             };
@@ -199,11 +201,13 @@ internal static class EvolvableEnumJsonConverter
     {
         private readonly EvolvableEnumWireFormat _format;
         private readonly FrozenDictionary<string, JsonEncodedText> _encodedNames;
+        private readonly FrozenDictionary<string, EvolvableEnum<TEnum, TBacking>>.AlternateLookup<ReadOnlySpan<char>> _knownNames;
 
         public Converter(EvolvableEnumWireFormat format, JavaScriptEncoder encoder)
         {
             _format = format;
             _encodedNames = _createEncodedNames<TEnum, TBacking>(encoder);
+            _knownNames = _createKnownNames(_encodedNames, EvolvableEnum<TEnum, TBacking>.FromName);
         }
 
         public override EvolvableEnum<TEnum, TBacking> Read(
@@ -211,7 +215,7 @@ internal static class EvolvableEnumJsonConverter
             Type typeToConvert,
             JsonSerializerOptions options) => reader.TokenType switch
             {
-                JsonTokenType.String => EvolvableEnum<TEnum, TBacking>.FromName(reader.GetString()!),
+                JsonTokenType.String => _readName(ref reader, _knownNames, EvolvableEnum<TEnum, TBacking>.FromName),
                 JsonTokenType.Number => EvolvableEnum<TEnum, TBacking>.FromNumber(_readNumber<TBacking>(ref reader)),
                 _ => throw _unexpectedToken<TEnum>(reader.TokenType),
             };
@@ -250,6 +254,28 @@ internal static class EvolvableEnumJsonConverter
         }
 
         return names.ToFrozenDictionary(StringComparer.Ordinal);
+    }
+
+    // Caches FromName for the declared names, so reading them needs no string. FromName throws on blank names.
+    private static FrozenDictionary<string, TValue>.AlternateLookup<ReadOnlySpan<char>> _createKnownNames<TValue>(
+        FrozenDictionary<string, JsonEncodedText> encodedNames,
+        Func<string, TValue> fromName)
+    {
+        return encodedNames.Keys
+            .Where(static name => !string.IsNullOrWhiteSpace(name))
+            .ToFrozenDictionary(static name => name, fromName, StringComparer.Ordinal)
+            .GetAlternateLookup<ReadOnlySpan<char>>();
+    }
+
+    private static TValue _readName<TValue>(
+        ref Utf8JsonReader reader,
+        FrozenDictionary<string, TValue>.AlternateLookup<ReadOnlySpan<char>> knownNames,
+        Func<string, TValue> fromName)
+    {
+        Span<char> buffer = stackalloc char[ShortJsonString.MaxLength];
+        return ShortJsonString.TryCopy(ref reader, buffer, out var written) && knownNames.TryGetValue(buffer[..written], out var known)
+            ? known
+            : fromName(reader.GetString()!);
     }
 
     private static void _writeName<TValue>(
