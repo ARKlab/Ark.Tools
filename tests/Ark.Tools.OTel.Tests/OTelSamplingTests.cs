@@ -940,7 +940,7 @@ public class ArkAdaptiveSamplerTests
         options.MaxOperationBuckets = 100;
         var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
 
-        // BUSY at 50 roots/s; each OP_i one root every 120 s, so it is idle every other period.
+        // BUSY at 1 root/s, which uses the whole budget; each OP_i one root every 120 s, so it is idle every other period.
         var intermittent = Enumerable.Range(0, operations).Select(static i => ($"OP_{i}", 120)).ToArray();
         _simulate(sampler, time, TimeSpan.FromHours(1), TimeSpan.FromSeconds(1), [("BUSY", 1), .. intermittent]);
         var counts = _simulate(sampler, time, TimeSpan.FromHours(1), TimeSpan.FromSeconds(1), [("BUSY", 1), .. intermittent]);
