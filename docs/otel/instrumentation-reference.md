@@ -317,8 +317,9 @@ services.AddArkAzureMonitorOpenTelemetry(configuration);
 Each operation name gets a thread-safe token bucket by default. A bucket starts
 with a two-second burst capacity. The adaptive controller periodically adjusts
 the refill rates from observed traffic so that all buckets together export
-about `TracesPerSecond` roots. Operations slower than the fair share keep all
-their roots; the busier operations split the rest of the budget evenly. Dynamic
+about `TracesPerSecond` roots. Operations slower than the fair share get a
+refill rate that covers their average traffic, though a burst larger than the
+bucket is still limited; the busier operations split the rest of the budget evenly. Dynamic
 operation names are bounded by `MaxOperationBuckets`; overflow shares the
 `__overflow__` bucket. Disabling per-operation bucketing uses `__global__`.
 

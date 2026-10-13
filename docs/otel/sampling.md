@@ -54,7 +54,9 @@ Root spans use a token bucket keyed by operation name. The default burst capacit
 seconds of tokens, and at least one token. `TracesPerSecond` is the total target for all
 buckets. Every `SamplingPercentageDecreaseTimeout`, the moving-average controller measures
 the traffic of each bucket and shares the budget max-min fairly: operations slower than the
-fair share keep all their roots, and the busier operations split the rest evenly. New and
+fair share get a refill rate that covers their average traffic, and the busier operations split
+the rest evenly. A burst larger than the bucket is still limited, so a rare operation that sends
+many roots at once keeps only the first ones. New and
 idle operations start at the current fair share, and an operation first seen after an
 adjustment starts with one token so that its first root is sampled, so the total can exceed the target until
 the next adjustment. `MaxOperationBuckets` limits memory when operation names are dynamic;

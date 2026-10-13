@@ -21,8 +21,9 @@ namespace Ark.Tools.OTel;
 /// ensuring rare code paths are sampled fairly relative to high-frequency ones.</description></item>
 /// <item><description><b>Adaptive rate control</b>: the refill rates are periodically adjusted from the observed
 /// traffic so that the buckets together export about <see cref="ArkAdaptiveSamplerOptions.TracesPerSecond"/> roots
-/// per second. The budget is shared max-min fairly: operations slower than the fair share keep all their roots
-/// and the rest of the budget is split evenly among the busier operations.</description></item>
+/// per second. The budget is shared max-min fairly: operations slower than the fair share get a refill rate that
+/// covers their average traffic and the rest of the budget is split evenly among the busier operations. A burst
+/// larger than a bucket (two seconds of its rate, at least one root) is still limited.</description></item>
 /// </list>
 /// <para>
 /// Spans that do not pass the rate limit receive <see cref="SamplingDecision.RecordOnly"/> (not <c>Drop</c>),

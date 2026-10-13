@@ -37,7 +37,9 @@ public sealed class ArkAdaptiveSamplerOptions
     /// When <see langword="true"/>, each distinct operation name gets its own token bucket and
     /// <see cref="TracesPerSecond"/> is shared max-min fairly among the operations seen in the last
     /// <see cref="SamplingPercentageDecreaseTimeout"/> period: an operation slower than the fair share
-    /// keeps all its roots, and the rest of the budget is split evenly among the busier operations.
+    /// gets a refill rate that covers its average traffic, and the rest of the budget is split evenly
+    /// among the busier operations. A burst larger than the bucket (two seconds of its rate, at least
+    /// one root) is still limited.
     /// New and idle operations get the current fair share.
     /// When <see langword="false"/>, all roots share one bucket and busy operations can crowd out rare ones.
     /// Default is <see langword="true"/>.
