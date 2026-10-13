@@ -22,6 +22,10 @@ public class DataKeyComparerTests
         [DataKey]
         public string? Code { get; init; }
 
+        /// <summary>A nullable value-type key.</summary>
+        [DataKey]
+        public int? Batch { get; init; }
+
         /// <summary>A value that is not part of the key.</summary>
         public int Value { get; init; }
     }
@@ -50,5 +54,22 @@ public class DataKeyComparerTests
 
         comparer.Equals(x, y).Should().BeTrue();
         comparer.GetHashCode(x).Should().Be(comparer.GetHashCode(y));
+    }
+
+    /// <summary>Verifies that rows differing in any single key are not equal.</summary>
+    [TestMethod]
+    [DataRow(2, "A", 1)]
+    [DataRow(1, null, 1)]
+    [DataRow(1, "B", 1)]
+    [DataRow(1, "A", null)]
+    [DataRow(1, "A", 2)]
+    public void Equals_KeysDiffer_ReturnsFalse(int id, string? code, int? batch)
+    {
+        var comparer = new DataKeyComparer<Row>();
+        var x = new Row { Id = 1, Code = "A", Batch = 1 };
+        var y = new Row { Id = id, Code = code, Batch = batch };
+
+        comparer.Equals(x, y).Should().BeFalse();
+        comparer.Equals(y, x).Should().BeFalse();
     }
 }
