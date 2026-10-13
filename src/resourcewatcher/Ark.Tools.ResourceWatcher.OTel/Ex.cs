@@ -42,11 +42,11 @@ public static class Ex
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return builder.ConfigureServices(static (_, services) =>
+        return builder.ConfigureServices(static (context, services) =>
         {
             // AddArkOpenTelemetry already adds the resource and the redaction processor.
             services.AddOpenTelemetry()
-                .AddArkOpenTelemetry()
+                .AddArkOpenTelemetry(configuration: context.Configuration)
                 .WithTracing(static tracing => tracing.AddSource(ResourceWatcherInstrumentation.ActivitySourceName))
                 .WithMetrics(static metrics => metrics.AddMeter(ResourceWatcherInstrumentation.MeterName));
         });

@@ -34,21 +34,26 @@ public static class Ex
     /// Optional application configuration for Ark OpenTelemetry instrumentation.
     /// </param>
     /// <param name="configureAdaptiveSampler">
-    /// Optional application configuration for the adaptive sampler.
+    /// Optional application configuration for the adaptive sampler, applied after <paramref name="configuration"/>.
+    /// </param>
+    /// <param name="configuration">
+    /// Optional application configuration; the adaptive sampler binds the <c>OTel:ArkAdaptiveSampler</c>
+    /// section over the legacy <c>ApplicationInsights:ArkAdaptiveSampler</c> section.
     /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
     public static OpenTelemetryBuilder AddArkAspNetCoreOpenTelemetry(
         this OpenTelemetryBuilder builder,
         Action<SqlClientTraceInstrumentationOptions>? configureSqlClient = null,
         Action<ArkOtelConfig>? configureArkOtel = null,
-        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler = null)
+        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler = null,
+        IConfiguration? configuration = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.Services.AddArkOTelHealthCheckPublisher();
 
         return builder
-            .AddArkOpenTelemetry(configureSqlClient, configureArkOtel, configureAdaptiveSampler)
+            .AddArkOpenTelemetry(configureSqlClient, configureArkOtel, configureAdaptiveSampler, configuration)
             .WithMetrics(static metrics => metrics.AddMeter(ArkOTelHealthCheckPublisher.MeterName));
     }
 
@@ -85,18 +90,7 @@ public static class Ex
         services.AddLogging(static logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
-        // Registered before AddArkOpenTelemetry so configureAdaptiveSampler overrides the configuration.
-        if (configuration is not null)
-        {
-            services.Configure<ArkAdaptiveSamplerOptions>(options =>
-            {
-                // Legacy Application Insights section first so the canonical OTel section wins.
-                configuration.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(options);
-                configuration.GetSection("OTel:ArkAdaptiveSampler").Bind(options);
-            });
-        }
-
-        builder.AddArkAspNetCoreOpenTelemetry(configureSqlClient, configureArkOtel, configureAdaptiveSampler);
+        builder.AddArkAspNetCoreOpenTelemetry(configureSqlClient, configureArkOtel, configureAdaptiveSampler, configuration);
 
         if (!string.IsNullOrWhiteSpace(connectionString))
         {

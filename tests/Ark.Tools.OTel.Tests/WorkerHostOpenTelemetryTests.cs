@@ -6,8 +6,10 @@ using Ark.Tools.ResourceWatcher.OTel;
 
 using AwesomeAssertions;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 using OpenTelemetry.Trace;
 
@@ -36,5 +38,21 @@ public sealed class WorkerHostOpenTelemetryTests
             .GetValue(tracerProvider)
             .Should().BeOfType<ArkAdaptiveSampler>();
         source.HasListeners().Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void AddArkOpenTelemetryForWorkerHost_BindsAdaptiveSamplerFromHostConfiguration()
+    {
+        using var host = new HostBuilder()
+            .ConfigureHostConfiguration(static config => config.AddInMemoryCollection(
+                new Dictionary<string, string?>(StringComparer.Ordinal)
+                {
+                    ["OTel:ArkAdaptiveSampler:TracesPerSecond"] = "42",
+                }))
+            .AddArkOpenTelemetryForWorkerHost()
+            .Build();
+
+        host.Services.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value.TracesPerSecond
+            .Should().Be(42);
     }
 }

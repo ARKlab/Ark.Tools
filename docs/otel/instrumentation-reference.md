@@ -252,12 +252,13 @@ The `ArkAdaptiveSampler` is always installed by Ark's OpenTelemetry setup. The
 exporter-neutral `AddArkOpenTelemetry` (also called by `AddArkAspNetCoreOpenTelemetry`
 and `AddArkOpenTelemetryForWorkerHost`) and the Azure Monitor
 `AddArkAzureMonitorOpenTelemetry` paths install it with the
-`ArkFailurePromotionProcessor`. The Azure Monitor path binds
-`OTel:ArkAdaptiveSampler` (falling back to the legacy
-`ApplicationInsights:ArkAdaptiveSampler`); the exporter-neutral path uses the
-documented defaults. The Application Insights v3 compatibility path installs
-the same sampler through `AddArkApplicationInsightsCustomizations`, which binds
-only `ApplicationInsights:ArkAdaptiveSampler`.
+`ArkFailurePromotionProcessor`. When given an `IConfiguration` (the worker host
+passes the host configuration), they bind `OTel:ArkAdaptiveSampler`, falling back
+to the legacy `ApplicationInsights:ArkAdaptiveSampler`; otherwise they use the
+documented defaults. A `configureAdaptiveSampler` callback runs after the binding.
+The Application Insights v3 compatibility path installs the same sampler through
+`AddArkApplicationInsightsCustomizations`, which binds only
+`ApplicationInsights:ArkAdaptiveSampler`.
 
 The sampler and `ArkFailurePromotionProcessor` must share one
 `FailedTraceRegistry` for whole-operation failure promotion.

@@ -17,6 +17,8 @@
 
     <IsTrimmable>true</IsTrimmable>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!-- Source-generated Bind keeps the ArkAdaptiveSamplerOptions binding trim-safe. -->
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
   <!--===============================================================================-->
 

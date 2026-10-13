@@ -9,14 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `ArkAdaptiveSamplerOptions.RespectRemoteParentSampling`: set it to `true` to have the W3C sampled flag of a remote parent decide which spans the service exports, as before this release.
-- `Ark.Tools.OTel`: `AddArkOpenTelemetry()` registers the Ark OpenTelemetry pipeline (adaptive sampler, failure promotion, redaction, and `HttpClient` and SQL Client instrumentation) on any host, without referencing ASP.NET Core. `AddArkAspNetCoreOpenTelemetry` and `AddArkAzureMonitorOpenTelemetry` now build on it.
+- `Ark.Tools.OTel`: `AddArkOpenTelemetry()` registers the Ark OpenTelemetry pipeline (adaptive sampler, failure promotion, redaction, and `HttpClient` and SQL Client instrumentation) on any host, without referencing ASP.NET Core. Pass an `IConfiguration` to bind the sampler from `OTel:ArkAdaptiveSampler` (or the legacy `ApplicationInsights:ArkAdaptiveSampler`). `AddArkAspNetCoreOpenTelemetry`, which gains the same optional `configuration` parameter, and `AddArkAzureMonitorOpenTelemetry` now build on it.
 
 ### Changed
 
 - **Breaking:** `ArkAdaptiveSampler` no longer follows the sampling decision of a remote parent by default: spans with a remote parent use the local budget and carry this service's sample rate, so callers using a different sampler, such as the classic Application Insights SDK, no longer decide which spans the service exports. Set `RespectRemoteParentSampling` to `true` to restore the previous behaviour.
 
 - `ArkAdaptiveSampler`: `TracesPerSecond` is now the total budget of root traces shared by all operation buckets, instead of a budget for each bucket, so a service with many operations no longer exports up to `TracesPerSecond` traces per operation. Rare operations get a share that covers their average traffic; raise `TracesPerSecond` if you relied on the per-operation budget. `MovingAverageRatio` now smooths only rate increases: rates drop to their new share at once.
-- `Ark.Tools.ResourceWatcher.OTel`: `AddArkOpenTelemetryForWorkerHost` now adds the full Ark pipeline, so worker hosts get adaptive sampling, failure promotion, and `HttpClient` and SQL Client spans, in addition to the ResourceWatcher source and meter.
+- `Ark.Tools.ResourceWatcher.OTel`: `AddArkOpenTelemetryForWorkerHost` now adds the full Ark pipeline, so worker hosts get adaptive sampling, failure promotion, and `HttpClient` and SQL Client spans, in addition to the ResourceWatcher source and meter. The sampler reads `OTel:ArkAdaptiveSampler` from the host configuration.
 - **Breaking:** `WebApi4xxAsSuccessProcessor` moved from `Ark.Tools.AspNetCore.OTel` to `Ark.Tools.OTel` (namespace `Ark.Tools.OTel`). Update the `using` if you register it yourself.
 
 - `Ark.Tools.AspNetCore.OTel`: the adaptive sampler is now configured from the `OTel:ArkAdaptiveSampler` section. `ApplicationInsights:ArkAdaptiveSampler` is still read for compatibility, but `OTel:ArkAdaptiveSampler` values take precedence. The Azure Monitor connection string is still read from `ApplicationInsights:ConnectionString`.

@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -23,6 +24,8 @@ public static class ArkOpenTelemetryBuilderExtensions
     // Ark.Tools.Rebus's activity source and meter name, kept as a literal so native-only hosts don't carry Rebus.
     private const string _rebusInstrumentationName = "ark.tools.rebus";
     private const string _azureCoreHttpSourceName = "Azure.Core.Http";
+    private const string _adaptiveSamplerSection = "OTel:ArkAdaptiveSampler";
+    private const string _legacyAdaptiveSamplerSection = "ApplicationInsights:ArkAdaptiveSampler";
 
     /// <summary>
     /// Adds the Ark sampler, processors and client instrumentations to an exporter-agnostic OpenTelemetry builder.
@@ -35,14 +38,19 @@ public static class ArkOpenTelemetryBuilderExtensions
     /// Optional application configuration for Ark OpenTelemetry instrumentation.
     /// </param>
     /// <param name="configureAdaptiveSampler">
-    /// Optional application configuration for the adaptive sampler.
+    /// Optional application configuration for the adaptive sampler, applied after <paramref name="configuration"/>.
+    /// </param>
+    /// <param name="configuration">
+    /// Optional application configuration; the adaptive sampler binds the <c>OTel:ArkAdaptiveSampler</c>
+    /// section over the legacy <c>ApplicationInsights:ArkAdaptiveSampler</c> section.
     /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
     public static OpenTelemetryBuilder AddArkOpenTelemetry(
         this OpenTelemetryBuilder builder,
         Action<SqlClientTraceInstrumentationOptions>? configureSqlClient = null,
         Action<ArkOtelConfig>? configureArkOtel = null,
-        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler = null)
+        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler = null,
+        IConfiguration? configuration = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -56,9 +64,13 @@ public static class ArkOpenTelemetryBuilderExtensions
             .WithTracing(tracing => tracing
                 .ConfigureServices(services =>
                 {
-                    var samplerOptions = services.AddOptions<ArkAdaptiveSamplerOptions>();
-                    if (configureAdaptiveSampler is not null)
-                        samplerOptions.Configure(configureAdaptiveSampler);
+                    services.AddOptions<ArkAdaptiveSamplerOptions>().Configure(options =>
+                    {
+                        // Legacy Application Insights section first so the canonical OTel section wins.
+                        configuration?.GetSection(_legacyAdaptiveSamplerSection).Bind(options);
+                        configuration?.GetSection(_adaptiveSamplerSection).Bind(options);
+                        configureAdaptiveSampler?.Invoke(options);
+                    });
                     services.AddSingleton(sp => new ArkAdaptiveSampler(
                         sp.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
                         failedTraceRegistry));
