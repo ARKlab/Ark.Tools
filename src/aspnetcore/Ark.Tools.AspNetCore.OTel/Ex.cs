@@ -23,6 +23,8 @@ namespace Ark.Tools.AspNetCore.OTel;
 /// </summary>
 public static class Ex
 {
+    private const string _suppressActivityOpenTelemetryDataSwitch = "Microsoft.AspNetCore.Hosting.SuppressActivityOpenTelemetryData";
+
     /// <summary>
     /// Adds the Ark OpenTelemetry pipeline (see <see cref="ArkOpenTelemetryBuilderExtensions.AddArkOpenTelemetry"/>)
     /// and the health check metrics to an exporter-agnostic OpenTelemetry builder.
@@ -61,6 +63,12 @@ public static class Ex
         Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler,
         IConfiguration? configuration)
     {
+        // ASP.NET Core 11 passes the request tags when it creates the server span, so the sampler can drop noise
+        // such as OPTIONS requests before it uses its budget. Do the same on earlier runtimes; an explicit
+        // application choice wins.
+        if (Environment.Version.Major < 11 && !AppContext.TryGetSwitch(_suppressActivityOpenTelemetryDataSwitch, out _))
+            AppContext.SetSwitch(_suppressActivityOpenTelemetryDataSwitch, false);
+
         builder.Services.AddArkOTelHealthCheckPublisher();
 
         return builder

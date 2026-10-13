@@ -38,9 +38,11 @@ collection. Spans that an Ark filter recognizes only after sampling, such as SQL
 skipped by query label (`outbox.peek-lock` and `SqlQueryLabelsToSkip`) or by an application
 SqlClient filter, and spans the pre-filter or NLog processors drop when they start or end, give
 back the token and the traffic they counted. Spans dropped after sampling by other processors
-or instrumentation filters, such as an application `HttpClient` filter, still count. HTTP `OPTIONS` requests are recognized before sampling
-only when ASP.NET Core passes the request method at creation: from ASP.NET Core 11, or with the
-`Microsoft.AspNetCore.Hosting.SuppressActivityOpenTelemetryData` switch set to `false`.
+or instrumentation filters, such as an application `HttpClient` filter, still count. HTTP `OPTIONS` requests are recognized before sampling when ASP.NET Core passes the request
+method at creation: by default from ASP.NET Core 11, and with `AddArkAspNetCoreOpenTelemetry` or
+`AddArkAzureMonitorOpenTelemetry` on .NET 10, which set the
+`Microsoft.AspNetCore.Hosting.SuppressActivityOpenTelemetryData` switch to `false` unless the
+application already set it.
 
 ## Failure-first troubleshooting
 

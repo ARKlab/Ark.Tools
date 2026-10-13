@@ -48,6 +48,9 @@ public sealed class ArkOpenTelemetrySetupTests
 
         _listens("Microsoft.AspNetCore").Should().BeTrue();
         _meterEnabled("Microsoft.AspNetCore.Hosting").Should().BeTrue();
+        AppContext.TryGetSwitch("Microsoft.AspNetCore.Hosting.SuppressActivityOpenTelemetryData", out var suppressed)
+            .Should().BeTrue();
+        suppressed.Should().BeFalse("ASP.NET Core passes the request tags at creation, as it does by default from version 11");
     }
 
     private static ServiceProvider _buildServiceProvider(bool aspNetCore, MetricReader reader)
