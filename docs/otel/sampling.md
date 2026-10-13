@@ -17,9 +17,11 @@ record-only data that can still be promoted when troubleshooting needs it.
 | Root with no parent and available budget | Record and sample |
 | Root with no parent and exhausted budget | Record only |
 | Local sampled parent | Record and sample |
-| Remote sampled parent | Budget decision, as a root (record and sample when `RespectRemoteParentSampling` is `true`) |
+| Remote sampled parent, `RespectRemoteParentSampling` `false` (default) | Budget decision, as a root |
+| Remote sampled parent, `RespectRemoteParentSampling` `true` | Record and sample |
 | Local unsampled parent | Record only |
-| Remote unsampled parent | Budget decision, as a root (record only when `RespectRemoteParentSampling` is `true`) |
+| Remote unsampled parent, `RespectRemoteParentSampling` `false` (default) | Budget decision, as a root |
+| Remote unsampled parent, `RespectRemoteParentSampling` `true` | Record only |
 | Failed span or exception | Promote to sampled |
 | HTTP 4xx response without error status | Success; do not promote |
 | HTTP 4xx response with error status | Promote to sampled |
