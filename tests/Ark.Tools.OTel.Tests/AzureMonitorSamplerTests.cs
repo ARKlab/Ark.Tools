@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.AspNetCore.OTel;
+using Ark.Tools.OTel.Azure;
 
 using AwesomeAssertions;
 
@@ -17,7 +18,8 @@ using System.Reflection;
 namespace Ark.Tools.OTel.Tests;
 
 /// <summary>
-/// Verifies that <see cref="Ex.AddArkAzureMonitorOpenTelemetry"/> keeps
+/// Verifies that <see cref="ArkAzureOpenTelemetryBuilderExtensions.AddArkAzureOpenTelemetry"/>, after
+/// <see cref="Ex.AddArkAspNetCoreOpenTelemetry"/>, keeps
 /// <see cref="ArkAdaptiveSampler"/> as the effective sampler when Azure Monitor is enabled.
 /// </summary>
 [TestClass]
@@ -31,7 +33,7 @@ public sealed class AzureMonitorSamplerTests
     [TestMethod]
     [DataRow(false)]
     [DataRow(true)]
-    public void AddArkAzureMonitorOpenTelemetry_EffectiveSamplerIsArkAdaptiveSampler(bool enableAzureMonitor)
+    public void AddArkAzureOpenTelemetry_EffectiveSamplerIsArkAdaptiveSampler(bool enableAzureMonitor)
     {
         using var serviceProvider = _buildServiceProvider(enableAzureMonitor ? _azureMonitorTarget : null);
 
@@ -41,9 +43,9 @@ public sealed class AzureMonitorSamplerTests
     }
 
     [TestMethod]
-    public void AddArkAzureMonitorOpenTelemetry_WithAzureMonitor_PromotesFailingChildOfRecordOnlyRoot()
+    public void AddArkAzureOpenTelemetry_WithAzureMonitor_PromotesFailingChildOfRecordOnlyRoot()
     {
-        var sourceName = nameof(AddArkAzureMonitorOpenTelemetry_WithAzureMonitor_PromotesFailingChildOfRecordOnlyRoot);
+        var sourceName = nameof(AddArkAzureOpenTelemetry_WithAzureMonitor_PromotesFailingChildOfRecordOnlyRoot);
         using var collector = new CollectingProcessor();
         using var serviceProvider = _buildServiceProvider(
             _azureMonitorTarget,
@@ -67,9 +69,9 @@ public sealed class AzureMonitorSamplerTests
     }
 
     [TestMethod]
-    public void AddArkAzureMonitorOpenTelemetry_WithAzureMonitor_DropsPreFilteredSpans()
+    public void AddArkAzureOpenTelemetry_WithAzureMonitor_DropsPreFilteredSpans()
     {
-        var sourceName = nameof(AddArkAzureMonitorOpenTelemetry_WithAzureMonitor_DropsPreFilteredSpans);
+        var sourceName = nameof(AddArkAzureOpenTelemetry_WithAzureMonitor_DropsPreFilteredSpans);
         using var serviceProvider = _buildServiceProvider(
             _azureMonitorTarget,
             services => services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddSource(sourceName)));
@@ -87,24 +89,30 @@ public sealed class AzureMonitorSamplerTests
     }
 
     [TestMethod]
-    public void AddArkAzureMonitorOpenTelemetry_OTelSamplerSectionOverridesLegacyApplicationInsightsSection()
+    public void AddArkAzureOpenTelemetry_OTelSamplerSectionAndCallbackOverrideLegacyApplicationInsightsSection()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 ["ApplicationInsights:ArkAdaptiveSampler:TracesPerSecond"] = "3",
                 ["ApplicationInsights:ArkAdaptiveSampler:MaxOperationBuckets"] = "7",
+                ["ApplicationInsights:ArkAdaptiveSampler:EnablePerOperationBucketing"] = "false",
                 ["OTel:ArkAdaptiveSampler:TracesPerSecond"] = "5",
             })
             .Build();
         var services = new ServiceCollection();
-        services.AddArkAzureMonitorOpenTelemetry(configuration);
+        services.AddOpenTelemetry()
+            .AddArkAspNetCoreOpenTelemetry(
+                configureAdaptiveSampler: static options => options.EnablePerOperationBucketing = true,
+                configuration: configuration)
+            .AddArkAzureOpenTelemetry(configuration);
         using var serviceProvider = services.BuildServiceProvider();
 
         var options = serviceProvider.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value;
 
         options.TracesPerSecond.Should().Be(5, "the OTel section is canonical");
         options.MaxOperationBuckets.Should().Be(7, "the legacy section still applies where OTel is silent");
+        options.EnablePerOperationBucketing.Should().BeTrue("the application callback wins over both sections");
     }
 
     private static ServiceProvider _buildServiceProvider(
@@ -122,7 +130,9 @@ public sealed class AzureMonitorSamplerTests
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
-        services.AddArkAzureMonitorOpenTelemetry(configuration);
+        services.AddOpenTelemetry()
+            .AddArkAspNetCoreOpenTelemetry(configuration: configuration)
+            .AddArkAzureOpenTelemetry(configuration);
         configureServices?.Invoke(services);
         return services.BuildServiceProvider();
     }

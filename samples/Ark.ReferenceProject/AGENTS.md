@@ -419,7 +419,7 @@ Host.CreateDefaultBuilder(args)
 
 ## OpenTelemetry diagnostics
 
-`AddArkAzureMonitorOpenTelemetry` exports to Azure Monitor only when
+`AddArkAzureOpenTelemetry` exports to Azure Monitor only when
 `ApplicationInsights:ConnectionString`, `APPLICATIONINSIGHTS_CONNECTION_STRING`,
 or the environment variable is non-empty. Integration-test settings intentionally
 leave that value empty, so local test runs do not send telemetry to Azure Monitor.

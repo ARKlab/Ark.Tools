@@ -16,9 +16,8 @@ using System.Diagnostics;
 namespace Ark.Tools.OTel.Tests;
 
 /// <summary>
-/// Verifies the HttpClient filter of the Azure setups, <see cref="Ex.AddArkAzureMonitorOpenTelemetry"/> (ASP.NET Core,
-/// Distro) and <see cref="ArkAzureOpenTelemetryBuilderExtensions.AddArkAzureOpenTelemetry"/> (any host, exporter), with
-/// and without Azure Monitor: HttpClient spans that duplicate an Azure SDK client span are dropped, and an application
+/// Verifies the HttpClient filter of <see cref="ArkAzureOpenTelemetryBuilderExtensions.AddArkAzureOpenTelemetry"/>
+/// after <see cref="Ex.AddArkAspNetCoreOpenTelemetry"/> or the generic Ark setup, with and without Azure Monitor: HttpClient spans that duplicate an Azure SDK client span are dropped, and an application
 /// filter still applies.
 /// </summary>
 [TestClass]
@@ -66,7 +65,7 @@ public sealed class HttpClientDeduplicationTests
             aspNetCore,
             static _ => false);
 
-        httpSpans.Should().BeEmpty("UseAzureMonitor must not replace the application filter");
+        httpSpans.Should().BeEmpty("the Azure setup must not replace the application filter");
     }
 
     private async Task<IReadOnlyList<Activity>> _collectHttpClientSpans(
@@ -90,10 +89,12 @@ public sealed class HttpClientDeduplicationTests
                 .AddHttpClientInstrumentation(options => options.FilterHttpRequestMessage = applicationFilter));
         }
 
+        var telemetry = services.AddOpenTelemetry();
         if (aspNetCore)
-            services.AddArkAzureMonitorOpenTelemetry(configuration);
+            telemetry.AddArkAspNetCoreOpenTelemetry(configuration: configuration);
         else
-            services.AddOpenTelemetry().AddArkOpenTelemetry(configuration: configuration).AddArkAzureOpenTelemetry(configuration);
+            telemetry.AddArkOpenTelemetry(configuration: configuration);
+        telemetry.AddArkAzureOpenTelemetry(configuration);
         services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
             .AddSource(parentSourceName)
             .AddProcessor(collector));

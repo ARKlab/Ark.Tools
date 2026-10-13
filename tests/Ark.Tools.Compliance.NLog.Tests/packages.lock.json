@@ -453,8 +453,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.AspNetCore.HealthChecks.OTel": "[1.0.0, )",
-          "Ark.Tools.OTel.Azure": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",
+          "Ark.Tools.OTel": "[1.0.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
@@ -527,32 +526,12 @@
           "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
         }
       },
-      "ark.tools.otel.azure": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.OTel": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )"
-        }
-      },
       "ark.tools.systemtextjson": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.Nodatime.SystemTextJson": "[1.0.0, )"
-        }
-      },
-      "Azure.Monitor.OpenTelemetry.AspNetCore": {
-        "type": "CentralTransitive",
-        "requested": "[1.6.0, )",
-        "resolved": "1.6.0",
-        "contentHash": "9H0JgEl5yVdpOz+GqPBL5Qtfw0k/gAQ9iD8L+W9ucrxwMG/CMwdAg4mWdLWKUvW56iDCQ8PAHVVCxC4Hg5l1AA==",
-        "dependencies": {
-          "Azure.Core": "1.60.0",
-          "Azure.Monitor.OpenTelemetry.Exporter": "1.8.3",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "OpenTelemetry.Instrumentation.AspNetCore": "1.15.2",
-          "OpenTelemetry.Instrumentation.Http": "1.15.1"
         }
       },
       "Azure.Monitor.OpenTelemetry.Exporter": {

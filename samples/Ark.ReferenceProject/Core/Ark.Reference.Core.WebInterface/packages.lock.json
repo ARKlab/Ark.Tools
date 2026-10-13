@@ -174,18 +174,6 @@
           "Microsoft.Azure.Amqp": "2.7.0"
         }
       },
-      "Azure.Monitor.OpenTelemetry.AspNetCore": {
-        "type": "Transitive",
-        "resolved": "1.6.0",
-        "contentHash": "9H0JgEl5yVdpOz+GqPBL5Qtfw0k/gAQ9iD8L+W9ucrxwMG/CMwdAg4mWdLWKUvW56iDCQ8PAHVVCxC4Hg5l1AA==",
-        "dependencies": {
-          "Azure.Core": "1.60.0",
-          "Azure.Monitor.OpenTelemetry.Exporter": "1.8.3",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "OpenTelemetry.Instrumentation.AspNetCore": "1.15.2",
-          "OpenTelemetry.Instrumentation.Http": "1.15.1"
-        }
-      },
       "Azure.Monitor.OpenTelemetry.Exporter": {
         "type": "Transitive",
         "resolved": "1.10.0",
@@ -954,6 +942,14 @@
           "OpenTelemetry.PersistentStorage.Abstractions": "1.1.1"
         }
       },
+      "OpenTelemetry.Resources.Azure": {
+        "type": "Transitive",
+        "resolved": "1.19.1-beta.2",
+        "contentHash": "Kd/j40oO/gwPYDGMK9fMo+smH2hfAIbTmQAZ1W515FdP0DDkXCtqtTp4QtwbIcf4QsjLGDwzil/hp0hgMDObXA==",
+        "dependencies": {
+          "OpenTelemetry": "[1.19.1, 2.0.0)"
+        }
+      },
       "Portable.System.DateTimeOnly": {
         "type": "Transitive",
         "resolved": "9.0.1",
@@ -1336,8 +1332,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.AspNetCore.HealthChecks.OTel": "[1.0.0, )",
-          "Ark.Tools.OTel.Azure": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",
+          "Ark.Tools.OTel": "[1.0.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
@@ -1515,7 +1510,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.OTel": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )"
+          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )",
+          "OpenTelemetry.Resources.Azure": "[1.19.1-beta.2, )"
         }
       },
       "ark.tools.outbox": {

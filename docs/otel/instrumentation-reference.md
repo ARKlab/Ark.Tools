@@ -7,15 +7,18 @@ semantic conventions for the provider version in use.
 
 ## Setup profiles
 
-### ASP.NET Core Azure Monitor OTel
+### ASP.NET Core on Azure
 
 Registration:
 
 ```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+builder.Services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration)
+    .AddArkAzureOpenTelemetry(builder.Configuration);
 ```
 
-Implemented by `Ark.Tools.AspNetCore.OTel`.
+Implemented by `Ark.Tools.AspNetCore.OTel` (ASP.NET Core instrumentation) and
+`Ark.Tools.OTel.Azure` (Azure SDK tracing, Azure resource detection and Azure Monitor export).
 
 | Signal | Default registration | Notes |
 |---|---|---|
@@ -86,7 +89,7 @@ Registration: `AddHttpClientInstrumentation()`.
 | Span | Provider `HttpClient` instrumentation | Provider-generated HTTP client semantic-convention attributes, such as method, URL/route, status, server address/port, and error details. |
 | Meter | `System.Net.Http`, registered by `AddArkOpenTelemetry` | Native .NET HTTP client metrics. |
 
-Ark.Tools does not add a custom HTTP span or meter. `AddArkAzureMonitorOpenTelemetry`,
+Ark.Tools does not add a custom HTTP span or meter. `AddArkAzureOpenTelemetry`,
 like the Azure Monitor Distro, drops an `HttpClient` span whose parent comes from the
 `Azure.Core.Http` source, because the Azure SDK span already describes the same
 call; an application `FilterHttpRequestMessage` still applies.
@@ -251,7 +254,7 @@ retains its legacy diagnostic listener for non-OTel consumers.
 ### Azure Service Bus
 
 `AddArkAzureSdkInstrumentation` (from `Ark.Tools.OTel.Azure`, also used by
-`AddArkAzureOpenTelemetry` and `AddArkAzureMonitorOpenTelemetry`) collects the Service Bus
+`AddArkAzureOpenTelemetry`) collects the Service Bus
 producer/consumer spans through the `Azure.*` sources, with or without a connection string, and
 drops receive spans (`ServiceBusReceiver.*`) before they use the sampler budget. Azure SDK tracing for
 Service Bus and Event Hubs is still experimental and needs
@@ -269,12 +272,10 @@ Azure SDK and OpenTelemetry semantic conventions.
 
 The `ArkAdaptiveSampler` is always installed by Ark's OpenTelemetry setup. The
 exporter-neutral `AddArkOpenTelemetry` (also called by `AddArkAspNetCoreOpenTelemetry`
-and `AddArkOpenTelemetryForWorkerHost`) and the Azure Monitor
-`AddArkAzureMonitorOpenTelemetry` paths install it with the
+and `AddArkOpenTelemetryForWorkerHost`) installs it with the
 `ArkFailurePromotionProcessor`. When given an `IConfiguration`
-(`AddArkAzureMonitorOpenTelemetry` passes its configuration and the worker host
-the host configuration), they bind `OTel:ArkAdaptiveSampler`; otherwise they use
-the documented defaults. `AddArkAzureMonitorOpenTelemetry` also reads the legacy
+(the worker host passes the host configuration), it binds `OTel:ArkAdaptiveSampler`; otherwise it uses
+the documented defaults. `AddArkAzureOpenTelemetry(configuration)` also reads the legacy
 `ApplicationInsights:ArkAdaptiveSampler` section, which `OTel:ArkAdaptiveSampler`
 overrides. A `configureAdaptiveSampler` callback runs after the binding.
 The Application Insights v3 compatibility path installs the same sampler through
@@ -284,9 +285,9 @@ The Application Insights v3 compatibility path installs the same sampler through
 The sampler and `ArkFailurePromotionProcessor` must share one
 `FailedTraceRegistry` for whole-operation failure promotion.
 
-`UseAzureMonitor` installs its own sampler. When a connection string is
-configured, `AddArkAzureMonitorOpenTelemetry` sets `ArkAdaptiveSampler` again
-after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
+The Azure Monitor exporter installs its own sampler. When a connection string is
+configured, `AddArkAzureOpenTelemetry` sets `ArkAdaptiveSampler` again
+after adding the exporter, so the Azure Monitor `TracesPerSecond` and
 `SamplingRatio` options have no effect. Configure sampling with
 `OTel:ArkAdaptiveSampler` instead.
 
@@ -336,7 +337,9 @@ failure promotion, register it before calling the Ark setup:
 ```csharp
 services.ConfigureOpenTelemetryTracerProvider(tracing =>
     tracing.AddProcessor(new ExpectedStorageErrorsProcessor()));
-services.AddArkAzureMonitorOpenTelemetry(configuration);
+services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(configuration: configuration)
+    .AddArkAzureOpenTelemetry(configuration);
 ```
 
 ### Rate control
@@ -381,9 +384,9 @@ Example:
 }
 ```
 
-`OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
-(`AddArkAzureMonitorOpenTelemetry`). The legacy `ApplicationInsights:ArkAdaptiveSampler`
-section is still read for compatibility; values in `OTel:ArkAdaptiveSampler` take
+`OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup.
+`AddArkAzureOpenTelemetry(configuration)` still reads the legacy
+`ApplicationInsights:ArkAdaptiveSampler` section for compatibility; values in `OTel:ArkAdaptiveSampler` take
 precedence. The Application Insights v3 compatibility path
 (`AddArkApplicationInsightsCustomizations`) reads only
 `ApplicationInsights:ArkAdaptiveSampler`.

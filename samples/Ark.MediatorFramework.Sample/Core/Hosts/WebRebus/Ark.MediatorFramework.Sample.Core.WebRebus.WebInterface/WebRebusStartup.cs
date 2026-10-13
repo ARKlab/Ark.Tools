@@ -7,6 +7,7 @@ using Ark.MediatorFramework.Sample.Core.Application.Messages;
 using Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface.Auth;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.OTel;
+using Ark.Tools.OTel.Azure;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Compliance;
 using Ark.Tools.Compliance.OpenApi;
@@ -94,7 +95,9 @@ public sealed class WebRebusStartup
         ArgumentNullException.ThrowIfNull(builder);
         builder.UseArkMinimalApiStartupDiagnostics();
         builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.Core.WebRebus.WebInterface");
-        builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+        builder.Services.AddOpenTelemetry()
+            .AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration)
+            .AddArkAzureOpenTelemetry(builder.Configuration);
         builder.Services.AddOpenTelemetry()
             .WithTracing(static tracing => tracing.AddSource(SampleTelemetry.ActivitySourceName));
         var startup = new WebRebusStartup(container, builder.Environment, builder.Configuration);

@@ -10,7 +10,7 @@ the route that matches the application.
 
 | Application state | Route |
 |---|---|
-| No custom `ITelemetryClient` or `TelemetryClient.Track*` calls | Migrate to OTel and the Azure Monitor Distro |
+| No custom `ITelemetryClient` or `TelemetryClient.Track*` calls | Migrate to OTel and Azure Monitor export |
 | Custom `Track*` calls or direct AI telemetry processors | Keep AI v3 explicitly, then migrate custom calls separately |
 | Only Ark Rebus or ResourceWatcher telemetry | Remove AI integration and enable Ark OTel extensions |
 
@@ -19,11 +19,11 @@ application exports to Application Insights. AI v3 consumes OpenTelemetry data t
 the Azure Monitor exporter. Keep the compatibility adapters only for code that directly
 uses the AI object model.
 
-## New application: Azure Monitor OTel Distro
+## New application: OTel with Azure Monitor export
 
-1. Reference `Ark.Tools.AspNetCore.OTel` for an ASP.NET Core host.
-2. Call `builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration)` before
-   `Build()`. The extension accepts either
+1. Reference `Ark.Tools.AspNetCore.OTel` and `Ark.Tools.OTel.Azure` for an ASP.NET Core host.
+2. Call `builder.Services.AddOpenTelemetry().AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration).AddArkAzureOpenTelemetry(builder.Configuration)`
+   before `Build()`. `AddArkAzureOpenTelemetry` accepts either
    `ApplicationInsights:ConnectionString` or
    `APPLICATIONINSIGHTS_CONNECTION_STRING`.
 3. Set the connection string in application configuration or the deployment environment.

@@ -10,6 +10,7 @@
     <!-- When ejecting this sample to a new project, change these versions to the actual Ark.Tools version from nuget.org -->
     <PackageVersion Include="Ark.Tools.AspNetCore" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.AspNetCore.OTel" Version="999.9.9" />
+    <PackageVersion Include="Ark.Tools.OTel.Azure" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Compliance" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Compliance.Reqnroll" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Compliance.Sql" Version="999.9.9" />

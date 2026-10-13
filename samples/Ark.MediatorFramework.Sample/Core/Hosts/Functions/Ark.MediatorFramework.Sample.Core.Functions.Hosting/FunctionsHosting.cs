@@ -54,7 +54,7 @@ public static class FunctionsHosting
             .WithMetrics(static metrics => metrics
                 .AddArkMessagingInstrumentation()
                 .AddMeter(ArkOTelHealthCheckPublisher.MeterName));
-        // Same lookup as AddArkAzureMonitorOpenTelemetry.
+        // Same lookup as AddArkAzureOpenTelemetry.
         var connectionString = configuration["ApplicationInsights:ConnectionString"]
             ?? configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
             ?? Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");

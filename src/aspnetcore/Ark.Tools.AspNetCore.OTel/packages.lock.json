@@ -2,19 +2,6 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
-      "Azure.Monitor.OpenTelemetry.AspNetCore": {
-        "type": "Direct",
-        "requested": "[1.6.0, )",
-        "resolved": "1.6.0",
-        "contentHash": "9H0JgEl5yVdpOz+GqPBL5Qtfw0k/gAQ9iD8L+W9ucrxwMG/CMwdAg4mWdLWKUvW56iDCQ8PAHVVCxC4Hg5l1AA==",
-        "dependencies": {
-          "Azure.Core": "1.60.0",
-          "Azure.Monitor.OpenTelemetry.Exporter": "1.8.3",
-          "OpenTelemetry.Extensions.Hosting": "1.15.3",
-          "OpenTelemetry.Instrumentation.AspNetCore": "1.15.2",
-          "OpenTelemetry.Instrumentation.Http": "1.15.1"
-        }
-      },
       "ErrorProne.NET.CoreAnalyzers": {
         "type": "Direct",
         "requested": "[0.1.2, )",
@@ -162,7 +149,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.OTel": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )"
+          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )",
+          "OpenTelemetry.Resources.Azure": "[1.19.1-beta.2, )"
         }
       },
       "Azure.Monitor.OpenTelemetry.Exporter": {
@@ -223,6 +211,15 @@
         "contentHash": "+egJpWBRfYP3ldfexV2bmJyzOWkkOPVYikw/vUEtbUvf2exJfY3RGInXrYlubhBIH6rmNEn6sI/FmqenZJwkjw==",
         "dependencies": {
           "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
+        }
+      },
+      "OpenTelemetry.Resources.Azure": {
+        "type": "CentralTransitive",
+        "requested": "[1.19.1-beta.2, )",
+        "resolved": "1.19.1-beta.2",
+        "contentHash": "Kd/j40oO/gwPYDGMK9fMo+smH2hfAIbTmQAZ1W515FdP0DDkXCtqtTp4QtwbIcf4QsjLGDwzil/hp0hgMDObXA==",
+        "dependencies": {
+          "OpenTelemetry": "[1.19.1, 2.0.0)"
         }
       }
     }

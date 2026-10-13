@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Sample.Core.Application;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.OTel;
+using Ark.Tools.OTel.Azure;
 using Ark.Tools.MediatorFramework;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.MediatorFramework.Messaging.OTel;
@@ -40,7 +41,9 @@ public static class SampleHost
         builder.UseArkMinimalApiStartupDiagnostics();
         builder.Host.ConfigureNLog("Ark.MediatorFramework.Sample.Core.Web.WebInterface");
 
-        builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+        builder.Services.AddOpenTelemetry()
+            .AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration)
+            .AddArkAzureOpenTelemetry(builder.Configuration);
 
         // The advanced tier is a tuning profile: opt in from configuration, not by default.
         var advancedMetrics = builder.Configuration.GetValue<bool>("Messaging:AdvancedMetrics");

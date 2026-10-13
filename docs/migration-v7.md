@@ -58,8 +58,8 @@ compared with v6.0.6 by delegating common policy to the SDK.
 For an application without custom `TelemetryClient.Track*` calls or direct
 Application Insights processors:
 
-1. Add `Ark.Tools.AspNetCore.OTel`.
-2. Call `builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration)`.
+1. Add `Ark.Tools.AspNetCore.OTel` and `Ark.Tools.OTel.Azure`.
+2. Call `builder.Services.AddOpenTelemetry().AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration).AddArkAzureOpenTelemetry(builder.Configuration)`.
 3. Configure `ApplicationInsights:ConnectionString` or
    `APPLICATIONINSIGHTS_CONNECTION_STRING`.
 4. Add only the instrumentation used by the application:

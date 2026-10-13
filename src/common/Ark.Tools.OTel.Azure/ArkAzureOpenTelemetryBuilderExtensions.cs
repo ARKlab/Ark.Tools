@@ -6,10 +6,12 @@ using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using OpenTelemetry;
 using OpenTelemetry.Instrumentation.Http;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 using System.Diagnostics;
@@ -52,8 +54,8 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
         });
 
         // Azure SDKs already emit a client span for each HTTP call: drop the nested HttpClient span, as the Azure
-        // Monitor Distro does. PostConfigure runs after every filter assignment, the Distro's included, so the
-        // application's filters set before and after this call still apply.
+        // Monitor Distro does. PostConfigure runs after every filter assignment, so the application's filters set
+        // before and after this call still apply.
         Func<HttpRequestMessage, bool>? filterBefore = null;
         builder.Services.Configure<HttpClientTraceInstrumentationOptions>(options =>
             filterBefore = options.FilterHttpRequestMessage);
@@ -71,14 +73,18 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
     }
 
     /// <summary>
-    /// Adds Azure SDK tracing (see <see cref="AddArkAzureSdkInstrumentation"/>) to an Ark OpenTelemetry setup and,
-    /// when an Application Insights connection string is configured, exports traces, metrics and error logs to
-    /// Azure Monitor. The Ark adaptive sampler stays in charge of sampling.
+    /// Adds the Azure integration to an Ark OpenTelemetry setup, on any host: Azure SDK tracing
+    /// (see <see cref="AddArkAzureSdkInstrumentation"/>), the Azure App Service, Virtual Machine and Container Apps
+    /// resource detectors and, when an Application Insights connection string is configured, the export of traces,
+    /// metrics (live metrics included) and error logs to Azure Monitor. The Ark adaptive sampler stays in charge of
+    /// sampling.
     /// </summary>
     /// <param name="builder">The OpenTelemetry builder, already configured with an Ark setup.</param>
     /// <param name="configuration">
     /// Optional application configuration holding <c>ApplicationInsights:ConnectionString</c> or
-    /// <c>APPLICATIONINSIGHTS_CONNECTION_STRING</c>; the environment variable is read as a fallback.
+    /// <c>APPLICATIONINSIGHTS_CONNECTION_STRING</c>; the environment variable is read as a fallback. The adaptive
+    /// sampler also reads the legacy <c>ApplicationInsights:ArkAdaptiveSampler</c> section, overridden by
+    /// <c>OTel:ArkAdaptiveSampler</c>.
     /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
     public static OpenTelemetryBuilder AddArkAzureOpenTelemetry(
@@ -87,7 +93,23 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        builder.AddArkAzureSdkInstrumentation();
+        if (configuration is not null)
+        {
+            // First in the collection, so the Ark setup's OTel:ArkAdaptiveSampler section and callback, registered
+            // earlier, still win.
+            builder.Services.Insert(0, ServiceDescriptor.Singleton<IConfigureOptions<ArkAdaptiveSamplerOptions>>(
+                new ConfigureNamedOptions<ArkAdaptiveSamplerOptions>(
+                    Options.DefaultName,
+                    options => configuration.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(options))));
+        }
+
+        builder
+            .AddArkAzureSdkInstrumentation()
+            // Cloud role instance and Azure attributes when running on App Service, a VM or Container Apps.
+            .ConfigureResource(static resource => resource
+                .AddAzureAppServiceDetector()
+                .AddAzureVMDetector()
+                .AddAzureContainerAppsDetector());
 
         var connectionString = configuration?["ApplicationInsights:ConnectionString"]
             ?? configuration?["APPLICATIONINSIGHTS_CONNECTION_STRING"]

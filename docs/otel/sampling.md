@@ -40,8 +40,8 @@ skipped by query label (`outbox.peek-lock` and `SqlQueryLabelsToSkip`) or by an 
 SqlClient filter, and spans the pre-filter or NLog processors drop when they start or end, give
 back the token and the traffic they counted. Spans dropped after sampling by other processors
 or instrumentation filters, such as an application `HttpClient` filter, still count. HTTP `OPTIONS` requests are recognized before sampling when ASP.NET Core passes the request
-method at creation: by default from ASP.NET Core 11, and with `AddArkAspNetCoreOpenTelemetry` or
-`AddArkAzureMonitorOpenTelemetry` on .NET 10, which set the
+method at creation: by default from ASP.NET Core 11, and with `AddArkAspNetCoreOpenTelemetry`
+on .NET 10, which sets the
 `Microsoft.AspNetCore.Hosting.SuppressActivityOpenTelemetryData` switch to `false` unless the
 application already set it.
 
@@ -136,8 +136,8 @@ incomplete; failure promotion applies either way. Set it to `true` to follow the
 flag of the remote parent instead: such spans then carry no sample rate (itemCount 1).
 
 `OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
-(`AddArkOpenTelemetry` when given an `IConfiguration`, `AddArkAzureMonitorOpenTelemetry`
-and `AddArkOpenTelemetryForWorkerHost`). `AddArkAzureMonitorOpenTelemetry` also reads
+(`AddArkOpenTelemetry` or `AddArkAspNetCoreOpenTelemetry` when given an `IConfiguration`,
+and `AddArkOpenTelemetryForWorkerHost`). `AddArkAzureOpenTelemetry(configuration)` also reads
 the legacy `ApplicationInsights:ArkAdaptiveSampler` section for compatibility; values
 in `OTel:ArkAdaptiveSampler` take precedence. The Application Insights v3 compatibility path
 (`AddArkApplicationInsightsCustomizations`) reads only

@@ -338,7 +338,8 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.OTel": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )"
+          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )",
+          "OpenTelemetry.Resources.Azure": "[1.19.1-beta.2, )"
         }
       },
       "ark.tools.solid": {
@@ -597,6 +598,15 @@
         "contentHash": "JYdCD0Hkn0+hbSNTjDWENIlsR0CquiH2g6g2jme8Pv1GdDKjJ4/hQnOPJ3vX6XNV/RLf5T1551FeX4DncbdmXw==",
         "dependencies": {
           "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
+        }
+      },
+      "OpenTelemetry.Resources.Azure": {
+        "type": "CentralTransitive",
+        "requested": "[1.19.1-beta.2, )",
+        "resolved": "1.19.1-beta.2",
+        "contentHash": "Kd/j40oO/gwPYDGMK9fMo+smH2hfAIbTmQAZ1W515FdP0DDkXCtqtTp4QtwbIcf4QsjLGDwzil/hp0hgMDObXA==",
+        "dependencies": {
+          "OpenTelemetry": "[1.19.1, 2.0.0)"
         }
       },
       "Slack.Webhooks": {

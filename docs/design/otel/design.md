@@ -9,14 +9,20 @@ activities, meters, and events; they do not reference the Application Insights S
 Application Insights remains a supported exporter and compatibility path, but it is
 selected by an application through a dedicated package and explicit setup call.
 
-The Azure Monitor OpenTelemetry Distro is the recommended new-application path:
+Azure Monitor export is the recommended new-application path:
 
 ```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
+builder.Services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration)
+    .AddArkAzureOpenTelemetry(builder.Configuration);
 ```
 
-The extension is opt-in. It configures the Microsoft distro and registers Ark
-instrumentation sources. The application owns the connection string and can select a
+Each host setup (`AddArkAspNetCoreOpenTelemetry`, `AddArkOpenTelemetryForWorkerHost`,
+`AddArkOpenTelemetry`) adds only its own instrumentation. The Azure extension
+(`Ark.Tools.OTel.Azure`) is opt-in and composes with any of them. It adds
+`Azure.Monitor.OpenTelemetry.Exporter`, Azure SDK tracing and Azure resource detection to the Ark setup, without the Azure Monitor
+Distro: Ark already provides its instrumentations and sampler, and the Distro would
+turn off URL query redaction and replace the sampler. The application owns the connection string and can select a
 different OTel exporter without changing Ark instrumentation.
 
 ## Package boundaries
@@ -28,7 +34,7 @@ different OTel exporter without changing Ark instrumentation.
 | `Ark.Tools.ResourceWatcher` | ResourceWatcher activities and diagnostic events | None |
 | `Ark.Tools.AspNetCore` | Hosting defaults and web pipeline | None |
 | `Ark.Tools.OTel.Azure` | Azure SDK tracing and Azure Monitor export on any host | None |
-| `Ark.Tools.AspNetCore.OTel` | Azure Monitor OTel Distro setup and health check metrics | None |
+| `Ark.Tools.AspNetCore.OTel` | ASP.NET Core instrumentation setup and health check metrics | None |
 | `Ark.Tools.ResourceWatcher.OTel` | ResourceWatcher OTel setup and worker-host pipeline | None |
 | `Ark.Tools.ApplicationInsights` | AI v3 compatibility customizations | Explicit |
 | `Ark.Tools.AspNetCore.ApplicationInsights` | AI v3 hosting setup and processors | Explicit |
@@ -66,7 +72,7 @@ MediatorFramework messaging exposes corresponding transport-neutral queue and
 processing measurements through
 `Ark.Tools.MediatorFramework.Messaging.OpenTelemetryProcessingMetricsStep`.
 Its instruments use the `ark.tools.mediatorframework` namespace, and its meter
-is registered alongside Rebus instrumentation by `AddArkAzureMonitorOpenTelemetry`.
+is registered alongside Rebus instrumentation by `AddArkOpenTelemetry`.
 
 ### Outbox
 
@@ -128,7 +134,7 @@ Success-only queue-time semantics are retained.
 
 `Ark.Tools.OTel` remains exporter-neutral. Its processors and sampler are added to
 the application's OTel tracer provider by both the exporter-neutral and Azure
-Monitor Distro setup extensions. Applications using the legacy AI v3 path use
+setup extensions. Applications using the legacy AI v3 path use
 the existing AI bridge package, which registers the same sampler.
 
 ## Non-goals

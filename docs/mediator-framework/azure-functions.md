@@ -136,11 +136,10 @@ then `APPLICATIONINSIGHTS_CONNECTION_STRING`. Set
 `APPLICATIONINSIGHTS_CONNECTION_STRING`, the setting the Functions host reads,
 and never place a connection string in source.
 
-Do not use `AddArkAspNetCoreOpenTelemetry`, `AddArkAzureMonitorOpenTelemetry` or
-the Azure Monitor distro in a Functions worker: their ASP.NET Core instrumentation reports every request a
-second time, after the host. The worker does not export logs either: the host
-captures the NLog console output and exports it, so a worker log exporter would
-send each entry twice.
+Do not use `AddArkAspNetCoreOpenTelemetry` or the Azure Monitor distro in a Functions worker: their
+ASP.NET Core instrumentation reports every request a second time, after the host. Do not use
+`AddArkAzureOpenTelemetry` either: it also exports logs, and the host already captures the NLog
+console output and exports it, so a worker log exporter would send each entry twice.
 
 ## 3. Declare a shared messaging network
 

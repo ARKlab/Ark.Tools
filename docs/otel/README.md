@@ -70,14 +70,21 @@ OpenTelemetry resource configuration.
 ### ASP.NET Core (recommended)
 
 ```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry();
+builder.Services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(configuration: builder.Configuration)
+    .AddArkAzureOpenTelemetry(builder.Configuration);
 ```
 
-The extension is provided by `Ark.Tools.AspNetCore.OTel` and uses the Azure Monitor
-OpenTelemetry Distro. Set `APPLICATIONINSIGHTS_CONNECTION_STRING` or configure an
-alternative exporter in the application.
+`AddArkAspNetCoreOpenTelemetry` (`Ark.Tools.AspNetCore.OTel`) adds the Ark pipeline and the
+ASP.NET Core instrumentation only. A host running on Azure also calls
+`AddArkAzureOpenTelemetry` (`Ark.Tools.OTel.Azure`), as a worker does: it adds Azure SDK tracing
+and Azure resource detection, and exports to Azure Monitor with
+`Azure.Monitor.OpenTelemetry.Exporter` when `APPLICATIONINSIGHTS_CONNECTION_STRING` or
+`ApplicationInsights:ConnectionString` is set. Other exporters can be added instead. Ark does not use
+the Azure Monitor OpenTelemetry Distro: unlike the Distro, Ark keeps the OpenTelemetry redaction of URL query strings, and
+does not add the Application Insights profiler tagging or the Azure SDK log forwarder.
 
-The Distro also registers an OpenTelemetry logger provider. Ark configures that
+The Azure Monitor exporter also registers an OpenTelemetry logger provider. Ark configures that
 provider in code to export only `Error` and `Critical` records; NLog remains
 available as a separate logging provider for console, database, mail, and Slack
 targets.
@@ -127,13 +134,13 @@ The recommended environment variable is:
 APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=https://...
 ```
 
-`AddArkAzureMonitorOpenTelemetry` also reads
+`AddArkAzureOpenTelemetry` also reads
 `ApplicationInsights:ConnectionString` from application configuration.
 
 ### Core client instrumentations
 
-`AddArkOpenTelemetry`, which `AddArkAspNetCoreOpenTelemetry`,
-`AddArkAzureMonitorOpenTelemetry` and `AddArkOpenTelemetryForWorkerHost` call, registers the
+`AddArkOpenTelemetry`, which `AddArkAspNetCoreOpenTelemetry` and
+`AddArkOpenTelemetryForWorkerHost` call, registers the
 stable OpenTelemetry .NET instrumentations for `HttpClient` and
 `Microsoft.Data.SqlClient`. Flurl clients created by `Ark.Tools.Http` use
 `HttpClient`, so their outbound requests are captured automatically; no
@@ -153,14 +160,16 @@ client duration meter is enabled by default. Applications can extend the Ark
 defaults and opt into query text only for controlled diagnostics:
 
 ```csharp
-builder.Services.AddArkAzureMonitorOpenTelemetry(
-    builder.Configuration,
-    sql => sql.Filter = command => true,
-    configureArkOtel: otel =>
-    {
-        otel.IncludeSqlQueryText = true;
-        otel.SqlQueryLabelsToSkip = ["health-check"];
-    });
+builder.Services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(
+        sql => sql.Filter = command => true,
+        configureArkOtel: otel =>
+        {
+            otel.IncludeSqlQueryText = true;
+            otel.SqlQueryLabelsToSkip = ["health-check"];
+        },
+        configuration: builder.Configuration)
+    .AddArkAzureOpenTelemetry(builder.Configuration);
 ```
 
 The SQL Server outbox polling command uses this label instead of matching SQL
@@ -173,12 +182,13 @@ Everything Azure-specific lives in `Ark.Tools.OTel.Azure`, for any host:
   nested under an Azure SDK span, so a call is not reported twice, and an application
   `HttpClient` filter still applies. Its sampling filter drops Service Bus receives before they
   use the sampler budget.
-- `AddArkAzureOpenTelemetry(configuration)` adds it to an Ark setup and, when an Application
-  Insights connection string is configured, exports traces, metrics and error logs to Azure
-  Monitor with `Azure.Monitor.OpenTelemetry.Exporter`. Use it in workers:
+- `AddArkAzureOpenTelemetry(configuration)` adds it to an Ark setup, with the Azure App Service,
+  Virtual Machine and Container Apps resource detectors, and, when an Application Insights
+  connection string is configured, exports traces, metrics and error logs to Azure Monitor with
+  `Azure.Monitor.OpenTelemetry.Exporter`. Use it in workers:
   `services.AddOpenTelemetry().AddArkOpenTelemetry(configuration: configuration).AddArkAzureOpenTelemetry(configuration)`.
-- `AddArkAzureMonitorOpenTelemetry` (ASP.NET Core) uses `AddArkAzureSdkInstrumentation()` and
-  exports through the Azure Monitor Distro.
+- ASP.NET Core hosts call it after `AddArkAspNetCoreOpenTelemetry`, see
+  [ASP.NET Core](#aspnet-core-recommended).
 
 Azure SDK tracing for Service Bus and Event Hubs is experimental and needs the
 `Azure.Experimental.EnableActivitySource` switch, which Azure.Core reads only once, when the
@@ -192,9 +202,8 @@ The other setups do not collect Azure SDK spans.
 Applications should use the current Azure Service Bus SDK rather than adding a
 separate, unsupported Service Bus instrumentation package.
 
-The Azure Monitor distro can also register some of these instrumentations.
-Applications should verify their exporter setup does not register the same
-instrumentation twice.
+Applications that add their own exporter setup, such as the Azure Monitor Distro, should
+verify it does not register the same instrumentation twice.
 
 ### Further instrumentation candidates
 
@@ -239,7 +248,7 @@ framework support before adding them to the default registration.
 ```
 
 The Azure Monitor connection string stays under `ApplicationInsights`. The sampler
-reads `OTel:ArkAdaptiveSampler`; `AddArkAzureMonitorOpenTelemetry` also reads the
+reads `OTel:ArkAdaptiveSampler`; `AddArkAzureOpenTelemetry` also reads the
 legacy `ApplicationInsights:ArkAdaptiveSampler` section for compatibility, and
 `OTel` values take precedence. The
 Application Insights v3 compatibility path (`AddArkApplicationInsightsCustomizations`)
@@ -336,8 +345,8 @@ Lines to:
 - `otel-metrics.jsonl` — `long` and `double` measurements with meter,
   instrument, unit, value, and tags.
 
-Azure Monitor remains isolated because `AddArkAzureMonitorOpenTelemetry` calls
-`UseAzureMonitor` only when `ApplicationInsights:ConnectionString` or
+Azure Monitor remains isolated because `AddArkAzureOpenTelemetry` adds the
+Azure Monitor exporter only when `ApplicationInsights:ConnectionString` or
 `APPLICATIONINSIGHTS_CONNECTION_STRING` is non-empty. Keep those values unset
 for local diagnostics and tests. Empty Application Insights settings in the
 sample integration-test configuration are safe.

@@ -3,18 +3,15 @@
   <PropertyGroup>
     <!-- the other props are defined in Directory.Build.props -->
     <TargetFrameworks>net10.0</TargetFrameworks>
-    <Description>OpenTelemetry and Azure Monitor Distro setup for Ark ASP.NET Core hosts.</Description>
-    <PackageTags>Ark;C#;.NET;Framework;AspNetCore;OpenTelemetry;AzureMonitor</PackageTags>
+    <Description>OpenTelemetry setup for Ark ASP.NET Core hosts.</Description>
+    <PackageTags>Ark;C#;.NET;Framework;AspNetCore;OpenTelemetry</PackageTags>
     <Version>$(AspNetCoreGroupVersion)</Version>
     <VersionSuffix>$(AspNetCoreGroupVersionSuffix)</VersionSuffix>
     <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
-    <!-- Source-generated Bind keeps the legacy ArkAdaptiveSamplerOptions binding trim-safe. -->
-    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" />
@@ -22,6 +19,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.AspNetCore.HealthChecks.OTel\Ark.Tools.AspNetCore.HealthChecks.OTel.csproj" />
-    <ProjectReference Include="..\..\common\Ark.Tools.OTel.Azure\Ark.Tools.OTel.Azure.csproj" />
+    <ProjectReference Include="..\..\common\Ark.Tools.OTel\Ark.Tools.OTel.csproj" />
   </ItemGroup>
 </Project>
