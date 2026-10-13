@@ -176,7 +176,9 @@ public static class Ex
     {
         services.Configure<ArkAdaptiveSamplerOptions>(options =>
         {
+            // Legacy Application Insights section first so the canonical OTel section wins.
             configuration?.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(options);
+            configuration?.GetSection("OTel:ArkAdaptiveSampler").Bind(options);
             configureAdaptiveSampler?.Invoke(options);
         });
     }

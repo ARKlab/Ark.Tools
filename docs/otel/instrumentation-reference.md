@@ -250,7 +250,8 @@ The `ArkAdaptiveSampler` is always installed by Ark's OpenTelemetry setup. The
 exporter-neutral `AddArkAspNetCoreOpenTelemetry` and the Azure Monitor
 `AddArkAzureMonitorOpenTelemetry` paths install it with the
 `ArkFailurePromotionProcessor`. The Azure Monitor path binds
-`ApplicationInsights:ArkAdaptiveSampler`; the exporter-neutral path uses the
+`OTel:ArkAdaptiveSampler` (falling back to the legacy
+`ApplicationInsights:ArkAdaptiveSampler`); the exporter-neutral path uses the
 documented defaults. The Application Insights v3 compatibility path installs
 the same sampler through `AddArkApplicationInsightsCustomizations`.
 
@@ -261,7 +262,7 @@ The sampler and `ArkFailurePromotionProcessor` must share one
 configured, `AddArkAzureMonitorOpenTelemetry` sets `ArkAdaptiveSampler` again
 after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
 `SamplingRatio` options have no effect. Configure sampling with
-`ApplicationInsights:ArkAdaptiveSampler` instead.
+`OTel:ArkAdaptiveSampler` instead.
 
 ### Decision order
 
@@ -326,7 +327,7 @@ operation names are bounded by `MaxOperationBuckets`; overflow shares the
 ### Options
 
 Configuration section:
-`ApplicationInsights:ArkAdaptiveSampler`.
+`OTel:ArkAdaptiveSampler`.
 
 | Option | Default | Effect |
 |---|---:|---|
@@ -341,7 +342,7 @@ Example:
 
 ```json
 {
-  "ApplicationInsights": {
+  "OTel": {
     "ArkAdaptiveSampler": {
       "TracesPerSecond": 1.0,
       "MovingAverageRatio": 0.5,
@@ -353,6 +354,10 @@ Example:
   }
 }
 ```
+
+`OTel:ArkAdaptiveSampler` is the canonical section. The legacy
+`ApplicationInsights:ArkAdaptiveSampler` section is still read for
+compatibility; values in `OTel:ArkAdaptiveSampler` take precedence.
 
 ## Source reference
 

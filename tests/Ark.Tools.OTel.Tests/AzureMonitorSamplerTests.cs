@@ -7,6 +7,7 @@ using AwesomeAssertions;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 using OpenTelemetry.Trace;
 
@@ -85,6 +86,27 @@ public sealed class AzureMonitorSamplerTests
             "ArkAdaptiveSampler drops spans marked as filtered noise instead of recording them");
     }
 
+    [TestMethod]
+    public void AddArkAzureMonitorOpenTelemetry_OTelSamplerSectionOverridesLegacyApplicationInsightsSection()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["ApplicationInsights:ArkAdaptiveSampler:TracesPerSecond"] = "3",
+                ["ApplicationInsights:ArkAdaptiveSampler:MaxOperationBuckets"] = "7",
+                ["OTel:ArkAdaptiveSampler:TracesPerSecond"] = "5",
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddArkAzureMonitorOpenTelemetry(configuration);
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = serviceProvider.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value;
+
+        options.TracesPerSecond.Should().Be(5, "the OTel section is canonical");
+        options.MaxOperationBuckets.Should().Be(7, "the legacy section still applies where OTel is silent");
+    }
+
     private static ServiceProvider _buildServiceProvider(
         string? azureMonitorTarget,
         Action<IServiceCollection>? configureServices = null)
@@ -93,8 +115,8 @@ public sealed class AzureMonitorSamplerTests
             .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 ["ApplicationInsights:ConnectionString"] = azureMonitorTarget,
-                ["ApplicationInsights:ArkAdaptiveSampler:TracesPerSecond"] = "0.0001",
-                ["ApplicationInsights:ArkAdaptiveSampler:EnablePerOperationBucketing"] = "false",
+                ["OTel:ArkAdaptiveSampler:TracesPerSecond"] = "0.0001",
+                ["OTel:ArkAdaptiveSampler:EnablePerOperationBucketing"] = "false",
             })
             .Build();
 
