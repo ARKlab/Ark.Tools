@@ -4,6 +4,7 @@
 using Ark.MediatorFramework.Sample.Core.Tests.Hooks;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.Outbox;
+using Ark.Tools.Outbox.SqlServer;
 
 using AwesomeAssertions;
 
@@ -72,6 +73,34 @@ public sealed class NativeOutboxIntegrationTests
         firstMessage.Body.Should().NotEqual(secondMessage.Body);
     }
 
+    [TestMethod]
+    public async Task SqlSendAsyncInsertsOneRoundTripPerChunkInInputOrder()
+    {
+        if (_inMemoryProfile())
+            Assert.Inconclusive("The SQL integration profile is disabled.");
+        await DatabaseHooks.ResetDatabaseAsync().ConfigureAwait(false);
+        // 1500 messages span two 1000-row chunks.
+        var messages = Enumerable.Range(0, 1500).Select(_indexedMessage).ToList();
+        var connection = new SqlConnection(DatabaseHooks.ConnectionString) { StatisticsEnabled = true };
+        await connection.OpenAsync().ConfigureAwait(false);
+        var transaction = await connection.BeginTransactionAsync().ConfigureAwait(false);
+        var context = new SampleDataContext(transaction, new SampleDataContextConfig(DatabaseHooks.ConnectionString));
+        await using (var _ = context.ConfigureAwait(false))
+        {
+            connection.ResetStatistics();
+            await context.SendAsync(messages).ConfigureAwait(false);
+            var roundTrips = (long)connection.RetrieveStatistics()["ServerRoundtrips"]!;
+            await context.CommitAsync().ConfigureAwait(false);
+
+            roundTrips.Should().Be(2);
+        }
+
+        var stored = await _readOutboxInIdOrderAsync().ConfigureAwait(false);
+        stored.Select(static x => BitConverter.ToInt32(x.Body)).Should().Equal(Enumerable.Range(0, 1500));
+        stored.Select(static x => x.Headers!["index"]).Should().Equal(
+            Enumerable.Range(0, 1500).Select(static i => i.ToString(CultureInfo.InvariantCulture)));
+    }
+
     private static ISampleDataContextFactory _sqlFactory()
     {
         SampleDapperMappings.Register();
@@ -105,6 +134,42 @@ public sealed class NativeOutboxIntegrationTests
                 [MessagingHeaders.OutboxDestination] = "processor",
             },
         };
+    }
+
+    private static OutboxMessage _indexedMessage(int index)
+    {
+        return new OutboxMessage
+        {
+            Body = BitConverter.GetBytes(index),
+            Headers = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["index"] = index.ToString(CultureInfo.InvariantCulture),
+            },
+        };
+    }
+
+    private static async Task<List<OutboxMessage>> _readOutboxInIdOrderAsync()
+    {
+        var connection = new SqlConnection(DatabaseHooks.ConnectionString);
+        await using var __connection = connection.ConfigureAwait(false);
+        await connection.OpenAsync().ConfigureAwait(false);
+        var command = connection.CreateCommand();
+        await using var __command = command.ConfigureAwait(false);
+        command.CommandText = "SELECT [Headers], [Body] FROM [dbo].[Outbox] ORDER BY [Id]";
+        var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        await using var __reader = reader.ConfigureAwait(false);
+        var serializer = new HeaderSerializer();
+        var rows = new List<OutboxMessage>();
+        while (await reader.ReadAsync().ConfigureAwait(false))
+        {
+            rows.Add(new OutboxMessage
+            {
+                Headers = serializer.DeserializeFromString(reader.GetString(0)),
+                Body = (byte[])reader[1],
+            });
+        }
+
+        return rows;
     }
 
     private static async Task<int> _countAsync(string table)
