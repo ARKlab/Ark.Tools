@@ -25,7 +25,7 @@ public sealed class ArkAdaptiveSamplerOptions
     /// <summary>
     /// Gets or sets the moving average ratio for smoothing adaptive rate increases.
     /// Value between 0 (instant adaptation) and 1 (rates never increase). Decreases apply at once,
-    /// so the buckets never share more than <see cref="TracesPerSecond"/>. Default is 0.5.
+    /// so the active buckets never share more than <see cref="TracesPerSecond"/>. Default is 0.5.
     /// </summary>
     public double MovingAverageRatio { get; set; } = 0.5;
 
@@ -44,7 +44,10 @@ public sealed class ArkAdaptiveSamplerOptions
     /// among the busier operations. A burst larger than the bucket (two seconds of its rate, at least
     /// one root) is still limited.
     /// Idle and new operations split the budget the active operations leave unused, holding at least
-    /// one token so that their first root is sampled.
+    /// one token so that their first root is sampled. An idle bucket also refills up to one token per period,
+    /// capped at an even split of <see cref="TracesPerSecond"/> among the idle buckets, so a rare operation
+    /// idle for whole periods, even next to a busy one, is sampled when it resumes while its traffic fits
+    /// that cap. This refill can add up to <see cref="TracesPerSecond"/> to what the active buckets share.
     /// When <see langword="false"/>, all roots share one bucket and busy operations can crowd out rare ones.
     /// Default is <see langword="true"/>.
     /// </summary>

@@ -268,21 +268,29 @@ public sealed class ArkAdaptiveSampler : Sampler
             var buckets = _buckets.Values.Select(static b => (Bucket: b, Counts: b.TakeCounts())).ToList();
             var active = buckets.Where(static b => b.Counts.Seen > 0).ToList();
 
+            // Restart the window anyway: a longer one would understate the next traffic of rare operations.
             if (active.Count == 0)
+            {
+                _lastAdjustment = now;
                 return;
+            }
 
             var share = _fairShare(active.Select(b => b.Counts.Seen / elapsed).ToList(), _options.TracesPerSecond);
 
             // Idle buckets and the next new one split what the active buckets leave unused, so the
             // buckets stay within the budget when idle operations resume. Each still holds one token.
             var allocated = active.Sum(b => Math.Min(b.Counts.Seen / elapsed, share));
-            var spareRate = Math.Max(0, _options.TracesPerSecond - allocated) / (buckets.Count - active.Count + 1);
+            var idleShares = buckets.Count - active.Count + 1;
+            var spareRate = Math.Max(0, _options.TracesPerSecond - allocated) / idleShares;
+            // One root per period, out of an even split of the budget: a rare operation that skips a period
+            // still has its next root sampled when busy operations use the whole budget.
+            var idleFloor = Math.Min(1.0 / elapsed, _options.TracesPerSecond / idleShares);
 
             foreach (var (bucket, (seen, sampled)) in buckets)
             {
                 if (seen == 0)
                 {
-                    bucket.UpdateRate(spareRate);
+                    bucket.UpdateRate(Math.Max(spareRate, idleFloor));
                     continue;
                 }
 
