@@ -152,7 +152,9 @@ public sealed class ArkAdaptiveSampler : Sampler
         if (activity.ParentSpanId != default && (_options.RespectRemoteParentSampling || !activity.HasRemoteParent))
             return;
 
-        var sampleRate = activity.GetTagItem(_sampleRateTag) is double rate ? rate : 0;
+        // Failure promotion overwrites the tag and keeps the sampler's rate aside.
+        var sampleRate = (activity.GetCustomProperty(_bucketSampleRateProperty) ?? activity.GetTagItem(_sampleRateTag))
+            is double rate ? rate : 0;
         _getOrCreateBucket(activity.OperationName).Refund(sampleRate);
     }
 
@@ -179,11 +181,27 @@ public sealed class ArkAdaptiveSampler : Sampler
         }
 
         return ArkPreFilterProcessor._isNoise(samplingParameters.Name, httpMethod, dbOperation)
-            || _options.Filter?.Invoke(samplingParameters) == false;
+            || _isFilteredByOptions(samplingParameters);
+    }
+
+    private bool _isFilteredByOptions(in SamplingParameters samplingParameters)
+    {
+        try
+        {
+            return _options.Filter?.Invoke(samplingParameters) == false;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // Fail open: a faulty application filter must not break the code that starts the span.
+            return false;
+        }
     }
 
     /// <summary>The Azure Monitor attribute holding the sample rate (0–100] of an exported span.</summary>
     internal const string _sampleRateTag = "microsoft.sample_rate";
+
+    /// <summary>The custom property holding the sampler's sample rate of a span whose tag was overwritten.</summary>
+    internal const string _bucketSampleRateProperty = "ark.sampler.sample_rate";
 
     private OperationBucket _getOrCreateBucket(string operationName)
     {

@@ -31,6 +31,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Ark.Tools.OTel.Tests" />
+    <!-- Its setup wires the sampler to the Ark filter processors, as AddArkOpenTelemetry does. -->
+    <InternalsVisibleTo Include="Ark.Tools.ApplicationInsights" />
   </ItemGroup>
 
   <ItemGroup>

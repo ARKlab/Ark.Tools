@@ -194,9 +194,12 @@ Azure SDK tracing for Service Bus and Event Hubs is experimental and needs the
 `Azure.Experimental.EnableActivitySource` switch, which Azure.Core reads only once, when the
 first Azure SDK client starts. The `Ark.Tools.OTel.Azure` package therefore sets it in the
 application's runtime configuration, before Key Vault or App Configuration clients can start
-(set the MSBuild property `ArkEnableAzureSdkActivitySource` to `false` to opt out), and
-`AddArkAzureSdkInstrumentation()` also sets it, unless the application or the
-`AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE` environment variable already did.
+(set the MSBuild property `ArkEnableAzureSdkActivitySource` to `false` to opt out). Azure.Core
+reads that switch before the `AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE` environment variable,
+so the variable has no effect in an application that references the package; use the MSBuild
+property instead. With a project reference, which does not import the props file,
+`AddArkAzureSdkInstrumentation()` sets the switch unless the application or the environment
+variable already did.
 The other setups do not collect Azure SDK spans.
 
 Applications should use the current Azure Service Bus SDK rather than adding a

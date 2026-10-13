@@ -49,14 +49,17 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
                 _database = _read(builder, "Initial Catalog", "InitialCatalog", "Database");
                 // Match the instrumentation's server.address: no "tcp:"-style protocol prefix, port or instance name.
                 var server = dataSource?.Split(',', 2)[0].Trim();
-                var protocolEnd = server?.IndexOf(':', StringComparison.Ordinal) ?? -1;
-                if (protocolEnd >= 0 && !server!.StartsWith('['))
-                    server = server[(protocolEnd + 1)..].TrimStart('\\', '/').Trim();
-                var instanceStart = server?.IndexOf('\\', StringComparison.Ordinal) ?? -1;
-                if (instanceStart >= 0)
+                if (server is not null)
                 {
-                    _instanceDatabase = server![(instanceStart + 1)..] + "." + _database;
-                    server = server[..instanceStart];
+                    var protocolEnd = server.IndexOf(':', StringComparison.Ordinal);
+                    if (protocolEnd >= 0 && !server.StartsWith('['))
+                        server = server[(protocolEnd + 1)..].TrimStart('\\', '/').Trim();
+                    var instanceStart = server.IndexOf('\\', StringComparison.Ordinal);
+                    if (instanceStart >= 0)
+                    {
+                        _instanceDatabase = server[(instanceStart + 1)..] + "." + _database;
+                        server = server[..instanceStart];
+                    }
                 }
 
                 _configuredServer = server;
@@ -139,14 +142,21 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
             !string.Equals(dbSystem, "microsoft.sql_server", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        // Match by server name.
-        var configuredServer = _configuredServer!;
         return peerName != null &&
-            (peerName.Equals(configuredServer, StringComparison.OrdinalIgnoreCase) ||
-             peerName.Contains(configuredServer, StringComparison.OrdinalIgnoreCase)) &&
+            _hostMatches(peerName, _configuredServer!) &&
             dbName != null &&
             (string.Equals(dbName, _database, StringComparison.OrdinalIgnoreCase) ||
              string.Equals(dbName, _instanceDatabase, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // The same host, or its short name and FQDN: "logs" matches "logs.example.com", "notlogs.example.com" does not.
+    private static bool _hostMatches(string peerName, string configuredServer)
+    {
+        var (shorter, longer) = peerName.Length <= configuredServer.Length
+            ? (peerName, configuredServer)
+            : (configuredServer, peerName);
+        return longer.StartsWith(shorter, StringComparison.OrdinalIgnoreCase)
+            && (longer.Length == shorter.Length || longer[shorter.Length] == '.');
     }
 
     private static string? _read(DbConnectionStringBuilder builder, params string[] keys)

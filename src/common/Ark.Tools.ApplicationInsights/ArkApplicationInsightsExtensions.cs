@@ -97,12 +97,16 @@ public static class ArkApplicationInsightsExtensions
                     {
                         builder.WithTracing(tracerBuilder =>
                         {
+                            // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
+                            // The filter processors give it back the budget of the spans they drop after sampling.
+                            var sampler = new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry);
+                            sqlDependencyFilter._sampler = sampler;
+
                             // Pre-filter processor runs first to drop noisy spans before sampling.
-                            tracerBuilder.AddProcessor(new ArkPreFilterProcessor());
+                            tracerBuilder.AddProcessor(new ArkPreFilterProcessor { _sampler = sampler });
                             tracerBuilder.AddArkComplianceRedaction();
 
-                            // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
-                            tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry));
+                            tracerBuilder.SetSampler(sampler);
 
                             // Failure promotion: promotes rate-limited spans (and their parent chain /
                             // in-flight siblings) to exported when a failure is detected anywhere in

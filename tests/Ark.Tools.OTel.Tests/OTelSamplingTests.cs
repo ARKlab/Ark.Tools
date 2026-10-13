@@ -267,6 +267,52 @@ public class ArkAdaptiveSamplerTests
         next!.Recorded.Should().BeTrue("the processor gave the filtered root's token back");
     }
 
+    /// <summary>
+    /// A failing root the sampler did not sample, promoted and then dropped by the NLog database processor,
+    /// returns no token: it never took one.
+    /// </summary>
+    [TestMethod]
+    public void Processor_FilteringAPromotedRoot_ReturnsNoToken()
+    {
+        var registry = new FailedTraceRegistry();
+        var sampler = new ArkAdaptiveSampler(_singleTokenOptions(), registry, new ManualTimeProvider());
+        using var promotion = new ArkFailurePromotionProcessor(registry);
+        using var nlogDatabase = new ArkSqlDependencyFilterProcessor("Server=tcp:logs.example.com,1433;Database=Logs")
+        {
+            _sampler = sampler,
+        };
+        using var pipeline = new TestPipeline(
+            nameof(Processor_FilteringAPromotedRoot_ReturnsNoToken), sampler, promotion, nlogDatabase);
+
+        using (var sampled = pipeline.StartRoot("OP"))
+            sampled!.Recorded.Should().BeTrue("the root took the only token");
+
+        using (var nlogWrite = pipeline.StartRoot("OP", ActivityKind.Client))
+        {
+            nlogWrite!.Recorded.Should().BeFalse("no token is left");
+            nlogWrite.SetTag("db.system.name", "microsoft.sql_server");
+            nlogWrite.SetTag("server.address", "logs.example.com");
+            nlogWrite.SetTag("db.namespace", "Logs");
+            nlogWrite.SetStatus(ActivityStatusCode.Error);
+        }
+
+        using var next = pipeline.StartRoot("OP");
+        next!.Recorded.Should().BeFalse("the promoted NLog write had no token to give back");
+    }
+
+    /// <summary>An application filter that throws keeps the span instead of failing the code that starts it.</summary>
+    [TestMethod]
+    public void ShouldSample_ThrowingFilter_KeepsTheSpan()
+    {
+        var options = _singleTokenOptions();
+        options.Filter = static _ => throw new InvalidOperationException("faulty filter");
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), new ManualTimeProvider());
+        var parameters = new SamplingParameters(
+            default, ActivityTraceId.CreateRandom(), "OP", ActivityKind.Internal, null, null);
+
+        sampler.ShouldSample(in parameters).Decision.Should().Be(SamplingDecision.RecordAndSample);
+    }
+
     // 0.5 trace/s: the initial burst of two seconds holds one token, and the frozen clock adds none.
     private static ArkAdaptiveSamplerOptions _singleTokenOptions()
     {

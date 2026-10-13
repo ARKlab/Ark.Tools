@@ -20,6 +20,8 @@ namespace Ark.Tools.OTel.Tests;
 /// Verifies the sources and meters collected by the Ark OpenTelemetry setups.
 /// </summary>
 [TestClass]
+// Asserts a source has no listeners: a parallel test's Azure.* listener would make it fail.
+[DoNotParallelize]
 public sealed class ArkOpenTelemetrySetupTests
 {
     [TestMethod]

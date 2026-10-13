@@ -27,6 +27,9 @@ public sealed class ArkSqlDependencyFilterProcessorTests
     [DataRow(@"Data Source=logs.example.com\SQLEXPRESS;Initial Catalog=Logs", "logs.example.com", "SQLEXPRESS.Logs", true)]
     [DataRow(_logsDatabase, "logs.example.com", "Orders", false)]
     [DataRow(_logsDatabase, "orders.example.com", "Logs", false)]
+    [DataRow(_logsDatabase, "notlogs.example.com", "Logs", false)]
+    [DataRow("Server=logs;Database=Logs", "logs.example.com", "Logs", true)]
+    [DataRow(_logsDatabase, "logs", "Logs", true)]
     public void OnEnd_DropsOnlySpansToTheConfiguredDatabase(
         string nlogDatabase,
         string host,
