@@ -80,7 +80,12 @@ public static class ArkOpenTelemetryBuilderExtensions
                 .AddSource(_rebusInstrumentationName)
                 .AddSource(_mediatorMessagingInstrumentationName)
                 .AddHttpClientInstrumentation(static options =>
-                    options.FilterHttpRequestMessage = static _ => !_isAzureSdkHttpRequest())
+                {
+                    var applicationFilter = options.FilterHttpRequestMessage;
+                    options.FilterHttpRequestMessage = request =>
+                        !_isAzureSdkHttpRequest()
+                        && (applicationFilter is null || applicationFilter(request));
+                })
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.RecordException = true;

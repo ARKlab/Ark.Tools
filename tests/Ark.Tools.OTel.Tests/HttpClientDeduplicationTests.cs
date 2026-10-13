@@ -50,5 +50,32 @@ public sealed class HttpClientDeduplicationTests
             .Should().Be(expectHttpClientSpan);
     }
 
+    [TestMethod]
+    public async Task AddArkOpenTelemetry_KeepsApplicationHttpClientFilter()
+    {
+        const string parentSourceName = "Ark.Tools.OTel.Tests.Dedup.ApplicationFilter";
+        using var collector = new CollectingProcessor();
+        var services = new ServiceCollection();
+        // An application filter registered before the Ark setup must still apply.
+        services.ConfigureOpenTelemetryTracerProvider(static tracing => tracing
+            .AddHttpClientInstrumentation(static options => options.FilterHttpRequestMessage = static _ => false));
+        services.AddOpenTelemetry().AddArkOpenTelemetry();
+        services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
+            .AddSource(parentSourceName)
+            .AddProcessor(collector));
+        await using var serviceProvider = services.BuildServiceProvider();
+        _ = serviceProvider.GetRequiredService<TracerProvider>();
+        using var source = new ActivitySource(parentSourceName);
+        using var httpClient = new HttpClient();
+
+        using (source.StartActivity("parent", ActivityKind.Client))
+        {
+            await Assert.ThrowsExactlyAsync<HttpRequestException>(
+                () => httpClient.GetAsync(new Uri("http://127.0.0.1:9/"), TestContext.CancellationToken));
+        }
+
+        collector.Spans.Should().NotContain(static span => span.Source.Name == "System.Net.Http");
+    }
+
     public TestContext TestContext { get; set; } = null!;
 }
