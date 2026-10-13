@@ -206,14 +206,6 @@
           "OpenTelemetry.Api": "1.19.1"
         }
       },
-      "OpenTelemetry.Instrumentation.AspNetCore": {
-        "type": "Transitive",
-        "resolved": "1.19.0",
-        "contentHash": "reypo7g0Nzyssg1EkbfWU6W58CVFgtgkSEGrFXtbpA+bNit7HUs7587DOkOdPCgqWr3IL4f6X9B2yhnU6POrFA==",
-        "dependencies": {
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
-        }
-      },
       "OpenTelemetry.PersistentStorage.Abstractions": {
         "type": "Transitive",
         "resolved": "1.1.1",
@@ -570,6 +562,15 @@
         "contentHash": "3qqZfVmW8mKA2/fRwI83o8z+yZd33KbEqRlXrlX0+3e/U7i+z0MQiCr0L3Axxa0jGdiylIrpWX4DIT9nAbJ00A==",
         "dependencies": {
           "OpenTelemetry": "1.19.1"
+        }
+      },
+      "OpenTelemetry.Instrumentation.AspNetCore": {
+        "type": "CentralTransitive",
+        "requested": "[1.19.0, )",
+        "resolved": "1.19.0",
+        "contentHash": "reypo7g0Nzyssg1EkbfWU6W58CVFgtgkSEGrFXtbpA+bNit7HUs7587DOkOdPCgqWr3IL4f6X9B2yhnU6POrFA==",
+        "dependencies": {
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
         }
       },
       "OpenTelemetry.Instrumentation.Http": {

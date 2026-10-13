@@ -11,7 +11,6 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 using System.Data.Common;
-using System.Diagnostics;
 
 namespace Ark.Tools.OTel;
 
@@ -23,7 +22,10 @@ public static class ArkOpenTelemetryBuilderExtensions
     private const string _mediatorMessagingInstrumentationName = "Ark.MediatorFramework.Messaging";
     // Ark.Tools.Rebus's activity source and meter name, kept as a literal so native-only hosts don't carry Rebus.
     private const string _rebusInstrumentationName = "ark.tools.rebus";
-    private const string _azureCoreHttpSourceName = "Azure.Core.Http";
+    // Ark.Tools.Outbox's activity source and meter name, kept as a literal for the same reason.
+    private const string _outboxInstrumentationName = "ark.tools.outbox";
+    // .NET runtime and process metrics, emitted natively by .NET 9 and later.
+    private const string _runtimeMeterName = "System.Runtime";
     private const string _adaptiveSamplerSection = "OTel:ArkAdaptiveSampler";
     private const string _legacyAdaptiveSamplerSection = "ApplicationInsights:ArkAdaptiveSampler";
 
@@ -42,7 +44,8 @@ public static class ArkOpenTelemetryBuilderExtensions
     /// </param>
     /// <param name="configuration">
     /// Optional application configuration; the adaptive sampler binds the <c>OTel:ArkAdaptiveSampler</c>
-    /// section over the legacy <c>ApplicationInsights:ArkAdaptiveSampler</c> section.
+    /// section over the legacy <c>ApplicationInsights:ArkAdaptiveSampler</c> section, and SQL spans to the
+    /// NLog database (<c>ConnectionStrings:NLog.Database</c>) are dropped.
     /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
     public static OpenTelemetryBuilder AddArkOpenTelemetry(
@@ -79,13 +82,8 @@ public static class ArkOpenTelemetryBuilderExtensions
                 .SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>())
                 .AddSource(_rebusInstrumentationName)
                 .AddSource(_mediatorMessagingInstrumentationName)
-                .AddHttpClientInstrumentation(static options =>
-                {
-                    var applicationFilter = options.FilterHttpRequestMessage;
-                    options.FilterHttpRequestMessage = request =>
-                        !_isAzureSdkHttpRequest()
-                        && (applicationFilter is null || applicationFilter(request));
-                })
+                .AddSource(_outboxInstrumentationName)
+                .AddHttpClientInstrumentation()
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.RecordException = true;
@@ -102,22 +100,27 @@ public static class ArkOpenTelemetryBuilderExtensions
                             ArkSqlQueryLabel.SetTag(activity, dbCommand.CommandText);
                     };
                 })
-                .AddSource("Azure.Messaging.ServiceBus")
                 .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
                 .AddProcessor(new WebApi4xxAsSuccessProcessor())
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
+                // No-op when no NLog database is configured.
+                .AddProcessor(new ArkSqlDependencyFilterProcessor(_getNLogConnectionString(configuration)))
                 .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction))
             .WithMetrics(static metrics => metrics
                 .AddMeter(_rebusInstrumentationName)
                 .AddMeter(_mediatorMessagingInstrumentationName)
+                .AddMeter(_outboxInstrumentationName)
+                .AddMeter(_runtimeMeterName)
+                .AddHttpClientInstrumentation()
                 .AddSqlClientInstrumentation());
     }
 
-    // Ported from the Azure Monitor Distro: Azure SDKs already emit a client span for each HTTP call,
-    // so the nested HttpClient span would duplicate it.
-    private static bool _isAzureSdkHttpRequest()
+    // Same lookup as Ark.Tools.NLog's GetNLogSetting: hosts may turn the '.' into ':' or '_'.
+    private static string? _getNLogConnectionString(IConfiguration? configuration)
     {
-        return Activity.Current?.Parent?.Source.Name == _azureCoreHttpSourceName;
+        return configuration?["ConnectionStrings:NLog.Database"]
+            ?? configuration?["ConnectionStrings:NLog:Database"]
+            ?? configuration?["ConnectionStrings:NLog_Database"];
     }
 
     private static bool _includeSqlClientSpan(

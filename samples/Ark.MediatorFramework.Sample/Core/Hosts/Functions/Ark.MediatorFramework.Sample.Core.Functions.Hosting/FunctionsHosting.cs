@@ -5,11 +5,12 @@ using Ark.MediatorFramework.Sample.Core.Application.Authorization;
 using Ark.MediatorFramework.Sample.Core.Application.Host;
 using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Application.Messages;
-using Ark.Tools.AspNetCore.OTel;
+using Ark.Tools.AspNetCore.HealthChecks.OTel;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.AzureFunctions.SimpleInjector;
 using Ark.Tools.MediatorFramework.Messaging;
 using Ark.Tools.MediatorFramework.Messaging.OTel;
+using Ark.Tools.OTel;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.Authorization;
 using Ark.Tools.Solid.SimpleInjector;
@@ -36,8 +37,8 @@ public static class FunctionsHosting
     /// worker defaults. Azure Monitor receives traces and metrics only when a connection string is configured.
     /// </summary>
     /// <remarks>
-    /// The Azure Monitor distro is not used: its ASP.NET Core instrumentation would report every request the Functions
-    /// host already reports. Logs are not exported by the worker either: with <c>telemetryMode: OpenTelemetry</c> the
+    /// Neither the Azure Monitor distro nor <c>AddArkAspNetCoreOpenTelemetry</c> is used: their ASP.NET Core
+    /// instrumentation would report every request the Functions host already reports. Logs are not exported by the worker either: with <c>telemetryMode: OpenTelemetry</c> the
     /// host captures the NLog console output and exports it, so a worker log exporter would send each entry twice.
     /// </remarks>
     /// <param name="services">The worker services.</param>
@@ -47,9 +48,12 @@ public static class FunctionsHosting
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
+        services.AddArkOTelHealthCheckPublisher();
         var telemetry = services.AddOpenTelemetry()
-            .AddArkAspNetCoreOpenTelemetry()
-            .WithMetrics(static metrics => metrics.AddArkMessagingInstrumentation());
+            .AddArkOpenTelemetry(configuration: configuration)
+            .WithMetrics(static metrics => metrics
+                .AddArkMessagingInstrumentation()
+                .AddMeter(ArkOTelHealthCheckPublisher.MeterName));
         // Same lookup as AddArkAzureMonitorOpenTelemetry.
         var connectionString = configuration["ApplicationInsights:ConnectionString"]
             ?? configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]

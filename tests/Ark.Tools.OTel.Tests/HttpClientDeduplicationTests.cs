@@ -1,8 +1,11 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.AspNetCore.OTel;
+
 using AwesomeAssertions;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using OpenTelemetry.Trace;
@@ -12,69 +15,78 @@ using System.Diagnostics;
 namespace Ark.Tools.OTel.Tests;
 
 /// <summary>
-/// Verifies that <see cref="ArkOpenTelemetryBuilderExtensions.AddArkOpenTelemetry"/> drops HttpClient spans
-/// that duplicate an Azure SDK client span.
+/// Verifies the HttpClient filter of <see cref="Ex.AddArkAzureMonitorOpenTelemetry"/>: the Azure Monitor Distro drops
+/// HttpClient spans that duplicate an Azure SDK client span, and an application filter still applies.
 /// </summary>
 [TestClass]
 // HttpClient spans are process-wide: a parallel test's tracer provider would also collect this request.
 [DoNotParallelize]
 public sealed class HttpClientDeduplicationTests
 {
+    // Placeholder Azure Monitor target: the ingestion and live endpoints point to a closed local port.
+    private const string _azureMonitorTarget =
+        "InstrumentationKey=00000000-0000-0000-0000-000000000000;"
+        + "IngestionEndpoint=http://127.0.0.1:1/;LiveEndpoint=http://127.0.0.1:1/";
+
     [TestMethod]
     [DataRow("Azure.Core.Http", false)]
     [DataRow("Ark.Tools.OTel.Tests.Dedup", true)]
-    public async Task AddArkOpenTelemetry_FiltersHttpClientSpanUnderAzureSdkSpan(
+    public async Task AddArkAzureMonitorOpenTelemetry_FiltersHttpClientSpanUnderAzureSdkSpan(
         string parentSourceName,
         bool expectHttpClientSpan)
     {
-        using var collector = new CollectingProcessor();
-        var services = new ServiceCollection();
-        services.AddOpenTelemetry().AddArkOpenTelemetry();
-        services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
-            .AddSource(parentSourceName)
-            .AddProcessor(collector));
-        await using var serviceProvider = services.BuildServiceProvider();
-        _ = serviceProvider.GetRequiredService<TracerProvider>();
-        using var source = new ActivitySource(parentSourceName);
-        using var httpClient = new HttpClient();
+        var httpSpans = await _collectHttpClientSpans(parentSourceName, applicationFilter: null);
 
-        using (var parent = source.StartActivity("parent", ActivityKind.Client))
-        {
-            parent.Should().NotBeNull();
-            // Nothing listens on the discard port: the request fails, but its span is still started.
-            await Assert.ThrowsExactlyAsync<HttpRequestException>(
-                () => httpClient.GetAsync(new Uri("http://127.0.0.1:9/"), TestContext.CancellationToken));
-        }
-
-        collector.Spans.Any(static span => span.Source.Name == "System.Net.Http")
-            .Should().Be(expectHttpClientSpan);
+        httpSpans.Should().HaveCount(expectHttpClientSpan ? 1 : 0);
+        AppContext.TryGetSwitch("Azure.Experimental.EnableActivitySource", out var azureSdkTracing).Should().BeTrue();
+        azureSdkTracing.Should().BeTrue("the Distro collects Azure SDK spans only with the experimental switch on");
     }
 
     [TestMethod]
-    public async Task AddArkOpenTelemetry_KeepsApplicationHttpClientFilter()
+    public async Task AddArkAzureMonitorOpenTelemetry_KeepsApplicationHttpClientFilter()
     {
-        const string parentSourceName = "Ark.Tools.OTel.Tests.Dedup.ApplicationFilter";
+        var httpSpans = await _collectHttpClientSpans("Ark.Tools.OTel.Tests.Dedup.ApplicationFilter", static _ => false);
+
+        httpSpans.Should().BeEmpty("UseAzureMonitor must not replace the application filter");
+    }
+
+    private async Task<IReadOnlyList<Activity>> _collectHttpClientSpans(
+        string parentSourceName,
+        Func<HttpRequestMessage, bool>? applicationFilter)
+    {
         using var collector = new CollectingProcessor();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["ApplicationInsights:ConnectionString"] = _azureMonitorTarget,
+            })
+            .Build();
         var services = new ServiceCollection();
         // An application filter registered before the Ark setup must still apply.
-        services.ConfigureOpenTelemetryTracerProvider(static tracing => tracing
-            .AddHttpClientInstrumentation(static options => options.FilterHttpRequestMessage = static _ => false));
-        services.AddOpenTelemetry().AddArkOpenTelemetry();
+        if (applicationFilter is not null)
+        {
+            services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
+                .AddHttpClientInstrumentation(options => options.FilterHttpRequestMessage = applicationFilter));
+        }
+
+        services.AddArkAzureMonitorOpenTelemetry(configuration);
         services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
             .AddSource(parentSourceName)
             .AddProcessor(collector));
-        await using var serviceProvider = services.BuildServiceProvider();
+        var serviceProvider = services.BuildServiceProvider();
+        await using var serviceProviderScope = serviceProvider.ConfigureAwait(false);
         _ = serviceProvider.GetRequiredService<TracerProvider>();
         using var source = new ActivitySource(parentSourceName);
         using var httpClient = new HttpClient();
 
-        using (source.StartActivity("parent", ActivityKind.Client))
-        {
-            await Assert.ThrowsExactlyAsync<HttpRequestException>(
-                () => httpClient.GetAsync(new Uri("http://127.0.0.1:9/"), TestContext.CancellationToken));
-        }
+        using var parent = source.StartActivity("parent", ActivityKind.Client);
+        parent.Should().NotBeNull();
+        // Nothing listens on the discard port: the request fails, but its span is still started.
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(
+            () => httpClient.GetAsync(new Uri("http://127.0.0.1:9/"), TestContext.CancellationToken)).ConfigureAwait(false);
 
-        collector.Spans.Should().NotContain(static span => span.Source.Name == "System.Net.Http");
+        // The exporter's own requests to the placeholder endpoints are not children of the test span.
+        return [.. collector.Spans.Where(span => span.Source.Name == "System.Net.Http" && span.ParentSpanId == parent!.SpanId)];
     }
 
     public TestContext TestContext { get; set; } = null!;

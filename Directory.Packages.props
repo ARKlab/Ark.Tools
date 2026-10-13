@@ -83,6 +83,7 @@
     <PackageVersion Include="OpenTelemetry" Version="1.19.1" />
     <PackageVersion Include="OpenTelemetry.Api" Version="1.19.1" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.19.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.19.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.19.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.19.0" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.6.0" />

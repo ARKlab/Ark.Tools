@@ -18,6 +18,8 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
 {
     private readonly string? _configuredServer;
     private readonly string? _database;
+    // SqlClient instrumentation reports db.namespace as "{instance}.{database}" for a named instance.
+    private readonly string? _instanceDatabase;
     private readonly bool _enabled;
 
     /// <summary>
@@ -40,8 +42,20 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
                 };
                 var dataSource = _read(builder, "Data Source", "DataSource", "Server", "Address", "Addr", "Network Address");
                 _database = _read(builder, "Initial Catalog", "InitialCatalog", "Database");
-                _configuredServer = dataSource?.Split(',', 2)[0].Trim();
-                _enabled = !string.IsNullOrWhiteSpace(dataSource) &&
+                // Match the instrumentation's server.address: no "tcp:"-style protocol prefix, port or instance name.
+                var server = dataSource?.Split(',', 2)[0].Trim();
+                var protocolEnd = server?.IndexOf(':', StringComparison.Ordinal) ?? -1;
+                if (protocolEnd >= 0 && !server!.StartsWith('['))
+                    server = server[(protocolEnd + 1)..].TrimStart('\\', '/').Trim();
+                var instanceStart = server?.IndexOf('\\', StringComparison.Ordinal) ?? -1;
+                if (instanceStart >= 0)
+                {
+                    _instanceDatabase = server![(instanceStart + 1)..] + "." + _database;
+                    server = server[..instanceStart];
+                }
+
+                _configuredServer = server;
+                _enabled = !string.IsNullOrWhiteSpace(_configuredServer) &&
                            !string.IsNullOrWhiteSpace(_database);
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -89,7 +103,8 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
             var dbName = data.GetTagItem("db.name") as string
                       ?? data.GetTagItem("db.namespace") as string;
             if (dbName != null &&
-                string.Equals(dbName, _database, StringComparison.OrdinalIgnoreCase))
+                (string.Equals(dbName, _database, StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(dbName, _instanceDatabase, StringComparison.OrdinalIgnoreCase)))
             {
                 data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
                 data.IsAllDataRequested = false;

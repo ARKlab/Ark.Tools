@@ -870,10 +870,10 @@
       },
       "OpenTelemetry.Instrumentation.AspNetCore": {
         "type": "Transitive",
-        "resolved": "1.15.2",
-        "contentHash": "2nPd7r0ug/gd6/CNFL6Rlu+RSQ9WYGSGHAYQ1ssbSqyzKJpqTunfx2I/1O0WB5k+L0cyXbG4XVZpoSoUc3M7wg==",
+        "resolved": "1.19.0",
+        "contentHash": "reypo7g0Nzyssg1EkbfWU6W58CVFgtgkSEGrFXtbpA+bNit7HUs7587DOkOdPCgqWr3IL4f6X9B2yhnU6POrFA==",
         "dependencies": {
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.15.3, 2.0.0)"
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
         }
       },
       "OpenTelemetry.Instrumentation.Http": {
@@ -1047,6 +1047,7 @@
           "Ark.Tools.OTel": "[1.0.0, )",
           "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
+          "OpenTelemetry.Instrumentation.AspNetCore": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
         }
       },
