@@ -615,6 +615,49 @@ public class ArkAdaptiveSamplerTests
     }
 
     /// <summary>
+    /// Idle buckets share only the budget the active ones leave unused, so when idle operations
+    /// resume the buckets together still stay within the budget.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_IdleOperationsResume_StayWithinBudget()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = true,
+            MovingAverageRatio = 0,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        int window(int operations, int everyTicks)
+        {
+            var sampled = 0;
+            for (var tick = 0; tick < 300; tick++)
+            {
+                time.Advance(TimeSpan.FromMilliseconds(200));
+                if (tick % everyTicks != 0)
+                    continue;
+                for (var i = 0; i < operations; i++)
+                {
+                    if (_sampleRoot(sampler, $"OP_{i}").Decision == SamplingDecision.RecordAndSample)
+                        sampled++;
+                }
+            }
+
+            sampler._adjustRate();
+            return sampled;
+        }
+
+        // All 20 operations busy, then only OP_0 at 0.2 roots/s, which fits the budget.
+        window(operations: 20, everyTicks: 1);
+        window(operations: 1, everyTicks: 25);
+
+        window(operations: 20, everyTicks: 1).Should().BeLessThanOrEqualTo(90, "the budget is about 60 roots per minute plus one token per bucket");
+    }
+
+    /// <summary>
     /// A rate decrease clamps the tokens a bucket already holds, even when no time has passed since
     /// its last refill, so leftover startup tokens cannot exceed the new share.
     /// </summary>

@@ -52,7 +52,7 @@ public sealed class ArkAdaptiveSampler : Sampler
     private readonly ConcurrentDictionary<string, OperationBucket> _buckets;
     private readonly TimeProvider _timeProvider;
 
-    // Adaptive rate controller state; _currentRate is the fair share given to new and idle buckets.
+    // Adaptive rate controller state; _currentRate is the spare budget given to new buckets.
     // Once the budget is shared out, a new bucket starts with a token even if its share is below 0.5/s.
     private long _lastAdjustment;
     private double _currentRate;
@@ -222,11 +222,16 @@ public sealed class ArkAdaptiveSampler : Sampler
 
             var share = _fairShare(active.Select(b => b.Counts.Seen / elapsed).ToList(), _options.TracesPerSecond);
 
+            // Idle buckets and the next new one split what the active buckets leave unused, so the
+            // buckets stay within the budget when idle operations resume. Each still holds one token.
+            var allocated = active.Sum(b => Math.Min(b.Counts.Seen / elapsed, share));
+            var spareRate = Math.Max(0, _options.TracesPerSecond - allocated) / (buckets.Count - active.Count + 1);
+
             foreach (var (bucket, (seen, sampled)) in buckets)
             {
                 if (seen == 0)
                 {
-                    bucket.UpdateRate(share);
+                    bucket.UpdateRate(spareRate);
                     continue;
                 }
 
@@ -240,7 +245,7 @@ public sealed class ArkAdaptiveSampler : Sampler
                 bucket.UpdateRate(Math.Max(Math.Min(0.0001, share), smoothedRate));
             }
 
-            _currentRate = share;
+            _currentRate = spareRate;
             _hasAdjusted = true;
             _lastAdjustment = now;
         }

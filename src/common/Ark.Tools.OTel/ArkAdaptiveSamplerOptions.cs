@@ -41,7 +41,8 @@ public sealed class ArkAdaptiveSamplerOptions
     /// gets a refill rate that covers its average traffic, and the rest of the budget is split evenly
     /// among the busier operations. A burst larger than the bucket (two seconds of its rate, at least
     /// one root) is still limited.
-    /// New and idle operations get the current fair share.
+    /// Idle and new operations split the budget the active operations leave unused, holding at least
+    /// one token so that their first root is sampled.
     /// When <see langword="false"/>, all roots share one bucket and busy operations can crowd out rare ones.
     /// Default is <see langword="true"/>.
     /// </summary>

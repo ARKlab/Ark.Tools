@@ -56,10 +56,12 @@ buckets. Every `SamplingPercentageDecreaseTimeout`, the moving-average controlle
 the traffic of each bucket and shares the budget max-min fairly: operations slower than the
 fair share get a refill rate that covers their average traffic, and the busier operations split
 the rest evenly. A burst larger than the bucket is still limited, so a rare operation that sends
-many roots at once keeps only the first ones. New and
-idle operations start at the current fair share, and an operation first seen after an
-adjustment starts with one token so that its first root is sampled, so the total can exceed the target until
-the next adjustment. `MovingAverageRatio` smooths rate increases only: a bucket above its new
+many roots at once keeps only the first ones. Idle
+operations, and new ones, split the budget the active operations leave unused, so the buckets
+stay within the budget when idle operations resume; each still holds one token, so its first
+root is sampled. Before the first adjustment every bucket starts at `TracesPerSecond`, and many
+operations first seen between two adjustments can also exceed the target until the next one.
+`MovingAverageRatio` smooths rate increases only: a bucket above its new
 target drops to it at once, so after an adjustment the buckets never share more than the
 budget. `MaxOperationBuckets` limits memory when operation names are dynamic;
 overflow shares one bucket.
