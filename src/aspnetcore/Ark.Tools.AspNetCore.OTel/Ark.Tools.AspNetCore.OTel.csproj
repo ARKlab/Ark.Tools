@@ -23,5 +23,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Ark.Tools.AspNetCore.HealthChecks.OTel\Ark.Tools.AspNetCore.HealthChecks.OTel.csproj" />
     <ProjectReference Include="..\..\common\Ark.Tools.OTel\Ark.Tools.OTel.csproj" />
+    <None Include="buildTransitive/Ark.Tools.AspNetCore.OTel.props" Pack="true" PackagePath="buildTransitive" />
   </ItemGroup>
 </Project>

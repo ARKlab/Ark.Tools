@@ -117,8 +117,9 @@ public static class Ex
                 configuration.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(options));
         }
 
-        // Azure SDKs emit their spans (Service Bus included) only with this experimental switch on;
-        // an explicit application or environment choice wins.
+        // Azure SDKs emit Service Bus and Event Hubs spans only with this experimental switch on. The package's
+        // buildTransitive props set it in the runtime configuration; this covers project references.
+        // An explicit application or environment choice wins.
         if (!AppContext.TryGetSwitch(_azureActivitySourceSwitch, out _)
             && Environment.GetEnvironmentVariable("AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE") is null)
         {
