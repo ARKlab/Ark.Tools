@@ -59,7 +59,9 @@ public sealed class ArkSqlDependencyFilterProcessorTests
             })
             .Build();
         var services = new ServiceCollection();
-        services.AddOpenTelemetry().AddArkOpenTelemetry(configuration: configuration);
+        services.AddOpenTelemetry().AddArkOpenTelemetry(
+            configureAdaptiveSampler: static options => options.Filter = static p => p.Name != "app-noise",
+            configuration: configuration);
         services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
             .AddSource(sourceName)
             .AddProcessor(collector));
@@ -69,6 +71,8 @@ public sealed class ArkSqlDependencyFilterProcessorTests
 
         _startSqlSpan(source, "Logs")?.Stop();
         _startSqlSpan(source, "Orders")?.Stop();
+        // The application's filter is kept next to the NLog database filter.
+        source.StartActivity("app-noise")?.Stop();
 
         collector.Spans.Select(static span => span.GetTagItem("db.namespace")).Should().Equal("Orders");
     }

@@ -51,7 +51,6 @@ public sealed class ArkAdaptiveSampler : Sampler
     private readonly FailedTraceRegistry _failedTraceRegistry;
     private readonly ConcurrentDictionary<string, OperationBucket> _buckets;
     private readonly TimeProvider _timeProvider;
-    private readonly IArkSamplingFilter[] _samplingFilters = [];
 
     // Adaptive rate controller state; _currentRate is the spare budget given to new buckets.
     // Once the budget is shared out, a new bucket starts with a token even if its share is below 0.5/s.
@@ -78,20 +77,6 @@ public sealed class ArkAdaptiveSampler : Sampler
     public ArkAdaptiveSampler(ArkAdaptiveSamplerOptions options, FailedTraceRegistry failedTraceRegistry)
         : this(options, failedTraceRegistry, TimeProvider.System)
     {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of <see cref="ArkAdaptiveSampler"/> that also drops the spans recognized by
-    /// <paramref name="samplingFilters"/> before sampling, so they do not use its budget.
-    /// </summary>
-    public ArkAdaptiveSampler(
-        ArkAdaptiveSamplerOptions options,
-        FailedTraceRegistry failedTraceRegistry,
-        IEnumerable<IArkSamplingFilter> samplingFilters)
-        : this(options, failedTraceRegistry)
-    {
-        ArgumentNullException.ThrowIfNull(samplingFilters);
-        _samplingFilters = [.. samplingFilters];
     }
 
     /// <summary>
@@ -171,7 +156,7 @@ public sealed class ArkAdaptiveSampler : Sampler
         _getOrCreateBucket(activity.OperationName).Refund(sampleRate);
     }
 
-    // The name and creation tags of a span: the pre-filter rules and the sampling filters, applied before sampling.
+    // The name and creation tags of a span: the pre-filter rules and the options filter, applied before sampling.
     private bool _isFiltered(in SamplingParameters samplingParameters)
     {
         string? httpMethod = null, dbOperation = null;
@@ -193,16 +178,8 @@ public sealed class ArkAdaptiveSampler : Sampler
             }
         }
 
-        if (ArkPreFilterProcessor._isNoise(samplingParameters.Name, httpMethod, dbOperation))
-            return true;
-
-        foreach (var filter in _samplingFilters)
-        {
-            if (filter.ShouldDrop(in samplingParameters))
-                return true;
-        }
-
-        return false;
+        return ArkPreFilterProcessor._isNoise(samplingParameters.Name, httpMethod, dbOperation)
+            || _options.Filter?.Invoke(samplingParameters) == false;
     }
 
     /// <summary>The Azure Monitor attribute holding the sample rate (0–100] of an exported span.</summary>

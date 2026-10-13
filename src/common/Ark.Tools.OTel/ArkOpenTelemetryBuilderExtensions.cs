@@ -76,12 +76,17 @@ public static class ArkOpenTelemetryBuilderExtensions
                         configuration?.GetSection(_adaptiveSamplerSection).Bind(options);
                         configureAdaptiveSampler?.Invoke(options);
                     });
+                    // After every Configure, so the application's filter is kept whenever it is set.
+                    services.PostConfigure<ArkAdaptiveSamplerOptions>(options =>
+                    {
+                        var filter = options.Filter;
+                        options.Filter = p => !nlogDatabaseFilter.ShouldDrop(p) && (filter is null || filter(p));
+                    });
                     services.AddSingleton(sp =>
                     {
                         sampler = new ArkAdaptiveSampler(
                             sp.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
-                            failedTraceRegistry,
-                            [nlogDatabaseFilter, .. sp.GetServices<IArkSamplingFilter>()]);
+                            failedTraceRegistry);
                         preFilter._sampler = sampler;
                         nlogDatabaseFilter._sampler = sampler;
                         return sampler;

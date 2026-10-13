@@ -14,9 +14,9 @@ namespace Ark.Tools.OTel;
 /// <summary>
 /// An OpenTelemetry <see cref="BaseProcessor{T}"/> that filters out SQL dependency spans
 /// targeting a specific database server and database (typically the NLog audit/log database).
-/// As an <see cref="IArkSamplingFilter"/>, it also drops them before <see cref="ArkAdaptiveSampler"/> samples them.
+/// <see cref="ShouldDrop"/> recognizes them before sampling, for <see cref="ArkAdaptiveSamplerOptions.Filter"/>.
 /// </summary>
-public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>, IArkSamplingFilter
+public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
 {
     // Set by AddArkOpenTelemetry: a span filtered here, after sampling, gives its budget back.
     internal ArkAdaptiveSampler? _sampler;
@@ -82,7 +82,12 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>, I
         _filter(data);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Returns <see langword="true"/> when the span described by <paramref name="samplingParameters"/> targets the
+    /// configured database, from the tags SqlClient instrumentation passes when it creates the span.
+    /// </summary>
+    /// <param name="samplingParameters">The name, kind and creation tags of the span.</param>
+    /// <returns><see langword="true"/> to drop the span.</returns>
     public bool ShouldDrop(in SamplingParameters samplingParameters)
     {
         // SqlClient instrumentation passes these tags when it creates the span.

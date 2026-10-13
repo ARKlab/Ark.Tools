@@ -47,6 +47,7 @@ public static class ArkApplicationInsightsExtensions
     /// </param>
     /// <returns>The same <paramref name="services"/> for chaining.</returns>
     [RequiresUnreferencedCode("Binding ArkAdaptiveSamplerOptions from configuration uses reflection.")]
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The tracing provider owns and disposes registered processors.")]
     public static IServiceCollection AddArkApplicationInsightsCustomizations(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -65,6 +66,16 @@ public static class ArkApplicationInsightsExtensions
         // Allow override from configuration.
         services.Configure<ArkAdaptiveSamplerOptions>(
             configuration.GetSection("ApplicationInsights:ArkAdaptiveSampler"));
+
+        // Service Bus receives and NLog database writes are dropped before they use the sampler budget.
+        var sqlDependencyFilter = new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter);
+        services.PostConfigure<ArkAdaptiveSamplerOptions>(options =>
+        {
+            var filter = options.Filter;
+            options.Filter = p => !AzureSamplingFilters.IsServiceBusReceive(p)
+                && !sqlDependencyFilter.ShouldDrop(p)
+                && (filter is null || filter(p));
+        });
 
         // Register the OTel pipeline customizations via IConfigureOptions<TelemetryConfiguration>.
         // This must run AFTER AddApplicationInsightsTelemetry registers its own IConfigureOptions.
@@ -91,12 +102,7 @@ public static class ArkApplicationInsightsExtensions
                             tracerBuilder.AddArkComplianceRedaction();
 
                             // Custom adaptive sampler replaces the built-in TracesPerSecond rate limiter.
-                            // Service Bus receives and NLog database writes are dropped before they use its budget.
-                            var sqlDependencyFilter = new ArkSqlDependencyFilterProcessor(sqlConnectionStringToFilter);
-                            tracerBuilder.SetSampler(new ArkAdaptiveSampler(
-                                samplerOptions,
-                                failedTraceRegistry,
-                                [new AzureServiceBusReceiveSamplingFilter(), sqlDependencyFilter]));
+                            tracerBuilder.SetSampler(new ArkAdaptiveSampler(samplerOptions, failedTraceRegistry));
 
                             // Failure promotion: promotes rate-limited spans (and their parent chain /
                             // in-flight siblings) to exported when a failure is detected anywhere in

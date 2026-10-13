@@ -196,10 +196,9 @@ public class ArkAdaptiveSamplerTests
     public void ShouldSample_FilteredNoise_DoesNotUseTheBudget()
     {
         using var nlogDatabase = new ArkSqlDependencyFilterProcessor("Server=tcp:logs.example.com,1433;Database=Logs");
-        var sampler = new ArkAdaptiveSampler(
-            _singleTokenOptions(),
-            new FailedTraceRegistry(),
-            [new Azure.AzureServiceBusReceiveSamplingFilter(), nlogDatabase]);
+        var options = _singleTokenOptions();
+        options.Filter = p => !Azure.AzureSamplingFilters.IsServiceBusReceive(p) && !nlogDatabase.ShouldDrop(p);
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry());
 
         SamplingDecision sample(string name, params KeyValuePair<string, object?>[] tags)
         {
@@ -994,10 +993,14 @@ public class ArkPreFilterProcessorTests
     [TestMethod]
     public void AzureSamplingFilter_ServiceBusReceive_IsFiltered()
     {
-        var opts = new ArkAdaptiveSamplerOptions { TracesPerSecond = 10_000 };
+        var opts = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 10_000,
+            Filter = static p => !Azure.AzureSamplingFilters.IsServiceBusReceive(p),
+        };
         using var pipeline = new TestPipeline(
             nameof(AzureSamplingFilter_ServiceBusReceive_IsFiltered),
-            new ArkAdaptiveSampler(opts, new FailedTraceRegistry(), [new Azure.AzureServiceBusReceiveSamplingFilter()]),
+            new ArkAdaptiveSampler(opts),
             new ArkPreFilterProcessor());
 
         using var act = pipeline.StartWithTags(

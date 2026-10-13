@@ -5,7 +5,6 @@ using Azure.Monitor.OpenTelemetry.Exporter;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry;
@@ -45,8 +44,12 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
             AppContext.SetSwitch(_azureActivitySourceSwitch, true);
         }
 
-        builder.Services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IArkSamplingFilter, AzureServiceBusReceiveSamplingFilter>());
+        // Service Bus receives do not use the sampler budget; after every Configure, so other filters are kept.
+        builder.Services.PostConfigure<ArkAdaptiveSamplerOptions>(static options =>
+        {
+            var filter = options.Filter;
+            options.Filter = p => !AzureSamplingFilters.IsServiceBusReceive(p) && (filter is null || filter(p));
+        });
 
         // Azure SDKs already emit a client span for each HTTP call: drop the nested HttpClient span, as the Azure
         // Monitor Distro does. PostConfigure runs after every filter assignment, the Distro's included, so the

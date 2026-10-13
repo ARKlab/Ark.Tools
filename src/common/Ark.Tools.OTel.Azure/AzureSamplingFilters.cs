@@ -8,13 +8,17 @@ using System.Diagnostics;
 namespace Ark.Tools.OTel.Azure;
 
 /// <summary>
-/// Drops Azure Service Bus receive spans (<c>ServiceBusReceiver.*</c>, <c>Receive</c>) before
-/// <see cref="ArkAdaptiveSampler"/> samples them, so polling receivers do not use its budget.
+/// Azure SDK rules for <see cref="ArkAdaptiveSamplerOptions.Filter"/>.
 /// </summary>
-public sealed class AzureServiceBusReceiveSamplingFilter : IArkSamplingFilter
+public static class AzureSamplingFilters
 {
-    /// <inheritdoc/>
-    public bool ShouldDrop(in SamplingParameters samplingParameters)
+    /// <summary>
+    /// Returns <see langword="true"/> for an Azure Service Bus receive span (<c>ServiceBusReceiver.*</c>,
+    /// <c>Receive</c>), which polling receivers create at a high rate.
+    /// </summary>
+    /// <param name="samplingParameters">The name, kind and creation tags of the span.</param>
+    /// <returns><see langword="true"/> to drop the span.</returns>
+    public static bool IsServiceBusReceive(in SamplingParameters samplingParameters)
     {
         if (samplingParameters.Kind is not (ActivityKind.Client or ActivityKind.Consumer))
             return false;
