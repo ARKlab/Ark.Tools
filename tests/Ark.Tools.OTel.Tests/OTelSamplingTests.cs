@@ -553,6 +553,36 @@ public class ArkAdaptiveSamplerTests
     }
 
 
+    /// <summary>
+    /// An operation first seen after the budget was shared out starts with a token even when its
+    /// fair share is below 0.5 roots/s, so its first root is sampled.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_NewOperationBelowFairShare_SamplesItsFirstRoot()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = true,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        // 20 busy operations at 5 roots/s share 1 root/s: 0.05 roots/s each.
+        for (var tick = 0; tick < 300; tick++)
+        {
+            time.Advance(TimeSpan.FromMilliseconds(200));
+            for (var i = 0; i < 20; i++)
+                _sampleRoot(sampler, $"BUSY_{i}");
+        }
+        sampler._adjustRate();
+
+        _sampleRoot(sampler, "NEW").Decision.Should().Be(SamplingDecision.RecordAndSample);
+    }
+
+    // ── behaviour: sample rate (Azure Monitor itemCount) ──────────────────
+
     private static ArkAdaptiveSamplerOptions _oneTracePerSecondOptions() => new()
     {
         TracesPerSecond = 1,

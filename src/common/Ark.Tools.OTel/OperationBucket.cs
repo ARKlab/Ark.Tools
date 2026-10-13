@@ -17,12 +17,13 @@ internal sealed class OperationBucket
     private long _seen;
     private long _sampled;
 
-    public OperationBucket(double rate, TimeProvider timeProvider)
+    public OperationBucket(double rate, TimeProvider timeProvider, bool allowFirstItem)
     {
         _rate = rate;
         _timeProvider = timeProvider;
-        // Pre-fill to allow initial burst up to 2 seconds worth of tokens.
-        _tokens = rate * 2.0;
+        // Pre-fill to allow initial burst up to 2 seconds worth of tokens,
+        // and at least one when asked so that the first item can be sampled.
+        _tokens = allowFirstItem ? Math.Max(1.0, rate * 2.0) : rate * 2.0;
         _lastRefill = timeProvider.GetTimestamp();
     }
 
