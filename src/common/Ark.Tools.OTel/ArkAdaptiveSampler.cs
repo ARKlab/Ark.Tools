@@ -37,7 +37,8 @@ namespace Ark.Tools.OTel;
 /// Local descendants inherit the rate of their sampled parent. Spans kept because their trace
 /// failed have rate 100 (itemCount 1), because they are exported whatever the budget.
 /// Spans kept only because a remote parent was sampled carry no rate (itemCount 1): the
-/// upstream rate is not propagated.
+/// upstream rate is not propagated. With <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/>
+/// off, spans with a remote parent are roots for the local budget and carry its rate.
 /// </para>
 /// </remarks>
 public sealed class ArkAdaptiveSampler : Sampler
@@ -110,12 +111,14 @@ public sealed class ArkAdaptiveSampler : Sampler
         // Parent decisions are authoritative for local traces. A sampled parent keeps
         // the chain intact; an unsampled parent must not be contradicted by sampling
         // an arbitrary child. RecordOnly still permits failure promotion at OnEnd.
+        // Remote parents decide too, unless RespectRemoteParentSampling is off.
         var parentContext = samplingParameters.ParentContext;
-        if (parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
-            return _inheritSampleRate(parentContext);
-
-        if (parentContext.TraceId != default)
-            return new SamplingResult(SamplingDecision.RecordOnly);
+        if (parentContext.TraceId != default && (_options.RespectRemoteParentSampling || !parentContext.IsRemote))
+        {
+            return parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+                ? _inheritSampleRate(parentContext)
+                : new SamplingResult(SamplingDecision.RecordOnly);
+        }
 
         // If any span in this trace has already been identified as a failure, always sample.
         // This ensures that siblings starting after the failure is detected are fully captured.

@@ -308,6 +308,56 @@ public class ArkAdaptiveSamplerTests
         sampler.ShouldSample(in parameters).Decision.Should().Be(SamplingDecision.RecordAndSample);
     }
 
+    private static SamplingResult _sampleRemoteChild(ArkAdaptiveSampler sampler, ActivityTraceFlags parentFlags)
+    {
+        var parent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            parentFlags,
+            traceState: null,
+            isRemote: true);
+        var parameters = new SamplingParameters(parent, parent.TraceId, "REMOTE_CHILD", ActivityKind.Server, null, null);
+        return sampler.ShouldSample(in parameters);
+    }
+
+    /// <summary>
+    /// By default an unsampled remote parent decides for the service (RecordOnly); with
+    /// <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/> off the span is a root
+    /// for the local budget and carries the bucket's sample rate.
+    /// </summary>
+    [TestMethod]
+    [DataRow(true, SamplingDecision.RecordOnly)]
+    [DataRow(false, SamplingDecision.RecordAndSample)]
+    public void ShouldSample_RemoteUnsampledParent_FollowsRespectRemoteParentSampling(bool respectRemoteParentSampling, SamplingDecision expected)
+    {
+        var options = _highRateOptions();
+        options.RespectRemoteParentSampling = respectRemoteParentSampling;
+        var sampler = new ArkAdaptiveSampler(options);
+
+        var result = _sampleRemoteChild(sampler, ActivityTraceFlags.None);
+
+        result.Decision.Should().Be(expected);
+        if (!respectRemoteParentSampling)
+            _sampleRate(result).Should().Be(100.0);
+    }
+
+    /// <summary>
+    /// By default a sampled remote parent is followed; with
+    /// <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/> off the local budget
+    /// decides, so an exhausted bucket records the span only.
+    /// </summary>
+    [TestMethod]
+    [DataRow(true, SamplingDecision.RecordAndSample)]
+    [DataRow(false, SamplingDecision.RecordOnly)]
+    public void ShouldSample_RemoteSampledParent_FollowsRespectRemoteParentSampling(bool respectRemoteParentSampling, SamplingDecision expected)
+    {
+        var options = _nearZeroRateOptions();
+        options.RespectRemoteParentSampling = respectRemoteParentSampling;
+        var sampler = new ArkAdaptiveSampler(options);
+
+        _sampleRemoteChild(sampler, ActivityTraceFlags.Recorded).Decision.Should().Be(expected);
+    }
+
     // ── behaviour: pre-filter tag → Drop ──────────────────────────────────
 
     /// <summary>

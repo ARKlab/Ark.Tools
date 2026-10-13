@@ -51,4 +51,19 @@ public sealed class ArkAdaptiveSamplerOptions
     /// Default is 100.
     /// </summary>
     public int MaxOperationBuckets { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets whether the sampling decision of a remote parent, propagated in the W3C
+    /// <c>traceparent</c> sampled flag, is followed. Default is <see langword="true"/>.
+    /// </summary>
+    /// <remarks>
+    /// When <see langword="true"/>, a span with a sampled remote parent is sampled and a span with an
+    /// unsampled remote parent is recorded only, so the caller decides for this service. Use
+    /// <see langword="false"/> when callers use a different sampler, such as the classic Application
+    /// Insights SDK, whose decisions should not drive this service: a span with a remote parent is then
+    /// a root for the local budget and carries this service's sample rate, as with the Azure Monitor
+    /// samplers. Distributed traces can then be incomplete across services that decide differently.
+    /// Failure promotion applies either way.
+    /// </remarks>
+    public bool RespectRemoteParentSampling { get; set; } = true;
 }

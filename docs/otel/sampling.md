@@ -17,9 +17,9 @@ record-only data that can still be promoted when troubleshooting needs it.
 | Root with no parent and available budget | Record and sample |
 | Root with no parent and exhausted budget | Record only |
 | Local sampled parent | Record and sample |
-| Remote sampled parent | Record and sample |
+| Remote sampled parent | Record and sample (budget decision when `RespectRemoteParentSampling` is `false`) |
 | Local unsampled parent | Record only |
-| Remote unsampled parent | Record only |
+| Remote unsampled parent | Record only (budget decision when `RespectRemoteParentSampling` is `false`) |
 | Failed span or exception | Promote to sampled |
 | HTTP 4xx response without error status | Success; do not promote |
 | HTTP 4xx response with error status | Promote to sampled |
@@ -92,11 +92,19 @@ rate-limited sampler. Exporters that read the attribute weight the spans correct
       "MovingAverageRatio": 0.5,
       "SamplingPercentageDecreaseTimeout": "00:01:00",
       "EnablePerOperationBucketing": true,
-      "MaxOperationBuckets": 100
+      "MaxOperationBuckets": 100,
+      "RespectRemoteParentSampling": true
     }
   }
 }
 ```
+
+`RespectRemoteParentSampling` (default `true`) makes the W3C sampled flag of a remote parent
+decide for the service. Set it to `false` when callers use a different sampler, such as the
+classic Application Insights SDK, so that their decisions do not drive this service: a span with
+a remote parent is then a root for the local budget and carries this service's sample rate, as
+with the Azure Monitor samplers. Traces that cross services which decide differently can then
+be incomplete; failure promotion applies either way.
 
 ## Operational checks
 
