@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `ArkAdaptiveSampler`: `TracesPerSecond` is now the total budget of root traces shared by all operation buckets, instead of a budget for each bucket, so a service with many operations no longer exports up to `TracesPerSecond` traces per operation. Rare operations get a share that covers their average traffic; raise `TracesPerSecond` if you relied on the per-operation budget. `MovingAverageRatio` now smooths only rate increases: rates drop to their new share at once.
 
-- OTel: the adaptive sampler is now configured from the `OTel:ArkAdaptiveSampler` section. `ApplicationInsights:ArkAdaptiveSampler` is still read for compatibility, but `OTel:ArkAdaptiveSampler` values take precedence. The Azure Monitor connection string is still read from `ApplicationInsights:ConnectionString`.
+- `Ark.Tools.AspNetCore.OTel`: the adaptive sampler is now configured from the `OTel:ArkAdaptiveSampler` section. `ApplicationInsights:ArkAdaptiveSampler` is still read for compatibility, but `OTel:ArkAdaptiveSampler` values take precedence. The Azure Monitor connection string is still read from `ApplicationInsights:ConnectionString`.
 
 ### Fixed
 

@@ -61,12 +61,9 @@ public static class ArkApplicationInsightsExtensions
             o.MaxOperationBuckets = 100;
         });
 
-        // Allow override from configuration: the legacy Application Insights section first,
-        // then the canonical OTel section, which wins.
+        // Allow override from configuration.
         services.Configure<ArkAdaptiveSamplerOptions>(
             configuration.GetSection("ApplicationInsights:ArkAdaptiveSampler"));
-        services.Configure<ArkAdaptiveSamplerOptions>(
-            configuration.GetSection("OTel:ArkAdaptiveSampler"));
 
         // Register the OTel pipeline customizations via IConfigureOptions<TelemetryConfiguration>.
         // This must run AFTER AddApplicationInsightsTelemetry registers its own IConfigureOptions.

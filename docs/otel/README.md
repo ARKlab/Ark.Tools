@@ -213,7 +213,9 @@ framework support before adding them to the default registration.
 
 The Azure Monitor connection string stays under `ApplicationInsights`. The sampler
 reads `OTel:ArkAdaptiveSampler`; the legacy `ApplicationInsights:ArkAdaptiveSampler`
-section is still read for compatibility, and `OTel` values take precedence.
+section is still read for compatibility, and `OTel` values take precedence. The
+Application Insights v3 compatibility path (`AddArkApplicationInsightsCustomizations`)
+reads only `ApplicationInsights:ArkAdaptiveSampler`.
 
 | Option | Default | Description |
 |--------|---------|-------------|

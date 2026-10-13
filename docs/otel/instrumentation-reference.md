@@ -253,7 +253,8 @@ exporter-neutral `AddArkAspNetCoreOpenTelemetry` and the Azure Monitor
 `OTel:ArkAdaptiveSampler` (falling back to the legacy
 `ApplicationInsights:ArkAdaptiveSampler`); the exporter-neutral path uses the
 documented defaults. The Application Insights v3 compatibility path installs
-the same sampler through `AddArkApplicationInsightsCustomizations`.
+the same sampler through `AddArkApplicationInsightsCustomizations`, which binds
+only `ApplicationInsights:ArkAdaptiveSampler`.
 
 The sampler and `ArkFailurePromotionProcessor` must share one
 `FailedTraceRegistry` for whole-operation failure promotion.
@@ -355,9 +356,12 @@ Example:
 }
 ```
 
-`OTel:ArkAdaptiveSampler` is the canonical section. The legacy
-`ApplicationInsights:ArkAdaptiveSampler` section is still read for
-compatibility; values in `OTel:ArkAdaptiveSampler` take precedence.
+`OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
+(`AddArkAzureMonitorOpenTelemetry`). The legacy `ApplicationInsights:ArkAdaptiveSampler`
+section is still read for compatibility; values in `OTel:ArkAdaptiveSampler` take
+precedence. The Application Insights v3 compatibility path
+(`AddArkApplicationInsightsCustomizations`) reads only
+`ApplicationInsights:ArkAdaptiveSampler`.
 
 ## Source reference
 
