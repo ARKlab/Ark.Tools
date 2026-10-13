@@ -59,7 +59,9 @@ the rest evenly. A burst larger than the bucket is still limited, so a rare oper
 many roots at once keeps only the first ones. New and
 idle operations start at the current fair share, and an operation first seen after an
 adjustment starts with one token so that its first root is sampled, so the total can exceed the target until
-the next adjustment. `MaxOperationBuckets` limits memory when operation names are dynamic;
+the next adjustment. `MovingAverageRatio` smooths rate increases only: a bucket above its new
+target drops to it at once, so after an adjustment the buckets never share more than the
+budget. `MaxOperationBuckets` limits memory when operation names are dynamic;
 overflow shares one bucket.
 
 ## Sample rate and item counts

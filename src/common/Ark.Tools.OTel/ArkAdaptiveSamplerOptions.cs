@@ -21,8 +21,9 @@ public sealed class ArkAdaptiveSamplerOptions
     public double TracesPerSecond { get; set; } = 1.0;
 
     /// <summary>
-    /// Gets or sets the moving average ratio for smoothing adaptive rate changes.
-    /// Value between 0 (instant adaptation) and 1 (no adaptation). Default is 0.5.
+    /// Gets or sets the moving average ratio for smoothing adaptive rate increases.
+    /// Value between 0 (instant adaptation) and 1 (rates never increase). Decreases apply at once,
+    /// so the buckets never share more than <see cref="TracesPerSecond"/>. Default is 0.5.
     /// </summary>
     public double MovingAverageRatio { get; set; } = 0.5;
 

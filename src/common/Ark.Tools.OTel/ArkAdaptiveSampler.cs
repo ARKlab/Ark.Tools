@@ -230,12 +230,14 @@ public sealed class ArkAdaptiveSampler : Sampler
                     continue;
                 }
 
-                // Apply moving average for smooth transitions.
+                // Apply moving average to smooth increases; never exceed the target, so the buckets
+                // stay within the budget.
                 var targetRate = Math.Min(seen / elapsed, share);
                 var currentRate = sampled / elapsed;
                 var α = _options.MovingAverageRatio;
+                var smoothedRate = Math.Min(targetRate, (α * currentRate) + ((1.0 - α) * targetRate));
                 // The floor keeps a bucket refilling; capped at the share so the buckets stay within the budget.
-                bucket.UpdateRate(Math.Max(Math.Min(0.0001, share), (α * currentRate) + ((1.0 - α) * targetRate)));
+                bucket.UpdateRate(Math.Max(Math.Min(0.0001, share), smoothedRate));
             }
 
             _currentRate = share;

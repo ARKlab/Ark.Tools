@@ -64,6 +64,8 @@ internal sealed class OperationBucket
         lock (_lock)
         {
             _rate = newRate;
+            // Clamp now: _refill does not when no time has passed, and a lower rate must not keep older tokens.
+            _tokens = Math.Min(_tokens, Math.Max(1.0, newRate * 2.0));
         }
     }
 

@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Breaking:** `ArkAdaptiveSampler` no longer follows the sampling decision of a remote parent by default: spans with a remote parent use the local budget and carry this service's sample rate, so callers using a different sampler, such as the classic Application Insights SDK, no longer decide which spans the service exports. Set `RespectRemoteParentSampling` to `true` to restore the previous behaviour.
 
-- `ArkAdaptiveSampler`: `TracesPerSecond` is now the total budget of root traces shared by all operation buckets, instead of a budget for each bucket, so a service with many operations no longer exports up to `TracesPerSecond` traces per operation. Rare operations get a share that covers their average traffic; raise `TracesPerSecond` if you relied on the per-operation budget.
+- `ArkAdaptiveSampler`: `TracesPerSecond` is now the total budget of root traces shared by all operation buckets, instead of a budget for each bucket, so a service with many operations no longer exports up to `TracesPerSecond` traces per operation. Rare operations get a share that covers their average traffic; raise `TracesPerSecond` if you relied on the per-operation budget. `MovingAverageRatio` now smooths only rate increases: rates drop to their new share at once.
 
 ### Fixed
 

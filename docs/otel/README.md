@@ -212,7 +212,7 @@ framework support before adding them to the default registration.
 | Option | Default | Description |
 |--------|---------|-------------|
 | `TracesPerSecond` | `1.0` | Target number of root traces to export per second, in total across operation buckets |
-| `MovingAverageRatio` | `0.5` | Smoothing factor for rate adjustment (0 = no smoothing, 1 = no adjustment) |
+| `MovingAverageRatio` | `0.5` | Smoothing factor for rate increases (0 = no smoothing, 1 = rates never increase); decreases apply at once |
 | `SamplingPercentageDecreaseTimeout` | `00:01:00` | How often to evaluate and adjust the sampling rate |
 | `EnablePerOperationBucketing` | `true` | Whether each operation gets its own token bucket and a max-min fair share of `TracesPerSecond` |
 | `MaxOperationBuckets` | `100` | Maximum distinct operations to track (prevents memory unbounded growth) |

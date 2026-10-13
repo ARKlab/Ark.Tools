@@ -331,7 +331,7 @@ Configuration section:
 | Option | Default | Effect |
 |---|---:|---|
 | `TracesPerSecond` | `1.0` | Target root traces per second, in total across operation buckets. |
-| `MovingAverageRatio` | `0.5` | Rate smoothing: `0` adapts immediately; `1` prevents adaptation. |
+| `MovingAverageRatio` | `0.5` | Smooths rate increases: `0` adapts immediately; `1` never increases. Decreases apply at once. |
 | `SamplingPercentageDecreaseTimeout` | `00:01:00` | Adaptive controller interval. |
 | `EnablePerOperationBucketing` | `true` | Gives each operation its own bucket and a fair share of the budget. |
 | `MaxOperationBuckets` | `100` | Maximum distinct operation buckets before overflow sharing. |

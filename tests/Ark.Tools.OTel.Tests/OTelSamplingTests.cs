@@ -575,6 +575,80 @@ public class ArkAdaptiveSamplerTests
 
 
     /// <summary>
+    /// After an adjustment the buckets never share more than the budget: a bucket above its fair
+    /// share drops to it at once, and <see cref="ArkAdaptiveSamplerOptions.MovingAverageRatio"/>
+    /// smooths only increases.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_BusyOperations_WindowAfterFirstAdjustmentStaysWithinBudget()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = true,
+            MovingAverageRatio = 0.5,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        int window()
+        {
+            var sampled = 0;
+            for (var tick = 0; tick < 300; tick++)
+            {
+                time.Advance(TimeSpan.FromMilliseconds(200));
+                for (var i = 0; i < 20; i++)
+                {
+                    if (_sampleRoot(sampler, $"BUSY_{i}").Decision == SamplingDecision.RecordAndSample)
+                        sampled++;
+                }
+            }
+
+            sampler._adjustRate();
+            return sampled;
+        }
+
+        window();
+
+        window().Should().BeLessThanOrEqualTo(80, "the budget is 1 root/s, about 60 per minute plus each bucket's token");
+    }
+
+    /// <summary>
+    /// A rate decrease clamps the tokens a bucket already holds, even when no time has passed since
+    /// its last refill, so leftover startup tokens cannot exceed the new share.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_RateDecrease_ClampsExistingTokens()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 100,
+            EnablePerOperationBucketing = true,
+            MaxOperationBuckets = 300,
+            MovingAverageRatio = 0,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        // 200 busy operations at 5 roots/s share 100 roots/s: 0.5 roots/s each.
+        for (var tick = 0; tick < 300; tick++)
+        {
+            time.Advance(TimeSpan.FromMilliseconds(200));
+            for (var i = 0; i < 200; i++)
+                _sampleRoot(sampler, $"BUSY_{i}");
+        }
+
+        // RARE holds almost its whole 200-token startup burst when the share drops.
+        _sampleRoot(sampler, "RARE");
+        sampler._adjustRate();
+
+        var sampled = Enumerable.Range(0, 10).Count(_ => _sampleRoot(sampler, "RARE").Decision == SamplingDecision.RecordAndSample);
+        sampled.Should().Be(1, "RARE's share is below 0.5 roots/s, so its bucket holds one token");
+    }
+
+    /// <summary>
     /// An operation first seen after the budget was shared out starts with a token even when its
     /// fair share is below 0.5 roots/s, so its first root is sampled.
     /// </summary>
