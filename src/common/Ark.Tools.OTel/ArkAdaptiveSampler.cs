@@ -165,10 +165,10 @@ public sealed class ArkAdaptiveSampler : Sampler
         if (_buckets.Count >= _options.MaxOperationBuckets)
             return _buckets.TryGetValue(operationName, out existing) ? existing : _getOrAddBucket("__overflow__");
 
-        return _getOrAddBucket(operationName);
+        return _getOrAddBucket(operationName, isOperation: true);
     }
 
-    private OperationBucket _getOrAddBucket(string key)
+    private OperationBucket _getOrAddBucket(string key, bool isOperation = false)
     {
         if (_buckets.TryGetValue(key, out var bucket))
             return bucket;
@@ -177,6 +177,10 @@ public sealed class ArkAdaptiveSampler : Sampler
         // Each bucket is created once, so the lock stays off the common path.
         lock (_adjustLock)
         {
+            // New operations seen at once can all pass the limit check above: recheck it here.
+            if (isOperation && !_buckets.ContainsKey(key) && _buckets.Count >= _options.MaxOperationBuckets)
+                key = "__overflow__";
+
             return _buckets.GetOrAdd(key, new OperationBucket(_currentRate, _timeProvider, _hasAdjusted));
         }
     }
