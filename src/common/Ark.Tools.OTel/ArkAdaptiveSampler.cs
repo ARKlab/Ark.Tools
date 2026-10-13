@@ -229,7 +229,8 @@ public sealed class ArkAdaptiveSampler : Sampler
                 var targetRate = Math.Min(seen / elapsed, share);
                 var currentRate = sampled / elapsed;
                 var α = _options.MovingAverageRatio;
-                bucket.UpdateRate(Math.Max(0.0001, (α * currentRate) + ((1.0 - α) * targetRate)));
+                // The floor keeps a bucket refilling; capped at the share so the buckets stay within the budget.
+                bucket.UpdateRate(Math.Max(Math.Min(0.0001, share), (α * currentRate) + ((1.0 - α) * targetRate)));
             }
 
             _currentRate = share;
