@@ -129,7 +129,8 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=h
 
 ### Core client instrumentations
 
-`AddArkOpenTelemetry`, which every Ark OpenTelemetry setup calls, registers the
+`AddArkOpenTelemetry`, which `AddArkAspNetCoreOpenTelemetry`,
+`AddArkAzureMonitorOpenTelemetry` and `AddArkOpenTelemetryForWorkerHost` call, registers the
 stable OpenTelemetry .NET instrumentations for `HttpClient` and
 `Microsoft.Data.SqlClient`. Flurl clients created by `Ark.Tools.Http` use
 `HttpClient`, so their outbound requests are captured automatically; no

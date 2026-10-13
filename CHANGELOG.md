@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `ArkAdaptiveSamplerOptions.RespectRemoteParentSampling`: set it to `true` to have the W3C sampled flag of a remote parent decide which spans the service exports, as before this release.
-- `Ark.Tools.OTel`: `AddArkOpenTelemetry()` registers the Ark OpenTelemetry pipeline (adaptive sampler, failure promotion, redaction, and `HttpClient` and SQL Client instrumentation) on any host, without referencing ASP.NET Core. Pass an `IConfiguration` to bind the sampler from `OTel:ArkAdaptiveSampler` (or the legacy `ApplicationInsights:ArkAdaptiveSampler`). `AddArkAspNetCoreOpenTelemetry`, which gains the same optional `configuration` parameter, and `AddArkAzureMonitorOpenTelemetry` now build on it.
+- `Ark.Tools.OTel`: `AddArkOpenTelemetry()` registers the Ark OpenTelemetry pipeline (adaptive sampler, failure promotion, redaction, and `HttpClient` and SQL Client instrumentation) on any host, without referencing ASP.NET Core. Pass an `IConfiguration` to bind the sampler from `OTel:ArkAdaptiveSampler` (or the legacy `ApplicationInsights:ArkAdaptiveSampler`). `AddArkAspNetCoreOpenTelemetry` and `AddArkAzureMonitorOpenTelemetry` now build on it.
 
 ### Changed
 

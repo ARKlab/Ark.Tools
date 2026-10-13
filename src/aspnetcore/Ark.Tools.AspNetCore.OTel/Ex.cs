@@ -34,22 +34,32 @@ public static class Ex
     /// Optional application configuration for Ark OpenTelemetry instrumentation.
     /// </param>
     /// <param name="configureAdaptiveSampler">
-    /// Optional application configuration for the adaptive sampler, applied after <paramref name="configuration"/>.
-    /// </param>
-    /// <param name="configuration">
-    /// Optional application configuration; the adaptive sampler binds the <c>OTel:ArkAdaptiveSampler</c>
-    /// section over the legacy <c>ApplicationInsights:ArkAdaptiveSampler</c> section.
+    /// Optional application configuration for the adaptive sampler.
     /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
     public static OpenTelemetryBuilder AddArkAspNetCoreOpenTelemetry(
         this OpenTelemetryBuilder builder,
         Action<SqlClientTraceInstrumentationOptions>? configureSqlClient = null,
         Action<ArkOtelConfig>? configureArkOtel = null,
-        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler = null,
-        IConfiguration? configuration = null)
+        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
+        return _addArkAspNetCoreOpenTelemetry(
+            builder,
+            configureSqlClient,
+            configureArkOtel,
+            configureAdaptiveSampler,
+            configuration: null);
+    }
+
+    private static OpenTelemetryBuilder _addArkAspNetCoreOpenTelemetry(
+        OpenTelemetryBuilder builder,
+        Action<SqlClientTraceInstrumentationOptions>? configureSqlClient,
+        Action<ArkOtelConfig>? configureArkOtel,
+        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler,
+        IConfiguration? configuration)
+    {
         builder.Services.AddArkOTelHealthCheckPublisher();
 
         return builder
@@ -90,7 +100,12 @@ public static class Ex
         services.AddLogging(static logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
-        builder.AddArkAspNetCoreOpenTelemetry(configureSqlClient, configureArkOtel, configureAdaptiveSampler, configuration);
+        _addArkAspNetCoreOpenTelemetry(
+            builder,
+            configureSqlClient,
+            configureArkOtel,
+            configureAdaptiveSampler,
+            configuration);
 
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
