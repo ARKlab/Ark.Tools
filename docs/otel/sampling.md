@@ -29,6 +29,15 @@ record-only data that can still be promoted when troubleshooting needs it.
 `RecordOnly` is deliberate. It preserves the activity long enough for the completion
 processor to inspect status, exception events, and response codes.
 
+Filtered spans do not use the budget. The sampler applies the pre-filter rules (HTTP
+`OPTIONS`, successful Service Bus receives, SQL commits) and the NLog database filter to the
+span name and creation tags, and drops matching spans before they reach a bucket. Spans that a
+filter can recognize only after sampling, such as SQL commands skipped by query label
+(`outbox.peek-lock` and `SqlQueryLabelsToSkip`) or by an application SqlClient filter, give back
+the token and the traffic they counted. HTTP `OPTIONS` requests are recognized before sampling
+only when ASP.NET Core passes the request method at creation: from ASP.NET Core 11, or with the
+`Microsoft.AspNetCore.Hosting.SuppressActivityOpenTelemetryData` switch set to `false`.
+
 ## Failure-first troubleshooting
 
 At completion, `ArkFailurePromotionProcessor`:

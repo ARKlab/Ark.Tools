@@ -168,9 +168,13 @@ without an Azure Monitor connection string. It collects Azure SDK spans, Azure
 Service Bus included, through the `Azure.*` sources and, like the Azure Monitor
 Distro, drops the `HttpClient` span nested under an Azure SDK span, so a call is
 not reported twice; an application `HttpClient` filter still applies. Azure SDK
-tracing is experimental, so the setup turns the
-`Azure.Experimental.EnableActivitySource` switch on, unless the application or the
-`AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE` environment variable already set it.
+tracing for Service Bus and Event Hubs is experimental and needs the
+`Azure.Experimental.EnableActivitySource` switch, which Azure.Core reads only once, when the
+first Azure SDK client starts. The `Ark.Tools.AspNetCore.OTel` package therefore sets it in the
+application's runtime configuration, before Key Vault or App Configuration clients can start
+(set the MSBuild property `ArkEnableAzureSdkActivitySource` to `false` to opt out), and the
+setup also sets it, unless the application or the `AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE`
+environment variable already did.
 The other setups do not collect Azure SDK spans.
 
 Applications should use the current Azure Service Bus SDK rather than adding a

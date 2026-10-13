@@ -251,9 +251,15 @@ retains its legacy diagnostic listener for non-OTel consumers.
 ### Azure Service Bus
 
 `AddArkAzureMonitorOpenTelemetry` collects the Service Bus producer/consumer spans
-through the `Azure.*` sources, with or without a connection string, and enables
-`Azure.Experimental.EnableActivitySource` unless the application already set it.
-The other setups do not collect them. Ark.Tools does not add a custom meter
+through the `Azure.*` sources, with or without a connection string. Azure SDK tracing for
+Service Bus and Event Hubs is still experimental and needs
+`Azure.Experimental.EnableActivitySource`; most other Azure SDK libraries released since
+November 2023 trace without it. Azure.Core reads the switch once, when the first Azure SDK
+client starts, so `Ark.Tools.AspNetCore.OTel` sets it in the application's runtime
+configuration through a `buildTransitive` props file (set the MSBuild property
+`ArkEnableAzureSdkActivitySource` to `false` to opt out), and the setup sets it again for
+project references unless the application already did. The other setups do not collect
+Azure SDK spans. Ark.Tools does not add a custom meter
 or custom tags. Provider-generated messaging attributes and propagation follow the
 Azure SDK and OpenTelemetry semantic conventions.
 
@@ -286,7 +292,7 @@ after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
 
 | Condition | Decision |
 |---|---|
-| Span marked `ark.filtered=true` | `Drop` |
+| Span marked `ark.filtered=true`, or matching the pre-filter or NLog database rules on its name and creation tags | `Drop`, without using the budget |
 | Local parent is recorded | `RecordAndSample` |
 | Local parent is not recorded | `RecordOnly` |
 | Parent is remote | Decided as a root (as a local parent when `RespectRemoteParentSampling` is `true`) |
