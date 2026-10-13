@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Compliance surface (`ArkComplianceSurfaceEnabled`): editing a method with many `Register` calls, such as a SimpleInjector composition root, no longer slows down the IDE, because DI container registrations are no longer analysed as serializer registrations and the remaining calls share one binding per file.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added
