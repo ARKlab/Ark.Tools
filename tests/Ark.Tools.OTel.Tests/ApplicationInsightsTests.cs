@@ -51,7 +51,8 @@ public sealed class ApplicationInsightsTests
         bool keeps(string name) => filter(new SamplingParameters(
             default, ActivityTraceId.CreateRandom(), name, ActivityKind.Client, null, null));
 
-        keeps("ServiceBusReceiver.ReceiveMessages").Should().BeFalse();
+        keeps("ServiceBusReceiver.Receive").Should().BeFalse();
+        keeps("ServiceBusReceiver.Complete").Should().BeTrue("settlement runs inside message processing");
         keeps("ServiceBusSender.Send").Should().BeTrue();
     }
 

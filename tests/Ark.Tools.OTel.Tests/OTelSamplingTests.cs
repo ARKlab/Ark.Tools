@@ -1059,6 +1059,26 @@ public class ArkPreFilterProcessorTests
     }
 
     /// <summary>
+    /// Only the receive span is noise: settlement and lock renewal run inside message processing, and the
+    /// application calls peek and deferred receives explicitly.
+    /// </summary>
+    [TestMethod]
+    [DataRow("ServiceBusReceiver.Receive", true)]
+    [DataRow("ServiceBusReceiver.Complete", false)]
+    [DataRow("ServiceBusReceiver.DeadLetter", false)]
+    [DataRow("ServiceBusReceiver.RenewMessageLock", false)]
+    [DataRow("ServiceBusReceiver.Peek", false)]
+    [DataRow("ServiceBusReceiver.ReceiveDeferred", false)]
+    public void AzureSamplingFilter_DropsOnlyTheServiceBusReceive(string name, bool expectDropped)
+    {
+        // Azure.Core tags peek and deferred receives with the receive operation too.
+        var tags = _tags("messaging.system", "servicebus", "messaging.operation", "receive");
+        var parameters = new SamplingParameters(default, ActivityTraceId.CreateRandom(), name, ActivityKind.Client, tags, null);
+
+        Azure.AzureSamplingFilters.IsServiceBusReceive(in parameters).Should().Be(expectDropped);
+    }
+
+    /// <summary>
     /// Azure Service Bus <c>Send</c> spans must NOT be filtered.
     /// </summary>
     [TestMethod]

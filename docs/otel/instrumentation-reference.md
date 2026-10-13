@@ -256,7 +256,7 @@ retains its legacy diagnostic listener for non-OTel consumers.
 `AddArkAzureSdkInstrumentation` (from `Ark.Tools.OTel.Azure`, also used by
 `AddArkAzureOpenTelemetry`) collects the Service Bus
 producer/consumer spans through the `Azure.*` sources, with or without a connection string, and
-drops receive spans (`ServiceBusReceiver.*`) before they use the sampler budget. Azure SDK tracing for
+drops receive spans (`ServiceBusReceiver.Receive`) before they use the sampler budget; settlement and lock renewal spans run inside message processing and follow its sampling decision. Azure SDK tracing for
 Service Bus and Event Hubs is still experimental and needs
 `Azure.Experimental.EnableActivitySource`; most other Azure SDK libraries released since
 November 2023 trace without it. Azure.Core reads the switch once, when the first Azure SDK

@@ -13,8 +13,8 @@ namespace Ark.Tools.OTel.Azure;
 public static class AzureSamplingFilters
 {
     /// <summary>
-    /// Returns <see langword="true"/> for an Azure Service Bus receive span (<c>ServiceBusReceiver.*</c>,
-    /// <c>Receive</c>), which polling receivers create at a high rate.
+    /// Returns <see langword="true"/> for an Azure Service Bus receive span (<c>ServiceBusReceiver.Receive</c>, or
+    /// <c>Receive</c> from older instrumentation), which polling receivers create at a high rate.
     /// </summary>
     /// <param name="samplingParameters">The name, kind and creation tags of the span.</param>
     /// <returns><see langword="true"/> to drop the span.</returns>
@@ -23,29 +23,22 @@ public static class AzureSamplingFilters
         if (samplingParameters.Kind is not (ActivityKind.Client or ActivityKind.Consumer))
             return false;
 
+        // Only the receive itself: settlement and lock renewal (ServiceBusReceiver.Complete, .RenewMessageLock, ...)
+        // run inside message processing, and the application calls peek and deferred receives explicitly.
         var name = samplingParameters.Name;
-        if (name != null && name.StartsWith("ServiceBusReceiver.", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(name, "ServiceBusReceiver.Receive", StringComparison.OrdinalIgnoreCase))
             return true;
 
-        string? messagingSystem = null, messagingOperation = null;
-        if (samplingParameters.Tags != null)
+        // Older Service Bus instrumentation names the span "Receive".
+        if (!string.Equals(name, "Receive", StringComparison.OrdinalIgnoreCase) || samplingParameters.Tags is null)
+            return false;
+
+        foreach (var tag in samplingParameters.Tags)
         {
-            foreach (var tag in samplingParameters.Tags)
-            {
-                switch (tag.Key)
-                {
-                    case "messaging.system":
-                        messagingSystem = tag.Value as string;
-                        break;
-                    case "messaging.operation" or "messaging.operation.name":
-                        messagingOperation ??= tag.Value as string;
-                        break;
-                }
-            }
+            if (tag.Key == "messaging.system")
+                return string.Equals(tag.Value as string, "servicebus", StringComparison.OrdinalIgnoreCase);
         }
 
-        return string.Equals(messagingSystem, "servicebus", StringComparison.OrdinalIgnoreCase)
-            && (string.Equals(messagingOperation, "receive", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(name, "Receive", StringComparison.OrdinalIgnoreCase));
+        return false;
     }
 }
