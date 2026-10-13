@@ -271,8 +271,8 @@
       },
       "HttpMessageFormatter": {
         "type": "Transitive",
-        "resolved": "2.0.5",
-        "contentHash": "llLJHBjjvZX90RlPrTXXo1zkYsrj6xU3qPHxeklnAkQyhkME1fAQo/XcKwYFJiLHf5bbJN0ZG0V7pK4KUhPT0A==",
+        "resolved": "2.0.6",
+        "contentHash": "K2fFQV53id2rV+4+liY829qzQTPtOjje2kro385R6bR2+ZdBqD4JxaqpZa/auyyHV2aJ+YtdsstLZOxVRsjPAQ==",
         "dependencies": {
           "Microsoft.AspNetCore.WebUtilities": "2.3.0"
         }
@@ -736,7 +736,7 @@
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Http": "[1.0.0, )",
           "AwesomeAssertions": "[9.6.0, )",
-          "AwesomeAssertions.Web": "[2.0.5, )",
+          "AwesomeAssertions.Web": "[3.0.0, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.23.0, )",
           "Reqnroll": "[3.3.4, )"
         }
@@ -815,12 +815,12 @@
       },
       "AwesomeAssertions.Web": {
         "type": "CentralTransitive",
-        "requested": "[2.0.5, )",
-        "resolved": "2.0.5",
-        "contentHash": "v5P7h3MrouiNsCqciNBPXxFjOtVodBBUrqz0KjU2RiQR47Vt1pXNYDuket/IuSuEeg88sILEEO50e+8R3ifS5A==",
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "XqDpLIcoCTbaSm02FiR06bD7Sv3mcT2NoF2EWx7w2LS6DRO8DDJ0JIB+41/KNtQehNjlqorZNKF/sRZSxLtKuw==",
         "dependencies": {
           "AwesomeAssertions": "9.0.0",
-          "HttpMessageFormatter": "2.0.5",
+          "HttpMessageFormatter": "2.0.6",
           "Microsoft.AspNetCore.WebUtilities": "2.3.0"
         }
       },
