@@ -75,10 +75,12 @@ the rest evenly. A burst larger than the bucket is still limited, so a rare oper
 many roots at once keeps only the first ones. Idle
 operations, and new ones, split the budget the active operations leave unused, so the buckets
 stay within the budget when idle operations resume; each still holds one token, so its first
-root is sampled. An idle bucket refills at least one token per `SamplingPercentageDecreaseTimeout`,
-so an operation that skips whole periods, such as a periodic job or a health check, is sampled
-every time it runs while its traffic fits its share, also next to a busy operation that uses the
-rest of the budget. Before the first adjustment every bucket starts at `TracesPerSecond`, and many
+root is sampled. An idle bucket also refills one token per `SamplingPercentageDecreaseTimeout`,
+within an even split of `TracesPerSecond` among the idle buckets, so an operation that skips whole
+periods, such as a periodic job or a health check, is sampled every time it runs while its traffic
+fits its share, also next to a busy operation that uses the rest of the budget. This refill can
+take the idle buckets above the budget the active ones leave, by at most `TracesPerSecond` in
+total. Before the first adjustment every bucket starts at `TracesPerSecond`, and many
 operations first seen between two adjustments can also exceed the target until the next one.
 `MovingAverageRatio` smooths rate increases only: a bucket above its new
 target drops to it at once, so after an adjustment the buckets never share more than the

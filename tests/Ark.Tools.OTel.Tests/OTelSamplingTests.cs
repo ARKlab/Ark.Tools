@@ -924,6 +924,31 @@ public class ArkAdaptiveSamplerTests
         counts["BUSY"].Sampled.Should().BeInRange(120 * 50, 120 * 70, "the budget is 1 root/s, about 60 per minute");
     }
 
+    /// <summary>
+    /// The one-root-per-period refill of idle buckets is shared out of the budget, so many operations
+    /// idle every other period next to a busy one cannot multiply it, also with a budget below one root
+    /// per period and close to <see cref="ArkAdaptiveSamplerOptions.MaxOperationBuckets"/>.
+    /// </summary>
+    [TestMethod]
+    [DataRow(1.0, 99)]
+    [DataRow(0.01, 5)]
+    public void AdjustRate_ManyIntermittentOperations_StayCloseToBudget(double tracesPerSecond, int operations)
+    {
+        var time = new ManualTimeProvider();
+        var options = _perOperationOptions();
+        options.TracesPerSecond = tracesPerSecond;
+        options.MaxOperationBuckets = 100;
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        // BUSY at 50 roots/s; each OP_i one root every 120 s, so it is idle every other period.
+        var intermittent = Enumerable.Range(0, operations).Select(static i => ($"OP_{i}", 120)).ToArray();
+        _simulate(sampler, time, TimeSpan.FromHours(1), TimeSpan.FromSeconds(1), [("BUSY", 1), .. intermittent]);
+        var counts = _simulate(sampler, time, TimeSpan.FromHours(1), TimeSpan.FromSeconds(1), [("BUSY", 1), .. intermittent]);
+
+        var sampledPerSecond = counts.Values.Sum(static c => c.Sampled) / 3600.0;
+        sampledPerSecond.Should().BeLessThanOrEqualTo(tracesPerSecond * 1.5, "idle buckets share their refill out of the budget");
+    }
+
     private static ArkAdaptiveSamplerOptions _perOperationOptions() => new()
     {
         TracesPerSecond = 1,
