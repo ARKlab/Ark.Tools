@@ -11,6 +11,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 using System.Data.Common;
+using System.Diagnostics;
 
 namespace Ark.Tools.OTel;
 
@@ -46,6 +47,7 @@ public static class ArkOpenTelemetryBuilderExtensions
     /// section, and SQL spans to the NLog database (<c>ConnectionStrings:NLog.Database</c>) are dropped.
     /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "The tracing provider owns and disposes registered processors.")]
     public static OpenTelemetryBuilder AddArkOpenTelemetry(
         this OpenTelemetryBuilder builder,
         Action<SqlClientTraceInstrumentationOptions>? configureSqlClient = null,
@@ -59,6 +61,9 @@ public static class ArkOpenTelemetryBuilderExtensions
         configureArkOtel?.Invoke(arkOtelConfig);
         var skippedSqlQueryLabels = _getSkippedSqlQueryLabels(arkOtelConfig.SqlQueryLabelsToSkip);
         var failedTraceRegistry = new FailedTraceRegistry();
+        // No-op when no NLog database is configured.
+        var nlogDatabaseFilter = new ArkSqlDependencyFilterProcessor(_getNLogConnectionString(configuration));
+        ArkAdaptiveSampler? sampler = null;
 
         return builder
             .ConfigureResource(static resource => resource.AddArkTelemetryResource())
@@ -70,9 +75,12 @@ public static class ArkOpenTelemetryBuilderExtensions
                         configuration?.GetSection(_adaptiveSamplerSection).Bind(options);
                         configureAdaptiveSampler?.Invoke(options);
                     });
-                    services.AddSingleton(sp => new ArkAdaptiveSampler(
+                    services.AddSingleton(sp => sampler = new ArkAdaptiveSampler(
                         sp.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
-                        failedTraceRegistry));
+                        failedTraceRegistry)
+                    {
+                        _sqlDependencyFilter = nlogDatabaseFilter,
+                    });
                 })
                 .AddProcessor(new ArkPreFilterProcessor())
                 .SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>())
@@ -86,8 +94,14 @@ public static class ArkOpenTelemetryBuilderExtensions
                     configureSqlClient?.Invoke(options);
                     var applicationFilter = options.Filter;
                     options.Filter = command =>
-                        _includeSqlClientSpan(command, skippedSqlQueryLabels)
-                        && (applicationFilter is null || applicationFilter(command));
+                    {
+                        var include = _includeSqlClientSpan(command, skippedSqlQueryLabels)
+                            && (applicationFilter is null || applicationFilter(command));
+                        // The filter runs after sampling, on the span just started: give back its budget.
+                        if (!include && Activity.Current is { } activity)
+                            sampler?._release(activity);
+                        return include;
+                    };
                     var applicationEnricher = options.EnrichWithSqlCommand;
                     options.EnrichWithSqlCommand = (activity, command) =>
                     {
@@ -99,8 +113,7 @@ public static class ArkOpenTelemetryBuilderExtensions
                 .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
                 .AddProcessor(new WebApi4xxAsSuccessProcessor())
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
-                // No-op when no NLog database is configured.
-                .AddProcessor(new ArkSqlDependencyFilterProcessor(_getNLogConnectionString(configuration)))
+                .AddProcessor(nlogDatabaseFilter)
                 .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction))
             .WithMetrics(static metrics => metrics
                 .AddMeter(_rebusInstrumentationName)

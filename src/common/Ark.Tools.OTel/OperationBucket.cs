@@ -57,6 +57,30 @@ internal sealed class OperationBucket
     }
 
     /// <summary>
+    /// Undoes a <see cref="TryConsume"/> for an item filtered after sampling: it is no longer seen, its token is
+    /// returned, and the items it stood for are skipped again.
+    /// </summary>
+    /// <param name="sampleRate">The sample rate <see cref="TryConsume"/> returned, or 0 when it was not sampled.</param>
+    public void Refund(double sampleRate)
+    {
+        lock (_lock)
+        {
+            // The counts may have been taken by the controller in between: never go below zero.
+            _seen = Math.Max(0, _seen - 1);
+            if (sampleRate > 0)
+            {
+                _sampled = Math.Max(0, _sampled - 1);
+                _tokens = Math.Min(_tokens + 1.0, Math.Max(1.0, _rate * 2.0));
+                _skipped += (long)Math.Round(100.0 / sampleRate, MidpointRounding.AwayFromZero) - 1;
+            }
+            else
+            {
+                _skipped = Math.Max(0, _skipped - 1);
+            }
+        }
+    }
+
+    /// <summary>
     /// Updates the refill rate used by this bucket.
     /// </summary>
     public void UpdateRate(double newRate)

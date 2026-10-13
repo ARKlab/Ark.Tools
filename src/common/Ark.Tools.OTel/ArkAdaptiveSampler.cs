@@ -101,16 +101,9 @@ public sealed class ArkAdaptiveSampler : Sampler
     /// <inheritdoc/>
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
-        // If the tag ark.filtered was set by the pre-filter processor, drop immediately.
-        // Note: tags may include initial tags passed at span creation time.
-        if (samplingParameters.Tags != null)
-        {
-            foreach (var tag in samplingParameters.Tags)
-            {
-                if (tag.Key == _filteredTag && tag.Value is true)
-                    return new SamplingResult(SamplingDecision.Drop);
-            }
-        }
+        // Filtered noise is dropped before it reaches a bucket, so it does not use the TracesPerSecond budget.
+        if (_isFiltered(samplingParameters))
+            return new SamplingResult(SamplingDecision.Drop);
 
         // Parent decisions are authoritative for local traces. A sampled parent keeps
         // the chain intact; an unsampled parent must not be contradicted by sampling
@@ -148,6 +141,65 @@ public sealed class ArkAdaptiveSampler : Sampler
 
     /// <summary>Gets the tag name used to mark pre-filtered spans.</summary>
     public static string FilteredTagName => _filteredTag;
+
+    /// <summary>Drops the spans to the NLog database before sampling, as the processor does after it.</summary>
+    internal ArkSqlDependencyFilterProcessor? _sqlDependencyFilter { get; init; }
+
+    /// <summary>
+    /// Gives back what a root span counted in its bucket when a filter drops it after sampling,
+    /// so filtered noise does not use the TracesPerSecond budget.
+    /// </summary>
+    internal void _release(Activity activity)
+    {
+        // Only roots go through a bucket: see ShouldSample.
+        if (activity.ParentSpanId != default && (_options.RespectRemoteParentSampling || !activity.HasRemoteParent))
+            return;
+
+        var sampleRate = activity.GetTagItem(_sampleRateTag) is double rate ? rate : 0;
+        _getOrCreateBucket(activity.OperationName).Refund(sampleRate);
+    }
+
+    // The creation tags of a span: the pre-filter and NLog database rules, applied before sampling.
+    private bool _isFiltered(in SamplingParameters samplingParameters)
+    {
+        string? httpMethod = null, messagingSystem = null, messagingOperation = null, dbOperation = null;
+        string? dbSystem = null, peerName = null, dbName = null;
+        if (samplingParameters.Tags != null)
+        {
+            foreach (var tag in samplingParameters.Tags)
+            {
+                switch (tag.Key)
+                {
+                    case _filteredTag when tag.Value is true:
+                        return true;
+                    case "http.request.method":
+                        httpMethod = tag.Value as string;
+                        break;
+                    case "messaging.system":
+                        messagingSystem = tag.Value as string;
+                        break;
+                    case "messaging.operation" or "messaging.operation.name":
+                        messagingOperation ??= tag.Value as string;
+                        break;
+                    case "db.operation" or "db.operation.name":
+                        dbOperation ??= tag.Value as string;
+                        break;
+                    case "db.system" or "db.system.name":
+                        dbSystem ??= tag.Value as string;
+                        break;
+                    case "server.address" or "net.peer.name" or "peer.service":
+                        peerName ??= tag.Value as string;
+                        break;
+                    case "db.name" or "db.namespace":
+                        dbName ??= tag.Value as string;
+                        break;
+                }
+            }
+        }
+
+        return ArkPreFilterProcessor._isNoise(samplingParameters.Name, httpMethod, messagingSystem, messagingOperation, dbOperation)
+            || _sqlDependencyFilter?._matches(dbSystem, peerName, dbName) == true;
+    }
 
     /// <summary>The Azure Monitor attribute holding the sample rate (0–100] of an exported span.</summary>
     internal const string _sampleRateTag = "microsoft.sample_rate";

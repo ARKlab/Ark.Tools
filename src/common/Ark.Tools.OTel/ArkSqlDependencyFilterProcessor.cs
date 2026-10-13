@@ -79,37 +79,37 @@ public sealed class ArkSqlDependencyFilterProcessor : BaseProcessor<Activity>
 
     private void _filter(Activity data)
     {
-        if (!_enabled)
-            return;
+        if (_matches(
+                data.GetTagItem("db.system") as string ?? data.GetTagItem("db.system.name") as string,
+                data.GetTagItem("server.address") as string
+                    ?? data.GetTagItem("net.peer.name") as string
+                    ?? data.GetTagItem("peer.service") as string,
+                data.GetTagItem("db.name") as string ?? data.GetTagItem("db.namespace") as string))
+        {
+            data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+            data.IsAllDataRequested = false;
+        }
+    }
 
-        var dbSystem = data.GetTagItem("db.system") as string
-                    ?? data.GetTagItem("db.system.name") as string;
+    // Shared with ArkAdaptiveSampler, which matches the creation tags before sampling.
+    internal bool _matches(string? dbSystem, string? peerName, string? dbName)
+    {
+        if (!_enabled)
+            return false;
 
         if (!string.Equals(dbSystem, "mssql", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(dbSystem, "microsoft.sql", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(dbSystem, "microsoft.sql_server", StringComparison.OrdinalIgnoreCase))
-            return;
+            return false;
 
         // Match by server name.
-        var peerName = data.GetTagItem("server.address") as string
-                    ?? data.GetTagItem("net.peer.name") as string
-                    ?? data.GetTagItem("peer.service") as string;
-
         var configuredServer = _configuredServer!;
-        if (peerName != null &&
+        return peerName != null &&
             (peerName.Equals(configuredServer, StringComparison.OrdinalIgnoreCase) ||
-             peerName.Contains(configuredServer, StringComparison.OrdinalIgnoreCase)))
-        {
-            var dbName = data.GetTagItem("db.name") as string
-                      ?? data.GetTagItem("db.namespace") as string;
-            if (dbName != null &&
-                (string.Equals(dbName, _database, StringComparison.OrdinalIgnoreCase) ||
-                 string.Equals(dbName, _instanceDatabase, StringComparison.OrdinalIgnoreCase)))
-            {
-                data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
-                data.IsAllDataRequested = false;
-            }
-        }
+             peerName.Contains(configuredServer, StringComparison.OrdinalIgnoreCase)) &&
+            dbName != null &&
+            (string.Equals(dbName, _database, StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(dbName, _instanceDatabase, StringComparison.OrdinalIgnoreCase));
     }
 
     private static string? _read(DbConnectionStringBuilder builder, params string[] keys)

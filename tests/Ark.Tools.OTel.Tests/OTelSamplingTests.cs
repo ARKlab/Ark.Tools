@@ -189,6 +189,70 @@ public class ArkAdaptiveSamplerTests
     }
 
     /// <summary>
+    /// Noise recognized from the name or the creation tags, such as a Service Bus receive or a write to the
+    /// NLog database, is dropped before sampling and does not use a token of the budget.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_FilteredNoise_DoesNotUseTheBudget()
+    {
+        var time = new ManualTimeProvider();
+        using var nlogDatabase = new ArkSqlDependencyFilterProcessor("Server=tcp:logs.example.com,1433;Database=Logs");
+        var sampler = new ArkAdaptiveSampler(_singleTokenOptions(), new FailedTraceRegistry(), time)
+        {
+            _sqlDependencyFilter = nlogDatabase,
+        };
+
+        SamplingDecision sample(string name, params KeyValuePair<string, object?>[] tags)
+        {
+            var parameters = new SamplingParameters(
+                default, ActivityTraceId.CreateRandom(), name, ActivityKind.Client, tags, null);
+            return sampler.ShouldSample(in parameters).Decision;
+        }
+
+        sample("ServiceBusReceiver.Receive").Should().Be(SamplingDecision.Drop);
+        sample(
+                "INSERT",
+                new("db.system.name", "microsoft.sql_server"),
+                new("server.address", "logs.example.com"),
+                new("db.namespace", "Logs"))
+            .Should().Be(SamplingDecision.Drop);
+
+        sample("OP").Should().Be(SamplingDecision.RecordAndSample, "the filtered spans left the only token");
+        sample("OP").Should().Be(SamplingDecision.RecordOnly);
+    }
+
+    /// <summary>
+    /// A root dropped by a filter after sampling, such as a SQL query label skipped by the SqlClient filter,
+    /// gives its token back.
+    /// </summary>
+    [TestMethod]
+    public void Release_ReturnsTheTokenOfARootFilteredAfterSampling()
+    {
+        var sampler = new ArkAdaptiveSampler(_singleTokenOptions(), new FailedTraceRegistry(), new ManualTimeProvider());
+        using var pipeline = new TestPipeline(nameof(Release_ReturnsTheTokenOfARootFilteredAfterSampling), sampler);
+
+        using (var filtered = pipeline.StartRoot("OP"))
+        {
+            filtered!.Recorded.Should().BeTrue("the root took the only token");
+            sampler._release(filtered);
+        }
+
+        using var next = pipeline.StartRoot("OP");
+        next!.Recorded.Should().BeTrue("the filtered root gave its token back");
+    }
+
+    // 0.5 trace/s: the initial burst of two seconds holds one token, and the frozen clock adds none.
+    private static ArkAdaptiveSamplerOptions _singleTokenOptions()
+    {
+        return new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 0.5,
+            EnablePerOperationBucketing = false,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+    }
+
+    /// <summary>
     /// The adaptive controller measures the observed traffic rate on the injected
     /// <see cref="TimeProvider"/> timeline and pushes the new rate to the buckets.
     /// </summary>

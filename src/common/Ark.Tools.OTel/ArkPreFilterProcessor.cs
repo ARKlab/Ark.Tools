@@ -40,12 +40,27 @@ public sealed class ArkPreFilterProcessor : BaseProcessor<Activity>
 
     private static bool _shouldFilter(Activity activity)
     {
-        var displayName = activity.DisplayName;
+        return _isNoise(
+            activity.DisplayName,
+            activity.GetTagItem("http.request.method") as string,
+            activity.GetTagItem("messaging.system") as string,
+            activity.GetTagItem("messaging.operation") as string
+                ?? activity.GetTagItem("messaging.operation.name") as string,
+            activity.GetTagItem("db.operation") as string
+                ?? activity.GetTagItem("db.operation.name") as string);
+    }
 
+    // Shared with ArkAdaptiveSampler, which applies the same rules to the name and creation tags before sampling.
+    internal static bool _isNoise(
+        string? displayName,
+        string? httpMethod,
+        string? messagingSystem,
+        string? messagingOperation,
+        string? dbOperation)
+    {
         // --- HTTP OPTIONS requests ---
         // Span name for ASP.NET Core is "HTTP {METHOD} {ROUTE}" or similar.
         // The http.request.method tag contains the method.
-        var httpMethod = activity.GetTagItem("http.request.method") as string;
         if (!string.IsNullOrEmpty(httpMethod) &&
             string.Equals(httpMethod, "OPTIONS", StringComparison.OrdinalIgnoreCase))
         {
@@ -61,10 +76,6 @@ public sealed class ArkPreFilterProcessor : BaseProcessor<Activity>
             return true;
 
         // --- Azure Service Bus Receive ---
-        var messagingOperation = activity.GetTagItem("messaging.operation") as string
-                               ?? activity.GetTagItem("messaging.operation.name") as string;
-        var messagingSystem = activity.GetTagItem("messaging.system") as string;
-
         if (messagingSystem != null &&
             messagingSystem.Equals("servicebus", StringComparison.OrdinalIgnoreCase) &&
             messagingOperation != null &&
@@ -83,8 +94,6 @@ public sealed class ArkPreFilterProcessor : BaseProcessor<Activity>
         }
 
         // --- SQL Commit ---
-        var dbOperation = activity.GetTagItem("db.operation") as string
-                       ?? activity.GetTagItem("db.operation.name") as string;
         if (dbOperation != null &&
             dbOperation.Equals("Commit", StringComparison.OrdinalIgnoreCase))
             return true;
