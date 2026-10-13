@@ -17,15 +17,30 @@ namespace Ark.Tools.OTel;
 /// </para>
 /// <list type="bullet">
 /// <item><description><b>Failure preservation</b>: spans with error status or exception events are always exported.</description></item>
-/// <item><description><b>Per-operation token buckets</b>: each distinct operation gets an independent rate limit,
+/// <item><description><b>Per-operation token buckets</b>: each distinct operation gets its own token bucket,
 /// ensuring rare code paths are sampled fairly relative to high-frequency ones.</description></item>
-/// <item><description><b>Adaptive rate control</b>: the token bucket refill rate is periodically adjusted based on
-/// observed traffic to keep exported telemetry near the configured <see cref="ArkAdaptiveSamplerOptions.TracesPerSecond"/> target.</description></item>
+/// <item><description><b>Adaptive rate control</b>: the refill rates are periodically adjusted from the observed
+/// traffic so that the buckets together export about <see cref="ArkAdaptiveSamplerOptions.TracesPerSecond"/> roots
+/// per second. The budget is shared max-min fairly: operations slower than the fair share get a refill rate that
+/// covers their average traffic and the rest of the budget is split evenly among the busier operations. A burst
+/// larger than a bucket (two seconds of its rate, at least one root) is still limited.</description></item>
 /// </list>
 /// <para>
 /// Spans that do not pass the rate limit receive <see cref="SamplingDecision.RecordOnly"/> (not <c>Drop</c>),
 /// so the companion <see cref="ArkFailurePromotionProcessor"/> can still promote them to
 /// <see cref="SamplingDecision.RecordAndSample"/> at span completion if a failure is detected.
+/// </para>
+/// <para>
+/// Sampled spans carry the <c>microsoft.sample_rate</c> attribute (0–100], the convention of the
+/// Azure Monitor samplers, from which Application Insights derives <c>itemCount = 100 / sampleRate</c>.
+/// A root sampled by its bucket stands for itself and for the roots the bucket skipped since its
+/// previous sampled root, so the item counts of the exported roots add up to the roots seen.
+/// Local descendants inherit the rate of their sampled parent: <see cref="ArkFailurePromotionProcessor"/>
+/// copies it from <see cref="Activity.Parent"/> when they start. Spans kept because their trace
+/// failed get rate 100 (itemCount 1) from the processor, because they are exported whatever the budget.
+/// By default, spans with a remote parent are roots for the local budget and carry its rate. With
+/// <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/> on, spans kept only because a
+/// remote parent was sampled carry no rate (itemCount 1): the upstream rate is not propagated.
 /// </para>
 /// </remarks>
 public sealed class ArkAdaptiveSampler : Sampler
@@ -37,11 +52,11 @@ public sealed class ArkAdaptiveSampler : Sampler
     private readonly ConcurrentDictionary<string, OperationBucket> _buckets;
     private readonly TimeProvider _timeProvider;
 
-    // Stats for adaptive rate controller
-    private long _totalSeen;
-    private long _totalSampled;
+    // Adaptive rate controller state; _currentRate is the spare budget given to new buckets.
+    // Once the budget is shared out, a new bucket starts with a token even if its share is below 0.5/s.
     private long _lastAdjustment;
     private double _currentRate;
+    private bool _hasAdjusted;
     private readonly Lock _adjustLock = new();
 
     /// <summary>
@@ -100,15 +115,20 @@ public sealed class ArkAdaptiveSampler : Sampler
         // Parent decisions are authoritative for local traces. A sampled parent keeps
         // the chain intact; an unsampled parent must not be contradicted by sampling
         // an arbitrary child. RecordOnly still permits failure promotion at OnEnd.
+        // Remote parents decide only when RespectRemoteParentSampling is on.
         var parentContext = samplingParameters.ParentContext;
-        if (parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
-            return new SamplingResult(SamplingDecision.RecordAndSample);
-
-        if (parentContext.TraceId != default)
-            return new SamplingResult(SamplingDecision.RecordOnly);
+        if (parentContext.TraceId != default && (_options.RespectRemoteParentSampling || !parentContext.IsRemote))
+        {
+            // ArkFailurePromotionProcessor copies the parent's sample rate when the span starts:
+            // one tag, where a sampling attribute would also allocate the SDK's tag collection.
+            return new SamplingResult(parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+                ? SamplingDecision.RecordAndSample
+                : SamplingDecision.RecordOnly);
+        }
 
         // If any span in this trace has already been identified as a failure, always sample.
         // This ensures that siblings starting after the failure is detected are fully captured.
+        // ArkFailurePromotionProcessor, which registers failures, sets their sample rate to 100 at OnEnd.
         if (_failedTraceRegistry.IsFailed(samplingParameters.TraceId))
             return new SamplingResult(SamplingDecision.RecordAndSample);
 
@@ -116,12 +136,9 @@ public sealed class ArkAdaptiveSampler : Sampler
         var operationName = samplingParameters.Name ?? "unknown";
         var bucket = _getOrCreateBucket(operationName);
 
-        Interlocked.Increment(ref _totalSeen);
-
-        if (bucket.TryConsume())
+        if (bucket.TryConsume(out var sampleRate))
         {
-            Interlocked.Increment(ref _totalSampled);
-            return new SamplingResult(SamplingDecision.RecordAndSample);
+            return new SamplingResult(SamplingDecision.RecordAndSample, [new(_sampleRateTag, sampleRate)]);
         }
 
         // Use RecordOnly so the failure promotion processor can still examine
@@ -132,10 +149,13 @@ public sealed class ArkAdaptiveSampler : Sampler
     /// <summary>Gets the tag name used to mark pre-filtered spans.</summary>
     public static string FilteredTagName => _filteredTag;
 
+    /// <summary>The Azure Monitor attribute holding the sample rate (0–100] of an exported span.</summary>
+    internal const string _sampleRateTag = "microsoft.sample_rate";
+
     private OperationBucket _getOrCreateBucket(string operationName)
     {
         if (!_options.EnablePerOperationBucketing)
-            return _buckets.GetOrAdd("__global__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
+            return _getOrAddBucket("__global__");
 
         // Look up first: ConcurrentDictionary.Count takes every internal lock, so keep it off the common path.
         if (_buckets.TryGetValue(operationName, out var existing))
@@ -144,9 +164,26 @@ public sealed class ArkAdaptiveSampler : Sampler
         // If we've reached the bucket limit, use the global bucket for overflow.
         // Look up again first: another thread may have added this operation's bucket meanwhile.
         if (_buckets.Count >= _options.MaxOperationBuckets)
-            return _buckets.TryGetValue(operationName, out existing) ? existing : _buckets.GetOrAdd("__overflow__", static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
+            return _buckets.TryGetValue(operationName, out existing) ? existing : _getOrAddBucket("__overflow__");
 
-        return _buckets.GetOrAdd(operationName, static (_, state) => new OperationBucket(state.Rate, state.TimeProvider), (Rate: _currentRate, TimeProvider: _timeProvider));
+        return _getOrAddBucket(operationName, isOperation: true);
+    }
+
+    private OperationBucket _getOrAddBucket(string key, bool isOperation = false)
+    {
+        if (_buckets.TryGetValue(key, out var bucket))
+            return bucket;
+
+        // Serialized with _adjustRate, so a new bucket starts at the current share and no rate update misses it.
+        // Each bucket is created once, so the lock stays off the common path.
+        lock (_adjustLock)
+        {
+            // New operations seen at once can all pass the limit check above: recheck it here.
+            if (isOperation && !_buckets.ContainsKey(key) && _buckets.Count >= _options.MaxOperationBuckets)
+                key = "__overflow__";
+
+            return _buckets.GetOrAdd(key, new OperationBucket(_currentRate, _timeProvider, _hasAdjusted));
+        }
     }
 
     private async Task _runAdaptiveControllerAsync()
@@ -166,7 +203,7 @@ public sealed class ArkAdaptiveSampler : Sampler
         }
     }
 
-    /// <summary>Recomputes the sampling rate from the traffic seen since the last adjustment.</summary>
+    /// <summary>Recomputes the bucket rates from the traffic seen since the last adjustment.</summary>
     internal void _adjustRate()
     {
         lock (_adjustLock)
@@ -177,29 +214,60 @@ public sealed class ArkAdaptiveSampler : Sampler
             if (elapsed <= 0)
                 return;
 
-            var totalSeen = Interlocked.Exchange(ref _totalSeen, 0);
-            var totalSampled = Interlocked.Exchange(ref _totalSampled, 0);
+            var buckets = _buckets.Values.Select(static b => (Bucket: b, Counts: b.TakeCounts())).ToList();
+            var active = buckets.Where(static b => b.Counts.Seen > 0).ToList();
 
-            if (totalSeen == 0)
+            if (active.Count == 0)
                 return;
 
-            var observedRatePerSecond = totalSeen / elapsed;
-            var targetSamplingRatio = _options.TracesPerSecond / observedRatePerSecond;
-            targetSamplingRatio = Math.Clamp(targetSamplingRatio, 0.0001, 1.0);
+            var share = _fairShare(active.Select(b => b.Counts.Seen / elapsed).ToList(), _options.TracesPerSecond);
 
-            var currentSamplingRatio = totalSeen > 0 ? (double)totalSampled / totalSeen : 1.0;
+            // Idle buckets and the next new one split what the active buckets leave unused, so the
+            // buckets stay within the budget when idle operations resume. Each still holds one token.
+            var allocated = active.Sum(b => Math.Min(b.Counts.Seen / elapsed, share));
+            var spareRate = Math.Max(0, _options.TracesPerSecond - allocated) / (buckets.Count - active.Count + 1);
 
-            // Apply moving average for smooth transitions.
-            var α = _options.MovingAverageRatio;
-            var newSamplingRatio = (α * currentSamplingRatio) + ((1.0 - α) * targetSamplingRatio);
-            _currentRate = observedRatePerSecond * newSamplingRatio;
-            _currentRate = Math.Max(0.0001, _currentRate);
+            foreach (var (bucket, (seen, sampled)) in buckets)
+            {
+                if (seen == 0)
+                {
+                    bucket.UpdateRate(spareRate);
+                    continue;
+                }
 
-            // Push updated rate to all buckets.
-            foreach (var bucket in _buckets.Values)
-                bucket.UpdateRate(_currentRate);
+                // Apply moving average to smooth increases; never exceed the target, so the buckets
+                // stay within the budget.
+                var targetRate = Math.Min(seen / elapsed, share);
+                var currentRate = sampled / elapsed;
+                var α = _options.MovingAverageRatio;
+                var smoothedRate = Math.Min(targetRate, (α * currentRate) + ((1.0 - α) * targetRate));
+                // The floor keeps a bucket refilling; capped at the share so the buckets stay within the budget.
+                bucket.UpdateRate(Math.Max(Math.Min(0.0001, share), smoothedRate));
+            }
 
+            _currentRate = spareRate;
+            _hasAdjusted = true;
             _lastAdjustment = now;
         }
+    }
+
+    /// <summary>
+    /// Returns the max-min fair share of <paramref name="budget"/>: the per-bucket rate at which
+    /// the buckets slower than it keep all their traffic and the others split the rest evenly.
+    /// Returns <paramref name="budget"/> when all the traffic fits in it.
+    /// </summary>
+    private static double _fairShare(List<double> rates, double budget)
+    {
+        rates.Sort();
+        var remaining = budget;
+        for (var i = 0; i < rates.Count; i++)
+        {
+            var share = remaining / (rates.Count - i);
+            if (rates[i] >= share)
+                return share;
+            remaining -= rates[i];
+        }
+
+        return budget;
     }
 }

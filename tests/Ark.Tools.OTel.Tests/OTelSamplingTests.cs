@@ -87,6 +87,10 @@ internal sealed class TestPipeline : IDisposable
     public Activity? StartChild(string name, Activity parent, ActivityKind kind = ActivityKind.Internal)
         => _source.StartActivity(name, kind, parent.Context);
 
+    /// <summary>Starts a child of <see cref="Activity.Current"/>, as instrumentation libraries do.</summary>
+    public Activity? StartCurrentChild(string name, ActivityKind kind = ActivityKind.Internal)
+        => _source.StartActivity(name, kind);
+
     /// <summary>Starts a span with initial creation-time tags so <c>OnStart</c> sees them.</summary>
     public Activity? StartWithTags(
         string name,
@@ -281,12 +285,14 @@ public class ArkAdaptiveSamplerTests
     }
 
     /// <summary>
-    /// A sampled remote parent keeps the distributed trace chain intact.
+    /// When remote parents are respected, a sampled remote parent keeps the distributed trace chain intact.
     /// </summary>
     [TestMethod]
     public void ShouldSample_WhenRemoteParentIsRecorded_ReturnsRecordAndSample()
     {
-        var sampler = new ArkAdaptiveSampler(_nearZeroRateOptions());
+        var options = _nearZeroRateOptions();
+        options.RespectRemoteParentSampling = true;
+        var sampler = new ArkAdaptiveSampler(options);
         var parent = new ActivityContext(
             ActivityTraceId.CreateRandom(),
             ActivitySpanId.CreateRandom(),
@@ -302,6 +308,56 @@ public class ArkAdaptiveSamplerTests
             null);
 
         sampler.ShouldSample(in parameters).Decision.Should().Be(SamplingDecision.RecordAndSample);
+    }
+
+    private static SamplingResult _sampleRemoteChild(ArkAdaptiveSampler sampler, ActivityTraceFlags parentFlags)
+    {
+        var parent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            parentFlags,
+            traceState: null,
+            isRemote: true);
+        var parameters = new SamplingParameters(parent, parent.TraceId, "REMOTE_CHILD", ActivityKind.Server, null, null);
+        return sampler.ShouldSample(in parameters);
+    }
+
+    /// <summary>
+    /// By default a span with an unsampled remote parent is a root for the local budget and carries
+    /// the bucket's sample rate; with <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/>
+    /// on the remote parent decides (RecordOnly).
+    /// </summary>
+    [TestMethod]
+    [DataRow(true, SamplingDecision.RecordOnly)]
+    [DataRow(false, SamplingDecision.RecordAndSample)]
+    public void ShouldSample_RemoteUnsampledParent_FollowsRespectRemoteParentSampling(bool respectRemoteParentSampling, SamplingDecision expected)
+    {
+        var options = _highRateOptions();
+        options.RespectRemoteParentSampling = respectRemoteParentSampling;
+        var sampler = new ArkAdaptiveSampler(options);
+
+        var result = _sampleRemoteChild(sampler, ActivityTraceFlags.None);
+
+        result.Decision.Should().Be(expected);
+        if (!respectRemoteParentSampling)
+            _sampleRate(result).Should().Be(100.0);
+    }
+
+    /// <summary>
+    /// By default the local budget decides for a span with a sampled remote parent, so an exhausted
+    /// bucket records it only; with <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/>
+    /// on the remote parent is followed.
+    /// </summary>
+    [TestMethod]
+    [DataRow(true, SamplingDecision.RecordAndSample)]
+    [DataRow(false, SamplingDecision.RecordOnly)]
+    public void ShouldSample_RemoteSampledParent_FollowsRespectRemoteParentSampling(bool respectRemoteParentSampling, SamplingDecision expected)
+    {
+        var options = _nearZeroRateOptions();
+        options.RespectRemoteParentSampling = respectRemoteParentSampling;
+        var sampler = new ArkAdaptiveSampler(options);
+
+        _sampleRemoteChild(sampler, ActivityTraceFlags.Recorded).Decision.Should().Be(expected);
     }
 
     // ── behaviour: pre-filter tag → Drop ──────────────────────────────────
@@ -440,6 +496,339 @@ public class ArkAdaptiveSamplerTests
 
         rb.Decision.Should().Be(SamplingDecision.RecordAndSample,
             "OP_B has its own bucket and must not be affected by OP_A exhaustion");
+    }
+
+    /// <summary>
+    /// Operations beyond <see cref="ArkAdaptiveSamplerOptions.MaxOperationBuckets"/> share one
+    /// overflow bucket, while operations that got their own bucket keep it.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_BeyondMaxOperationBuckets_OperationsShareOverflowBucket()
+    {
+        var time = new ManualTimeProvider();
+        var options = _oneTracePerSecondOptions();
+        options.EnablePerOperationBucketing = true;
+        options.MaxOperationBuckets = 1;
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        _sampleRoot(sampler, "OWN").Decision.Should().Be(SamplingDecision.RecordAndSample);
+        _sampleRoot(sampler, "OVERFLOW_A").Decision.Should().Be(SamplingDecision.RecordAndSample);
+        _sampleRoot(sampler, "OVERFLOW_B").Decision.Should().Be(SamplingDecision.RecordAndSample);
+        _sampleRoot(sampler, "OVERFLOW_A").Decision.Should().Be(SamplingDecision.RecordOnly, "OVERFLOW_A and OVERFLOW_B drained the shared two-token burst");
+        _sampleRoot(sampler, "OWN").Decision.Should().Be(SamplingDecision.RecordAndSample, "OWN keeps its own bucket");
+    }
+
+    // ── behaviour: total budget across operation buckets ──────────────────
+
+    /// <summary>
+    /// <see cref="ArkAdaptiveSamplerOptions.TracesPerSecond"/> is the total budget: with many
+    /// busy operations the exported roots converge to it instead of to one budget per bucket,
+    /// a rare operation is still sampled in full, and the item counts still add up to the roots seen.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_ManyOperations_TotalExportedRateConvergesToTracesPerSecond()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = true,
+            MaxOperationBuckets = 100,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        // 20 busy operations at 5 roots/s each and one rare operation every 30 s, for ten one-minute windows.
+        var busyOperations = Enumerable.Range(0, 20).Select(static i => $"BUSY_{i}").ToList();
+        var seen = 0;
+        var itemCount = 0.0;
+        var sampledInLastWindow = 0;
+        var rareSampledInLastWindow = 0;
+        for (var window = 0; window < 10; window++)
+        {
+            sampledInLastWindow = 0;
+            rareSampledInLastWindow = 0;
+            for (var tick = 0; tick < 300; tick++)
+            {
+                time.Advance(TimeSpan.FromMilliseconds(200));
+                var operations = tick % 150 == 0 ? busyOperations.Append("RARE") : busyOperations;
+                foreach (var operation in operations)
+                {
+                    var result = _sampleRoot(sampler, operation);
+                    seen++;
+                    if (result.Decision != SamplingDecision.RecordAndSample)
+                        continue;
+                    itemCount += 100.0 / _sampleRate(result);
+                    sampledInLastWindow++;
+                    if (operation == "RARE")
+                        rareSampledInLastWindow++;
+                }
+            }
+
+            sampler._adjustRate();
+        }
+
+        sampledInLastWindow.Should().BeInRange(48, 75, "the total budget is 1 trace/s, so about 60 roots per minute");
+        rareSampledInLastWindow.Should().Be(2, "an operation below the fair share is sampled in full");
+        itemCount.Should().BeApproximately(seen, seen * 0.05, "each bucket's unsampled tail is the only volume not counted");
+    }
+
+
+    /// <summary>
+    /// After an adjustment the buckets never share more than the budget: a bucket above its fair
+    /// share drops to it at once, and <see cref="ArkAdaptiveSamplerOptions.MovingAverageRatio"/>
+    /// smooths only increases.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_BusyOperations_WindowAfterFirstAdjustmentStaysWithinBudget()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = true,
+            MovingAverageRatio = 0.5,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        int window()
+        {
+            var sampled = 0;
+            for (var tick = 0; tick < 300; tick++)
+            {
+                time.Advance(TimeSpan.FromMilliseconds(200));
+                for (var i = 0; i < 20; i++)
+                {
+                    if (_sampleRoot(sampler, $"BUSY_{i}").Decision == SamplingDecision.RecordAndSample)
+                        sampled++;
+                }
+            }
+
+            sampler._adjustRate();
+            return sampled;
+        }
+
+        window();
+
+        window().Should().BeLessThanOrEqualTo(80, "the budget is 1 root/s, about 60 per minute plus each bucket's token");
+    }
+
+    /// <summary>
+    /// Idle buckets share only the budget the active ones leave unused, so when idle operations
+    /// resume the buckets together still stay within the budget.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_IdleOperationsResume_StayWithinBudget()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = true,
+            MovingAverageRatio = 0,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        int window(int operations, int everyTicks)
+        {
+            var sampled = 0;
+            for (var tick = 0; tick < 300; tick++)
+            {
+                time.Advance(TimeSpan.FromMilliseconds(200));
+                if (tick % everyTicks != 0)
+                    continue;
+                for (var i = 0; i < operations; i++)
+                {
+                    if (_sampleRoot(sampler, $"OP_{i}").Decision == SamplingDecision.RecordAndSample)
+                        sampled++;
+                }
+            }
+
+            sampler._adjustRate();
+            return sampled;
+        }
+
+        // All 20 operations busy, then only OP_0 at 0.2 roots/s, which fits the budget.
+        window(operations: 20, everyTicks: 1);
+        window(operations: 1, everyTicks: 25);
+
+        window(operations: 20, everyTicks: 1).Should().BeLessThanOrEqualTo(90, "the budget is about 60 roots per minute plus one token per bucket");
+    }
+
+    /// <summary>
+    /// A rate decrease clamps the tokens a bucket already holds, even when no time has passed since
+    /// its last refill, so leftover startup tokens cannot exceed the new share.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_RateDecrease_ClampsExistingTokens()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 100,
+            EnablePerOperationBucketing = true,
+            MaxOperationBuckets = 300,
+            MovingAverageRatio = 0,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        // 200 busy operations at 5 roots/s share 100 roots/s: 0.5 roots/s each.
+        for (var tick = 0; tick < 300; tick++)
+        {
+            time.Advance(TimeSpan.FromMilliseconds(200));
+            for (var i = 0; i < 200; i++)
+                _sampleRoot(sampler, $"BUSY_{i}");
+        }
+
+        // RARE holds almost its whole 200-token startup burst when the share drops.
+        _sampleRoot(sampler, "RARE");
+        sampler._adjustRate();
+
+        var sampled = Enumerable.Range(0, 10).Count(_ => _sampleRoot(sampler, "RARE").Decision == SamplingDecision.RecordAndSample);
+        sampled.Should().Be(1, "RARE's share is below 0.5 roots/s, so its bucket holds one token");
+    }
+
+    /// <summary>
+    /// An operation first seen after the budget was shared out starts with a token even when its
+    /// fair share is below 0.5 roots/s, so its first root is sampled.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_NewOperationBelowFairShare_SamplesItsFirstRoot()
+    {
+        var time = new ManualTimeProvider();
+        var options = new ArkAdaptiveSamplerOptions
+        {
+            TracesPerSecond = 1,
+            EnablePerOperationBucketing = true,
+            SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+        };
+        var sampler = new ArkAdaptiveSampler(options, new FailedTraceRegistry(), time);
+
+        // 20 busy operations at 5 roots/s share 1 root/s: 0.05 roots/s each.
+        for (var tick = 0; tick < 300; tick++)
+        {
+            time.Advance(TimeSpan.FromMilliseconds(200));
+            for (var i = 0; i < 20; i++)
+                _sampleRoot(sampler, $"BUSY_{i}");
+        }
+        sampler._adjustRate();
+
+        _sampleRoot(sampler, "NEW").Decision.Should().Be(SamplingDecision.RecordAndSample);
+    }
+
+    // ── behaviour: sample rate (Azure Monitor itemCount) ──────────────────
+
+    private static ArkAdaptiveSamplerOptions _oneTracePerSecondOptions() => new()
+    {
+        TracesPerSecond = 1,
+        EnablePerOperationBucketing = false,
+        SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+    };
+
+    private static SamplingResult _sampleRoot(ArkAdaptiveSampler sampler, string name = "OP")
+    {
+        var parameters = new SamplingParameters(
+            default, ActivityTraceId.CreateRandom(), name, ActivityKind.Server, null, null);
+        return sampler.ShouldSample(in parameters);
+    }
+
+    private static double _sampleRate(SamplingResult result)
+        => (double)result.Attributes.Single(static a => a.Key == ArkAdaptiveSampler._sampleRateTag).Value;
+
+    /// <summary>
+    /// A bucket-sampled root carries the <c>microsoft.sample_rate</c> attribute: it stands for
+    /// itself and for the roots the bucket skipped since the previous sampled root, so the
+    /// item counts (100 / sample rate) of the exported roots add up to every root seen.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_BucketSampledRoots_CarrySampleRateCoveringSkippedRoots()
+    {
+        var time = new ManualTimeProvider();
+        var sampler = new ArkAdaptiveSampler(_oneTracePerSecondOptions(), new FailedTraceRegistry(), time);
+
+        // The two-token burst samples 2 roots; the other 8 are skipped while time is frozen.
+        var results = Enumerable.Range(0, 10).Select(_ => _sampleRoot(sampler)).ToList();
+        time.Advance(TimeSpan.FromSeconds(1));
+        results.Add(_sampleRoot(sampler));
+
+        var sampled = results.Where(static r => r.Decision == SamplingDecision.RecordAndSample).ToList();
+        sampled.Select(_sampleRate).Should().Equal(100.0, 100.0, 100.0 / 9);
+        sampled.Sum(static r => 100.0 / _sampleRate(r)).Should().BeApproximately(results.Count, 1e-9);
+    }
+
+    /// <summary>
+    /// Descendants of a sampled root carry the root's sample rate, as the Azure Monitor
+    /// rate-limited sampler does, so requests and dependencies of a trace share one weight.
+    /// <see cref="ArkFailurePromotionProcessor"/> copies it from the parent when a child starts.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_ChildrenOfSampledRoot_InheritRootSampleRate()
+    {
+        var time = new ManualTimeProvider();
+        var registry = new FailedTraceRegistry();
+        using var pipeline = new TestPipeline(
+            nameof(ShouldSample_ChildrenOfSampledRoot_InheritRootSampleRate),
+            new ArkAdaptiveSampler(_oneTracePerSecondOptions(), registry, time),
+            new ArkFailurePromotionProcessor(registry));
+
+        // Two roots fill the burst, the third is skipped, so the next sampled root counts 2.
+        for (var i = 0; i < 3; i++)
+        {
+            using (pipeline.StartRoot("ROOT"))
+            {
+            }
+        }
+        time.Advance(TimeSpan.FromSeconds(1));
+
+        using var root = pipeline.StartRoot("ROOT");
+        var child = pipeline.StartCurrentChild("CHILD")!;
+        var grandChild = pipeline.StartCurrentChild("GRANDCHILD")!;
+        grandChild.Stop();
+        child.Stop();
+        var sibling = pipeline.StartCurrentChild("SIBLING")!;
+        sibling.Stop();
+
+        foreach (var activity in new[] { root!, child, grandChild, sibling })
+        {
+            activity.Recorded.Should().BeTrue();
+            activity.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(50.0, "{0} belongs to a root that counts 2", activity.DisplayName);
+        }
+    }
+
+    /// <summary>
+    /// A root sampled by the budget whose descendant fails would have been exported anyway,
+    /// so its weight becomes 1 like that of every other span kept because of a failure.
+    /// </summary>
+    [TestMethod]
+    public void FailurePromotion_SampledRootOfFailedTrace_HasFullSampleRate()
+    {
+        var time = new ManualTimeProvider();
+        var registry = new FailedTraceRegistry();
+        using var pipeline = new TestPipeline(
+            nameof(FailurePromotion_SampledRootOfFailedTrace_HasFullSampleRate),
+            new ArkAdaptiveSampler(_oneTracePerSecondOptions(), registry, time),
+            new ArkFailurePromotionProcessor(registry));
+
+        for (var i = 0; i < 3; i++)
+        {
+            using (pipeline.StartRoot("ROOT"))
+            {
+            }
+        }
+        time.Advance(TimeSpan.FromSeconds(1));
+
+        var root = pipeline.StartRoot("FAILED_ROOT")!;
+        var child = pipeline.StartChild("FAILED_CHILD", root)!;
+        root.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(50.0);
+        child.SetStatus(ActivityStatusCode.Error, "child failed");
+        child.Stop();
+        root.Stop();
+
+        root.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(100.0);
+        child.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(100.0);
     }
 }
 
@@ -831,6 +1220,31 @@ public class ArkFailurePromotionProcessorTests
             .Select(static a => a.DisplayName)
             .Should().Contain("SIBLING_B",
                 "a sibling that ends after the failure must be promoted via registry");
+    }
+
+    // ── failure promotion: sample rate ─────────────────────────────────────
+
+    /// <summary>
+    /// Spans exported only because of a failure count themselves alone: their
+    /// <c>microsoft.sample_rate</c> is 100 (itemCount 1), so promoted failures do not inflate counts.
+    /// </summary>
+    [TestMethod]
+    public void FailurePromotion_PromotedSpans_HaveFullSampleRate()
+    {
+        var registry = new FailedTraceRegistry();
+        using var pipeline = _nearZeroPipeline(
+            nameof(FailurePromotion_PromotedSpans_HaveFullSampleRate), registry);
+
+        var root = pipeline.StartRoot("ROOT");
+        var failing = pipeline.StartChild("FAILING", root!);
+        var sibling = pipeline.StartChild("SIBLING", root!);
+        failing!.SetStatus(ActivityStatusCode.Error, "failed");
+        failing.Stop();
+        sibling!.Stop();
+        root!.Stop();
+
+        pipeline.Exported.Select(static a => a.DisplayName).Should().BeEquivalentTo(["FAILING", "SIBLING", "ROOT"]);
+        pipeline.Exported.Should().OnlyContain(static a => Equals(a.GetTagItem(ArkAdaptiveSampler._sampleRateTag), 100.0));
     }
 
     // ── non-failure: successful span is NOT promoted ───────────────────────

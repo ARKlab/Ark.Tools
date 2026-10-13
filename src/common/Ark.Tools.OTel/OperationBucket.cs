@@ -13,31 +13,45 @@ internal sealed class OperationBucket
     private double _tokens;
     private double _rate;
     private long _lastRefill;
+    private long _skipped;
+    private long _seen;
+    private long _sampled;
 
-    public OperationBucket(double rate, TimeProvider timeProvider)
+    public OperationBucket(double rate, TimeProvider timeProvider, bool allowFirstItem)
     {
         _rate = rate;
         _timeProvider = timeProvider;
-        // Pre-fill to allow initial burst up to 2 seconds worth of tokens.
-        _tokens = rate * 2.0;
+        // Pre-fill to allow initial burst up to 2 seconds worth of tokens,
+        // and at least one when asked so that the first item can be sampled.
+        _tokens = allowFirstItem ? Math.Max(1.0, rate * 2.0) : rate * 2.0;
         _lastRefill = timeProvider.GetTimestamp();
     }
 
     /// <summary>
     /// Attempts to consume one token. Returns <see langword="true"/> if a token was available.
     /// </summary>
-    public bool TryConsume()
+    /// <param name="sampleRate">
+    /// When a token was consumed, the Azure Monitor sample rate (0–100] of the sampled item:
+    /// it stands for itself and for every item skipped since the previous sampled one.
+    /// </param>
+    public bool TryConsume(out double sampleRate)
     {
         lock (_lock)
         {
             _refill();
+            _seen++;
 
             if (_tokens >= 1.0)
             {
                 _tokens -= 1.0;
+                _sampled++;
+                sampleRate = 100.0 / (_skipped + 1);
+                _skipped = 0;
                 return true;
             }
 
+            _skipped++;
+            sampleRate = 0;
             return false;
         }
     }
@@ -50,6 +64,22 @@ internal sealed class OperationBucket
         lock (_lock)
         {
             _rate = newRate;
+            // Clamp now: _refill does not when no time has passed, and a lower rate must not keep older tokens.
+            _tokens = Math.Min(_tokens, Math.Max(1.0, newRate * 2.0));
+        }
+    }
+
+    /// <summary>
+    /// Returns the items seen and sampled since the previous call, for the adaptive controller.
+    /// </summary>
+    public (long Seen, long Sampled) TakeCounts()
+    {
+        lock (_lock)
+        {
+            var counts = (_seen, _sampled);
+            _seen = 0;
+            _sampled = 0;
+            return counts;
         }
     }
 
@@ -59,7 +89,8 @@ internal sealed class OperationBucket
         var elapsed = _timeProvider.GetElapsedTime(_lastRefill, now).TotalSeconds;
         if (elapsed <= 0) return;
 
-        var capacity = _rate * 2.0;
+        // At least one token, so a bucket whose share is below 0.5/s can still sample.
+        var capacity = Math.Max(1.0, _rate * 2.0);
         _tokens = Math.Min(capacity, _tokens + elapsed * _rate);
         _lastRefill = now;
     }

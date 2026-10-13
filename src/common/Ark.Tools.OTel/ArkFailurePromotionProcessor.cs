@@ -33,6 +33,16 @@ namespace Ark.Tools.OTel;
 /// </description></item>
 /// </list>
 /// <para>
+/// When a sampled span starts, the processor copies the <c>microsoft.sample_rate</c> attribute of its
+/// in-process parent (<see cref="Activity.Parent"/>), so a trace shares the weight of its root. A span
+/// started with an explicit parent context has no <see cref="Activity.Parent"/> and carries no rate.
+/// </para>
+/// <para>
+/// Every span exported because of a failure, including an already sampled one, gets the
+/// <c>microsoft.sample_rate</c> attribute set to 100 (itemCount 1): its export no longer depends on
+/// the sampling budget, so weighting it as a sample would inflate request and failure counts.
+/// </para>
+/// <para>
 /// <b>Limitation:</b> sibling spans that have <em>already completed before</em> the failure is detected
 /// cannot be retroactively included; they have already been processed by the export pipeline.
 /// The parent (root) span and all spans that complete after failure detection are always captured.
@@ -63,38 +73,28 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
     }
 
     /// <inheritdoc/>
+    public override void OnStart(Activity data)
+    {
+        // A sampled child shares the sample rate of its parent. Copying the tag here costs one tag,
+        // where a sampling attribute would also allocate the SDK's sampling tag collection.
+        if (data.Recorded && data.Parent?.GetTagItem(ArkAdaptiveSampler._sampleRateTag) is { } sampleRate)
+            data.SetTag(ArkAdaptiveSampler._sampleRateTag, sampleRate);
+    }
+
+    /// <inheritdoc/>
     public override void OnEnd(Activity data)
     {
-        // If this span is already sampled, it will be exported normally.
-        // Still register a failure so in-flight siblings and future children are promoted.
-        if (data.Recorded)
-        {
-            if (_isFailure(data))
-                _registry.Register(data.TraceId);
-            return;
-        }
-
-        // This span was rate-limited (RecordOnly). Decide whether to promote.
-
         if (_isFailure(data))
         {
-            // Register the entire trace as failed.
+            // Register the entire trace as failed so in-flight siblings and future children are promoted.
             _registry.Register(data.TraceId);
 
-            // Promote the failing span itself.
-            _promoteSpan(data);
-
-            // Walk the in-process parent chain and promote all ancestors.
+            // Promote the failing span and walk the in-process parent chain to promote all ancestors.
             // Parent spans have not yet ended at this point (children always end before parents
             // in a single-process trace), so setting their flags here means the exporter will
             // include them when their own OnEnd is later called.
-            var parent = data.Parent;
-            while (parent != null)
-            {
-                if (!parent.Recorded)
-                    _promoteSpan(parent);
-                parent = parent.Parent;
-            }
+            for (var span = data; span != null; span = span.Parent)
+                _promoteSpan(span);
 
             return;
         }
@@ -109,6 +109,9 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
     {
         activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
         activity.IsAllDataRequested = true;
+
+        // The failure makes the export certain, whatever the sampler decided: the span counts only itself.
+        activity.SetTag(ArkAdaptiveSampler._sampleRateTag, 100.0);
     }
 
     private static bool _isFailure(Activity activity)

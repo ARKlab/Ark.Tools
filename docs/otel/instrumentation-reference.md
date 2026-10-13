@@ -268,8 +268,9 @@ after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
 | Condition | Decision |
 |---|---|
 | Span marked `ark.filtered=true` | `Drop` |
-| Parent is recorded | `RecordAndSample` |
-| Parent exists but is not recorded | `RecordOnly` |
+| Local parent is recorded | `RecordAndSample` |
+| Local parent is not recorded | `RecordOnly` |
+| Parent is remote | Decided as a root (as a local parent when `RespectRemoteParentSampling` is `true`) |
 | Trace is already registered as failed | `RecordAndSample` |
 | Root bucket has tokens | `RecordAndSample` |
 | Root bucket is empty | `RecordOnly` |
@@ -315,7 +316,10 @@ services.AddArkAzureMonitorOpenTelemetry(configuration);
 
 Each operation name gets a thread-safe token bucket by default. A bucket starts
 with a two-second burst capacity. The adaptive controller periodically adjusts
-the refill rate from observed traffic and the configured target. Dynamic
+the refill rates from observed traffic so that all buckets together export
+about `TracesPerSecond` roots. Operations slower than the fair share get a
+refill rate that covers their average traffic, though a burst larger than the
+bucket is still limited; the busier operations split the rest of the budget evenly. Dynamic
 operation names are bounded by `MaxOperationBuckets`; overflow shares the
 `__overflow__` bucket. Disabling per-operation bucketing uses `__global__`.
 
@@ -326,11 +330,12 @@ Configuration section:
 
 | Option | Default | Effect |
 |---|---:|---|
-| `TracesPerSecond` | `1.0` | Target root traces per second per operation bucket. |
-| `MovingAverageRatio` | `0.5` | Rate smoothing: `0` adapts immediately; `1` prevents adaptation. |
+| `TracesPerSecond` | `1.0` | Target root traces per second, in total across operation buckets. |
+| `MovingAverageRatio` | `0.5` | Smooths rate increases: `0` adapts immediately; `1` never increases. Decreases apply at once. |
 | `SamplingPercentageDecreaseTimeout` | `00:01:00` | Adaptive controller interval. |
-| `EnablePerOperationBucketing` | `true` | Gives each operation its own budget. |
+| `EnablePerOperationBucketing` | `true` | Gives each operation its own bucket and a fair share of the budget. |
 | `MaxOperationBuckets` | `100` | Maximum distinct operation buckets before overflow sharing. |
+| `RespectRemoteParentSampling` | `false` | Follows the sampled flag of a remote parent; `false` applies the local budget to spans with a remote parent. |
 
 Example:
 
@@ -342,7 +347,8 @@ Example:
       "MovingAverageRatio": 0.5,
       "SamplingPercentageDecreaseTimeout": "00:01:00",
       "EnablePerOperationBucketing": true,
-      "MaxOperationBuckets": 100
+      "MaxOperationBuckets": 100,
+      "RespectRemoteParentSampling": false
     }
   }
 }
