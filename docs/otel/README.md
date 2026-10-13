@@ -134,11 +134,13 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=h
 stable OpenTelemetry .NET instrumentations for `HttpClient` and
 `Microsoft.Data.SqlClient`. Flurl clients created by `Ark.Tools.Http` use
 `HttpClient`, so their outbound requests are captured automatically; no
-Flurl-specific hook is required.
+Flurl-specific hook is required. It also collects `HttpClient` metrics
+(`System.Net.Http`), .NET runtime and process metrics (`System.Runtime`) and the
+Outbox source and meter. `AddArkAspNetCoreOpenTelemetry` adds ASP.NET Core server
+spans and request metrics (`Microsoft.AspNetCore.Hosting`).
 
-Azure SDK clients record each HTTP call as their own client span. Like the Azure
-Monitor Distro, Ark drops the `HttpClient` span nested under it, so the call is
-not reported twice.
+When given configuration, `AddArkOpenTelemetry` drops the SQL spans of NLog's own
+database writes, matching the `ConnectionStrings:NLog.Database` server and database.
 
 SQL spans redact the large `db.query.text` attribute by default. A command can
 carry a `-- otel-query-label: ...` linting comment; its trimmed, sanitized value
@@ -161,16 +163,14 @@ builder.Services.AddArkAzureMonitorOpenTelemetry(
 The SQL Server outbox polling command uses this label instead of matching SQL
 hints, so unrelated commands containing hints remain visible.
 
-Azure Service Bus uses the tracing `ActivitySource` emitted by the
-`Azure.Messaging.ServiceBus` SDK. Ark registers that source
-(`Azure.Messaging.ServiceBus`) so sender and receiver spans flow through the
-same provider. Because Azure SDK ActivitySource support is experimental,
-applications that use Service Bus must enable it before constructing clients:
-
-```csharp
-AppContext.SetSwitch("Azure.Experimental.EnableActivitySource", true);
-builder.Services.AddArkAzureMonitorOpenTelemetry(builder.Configuration);
-```
+Azure SDK spans, Azure Service Bus included, are collected only by
+`AddArkAzureMonitorOpenTelemetry`: the Azure Monitor Distro registers the `Azure.*`
+sources and drops the `HttpClient` span nested under an Azure SDK span, so a call
+is not reported twice; Ark keeps an application `HttpClient` filter on top of the
+Distro's. Azure SDK tracing is experimental, so the setup turns the
+`Azure.Experimental.EnableActivitySource` switch on, unless the application or the
+`AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE` environment variable already set it.
+Exporter-neutral setups do not collect Azure SDK spans.
 
 Applications should use the current Azure Service Bus SDK rather than adding a
 separate, unsupported Service Bus instrumentation package.

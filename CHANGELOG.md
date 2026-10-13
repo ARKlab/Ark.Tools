@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `ArkAdaptiveSamplerOptions.RespectRemoteParentSampling`: set it to `true` to have the W3C sampled flag of a remote parent decide which spans the service exports, as before this release.
-- `Ark.Tools.OTel`: `AddArkOpenTelemetry()` registers the Ark OpenTelemetry pipeline (adaptive sampler, failure promotion, redaction, and `HttpClient` and SQL Client instrumentation) on any host, without referencing ASP.NET Core. Pass an `IConfiguration` to bind the sampler from `OTel:ArkAdaptiveSampler` (or the legacy `ApplicationInsights:ArkAdaptiveSampler`). `AddArkAspNetCoreOpenTelemetry` and `AddArkAzureMonitorOpenTelemetry` now build on it.
+- `Ark.Tools.OTel`: `AddArkOpenTelemetry()` registers the Ark OpenTelemetry pipeline (adaptive sampler, failure promotion, redaction, `HttpClient` and SQL Client instrumentation, the Outbox source and meter, and HTTP client and .NET runtime metrics) on any host, without referencing ASP.NET Core. Pass an `IConfiguration` to bind the sampler from `OTel:ArkAdaptiveSampler` (or the legacy `ApplicationInsights:ArkAdaptiveSampler`). `AddArkAspNetCoreOpenTelemetry` and `AddArkAzureMonitorOpenTelemetry` now build on it.
 
 ### Changed
 
@@ -18,13 +18,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `ArkAdaptiveSampler`: `TracesPerSecond` is now the total budget of root traces shared by all operation buckets, instead of a budget for each bucket, so a service with many operations no longer exports up to `TracesPerSecond` traces per operation. Rare operations get a share that covers their average traffic; raise `TracesPerSecond` if you relied on the per-operation budget. `MovingAverageRatio` now smooths only rate increases: rates drop to their new share at once.
 - `Ark.Tools.ResourceWatcher.OTel`: `AddArkOpenTelemetryForWorkerHost` now adds the full Ark pipeline, so worker hosts get adaptive sampling, failure promotion, and `HttpClient` and SQL Client spans, in addition to the ResourceWatcher source and meter. The sampler reads `OTel:ArkAdaptiveSampler` from the host configuration.
 - **Breaking:** `WebApi4xxAsSuccessProcessor` moved from `Ark.Tools.AspNetCore.OTel` to `Ark.Tools.OTel` (namespace `Ark.Tools.OTel`). Update the `using` if you register it yourself.
+- `Ark.Tools.AspNetCore.OTel`: `AddArkAspNetCoreOpenTelemetry` now collects ASP.NET Core server spans and request metrics with any exporter, not only through the Azure Monitor Distro. Azure Functions workers, whose host already reports each request, should call `AddArkOpenTelemetry` instead.
+- `Ark.Tools.AspNetCore.OTel`: Azure SDK spans, Azure Service Bus included, are collected only by `AddArkAzureMonitorOpenTelemetry`, which now turns the `Azure.Experimental.EnableActivitySource` switch on unless the application or the `AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE` environment variable already set it. `AddArkAspNetCoreOpenTelemetry` no longer registers the `Azure.Messaging.ServiceBus` source.
 
 - `Ark.Tools.AspNetCore.OTel`: the adaptive sampler is now configured from the `OTel:ArkAdaptiveSampler` section. `ApplicationInsights:ArkAdaptiveSampler` is still read for compatibility, but `OTel:ArkAdaptiveSampler` values take precedence. The Azure Monitor connection string is still read from `ApplicationInsights:ConnectionString`.
 
 ### Fixed
 
 - `ArkAdaptiveSampler` marks the spans it samples with their Azure Monitor sample rate (`microsoft.sample_rate`), so item counts can add up to the real request and dependency volumes; spans kept because of a failure count once. `Azure.Monitor.OpenTelemetry.Exporter` 1.10.0 does not read the attribute yet, see [Sample rate and item counts](docs/otel/sampling.md#sample-rate-and-item-counts).
-- OpenTelemetry: HTTP calls made by Azure SDK clients are no longer reported twice. Ark drops the `HttpClient` span nested under the Azure SDK span, as the Azure Monitor Distro does.
+- `AddArkAzureMonitorOpenTelemetry` keeps an application `HttpClient` filter (`FilterHttpRequestMessage`) registered before it; the Azure Monitor Distro used to replace it with its own Azure SDK deduplication filter.
+- OpenTelemetry setups given configuration now drop the SQL spans of NLog's own database writes (`ConnectionStrings:NLog.Database`), as the Application Insights setup does. `ArkSqlDependencyFilterProcessor` now also matches a `tcp:` server prefix and a named SQL Server instance.
 
 ## [7.0.0-beta15] - 2026-10-13
 

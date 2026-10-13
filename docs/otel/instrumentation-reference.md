@@ -21,10 +21,14 @@ Implemented by `Ark.Tools.AspNetCore.OTel`.
 |---|---|---|
 | Resource | `AddArkTelemetryResource()` | Sets `service.name` to the entry assembly name. |
 | Traces | `ark.tools.rebus` source | The source must also be used by Rebus through `UseOpenTelemetry`. |
+| Traces | `ark.tools.outbox` source | Outbox batch spans emitted by `OutboxProcessorBase`. |
+| Traces | ASP.NET Core instrumentation | Server spans for incoming requests. |
 | Traces | `HttpClient` instrumentation | Captures outbound `HttpClient` requests, including Flurl clients built on `HttpClient`. |
-| Traces | `Microsoft.Data.SqlClient` instrumentation | SQL spans; `RecordException = true`. |
-| Traces | `Azure.Messaging.ServiceBus` source | Captures SDK spans when the Azure experimental ActivitySource switch is enabled before client creation. |
+| Traces | `Microsoft.Data.SqlClient` instrumentation | SQL spans; `RecordException = true`. Spans to the NLog database are dropped. |
+| Traces | `Azure.*` sources (Distro) | Azure SDK spans, Service Bus included. The setup enables the Azure experimental ActivitySource switch unless the application already set it. |
 | Metrics | `ark.tools.rebus` meter | Rebus metrics are emitted only when `UseOpenTelemetryMetrics` is installed in the Rebus pipeline. |
+| Metrics | `ark.tools.outbox` meter | Outbox metrics. |
+| Metrics | `System.Net.Http`, `Microsoft.AspNetCore.Hosting`, `System.Runtime` meters | HTTP client and server metrics, .NET runtime and process metrics. |
 | Metrics | SQL Client instrumentation | Provider SQL client duration metrics. |
 | Logs | OpenTelemetry logger provider | Only `Error` and `Critical` records are enabled for OTel export. |
 
@@ -54,8 +58,9 @@ builder.Services.AddOpenTelemetry()
     .AddArkOutboxOpenTelemetry();
 ```
 
-Implemented by `Ark.Tools.Outbox.OTel`. This registration is opt-in and is
-independent of Rebus. The signals are emitted by `OutboxProcessorBase`, so
+Implemented by `Ark.Tools.Outbox.OTel`. `AddArkOpenTelemetry` and the setups built
+on it already collect the Outbox source and meter; use this registration in a
+custom chain. It is independent of Rebus. The signals are emitted by `OutboxProcessorBase`, so
 other outbox implementations can use the same contract.
 
 ### Exporter-neutral ResourceWatcher
@@ -79,11 +84,12 @@ Registration: `AddHttpClientInstrumentation()`.
 | Signal | Name/source | Attributes |
 |---|---|---|
 | Span | Provider `HttpClient` instrumentation | Provider-generated HTTP client semantic-convention attributes, such as method, URL/route, status, server address/port, and error details. |
-| Meter | None registered by `AddArkOpenTelemetry` | Add a provider metrics registration separately if HTTP client metrics are required. |
+| Meter | `System.Net.Http`, registered by `AddArkOpenTelemetry` | Native .NET HTTP client metrics. |
 
-Ark.Tools does not add a custom HTTP span or meter. It drops an `HttpClient` span
-whose parent comes from the `Azure.Core.Http` source, because the Azure SDK span
-already describes the same call. The Azure Monitor Distro applies the same filter.
+Ark.Tools does not add a custom HTTP span or meter. In `AddArkAzureMonitorOpenTelemetry`,
+the Azure Monitor Distro drops an `HttpClient` span whose parent comes from the
+`Azure.Core.Http` source, because the Azure SDK span already describes the same
+call; Ark keeps an application `FilterHttpRequestMessage` on top of the Distro's.
 
 ### Microsoft SQL Server client
 
@@ -106,8 +112,11 @@ Ark.Tools adds the following span behavior:
 
 `ArkSqlClientSpanProcessor` performs query-label extraction and query-text
 redaction on span completion, after the provider has populated database tags.
-`ArkSqlDependencyFilterProcessor` is a separate optional processor for the
-Application Insights customization path. It matches SQL Server spans by:
+`ArkSqlDependencyFilterProcessor` drops the SQL spans of NLog's own database writes.
+`AddArkOpenTelemetry` adds it when given configuration, using the
+`ConnectionStrings:NLog.Database` connection string (also read as `NLog:Database`
+or `NLog_Database`); the Application Insights customization path uses it too. It
+matches SQL Server spans by:
 
 ```text
 db.system.name = microsoft.sql_server
@@ -116,8 +125,10 @@ server.address = <Data Source host>
 ```
 
 It also accepts older SQL system values and equivalent legacy tags. A configured
-`Data Source` containing a port is compared by host, so `localhost,1433`
-matches `server.address = localhost`.
+`Data Source` is compared by host, without a protocol prefix, port or instance
+name, so `tcp:localhost,1433` matches `server.address = localhost`. With a named
+instance the instrumentation reports `db.namespace = <instance>.<database>`, which
+also matches.
 
 ### Rebus
 
@@ -239,11 +250,11 @@ retains its legacy diagnostic listener for non-OTel consumers.
 
 ### Azure Service Bus
 
-Ark.Tools registers the Azure SDK source
-`Azure.Messaging.ServiceBus`; the SDK creates the producer/consumer spans.
-Ark.Tools does not add a custom meter or custom tags. Enable
-`Azure.Experimental.EnableActivitySource` before constructing Service Bus
-clients. Provider-generated messaging attributes and propagation follow the
+`AddArkAzureMonitorOpenTelemetry` collects the Service Bus producer/consumer spans
+through the Distro's `Azure.*` sources and enables
+`Azure.Experimental.EnableActivitySource` unless the application already set it.
+Exporter-neutral setups do not collect them. Ark.Tools does not add a custom meter
+or custom tags. Provider-generated messaging attributes and propagation follow the
 Azure SDK and OpenTelemetry semantic conventions.
 
 ## Adaptive sampler
