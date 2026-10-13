@@ -665,7 +665,6 @@
           "Ark.Tools.OTel": "[1.0.0, )",
           "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.6.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
-          "OpenTelemetry.Instrumentation.Http": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
         }
       },
@@ -741,7 +740,10 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "OpenTelemetry": "[1.19.1, )"
+          "OpenTelemetry": "[1.19.1, )",
+          "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
+          "OpenTelemetry.Instrumentation.Http": "[1.19.0, )",
+          "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
         }
       },
       "ark.tools.rebus": {
@@ -765,6 +767,14 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )",
           "Microsoft.Extensions.DiagnosticAdapter": "[3.1.32, )"
+        }
+      },
+      "ark.tools.resourcewatcher.otel": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.OTel": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher": "[1.0.0, )",
+          "OpenTelemetry.Extensions.Hosting": "[1.19.1, )"
         }
       },
       "ark.tools.simpleinjector": {

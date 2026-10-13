@@ -1,8 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.AspNetCore.OTel;
-
 using AwesomeAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -14,22 +12,24 @@ using System.Diagnostics;
 namespace Ark.Tools.OTel.Tests;
 
 /// <summary>
-/// Verifies that <see cref="Ex.AddArkAspNetCoreOpenTelemetry"/> drops HttpClient spans
+/// Verifies that <see cref="ArkOpenTelemetryBuilderExtensions.AddArkOpenTelemetry"/> drops HttpClient spans
 /// that duplicate an Azure SDK client span.
 /// </summary>
 [TestClass]
-public sealed class AspNetCoreHttpClientDeduplicationTests
+// HttpClient spans are process-wide: a parallel test's tracer provider would also collect this request.
+[DoNotParallelize]
+public sealed class HttpClientDeduplicationTests
 {
     [TestMethod]
     [DataRow("Azure.Core.Http", false)]
     [DataRow("Ark.Tools.OTel.Tests.Dedup", true)]
-    public async Task AddArkAspNetCoreOpenTelemetry_FiltersHttpClientSpanUnderAzureSdkSpan(
+    public async Task AddArkOpenTelemetry_FiltersHttpClientSpanUnderAzureSdkSpan(
         string parentSourceName,
         bool expectHttpClientSpan)
     {
         using var collector = new CollectingProcessor();
         var services = new ServiceCollection();
-        services.AddOpenTelemetry().AddArkAspNetCoreOpenTelemetry();
+        services.AddOpenTelemetry().AddArkOpenTelemetry();
         services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
             .AddSource(parentSourceName)
             .AddProcessor(collector));

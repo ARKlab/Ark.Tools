@@ -12,6 +12,7 @@
     <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ark.Tools.AspNetCore.OTel.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Rebus/Ark.Tools.Rebus.csproj" />
     <ProjectReference Include="../../src/resourcewatcher/Ark.Tools.ResourceWatcher/Ark.Tools.ResourceWatcher.csproj" />
+    <ProjectReference Include="../../src/resourcewatcher/Ark.Tools.ResourceWatcher.OTel/Ark.Tools.ResourceWatcher.OTel.csproj" />
   </ItemGroup>
 
   <ItemGroup>

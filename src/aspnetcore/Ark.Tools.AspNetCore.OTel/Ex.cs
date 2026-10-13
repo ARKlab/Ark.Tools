@@ -6,16 +6,11 @@ using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 using OpenTelemetry;
 using OpenTelemetry.Instrumentation.SqlClient;
 using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-
-using System.Data.Common;
-using System.Diagnostics;
 
 using Ark.Tools.AspNetCore.HealthChecks.OTel;
 using Ark.Tools.OTel;
@@ -27,13 +22,9 @@ namespace Ark.Tools.AspNetCore.OTel;
 /// </summary>
 public static class Ex
 {
-    private const string _mediatorMessagingInstrumentationName = "Ark.MediatorFramework.Messaging";
-    // Ark.Tools.Rebus's activity source and meter name, kept as a literal so native-only hosts don't carry Rebus.
-    private const string _rebusInstrumentationName = "ark.tools.rebus";
-    private const string _azureCoreHttpSourceName = "Azure.Core.Http";
-
     /// <summary>
-    /// Adds Ark ASP.NET Core instrumentation to an exporter-agnostic OpenTelemetry builder.
+    /// Adds the Ark OpenTelemetry pipeline (see <see cref="ArkOpenTelemetryBuilderExtensions.AddArkOpenTelemetry"/>)
+    /// and the health check metrics to an exporter-agnostic OpenTelemetry builder.
     /// </summary>
     /// <param name="builder">The OpenTelemetry builder.</param>
     /// <param name="configureSqlClient">
@@ -54,70 +45,11 @@ public static class Ex
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return _addArkAspNetCoreOpenTelemetry(
-            builder,
-            configureSqlClient,
-            configureArkOtel,
-            configureAdaptiveSampler,
-            configuration: null);
-    }
-
-    private static OpenTelemetryBuilder _addArkAspNetCoreOpenTelemetry(
-        OpenTelemetryBuilder builder,
-        Action<SqlClientTraceInstrumentationOptions>? configureSqlClient,
-        Action<ArkOtelConfig>? configureArkOtel,
-        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler,
-        IConfiguration? configuration)
-    {
-        var arkOtelConfig = new ArkOtelConfig();
-        configureArkOtel?.Invoke(arkOtelConfig);
-        var skippedSqlQueryLabels = _getSkippedSqlQueryLabels(arkOtelConfig.SqlQueryLabelsToSkip);
-        var failedTraceRegistry = new FailedTraceRegistry();
-
         builder.Services.AddArkOTelHealthCheckPublisher();
 
         return builder
-            .ConfigureResource(static resource => resource.AddArkTelemetryResource())
-            .WithTracing(tracing => tracing
-                .ConfigureServices(services =>
-                {
-                    _configureAdaptiveSampler(services, configuration, configureAdaptiveSampler);
-                    services.AddSingleton(sp => new ArkAdaptiveSampler(
-                        sp.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value,
-                        failedTraceRegistry));
-                })
-                .AddProcessor(new ArkPreFilterProcessor())
-                .SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>())
-                .AddSource(_rebusInstrumentationName)
-                .AddSource(_mediatorMessagingInstrumentationName)
-                .AddHttpClientInstrumentation(static options =>
-                    options.FilterHttpRequestMessage = static _ => !_isAzureSdkHttpRequest())
-                .AddSqlClientInstrumentation(options =>
-                {
-                    options.RecordException = true;
-                    configureSqlClient?.Invoke(options);
-                    var applicationFilter = options.Filter;
-                    options.Filter = command =>
-                        _includeSqlClientSpan(command, skippedSqlQueryLabels)
-                        && (applicationFilter is null || applicationFilter(command));
-                    var applicationEnricher = options.EnrichWithSqlCommand;
-                    options.EnrichWithSqlCommand = (activity, command) =>
-                    {
-                        applicationEnricher?.Invoke(activity, command);
-                        if (command is DbCommand dbCommand)
-                            ArkSqlQueryLabel.SetTag(activity, dbCommand.CommandText);
-                    };
-                })
-                .AddSource("Azure.Messaging.ServiceBus")
-                .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
-                .AddProcessor(new WebApi4xxAsSuccessProcessor())
-                .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
-                .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction))
-            .WithMetrics(static metrics => metrics
-                .AddMeter(_rebusInstrumentationName)
-                .AddMeter(_mediatorMessagingInstrumentationName)
-                .AddMeter(ArkOTelHealthCheckPublisher.MeterName)
-                .AddSqlClientInstrumentation());
+            .AddArkOpenTelemetry(configureSqlClient, configureArkOtel, configureAdaptiveSampler)
+            .WithMetrics(static metrics => metrics.AddMeter(ArkOTelHealthCheckPublisher.MeterName));
     }
 
     /// <summary>
@@ -153,12 +85,18 @@ public static class Ex
         services.AddLogging(static logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
-        _addArkAspNetCoreOpenTelemetry(
-            builder,
-            configureSqlClient,
-            configureArkOtel,
-            configureAdaptiveSampler,
-            configuration);
+        // Registered before AddArkOpenTelemetry so configureAdaptiveSampler overrides the configuration.
+        if (configuration is not null)
+        {
+            services.Configure<ArkAdaptiveSamplerOptions>(options =>
+            {
+                // Legacy Application Insights section first so the canonical OTel section wins.
+                configuration.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(options);
+                configuration.GetSection("OTel:ArkAdaptiveSampler").Bind(options);
+            });
+        }
+
+        builder.AddArkAspNetCoreOpenTelemetry(configureSqlClient, configureArkOtel, configureAdaptiveSampler);
 
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
@@ -170,57 +108,5 @@ public static class Ex
         }
 
         return services;
-    }
-
-    private static void _configureAdaptiveSampler(
-        IServiceCollection services,
-        IConfiguration? configuration,
-        Action<ArkAdaptiveSamplerOptions>? configureAdaptiveSampler)
-    {
-        services.Configure<ArkAdaptiveSamplerOptions>(options =>
-        {
-            // Legacy Application Insights section first so the canonical OTel section wins.
-            configuration?.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(options);
-            configuration?.GetSection("OTel:ArkAdaptiveSampler").Bind(options);
-            configureAdaptiveSampler?.Invoke(options);
-        });
-    }
-
-    // Ported from the Azure Monitor Distro: Azure SDKs already emit a client span for each HTTP call,
-    // so the nested HttpClient span would duplicate it.
-    private static bool _isAzureSdkHttpRequest()
-    {
-        return Activity.Current?.Parent?.Source.Name == _azureCoreHttpSourceName;
-    }
-
-    private static bool _includeSqlClientSpan(
-        object command,
-        IReadOnlySet<string> skippedSqlQueryLabels)
-    {
-        if (command is not DbCommand dbCommand)
-            return true;
-
-        var label = ArkSqlQueryLabel.Extract(dbCommand.CommandText);
-        return label is null || !skippedSqlQueryLabels.Contains(label);
-    }
-
-    private static IReadOnlySet<string> _getSkippedSqlQueryLabels(
-        IEnumerable<string>? sqlQueryLabelsToSkip)
-    {
-        var labels = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "outbox.peek-lock"
-        };
-
-        if (sqlQueryLabelsToSkip is null)
-            return labels;
-
-        foreach (var label in sqlQueryLabelsToSkip)
-        {
-            if (!string.IsNullOrWhiteSpace(label))
-                labels.Add(label.Trim());
-        }
-
-        return labels;
     }
 }
