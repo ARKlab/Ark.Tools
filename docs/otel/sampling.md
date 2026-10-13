@@ -67,7 +67,7 @@ puts the `microsoft.sample_rate` attribute (0–100) on the spans it samples:
 | Span | `microsoft.sample_rate` |
 |---|---|
 | Root sampled by its bucket | `100 / n`, where `n` counts the root and the roots the bucket skipped since its previous sampled root |
-| Local descendant of a sampled span | The parent's rate |
+| Local descendant of a sampled span | The parent's rate, copied by `ArkFailurePromotionProcessor` when the span starts |
 | Span kept because its trace failed, including the failing span, its ancestors and later spans of the trace | `100` (itemCount 1) |
 | Span with a remote parent | As a root; with `RespectRemoteParentSampling`, none (itemCount 1): the upstream rate is not propagated |
 
@@ -77,8 +77,8 @@ windows lag slightly, and the roots skipped after an operation's last sampled ro
 counted. Failures are kept whatever the budget, so they count only themselves. A promoted root
 is also counted in its bucket's next sampled root, and a sampled root that fails no longer
 stands for the roots skipped before it; sampling does not depend on the outcome, so these
-effects cancel out on average and the sum stays an unbiased estimate. The rate is read from the parent `Activity`, so a span started with an
-explicit parent context that is not `Activity.Current` or one of its ancestors carries no rate.
+effects cancel out on average and the sum stays an unbiased estimate. The rate is copied from `Activity.Parent`, so a span started with an
+explicit parent context carries no rate.
 
 `Azure.Monitor.OpenTelemetry.Exporter` 1.10.0 does not read the attribute yet: it sets the
 `sampleRate` of every item from `AzureMonitorExporterOptions.SamplingRatio`, so Application

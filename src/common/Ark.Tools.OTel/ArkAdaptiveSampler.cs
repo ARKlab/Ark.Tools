@@ -34,8 +34,9 @@ namespace Ark.Tools.OTel;
 /// Azure Monitor samplers, from which Application Insights derives <c>itemCount = 100 / sampleRate</c>.
 /// A root sampled by its bucket stands for itself and for the roots the bucket skipped since its
 /// previous sampled root, so the item counts of the exported roots add up to the roots seen.
-/// Local descendants inherit the rate of their sampled parent. Spans kept because their trace
-/// failed have rate 100 (itemCount 1), because they are exported whatever the budget.
+/// Local descendants inherit the rate of their sampled parent: <see cref="ArkFailurePromotionProcessor"/>
+/// copies it from <see cref="Activity.Parent"/> when they start. Spans kept because their trace
+/// failed get rate 100 (itemCount 1) from the processor, because they are exported whatever the budget.
 /// By default, spans with a remote parent are roots for the local budget and carry its rate. With
 /// <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/> on, spans kept only because a
 /// remote parent was sampled carry no rate (itemCount 1): the upstream rate is not propagated.
@@ -117,15 +118,18 @@ public sealed class ArkAdaptiveSampler : Sampler
         var parentContext = samplingParameters.ParentContext;
         if (parentContext.TraceId != default && (_options.RespectRemoteParentSampling || !parentContext.IsRemote))
         {
-            return parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
-                ? _inheritSampleRate(parentContext)
-                : new SamplingResult(SamplingDecision.RecordOnly);
+            // ArkFailurePromotionProcessor copies the parent's sample rate when the span starts:
+            // one tag, where a sampling attribute would also allocate the SDK's tag collection.
+            return new SamplingResult(parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+                ? SamplingDecision.RecordAndSample
+                : SamplingDecision.RecordOnly);
         }
 
         // If any span in this trace has already been identified as a failure, always sample.
         // This ensures that siblings starting after the failure is detected are fully captured.
+        // ArkFailurePromotionProcessor, which registers failures, sets their sample rate to 100 at OnEnd.
         if (_failedTraceRegistry.IsFailed(samplingParameters.TraceId))
-            return new SamplingResult(SamplingDecision.RecordAndSample, _fullSampleRate);
+            return new SamplingResult(SamplingDecision.RecordAndSample);
 
         // Get the operation bucket.
         var operationName = samplingParameters.Name ?? "unknown";
@@ -146,25 +150,6 @@ public sealed class ArkAdaptiveSampler : Sampler
 
     /// <summary>The Azure Monitor attribute holding the sample rate (0–100] of an exported span.</summary>
     internal const string _sampleRateTag = "microsoft.sample_rate";
-
-    private static readonly KeyValuePair<string, object>[] _fullSampleRate = [new(_sampleRateTag, 100.0)];
-
-    private static SamplingResult _inheritSampleRate(in ActivityContext parentContext)
-    {
-        // Like the Azure Monitor rate-limited sampler, read the rate from the local parent activity.
-        // Activity.Current is the parent, or a descendant of it when a sibling starts.
-        for (var activity = Activity.Current; activity != null; activity = activity.Parent)
-        {
-            if (activity.SpanId != parentContext.SpanId)
-                continue;
-
-            return activity.GetTagItem(_sampleRateTag) is { } sampleRate
-                ? new SamplingResult(SamplingDecision.RecordAndSample, [new(_sampleRateTag, sampleRate)])
-                : new SamplingResult(SamplingDecision.RecordAndSample);
-        }
-
-        return new SamplingResult(SamplingDecision.RecordAndSample);
-    }
 
     private OperationBucket _getOrCreateBucket(string operationName)
     {

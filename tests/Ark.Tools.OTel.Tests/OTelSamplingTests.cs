@@ -414,7 +414,6 @@ public class ArkAdaptiveSamplerTests
         var result = sampler.ShouldSample(in parameters);
         result.Decision.Should().Be(SamplingDecision.RecordAndSample,
             "after failure registration all new spans in that trace must be sampled");
-        _sampleRate(result).Should().Be(100.0, "a span kept because its trace failed counts only itself");
     }
 
     // ── behaviour: bucket exhausted → RecordOnly (not Drop) ───────────────
@@ -626,14 +625,17 @@ public class ArkAdaptiveSamplerTests
     /// <summary>
     /// Descendants of a sampled root carry the root's sample rate, as the Azure Monitor
     /// rate-limited sampler does, so requests and dependencies of a trace share one weight.
+    /// <see cref="ArkFailurePromotionProcessor"/> copies it from the parent when a child starts.
     /// </summary>
     [TestMethod]
     public void ShouldSample_ChildrenOfSampledRoot_InheritRootSampleRate()
     {
         var time = new ManualTimeProvider();
+        var registry = new FailedTraceRegistry();
         using var pipeline = new TestPipeline(
             nameof(ShouldSample_ChildrenOfSampledRoot_InheritRootSampleRate),
-            new ArkAdaptiveSampler(_oneTracePerSecondOptions(), new FailedTraceRegistry(), time));
+            new ArkAdaptiveSampler(_oneTracePerSecondOptions(), registry, time),
+            new ArkFailurePromotionProcessor(registry));
 
         // Two roots fill the burst, the third is skipped, so the next sampled root counts 2.
         for (var i = 0; i < 3; i++)
@@ -645,14 +647,16 @@ public class ArkAdaptiveSamplerTests
         time.Advance(TimeSpan.FromSeconds(1));
 
         using var root = pipeline.StartRoot("ROOT");
-        using var child = pipeline.StartCurrentChild("CHILD");
-        using var grandChild = pipeline.StartCurrentChild("GRANDCHILD");
-        // Started while GRANDCHILD is the current activity: the rate is found up its parent chain.
-        using var sibling = pipeline.StartChild("SIBLING", root!);
+        var child = pipeline.StartCurrentChild("CHILD")!;
+        var grandChild = pipeline.StartCurrentChild("GRANDCHILD")!;
+        grandChild.Stop();
+        child.Stop();
+        var sibling = pipeline.StartCurrentChild("SIBLING")!;
+        sibling.Stop();
 
-        foreach (var activity in new[] { root, child, grandChild, sibling })
+        foreach (var activity in new[] { root!, child, grandChild, sibling })
         {
-            activity!.Recorded.Should().BeTrue();
+            activity.Recorded.Should().BeTrue();
             activity.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(50.0, "{0} belongs to a root that counts 2", activity.DisplayName);
         }
     }

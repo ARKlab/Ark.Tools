@@ -33,6 +33,11 @@ namespace Ark.Tools.OTel;
 /// </description></item>
 /// </list>
 /// <para>
+/// When a sampled span starts, the processor copies the <c>microsoft.sample_rate</c> attribute of its
+/// in-process parent (<see cref="Activity.Parent"/>), so a trace shares the weight of its root. A span
+/// started with an explicit parent context has no <see cref="Activity.Parent"/> and carries no rate.
+/// </para>
+/// <para>
 /// Every span exported because of a failure, including an already sampled one, gets the
 /// <c>microsoft.sample_rate</c> attribute set to 100 (itemCount 1): its export no longer depends on
 /// the sampling budget, so weighting it as a sample would inflate request and failure counts.
@@ -65,6 +70,15 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
     public ArkFailurePromotionProcessor(FailedTraceRegistry registry)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+    }
+
+    /// <inheritdoc/>
+    public override void OnStart(Activity data)
+    {
+        // A sampled child shares the sample rate of its parent. Copying the tag here costs one tag,
+        // where a sampling attribute would also allocate the SDK's sampling tag collection.
+        if (data.Recorded && data.Parent?.GetTagItem(ArkAdaptiveSampler._sampleRateTag) is { } sampleRate)
+            data.SetTag(ArkAdaptiveSampler._sampleRateTag, sampleRate);
     }
 
     /// <inheritdoc/>
