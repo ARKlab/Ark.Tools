@@ -54,16 +54,16 @@ public sealed class ArkAdaptiveSamplerOptions
 
     /// <summary>
     /// Gets or sets whether the sampling decision of a remote parent, propagated in the W3C
-    /// <c>traceparent</c> sampled flag, is followed. Default is <see langword="true"/>.
+    /// <c>traceparent</c> sampled flag, is followed. Default is <see langword="false"/>.
     /// </summary>
     /// <remarks>
-    /// When <see langword="true"/>, a span with a sampled remote parent is sampled and a span with an
-    /// unsampled remote parent is recorded only, so the caller decides for this service. Use
-    /// <see langword="false"/> when callers use a different sampler, such as the classic Application
-    /// Insights SDK, whose decisions should not drive this service: a span with a remote parent is then
-    /// a root for the local budget and carries this service's sample rate, as with the Azure Monitor
-    /// samplers. Distributed traces can then be incomplete across services that decide differently.
+    /// When <see langword="false"/>, a span with a remote parent is a root for the local budget and
+    /// carries this service's sample rate, as with the Azure Monitor samplers, so callers that use a
+    /// different sampler, such as the classic Application Insights SDK, do not decide for this service.
+    /// Distributed traces can then be incomplete across services that decide differently.
+    /// When <see langword="true"/>, a span with a sampled remote parent is sampled without a sample rate
+    /// (itemCount 1) and a span with an unsampled remote parent is recorded only.
     /// Failure promotion applies either way.
     /// </remarks>
-    public bool RespectRemoteParentSampling { get; set; } = true;
+    public bool RespectRemoteParentSampling { get; set; }
 }

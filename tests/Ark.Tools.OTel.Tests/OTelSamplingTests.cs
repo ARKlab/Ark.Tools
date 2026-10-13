@@ -285,12 +285,14 @@ public class ArkAdaptiveSamplerTests
     }
 
     /// <summary>
-    /// A sampled remote parent keeps the distributed trace chain intact.
+    /// When remote parents are respected, a sampled remote parent keeps the distributed trace chain intact.
     /// </summary>
     [TestMethod]
     public void ShouldSample_WhenRemoteParentIsRecorded_ReturnsRecordAndSample()
     {
-        var sampler = new ArkAdaptiveSampler(_nearZeroRateOptions());
+        var options = _nearZeroRateOptions();
+        options.RespectRemoteParentSampling = true;
+        var sampler = new ArkAdaptiveSampler(options);
         var parent = new ActivityContext(
             ActivityTraceId.CreateRandom(),
             ActivitySpanId.CreateRandom(),
@@ -321,9 +323,9 @@ public class ArkAdaptiveSamplerTests
     }
 
     /// <summary>
-    /// By default an unsampled remote parent decides for the service (RecordOnly); with
-    /// <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/> off the span is a root
-    /// for the local budget and carries the bucket's sample rate.
+    /// By default a span with an unsampled remote parent is a root for the local budget and carries
+    /// the bucket's sample rate; with <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/>
+    /// on the remote parent decides (RecordOnly).
     /// </summary>
     [TestMethod]
     [DataRow(true, SamplingDecision.RecordOnly)]
@@ -342,9 +344,9 @@ public class ArkAdaptiveSamplerTests
     }
 
     /// <summary>
-    /// By default a sampled remote parent is followed; with
-    /// <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/> off the local budget
-    /// decides, so an exhausted bucket records the span only.
+    /// By default the local budget decides for a span with a sampled remote parent, so an exhausted
+    /// bucket records it only; with <see cref="ArkAdaptiveSamplerOptions.RespectRemoteParentSampling"/>
+    /// on the remote parent is followed.
     /// </summary>
     [TestMethod]
     [DataRow(true, SamplingDecision.RecordAndSample)]

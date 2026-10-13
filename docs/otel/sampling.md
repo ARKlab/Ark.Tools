@@ -17,9 +17,9 @@ record-only data that can still be promoted when troubleshooting needs it.
 | Root with no parent and available budget | Record and sample |
 | Root with no parent and exhausted budget | Record only |
 | Local sampled parent | Record and sample |
-| Remote sampled parent | Record and sample (budget decision when `RespectRemoteParentSampling` is `false`) |
+| Remote sampled parent | Budget decision, as a root (record and sample when `RespectRemoteParentSampling` is `true`) |
 | Local unsampled parent | Record only |
-| Remote unsampled parent | Record only (budget decision when `RespectRemoteParentSampling` is `false`) |
+| Remote unsampled parent | Budget decision, as a root (record only when `RespectRemoteParentSampling` is `true`) |
 | Failed span or exception | Promote to sampled |
 | HTTP 4xx response without error status | Success; do not promote |
 | HTTP 4xx response with error status | Promote to sampled |
@@ -69,7 +69,7 @@ puts the `microsoft.sample_rate` attribute (0–100) on the spans it samples:
 | Root sampled by its bucket | `100 / n`, where `n` counts the root and the roots the bucket skipped since its previous sampled root |
 | Local descendant of a sampled span | The parent's rate |
 | Span kept because its trace failed, including the failing span, its ancestors and later spans of the trace | `100` (itemCount 1) |
-| Span kept only because a remote parent was sampled | None (itemCount 1): the upstream rate is not propagated |
+| Span with a remote parent | As a root; with `RespectRemoteParentSampling`, none (itemCount 1): the upstream rate is not propagated |
 
 Without failures, the sum of the item counts of the exported roots matches the number of roots
 seen. The roots a bucket skipped are counted when it samples its next root, so short time
@@ -98,18 +98,18 @@ rate-limited sampler. Exporters that read the attribute weight the spans correct
       "SamplingPercentageDecreaseTimeout": "00:01:00",
       "EnablePerOperationBucketing": true,
       "MaxOperationBuckets": 100,
-      "RespectRemoteParentSampling": true
+      "RespectRemoteParentSampling": false
     }
   }
 }
 ```
 
-`RespectRemoteParentSampling` (default `true`) makes the W3C sampled flag of a remote parent
-decide for the service. Set it to `false` when callers use a different sampler, such as the
-classic Application Insights SDK, so that their decisions do not drive this service: a span with
-a remote parent is then a root for the local budget and carries this service's sample rate, as
-with the Azure Monitor samplers. Traces that cross services which decide differently can then
-be incomplete; failure promotion applies either way.
+By default (`RespectRemoteParentSampling` is `false`) a span with a remote parent is a root for
+the local budget and carries this service's sample rate, as with the Azure Monitor samplers, so
+callers that use a different sampler, such as the classic Application Insights SDK, do not
+decide for the service. Traces that cross services which decide differently can then be
+incomplete; failure promotion applies either way. Set it to `true` to follow the W3C sampled
+flag of the remote parent instead: such spans then carry no sample rate (itemCount 1).
 
 ## Operational checks
 

@@ -203,7 +203,7 @@ framework support before adding them to the default registration.
       "SamplingPercentageDecreaseTimeout": "00:01:00",
       "EnablePerOperationBucketing": true,
       "MaxOperationBuckets": 100,
-      "RespectRemoteParentSampling": true
+      "RespectRemoteParentSampling": false
     }
   }
 }
@@ -216,7 +216,7 @@ framework support before adding them to the default registration.
 | `SamplingPercentageDecreaseTimeout` | `00:01:00` | How often to evaluate and adjust the sampling rate |
 | `EnablePerOperationBucketing` | `true` | Whether each operation gets its own token bucket and a max-min fair share of `TracesPerSecond` |
 | `MaxOperationBuckets` | `100` | Maximum distinct operations to track (prevents memory unbounded growth) |
-| `RespectRemoteParentSampling` | `true` | Whether the sampled flag of a remote parent decides for the service; `false` applies the local budget to spans with a remote parent |
+| `RespectRemoteParentSampling` | `false` | Whether the sampled flag of a remote parent decides for the service; `false` applies the local budget to spans with a remote parent |
 
 ### Snapshot Collector
 
@@ -236,7 +236,7 @@ framework support before adding them to the default registration.
 See [sampling.md](sampling.md) for a detailed explanation of the adaptive sampling algorithm.
 
 **Short version:**
-1. A sampled local or remote parent → **sampled** (the chain stays intact; remote parents are ignored when `RespectRemoteParentSampling` is `false`)
+1. A sampled local parent → **sampled** (the chain stays intact); a remote parent is ignored unless `RespectRemoteParentSampling` is `true`
 2. An unsampled local parent → **RecordOnly** (children cannot contradict the parent)
 3. Spans matching noise filters → **dropped immediately**
 4. A completed failure → promoted, with its local ancestors and subsequent siblings retained

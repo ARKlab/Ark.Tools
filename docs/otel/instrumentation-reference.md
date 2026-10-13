@@ -268,9 +268,9 @@ after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
 | Condition | Decision |
 |---|---|
 | Span marked `ark.filtered=true` | `Drop` |
-| Parent is recorded | `RecordAndSample` |
-| Parent exists but is not recorded | `RecordOnly` |
-| Parent is remote and `RespectRemoteParentSampling` is `false` | Decided as a root |
+| Local parent is recorded | `RecordAndSample` |
+| Local parent is not recorded | `RecordOnly` |
+| Parent is remote | Decided as a root (as a local parent when `RespectRemoteParentSampling` is `true`) |
 | Trace is already registered as failed | `RecordAndSample` |
 | Root bucket has tokens | `RecordAndSample` |
 | Root bucket is empty | `RecordOnly` |
@@ -334,7 +334,7 @@ Configuration section:
 | `SamplingPercentageDecreaseTimeout` | `00:01:00` | Adaptive controller interval. |
 | `EnablePerOperationBucketing` | `true` | Gives each operation its own bucket and a fair share of the budget. |
 | `MaxOperationBuckets` | `100` | Maximum distinct operation buckets before overflow sharing. |
-| `RespectRemoteParentSampling` | `true` | Follows the sampled flag of a remote parent; `false` applies the local budget to spans with a remote parent. |
+| `RespectRemoteParentSampling` | `false` | Follows the sampled flag of a remote parent; `false` applies the local budget to spans with a remote parent. |
 
 Example:
 
@@ -347,7 +347,7 @@ Example:
       "SamplingPercentageDecreaseTimeout": "00:01:00",
       "EnablePerOperationBucketing": true,
       "MaxOperationBuckets": 100,
-      "RespectRemoteParentSampling": true
+      "RespectRemoteParentSampling": false
     }
   }
 }

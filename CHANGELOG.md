@@ -8,9 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `ArkAdaptiveSamplerOptions.RespectRemoteParentSampling` (default `true`): set it to `false` so that callers using a different sampler, such as the classic Application Insights SDK, no longer decide which spans the service exports; spans with a remote parent then use the local budget.
+- `ArkAdaptiveSamplerOptions.RespectRemoteParentSampling`: set it to `true` to have the W3C sampled flag of a remote parent decide which spans the service exports, as before this release.
 
 ### Changed
+
+- **Breaking:** `ArkAdaptiveSampler` no longer follows the sampling decision of a remote parent by default: spans with a remote parent use the local budget and carry this service's sample rate, so callers using a different sampler, such as the classic Application Insights SDK, no longer decide which spans the service exports. Set `RespectRemoteParentSampling` to `true` to restore the previous behaviour.
 
 - `ArkAdaptiveSampler`: `TracesPerSecond` is now the total budget of root traces shared by all operation buckets, instead of a budget for each bucket, so a service with many operations no longer exports up to `TracesPerSecond` traces per operation. Rare operations keep all their roots; raise `TracesPerSecond` if you relied on the per-operation budget.
 
