@@ -8,6 +8,8 @@
     <Version>$(AspNetCoreGroupVersion)</Version>
     <VersionSuffix>$(AspNetCoreGroupVersionSuffix)</VersionSuffix>
     <Version Condition="'$(VersionSuffix)' != ''">$(Version)-$(VersionSuffix)</Version>
+    <!-- Source-generated Bind keeps the legacy ArkAdaptiveSamplerOptions binding trim-safe. -->
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
 
   <ItemGroup>

@@ -27,7 +27,6 @@ public static class ArkOpenTelemetryBuilderExtensions
     // .NET runtime and process metrics, emitted natively by .NET 9 and later.
     private const string _runtimeMeterName = "System.Runtime";
     private const string _adaptiveSamplerSection = "OTel:ArkAdaptiveSampler";
-    private const string _legacyAdaptiveSamplerSection = "ApplicationInsights:ArkAdaptiveSampler";
 
     /// <summary>
     /// Adds the Ark sampler, processors and client instrumentations to an exporter-agnostic OpenTelemetry builder.
@@ -44,8 +43,7 @@ public static class ArkOpenTelemetryBuilderExtensions
     /// </param>
     /// <param name="configuration">
     /// Optional application configuration; the adaptive sampler binds the <c>OTel:ArkAdaptiveSampler</c>
-    /// section over the legacy <c>ApplicationInsights:ArkAdaptiveSampler</c> section, and SQL spans to the
-    /// NLog database (<c>ConnectionStrings:NLog.Database</c>) are dropped.
+    /// section, and SQL spans to the NLog database (<c>ConnectionStrings:NLog.Database</c>) are dropped.
     /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
     public static OpenTelemetryBuilder AddArkOpenTelemetry(
@@ -69,8 +67,6 @@ public static class ArkOpenTelemetryBuilderExtensions
                 {
                     services.AddOptions<ArkAdaptiveSamplerOptions>().Configure(options =>
                     {
-                        // Legacy Application Insights section first so the canonical OTel section wins.
-                        configuration?.GetSection(_legacyAdaptiveSamplerSection).Bind(options);
                         configuration?.GetSection(_adaptiveSamplerSection).Bind(options);
                         configureAdaptiveSampler?.Invoke(options);
                     });

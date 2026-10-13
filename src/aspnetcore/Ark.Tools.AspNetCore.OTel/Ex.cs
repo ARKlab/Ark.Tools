@@ -13,6 +13,8 @@ using OpenTelemetry.Instrumentation.SqlClient;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 
+using System.Diagnostics;
+
 using Ark.Tools.AspNetCore.HealthChecks.OTel;
 using Ark.Tools.OTel;
 
@@ -24,6 +26,7 @@ namespace Ark.Tools.AspNetCore.OTel;
 public static class Ex
 {
     private const string _azureActivitySourceSwitch = "Azure.Experimental.EnableActivitySource";
+    private const string _azureCoreHttpSourceName = "Azure.Core.Http";
 
     /// <summary>
     /// Adds the Ark OpenTelemetry pipeline (see <see cref="ArkOpenTelemetryBuilderExtensions.AddArkOpenTelemetry"/>)
@@ -75,8 +78,8 @@ public static class Ex
     }
 
     /// <summary>
-    /// Adds Ark instrumentation sources and Azure Monitor when a connection string is configured.
-    /// OpenTelemetry log export is restricted to errors and critical failures.
+    /// Adds the Ark ASP.NET Core OpenTelemetry setup with Azure SDK tracing, and Azure Monitor export when a
+    /// connection string is configured. OpenTelemetry log export is restricted to errors and critical failures.
     /// </summary>
     /// <param name="services">The application service collection.</param>
     /// <param name="configuration">Optional application configuration.</param>
@@ -107,43 +110,52 @@ public static class Ex
         services.AddLogging(static logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
 
+        // Registered before the Ark setup, whose canonical OTel:ArkAdaptiveSampler section then wins.
+        if (configuration is not null)
+        {
+            services.Configure<ArkAdaptiveSamplerOptions>(options =>
+                configuration.GetSection("ApplicationInsights:ArkAdaptiveSampler").Bind(options));
+        }
+
+        // Azure SDKs emit their spans (Service Bus included) only with this experimental switch on;
+        // an explicit application or environment choice wins.
+        if (!AppContext.TryGetSwitch(_azureActivitySourceSwitch, out _)
+            && Environment.GetEnvironmentVariable("AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE") is null)
+        {
+            AppContext.SetSwitch(_azureActivitySourceSwitch, true);
+        }
+
+        // Captured before UseAzureMonitor, which replaces the HttpClient filter.
+        Func<HttpRequestMessage, bool>? applicationHttpFilter = null;
+        services.Configure<HttpClientTraceInstrumentationOptions>(options =>
+            applicationHttpFilter = options.FilterHttpRequestMessage);
+
         _addArkAspNetCoreOpenTelemetry(
-            builder,
-            configureSqlClient,
-            configureArkOtel,
-            configureAdaptiveSampler,
-            configuration);
+                builder,
+                configureSqlClient,
+                configureArkOtel,
+                configureAdaptiveSampler,
+                configuration)
+            .WithTracing(static tracing => tracing.AddSource("Azure.*"));
 
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
-            // The Distro collects Azure SDK spans (Service Bus included) only with this experimental switch on;
-            // an explicit application or environment choice wins.
-            if (!AppContext.TryGetSwitch(_azureActivitySourceSwitch, out _)
-                && Environment.GetEnvironmentVariable("AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE") is null)
-            {
-                AppContext.SetSwitch(_azureActivitySourceSwitch, true);
-            }
-
-            // UseAzureMonitor replaces the HttpClient filter with its Azure SDK deduplication; keep the application's too.
-            Func<HttpRequestMessage, bool>? applicationHttpFilter = null;
-            services.Configure<HttpClientTraceInstrumentationOptions>(options =>
-                applicationHttpFilter = options.FilterHttpRequestMessage);
-
             builder.UseAzureMonitor(options => options.ConnectionString = connectionString);
-
-            services.Configure<HttpClientTraceInstrumentationOptions>(options =>
-            {
-                var distroFilter = options.FilterHttpRequestMessage;
-                var applicationFilter = applicationHttpFilter;
-                options.FilterHttpRequestMessage = request =>
-                    (distroFilter is null || distroFilter(request))
-                    && (applicationFilter is null || applicationFilter(request));
-            });
 
             // UseAzureMonitor sets its own sampler; set Ark's again so the later registration wins.
             builder.WithTracing(static tracing =>
                 tracing.SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>()));
         }
+
+        // Azure SDKs already emit a client span for each HTTP call: drop the nested HttpClient span, as the Distro
+        // does, and keep the application's filter.
+        services.Configure<HttpClientTraceInstrumentationOptions>(options =>
+        {
+            var applicationFilter = applicationHttpFilter;
+            options.FilterHttpRequestMessage = request =>
+                Activity.Current?.Parent?.Source.Name != _azureCoreHttpSourceName
+                && (applicationFilter is null || applicationFilter(request));
+        });
 
         return services;
     }

@@ -15,8 +15,8 @@ using System.Diagnostics;
 namespace Ark.Tools.OTel.Tests;
 
 /// <summary>
-/// Verifies the HttpClient filter of <see cref="Ex.AddArkAzureMonitorOpenTelemetry"/>: the Azure Monitor Distro drops
-/// HttpClient spans that duplicate an Azure SDK client span, and an application filter still applies.
+/// Verifies the HttpClient filter of <see cref="Ex.AddArkAzureMonitorOpenTelemetry"/>, with and without Azure Monitor:
+/// HttpClient spans that duplicate an Azure SDK client span are dropped, and an application filter still applies.
 /// </summary>
 [TestClass]
 // HttpClient spans are process-wide: a parallel test's tracer provider would also collect this request.
@@ -29,36 +29,45 @@ public sealed class HttpClientDeduplicationTests
         + "IngestionEndpoint=http://127.0.0.1:1/;LiveEndpoint=http://127.0.0.1:1/";
 
     [TestMethod]
-    [DataRow("Azure.Core.Http", false)]
-    [DataRow("Ark.Tools.OTel.Tests.Dedup", true)]
+    [DataRow("Azure.Core.Http", false, true)]
+    [DataRow("Ark.Tools.OTel.Tests.Dedup", true, true)]
+    [DataRow("Azure.Core.Http", false, false)]
+    [DataRow("Ark.Tools.OTel.Tests.Dedup", true, false)]
     public async Task AddArkAzureMonitorOpenTelemetry_FiltersHttpClientSpanUnderAzureSdkSpan(
         string parentSourceName,
-        bool expectHttpClientSpan)
+        bool expectHttpClientSpan,
+        bool withAzureMonitor)
     {
-        var httpSpans = await _collectHttpClientSpans(parentSourceName, applicationFilter: null);
+        var httpSpans = await _collectHttpClientSpans(parentSourceName, withAzureMonitor, applicationFilter: null);
 
         httpSpans.Should().HaveCount(expectHttpClientSpan ? 1 : 0);
         AppContext.TryGetSwitch("Azure.Experimental.EnableActivitySource", out var azureSdkTracing).Should().BeTrue();
-        azureSdkTracing.Should().BeTrue("the Distro collects Azure SDK spans only with the experimental switch on");
+        azureSdkTracing.Should().BeTrue("Azure SDKs emit spans only with the experimental switch on");
     }
 
     [TestMethod]
-    public async Task AddArkAzureMonitorOpenTelemetry_KeepsApplicationHttpClientFilter()
+    [DataRow(true)]
+    [DataRow(false)]
+    public async Task AddArkAzureMonitorOpenTelemetry_KeepsApplicationHttpClientFilter(bool withAzureMonitor)
     {
-        var httpSpans = await _collectHttpClientSpans("Ark.Tools.OTel.Tests.Dedup.ApplicationFilter", static _ => false);
+        var httpSpans = await _collectHttpClientSpans(
+            "Ark.Tools.OTel.Tests.Dedup.ApplicationFilter",
+            withAzureMonitor,
+            static _ => false);
 
         httpSpans.Should().BeEmpty("UseAzureMonitor must not replace the application filter");
     }
 
     private async Task<IReadOnlyList<Activity>> _collectHttpClientSpans(
         string parentSourceName,
+        bool withAzureMonitor,
         Func<HttpRequestMessage, bool>? applicationFilter)
     {
         using var collector = new CollectingProcessor();
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                ["ApplicationInsights:ConnectionString"] = _azureMonitorTarget,
+                ["ApplicationInsights:ConnectionString"] = withAzureMonitor ? _azureMonitorTarget : null,
             })
             .Build();
         var services = new ServiceCollection();
