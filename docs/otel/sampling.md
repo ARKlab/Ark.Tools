@@ -31,10 +31,11 @@ processor to inspect status, exception events, and response codes.
 
 Only the roots that the bucket logic decides count in the budget: dropped and filtered spans do
 not. The sampler applies the pre-filter rules (HTTP `OPTIONS`, SQL commits) and every
-`IArkSamplingFilter` (the NLog database filter, and the Service Bus receive filter of
+`ArkAdaptiveSamplerOptions.Filter` (the NLog database filter, and the Service Bus receive rule of
 `Ark.Tools.OTel.Azure`) to the span name and creation tags, and drops matching spans before they
-reach a bucket. Applications can register their own `IArkSamplingFilter` in the service
-collection. Spans that an Ark filter recognizes only after sampling, such as SQL commands
+reach a bucket. `Filter` returns `false` to drop a span; the Ark setups compose their rules onto it
+from `PostConfigure`, so an application filter set with `configureAdaptiveSampler` or
+`services.Configure<ArkAdaptiveSamplerOptions>` is kept. Spans that an Ark filter recognizes only after sampling, such as SQL commands
 skipped by query label (`outbox.peek-lock` and `SqlQueryLabelsToSkip`) or by an application
 SqlClient filter, and spans the pre-filter or NLog processors drop when they start or end, give
 back the token and the traffic they counted. Spans dropped after sampling by other processors

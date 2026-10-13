@@ -294,7 +294,7 @@ after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
 
 | Condition | Decision |
 |---|---|
-| Span marked `ark.filtered=true`, or matching the pre-filter rules or an `IArkSamplingFilter` on its name and creation tags | `Drop`, without using the budget |
+| Span marked `ark.filtered=true`, or matching the pre-filter rules or `ArkAdaptiveSamplerOptions.Filter` on its name and creation tags | `Drop`, without using the budget |
 | Local parent is recorded | `RecordAndSample` |
 | Local parent is not recorded | `RecordOnly` |
 | Parent is remote | Decided as a root (as a local parent when `RespectRemoteParentSampling` is `true`) |
@@ -393,7 +393,7 @@ precedence. The Application Insights v3 compatibility path
 | Contract | Source |
 |---|---|
 | Host-agnostic setup | `src/common/Ark.Tools.OTel/ArkOpenTelemetryBuilderExtensions.cs` |
-| Azure SDK tracing and Azure Monitor export | `src/common/Ark.Tools.OTel.Azure/ArkAzureOpenTelemetryBuilderExtensions.cs`, `AzureServiceBusReceiveSamplingFilter.cs` |
+| Azure SDK tracing and Azure Monitor export | `src/common/Ark.Tools.OTel.Azure/ArkAzureOpenTelemetryBuilderExtensions.cs`, `AzureSamplingFilters.cs` |
 | ASP.NET Core setup | `src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ex.cs` |
 | SQL redaction and labels | `src/common/Ark.Tools.OTel/ArkSqlClientSpanProcessor.cs`, `ArkSqlQueryLabel.cs` |
 | SQL target filtering | `src/common/Ark.Tools.OTel/ArkSqlDependencyFilterProcessor.cs` |

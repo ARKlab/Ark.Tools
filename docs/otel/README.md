@@ -299,7 +299,7 @@ HTTP Request / Message / SQL / etc.
           ▼
   [ArkAdaptiveSampler.ShouldSample]
   • Check: is it filtered? (name and creation tags: OPTIONS, SQL Commit,
-    IArkSamplingFilter such as NLog database and Service Bus receive) → Drop, no budget used
+    ArkAdaptiveSamplerOptions.Filter such as NLog database and Service Bus receive) → Drop, no budget used
   • Check: is parent already sampled? → propagate
   • Check: does an unsampled parent exist? → RecordOnly
   • Check: root per-op token bucket → RecordAndSample or RecordOnly
