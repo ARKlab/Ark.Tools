@@ -121,9 +121,9 @@ flag of the remote parent instead: such spans then carry no sample rate (itemCou
 
 `OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
 (`AddArkOpenTelemetry` when given an `IConfiguration`, `AddArkAzureMonitorOpenTelemetry`
-and `AddArkOpenTelemetryForWorkerHost`). The legacy `ApplicationInsights:ArkAdaptiveSampler`
-section is still read for compatibility; values in `OTel:ArkAdaptiveSampler` take
-precedence. The Application Insights v3 compatibility path
+and `AddArkOpenTelemetryForWorkerHost`). `AddArkAzureMonitorOpenTelemetry` also reads
+the legacy `ApplicationInsights:ArkAdaptiveSampler` section for compatibility; values
+in `OTel:ArkAdaptiveSampler` take precedence. The Application Insights v3 compatibility path
 (`AddArkApplicationInsightsCustomizations`) reads only
 `ApplicationInsights:ArkAdaptiveSampler`.
 

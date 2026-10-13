@@ -163,14 +163,15 @@ builder.Services.AddArkAzureMonitorOpenTelemetry(
 The SQL Server outbox polling command uses this label instead of matching SQL
 hints, so unrelated commands containing hints remain visible.
 
-Azure SDK spans, Azure Service Bus included, are collected only by
-`AddArkAzureMonitorOpenTelemetry`: the Azure Monitor Distro registers the `Azure.*`
-sources and drops the `HttpClient` span nested under an Azure SDK span, so a call
-is not reported twice; Ark keeps an application `HttpClient` filter on top of the
-Distro's. Azure SDK tracing is experimental, so the setup turns the
+Everything Azure-specific lives in `AddArkAzureMonitorOpenTelemetry`, with or
+without an Azure Monitor connection string. It collects Azure SDK spans, Azure
+Service Bus included, through the `Azure.*` sources and, like the Azure Monitor
+Distro, drops the `HttpClient` span nested under an Azure SDK span, so a call is
+not reported twice; an application `HttpClient` filter still applies. Azure SDK
+tracing is experimental, so the setup turns the
 `Azure.Experimental.EnableActivitySource` switch on, unless the application or the
 `AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE` environment variable already set it.
-Exporter-neutral setups do not collect Azure SDK spans.
+The other setups do not collect Azure SDK spans.
 
 Applications should use the current Azure Service Bus SDK rather than adding a
 separate, unsupported Service Bus instrumentation package.
@@ -222,8 +223,9 @@ framework support before adding them to the default registration.
 ```
 
 The Azure Monitor connection string stays under `ApplicationInsights`. The sampler
-reads `OTel:ArkAdaptiveSampler`; the legacy `ApplicationInsights:ArkAdaptiveSampler`
-section is still read for compatibility, and `OTel` values take precedence. The
+reads `OTel:ArkAdaptiveSampler`; `AddArkAzureMonitorOpenTelemetry` also reads the
+legacy `ApplicationInsights:ArkAdaptiveSampler` section for compatibility, and
+`OTel` values take precedence. The
 Application Insights v3 compatibility path (`AddArkApplicationInsightsCustomizations`)
 reads only `ApplicationInsights:ArkAdaptiveSampler`.
 
