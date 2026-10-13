@@ -23,12 +23,12 @@ different OTel exporter without changing Ark instrumentation.
 
 | Package | Responsibility | Application Insights dependency |
 |---|---|---|
-| `Ark.Tools.OTel` | Ark sampling, filtering, enrichment processors | None |
+| `Ark.Tools.OTel` | Ark sampling, filtering, enrichment processors and host-agnostic setup | None |
 | `Ark.Tools.Rebus` | Rebus spans and metrics through OTel APIs | None |
 | `Ark.Tools.ResourceWatcher` | ResourceWatcher activities and diagnostic events | None |
 | `Ark.Tools.AspNetCore` | Hosting defaults and web pipeline | None |
-| `Ark.Tools.AspNetCore.OTel` | Azure Monitor OTel Distro setup and Ark sources | None |
-| `Ark.Tools.ResourceWatcher.OTel` | ResourceWatcher OTel setup | None |
+| `Ark.Tools.AspNetCore.OTel` | Azure Monitor OTel Distro setup and health check metrics | None |
+| `Ark.Tools.ResourceWatcher.OTel` | ResourceWatcher OTel setup and worker-host pipeline | None |
 | `Ark.Tools.ApplicationInsights` | AI v3 compatibility customizations | Explicit |
 | `Ark.Tools.AspNetCore.ApplicationInsights` | AI v3 hosting setup and processors | Explicit |
 | `Ark.Tools.ApplicationInsights.HostedService` | AI v3 worker setup | Explicit |

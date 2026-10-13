@@ -67,8 +67,8 @@ builder.Services.AddOpenTelemetry()
     .AddArkResourceWatcherOpenTelemetry();
 ```
 
-`AddArkOpenTelemetryForWorkerHost` is the equivalent worker-host convenience
-extension. This registration is opt-in.
+`AddArkOpenTelemetryForWorkerHost` is the worker-host convenience extension: it
+also adds the Ark pipeline (`AddArkOpenTelemetry`). This registration is opt-in.
 
 ## Instrumentation contracts
 
@@ -79,9 +79,11 @@ Registration: `AddHttpClientInstrumentation()`.
 | Signal | Name/source | Attributes |
 |---|---|---|
 | Span | Provider `HttpClient` instrumentation | Provider-generated HTTP client semantic-convention attributes, such as method, URL/route, status, server address/port, and error details. |
-| Meter | None registered by `AddArkAspNetCoreOpenTelemetry` | Add a provider metrics registration separately if HTTP client metrics are required. |
+| Meter | None registered by `AddArkOpenTelemetry` | Add a provider metrics registration separately if HTTP client metrics are required. |
 
-Ark.Tools does not add a custom HTTP span or meter.
+Ark.Tools does not add a custom HTTP span or meter. It drops an `HttpClient` span
+whose parent comes from the `Azure.Core.Http` source, because the Azure SDK span
+already describes the same call. The Azure Monitor Distro applies the same filter.
 
 ### Microsoft SQL Server client
 
@@ -247,7 +249,8 @@ Azure SDK and OpenTelemetry semantic conventions.
 ## Adaptive sampler
 
 The `ArkAdaptiveSampler` is always installed by Ark's OpenTelemetry setup. The
-exporter-neutral `AddArkAspNetCoreOpenTelemetry` and the Azure Monitor
+exporter-neutral `AddArkOpenTelemetry` (also called by `AddArkAspNetCoreOpenTelemetry`
+and `AddArkOpenTelemetryForWorkerHost`) and the Azure Monitor
 `AddArkAzureMonitorOpenTelemetry` paths install it with the
 `ArkFailurePromotionProcessor`. The Azure Monitor path binds
 `OTel:ArkAdaptiveSampler` (falling back to the legacy
@@ -367,6 +370,7 @@ precedence. The Application Insights v3 compatibility path
 
 | Contract | Source |
 |---|---|
+| Host-agnostic setup | `src/common/Ark.Tools.OTel/ArkOpenTelemetryBuilderExtensions.cs` |
 | ASP.NET Core setup | `src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ex.cs` |
 | SQL redaction and labels | `src/common/Ark.Tools.OTel/ArkSqlClientSpanProcessor.cs`, `ArkSqlQueryLabel.cs` |
 | SQL target filtering | `src/common/Ark.Tools.OTel/ArkSqlDependencyFilterProcessor.cs` |

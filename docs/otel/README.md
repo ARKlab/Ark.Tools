@@ -102,8 +102,12 @@ on a general Ark hosting package to register it.
 
 ### Worker Service / Hosted Service
 
-Use `Ark.Tools.ResourceWatcher.OTel` for ResourceWatcher source and meter registration,
-then add the exporter selected by the application. The legacy
+Call `AddArkOpenTelemetry()` from `Ark.Tools.OTel` on the OpenTelemetry builder. It
+registers the same sampler, processors and client instrumentations as the ASP.NET Core
+setup, without the ASP.NET Core dependency. For a ResourceWatcher worker,
+`AddArkOpenTelemetryForWorkerHost()` from `Ark.Tools.ResourceWatcher.OTel` calls it and
+adds the ResourceWatcher source and meter. Then add the exporter selected by the
+application. The legacy
 `Ark.Tools.ResourceWatcher.ApplicationInsights` package remains available for
 applications that still use the SDK.
 
@@ -125,10 +129,15 @@ APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=...;IngestionEndpoint=h
 
 ### Core client instrumentations
 
-`AddArkAzureMonitorOpenTelemetry` registers the stable OpenTelemetry .NET
-instrumentations for `HttpClient` and `Microsoft.Data.SqlClient`. Flurl clients
-created by `Ark.Tools.Http` use `HttpClient`, so their outbound requests are
-captured automatically; no Flurl-specific hook is required.
+`AddArkOpenTelemetry`, which every Ark OpenTelemetry setup calls, registers the
+stable OpenTelemetry .NET instrumentations for `HttpClient` and
+`Microsoft.Data.SqlClient`. Flurl clients created by `Ark.Tools.Http` use
+`HttpClient`, so their outbound requests are captured automatically; no
+Flurl-specific hook is required.
+
+Azure SDK clients record each HTTP call as their own client span. Like the Azure
+Monitor Distro, Ark drops the `HttpClient` span nested under it, so the call is
+not reported twice.
 
 SQL spans redact the large `db.query.text` attribute by default. A command can
 carry a `-- otel-query-label: ...` linting comment; its trimmed, sanitized value
