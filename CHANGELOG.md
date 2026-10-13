@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0-beta16] - 2026-10-13
+
 ### Added
 
 - `ArkAdaptiveSamplerOptions.RespectRemoteParentSampling`: set it to `true` to have the W3C sampled flag of a remote parent decide which spans the service exports, as before this release.
