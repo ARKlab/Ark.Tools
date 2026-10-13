@@ -286,7 +286,9 @@ public sealed class ArkAdaptiveSampler : Sampler
             {
                 if (seen == 0)
                 {
-                    bucket.UpdateRate(spareRate);
+                    // At least one root per period: a rare operation can skip a period and still have
+                    // its next root sampled, even when busy operations use the whole budget.
+                    bucket.UpdateRate(Math.Max(spareRate, 1.0 / elapsed));
                     continue;
                 }
 

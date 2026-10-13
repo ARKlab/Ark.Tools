@@ -861,6 +861,7 @@ public class ArkAdaptiveSamplerTests
     /// </summary>
     [TestMethod]
     [DataRow(60)]
+    [DataRow(61)]
     [DataRow(90)]
     [DataRow(180)]
     [DataRow(900)]
@@ -913,13 +914,14 @@ public class ArkAdaptiveSamplerTests
         var time = new ManualTimeProvider();
         var sampler = new ArkAdaptiveSampler(_perOperationOptions(), new FailedTraceRegistry(), time);
 
-        // 50 roots/s for BUSY, one root per minute for RARE and one every 150 s for SLOW.
-        var counts = _simulate(sampler, time, TimeSpan.FromMinutes(15), TimeSpan.FromMilliseconds(20),
-            ("BUSY", 1), ("RARE", 3000), ("SLOW", 7500));
+        // 50 roots/s for BUSY, one root per minute for RARE, one every 61 s for ODD and one every 150 s for SLOW.
+        var counts = _simulate(sampler, time, TimeSpan.FromHours(2), TimeSpan.FromMilliseconds(20),
+            ("BUSY", 1), ("RARE", 3000), ("ODD", 3050), ("SLOW", 7500));
 
         counts["RARE"].Sampled.Should().Be(counts["RARE"].Seen);
+        counts["ODD"].Sampled.Should().Be(counts["ODD"].Seen);
         counts["SLOW"].Sampled.Should().Be(counts["SLOW"].Seen);
-        counts["BUSY"].Sampled.Should().BeInRange(15 * 50, 15 * 70, "the budget is 1 root/s, about 60 per minute");
+        counts["BUSY"].Sampled.Should().BeInRange(120 * 50, 120 * 70, "the budget is 1 root/s, about 60 per minute");
     }
 
     private static ArkAdaptiveSamplerOptions _perOperationOptions() => new()
