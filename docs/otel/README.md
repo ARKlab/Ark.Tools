@@ -42,11 +42,13 @@ The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 
 ### Pre-filtering (Noise Reduction)
 
-`ArkPreFilterProcessor` drops known-noisy, low-value spans before the sampler sees them:
+`ArkAdaptiveSampler` drops known-noisy, low-value spans before sampling, from their name and
+creation tags, so they do not use its budget; `ArkPreFilterProcessor` drops the ones recognized
+only after they start:
 
 - `OPTIONS` requests (CORS preflight) – successful only
-- Azure Service Bus `Receive` operations – successful only  
 - SQL `Commit` operations – successful only
+- Azure Service Bus `Receive` operations, through the `Ark.Tools.OTel.Azure` sampling filter
 - Empty outbox polling cycles do not create spans
 - Outbox SQL polling commands are filtered by default
 - Optional: specific SQL server/database combinations (for NLog database)
@@ -107,7 +109,8 @@ registers the same sampler, processors and client instrumentations as the ASP.NE
 setup, without the ASP.NET Core dependency. For a ResourceWatcher worker,
 `AddArkOpenTelemetryForWorkerHost()` from `Ark.Tools.ResourceWatcher.OTel` calls it and
 adds the ResourceWatcher source and meter. Then add the exporter selected by the
-application. The legacy
+application. A worker that uses Azure SDKs or exports to Azure Monitor adds
+`AddArkAzureOpenTelemetry(configuration)` from `Ark.Tools.OTel.Azure` (see below). The legacy
 `Ark.Tools.ResourceWatcher.ApplicationInsights` package remains available for
 applications that still use the SDK.
 
@@ -163,18 +166,27 @@ builder.Services.AddArkAzureMonitorOpenTelemetry(
 The SQL Server outbox polling command uses this label instead of matching SQL
 hints, so unrelated commands containing hints remain visible.
 
-Everything Azure-specific lives in `AddArkAzureMonitorOpenTelemetry`, with or
-without an Azure Monitor connection string. It collects Azure SDK spans, Azure
-Service Bus included, through the `Azure.*` sources and, like the Azure Monitor
-Distro, drops the `HttpClient` span nested under an Azure SDK span, so a call is
-not reported twice; an application `HttpClient` filter still applies. Azure SDK
-tracing for Service Bus and Event Hubs is experimental and needs the
+Everything Azure-specific lives in `Ark.Tools.OTel.Azure`, for any host:
+
+- `AddArkAzureSdkInstrumentation()` collects Azure SDK spans, Azure Service Bus included,
+  through the `Azure.*` sources; like the Azure Monitor Distro, it drops the `HttpClient` span
+  nested under an Azure SDK span, so a call is not reported twice, and an application
+  `HttpClient` filter still applies. Its sampling filter drops Service Bus receives before they
+  use the sampler budget.
+- `AddArkAzureOpenTelemetry(configuration)` adds it to an Ark setup and, when an Application
+  Insights connection string is configured, exports traces, metrics and error logs to Azure
+  Monitor with `Azure.Monitor.OpenTelemetry.Exporter`. Use it in workers:
+  `services.AddOpenTelemetry().AddArkOpenTelemetry(configuration: configuration).AddArkAzureOpenTelemetry(configuration)`.
+- `AddArkAzureMonitorOpenTelemetry` (ASP.NET Core) uses `AddArkAzureSdkInstrumentation()` and
+  exports through the Azure Monitor Distro.
+
+Azure SDK tracing for Service Bus and Event Hubs is experimental and needs the
 `Azure.Experimental.EnableActivitySource` switch, which Azure.Core reads only once, when the
-first Azure SDK client starts. The `Ark.Tools.AspNetCore.OTel` package therefore sets it in the
+first Azure SDK client starts. The `Ark.Tools.OTel.Azure` package therefore sets it in the
 application's runtime configuration, before Key Vault or App Configuration clients can start
-(set the MSBuild property `ArkEnableAzureSdkActivitySource` to `false` to opt out), and the
-setup also sets it, unless the application or the `AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE`
-environment variable already did.
+(set the MSBuild property `ArkEnableAzureSdkActivitySource` to `false` to opt out), and
+`AddArkAzureSdkInstrumentation()` also sets it, unless the application or the
+`AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE` environment variable already did.
 The other setups do not collect Azure SDK spans.
 
 Applications should use the current Azure Service Bus SDK rather than adding a
@@ -283,17 +295,18 @@ HTTP Request / Message / SQL / etc.
           │
           ▼
   [OpenTelemetry SDK - ActivitySource]
+          │ Activity created
+          ▼
+  [ArkAdaptiveSampler.ShouldSample]
+  • Check: is it filtered? (name and creation tags: OPTIONS, SQL Commit,
+    IArkSamplingFilter such as NLog database and Service Bus receive) → Drop, no budget used
+  • Check: is parent already sampled? → propagate
+  • Check: does an unsampled parent exist? → RecordOnly
+  • Check: root per-op token bucket → RecordAndSample or RecordOnly
           │ Activity started
           ▼
   [ArkPreFilterProcessor.OnStart]
-  Filter noise (OPTIONS, SB Receive, SQL Commit)
-          │ (not filtered)
-          ▼
-  [ArkAdaptiveSampler.ShouldSample]
-  • Check: is parent already sampled? → propagate
-  • Check: is it pre-filtered? (span tag set by processor) → Drop
-  • Check: does an unsampled parent exist? → RecordOnly
-  • Check: root per-op token bucket → RecordAndSample or RecordOnly
+  Filter noise recognized only after start; give the budget back
           │
           ▼
   [ResourceBuilder.AddArkTelemetryResource]

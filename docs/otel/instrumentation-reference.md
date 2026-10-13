@@ -250,12 +250,14 @@ retains its legacy diagnostic listener for non-OTel consumers.
 
 ### Azure Service Bus
 
-`AddArkAzureMonitorOpenTelemetry` collects the Service Bus producer/consumer spans
-through the `Azure.*` sources, with or without a connection string. Azure SDK tracing for
+`AddArkAzureSdkInstrumentation` (from `Ark.Tools.OTel.Azure`, also used by
+`AddArkAzureOpenTelemetry` and `AddArkAzureMonitorOpenTelemetry`) collects the Service Bus
+producer/consumer spans through the `Azure.*` sources, with or without a connection string, and
+drops receive spans (`ServiceBusReceiver.*`) before they use the sampler budget. Azure SDK tracing for
 Service Bus and Event Hubs is still experimental and needs
 `Azure.Experimental.EnableActivitySource`; most other Azure SDK libraries released since
 November 2023 trace without it. Azure.Core reads the switch once, when the first Azure SDK
-client starts, so `Ark.Tools.AspNetCore.OTel` sets it in the application's runtime
+client starts, so `Ark.Tools.OTel.Azure` sets it in the application's runtime
 configuration through a `buildTransitive` props file (set the MSBuild property
 `ArkEnableAzureSdkActivitySource` to `false` to opt out), and the setup sets it again for
 project references unless the application already did. The other setups do not collect
@@ -292,7 +294,7 @@ after calling `UseAzureMonitor`, so the Azure Monitor `TracesPerSecond` and
 
 | Condition | Decision |
 |---|---|
-| Span marked `ark.filtered=true`, or matching the pre-filter or NLog database rules on its name and creation tags | `Drop`, without using the budget |
+| Span marked `ark.filtered=true`, or matching the pre-filter rules or an `IArkSamplingFilter` on its name and creation tags | `Drop`, without using the budget |
 | Local parent is recorded | `RecordAndSample` |
 | Local parent is not recorded | `RecordOnly` |
 | Parent is remote | Decided as a root (as a local parent when `RespectRemoteParentSampling` is `true`) |
@@ -391,6 +393,7 @@ precedence. The Application Insights v3 compatibility path
 | Contract | Source |
 |---|---|
 | Host-agnostic setup | `src/common/Ark.Tools.OTel/ArkOpenTelemetryBuilderExtensions.cs` |
+| Azure SDK tracing and Azure Monitor export | `src/common/Ark.Tools.OTel.Azure/ArkAzureOpenTelemetryBuilderExtensions.cs`, `AzureServiceBusReceiveSamplingFilter.cs` |
 | ASP.NET Core setup | `src/aspnetcore/Ark.Tools.AspNetCore.OTel/Ex.cs` |
 | SQL redaction and labels | `src/common/Ark.Tools.OTel/ArkSqlClientSpanProcessor.cs`, `ArkSqlQueryLabel.cs` |
 | SQL target filtering | `src/common/Ark.Tools.OTel/ArkSqlDependencyFilterProcessor.cs` |

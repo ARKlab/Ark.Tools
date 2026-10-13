@@ -27,6 +27,7 @@ different OTel exporter without changing Ark instrumentation.
 | `Ark.Tools.Rebus` | Rebus spans and metrics through OTel APIs | None |
 | `Ark.Tools.ResourceWatcher` | ResourceWatcher activities and diagnostic events | None |
 | `Ark.Tools.AspNetCore` | Hosting defaults and web pipeline | None |
+| `Ark.Tools.OTel.Azure` | Azure SDK tracing and Azure Monitor export on any host | None |
 | `Ark.Tools.AspNetCore.OTel` | Azure Monitor OTel Distro setup and health check metrics | None |
 | `Ark.Tools.ResourceWatcher.OTel` | ResourceWatcher OTel setup and worker-host pipeline | None |
 | `Ark.Tools.ApplicationInsights` | AI v3 compatibility customizations | Explicit |

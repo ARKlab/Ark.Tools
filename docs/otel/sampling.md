@@ -29,12 +29,16 @@ record-only data that can still be promoted when troubleshooting needs it.
 `RecordOnly` is deliberate. It preserves the activity long enough for the completion
 processor to inspect status, exception events, and response codes.
 
-Filtered spans do not use the budget. The sampler applies the pre-filter rules (HTTP
-`OPTIONS`, successful Service Bus receives, SQL commits) and the NLog database filter to the
-span name and creation tags, and drops matching spans before they reach a bucket. Spans that a
-filter can recognize only after sampling, such as SQL commands skipped by query label
-(`outbox.peek-lock` and `SqlQueryLabelsToSkip`) or by an application SqlClient filter, give back
-the token and the traffic they counted. HTTP `OPTIONS` requests are recognized before sampling
+Only the roots that the bucket logic decides count in the budget: dropped and filtered spans do
+not. The sampler applies the pre-filter rules (HTTP `OPTIONS`, SQL commits) and every
+`IArkSamplingFilter` (the NLog database filter, and the Service Bus receive filter of
+`Ark.Tools.OTel.Azure`) to the span name and creation tags, and drops matching spans before they
+reach a bucket. Applications can register their own `IArkSamplingFilter` in the service
+collection. Spans that an Ark filter recognizes only after sampling, such as SQL commands
+skipped by query label (`outbox.peek-lock` and `SqlQueryLabelsToSkip`) or by an application
+SqlClient filter, and spans the pre-filter or NLog processors drop when they start or end, give
+back the token and the traffic they counted. Spans dropped after sampling by other processors
+or instrumentation filters, such as an application `HttpClient` filter, still count. HTTP `OPTIONS` requests are recognized before sampling
 only when ASP.NET Core passes the request method at creation: from ASP.NET Core 11, or with the
 `Microsoft.AspNetCore.Hosting.SuppressActivityOpenTelemetryData` switch set to `false`.
 
