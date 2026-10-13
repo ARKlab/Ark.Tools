@@ -117,8 +117,12 @@ public sealed class AzureMonitorSamplerTests
     }
 
     [TestMethod]
+    // Environment variables are process-wide: a parallel test would see this App Service identity.
+    [DoNotParallelize]
     public void AddArkAzureOpenTelemetry_OnAppService_KeepsArkServiceNameAndAddsTheInstance()
     {
+        var siteName = Environment.GetEnvironmentVariable("WEBSITE_SITE_NAME");
+        var instanceId = Environment.GetEnvironmentVariable("WEBSITE_INSTANCE_ID");
         Environment.SetEnvironmentVariable("WEBSITE_SITE_NAME", "orders-site");
         Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", "instance-1");
         try
@@ -134,8 +138,8 @@ public sealed class AzureMonitorSamplerTests
         }
         finally
         {
-            Environment.SetEnvironmentVariable("WEBSITE_SITE_NAME", null);
-            Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", null);
+            Environment.SetEnvironmentVariable("WEBSITE_SITE_NAME", siteName);
+            Environment.SetEnvironmentVariable("WEBSITE_INSTANCE_ID", instanceId);
         }
     }
 

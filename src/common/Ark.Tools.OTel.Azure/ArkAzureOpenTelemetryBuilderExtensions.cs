@@ -39,7 +39,8 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         // Azure SDKs emit Service Bus and Event Hubs spans only with this experimental switch on. The package's
-        // buildTransitive props set it in the runtime configuration; this covers project references.
+        // buildTransitive props set it in the runtime configuration of package consumers; this covers project
+        // references, which do not import the props.
         // An explicit application or environment choice wins.
         if (!AppContext.TryGetSwitch(_azureActivitySourceSwitch, out _)
             && Environment.GetEnvironmentVariable("AZURE_EXPERIMENTAL_ENABLE_ACTIVITY_SOURCE") is null)
