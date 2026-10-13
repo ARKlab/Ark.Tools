@@ -1,6 +1,6 @@
 # Adaptive sampling in Ark.Tools
 
-Updated: 2026-08-15
+Updated: 2026-10-13
 
 ## Decision
 
@@ -52,6 +52,31 @@ Root spans use a token bucket keyed by operation name. The default burst capacit
 seconds of tokens. `TracesPerSecond` controls the target, while the moving-average
 controller adjusts the rate periodically using observed traffic. `MaxOperationBuckets`
 limits memory when operation names are dynamic; overflow shares one bucket.
+
+## Sample rate and item counts
+
+Application Insights estimates volumes from the `sampleRate` of each item:
+`itemCount = 100 / sampleRate`. Like the Azure Monitor samplers, `ArkAdaptiveSampler`
+puts the `microsoft.sample_rate` attribute (0–100) on the spans it samples:
+
+| Span | `microsoft.sample_rate` |
+|---|---|
+| Root sampled by its bucket | `100 / n`, where `n` counts the root and the roots the bucket skipped since its previous sampled root |
+| Local descendant of a sampled span | The parent's rate |
+| Span kept because its trace failed, including the failing span, its ancestors and later spans of the trace | `100` (itemCount 1) |
+| Span kept only because a remote parent was sampled | None (itemCount 1): the upstream rate is not propagated |
+
+The sum of the item counts of the exported roots therefore matches the number of roots seen.
+Failures are kept whatever the budget, so they count only themselves and do not inflate
+request or failure counts. The rate is read from the parent `Activity`, so a span started with an
+explicit parent context that is not `Activity.Current` or one of its ancestors carries no rate.
+
+`Azure.Monitor.OpenTelemetry.Exporter` 1.10.0 does not read the attribute yet: it sets the
+`sampleRate` of every item from `AzureMonitorExporterOptions.SamplingRatio`, so Application
+Insights still reports `itemCount = 1` for every sampled span, as it does with the exporter's own
+rate-limited sampler. Exporters that read the attribute weight the spans correctly. Until the
+.NET exporter does, use the unsampled OpenTelemetry metrics, such as
+`http.server.request.duration`, for volumes, rates and count-based alerts.
 
 ## Configuration
 

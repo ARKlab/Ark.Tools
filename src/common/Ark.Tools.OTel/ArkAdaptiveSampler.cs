@@ -27,6 +27,16 @@ namespace Ark.Tools.OTel;
 /// so the companion <see cref="ArkFailurePromotionProcessor"/> can still promote them to
 /// <see cref="SamplingDecision.RecordAndSample"/> at span completion if a failure is detected.
 /// </para>
+/// <para>
+/// Sampled spans carry the <c>microsoft.sample_rate</c> attribute (0–100], the convention of the
+/// Azure Monitor samplers, from which Application Insights derives <c>itemCount = 100 / sampleRate</c>.
+/// A root sampled by its bucket stands for itself and for the roots the bucket skipped since its
+/// previous sampled root, so the item counts of the exported roots add up to the roots seen.
+/// Local descendants inherit the rate of their sampled parent. Spans kept because their trace
+/// failed have rate 100 (itemCount 1), because they are exported whatever the budget.
+/// Spans kept only because a remote parent was sampled carry no rate (itemCount 1): the
+/// upstream rate is not propagated.
+/// </para>
 /// </remarks>
 public sealed class ArkAdaptiveSampler : Sampler
 {
@@ -102,7 +112,7 @@ public sealed class ArkAdaptiveSampler : Sampler
         // an arbitrary child. RecordOnly still permits failure promotion at OnEnd.
         var parentContext = samplingParameters.ParentContext;
         if (parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
-            return new SamplingResult(SamplingDecision.RecordAndSample);
+            return _inheritSampleRate(parentContext);
 
         if (parentContext.TraceId != default)
             return new SamplingResult(SamplingDecision.RecordOnly);
@@ -110,7 +120,7 @@ public sealed class ArkAdaptiveSampler : Sampler
         // If any span in this trace has already been identified as a failure, always sample.
         // This ensures that siblings starting after the failure is detected are fully captured.
         if (_failedTraceRegistry.IsFailed(samplingParameters.TraceId))
-            return new SamplingResult(SamplingDecision.RecordAndSample);
+            return new SamplingResult(SamplingDecision.RecordAndSample, _fullSampleRate);
 
         // Get the operation bucket.
         var operationName = samplingParameters.Name ?? "unknown";
@@ -118,10 +128,10 @@ public sealed class ArkAdaptiveSampler : Sampler
 
         Interlocked.Increment(ref _totalSeen);
 
-        if (bucket.TryConsume())
+        if (bucket.TryConsume(out var sampleRate))
         {
             Interlocked.Increment(ref _totalSampled);
-            return new SamplingResult(SamplingDecision.RecordAndSample);
+            return new SamplingResult(SamplingDecision.RecordAndSample, [new(_sampleRateTag, sampleRate)]);
         }
 
         // Use RecordOnly so the failure promotion processor can still examine
@@ -131,6 +141,28 @@ public sealed class ArkAdaptiveSampler : Sampler
 
     /// <summary>Gets the tag name used to mark pre-filtered spans.</summary>
     public static string FilteredTagName => _filteredTag;
+
+    /// <summary>The Azure Monitor attribute holding the sample rate (0–100] of an exported span.</summary>
+    internal const string _sampleRateTag = "microsoft.sample_rate";
+
+    private static readonly KeyValuePair<string, object>[] _fullSampleRate = [new(_sampleRateTag, 100.0)];
+
+    private static SamplingResult _inheritSampleRate(in ActivityContext parentContext)
+    {
+        // Like the Azure Monitor rate-limited sampler, read the rate from the local parent activity.
+        // Activity.Current is the parent, or a descendant of it when a sibling starts.
+        for (var activity = Activity.Current; activity != null; activity = activity.Parent)
+        {
+            if (activity.SpanId != parentContext.SpanId)
+                continue;
+
+            return activity.GetTagItem(_sampleRateTag) is { } sampleRate
+                ? new SamplingResult(SamplingDecision.RecordAndSample, [new(_sampleRateTag, sampleRate)])
+                : new SamplingResult(SamplingDecision.RecordAndSample);
+        }
+
+        return new SamplingResult(SamplingDecision.RecordAndSample);
+    }
 
     private OperationBucket _getOrCreateBucket(string operationName)
     {

@@ -87,6 +87,10 @@ internal sealed class TestPipeline : IDisposable
     public Activity? StartChild(string name, Activity parent, ActivityKind kind = ActivityKind.Internal)
         => _source.StartActivity(name, kind, parent.Context);
 
+    /// <summary>Starts a child of <see cref="Activity.Current"/>, as instrumentation libraries do.</summary>
+    public Activity? StartCurrentChild(string name, ActivityKind kind = ActivityKind.Internal)
+        => _source.StartActivity(name, kind);
+
     /// <summary>Starts a span with initial creation-time tags so <c>OnStart</c> sees them.</summary>
     public Activity? StartWithTags(
         string name,
@@ -358,6 +362,7 @@ public class ArkAdaptiveSamplerTests
         var result = sampler.ShouldSample(in parameters);
         result.Decision.Should().Be(SamplingDecision.RecordAndSample,
             "after failure registration all new spans in that trace must be sampled");
+        _sampleRate(result).Should().Be(100.0, "a span kept because its trace failed counts only itself");
     }
 
     // ── behaviour: bucket exhausted → RecordOnly (not Drop) ───────────────
@@ -440,6 +445,113 @@ public class ArkAdaptiveSamplerTests
 
         rb.Decision.Should().Be(SamplingDecision.RecordAndSample,
             "OP_B has its own bucket and must not be affected by OP_A exhaustion");
+    }
+
+    // ── behaviour: sample rate (Azure Monitor itemCount) ──────────────────
+
+    private static ArkAdaptiveSamplerOptions _oneTracePerSecondOptions() => new()
+    {
+        TracesPerSecond = 1,
+        EnablePerOperationBucketing = false,
+        SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+    };
+
+    private static SamplingResult _sampleRoot(ArkAdaptiveSampler sampler, string name = "OP")
+    {
+        var parameters = new SamplingParameters(
+            default, ActivityTraceId.CreateRandom(), name, ActivityKind.Server, null, null);
+        return sampler.ShouldSample(in parameters);
+    }
+
+    private static double _sampleRate(SamplingResult result)
+        => (double)result.Attributes.Single(static a => a.Key == ArkAdaptiveSampler._sampleRateTag).Value;
+
+    /// <summary>
+    /// A bucket-sampled root carries the <c>microsoft.sample_rate</c> attribute: it stands for
+    /// itself and for the roots the bucket skipped since the previous sampled root, so the
+    /// item counts (100 / sample rate) of the exported roots add up to every root seen.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_BucketSampledRoots_CarrySampleRateCoveringSkippedRoots()
+    {
+        var time = new ManualTimeProvider();
+        var sampler = new ArkAdaptiveSampler(_oneTracePerSecondOptions(), new FailedTraceRegistry(), time);
+
+        // The two-token burst samples 2 roots; the other 8 are skipped while time is frozen.
+        var results = Enumerable.Range(0, 10).Select(_ => _sampleRoot(sampler)).ToList();
+        time.Advance(TimeSpan.FromSeconds(1));
+        results.Add(_sampleRoot(sampler));
+
+        var sampled = results.Where(static r => r.Decision == SamplingDecision.RecordAndSample).ToList();
+        sampled.Select(_sampleRate).Should().Equal(100.0, 100.0, 100.0 / 9);
+        sampled.Sum(static r => 100.0 / _sampleRate(r)).Should().BeApproximately(results.Count, 1e-9);
+    }
+
+    /// <summary>
+    /// Descendants of a sampled root carry the root's sample rate, as the Azure Monitor
+    /// rate-limited sampler does, so requests and dependencies of a trace share one weight.
+    /// </summary>
+    [TestMethod]
+    public void ShouldSample_ChildrenOfSampledRoot_InheritRootSampleRate()
+    {
+        var time = new ManualTimeProvider();
+        using var pipeline = new TestPipeline(
+            nameof(ShouldSample_ChildrenOfSampledRoot_InheritRootSampleRate),
+            new ArkAdaptiveSampler(_oneTracePerSecondOptions(), new FailedTraceRegistry(), time));
+
+        // Two roots fill the burst, the third is skipped, so the next sampled root counts 2.
+        for (var i = 0; i < 3; i++)
+        {
+            using (pipeline.StartRoot("ROOT"))
+            {
+            }
+        }
+        time.Advance(TimeSpan.FromSeconds(1));
+
+        using var root = pipeline.StartRoot("ROOT");
+        using var child = pipeline.StartCurrentChild("CHILD");
+        using var grandChild = pipeline.StartCurrentChild("GRANDCHILD");
+        // Started while GRANDCHILD is the current activity: the rate is found up its parent chain.
+        using var sibling = pipeline.StartChild("SIBLING", root!);
+
+        foreach (var activity in new[] { root, child, grandChild, sibling })
+        {
+            activity!.Recorded.Should().BeTrue();
+            activity.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(50.0, "{0} belongs to a root that counts 2", activity.DisplayName);
+        }
+    }
+
+    /// <summary>
+    /// A root sampled by the budget whose descendant fails would have been exported anyway,
+    /// so its weight becomes 1 like that of every other span kept because of a failure.
+    /// </summary>
+    [TestMethod]
+    public void FailurePromotion_SampledRootOfFailedTrace_HasFullSampleRate()
+    {
+        var time = new ManualTimeProvider();
+        var registry = new FailedTraceRegistry();
+        using var pipeline = new TestPipeline(
+            nameof(FailurePromotion_SampledRootOfFailedTrace_HasFullSampleRate),
+            new ArkAdaptiveSampler(_oneTracePerSecondOptions(), registry, time),
+            new ArkFailurePromotionProcessor(registry));
+
+        for (var i = 0; i < 3; i++)
+        {
+            using (pipeline.StartRoot("ROOT"))
+            {
+            }
+        }
+        time.Advance(TimeSpan.FromSeconds(1));
+
+        var root = pipeline.StartRoot("FAILED_ROOT")!;
+        var child = pipeline.StartChild("FAILED_CHILD", root)!;
+        root.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(50.0);
+        child.SetStatus(ActivityStatusCode.Error, "child failed");
+        child.Stop();
+        root.Stop();
+
+        root.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(100.0);
+        child.GetTagItem(ArkAdaptiveSampler._sampleRateTag).Should().Be(100.0);
     }
 }
 
@@ -831,6 +943,31 @@ public class ArkFailurePromotionProcessorTests
             .Select(static a => a.DisplayName)
             .Should().Contain("SIBLING_B",
                 "a sibling that ends after the failure must be promoted via registry");
+    }
+
+    // ── failure promotion: sample rate ─────────────────────────────────────
+
+    /// <summary>
+    /// Spans exported only because of a failure count themselves alone: their
+    /// <c>microsoft.sample_rate</c> is 100 (itemCount 1), so promoted failures do not inflate counts.
+    /// </summary>
+    [TestMethod]
+    public void FailurePromotion_PromotedSpans_HaveFullSampleRate()
+    {
+        var registry = new FailedTraceRegistry();
+        using var pipeline = _nearZeroPipeline(
+            nameof(FailurePromotion_PromotedSpans_HaveFullSampleRate), registry);
+
+        var root = pipeline.StartRoot("ROOT");
+        var failing = pipeline.StartChild("FAILING", root!);
+        var sibling = pipeline.StartChild("SIBLING", root!);
+        failing!.SetStatus(ActivityStatusCode.Error, "failed");
+        failing.Stop();
+        sibling!.Stop();
+        root!.Stop();
+
+        pipeline.Exported.Select(static a => a.DisplayName).Should().BeEquivalentTo(["FAILING", "SIBLING", "ROOT"]);
+        pipeline.Exported.Should().OnlyContain(static a => Equals(a.GetTagItem(ArkAdaptiveSampler._sampleRateTag), 100.0));
     }
 
     // ── non-failure: successful span is NOT promoted ───────────────────────

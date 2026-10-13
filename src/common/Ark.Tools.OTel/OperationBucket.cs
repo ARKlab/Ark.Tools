@@ -13,6 +13,7 @@ internal sealed class OperationBucket
     private double _tokens;
     private double _rate;
     private long _lastRefill;
+    private long _skipped;
 
     public OperationBucket(double rate, TimeProvider timeProvider)
     {
@@ -26,7 +27,11 @@ internal sealed class OperationBucket
     /// <summary>
     /// Attempts to consume one token. Returns <see langword="true"/> if a token was available.
     /// </summary>
-    public bool TryConsume()
+    /// <param name="sampleRate">
+    /// When a token was consumed, the Azure Monitor sample rate (0–100] of the sampled item:
+    /// it stands for itself and for every item skipped since the previous sampled one.
+    /// </param>
+    public bool TryConsume(out double sampleRate)
     {
         lock (_lock)
         {
@@ -35,9 +40,13 @@ internal sealed class OperationBucket
             if (_tokens >= 1.0)
             {
                 _tokens -= 1.0;
+                sampleRate = 100.0 / (_skipped + 1);
+                _skipped = 0;
                 return true;
             }
 
+            _skipped++;
+            sampleRate = 0;
             return false;
         }
     }
