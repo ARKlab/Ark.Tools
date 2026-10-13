@@ -449,11 +449,10 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "Ark.Tools.OTel.Azure": "[1.0.0, )",
+          "Ark.Tools.OTel": "[1.0.0, )",
           "Microsoft.ApplicationInsights": "[3.2.0, )",
           "Microsoft.Extensions.Options": "[10.0.12, )",
-          "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
-          "OpenTelemetry.Resources.Azure": "[1.19.1-beta.2, )"
+          "OpenTelemetry.Extensions.Hosting": "[1.19.1, )"
         }
       },
       "ark.tools.compliance": {
@@ -546,14 +545,6 @@
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
           "OpenTelemetry.Instrumentation.Http": "[1.19.0, )",
           "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
-        }
-      },
-      "ark.tools.otel.azure": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.OTel": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )",
-          "OpenTelemetry.Resources.Azure": "[1.19.1-beta.2, )"
         }
       },
       "ark.tools.systemtextjson": {
@@ -1005,15 +996,6 @@
           "Microsoft.Extensions.Configuration": "10.0.0",
           "Microsoft.Extensions.Options": "10.0.0",
           "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
-        }
-      },
-      "OpenTelemetry.Resources.Azure": {
-        "type": "CentralTransitive",
-        "requested": "[1.19.1-beta.2, )",
-        "resolved": "1.19.1-beta.2",
-        "contentHash": "Kd/j40oO/gwPYDGMK9fMo+smH2hfAIbTmQAZ1W515FdP0DDkXCtqtTp4QtwbIcf4QsjLGDwzil/hp0hgMDObXA==",
-        "dependencies": {
-          "OpenTelemetry": "[1.19.1, 2.0.0)"
         }
       },
       "Slack.Webhooks": {

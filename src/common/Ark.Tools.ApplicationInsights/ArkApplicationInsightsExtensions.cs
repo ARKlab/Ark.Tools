@@ -11,7 +11,6 @@ using OpenTelemetry.Trace;
 
 using Ark.Tools.Compliance;
 using Ark.Tools.OTel;
-using Ark.Tools.OTel.Azure;
 
 namespace Ark.Tools.ApplicationInsights;
 
@@ -72,7 +71,7 @@ public static class ArkApplicationInsightsExtensions
         services.PostConfigure<ArkAdaptiveSamplerOptions>(options =>
         {
             var filter = options.Filter;
-            options.Filter = p => !AzureSamplingFilters.IsServiceBusReceive(p)
+            options.Filter = p => !ServiceBusReceiveSamplingFilter.IsServiceBusReceive(p)
                 && !sqlDependencyFilter.ShouldDrop(p)
                 && (filter is null || filter(p));
         });

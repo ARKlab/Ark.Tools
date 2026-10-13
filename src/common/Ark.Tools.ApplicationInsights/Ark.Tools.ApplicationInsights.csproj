@@ -24,12 +24,10 @@
     <PackageReference Include="Microsoft.ApplicationInsights" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="Microsoft.Extensions.Options" />
-    <!-- Pinned transitively through Ark.Tools.OTel.Azure; it has no stable release yet. -->
-    <PackageReference Include="OpenTelemetry.Resources.Azure" NoWarn="NU5104" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Ark.Tools.OTel.Azure/Ark.Tools.OTel.Azure.csproj" />
+    <ProjectReference Include="../Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
   </ItemGroup>
 
   <ItemGroup>

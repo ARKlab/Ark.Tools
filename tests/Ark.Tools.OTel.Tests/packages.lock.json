@@ -620,11 +620,10 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "Ark.Tools.OTel.Azure": "[1.0.0, )",
+          "Ark.Tools.OTel": "[1.0.0, )",
           "Microsoft.ApplicationInsights": "[3.2.0, )",
           "Microsoft.Extensions.Options": "[10.0.12, )",
-          "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
-          "OpenTelemetry.Resources.Azure": "[1.19.1-beta.2, )"
+          "OpenTelemetry.Extensions.Hosting": "[1.19.1, )"
         }
       },
       "ark.tools.aspnetcore.applicationinsights": {

@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights;
 using Ark.Tools.AspNetCore.ApplicationInsights.Startup;
 using Ark.Tools.Solid;
@@ -11,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Options;
+
+using OpenTelemetry.Trace;
 
 using System.Diagnostics;
 using System.Security.Claims;
@@ -34,6 +37,22 @@ public sealed class ApplicationInsightsTests
             descriptor.ServiceType.FullName is { } fullName
             && fullName.Contains("SnapshotCollector", StringComparison.Ordinal))
             .Should().BeFalse();
+    }
+
+    /// <summary>Drops Service Bus receive spans before sampling, without the Ark.Tools.OTel.Azure package.</summary>
+    [TestMethod]
+    public void SamplerFilter_DropsServiceBusReceivesOnly()
+    {
+        var services = new ServiceCollection();
+        services.AddArkApplicationInsightsCustomizations(new ConfigurationBuilder().Build());
+        using var serviceProvider = services.BuildServiceProvider();
+        var filter = serviceProvider.GetRequiredService<IOptions<ArkAdaptiveSamplerOptions>>().Value.Filter!;
+
+        bool keeps(string name) => filter(new SamplingParameters(
+            default, ActivityTraceId.CreateRandom(), name, ActivityKind.Client, null, null));
+
+        keeps("ServiceBusReceiver.ReceiveMessages").Should().BeFalse();
+        keeps("ServiceBusSender.Send").Should().BeTrue();
     }
 
     /// <summary>Marks client errors successful only on server request spans.</summary>
