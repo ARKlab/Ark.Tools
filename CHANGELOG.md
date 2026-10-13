@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - `ArkAdaptiveSampler` marks the spans it samples with their Azure Monitor sample rate (`microsoft.sample_rate`), so item counts can add up to the real request and dependency volumes; spans kept because of a failure count once. `Azure.Monitor.OpenTelemetry.Exporter` 1.10.0 does not read the attribute yet, see [Sample rate and item counts](docs/otel/sampling.md#sample-rate-and-item-counts).
+- `Ark.Tools.AspNetCore.OTel`: `AddArkAspNetCoreOpenTelemetry` no longer exports an HttpClient span for each HTTP call an Azure SDK client makes, because the SDK already records that call as its own span. The Azure Monitor Distro filters these spans the same way.
 
 ## [7.0.0-beta15] - 2026-10-13
 

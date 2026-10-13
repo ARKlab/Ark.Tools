@@ -15,6 +15,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 using System.Data.Common;
+using System.Diagnostics;
 
 using Ark.Tools.AspNetCore.HealthChecks.OTel;
 using Ark.Tools.OTel;
@@ -29,6 +30,7 @@ public static class Ex
     private const string _mediatorMessagingInstrumentationName = "Ark.MediatorFramework.Messaging";
     // Ark.Tools.Rebus's activity source and meter name, kept as a literal so native-only hosts don't carry Rebus.
     private const string _rebusInstrumentationName = "ark.tools.rebus";
+    private const string _azureCoreHttpSourceName = "Azure.Core.Http";
 
     /// <summary>
     /// Adds Ark ASP.NET Core instrumentation to an exporter-agnostic OpenTelemetry builder.
@@ -88,7 +90,8 @@ public static class Ex
                 .SetSampler(static services => services.GetRequiredService<ArkAdaptiveSampler>())
                 .AddSource(_rebusInstrumentationName)
                 .AddSource(_mediatorMessagingInstrumentationName)
-                .AddHttpClientInstrumentation()
+                .AddHttpClientInstrumentation(static options =>
+                    options.FilterHttpRequestMessage = static _ => !_isAzureSdkHttpRequest())
                 .AddSqlClientInstrumentation(options =>
                 {
                     options.RecordException = true;
@@ -181,6 +184,13 @@ public static class Ex
             configuration?.GetSection("OTel:ArkAdaptiveSampler").Bind(options);
             configureAdaptiveSampler?.Invoke(options);
         });
+    }
+
+    // Ported from the Azure Monitor Distro: Azure SDKs already emit a client span for each HTTP call,
+    // so the nested HttpClient span would duplicate it.
+    private static bool _isAzureSdkHttpRequest()
+    {
+        return Activity.Current?.Parent?.Source.Name == _azureCoreHttpSourceName;
     }
 
     private static bool _includeSqlClientSpan(
