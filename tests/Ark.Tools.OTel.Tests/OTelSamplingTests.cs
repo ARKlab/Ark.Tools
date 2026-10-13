@@ -855,6 +855,107 @@ public class ArkAdaptiveSamplerTests
         _sampleRoot(sampler, "NEW").Decision.Should().Be(SamplingDecision.RecordAndSample);
     }
 
+    /// <summary>
+    /// A low-traffic process, whose roots are far below 0.5 per second, keeps sampling every root
+    /// after the controller lowers the bucket rates to the observed traffic.
+    /// </summary>
+    [TestMethod]
+    [DataRow(60)]
+    [DataRow(90)]
+    [DataRow(180)]
+    [DataRow(900)]
+    public void AdjustRate_LowTraffic_SamplesEveryRoot(int everySeconds)
+    {
+        var time = new ManualTimeProvider();
+        var sampler = new ArkAdaptiveSampler(_perOperationOptions(), new FailedTraceRegistry(), time);
+
+        var counts = _simulate(sampler, time, TimeSpan.FromHours(2), TimeSpan.FromSeconds(1), ("JOB", everySeconds));
+
+        counts["JOB"].Sampled.Should().Be(counts["JOB"].Seen, "a root every {0} s fits in the budget", everySeconds);
+    }
+
+    /// <summary>
+    /// A periodic job and a health check, the only roots of a worker, are both sampled every time.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_PeriodicJobAndHealthCheck_SamplesEveryRoot()
+    {
+        var time = new ManualTimeProvider();
+        var sampler = new ArkAdaptiveSampler(_perOperationOptions(), new FailedTraceRegistry(), time);
+
+        var counts = _simulate(sampler, time, TimeSpan.FromHours(2), TimeSpan.FromSeconds(1), ("JOB", 900), ("HEALTH", 170));
+
+        counts["JOB"].Sampled.Should().Be(counts["JOB"].Seen);
+        counts["HEALTH"].Sampled.Should().Be(counts["HEALTH"].Seen);
+    }
+
+    /// <summary>
+    /// An operation first seen after the controller lowered the rates of a low-traffic process
+    /// has its first root sampled.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_NewOperationAtLowTraffic_SamplesItsFirstRoot()
+    {
+        var time = new ManualTimeProvider();
+        var sampler = new ArkAdaptiveSampler(_perOperationOptions(), new FailedTraceRegistry(), time);
+        _simulate(sampler, time, TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(1), ("JOB", 60));
+
+        _sampleRoot(sampler, "NEW").Decision.Should().Be(SamplingDecision.RecordAndSample);
+    }
+
+    /// <summary>
+    /// Rare operations next to a busy one keep being sampled, also when they are idle for whole
+    /// adjustment periods, while the busy one stays limited to the budget.
+    /// </summary>
+    [TestMethod]
+    public void AdjustRate_RareOperationsNextToBusyOne_AreSampledAndBusyOneIsLimited()
+    {
+        var time = new ManualTimeProvider();
+        var sampler = new ArkAdaptiveSampler(_perOperationOptions(), new FailedTraceRegistry(), time);
+
+        // 50 roots/s for BUSY, one root per minute for RARE and one every 150 s for SLOW.
+        var counts = _simulate(sampler, time, TimeSpan.FromMinutes(15), TimeSpan.FromMilliseconds(20),
+            ("BUSY", 1), ("RARE", 3000), ("SLOW", 7500));
+
+        counts["RARE"].Sampled.Should().Be(counts["RARE"].Seen);
+        counts["SLOW"].Sampled.Should().Be(counts["SLOW"].Seen);
+        counts["BUSY"].Sampled.Should().BeInRange(15 * 50, 15 * 70, "the budget is 1 root/s, about 60 per minute");
+    }
+
+    private static ArkAdaptiveSamplerOptions _perOperationOptions() => new()
+    {
+        TracesPerSecond = 1,
+        EnablePerOperationBucketing = true,
+        SamplingPercentageDecreaseTimeout = TimeSpan.FromMinutes(10),
+    };
+
+    /// <summary>
+    /// Samples a root of each operation every <c>EveryTicks</c> ticks, from the first tick, and
+    /// adjusts the rates every minute as the controller does with the default options.
+    /// </summary>
+    private static Dictionary<string, (int Seen, int Sampled)> _simulate(
+        ArkAdaptiveSampler sampler, ManualTimeProvider time, TimeSpan duration, TimeSpan tick,
+        params (string Name, int EveryTicks)[] operations)
+    {
+        var counts = operations.ToDictionary(static o => o.Name, static _ => (Seen: 0, Sampled: 0));
+        var adjustEveryTicks = (int)(TimeSpan.FromMinutes(1) / tick);
+        for (var t = 0; t < (int)(duration / tick); t++)
+        {
+            foreach (var (name, everyTicks) in operations.Where(o => t % o.EveryTicks == 0))
+            {
+                var (seen, sampled) = counts[name];
+                var isSampled = _sampleRoot(sampler, name).Decision == SamplingDecision.RecordAndSample;
+                counts[name] = (seen + 1, sampled + (isSampled ? 1 : 0));
+            }
+
+            time.Advance(tick);
+            if ((t + 1) % adjustEveryTicks == 0)
+                sampler._adjustRate();
+        }
+
+        return counts;
+    }
+
     // ── behaviour: sample rate (Azure Monitor itemCount) ──────────────────
 
     private static ArkAdaptiveSamplerOptions _oneTracePerSecondOptions() => new()
