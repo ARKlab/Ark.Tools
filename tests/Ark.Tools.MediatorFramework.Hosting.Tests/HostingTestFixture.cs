@@ -4,6 +4,7 @@
 using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
+using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Grpc;
 using Ark.Tools.MediatorFramework.Hosting.Contracts;
 using Ark.Tools.MediatorFramework.Mcp;
@@ -266,7 +267,8 @@ public sealed class HostingTestFixture : IAsyncDisposable
     /// <summary>Builds and maps an independent code-first gRPC host.</summary>
     /// <param name="listenAddress">Optional Kestrel address; null selects TestServer.</param>
     /// <returns>The unstarted gRPC application.</returns>
-    public WebApplication BuildGrpcHost(Uri? listenAddress = null)
+    public WebApplication BuildGrpcHost(
+        [NotPersonalData("Test host listen address is infrastructure metadata.")] Uri? listenAddress = null)
     {
         _throwIfDisposed();
         var builder = WebApplication.CreateBuilder();
@@ -468,6 +470,7 @@ public sealed class HostingTestState
     public int RequestExecutions { get; internal set; }
 
     /// <summary>Gets whether a generated request supplied a cancellable token.</summary>
+    [NotPersonalData("Cancellation observation flag, not an authentication token.")]
     public bool RequestCancellationTokenWasCancelable { get; internal set; }
 
     /// <summary>Gets the number of command handler executions.</summary>
@@ -528,9 +531,11 @@ public sealed class HostingTestState
     public string? FailedMessageException => Volatile.Read(ref _failedMessageException);
 
     /// <summary>Gets the cancellation status observed by the Rebus handler.</summary>
+    [NotPersonalData("Cancellation observation flag, not an authentication token.")]
     public bool RebusCancellationTokenWasCancelable => Volatile.Read(ref _rebusCancellationTokenWasCancelable);
 
     /// <summary>Gets the user identifier propagated through Rebus headers.</summary>
+    [NotPersonalData("Synthetic test user identifier.")]
     public string? RebusUserId => Volatile.Read(ref _rebusUserId);
 
     /// <summary>Gets the number of deferred messages scheduled by handlers.</summary>
@@ -550,7 +555,9 @@ public sealed class HostingTestState
     private int _secondLevelRetryAttempts;
     private int _failedMessageExecutions;
     private string? _failedMessageException;
+    [NotPersonalData("Cancellation observation flag, not an authentication token.")]
     private bool _rebusCancellationTokenWasCancelable;
+    [NotPersonalData("Synthetic test user identifier.")]
     private string? _rebusUserId;
     private int _deferredMessages;
     private bool _failSecondLevelRetryHandler;
@@ -572,7 +579,7 @@ public sealed class HostingTestState
         Interlocked.Increment(ref _deferredMessages);
     }
 
-    internal void _recordRebusUserId(string? userId)
+    internal void _recordRebusUserId([NotPersonalData("Synthetic test user identifier.")] string? userId)
     {
         Interlocked.Exchange(ref _rebusUserId, userId);
     }
