@@ -358,7 +358,7 @@ illustrative):
 ```csharp
 public partial class McpHostContext : IMcpToolContext
 {
-    public IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
+    public static IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
     {
         builder.Services.AddSingleton<McpServerTool>(static services => McpServerTool.Create(
             typeof(SearchBooksTool).GetMethod(nameof(SearchBooksTool.ExecuteAsync))!,
