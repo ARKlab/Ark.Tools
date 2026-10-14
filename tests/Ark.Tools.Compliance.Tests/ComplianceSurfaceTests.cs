@@ -7,11 +7,13 @@ using AwesomeAssertions;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Reflection;
 using System.Security;
 
 namespace Ark.Tools.Compliance.Tests;
@@ -479,6 +481,87 @@ public sealed class ComplianceSurfaceTests
 
         result.Text.Should().Contain("CLASSIFIED\tExample.Customer\tEmail\tArk:PersonalData\t\tDapper,MessagePack,Newtonsoft.Json,Protobuf,System.Text.Json");
         result.Text.Should().Contain("CLASSIFIED\tExample.Customer\tPhone\tArk:PersonalData\t\tSystem.Text.Json");
+    }
+
+    /// <summary>Only serializer registration shapes are bound; DI container registrations are not candidates.</summary>
+    [TestMethod]
+    public void Surface_BindsOnlySerializerRegistrationShapes()
+    {
+        const string source = """
+            using Ark.Tools.Compliance;
+            using Ark.Tools.Compliance.Dapper;
+            using Ark.Tools.Compliance.NewtonsoftJson;
+            using Ark.Tools.Compliance.MessagePack;
+            using Ark.Tools.Compliance.Protobuf;
+            using static Ark.Tools.Compliance.Dapper.SensitiveValueDapper;
+            namespace Example;
+            public interface IFoo { }
+            public sealed class Foo : IFoo { }
+            public sealed class Container
+            {
+                public void Register<TService, TImplementation>() where TImplementation : TService { }
+                public void Register(System.Type service, System.Type implementation) { }
+            }
+            public class Customer
+            {
+                public EmailAddress Email { get; set; }
+                public PhoneNumber Phone { get; set; }
+                public static void Configure(Container container, ProtoBuf.Meta.RuntimeTypeModel? model)
+                {
+                    container.Register<IFoo, Foo>();
+                    container.Register(typeof(IFoo), typeof(Foo));
+                    Register<EmailAddress>();
+                    SensitiveValueDapper.RegisterBuiltIn();
+                    SensitiveValueNewtonsoftJson.Register<EmailAddress>(new Newtonsoft.Json.JsonSerializerSettings());
+                    SensitiveValueNewtonsoftJson.RegisterBuiltIn(new Newtonsoft.Json.JsonSerializerSettings());
+                    SensitiveValueFormatterResolver.Register<EmailAddress>();
+                    SensitiveValueFormatterResolver.RegisterBuiltIn();
+                    SensitiveValueProtobuf.Register<EmailAddress>(ProtoBuf.Meta.RuntimeTypeModel.Create());
+                    model?.Register<EmailAddress>();
+                    model?.RegisterBuiltIn();
+                    container.Register<IFoo, Foo>();
+                }
+            }
+            """;
+        var compilation = _createCompilation(CSharpSyntaxTree.ParseText(source, path: "Customer.cs"));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ComplianceSurfaceGenerator().AsSourceGenerator()],
+            optionsProvider: new OptionsProvider(enabled: true, complianceEnabled: true),
+            driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: true));
+
+        var result = driver.RunGenerators(compilation).GetRunResult().Results.Single();
+
+        result.Exception.Should().BeNull();
+        // Tracked steps only report entries that reach an output, so filtered candidates are checked on the predicate.
+        var isCandidate = typeof(ComplianceSurfaceGenerator).GetMethod(
+            "_isRegistrationCandidate", BindingFlags.NonPublic | BindingFlags.Static)!;
+        compilation.SyntaxTrees.Single().GetRoot().DescendantNodes().OfType<InvocationExpressionSyntax>()
+            .Where(invocation => (bool)isCandidate.Invoke(null, [invocation])!)
+            .Should().HaveCount(9).And.NotContain(static invocation => invocation.ToString().StartsWith("container.", StringComparison.Ordinal));
+        result.TrackedSteps["ComplianceSurfaceRegistrationSpecs"].SelectMany(static step => step.Outputs)
+            .Should().HaveCount(9);
+        var text = result.GeneratedSources.Single().SourceText.ToString();
+        text.Should().Contain("CLASSIFIED\tExample.Customer\tEmail\tArk:PersonalData\t\tDapper,MessagePack,Newtonsoft.Json,Protobuf,System.Text.Json");
+        text.Should().Contain("CLASSIFIED\tExample.Customer\tPhone\tArk:PersonalData\t\tDapper,MessagePack,Newtonsoft.Json,Protobuf,System.Text.Json");
+    }
+
+    /// <summary>Registration candidates share one semantic model per tree, and a new compilation never reuses a stale one.</summary>
+    [TestMethod]
+    public void Surface_ReusesSemanticModelPerCompilationAndTree()
+    {
+        var first = CSharpSyntaxTree.ParseText("namespace Example; public class A { }", path: "A.cs");
+        var second = CSharpSyntaxTree.ParseText("namespace Example; public class B { }", path: "B.cs");
+        var compilation = _createCompilation(first, second);
+        var semanticModel = typeof(ComplianceSurfaceGenerator).GetMethod(
+            "_semanticModel", BindingFlags.NonPublic | BindingFlags.Static)!;
+        SemanticModel get(Compilation owner, SyntaxTree tree) => (SemanticModel)semanticModel.Invoke(null, [owner, tree])!;
+
+        var model = get(compilation, first);
+
+        get(compilation, first).Should().BeSameAs(model);
+        get(compilation, second).Should().NotBeSameAs(model);
+        var replacement = compilation.WithAssemblyName("Replacement");
+        get(replacement, first).Should().NotBeSameAs(model).And.Match<SemanticModel>(m => m.Compilation == replacement);
     }
 
     /// <summary>Ignore attributes suppress the corresponding serializer without erasing the classified member.</summary>

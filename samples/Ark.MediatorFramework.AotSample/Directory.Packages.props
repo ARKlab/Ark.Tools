@@ -23,6 +23,7 @@
     <PackageVersion Include="Dapper" Version="2.1.89" />
     <PackageVersion Include="Dapper.AOT" Version="1.1.0" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <!-- Transitive pin: aligns the version Ark.Tools.MediatorFramework.MinimalApi builds against. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageVersion Include="NodaTime" Version="3.3.5" />
