@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `Ark.Tools.MediatorFramework.Mcp`: `McpToolSerializerOptions.Get(services)` returns the JSON options used by generated MCP tools. Attachment tools now also work under Native AOT (or with reflection-based JSON disabled), because the MCP protocol and attachment contracts are appended after your own resolvers.
 - `Ark.Tools.FtpClient.FtpProxy`: `IFtpClientProxyConfig.AcceptAnyServerCertificate` (default `false`) accepts any TLS certificate from the FtpProxy service. It disables certificate validation, so use it only with a development proxy that has a self-signed certificate.
 
 ### Changed

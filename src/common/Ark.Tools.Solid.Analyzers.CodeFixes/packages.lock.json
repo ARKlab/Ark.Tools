@@ -281,6 +281,7 @@
           "System.Threading.Tasks.Extensions": "4.6.0"
         }
       }
-    }
+    },
+    ".NETStandard,Version=v2.0/linux-x64": {}
   }
 }

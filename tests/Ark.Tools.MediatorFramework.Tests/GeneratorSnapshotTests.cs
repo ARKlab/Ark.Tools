@@ -222,7 +222,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("RegisterMcpTools");
         result.Generated.Should().Contain("typeof(Tool0).GetMethod(nameof(Tool0.ExecuteAsync))!");
         result.Generated.Should().Contain(
-            "SerializerOptions = services.GetRequiredService<global::Microsoft.Extensions.Options.IOptions<global::Microsoft.AspNetCore.Http.Json.JsonOptions>>().Value.SerializerOptions");
+            "SerializerOptions = global::Ark.Tools.MediatorFramework.Mcp.McpToolSerializerOptions.Get(services)");
         result.Generated.Should().Contain("IQueryProcessor");
         result.Generated.Should().Contain(
             "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(services)");

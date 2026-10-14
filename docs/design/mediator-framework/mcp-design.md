@@ -67,9 +67,13 @@ assembly-wide scanning while preserving the official `[McpServerToolType]` and
 `[McpServerTool]` metadata model. `WithTools<TToolType>(serializerOptions)`
 accepts JSON options only at registration time, before the service provider
 exists, so the generated factory sets `McpServerToolCreateOptions.SerializerOptions`
-from `IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` instead. Tool
-arguments, input schemas and structured results therefore use the same JSON
-options as the Minimal API endpoints rather than `McpJsonUtilities.DefaultOptions`.
+from `McpToolSerializerOptions.Get(services)`: one read-only copy of
+`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per host, with
+`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and an internal context for
+`McpAttachmentInput` appended to the resolver chain. Tool arguments, input
+schemas and structured results therefore use the same JSON options as the
+Minimal API endpoints, and attachment tools still resolve the MCP protocol
+types when reflection-based serialization is disabled (Native AOT).
 
 The SDK's current HTTP integration maps Streamable HTTP at the route supplied to
 `MapMcp`. Stateless mode is recommended when tools do not need

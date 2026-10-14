@@ -835,7 +835,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.AppendLine("    public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder)");
         builder.AppendLine("    {");
         RenderVersionMap(builder, contracts);
-        // WithTools<T> takes JSON options only at registration time, so each tool resolves the Minimal API options from DI.
+        // WithTools<T> takes JSON options only at registration time, so each tool resolves the shared options from DI.
         for (var index = 0; index < contracts.Length; index++)
         {
             builder.AppendLine("        builder.Services.AddSingleton<global::ModelContextProtocol.Server.McpServerTool>(static services => global::ModelContextProtocol.Server.McpServerTool.Create(");
@@ -844,7 +844,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             builder.AppendLine("            new global::ModelContextProtocol.Server.McpServerToolCreateOptions");
             builder.AppendLine("            {");
             builder.AppendLine("                Services = services,");
-            builder.AppendLine("                SerializerOptions = services.GetRequiredService<global::Microsoft.Extensions.Options.IOptions<global::Microsoft.AspNetCore.Http.Json.JsonOptions>>().Value.SerializerOptions,");
+            builder.AppendLine("                SerializerOptions = global::Ark.Tools.MediatorFramework.Mcp.McpToolSerializerOptions.Get(services),");
             builder.AppendLine("            }));");
         }
 

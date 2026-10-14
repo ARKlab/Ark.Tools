@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Compliance;
+using Ark.Tools.MediatorFramework.Mcp;
 
 using AwesomeAssertions;
 
@@ -19,6 +20,7 @@ using ModelContextProtocol.Protocol;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
@@ -101,6 +103,30 @@ public sealed class McpHostingTests
         result.IsError.Should().NotBe(true);
         result.StructuredContent.Should().NotBeNull();
         result.StructuredContent!.Value.GetProperty("message").GetString().Should().Be("7:from-mcp");
+    }
+
+    /// <summary>
+    /// Verifies the tool JSON options resolve the MCP and attachment contracts when the application options
+    /// have no reflection fallback, keeping the application resolver first and its options unchanged.
+    /// </summary>
+    [TestMethod]
+    public void ToolSerializerOptionsAppendMcpContractsAfterApplicationResolvers()
+    {
+        var applicationResolver = new ResolvesNothing();
+        var services = new ServiceCollection();
+        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolver = applicationResolver);
+        using var provider = services.BuildServiceProvider();
+        var applicationOptions = provider.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+        applicationOptions.Invoking(static options => options.GetTypeInfo(typeof(McpAttachmentInput)))
+            .Should().Throw<NotSupportedException>();
+
+        var toolOptions = McpToolSerializerOptions.Get(provider);
+
+        toolOptions.IsReadOnly.Should().BeTrue();
+        toolOptions.TypeInfoResolverChain[0].Should().BeSameAs(applicationResolver);
+        toolOptions.GetTypeInfo(typeof(McpAttachmentInput)).Should().NotBeNull();
+        toolOptions.GetTypeInfo(typeof(EmbeddedResourceBlock)).Should().NotBeNull();
+        applicationOptions.TypeInfoResolverChain.Should().ContainSingle();
     }
 
     /// <summary>Verifies a tool result is serialized with the Minimal API JSON options, so it has the HTTP response shape.</summary>
@@ -277,4 +303,12 @@ public sealed class McpHostingTests
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
     }
 #pragma warning restore MA0004
+
+    private sealed class ResolvesNothing : IJsonTypeInfoResolver
+    {
+        public JsonTypeInfo? GetTypeInfo(Type type, JsonSerializerOptions options)
+        {
+            return null;
+        }
+    }
 }
