@@ -103,6 +103,13 @@ jobs:
     - name: Test
       run: dotnet test --no-build --no-restore --configuration Debug
 
+    # AotSample is a separate solution. Its tests run with reflection-based JSON off, so a type missing from
+    # AotJsonContext fails here; the end-to-end test needs ConnectionStrings__Sql and is skipped.
+    - name: 'AotSample tests'
+      run: |
+        dotnet restore samples/Ark.MediatorFramework.AotSample/Core/Hosts/Web/Ark.MediatorFramework.AotSample.Core.Web.Tests --locked-mode
+        dotnet test --project samples/Ark.MediatorFramework.AotSample/Core/Hosts/Web/Ark.MediatorFramework.AotSample.Core.Web.Tests --no-restore --configuration Debug
+
     # Runs SqlStateProvider in a trimmed app, where reflection-based JSON is off by default and unused members are removed.
     - name: 'Trimmed SqlStateProvider smoke test'
       run: |
