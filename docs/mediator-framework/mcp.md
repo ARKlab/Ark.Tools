@@ -51,6 +51,21 @@ builder.Services
 app.MapMcp("/mcp/v{version}").RequireAuthorization();
 ```
 
+Without options, tools serialize arguments and structured results with the MCP
+SDK defaults, which do not include the Ark converters: an `EvolvableEnum`, for
+example, is returned as an object instead of its name. Pass the options your
+HTTP endpoints use so MCP returns the same JSON shape:
+
+```csharp
+var jsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
+// Add the same TypeInfoResolver as the HTTP options.
+
+builder.Services
+    .AddMcpServer()
+    .WithHttpTransport()
+    .WithArkMcpTools<McpHostContext>(jsonOptions);
+```
+
 `MapMcp` remains host-owned. Configure authentication, authorization,
 `AllowedHosts`, CORS, rate limits, request limits, and the SimpleInjector scope
 in the host. A request to `/mcp/v1` exposes contracts active in version 1, and

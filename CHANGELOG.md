@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Ark.Tools.MediatorFramework.Mcp`: `WithArkMcpTools<TContext>(serializerOptions)` serializes the arguments and structured results of generated MCP tools with your JSON options, so MCP returns the same shape as the HTTP endpoints (for example `EvolvableEnum` values as names). Without options, the MCP SDK defaults still apply.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added
