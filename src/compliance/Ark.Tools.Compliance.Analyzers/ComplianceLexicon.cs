@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -19,6 +20,8 @@ internal sealed class ComplianceLexicon
     private static readonly char[] _newLines = { '\r', '\n' };
     private readonly HashSet<string> _terms = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _excluded = new(StringComparer.OrdinalIgnoreCase);
+    // Identifier names repeat heavily in a compilation (id, name, value, request): answer once per name.
+    private readonly ConcurrentDictionary<string, bool> _matchesByName = new(StringComparer.Ordinal);
 
     internal ComplianceLexicon(ImmutableArray<AdditionalText> files, CancellationToken cancellationToken)
     {
@@ -44,6 +47,17 @@ internal sealed class ComplianceLexicon
     }
 
     internal bool _matches(string name, CancellationToken cancellationToken)
+    {
+        if (!_matchesByName.TryGetValue(name, out var result))
+        {
+            result = _matchesUncached(name, cancellationToken);
+            _matchesByName.TryAdd(name, result);
+        }
+
+        return result;
+    }
+
+    private bool _matchesUncached(string name, CancellationToken cancellationToken)
     {
         name = name.TrimStart('_');
         foreach (var excluded in _excluded)
