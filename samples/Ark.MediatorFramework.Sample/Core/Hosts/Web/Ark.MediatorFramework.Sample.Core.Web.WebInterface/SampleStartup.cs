@@ -143,31 +143,19 @@ public sealed class SampleStartup
 
         // Minimal API JSON: compose the source-generated application metadata with the Ark
         // defaults (camelCase, NodaTime, enum-as-member).
-        services.ConfigureHttpJsonOptions(static options =>
-        {
-            var context = new SampleApiJsonSerializerContext(
-                new JsonSerializerOptions
-                {
-                    RespectNullableAnnotations = true,
-                    RespectRequiredConstructorParameters = true
-                }.ConfigureArkDefaults());
-            var applicationContext = new ApplicationJsonSerializerContext(
-                new JsonSerializerOptions
-                {
-                    RespectNullableAnnotations = true,
-                    RespectRequiredConstructorParameters = true
-                }.ConfigureArkDefaults());
-            options.SerializerOptions.ConfigureArkDefaults();
-            options.SerializerOptions.TypeInfoResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
-                context,
-                applicationContext,
-                new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
-        });
+        services.ConfigureHttpJsonOptions(static options => _configureJson(options.SerializerOptions));
         WebHosting.AddParticipant<SampleMessagingApiParticipant>(
             services, _container, _transport, _dataBus, _resourceManagement, receiver: false);
+        // MCP tools serialize with the same options as the HTTP endpoints, so both return the same shape.
+        var mcpJsonOptions = new JsonSerializerOptions
+        {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true
+        };
+        _configureJson(mcpJsonOptions);
         services.AddMcpServer()
             .WithHttpTransport()
-            .WithArkMcpTools<SampleMcpHostContext>();
+            .WithArkMcpTools<SampleMcpHostContext>(mcpJsonOptions);
 
         // RFC 7807 ProblemDetails: map semantic domain exceptions consistently across hosts.
         services.AddArkProblemDetailsExceptionHandler();
@@ -222,6 +210,27 @@ public sealed class SampleStartup
                     .WithPkce(Pkce.Sha256));
             }).AllowAnonymous();
         });
+    }
+
+    private static void _configureJson(JsonSerializerOptions options)
+    {
+        var context = new SampleApiJsonSerializerContext(
+            new JsonSerializerOptions
+            {
+                RespectNullableAnnotations = true,
+                RespectRequiredConstructorParameters = true
+            }.ConfigureArkDefaults());
+        var applicationContext = new ApplicationJsonSerializerContext(
+            new JsonSerializerOptions
+            {
+                RespectNullableAnnotations = true,
+                RespectRequiredConstructorParameters = true
+            }.ConfigureArkDefaults());
+        options.ConfigureArkDefaults();
+        options.TypeInfoResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
+            context,
+            applicationContext,
+            new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
     }
 
     private void _configureOpenApi(Microsoft.AspNetCore.OpenApi.OpenApiOptions options)
