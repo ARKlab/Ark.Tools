@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Reflection;
+
 using Ark.Tools.Core.DataKey;
 
 using AwesomeAssertions;
@@ -30,6 +32,18 @@ public class DataKeyComparerTests
         public int Value { get; init; }
     }
 
+    /// <summary>A row whose key set includes a static property.</summary>
+    public sealed class RowWithStaticKey
+    {
+        /// <summary>A static key, shared by every row.</summary>
+        [DataKey]
+        public static int Partition => 7;
+
+        /// <summary>The instance key.</summary>
+        [DataKey]
+        public int Id { get; init; }
+    }
+
     /// <summary>Verifies that a null key does not discard the hash of the keys before it.</summary>
     [TestMethod]
     public void GetHashCode_KeysDifferingBeforeNullKey_HashDifferently()
@@ -40,6 +54,35 @@ public class DataKeyComparerTests
         var second = comparer.GetHashCode(new Row { Id = 2, Code = null });
 
         first.Should().NotBe(second);
+    }
+
+    /// <summary>
+    /// Verifies the reflection path used without a JIT (Native AOT), which the JIT test run otherwise bypasses:
+    /// a null key does not discard the hash of the keys before it, and it agrees with the compiled path.
+    /// </summary>
+    [TestMethod]
+    public void ReflectionPath_KeysDifferingBeforeNullKey_HashDifferentlyAndMatchCompiledPath()
+    {
+        var hash = typeof(DataKeyComparer<Row>).GetMethod("_reflectionHash", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var equals = typeof(DataKeyComparer<Row>).GetMethod("_reflectionEquals", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var comparer = new DataKeyComparer<Row>();
+        var first = new Row { Id = 1, Code = null };
+        var second = new Row { Id = 2, Code = null };
+
+        hash.Invoke(null, [first]).Should().NotBe(hash.Invoke(null, [second]));
+        equals.Invoke(null, [first, new Row { Id = 1, Code = null, Value = 3 }]).Should().Be(true);
+        equals.Invoke(null, [first, second]).Should().Be(false);
+        hash.Invoke(null, [first]).Should().Be(comparer.GetHashCode(first));
+    }
+
+    /// <summary>Verifies that a static key property is read without a receiver instead of breaking the comparer.</summary>
+    [TestMethod]
+    public void StaticKeyProperty_IsSupported()
+    {
+        var comparer = new DataKeyComparer<RowWithStaticKey>();
+
+        comparer.Equals(new RowWithStaticKey { Id = 1 }, new RowWithStaticKey { Id = 1 }).Should().BeTrue();
+        comparer.Equals(new RowWithStaticKey { Id = 1 }, new RowWithStaticKey { Id = 2 }).Should().BeFalse();
     }
 
     /// <summary>Verifies that rows with equal keys, including a null key, are equal and hash equally.</summary>

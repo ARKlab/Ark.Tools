@@ -31,8 +31,12 @@ public sealed class DataKeyComparer<[DynamicallyAccessedMembers(DynamicallyAcces
         {
             var equalsMethod = typeof(DataKeyComparer<T>).GetMethod(nameof(_keyEquals), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(prop.PropertyType);
             var hashMethod = typeof(DataKeyComparer<T>).GetMethod(nameof(_keyHash), BindingFlags.NonPublic | BindingFlags.Static)!.MakeGenericMethod(prop.PropertyType);
-            equals = Expression.AndAlso(equals, Expression.Call(equalsMethod, Expression.Property(x, prop), Expression.Property(y, prop)));
-            hash = Expression.Add(Expression.Multiply(hash, Expression.Constant(23)), Expression.Call(hashMethod, Expression.Property(x, prop)));
+            // GetProperties also returns static properties: read them without a receiver, as GetValue does.
+            var isStatic = prop.GetMethod!.IsStatic;
+            var xValue = Expression.Property(isStatic ? null : x, prop);
+            var yValue = Expression.Property(isStatic ? null : y, prop);
+            equals = Expression.AndAlso(equals, Expression.Call(equalsMethod, xValue, yValue));
+            hash = Expression.Add(Expression.Multiply(hash, Expression.Constant(23)), Expression.Call(hashMethod, xValue));
         }
 
         _typedEquals = Expression.Lambda<Func<T, T, bool>>(equals, x, y).Compile();
@@ -55,6 +59,11 @@ public sealed class DataKeyComparer<[DynamicallyAccessedMembers(DynamicallyAcces
         if (_keyProperties.Length == 0) return x == y;
         if (_typedEquals != null) return _typedEquals(x, y);
 
+        return _reflectionEquals(x, y);
+    }
+
+    private static bool _reflectionEquals(T x, T y)
+    {
         foreach (var prop in _keyProperties)
         {
             var xprop = prop.GetValue(x);
@@ -81,6 +90,11 @@ public sealed class DataKeyComparer<[DynamicallyAccessedMembers(DynamicallyAcces
         if (_keyProperties.Length == 0) return obj.GetHashCode();
         if (_typedHash != null) return _typedHash(obj);
 
+        return _reflectionHash(obj);
+    }
+
+    private static int _reflectionHash(T obj)
+    {
         unchecked // Overflow is fine, just wrap
         {
             int hash = 17;
