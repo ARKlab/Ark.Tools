@@ -151,7 +151,7 @@ public static class FunctionsHosting
         ArgumentNullException.ThrowIfNull(dataBus);
         _configureMessagingJson(services);
         AddUserContext(services, container);
-        services.AddArkAzureFunctions();
+        services.AddArkAzureFunctions(SampleApiJsonSerializerContext.Default, ApplicationJsonSerializerContext.Default);
         services.AddArkSolidProcessors(container);
         services.ConfigureArkMessagingFunctions(
             configuration,
@@ -187,7 +187,7 @@ public static class FunctionsHosting
         Action<MessagingDataBusBuilder> dataBus)
     {
         _configureMessagingJson(services);
-        services.AddArkAzureFunctions();
+        services.AddArkAzureFunctions(SampleApiJsonSerializerContext.Default, ApplicationJsonSerializerContext.Default);
         services.AddArkSolidProcessors(container);
         services.AddSingleton(static serviceProvider => new UserContextOutgoingStep(
             () => serviceProvider.GetRequiredService<IContextProvider<ClaimsPrincipal>>().Current));

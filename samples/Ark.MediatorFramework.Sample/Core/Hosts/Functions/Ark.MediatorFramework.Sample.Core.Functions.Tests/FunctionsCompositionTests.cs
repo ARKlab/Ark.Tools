@@ -5,6 +5,7 @@ extern alias Audit;
 extern alias Notifications;
 extern alias Processor;
 
+using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Functions.Hosting;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.Messaging;
@@ -13,9 +14,11 @@ using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 using NodaTime;
 
@@ -57,6 +60,27 @@ public sealed class FunctionsCompositionTests
 
         services.Should().NotContain(static service => service.ServiceType == typeof(MessagingTriggeredHostMarker));
         provider.GetServices<IHostedService>().OfType<MessagingProcessorHost>().Should().BeEmpty();
+    }
+
+    /// <summary>The Api app's HTTP JSON resolves contracts from the source-generated contexts before any reflection fallback.</summary>
+    [TestMethod]
+    public async Task ApiAppHttpJsonUsesTheSourceGeneratedContexts()
+    {
+        await using var container = FunctionsHosting.CreateContainer(_inMemoryOptions());
+        var services = new ServiceCollection();
+        services.AddLogging();
+        FunctionsHosting.AddApiProducer(
+            services,
+            container,
+            static transport => transport.UseInMemory(),
+            static dataBus => dataBus.UseInMemory(lifetime: Duration.FromHours(2)));
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+
+        options.TypeInfoResolverChain.Take(2).Should().Equal(
+            SampleApiJsonSerializerContext.Default,
+            ApplicationJsonSerializerContext.Default);
     }
 
     /// <summary>Each trigger app is generated for exactly one participant.</summary>
