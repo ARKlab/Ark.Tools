@@ -67,7 +67,7 @@ public sealed class SftpClientConnection : FtpClientConnectionBase
     {
         await _ensureConnected(ctk).ConfigureAwait(false);
         using var ms = new MemoryStream(80 * 1024);
-        await _client.DownloadAsync(path, ms, static u => { }).ConfigureAwait(false);
+        await _client.DownloadFileAsync(path, ms, ctk).ConfigureAwait(false);
         return ms.ToArray();
     }
 
@@ -75,7 +75,7 @@ public sealed class SftpClientConnection : FtpClientConnectionBase
     {
         await _ensureConnected(ctk).ConfigureAwait(false);
         using var ms = new MemoryStream(content);
-        await _client.UploadAsync(ms, path).ConfigureAwait(false);
+        await _client.UploadFileAsync(ms, path, ctk).ConfigureAwait(false);
     }
 
     public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
