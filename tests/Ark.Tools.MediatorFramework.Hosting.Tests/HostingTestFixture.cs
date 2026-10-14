@@ -44,7 +44,6 @@ using NodaTime;
 
 using System.Collections.Concurrent;
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
@@ -227,9 +226,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds and maps an independent MCP host.</summary>
-    /// <param name="serializerOptions">Optional JSON options for tool arguments and results; null keeps the MCP defaults.</param>
+    /// <param name="configureServices">Optional extra service registrations, applied before the host is built.</param>
     /// <returns>The unstarted MCP application.</returns>
-    public WebApplication BuildMcpHost(JsonSerializerOptions? serializerOptions = null)
+    public WebApplication BuildMcpHost(Action<IServiceCollection>? configureServices = null)
     {
         _throwIfDisposed();
         var builder = WebApplication.CreateBuilder();
@@ -244,11 +243,10 @@ public sealed class HostingTestFixture : IAsyncDisposable
                 TestAuthenticationHandler._schemeName,
                 static _ => { });
         builder.Services.AddAuthorization();
-        var mcp = builder.Services.AddMcpServer().WithHttpTransport();
-        if (serializerOptions is null)
-            mcp.WithArkMcpTools<HostingMcpContext>();
-        else
-            mcp.WithArkMcpTools<HostingMcpContext>(serializerOptions);
+        builder.Services.AddMcpServer()
+            .WithHttpTransport()
+            .WithArkMcpTools<HostingMcpContext>();
+        configureServices?.Invoke(builder.Services);
         var app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -259,11 +257,10 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds and starts an independent MCP test host.</summary>
-    /// <param name="serializerOptions">Optional JSON options for tool arguments and results; null keeps the MCP defaults.</param>
     /// <returns>The started MCP application.</returns>
-    public async Task<WebApplication> StartMcpHostAsync(JsonSerializerOptions? serializerOptions = null)
+    public async Task<WebApplication> StartMcpHostAsync()
     {
-        var app = BuildMcpHost(serializerOptions);
+        var app = BuildMcpHost();
         await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
         return app;
     }

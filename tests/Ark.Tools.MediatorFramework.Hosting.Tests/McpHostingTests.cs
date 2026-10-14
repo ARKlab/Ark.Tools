@@ -101,9 +101,9 @@ public sealed class McpHostingTests
         result.StructuredContent!.Value.GetProperty("message").GetString().Should().Be("7:from-mcp");
     }
 
-    /// <summary>Verifies a tool result serialized with the HTTP JSON options has the HTTP response shape.</summary>
+    /// <summary>Verifies a tool result is serialized with the Minimal API JSON options, so it has the HTTP response shape.</summary>
     [TestMethod]
-    public async Task ToolResultMatchesHttpResponseWithSharedJsonOptions()
+    public async Task ToolResultUsesMinimalApiJsonOptions()
     {
         // Each fixture container backs a single host, so HTTP and MCP get one each.
         await using var httpFixture = new HostingTestFixture();
@@ -117,7 +117,9 @@ public sealed class McpHostingTests
         var httpResponse = JsonNode.Parse(await httpClient.GetStringAsync(
             new Uri("/api/v1/hosting/queries/7?Value=shared", UriKind.Relative),
             httpApp.Lifetime.ApplicationStopping).ConfigureAwait(false));
-        await using var app = await fixture.StartMcpHostAsync(jsonOptions).ConfigureAwait(false);
+        await using var app = fixture.BuildMcpHost(static services => services.ConfigureHttpJsonOptions(
+            static options => options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower));
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
         await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
 
         var result = await client.CallToolAsync(

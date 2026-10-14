@@ -51,20 +51,11 @@ builder.Services
 app.MapMcp("/mcp/v{version}").RequireAuthorization();
 ```
 
-Without options, tools serialize arguments and structured results with the MCP
-SDK defaults, which do not include the Ark converters: an `EvolvableEnum`, for
-example, is returned as an object instead of its name. Pass the options your
-HTTP endpoints use so MCP returns the same JSON shape:
-
-```csharp
-var jsonOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-// Add the same TypeInfoResolver as the HTTP options.
-
-builder.Services
-    .AddMcpServer()
-    .WithHttpTransport()
-    .WithArkMcpTools<McpHostContext>(jsonOptions);
-```
+Generated tools serialize arguments, input schemas and structured results with
+the Minimal API JSON options (`Microsoft.AspNetCore.Http.Json.JsonOptions`), so
+MCP returns the same shape as the HTTP endpoints. Configure both with
+`ConfigureHttpJsonOptions`; the MCP SDK defaults (`McpJsonUtilities.DefaultOptions`)
+are not used for generated tools.
 
 `MapMcp` remains host-owned. Configure authentication, authorization,
 `AllowedHosts`, CORS, rate limits, request limits, and the SimpleInjector scope

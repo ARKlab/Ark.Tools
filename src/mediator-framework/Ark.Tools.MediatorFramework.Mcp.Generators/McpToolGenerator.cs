@@ -833,13 +833,24 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .Append(contextModel.Constraints)
             .AppendLine();
         builder.AppendLine("{");
-        RenderRegistration(builder, contracts, string.Empty, string.Empty);
-        builder.AppendLine();
-        RenderRegistration(
-            builder,
-            contracts,
-            ", global::System.Text.Json.JsonSerializerOptions serializerOptions",
-            "serializerOptions");
+        builder.AppendLine("    public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder)");
+        builder.AppendLine("    {");
+        RenderVersionMap(builder, contracts);
+        // WithTools<T> takes JSON options only at registration time, so each tool resolves the Minimal API options from DI.
+        for (var index = 0; index < contracts.Length; index++)
+        {
+            builder.AppendLine("        builder.Services.AddSingleton<global::ModelContextProtocol.Server.McpServerTool>(static services => global::ModelContextProtocol.Server.McpServerTool.Create(");
+            builder.Append("            typeof(Tool").Append(index).Append(").GetMethod(nameof(Tool").Append(index).AppendLine(".ExecuteAsync))!,");
+            builder.AppendLine("            target: null,");
+            builder.AppendLine("            new global::ModelContextProtocol.Server.McpServerToolCreateOptions");
+            builder.AppendLine("            {");
+            builder.AppendLine("                Services = services,");
+            builder.AppendLine("                SerializerOptions = services.GetRequiredService<global::Microsoft.Extensions.Options.IOptions<global::Microsoft.AspNetCore.Http.Json.JsonOptions>>().Value.SerializerOptions,");
+            builder.AppendLine("            }));");
+        }
+
+        builder.AppendLine("        return builder;");
+        builder.AppendLine("    }");
         for (var index = 0; index < contracts.Length; index++)
             RenderTool(builder, contracts[index], index);
         builder.AppendLine("}");
@@ -873,25 +884,6 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         string? line;
         while ((line = reader.ReadLine()) is not null)
             builder.Append(' ', indentation * 4).AppendLine(line);
-    }
-
-    private static void RenderRegistration(
-        StringBuilder builder,
-        ImmutableArray<ToolModel> contracts,
-        string extraParameter,
-        string withToolsArgument)
-    {
-        builder.Append("    public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder")
-            .Append(extraParameter).AppendLine(")");
-        builder.AppendLine("    {");
-        RenderVersionMap(builder, contracts);
-        builder.AppendLine("        return builder");
-        for (var index = 0; index < contracts.Length; index++)
-            builder.Append("            .WithTools<Tool").Append(index).Append(">(").Append(withToolsArgument).Append(")")
-                .AppendLine(index == contracts.Length - 1 ? ";" : string.Empty);
-        if (contracts.Length == 0)
-            builder.AppendLine("            ;");
-        builder.AppendLine("    }");
     }
 
     private static void RenderVersionMap(StringBuilder builder, ImmutableArray<ToolModel> contracts)
