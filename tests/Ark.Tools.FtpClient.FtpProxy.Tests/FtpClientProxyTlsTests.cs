@@ -105,6 +105,7 @@ public class FtpClientProxyTlsTests
 
             while (!string.IsNullOrEmpty(await reader.ReadLineAsync(ctk).ConfigureAwait(false)))
             {
+                // Skip the request headers up to the blank line that ends them.
             }
 
             var response = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n[]");
