@@ -37,12 +37,11 @@ public static class McpAttachmentResults
             await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
         }
 
-        var resource = new BlobResourceContents
-        {
-            Uri = "ark://" + Guid.NewGuid().ToString("N") + "/" + Uri.EscapeDataString(attachment.Name),
-            MimeType = attachment.ContentType,
-            Blob = output.ToArray(),
-        };
+        // Blob carries the base64 text as UTF-8; FromBytes encodes the raw attachment bytes.
+        var resource = BlobResourceContents.FromBytes(
+            output.GetBuffer().AsMemory(0, (int)output.Length),
+            "ark://" + Guid.NewGuid().ToString("N") + "/" + Uri.EscapeDataString(attachment.Name),
+            attachment.ContentType);
         return new EmbeddedResourceBlock
         {
             Resource = resource,

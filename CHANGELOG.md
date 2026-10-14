@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `Ark.Tools.MediatorFramework.Mcp`: attachment downloads now return the MCP `blob` as base64, as the protocol requires. Before, the raw bytes were sent, so MCP clients that decode the blob (for example `BlobResourceContents.DecodedData`) failed or got corrupted data.
 - `Ark.Tools.Sdk`: Reqnroll code-behind (`*.feature.cs`) is now generated in `obj/` as documented when `Directory.Build.props` imports the SDK props, so the build after a clean no longer recompiles every Reqnroll test project; run `dotnet clean` once to delete the old code-behind files from the project folders.
 - `DataKeyComparer` and `DataKeyHashSet`: a null key property no longer resets the hash code, so rows that differ only in the keys before a null key no longer collide and slow the set down.
 - `Ark.Tools.Outbox.SqlServer`: the outbox now dispatches the oldest messages first, in the order they were written. Before, it sent the newest first, so under load old messages could wait indefinitely and the messages of one transaction went out in reverse order.
