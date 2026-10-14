@@ -4,6 +4,8 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Messaging;
@@ -16,6 +18,7 @@ using Azure.Core.Pipeline;
 using Azure.Storage;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Specialized;
+using Azure.Storage.Sas;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -113,20 +116,32 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
     }
 
     [TestMethod]
-    public async Task RenewAndAbandonKeepTheMessageOnTransportBuiltClient()
+    public async Task RenewAndAbandonOnTransportBuiltClientUpdateOnlyTheVisibility()
     {
-        // The connection-string transport builds its own client, so renewal and abandon update only the visibility.
-        var transport = new StorageQueueMessagingTransport(
-            _connectionString,
-            receiveVisibilityTimeout: TimeSpan.FromSeconds(30),
-            retryDelay: TimeSpan.FromMilliseconds(10));
+        // The connection-string constructor builds its own client, so requests are observed through a recording
+        // proxy instead of a pipeline policy. A SAS signature does not cover the host, so it stays valid there.
+        var sas = _service.GenerateAccountSasUri(
+            AccountSasPermissions.All,
+            DateTimeOffset.UtcNow.AddHours(1),
+            AccountSasResourceTypes.All).Query.TrimStart('?');
+        var proxy = new RecordingQueueProxy(new Uri(_service.Uri.GetLeftPart(UriPartial.Authority)));
+        await using (proxy.ConfigureAwait(false))
+        {
+            var transport = new StorageQueueMessagingTransport(
+                string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"QueueEndpoint={new Uri(proxy.Endpoint, _service.AccountName)};SharedAccessSignature={sas}"),
+                receiveVisibilityTimeout: TimeSpan.FromSeconds(30),
+                retryDelay: TimeSpan.FromMilliseconds(10));
 
-        var second = await _renewAbandonAndReceiveAgainAsync(transport).ConfigureAwait(false);
+            var second = await _renewAbandonAndReceiveAgainAsync(transport).ConfigureAwait(false);
 
-        second.DeliveryCount.Should().Be(2);
-        second.Headers.Should().Contain("key", "value");
-        second.Payload.ToArray().Should().Equal(4, 5, 6);
-        await second.CompleteAsync(default).ConfigureAwait(false);
+            proxy.UpdateBodyLengths.Should().Equal(0, 0);
+            second.DeliveryCount.Should().Be(2);
+            second.Headers.Should().Contain("key", "value");
+            second.Payload.ToArray().Should().Equal(4, 5, 6);
+            await second.CompleteAsync(default).ConfigureAwait(false);
+        }
     }
 
     [TestMethod]
@@ -193,6 +208,103 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
             {
                 SentContent.Enqueue(message.Request.Content is not null);
             }
+        }
+    }
+
+    // Forwards every request to Azurite and records the body length of each Update Message request.
+    private sealed class RecordingQueueProxy : IAsyncDisposable
+    {
+        // Hop-by-hop or framing headers that HttpClient and HttpListener set themselves.
+        private static readonly HashSet<string> _skippedHeaders = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Host", "Connection", "Keep-Alive", "Content-Length", "Transfer-Encoding", "WWW-Authenticate"
+        };
+
+        private readonly Uri _target;
+        private readonly HttpListener _listener = new();
+        private readonly HttpClient _client = new();
+        private readonly Task _loop;
+
+        public RecordingQueueProxy(Uri target)
+        {
+            _target = target;
+            // Reserve a free port, then hand it to HttpListener, which cannot bind port 0 itself.
+            using (var port = new TcpListener(IPAddress.Loopback, 0))
+            {
+                port.Start();
+                Endpoint = new Uri(string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"http://127.0.0.1:{((IPEndPoint)port.LocalEndpoint).Port}/"));
+            }
+            _listener.Prefixes.Add(Endpoint.ToString());
+            _listener.Start();
+            _loop = _runAsync();
+        }
+
+        public Uri Endpoint { get; }
+
+        public ConcurrentQueue<long> UpdateBodyLengths { get; } = new();
+
+        public async ValueTask DisposeAsync()
+        {
+            _listener.Close();
+            await _loop.ConfigureAwait(false);
+            _client.Dispose();
+        }
+
+        private async Task _runAsync()
+        {
+            while (true)
+            {
+                HttpListenerContext context;
+                try
+                {
+                    context = await _listener.GetContextAsync().ConfigureAwait(false);
+                }
+                catch (Exception exception) when (exception is HttpListenerException or ObjectDisposedException)
+                {
+                    // Closing the listener in DisposeAsync is the only way to end the accept loop.
+                    return;
+                }
+
+                await _forwardAsync(context).ConfigureAwait(false);
+            }
+        }
+
+        private async Task _forwardAsync(HttpListenerContext context)
+        {
+            var request = context.Request;
+            using var body = new MemoryStream();
+            await request.InputStream.CopyToAsync(body).ConfigureAwait(false);
+            // Update Message is the only PUT that carries a pop receipt.
+            if (string.Equals(request.HttpMethod, "PUT", StringComparison.Ordinal)
+                && request.RawUrl!.Contains("popreceipt=", StringComparison.OrdinalIgnoreCase))
+            {
+                UpdateBodyLengths.Enqueue(body.Length);
+            }
+
+            using var forward = new HttpRequestMessage(new HttpMethod(request.HttpMethod), new Uri(_target, request.RawUrl));
+            if (body.Length > 0)
+                forward.Content = new ByteArrayContent(body.ToArray());
+            foreach (var name in request.Headers.AllKeys)
+            {
+                if (name is null || _skippedHeaders.Contains(name))
+                    continue;
+                if (!forward.Headers.TryAddWithoutValidation(name, request.Headers[name]))
+                    forward.Content?.Headers.TryAddWithoutValidation(name, request.Headers[name]);
+            }
+
+            using var response = await _client.SendAsync(forward).ConfigureAwait(false);
+            var payload = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+            context.Response.StatusCode = (int)response.StatusCode;
+            foreach (var header in response.Headers.Concat(response.Content.Headers))
+            {
+                if (!_skippedHeaders.Contains(header.Key))
+                    context.Response.Headers[header.Key] = string.Join(',', header.Value);
+            }
+            context.Response.ContentLength64 = payload.Length;
+            await context.Response.OutputStream.WriteAsync(payload).ConfigureAwait(false);
+            context.Response.Close();
         }
     }
 
