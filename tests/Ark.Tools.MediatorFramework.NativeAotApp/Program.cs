@@ -160,10 +160,10 @@ internal static class Program
         var upload = await client.CallToolAsync("books.upload", new Dictionary<string, object?>(StringComparer.Ordinal) { ["attachment"] = attachment.RootElement }, cancellationToken: ctk).ConfigureAwait(false);
         check("mcp-attachment-upload", () => upload.IsError != true && upload.StructuredContent?.GetProperty("code").GetString() == "a.txt:hello");
 
-        // Shape and a non-empty blob only: this guards the JSON resolvers, not the blob encoding.
         var download = await client.CallToolAsync("books.download", new Dictionary<string, object?>(StringComparer.Ordinal) { ["name"] = "b.txt" }, cancellationToken: ctk).ConfigureAwait(false);
         check("mcp-attachment-download", () => download.IsError != true
-            && download.Content.OfType<EmbeddedResourceBlock>().SingleOrDefault()?.Resource is BlobResourceContents { MimeType: "text/plain", Blob.IsEmpty: false });
+            && download.Content.OfType<EmbeddedResourceBlock>().SingleOrDefault()?.Resource is BlobResourceContents { MimeType: "text/plain" } blob
+            && blob.DecodedData.Span.SequenceEqual("payload"u8));
     }
 
     // Native AOT cannot use ConfigureArkDefaults: add the source-generated context and the value object converter.
