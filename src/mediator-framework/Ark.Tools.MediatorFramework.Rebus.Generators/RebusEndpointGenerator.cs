@@ -67,8 +67,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Collect()
                 .Select(static (endpoints, _) => new EquatableArray<EndpointModel>(endpoints));
             // Referenced-assembly scans read metadata symbols only, so they rerun when references change.
-            var referenceScope = context.CompilationProvider
-                .WithComparer(MetadataReferencesComparer.Instance);
+            var referenceScope = context.CompilationProvider._referencesOnly();
             var referencedEndpoints = referenceScope
                 .Combine(endpointAssemblies)
                 .Select(static (pair, cancellationToken) => new EquatableArray<EndpointModel>(
@@ -243,7 +242,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
             return contextType.GetAttributes()
                 .Where(attribute => attribute.AttributeClass is { Name: "ArkGenerateRebusForAssemblyAttribute" } attributeClass
-                    && attributeClass.ToDisplayString() == ArkGenerateRebusForAssemblyAttribute)
+                    && attributeClass._isFullName(ArkGenerateRebusForAssemblyAttribute))
                 .Select(attribute => attribute.ConstructorArguments.FirstOrDefault().Value as ITypeSymbol)
                 .Where(static marker => marker?.ContainingAssembly?.Name is not null)
                 .Select(static marker => marker!.ContainingAssembly!.Name)
@@ -300,7 +299,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static bool IsType(INamedTypeSymbol type, string name, string @namespace)
             => type.MetadataName == name
-                && type.ContainingNamespace.ToDisplayString() == @namespace;
+                && type.ContainingNamespace._isNamespace(@namespace);
 
         private static IEnumerable<IAssemblySymbol> _referencedAssemblies(Compilation compilation, IAssemblySymbol runtimeAssembly)
         {
@@ -422,8 +421,8 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static bool IsAsyncEnumerable(ITypeSymbol type)
             => type is INamedTypeSymbol named
-                && (named.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IAsyncEnumerable<T>"
-                    || named.AllInterfaces.Any(iface => iface.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IAsyncEnumerable<T>"));
+                && (named.OriginalDefinition._isMetadataName("System.Collections.Generic", "IAsyncEnumerable`1")
+                    || named.AllInterfaces.Any(static iface => iface.OriginalDefinition._isMetadataName("System.Collections.Generic", "IAsyncEnumerable`1")));
 
         private static Location GetLocation(AttributeData attribute)
             => attribute.ApplicationSyntaxReference?.GetSyntax().GetLocation() ?? Location.None;

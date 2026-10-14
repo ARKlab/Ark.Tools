@@ -57,7 +57,7 @@ internal static class HttpStringBinding
             : type;
         return !RequiresTypeConverterBinding(targetType)
             || targetType.AllInterfaces.Any(candidate =>
-                candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
+                candidate.OriginalDefinition._isMetadataName("System", "IParsable`1")
                 && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], targetType));
     }
 
@@ -100,7 +100,8 @@ internal static class HttpStringBinding
     public static bool IsFormatProviderParameter(IParameterSymbol parameter)
     {
         return parameter.RefKind == RefKind.None
-            && parameter.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString() == "System.IFormatProvider";
+            && parameter.Type is INamedTypeSymbol formatProvider
+            && formatProvider._isFullName("System.IFormatProvider");
     }
 
     /// <summary>Gets whether a single value of the type has no public static <c>TryParse(string, ...)</c>.</summary>
@@ -116,7 +117,8 @@ internal static class HttpStringBinding
             : type;
         if (targetType.SpecialType == SpecialType.System_String
             || targetType.TypeKind == TypeKind.Enum
-            || targetType.ToDisplayString() is "System.Uri" or "Microsoft.Extensions.Primitives.StringValues")
+            || (targetType is INamedTypeSymbol { NullableAnnotation: not NullableAnnotation.Annotated } named
+                && (named._isFullName("System.Uri") || named._isFullName("Microsoft.Extensions.Primitives.StringValues"))))
             return false;
 
         // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see; without it
@@ -142,24 +144,17 @@ internal static class HttpStringBinding
         => type switch
         {
             IArrayTypeSymbol array => array.Rank == 1 && array.ElementType.SpecialType == SpecialType.System_String,
-            INamedTypeSymbol named when named.ToDisplayString() == "Microsoft.Extensions.Primitives.StringValues" => true,
+            INamedTypeSymbol named when named._isFullName("Microsoft.Extensions.Primitives.StringValues") => true,
             INamedTypeSymbol { TypeArguments.Length: 1 } named => named.TypeArguments[0].SpecialType == SpecialType.System_String
-                && _stringCollectionShapes.Contains(named.OriginalDefinition.ToDisplayString()),
+                && _isStringCollectionShape(named.OriginalDefinition),
             _ => false,
         };
 
-    private static readonly HashSet<string> _stringCollectionShapes =
-    [
-        "System.Collections.Generic.IEnumerable<T>",
-        "System.Collections.Generic.IReadOnlyCollection<T>",
-        "System.Collections.Generic.IReadOnlyList<T>",
-        "System.Collections.Generic.ICollection<T>",
-        "System.Collections.Generic.IList<T>",
-        "System.Collections.Generic.List<T>",
-        "System.Collections.Generic.ISet<T>",
-        "System.Collections.Generic.HashSet<T>",
-        "System.Collections.Immutable.ImmutableArray<T>",
-    ];
+    private static bool _isStringCollectionShape(INamedTypeSymbol definition)
+        => definition.MetadataName is "IEnumerable`1" or "IReadOnlyCollection`1" or "IReadOnlyList`1" or "ICollection`1"
+                or "IList`1" or "List`1" or "ISet`1" or "HashSet`1"
+            ? definition._isMetadataName("System.Collections.Generic", definition.MetadataName)
+            : definition._isMetadataName("System.Collections.Immutable", "ImmutableArray`1");
 
     /// <summary>
     /// Gets whether an explicit route or query value binds to the type: a string-bindable type natively, a string
@@ -280,7 +275,7 @@ internal static class HttpStringBinding
             return ConversionKind.String;
         if (type.TypeKind == TypeKind.Enum)
             return ConversionKind.Enum;
-        if (type.ToDisplayString() == "System.Uri")
+        if (type is INamedTypeSymbol uri && uri._isFullName("System.Uri"))
             return ConversionKind.Uri;
         // Vogen generates TryParse(string, IFormatProvider?, out T) in a source this generator cannot see; without it
         // the value object binds through the TypeConverter Vogen also generates.
@@ -291,7 +286,7 @@ internal static class HttpStringBinding
         if (tryParse.Any(_hasFormatProvider))
             return ConversionKind.TryParseWithProvider;
         // As in Minimal API, an explicit IParsable<T> implementation wins over a public TryParse(string, out T).
-        if (type.AllInterfaces.Any(candidate => candidate.OriginalDefinition.ToDisplayString() == "System.IParsable<TSelf>"
+        if (type.AllInterfaces.Any(candidate => candidate.OriginalDefinition._isMetadataName("System", "IParsable`1")
             && SymbolEqualityComparer.Default.Equals(candidate.TypeArguments[0], type)))
             return ConversionKind.Parsable;
         if (tryParse.Any(static method => method.Parameters.Length == 2))

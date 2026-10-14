@@ -461,7 +461,10 @@ participant's composition.
 The registered `MessagingOutboxProcessor` is the single `IHostedService` for the
 reserved `outbox-processor` identity. It uses the existing
 `OutboxProcessorBase` bounded polling, SQL peek-lock, commit-after-acceptance,
-error backoff, and cooperative cancellation behavior. It owns no participant
+error backoff, and cooperative cancellation behavior. Within a polled batch it
+sends to different queues and topics concurrently and to each queue or topic in
+outbox order, with no ordering between destinations; if any send fails, the
+batch is not committed and is retried. It owns no participant
 queue or subscriptions. Registering it twice, composing it with Functions, or
 using `outbox-processor` as an application participant fails composition.
 
