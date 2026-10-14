@@ -30,17 +30,32 @@ public sealed class StorageQueueMessagingTransport :
     private readonly ConcurrentDictionary<string, QueueClient> _queues = new(StringComparer.Ordinal);
     private readonly TimeSpan _receiveVisibilityTimeout;
     private readonly TimeSpan _retryDelay;
+    private readonly bool _updatesWithoutContent;
 
     /// <summary>Creates a transport over an application-composed Queue Storage service client.</summary>
     /// <param name="serviceClient">The Queue Storage service client configured with no message encoding.</param>
     /// <param name="receiveVisibilityTimeout">The visibility window used by the custom receive pump.</param>
     /// <param name="retryDelay">The delay applied when the custom receive pump abandons a delivery.</param>
+    /// <remarks>
+    /// Lock renewal and abandon send the message body again with the new visibility, because the client may use
+    /// client-side encryption, which cannot update a message without content.
+    /// </remarks>
     public StorageQueueMessagingTransport(
         QueueServiceClient serviceClient,
         TimeSpan? receiveVisibilityTimeout = null,
         TimeSpan? retryDelay = null)
+        : this(serviceClient, updatesWithoutContent: false, receiveVisibilityTimeout, retryDelay)
+    {
+    }
+
+    private StorageQueueMessagingTransport(
+        QueueServiceClient serviceClient,
+        bool updatesWithoutContent,
+        TimeSpan? receiveVisibilityTimeout,
+        TimeSpan? retryDelay)
     {
         _serviceClient = serviceClient ?? throw new ArgumentNullException(nameof(serviceClient));
+        _updatesWithoutContent = updatesWithoutContent;
         _receiveVisibilityTimeout = receiveVisibilityTimeout ?? TimeSpan.FromMinutes(1);
         _retryDelay = retryDelay ?? TimeSpan.FromSeconds(1);
         _validateVisibility(_receiveVisibilityTimeout, nameof(receiveVisibilityTimeout));
@@ -57,6 +72,7 @@ public sealed class StorageQueueMessagingTransport :
         TimeSpan? retryDelay = null)
         : this(
             new QueueServiceClient(connectionString, _clientOptions()),
+            updatesWithoutContent: true,
             receiveVisibilityTimeout,
             retryDelay)
     {
@@ -75,6 +91,7 @@ public sealed class StorageQueueMessagingTransport :
         TimeSpan? retryDelay = null)
         : this(
             new QueueServiceClient(serviceUri, credential, _clientOptions()),
+            updatesWithoutContent: true,
             receiveVisibilityTimeout,
             retryDelay)
     {
@@ -275,7 +292,8 @@ public sealed class StorageQueueMessagingTransport :
                     message,
                     envelope,
                     _receiveVisibilityTimeout,
-                    _retryDelay));
+                    _retryDelay,
+                    _updatesWithoutContent));
             }
 
             if (batch.Count > 0)
@@ -416,6 +434,7 @@ public sealed class StorageQueueMessagingTransport :
         private readonly QueueMessage _message;
         private readonly TimeSpan _receiveVisibilityTimeout;
         private readonly TimeSpan _retryDelay;
+        private readonly bool _updatesWithoutContent;
 
         // Storage Queues rotates the pop receipt on every UpdateMessage, so the receipt is mutable
         // state shared by the renewer and the settling worker. The gate makes renewal and settlement
@@ -430,7 +449,8 @@ public sealed class StorageQueueMessagingTransport :
             QueueMessage message,
             StorageQueueEnvelope envelope,
             TimeSpan receiveVisibilityTimeout,
-            TimeSpan retryDelay)
+            TimeSpan retryDelay,
+            bool updatesWithoutContent)
         {
             _source = source;
             _poison = poison;
@@ -438,6 +458,7 @@ public sealed class StorageQueueMessagingTransport :
             _popReceipt = message.PopReceipt;
             _receiveVisibilityTimeout = receiveVisibilityTimeout;
             _retryDelay = retryDelay;
+            _updatesWithoutContent = updatesWithoutContent;
             _setLockedUntil(message.NextVisibleOn);
             Headers = envelope.Headers;
             Payload = envelope.Payload;
@@ -550,12 +571,21 @@ public sealed class StorageQueueMessagingTransport :
         {
             try
             {
-                // No message content: the update only moves the visibility and the stored body is kept.
-                var response = await _source.UpdateMessageAsync(
-                    _message.MessageId,
-                    _popReceipt,
-                    visibilityTimeout: visibilityTimeout,
-                    cancellationToken: ctk).ConfigureAwait(false);
+                // Without content the update only moves the visibility and keeps the stored body. Only clients
+                // built here can do that: with client-side encryption on, Azure.Storage.Queues 12.28.1 encrypts the
+                // update content before its null check, and an application-composed client may have it enabled.
+                var response = _updatesWithoutContent
+                    ? await _source.UpdateMessageAsync(
+                        _message.MessageId,
+                        _popReceipt,
+                        visibilityTimeout: visibilityTimeout,
+                        cancellationToken: ctk).ConfigureAwait(false)
+                    : await _source.UpdateMessageAsync(
+                        _message.MessageId,
+                        _popReceipt,
+                        _message.Body,
+                        visibilityTimeout,
+                        ctk).ConfigureAwait(false);
                 _popReceipt = response.Value.PopReceipt;
                 _setLockedUntil(response.Value.NextVisibleOn);
             }

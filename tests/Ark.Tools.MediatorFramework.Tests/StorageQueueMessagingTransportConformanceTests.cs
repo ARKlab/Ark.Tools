@@ -11,8 +11,11 @@ using Ark.Tools.MediatorFramework.Messaging;
 using AwesomeAssertions;
 
 using Azure.Core;
+using Azure.Core.Cryptography;
 using Azure.Core.Pipeline;
+using Azure.Storage;
 using Azure.Storage.Queues;
+using Azure.Storage.Queues.Specialized;
 
 namespace Ark.Tools.MediatorFramework.Tests;
 
@@ -110,18 +113,53 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
     }
 
     [TestMethod]
-    public async Task RenewAndAbandonKeepTheMessageWithoutResendingIt()
+    public async Task RenewAndAbandonKeepTheMessageOnTransportBuiltClient()
+    {
+        // The connection-string transport builds its own client, so renewal and abandon update only the visibility.
+        var transport = new StorageQueueMessagingTransport(
+            _connectionString,
+            receiveVisibilityTimeout: TimeSpan.FromSeconds(30),
+            retryDelay: TimeSpan.FromMilliseconds(10));
+
+        var second = await _renewAbandonAndReceiveAgainAsync(transport).ConfigureAwait(false);
+
+        second.DeliveryCount.Should().Be(2);
+        second.Headers.Should().Contain("key", "value");
+        second.Payload.ToArray().Should().Equal(4, 5, 6);
+        await second.CompleteAsync(default).ConfigureAwait(false);
+    }
+
+    [TestMethod]
+    public async Task RenewAndAbandonResendTheMessageOnEncryptedApplicationClient()
     {
         var updates = new UpdateMessageRecorder();
-        var options = new QueueClientOptions
+        var options = new SpecializedQueueClientOptions
         {
-            MessageEncoding = QueueMessageEncoding.None
+            MessageEncoding = QueueMessageEncoding.None,
+            ClientSideEncryption = new ClientSideEncryptionOptions(ClientSideEncryptionVersion.V2_0)
+            {
+                KeyEncryptionKey = new TestKeyEncryptionKey(),
+                KeyWrapAlgorithm = TestKeyEncryptionKey.Algorithm
+            }
         };
         options.AddPolicy(updates, HttpPipelinePosition.PerCall);
         var transport = new StorageQueueMessagingTransport(
             new QueueServiceClient(_connectionString, options),
             receiveVisibilityTimeout: TimeSpan.FromSeconds(30),
             retryDelay: TimeSpan.FromMilliseconds(10));
+
+        var second = await _renewAbandonAndReceiveAgainAsync(transport).ConfigureAwait(false);
+
+        updates.SentContent.Should().Equal(true, true);
+        second.DeliveryCount.Should().Be(2);
+        second.Headers.Should().Contain("key", "value");
+        second.Payload.ToArray().Should().Equal(4, 5, 6);
+        await second.CompleteAsync(default).ConfigureAwait(false);
+    }
+
+    private static async Task<IMessagingLockedDelivery> _renewAbandonAndReceiveAgainAsync(
+        StorageQueueMessagingTransport transport)
+    {
         var source = (IMessagingMessageSource)transport;
         await transport.SendAsync(
             _queue,
@@ -133,13 +171,7 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
 
         await first.RenewLockAsync(default).ConfigureAwait(false);
         await first.AbandonAsync(default).ConfigureAwait(false);
-        var second = await source.ReceiveOneAsync(_queue, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
-
-        updates.SentContent.Should().Equal(false, false);
-        second.DeliveryCount.Should().Be(2);
-        second.Headers.Should().Contain("key", "value");
-        second.Payload.ToArray().Should().Equal(4, 5, 6);
-        await second.CompleteAsync(default).ConfigureAwait(false);
+        return await source.ReceiveOneAsync(_queue, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
     }
 
     private async Task _recreateAsync(string queue)
@@ -161,6 +193,43 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
             {
                 SentContent.Enqueue(message.Request.Content is not null);
             }
+        }
+    }
+
+    // Test double only: the "wrapped" key is the key itself, which is enough to exercise client-side encryption.
+    private sealed class TestKeyEncryptionKey : IKeyEncryptionKey
+    {
+        public const string Algorithm = "test-identity";
+
+        public string KeyId => "test-kek";
+
+        public byte[] WrapKey(string algorithm, ReadOnlyMemory<byte> key, CancellationToken cancellationToken = default)
+        {
+            return key.ToArray();
+        }
+
+        public async Task<byte[]> WrapKeyAsync(
+            string algorithm,
+            ReadOnlyMemory<byte> key,
+            CancellationToken cancellationToken = default)
+        {
+            return await Task.FromResult(key.ToArray()).ConfigureAwait(false);
+        }
+
+        public byte[] UnwrapKey(
+            string algorithm,
+            ReadOnlyMemory<byte> encryptedKey,
+            CancellationToken cancellationToken = default)
+        {
+            return encryptedKey.ToArray();
+        }
+
+        public async Task<byte[]> UnwrapKeyAsync(
+            string algorithm,
+            ReadOnlyMemory<byte> encryptedKey,
+            CancellationToken cancellationToken = default)
+        {
+            return await Task.FromResult(encryptedKey.ToArray()).ConfigureAwait(false);
         }
     }
 }
