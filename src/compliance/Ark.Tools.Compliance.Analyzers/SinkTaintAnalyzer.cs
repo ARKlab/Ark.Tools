@@ -132,8 +132,11 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
 
                 if (assignment is ICompoundAssignmentOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String })
                 {
-                    _check(context, assignment.Value, "ARKPII005", today);
-                    _check(context, assignment.Target, "ARKPII005", today);
+                    // One report per statement: the target is checked only when the appended value is clean.
+                    if (!_check(context, assignment.Value, "ARKPII005", today))
+                    {
+                        _check(context, assignment.Target, "ARKPII005", today);
+                    }
                 }
 
                 break;
@@ -377,7 +380,7 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             || (type is INamedTypeSymbol named && SinkConfiguration._implements(named, "System.Collections.IDictionary"));
     }
 
-    private static void _check(OperationAnalysisContext context, IOperation value, string rule, DateTime today)
+    private static bool _check(OperationAnalysisContext context, IOperation value, string rule, DateTime today)
     {
         var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(value.Syntax.SyntaxTree);
         var source = new SinkFlow(options, context.CancellationToken)._find(value);
@@ -385,11 +388,12 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             || _reviewed(context.ContainingSymbol, rule, today, context.CancellationToken)
             || _reviewed(source._symbol, rule, today, context.CancellationToken))
         {
-            return;
+            return false;
         }
 
         context.ReportDiagnostic(Diagnostic.Create(_getDescriptor(rule), value.Syntax.GetLocation(),
             source._symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), source._classification));
+        return true;
     }
 
     private static DiagnosticDescriptor _getDescriptor(string rule)

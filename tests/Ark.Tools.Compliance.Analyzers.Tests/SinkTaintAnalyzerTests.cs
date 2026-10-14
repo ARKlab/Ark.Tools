@@ -282,6 +282,8 @@ public sealed class SinkTaintAnalyzerTests
     [DataRow("var value = \"Count \" + (1 + c.Status.Length) + c.Email + \"!\";", "\"Count \" + (1 + c.Status.Length) + c.Email + \"!\"")]
     [DataRow("var value = $\"User {c.Email}\" + \"!\" + \".\";", "$\"User {c.Email}\" + \"!\" + \".\"")]
     [DataRow("var value = \"\"; value += c.Email + \"!\" + \".\";", "c.Email + \"!\" + \".\"")]
+    [DataRow("var value = c.Email; value += c.Email + \"!\";", "c.Email + \"!\"")]
+    [DataRow("var value = c.Email; value += \"!\";", "value")]
     [DataRow("var value = \"User \" + sensitive + \"!\";", "\"User \" + sensitive + \"!\"")]
     public async Task UnprotectedConcatenation_IsReportedOnceAtOutermostExpression(string statement, string expected)
     {
