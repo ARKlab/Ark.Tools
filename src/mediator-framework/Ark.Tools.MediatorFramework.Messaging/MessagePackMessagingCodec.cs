@@ -37,9 +37,9 @@ public sealed class MessagePackMessagingCodec : IMessagingCodec
     {
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(writer);
-        await MessagePackSerializer
-            .SerializeAsync(writer.AsStream(leaveOpen: true), value, _serializeOptions, ctk)
-            .ConfigureAwait(false);
+        // MessagePack buffers the whole message either way; writing to the pipe skips its private copy.
+        MessagePackSerializer.Serialize(writer, value, _serializeOptions, ctk);
+        await writer.FlushAsync(ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

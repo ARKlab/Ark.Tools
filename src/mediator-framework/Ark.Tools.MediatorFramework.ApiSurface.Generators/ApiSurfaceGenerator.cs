@@ -603,15 +603,18 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         INamedTypeSymbol type,
         IReadOnlyDictionary<INamedTypeSymbol, string[]> networkMemberships)
     {
-        // Name each attribute once; the first occurrence wins, as with FirstOrDefault.
-        var attributes = new Dictionary<string, AttributeData>(StringComparer.Ordinal);
-        foreach (var attribute in type.GetAttributes())
+        // The first occurrence wins, as with FirstOrDefault.
+        var attributes = type.GetAttributes();
+        AttributeData? Find(string name)
         {
-            if (attribute.AttributeClass?.ToDisplayString() is { } attributeName && !attributes.ContainsKey(attributeName))
-                attributes.Add(attributeName, attribute);
-        }
+            foreach (var attribute in attributes)
+            {
+                if (attribute.AttributeClass._isFullName(name))
+                    return attribute;
+            }
 
-        AttributeData? Find(string name) => attributes.TryGetValue(name, out var attribute) ? attribute : null;
+            return null;
+        }
         var http = Find(Http);
         var grpc = Find(Grpc);
         var rebus = Find(Rebus);
@@ -947,7 +950,7 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     {
         if (named.IsGenericType && named.Arity is 1 or 2
             && named.OriginalDefinition.Name == "EvolvableEnum"
-            && named.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Core"
+            && named.ContainingNamespace._isNamespace("Ark.Tools.Core")
             && named.TypeArguments[0] is INamedTypeSymbol argument && argument.TypeKind == TypeKind.Enum)
         {
             enumType = argument;
