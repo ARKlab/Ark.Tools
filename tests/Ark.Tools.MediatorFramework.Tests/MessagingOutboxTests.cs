@@ -162,6 +162,32 @@ public sealed partial class MessagingOutboxTests
     }
 
     [TestMethod]
+    [DataRow("mailbox", false)]
+    [DataRow("topic", true)]
+    public async Task ProcessorRejectsInvalidDestinationHeadersBeforeAnySend(string destinationKind, bool dueTime)
+    {
+        var factory = new InMemoryOutboxContextFactory();
+        await _seedAsync(factory, _queueHeaders("a1", "queue-a"), [1]).ConfigureAwait(false);
+        var invalid = _queueHeaders("bad", "queue-b");
+        invalid[MessagingHeaders.OutboxDestinationKind] = destinationKind;
+        if (dueTime)
+            invalid[MessagingHeaders.OutboxDueTime] = "2024-01-01T00:00:00.0000000+00:00";
+        await _seedAsync(factory, invalid, [2]).ConfigureAwait(false);
+        var transport = new RecordingTransport(fail: false);
+        var processor = new MessagingOutboxProcessor(factory, transport, batchSize: 10);
+        await using var __processor = processor.ConfigureAwait(false);
+
+        await processor.StartAsync(default).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await processor.StopAsync(cts.Token).ConfigureAwait(false);
+
+        transport.Sends.Should().BeEmpty();
+        transport.Publishes.Should().BeEmpty();
+        (await _countAsync(factory).ConfigureAwait(false)).Should().Be(2);
+    }
+
+    [TestMethod]
     public async Task ProcessorFailureOnOneDestinationCancelsOthersAndDoesNotCommit()
     {
         var factory = new InMemoryOutboxContextFactory();

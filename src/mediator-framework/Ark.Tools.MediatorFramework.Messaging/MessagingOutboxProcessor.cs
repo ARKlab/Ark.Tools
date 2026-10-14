@@ -116,9 +116,22 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
                     "O",
                     CultureInfo.InvariantCulture,
                     DateTimeStyles.RoundtripKind);
+            // Reject bad headers before any destination is sent, so a retry cannot duplicate accepted sends.
+            var isTopic = string.Equals(destinationKind, "topic", StringComparison.Ordinal);
+            if (!isTopic && !string.Equals(destinationKind, "queue", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Native messaging outbox destination kind '{0}' is invalid.",
+                        destinationKind));
+            }
+
+            if (isTopic && dueTime is not null)
+                throw new InvalidOperationException("Published outbox messages cannot have a due time.");
             var readOnlyHeaders = new ReadOnlyDictionary<string, string>(headers);
             var payload = new ReadOnlySequence<byte>(body);
-            var operation = string.Equals(destinationKind, "topic", StringComparison.Ordinal)
+            var operation = isTopic
                 ? "publish"
                 : dueTime is not null
                     ? "defer"
@@ -157,23 +170,13 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
                     dueTime,
                     ctk).ConfigureAwait(false);
             }
-            else if (string.Equals(destinationKind, "topic", StringComparison.Ordinal))
+            else
             {
-                if (dueTime is not null)
-                    throw new InvalidOperationException("Published outbox messages cannot have a due time.");
                 await _transport.PublishAsync(
                     destination,
                     readOnlyHeaders,
                     payload,
                     ctk).ConfigureAwait(false);
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    string.Format(
-                        CultureInfo.InvariantCulture,
-                        "Native messaging outbox destination kind '{0}' is invalid.",
-                        destinationKind));
             }
         }
         finally
