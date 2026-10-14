@@ -47,7 +47,20 @@ public class ArkDefaultsEnumAndNetworkJsonTests
         Write = 2,
     }
 
+    public enum LongNamed
+    {
+        [EnumMember(Value = _longName)]
+        Long = 0,
+    }
+
     public sealed record Holder(Plain? Value);
+
+    // Longer than the converters' 128-char stack buffer, so it is read through the allocating path.
+    private const string _longName = "long-"
+        + "0123456789012345678901234567890123456789"
+        + "0123456789012345678901234567890123456789"
+        + "0123456789012345678901234567890123456789"
+        + "0123456789012345678901234567890123456789";
 
     private static readonly JsonSerializerOptions _options = new JsonSerializerOptions
     {
@@ -133,6 +146,51 @@ public class ArkDefaultsEnumAndNetworkJsonTests
     {
         var act = static () => _de<Plain>("\"Nope\"");
         act.Should().Throw<JsonException>();
+    }
+
+    [TestMethod]
+    [DataRow("\"SecondValue\"")]
+    [DataRow("\"secondvalue\"")]
+    [DataRow("\"\\u0053econdValue\"")]
+    [DataRow("\"\\u0073ECONDVALUE\"")]
+    public void PlainEnum_ReadsExactCaseMismatchedAndEscapedNames(string json)
+    {
+        _de<Plain>(json).Should().Be(Plain.SecondValue);
+    }
+
+    [TestMethod]
+    [DataRow("\"N\\u006Fpe\"")]
+    [DataRow("\"\"")]
+    public void UnknownEscapedOrEmptyName_Throws(string json)
+    {
+        var act = () => _de<Plain>(json);
+        act.Should().Throw<JsonException>();
+    }
+
+    [TestMethod]
+    public void NamesLongerThanTheStackBuffer_AreReadCaseInsensitive()
+    {
+        _de<LongNamed>("\"" + _longName + "\"").Should().Be(LongNamed.Long);
+        _de<LongNamed>("\"" + _longName.ToUpperInvariant() + "\"").Should().Be(LongNamed.Long);
+        _de<LongNamed>("\"\\u006C" + _longName[1..] + "\"").Should().Be(LongNamed.Long);
+
+        var act = static () => _de<LongNamed>("\"" + new string('x', 200) + "\"");
+        act.Should().Throw<JsonException>();
+    }
+
+    [TestMethod]
+    public void GenericConverter_ReadsEscapedAndLongDictionaryKeys()
+    {
+        var options = new JsonSerializerOptions
+        {
+            RespectNullableAnnotations = true,
+            RespectRequiredConstructorParameters = true,
+            Converters = { new ArkJsonStringEnumConverter<Annotated>(), new ArkJsonStringEnumConverter<LongNamed>() },
+        };
+
+        JsonSerializer.Deserialize<Dictionary<Annotated, int>>("{\"\\u0063ustom_value\":1}", options).Should().ContainKey(Annotated.Custom);
+        JsonSerializer.Deserialize<Dictionary<Annotated, int>>("{\"\\u0043USTOM_VALUE\":1}", options).Should().ContainKey(Annotated.Custom);
+        JsonSerializer.Deserialize<Dictionary<LongNamed, int>>("{\"" + _longName.ToUpperInvariant() + "\":1}", options).Should().ContainKey(LongNamed.Long);
     }
 
     [TestMethod]
