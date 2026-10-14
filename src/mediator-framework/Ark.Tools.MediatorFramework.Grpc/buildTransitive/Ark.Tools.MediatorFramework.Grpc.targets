@@ -2,17 +2,47 @@
   <PropertyGroup>
     <ArkExportProto Condition="'$(ArkExportProto)' == ''">true</ArkExportProto>
     <ArkExportProtoDir Condition="'$(ArkExportProtoDir)' == ''">$(MSBuildProjectDirectory)/proto</ArkExportProtoDir>
+    <!-- Resolved at evaluation so the runner can be an input of ArkExportProto -->
+    <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == '' And Exists('$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll')">$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
+    <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == ''">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The exporter loads the embedded ark/*.proto schemas from these assemblies in the host output -->
+    <_ArkExportProtoEmbeddedSchema Include="$(TargetDir)Ark.Tools.MediatorFramework.Grpc.dll;$(TargetDir)Ark.Tools.Nodatime.Protobuf.dll" />
+  </ItemGroup>
+
+  <!-- Runs before ArkExportProto checks its Outputs. One stamp per destination, so switching
+       ArkExportProtoDir does not reuse another directory's state. The stamp lists the exported
+       files; re-export when any of them was deleted. -->
+  <Target Name="_ArkExportProtoResetStamp"
+          BeforeTargets="ArkExportProto"
+          Condition="'$(ArkExportProto)' == 'true'">
+    <PropertyGroup>
+      <_ArkExportProtoStamp>$(IntermediateOutputPath)ArkExportProto.$([MSBuild]::StableStringHash($([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(ArkExportProtoDir)')))).stamp</_ArkExportProtoStamp>
+    </PropertyGroup>
+    <ReadLinesFromFile File="$(_ArkExportProtoStamp)" Condition="Exists('$(_ArkExportProtoStamp)')">
+      <Output TaskParameter="Lines" ItemName="_ArkExportProtoManifest" />
+    </ReadLinesFromFile>
+    <Delete Files="$(_ArkExportProtoStamp)" Condition="'@(_ArkExportProtoManifest->Exists())' != '@(_ArkExportProtoManifest)'" />
+  </Target>
 
   <Target Name="ArkExportProto"
           AfterTargets="Build"
-          Condition="'$(ArkExportProto)' == 'true' And '$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true' And Exists('$(TargetDir)$(TargetName).runtimeconfig.json')">
-    <PropertyGroup>
-      <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == '' And Exists('$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll')">$(MSBuildThisFileDirectory)..\tools\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
-      <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == ''">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
-    </PropertyGroup>
+          Condition="'$(ArkExportProto)' == 'true' And '$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true' And Exists('$(TargetDir)$(TargetName).runtimeconfig.json')"
+          Inputs="$(TargetPath);$(_ArkProtoExportRunner);@(ArkAdditionalProto);@(_ArkExportProtoEmbeddedSchema->Exists())"
+          Outputs="$(_ArkExportProtoStamp)">
     <Delete Files="$(ArkExportProtoDir)/.ark-export-active" />
     <Exec Command="dotnet &quot;$(_ArkProtoExportRunner)&quot; &quot;$(TargetPath)&quot; &quot;$(ArkExportProtoDir)&quot;" />
+    <ItemGroup>
+      <_ArkExportedProto Include="$(ArkExportProtoDir)/**/*.proto" />
+      <_ArkExportedProto Include="@(ArkAdditionalProto->'$(ArkExportProtoDir)/%(Filename)%(Extension)')" Condition="Exists('$(ArkExportProtoDir)/.ark-export-active')" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_ArkExportProtoStamp)" Lines="@(_ArkExportedProto->'%(FullPath)'->Distinct())" Overwrite="true" />
+    <Touch Files="$(_ArkExportProtoStamp)" AlwaysCreate="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_ArkExportProtoStamp)" />
+    </ItemGroup>
   </Target>
 
   <Target Name="ArkCopyAdditionalProto"

@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Builder;
@@ -209,7 +211,7 @@ public sealed class McpHostingTests
 
     private static async Task<McpClient> _createClientAsync(
         WebApplication app,
-        string? token = null,
+        [NotPersonalData("Synthetic test bearer token.")] string? token = null,
         string version = "1")
     {
         var httpClient = app.GetTestServer().CreateClient();

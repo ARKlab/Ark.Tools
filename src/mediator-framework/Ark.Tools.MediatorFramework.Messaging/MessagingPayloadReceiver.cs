@@ -114,8 +114,19 @@ public sealed class MessagingPayloadReceiver
         IMessagingCodec codec,
         CancellationToken ctk)
     {
+        ArgumentNullException.ThrowIfNull(headers);
         ArgumentNullException.ThrowIfNull(codec);
         await Task.CompletedTask.ConfigureAwait(false);
+        // Plain inline bytes within the limit cannot trip the bounded stream, so the codec reads them in place.
+        if (transportPayload.Length <= _network.MaximumDecompressedPayloadBytes
+            && !headers.ContainsKey(MessagingHeaders.ContentEncoding)
+            && !headers.ContainsKey(MessagingHeaders.PayloadAttachmentId)
+            && !headers.ContainsKey(MessagingHeaders.PayloadAttachmentLength)
+            && !headers.ContainsKey(MessagingHeaders.PayloadAttachmentSha256))
+        {
+            return new MessagingStreamPayloadReader(transportPayload, codec);
+        }
+
         return new MessagingStreamPayloadReader(
             token => PreparePayloadAsync(headers, transportPayload, token),
             codec);
@@ -279,7 +290,7 @@ public sealed class MessagingPayloadReceiver
         }
     }
 
-    private sealed class SequenceReadStream : Stream
+    internal sealed class SequenceReadStream : Stream
     {
         private readonly ReadOnlySequence<byte> _sequence;
         private SequencePosition _position;
