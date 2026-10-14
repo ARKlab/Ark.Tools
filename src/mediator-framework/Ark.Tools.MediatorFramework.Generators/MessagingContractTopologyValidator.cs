@@ -75,7 +75,7 @@ public static class MessagingContractTopologyValidator
             property.IsStatic
             && property.Type is INamedTypeSymbol parserType
             && parserType.OriginalDefinition.MetadataName == "MessageParser`1"
-            && parserType.OriginalDefinition.ContainingNamespace.ToDisplayString() == "Google.Protobuf"
+            && parserType.OriginalDefinition.ContainingNamespace._isNamespace("Google.Protobuf")
             && parserType.TypeArguments.Length == 1
             && SymbolEqualityComparer.Default.Equals(parserType.TypeArguments[0], contract));
         return hasMessageInterface && hasTypedMessageInterface && parser;
@@ -83,7 +83,7 @@ public static class MessagingContractTopologyValidator
 
     private static bool _isGoogleProtobufMessage(INamedTypeSymbol @interface)
     {
-        return @interface.OriginalDefinition.ContainingNamespace.ToDisplayString() == "Google.Protobuf"
+        return @interface.OriginalDefinition.ContainingNamespace._isNamespace("Google.Protobuf")
             && @interface.OriginalDefinition.MetadataName is "IMessage" or "IMessage`1";
     }
 }
