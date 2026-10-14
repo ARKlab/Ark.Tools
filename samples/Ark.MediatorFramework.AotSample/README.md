@@ -21,7 +21,7 @@ API. The findings behind it are in the
 | `Core/Hosts/Web/…Web.WebInterface` | Minimal API with generated endpoints, `CreateSlimBuilder`, no MVC. Sends through the outbox |
 | `Core/Hosts/Web/…Web.OutboxProcessor` | Moves outbox rows to Service Bus |
 | `Core/Hosts/Web/…Web.Processor` | Service Bus receiver for `PrintBookCommand` |
-| `Core/Hosts/Web/…Web.Tests` | End-to-end test of the three processes, in-process (JIT) |
+| `Core/Hosts/Web/…Web.Tests` | End-to-end test of the three processes, in-process (JIT) with reflection-based JSON off, as in the published apps |
 
 ## What differs from the Core sample
 
