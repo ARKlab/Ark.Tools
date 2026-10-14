@@ -176,6 +176,10 @@ public sealed class SinkTaintAnalyzerTests
     [DataRow("var e = new Exception(); var data = e.Data; data[\"email\"] = c.Email;")]
     [DataRow("var e = new Exception(); var data = e.Data; data.Add(\"email\", c.Email);")]
     [DataRow("var e = new Exception(); System.Collections.IDictionary data; data = e.Data; data[\"email\"] = c.Email;")]
+    [DataRow("var e = new Exception(); object data = e.Data; ((System.Collections.IDictionary)data)[\"email\"] = c.Email;")]
+    [DataRow("var e = new Exception(); var data = (System.Collections.Hashtable)e.Data; data.Add(\"email\", c.Email);")]
+    [DataRow("var e = new Exception(); ((System.Collections.IDictionary)e.Data.SyncRoot)[\"email\"] = c.Email;")]
+    [DataRow("var e = new Exception(); ((System.Collections.IDictionary)e.Data.SyncRoot).Add(\"email\", c.Email);")]
     public async Task ExceptionsWithClassifiedValues_ReportError(string statement)
     {
         var diagnostics = await _analyzeAsync(_method(statement)).ConfigureAwait(false);
@@ -188,6 +192,17 @@ public sealed class SinkTaintAnalyzerTests
     {
         var diagnostics = await _analyzeAsync(_method(
             "var e = new ArgumentException(c.Key, nameof(c)); e.Data[\"key\"] = c.Key;")).ConfigureAwait(false);
+        diagnostics.Should().BeEmpty();
+    }
+
+    /// <summary>Assignments and Add calls that cannot reach an exception data dictionary are not exception sinks.</summary>
+    [TestMethod]
+    [DataRow("var list = new System.Collections.Generic.List<string>(); list.Add(c.Email);")]
+    [DataRow("var o = new Customer(); o.Status = c.Email;")]
+    [DataRow("var total = 0; total += c.Email.Length;")]
+    public async Task UnrelatedAssignmentsAndAdds_AreAccepted(string statement)
+    {
+        var diagnostics = await _analyzeAsync(_method(statement)).ConfigureAwait(false);
         diagnostics.Should().BeEmpty();
     }
 
