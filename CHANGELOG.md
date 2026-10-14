@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
+
+### Fixed
+
+- `DataKeyComparer` and `DataKeyHashSet`: a null key property no longer resets the hash code, so rows that differ only in the keys before a null key no longer collide and slow the set down.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added
