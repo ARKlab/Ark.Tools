@@ -246,8 +246,8 @@ The project uses **System.Text.Json with Source Generation** for high-performanc
 - **CoreApiJsonSerializerContext** (`Ark.Reference.Core.WebInterface.JsonContext`): Contains source-generated serialization metadata for all API types (DTOs, Queries, Requests, Messages)
 - **ArkProblemDetailsJsonSerializerContext** (`Ark.Tools.AspNetCore.JsonContext`): Contains source-generated serialization metadata for ProblemDetails error responses (shared across all Ark applications)
 - **Configuration**: Registered in `Startup.cs` via `JsonTypeInfoResolver.Combine` with minimal reflection fallback
-- **Helper Method**: `Ex.CreateCoreApiJsonSerializerOptions()` in the Application layer creates JsonSerializerOptions configured with Ark defaults (NodaTime, converters, naming policies)
-- **Important**: JsonSerializerOptions get locked when passed to a JsonSerializerContext constructor, so separate instances must be created for each context
+- **Helper Method**: `Ex.CreateCoreApiJsonSerializerOptions()` in the Application layer creates JsonSerializerOptions configured with Ark defaults (NodaTime, converters, naming policies) and the strictness flags
+- **Important**: a context used as a resolver follows the options it is given, so use the contexts' `Default` instances and set Ark defaults and strictness flags on the consuming options (HTTP, MVC, Rebus)
 - **Benefits**:
   - Compile-time code generation eliminates runtime reflection
   - Faster startup time and lower memory usage
@@ -261,18 +261,19 @@ To add new types to source generation:
 
 Example configuration pattern:
 ```csharp
-// Create contexts with Ark-configured options (separate instances due to locking)
-var coreApiOptions = Ex.CreateCoreApiJsonSerializerOptions();
-var coreApiContext = new CoreApiJsonSerializerContext(coreApiOptions);
-
-var problemDetailsOptions = Ex.CreateCoreApiJsonSerializerOptions();
-var problemDetailsContext = new ArkProblemDetailsJsonSerializerContext(problemDetailsOptions);
-
 // Combine contexts with prioritized resolution
 var combinedResolver = JsonTypeInfoResolver.Combine(
-    coreApiContext,           // Application types (Priority 1)
-    problemDetailsContext,    // Error types (Priority 2)
-    new DefaultJsonTypeInfoResolver()); // Reflection fallback (Priority 3)
+    CoreApiJsonSerializerContext.Default,           // Application types (Priority 1)
+    ArkProblemDetailsJsonSerializerContext.Default, // Error types (Priority 2)
+    new DefaultJsonTypeInfoResolver());             // Reflection fallback (Priority 3)
+
+// Strictness flags go on the options that use the contexts
+services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+{
+    options.JsonSerializerOptions.RespectNullableAnnotations = true;
+    options.JsonSerializerOptions.RespectRequiredConstructorParameters = true;
+    options.JsonSerializerOptions.TypeInfoResolver = combinedResolver;
+});
 ```
 
 ### Error Handling & Business Rules
