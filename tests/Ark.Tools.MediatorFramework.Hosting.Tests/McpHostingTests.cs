@@ -4,14 +4,19 @@
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
 using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
@@ -94,6 +99,40 @@ public sealed class McpHostingTests
         result.IsError.Should().NotBe(true);
         result.StructuredContent.Should().NotBeNull();
         result.StructuredContent!.Value.GetProperty("message").GetString().Should().Be("7:from-mcp");
+    }
+
+    /// <summary>Verifies a tool result serialized with the HTTP JSON options has the HTTP response shape.</summary>
+    [TestMethod]
+    public async Task ToolResultMatchesHttpResponseWithSharedJsonOptions()
+    {
+        // Each fixture container backs a single host, so HTTP and MCP get one each.
+        await using var httpFixture = new HostingTestFixture();
+        await using var fixture = new HostingTestFixture();
+        await using var httpApp = httpFixture.BuildMinimalApiHost();
+        var jsonOptions = httpApp.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+        // A non-default naming policy, so the MCP SDK defaults cannot produce the same shape by chance.
+        jsonOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+        await httpApp.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        using var httpClient = httpApp.GetTestServer().CreateClient();
+        var httpResponse = JsonNode.Parse(await httpClient.GetStringAsync(
+            new Uri("/api/v1/hosting/queries/7?Value=shared", UriKind.Relative),
+            httpApp.Lifetime.ApplicationStopping).ConfigureAwait(false));
+        await using var app = await fixture.StartMcpHostAsync(jsonOptions).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.query",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = 7, ["value"] = "shared" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        result.StructuredContent.Should().NotBeNull();
+        result.StructuredContent!.Value.GetProperty("server_stamp").GetString().Should().Be("hosting-server");
+        var mcpResult = JsonNode.Parse(result.StructuredContent.Value.GetRawText());
+        JsonNode.DeepEquals(mcpResult, httpResponse).Should().BeTrue(
+            "MCP returned {0} while HTTP returned {1}",
+            mcpResult?.ToJsonString(),
+            httpResponse?.ToJsonString());
     }
 
     /// <summary>Verifies validation failures become safe structured MCP errors.</summary>
