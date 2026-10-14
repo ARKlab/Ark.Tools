@@ -110,8 +110,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value);
             // The referenced-assembly scan reads metadata symbols only, so it reruns when references change.
-            var referencedEndpoints = context.CompilationProvider
-                .WithComparer(MetadataReferencesComparer.Instance)
+            var referencedEndpoints = context.CompilationProvider._referencesOnly()
                 .Combine(endpointAssemblies)
                 .Select(static (pair, cancellationToken) => new EquatableArray<EndpointModel>(
                     GetReferencedEndpoints(pair.Left, pair.Right.Values, cancellationToken)))

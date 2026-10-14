@@ -59,8 +59,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .Collect()
             .Select(static (networks, _) => networks._toEquatableArray());
         // Referenced networks read metadata symbols only, so they rerun when references change.
-        var referencedNetworks = context.CompilationProvider
-            .WithComparer(MetadataReferencesComparer.Instance)
+        var referencedNetworks = context.CompilationProvider._referencesOnly()
             .Combine(hostAssemblies)
             .Select(static (pair, cancellationToken) => MessagingFunctionsParser._readReferencedNetworks(
                 pair.Left,

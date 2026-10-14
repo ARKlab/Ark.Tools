@@ -8,6 +8,7 @@ using Ark.Tools.Solid;
 using AwesomeAssertions;
 
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -841,6 +842,43 @@ public sealed class GeneratorIncrementalityTests
             cachedSteps: ["MessagingFunctionsReferencedNetworks"],
             unchangedSteps: ["MessagingFunctionsHostAttributes", "MessagingFunctionsNetworks", "MessagingFunctionsHostSpecs", "MessagingFunctionsSpecs"],
             expectedOutput: ["typeof(global::MessagingContracts.OrdersNetwork)", "\"OrdersMessaging\""]);
+    }
+
+    [TestMethod]
+    [DataRow(typeof(ArkMinimalApiEndpointGenerator))]
+    [DataRow(typeof(ArkGrpcEndpointGenerator))]
+    [DataRow(typeof(ArkRebusEndpointGenerator))]
+    [DataRow(typeof(McpToolGenerator))]
+    [DataRow(typeof(AzureFunctions.Generators.AzureFunctionsEndpointGenerator))]
+    [DataRow(typeof(AzureFunctions.Generators.MessagingFunctionsGenerator))]
+    public void GeneratorDoesNotRetainAnEarlierCompilation(Type generatorType)
+    {
+        var (driver, later, earlier) = _runOnEditedCompilation((IIncrementalGenerator)Activator.CreateInstance(generatorType)!);
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        // The referenced-assembly scan caches across source edits; it must not do so by pinning a whole compilation.
+        earlier.IsAlive.Should().BeFalse("the generator must not keep the compilation of an earlier run alive");
+        GC.KeepAlive(driver);
+        GC.KeepAlive(later);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static (GeneratorDriver Driver, Compilation Later, WeakReference Earlier) _runOnEditedCompilation(IIncrementalGenerator generator)
+    {
+        var unrelatedTree = CSharpSyntaxTree.ParseText(_unrelatedSource, path: "Unrelated.cs");
+        var earlier = CSharpCompilation.Create(
+            "Retention",
+            [unrelatedTree],
+            _getReferences(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(generator);
+        driver = driver.RunGenerators(earlier);
+        var later = earlier.ReplaceSyntaxTree(unrelatedTree, CSharpSyntaxTree.ParseText(_unrelatedEdit, path: "Unrelated.cs"));
+        driver = driver.RunGenerators(later);
+        return (driver, later, new WeakReference(earlier));
     }
 
     private static void _assertReusesCachedOutput(

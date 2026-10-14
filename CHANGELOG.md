@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
+- The MediatorFramework Minimal API, gRPC, Rebus, MCP and Azure Functions source generators no longer keep an earlier copy of the project's compilation alive in the IDE between edits, which lowers IDE memory use.
 
 ### Fixed
 

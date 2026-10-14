@@ -135,6 +135,23 @@ internal sealed class MetadataReferencesComparer : IEqualityComparer<Compilation
         => obj.AssemblyName is null ? 0 : StringComparer.Ordinal.GetHashCode(obj.AssemblyName);
 }
 
+/// <summary>Builds the input of pipeline steps that read only referenced (metadata) symbols.</summary>
+internal static class ReferenceScope
+{
+    /// <summary>
+    /// Projects each compilation to a copy without syntax trees, compared by <see cref="MetadataReferencesComparer"/>,
+    /// so the steps rerun only when references change. An input compared equal keeps the previous item, and keeping
+    /// the compilation itself would pin its syntax trees and source symbols until references change. The copy shares
+    /// the bound references, so it sees the same metadata symbols.
+    /// </summary>
+    /// <param name="compilations">The compilation provider.</param>
+    /// <returns>The references-only compilation provider.</returns>
+    public static IncrementalValueProvider<Compilation> _referencesOnly(this IncrementalValueProvider<Compilation> compilations)
+        => compilations
+            .Select(static (compilation, _) => compilation.RemoveAllSyntaxTrees())
+            .WithComparer(MetadataReferencesComparer.Instance);
+}
+
 /// <summary>A symbol-free description of a source location carried by generator specifications.</summary>
 internal readonly struct LocationSpec : IEquatable<LocationSpec>
 {

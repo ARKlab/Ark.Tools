@@ -123,8 +123,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .WithTrackingName(_endpointSpecStage)
             .Collect();
         // Referenced contract assemblies are scanned only when the metadata references change.
-        var referencedEndpoints = context.CompilationProvider
-            .WithComparer(MetadataReferencesComparer.Instance)
+        var referencedEndpoints = context.CompilationProvider._referencesOnly()
             .Combine(hosts.Select(static (values, _) => new EquatableArray<string>(values
                 .Where(static host => !host.MarkerIsInSource)
                 .Select(static host => host.MarkerAssemblyName)
