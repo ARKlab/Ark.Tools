@@ -56,7 +56,7 @@ links outside `docs/`, and verify that all Markdown links still resolve.
 
 ### Prerequisites
 - .NET SDK 10.0.100 (specified in `global.json`)
-- Docker (for integration tests requiring SQL Server, Azurite and the Service Bus emulator)
+- Docker (for integration tests requiring SQL Server, Azurite, the Service Bus emulator and an SFTP server)
 
 ### Basic Commands
 ```bash
@@ -86,7 +86,7 @@ dotnet test --filter "TestCategory=sqlstateprovider&DisplayName~Update"
 
 ### Start Test Dependencies
 The root `docker-compose.yml` starts the same services as CI: SQL Server (`1433`),
-Azurite (`10000`-`10002`) and the Service Bus emulator (`5672`, `5300`).
+Azurite (`10000`-`10002`), the Service Bus emulator (`5672`, `5300`) and SFTP (`2222`).
 Without them, integration tests fail with connection errors, which are not
 regressions.
 
@@ -104,8 +104,10 @@ docker compose down
 
 The messaging tests read `ARK_SERVICEBUS_EMULATOR_CONNECTION_STRING` and fall back
 to the local emulator defaults, so no environment variable is needed with this
-compose file. The Azure Functions boundary tests also need Azure Functions Core
-Tools (`npm install --global azure-functions-core-tools@4`).
+compose file. The SFTP round-trip tests run only when `ARK_SFTP_TEST_URI` is set
+(`sftp://ark:ark@127.0.0.1:2222/upload` with this compose file, as in CI) and
+are reported as inconclusive otherwise. The Azure Functions boundary tests also
+need Azure Functions Core Tools (`npm install --global azure-functions-core-tools@4`).
 
 ## Code Style & Conventions
 

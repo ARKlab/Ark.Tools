@@ -2,10 +2,11 @@
 
 ## Test execution
 
-Integration tests need SQL Server, Azurite and the Service Bus emulator. Start
+Integration tests need SQL Server, Azurite, the Service Bus emulator and SFTP. Start
 them with `docker compose up -d` from the repository root; the root
 [`docker-compose.yml`](docker-compose.yml) runs the same services as CI. Stop them
-with `docker compose down`.
+with `docker compose down`. The SFTP tests also need
+`ARK_SFTP_TEST_URI=sftp://ark:ark@127.0.0.1:2222/upload`; without it they are skipped.
 
 The repository uses the native Microsoft.Testing.Platform runner selected in
 `global.json`. Non-Reqnroll test projects reference `MSTest.SourceGeneration`
@@ -28,7 +29,7 @@ Inspect generated metadata with `-p:EmitCompilerGeneratedFiles=true` on the buil
 
 For an explicitly requested complete-run performance comparison:
 
-1. Start the same SQL Server, Azurite and Service Bus services used by
+1. Start the same SQL Server, Azurite, Service Bus and SFTP services used by
    [the publish workflow](.github/workflows/publish_nuget.yml) with
    `docker compose up -d` from the repository root (see
    [`docker-compose.yml`](docker-compose.yml)), and install Azure Functions Core

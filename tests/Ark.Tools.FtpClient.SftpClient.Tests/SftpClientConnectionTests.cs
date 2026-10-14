@@ -17,8 +17,8 @@ namespace Ark.Tools.FtpClient.SftpClient.Tests;
 /// <summary>
 /// SFTP transfers, including cancellation while the server has stopped answering. The round-trip and mid-transfer
 /// tests need a real SFTP server and are skipped without one; the never-answers test is self-contained.
-/// Set ARK_SFTP_TEST_URI to sftp://user:password@host:port/writable-folder, e.g. for a local
-/// <c>docker run -p 127.0.0.1:2222:22 atmoz/sftp:alpine ark:ark:::upload</c> use sftp://ark:ark@127.0.0.1:2222/upload.
+/// Set ARK_SFTP_TEST_URI to sftp://user:password@host:port/writable-folder, e.g. for the sftp service of the root
+/// docker-compose.yml (<c>docker compose up -d sftp</c>, as in CI) use sftp://ark:ark@127.0.0.1:2222/upload.
 /// </summary>
 [TestClass]
 public class SftpClientConnectionTests
