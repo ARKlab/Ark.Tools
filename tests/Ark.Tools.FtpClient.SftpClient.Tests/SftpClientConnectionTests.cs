@@ -6,6 +6,8 @@ using Ark.Tools.FtpClient.Core;
 
 using AwesomeAssertions;
 
+using Renci.SshNet.Common;
+
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -37,12 +39,33 @@ public class SftpClientConnectionTests
         RandomNumberGenerator.Fill(content);
         using var serverConfig = server.CreateConfig(server.Endpoint);
         using var connection = new SftpClientConnection(serverConfig);
+        try
+        {
+            await connection.UploadFileAsync(path, content, TestContext.CancellationToken).ConfigureAwait(false);
+            var downloaded = await connection.DownloadFileAsync(path, TestContext.CancellationToken).ConfigureAwait(false);
 
-        await connection.UploadFileAsync(path, content, TestContext.CancellationToken).ConfigureAwait(false);
-        var downloaded = await connection.DownloadFileAsync(path, TestContext.CancellationToken).ConfigureAwait(false);
+            downloaded.Should().Equal(content);
+            (await connection.IsConnectedAsync(TestContext.CancellationToken).ConfigureAwait(false)).Should().BeTrue();
+        }
+        finally
+        {
+            await _deleteRemoteFileAsync(server, path).ConfigureAwait(false);
+        }
+    }
 
-        downloaded.Should().Equal(content);
-        (await connection.IsConnectedAsync(TestContext.CancellationToken).ConfigureAwait(false)).Should().BeTrue();
+    [TestMethod]
+    public async Task DownloadFileAsync_ServerNeverAnswersThenTokenIsCancelled_ShouldStop()
+    {
+        // Accepts the TCP connection but never sends the SSH identification, like a server hung before the handshake.
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        using var config = new FtpConfig(new Uri($"sftp://127.0.0.1:{((IPEndPoint)listener.LocalEndpoint).Port}"), new NetworkCredential("user", "placeholder"));
+        using var connection = new SftpClientConnection(config);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        var act = async () => await connection.DownloadFileAsync("file.bin", cts.Token).WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
+
+        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
     }
 
     [TestMethod]
@@ -50,48 +73,80 @@ public class SftpClientConnectionTests
     {
         var server = _getServer();
         var path = $"{server.Folder}/{Guid.NewGuid():N}.bin";
-        using (var serverConfig = server.CreateConfig(server.Endpoint))
-        using (var setup = new SftpClientConnection(serverConfig))
+        try
         {
-            await setup.UploadFileAsync(path, new byte[_fileSize], TestContext.CancellationToken).ConfigureAwait(false);
+            using (var serverConfig = server.CreateConfig(server.Endpoint))
+            using (var setup = new SftpClientConnection(serverConfig))
+            {
+                await setup.UploadFileAsync(path, new byte[_fileSize], TestContext.CancellationToken).ConfigureAwait(false);
+            }
+
+            var proxy = StallingProxy.Start(server.Endpoint);
+            await using var proxyScope = proxy.ConfigureAwait(false);
+            using var proxyConfig = server.CreateConfig(proxy.Endpoint);
+            using var connection = new SftpClientConnection(proxyConfig);
+            using var cts = new CancellationTokenSource();
+
+            var download = connection.DownloadFileAsync(path, cts.Token);
+            await proxy.Stalled.WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
+            await cts.CancelAsync().ConfigureAwait(false);
+
+            var act = async () => await download.WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
+            await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+            (await connection.IsConnectedAsync(TestContext.CancellationToken).ConfigureAwait(false)).Should().BeFalse();
         }
-
-        var proxy = StallingProxy.Start(server.Endpoint);
-        await using var proxyScope = proxy.ConfigureAwait(false);
-        using var proxyConfig = server.CreateConfig(proxy.Endpoint);
-        using var connection = new SftpClientConnection(proxyConfig);
-        using var cts = new CancellationTokenSource();
-
-        var download = connection.DownloadFileAsync(path, cts.Token);
-        await proxy.Stalled.WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
-        await cts.CancelAsync().ConfigureAwait(false);
-
-        var act = async () => await download.WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
-        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
-        (await connection.IsConnectedAsync(TestContext.CancellationToken).ConfigureAwait(false)).Should().BeFalse();
+        finally
+        {
+            await _deleteRemoteFileAsync(server, path).ConfigureAwait(false);
+        }
     }
 
     [TestMethod]
     public async Task PoolUploadFileAsync_ServerStallsThenTokenIsCancelled_ShouldStopAndNotReuseTheConnection()
     {
         var server = _getServer();
-        var proxy = StallingProxy.Start(server.Endpoint);
-        await using var proxyScope = proxy.ConfigureAwait(false);
-        using var proxyConfig = server.CreateConfig(proxy.Endpoint);
-        using var pool = new FtpClientPool(1, proxyConfig, new SFtpClientConnectionFactory());
-        using var cts = new CancellationTokenSource();
+        var path = $"{server.Folder}/{Guid.NewGuid():N}.bin";
+        try
+        {
+            var proxy = StallingProxy.Start(server.Endpoint);
+            await using var proxyScope = proxy.ConfigureAwait(false);
+            using var proxyConfig = server.CreateConfig(proxy.Endpoint);
+            using var pool = new FtpClientPool(1, proxyConfig, new SFtpClientConnectionFactory());
+            using var cts = new CancellationTokenSource();
 
-        var upload = pool.UploadFileAsync($"{server.Folder}/{Guid.NewGuid():N}.bin", new byte[_fileSize], cts.Token);
-        await proxy.Stalled.WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
-        await cts.CancelAsync().ConfigureAwait(false);
+            var upload = pool.UploadFileAsync(path, new byte[_fileSize], cts.Token);
+            await proxy.Stalled.WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
+            await cts.CancelAsync().ConfigureAwait(false);
 
-        var act = async () => await upload.WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
-        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+            var act = async () => await upload.WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
+            await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
 
-        using var listCts = new CancellationTokenSource(_bound);
-        var entries = await pool.ListDirectoryAsync(server.Folder, listCts.Token).ConfigureAwait(false);
-        entries.Should().NotBeNull();
-        proxy.Connections.Should().Be(2, "the pool must drop the connection of the cancelled upload and open a new one");
+            using var listCts = new CancellationTokenSource(_bound);
+            var entries = await pool.ListDirectoryAsync(server.Folder, listCts.Token).ConfigureAwait(false);
+            entries.Should().NotBeNull();
+            proxy.Connections.Should().Be(2, "the pool must drop the connection of the cancelled upload and open a new one");
+        }
+        finally
+        {
+            // the cancelled upload may have left a partial file
+            await _deleteRemoteFileAsync(server, path).ConfigureAwait(false);
+        }
+    }
+
+    // Uses its own connection: the test's connection may have been disconnected by the cancellation under test.
+    private static async Task _deleteRemoteFileAsync(SftpServer server, string path)
+    {
+        using var cleanupCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        using var config = server.CreateConfig(server.Endpoint);
+        using var connection = new SftpClientConnection(config);
+        try
+        {
+            await connection.DeleteFileAsync(path, cleanupCts.Token).ConfigureAwait(false);
+        }
+        catch (SftpPathNotFoundException)
+        {
+            // the transfer never created the file
+        }
     }
 
     private static SftpServer _getServer()
