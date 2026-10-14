@@ -217,6 +217,14 @@ public static class Program
             result.ExitCode.Should().Be(0, result.Output);
             File.GetLastWriteTimeUtc(generatedProto).Should().Be(timestamp);
 
+            var mediatorProto = Path.Join(output, "ark", "mediator.proto");
+            var expectedMediatorProto = await File.ReadAllTextAsync(mediatorProto).ConfigureAwait(false);
+            await File.WriteAllTextAsync(mediatorProto, "stale").ConfigureAwait(false);
+            File.SetLastWriteTimeUtc(Path.Join(consumer, "bin", "Debug", "net10.0", "Ark.Tools.MediatorFramework.Grpc.dll"), DateTime.UtcNow);
+            result = await _runDotnetAsync("build", consumer, consumer, "--no-restore", "-t:ArkExportProto").ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            (await File.ReadAllTextAsync(mediatorProto).ConfigureAwait(false)).Should().Be(expectedMediatorProto);
+
             foreach (var exported in new[] { Path.Join(output, "ark", "nodatime.proto"), Path.Join(output, "hand.proto") })
             {
                 File.Delete(exported);

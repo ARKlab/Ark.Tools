@@ -7,6 +7,11 @@
     <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == ''">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The exporter loads the embedded ark/*.proto schemas from these assemblies in the host output -->
+    <_ArkExportProtoEmbeddedSchema Include="$(TargetDir)Ark.Tools.MediatorFramework.Grpc.dll;$(TargetDir)Ark.Tools.Nodatime.Protobuf.dll" />
+  </ItemGroup>
+
   <!-- Runs before ArkExportProto checks its Outputs. One stamp per destination, so switching
        ArkExportProtoDir does not reuse another directory's state. The stamp lists the exported
        files; re-export when any of them was deleted. -->
@@ -25,7 +30,7 @@
   <Target Name="ArkExportProto"
           AfterTargets="Build"
           Condition="'$(ArkExportProto)' == 'true' And '$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true' And Exists('$(TargetDir)$(TargetName).runtimeconfig.json')"
-          Inputs="$(TargetPath);$(_ArkProtoExportRunner);@(ArkAdditionalProto)"
+          Inputs="$(TargetPath);$(_ArkProtoExportRunner);@(ArkAdditionalProto);@(_ArkExportProtoEmbeddedSchema->Exists())"
           Outputs="$(_ArkExportProtoStamp)">
     <Delete Files="$(ArkExportProtoDir)/.ark-export-active" />
     <Exec Command="dotnet &quot;$(_ArkProtoExportRunner)&quot; &quot;$(TargetPath)&quot; &quot;$(ArkExportProtoDir)&quot;" />
