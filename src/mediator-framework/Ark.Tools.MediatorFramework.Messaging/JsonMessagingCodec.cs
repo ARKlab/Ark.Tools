@@ -44,8 +44,7 @@ public sealed class JsonMessagingCodec : IMessagingCodec
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(writer);
         var typeInfo = _getTypeInfo<T>();
-        await JsonSerializer.SerializeAsync(writer.AsStream(leaveOpen: true), value, typeInfo, ctk)
-            .ConfigureAwait(false);
+        await JsonSerializer.SerializeAsync(writer, value, typeInfo, ctk).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
