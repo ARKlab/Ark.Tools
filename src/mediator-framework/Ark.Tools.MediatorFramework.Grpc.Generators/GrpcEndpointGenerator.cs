@@ -40,6 +40,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private const string ReferencedProtoContractsTrackingName = "GrpcReferencedProtoContracts";
         private const string ProtoContractAttribute = "ProtoBuf.ProtoContractAttribute";
         private const string OutputTrackingName = "GrpcOutput";
+        private const string EmissionInputTrackingName = "GrpcEmissionInput";
         private const string AsyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
         private static readonly string[] _collectionPrefixes =
         [
@@ -75,8 +76,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Select(static (endpoint, _) => endpoint!.Value)
                 .WithTrackingName(ModelTrackingName);
             // Referenced-assembly scans read metadata symbols only, so they rerun when references change.
-            var referenceScope = context.CompilationProvider
-                .WithComparer(MetadataReferencesComparer.Instance);
+            var referenceScope = context.CompilationProvider._referencesOnly();
             var referencedEndpoints = referenceScope
                 .Combine(endpointAssemblies)
                 .Select(static (pair, cancellationToken) => new EquatableArray<EndpointModel>(
@@ -125,9 +125,26 @@ namespace Ark.Tools.MediatorFramework.Generators
                     cancellationToken))
                 .WithTrackingName(OutputTrackingName);
 
+            // The emitted source reads no locations or diagnostics, so an edit that only shifts lines leaves the
+            // emission input unchanged.
+            var emission = output
+                .Select(static (output, _) => output.Model is null
+                    ? null
+                    : output.Model with
+                    {
+                        Items = new EquatableArray<EndpointModel>(output.Model.Items.Values
+                            .Select(static item => item.ForEmission())
+                            .ToImmutableArray()),
+                    })
+                .WithTrackingName(EmissionInputTrackingName);
             context.RegisterSourceOutput(
-                output,
-                static (spc, output) => Emit(spc, output));
+                emission,
+                static (spc, model) => Emit(spc, model));
+
+            // Diagnostics only, at the real source locations.
+            context.RegisterSourceOutput(
+                output.Select(static (output, _) => output.Diagnostics),
+                static (spc, diagnostics) => ReportDiagnostics(spc, diagnostics));
         }
 
         private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
@@ -463,14 +480,10 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static bool IsType(INamedTypeSymbol type, string metadataName, string namespaceName)
             => string.Equals(type.MetadataName, metadataName, StringComparison.Ordinal)
-                && string.Equals(type.ContainingNamespace.ToDisplayString(), namespaceName, StringComparison.Ordinal);
+                && type.ContainingNamespace._isNamespace(namespaceName);
 
         private static bool IsAttribute(AttributeData attribute, string metadataName)
-            => attribute.AttributeClass is not null
-                && string.Equals(attribute.AttributeClass.MetadataName, metadataName.Substring(metadataName.LastIndexOf('.') + 1), StringComparison.Ordinal)
-                && string.Equals(
-                    attribute.AttributeClass.ContainingNamespace.ToDisplayString(),
-                    metadataName[..metadataName.LastIndexOf('.')], StringComparison.Ordinal);
+            => attribute.AttributeClass._isFullName(metadataName);
 
         private static bool IsAttachmentCollection(ITypeSymbol type, INamedTypeSymbol? attachmentType)
         {
@@ -479,11 +492,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (type is not INamedTypeSymbol named || !named.IsGenericType
                 || !IsAttachmentType(named.TypeArguments[0], attachmentType))
                 return false;
-            return named.OriginalDefinition.ToDisplayString() is
-                "System.Collections.Generic.IEnumerable<T>" or
-                "System.Collections.Generic.List<T>" or
-                "System.Collections.Generic.IReadOnlyList<T>" or
-                "System.Collections.Generic.IReadOnlyCollection<T>";
+            var definition = named.OriginalDefinition;
+            return definition.MetadataName is "IEnumerable`1" or "List`1" or "IReadOnlyList`1" or "IReadOnlyCollection`1"
+                && definition._isMetadataName("System.Collections.Generic", definition.MetadataName);
         }
 
         private static ITypeSymbol? GetAsyncEnumerableElement(ITypeSymbol type, INamedTypeSymbol? asyncEnumerableType)
@@ -804,18 +815,21 @@ namespace Ark.Tools.MediatorFramework.Generators
             return sb.ToString();
         }
 
-        private static void Emit(SourceProductionContext context, GrpcOutput output)
+        private static void ReportDiagnostics(SourceProductionContext context, EquatableArray<DiagnosticInfo> diagnostics)
         {
-            foreach (var diagnostic in output.Diagnostics.Values)
+            foreach (var diagnostic in diagnostics.Values)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
                     diagnostic.Descriptor,
                     diagnostic.Location.ToLocation(),
                     diagnostic.Arguments.Values.ToArray<object?>()));
             }
+        }
 
-            if (output.Model is not null)
-                context.AddSource("ArkGeneratedEndpoints.Grpc.g.cs", SourceText.From(Render(output.Model, context.CancellationToken), Encoding.UTF8));
+        private static void Emit(SourceProductionContext context, GrpcRenderModel? model)
+        {
+            if (model is not null)
+                context.AddSource("ArkGeneratedEndpoints.Grpc.g.cs", SourceText.From(Render(model, context.CancellationToken), Encoding.UTF8));
         }
 
         private static string HandlerService(EndpointModel item)
@@ -1103,7 +1117,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 if (precomputed is null)
                     exportIssue = "is a value object over '" + DisplayName(valueObjectPrimitive) + "', which has no protobuf scalar; wrap a string, Guid, bool, int, long, float or double";
             }
-            else if (element.ToDisplayString() == "System.Guid" && CompatibilityLevel(property, type) < 300)
+            else if (element is INamedTypeSymbol guid && guid._isFullName("System.Guid") && CompatibilityLevel(property, type) < 300)
             {
                 exportIssue = "is a Guid, which protobuf-net serializes as bcl.Guid below CompatibilityLevel.Level300; add [assembly: ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level300)] to serialize it as a string";
             }
@@ -1365,7 +1379,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static bool IsEvolvableEnum(INamedTypeSymbol named) =>
             named.IsGenericType && named.Arity is 1 or 2
             && named.OriginalDefinition.Name == "EvolvableEnum"
-            && named.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Core";
+            && named.ContainingNamespace._isNamespace("Ark.Tools.Core");
 
         private static string EvolvableEnumProtoType(INamedTypeSymbol type)
         {
@@ -1537,9 +1551,12 @@ namespace Ark.Tools.MediatorFramework.Generators
             public bool IsStreaming => StreamElement is not null;
             public bool MessageIsGenericContract { get; }
             public string AssemblyName { get; }
-            public LocationSpec Location { get; }
-            public EquatableArray<DiagnosticInfo> Diagnostics { get; }
+            public LocationSpec Location { get; private init; }
+            public EquatableArray<DiagnosticInfo> Diagnostics { get; private init; }
             public bool IsValid { get; }
+
+            // The emitted source reads neither, so dropping them keeps the emission input equal when lines shift.
+            public EndpointModel ForEmission() => this with { Location = default, Diagnostics = EquatableArray<DiagnosticInfo>.Empty };
         }
 
         private readonly record struct DiagnosticInfo
