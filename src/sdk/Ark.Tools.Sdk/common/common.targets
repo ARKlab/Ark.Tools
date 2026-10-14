@@ -6,7 +6,7 @@
 
 	<Import Project="$(MSBuildThisFileDirectory)tests.targets" Condition="'$(IsTestProject)' == 'true'" />
 
-  <!-- Reqnroll reads these only in items and targets, which see the final property values, so resolving the mark here still applies. -->
+  <!-- Reqnroll's props only default these when empty; its items and targets, which drive code-behind, see the final values, so resolving the mark here still applies. -->
   <PropertyGroup>
     <_ArkReqnrollCodeBehindDefault Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">true</_ArkReqnrollCodeBehindDefault>
     <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == 'ArkToolsDefault'">$(_ArkReqnrollCodeBehindDefault)</ReqnrollUseIntermediateOutputPathForCodeBehind>
