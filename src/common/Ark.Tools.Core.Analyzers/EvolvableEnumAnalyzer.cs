@@ -163,6 +163,15 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
 
     private static bool _isFull(INamedTypeSymbol enumType, ImmutableArray<IFieldSymbol> fields)
     {
+        var capacity = enumType.EnumUnderlyingType?.SpecialType switch
+        {
+            SpecialType.System_SByte or SpecialType.System_Byte => 256,
+            SpecialType.System_Int16 or SpecialType.System_UInt16 => 65_536,
+            _ => 0,
+        };
+        if (capacity == 0)
+            return false;
+
         var values = new HashSet<object>();
         foreach (var field in fields)
         {
@@ -170,12 +179,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 values.Add(value);
         }
 
-        return enumType.EnumUnderlyingType?.SpecialType switch
-        {
-            SpecialType.System_SByte or SpecialType.System_Byte => values.Count == 256,
-            SpecialType.System_Int16 or SpecialType.System_UInt16 => values.Count == 65_536,
-            _ => false,
-        };
+        return values.Count == capacity;
     }
 
     private static IEnumerable<string> _getNames(IFieldSymbol field, CompilationFacts facts)
