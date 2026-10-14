@@ -868,7 +868,7 @@ public sealed class SdkPackageTests
         using var splitBodyTest = await EvaluateAsync(
             "split-body-test",
             "Consumer.Specs.csproj",
-            "<IsTestProject>true</IsTestProject><ReqnrollDeleteObsoleteCodeBehindFilesOnClean>false</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>",
+            "<IsTestProject>true</IsTestProject><ReqnrollUseIntermediateOutputPathForCodeBehind></ReqnrollUseIntermediateOutputPathForCodeBehind><ReqnrollDeleteObsoleteCodeBehindFilesOnClean>false</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>",
             splitProps,
             splitTargets).ConfigureAwait(false);
         AssertCodeBehind(splitBodyTest, "true", "false", inObj: true);
