@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 using Ark.Tools.Compliance;
@@ -9,6 +10,8 @@ using Ark.Tools.MediatorFramework.Messaging;
 
 using AwesomeAssertions;
 
+using Azure.Core;
+using Azure.Core.Pipeline;
 using Azure.Storage.Queues;
 
 namespace Ark.Tools.MediatorFramework.Tests;
@@ -106,10 +109,58 @@ public sealed class StorageQueueMessagingTransportConformanceTests : MessagingTr
         original.Value.Should().BeNull();
     }
 
+    [TestMethod]
+    public async Task RenewAndAbandonKeepTheMessageWithoutResendingIt()
+    {
+        var updates = new UpdateMessageRecorder();
+        var options = new QueueClientOptions
+        {
+            MessageEncoding = QueueMessageEncoding.None
+        };
+        options.AddPolicy(updates, HttpPipelinePosition.PerCall);
+        var transport = new StorageQueueMessagingTransport(
+            new QueueServiceClient(_connectionString, options),
+            receiveVisibilityTimeout: TimeSpan.FromSeconds(30),
+            retryDelay: TimeSpan.FromMilliseconds(10));
+        var source = (IMessagingMessageSource)transport;
+        await transport.SendAsync(
+            _queue,
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["key"] = "value" },
+            new ReadOnlySequence<byte>(new byte[] { 4, 5, 6 }),
+            null,
+            default).ConfigureAwait(false);
+        var first = await source.ReceiveOneAsync(_queue).ConfigureAwait(false);
+
+        await first.RenewLockAsync(default).ConfigureAwait(false);
+        await first.AbandonAsync(default).ConfigureAwait(false);
+        var second = await source.ReceiveOneAsync(_queue, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+
+        updates.SentContent.Should().Equal(false, false);
+        second.DeliveryCount.Should().Be(2);
+        second.Headers.Should().Contain("key", "value");
+        second.Payload.ToArray().Should().Equal(4, 5, 6);
+        await second.CompleteAsync(default).ConfigureAwait(false);
+    }
+
     private async Task _recreateAsync(string queue)
     {
         var client = _service.GetQueueClient(queue);
         await client.DeleteIfExistsAsync().ConfigureAwait(false);
         await client.CreateIfNotExistsAsync().ConfigureAwait(false);
+    }
+
+    // Update Message is the only PUT that carries a pop receipt.
+    private sealed class UpdateMessageRecorder : HttpPipelineSynchronousPolicy
+    {
+        public ConcurrentQueue<bool> SentContent { get; } = new();
+
+        public override void OnSendingRequest(HttpMessage message)
+        {
+            if (message.Request.Method == RequestMethod.Put
+                && message.Request.Uri.Query.Contains("popreceipt=", StringComparison.OrdinalIgnoreCase))
+            {
+                SentContent.Enqueue(message.Request.Content is not null);
+            }
+        }
     }
 }

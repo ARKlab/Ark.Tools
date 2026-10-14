@@ -550,12 +550,12 @@ public sealed class StorageQueueMessagingTransport :
         {
             try
             {
+                // No message content: the update only moves the visibility and the stored body is kept.
                 var response = await _source.UpdateMessageAsync(
                     _message.MessageId,
                     _popReceipt,
-                    _message.Body,
-                    visibilityTimeout,
-                    ctk).ConfigureAwait(false);
+                    visibilityTimeout: visibilityTimeout,
+                    cancellationToken: ctk).ConfigureAwait(false);
                 _popReceipt = response.Value.PopReceipt;
                 _setLockedUntil(response.Value.NextVisibleOn);
             }

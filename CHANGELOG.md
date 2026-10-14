@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
+- `StorageQueueMessagingTransport`: lock renewal and abandon update only the message visibility instead of uploading the message body again, so each renewal sends no payload.
 - Compliance surface (`ArkComplianceSurfaceEnabled`): editing a method with many `Register` calls, such as a SimpleInjector composition root, no longer slows down the IDE, because DI container registrations are no longer analysed as serializer registrations and the remaining calls share one binding per file.
 
 ### Fixed
