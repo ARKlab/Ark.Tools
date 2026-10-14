@@ -12,7 +12,7 @@ diagnostics. Referenced automatically by `Ark.Tools.Sdk` when
 
 | ID | Severity | Fires when |
 | --- | --- | --- |
-| ARKPII001 | Warning | A member/parameter whose *name* suggests personal data (`Email`, `Ssn`, `TaxId`, …) is not classified. Fix: apply a classification attribute, use a sensitive value object, or apply `[NotPersonalData("<why>")]`. |
+| ARKPII001 | Warning | A member/parameter whose *name* suggests personal data (`Email`, `Ssn`, `TaxId`, …) is not classified. Fix: apply a classification attribute, use a sensitive value object, or apply `[NotPersonalData("<why>")]`. The code fix offers the attributes; once a `string` property is classified, the *Use sensitive value object* refactoring on that property converts it. |
 | ARKPII002 | Error | A classified value reaches a log call (NLog `Logger`, `Microsoft.Extensions.Logging`, `BeginScope`) — as template argument, interpolation, or destructured object. |
 | ARKPII003 | Error | A classified value reaches an exception message or `Exception.Data`. Exception text is logged and returned to clients. |
 | ARKPII004 | Error | A classified value reaches `Activity` tags, baggage, or events (telemetry). |

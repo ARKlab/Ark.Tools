@@ -74,18 +74,6 @@ public sealed class ComplianceCodeFixProvider : CodeFixProvider
                     "global::Ark.Tools.Compliance.NotPersonalData",
                     "TODO: explain why this declaration cannot contain personal data", cancellationToken).ConfigureAwait(false),
                 "ExplainNotPersonalData"), diagnostic);
-
-            if (declaration is PropertyDeclarationSyntax property
-                && await _canConvertAsync(context.Document, property, context.CancellationToken).ConfigureAwait(false))
-            {
-                var name = _sensitiveType(property.Identifier.ValueText);
-                if (name is not null)
-                {
-                    context.RegisterCodeFix(CodeAction.Create("Use sensitive value object " + name,
-                        async cancellationToken => await _convertPropertyAsync(context.Document, property, name, cancellationToken).ConfigureAwait(false),
-                        "UseSensitiveValueObject"), diagnostic);
-                }
-            }
         }
     }
 

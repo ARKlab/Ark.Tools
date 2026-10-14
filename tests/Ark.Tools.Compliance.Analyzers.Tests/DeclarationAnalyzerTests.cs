@@ -280,23 +280,31 @@ public sealed class DeclarationAnalyzerTests
             .And.Contain("DebuggerAttributeGeneration").And.Contain("ToString").And.Contain("TryFormat");
     }
 
-    /// <summary>Classification and value-object fixes compile and remove the declaration diagnostic.</summary>
+    /// <summary>The classification fix compiles and removes the declaration diagnostic.</summary>
     [TestMethod]
-    [DataRow("ClassifyPersonalData")]
-    [DataRow("UseSensitiveValueObject")]
-    public async Task ClassificationFixesProduceCompilingOutput(string equivalenceKey)
+    public async Task ClassificationFixProducesCompilingOutput()
     {
         var fixedSource = await _applyFixAsync(
-            "class Customer { public string Email { get; set; } = \"jane@example.com\"; }", equivalenceKey).ConfigureAwait(false);
+            "class Customer { public string Email { get; set; } = \"jane@example.com\"; }", "ClassifyPersonalData").ConfigureAwait(false);
         var compilation = _compilation(fixedSource, includeStubs: false);
         compilation.GetDiagnostics().Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
             .Should().BeEmpty();
         (await compilation.WithAnalyzers([new DeclarationComplianceAnalyzer()], _analyzerOptions())
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false)).Should().BeEmpty();
-        if (equivalenceKey == "UseSensitiveValueObject")
-        {
-            fixedSource.Should().Contain("EmailAddress.From(\"jane@example.com\")");
-        }
+    }
+
+    /// <summary>
+    /// The ARKPII001 fix offers only classification actions; the value-object conversion is a refactoring, so the
+    /// light bulb never waits for its solution-wide reference search.
+    /// </summary>
+    [TestMethod]
+    public async Task ClassificationFixDoesNotOfferValueObjectConversion()
+    {
+        using var workspace = new AdhocWorkspace();
+        var actions = await _codeFixesAsync(_document(workspace, "class Customer { public string Email { get; set; } }"))
+            .ConfigureAwait(false);
+        actions.Select(static action => action.EquivalenceKey)
+            .Should().BeEquivalentTo("ClassifyPersonalData", "ExplainNotPersonalData");
     }
 
     /// <summary>The exclusion fix never invents a valid review; its placeholder still requires action.</summary>
@@ -318,12 +326,12 @@ public sealed class DeclarationAnalyzerTests
     [DataRow("string", "default!")]
     [DataRow("string", "\"person@example.com\"!")]
     [DataRow("string?", "null")]
-    public async Task ValueObjectFixHandlesInitializers(string type, string initializer)
+    public async Task ValueObjectRefactoringHandlesInitializers(string type, string initializer)
     {
-        var fixedSource = await _applyFixAsync(
-            "class Customer { public " + type + " Email { get; set; } = " + initializer + "; }",
-            "UseSensitiveValueObject").ConfigureAwait(false);
-        _compilation(fixedSource, includeStubs: false).GetDiagnostics()
+        var fixedSource = await _applyRefactoringAsync(
+            "class Customer { [PersonalData] public " + type + " Email { get; set; } = " + initializer + "; }").ConfigureAwait(false);
+        fixedSource.Should().NotBeNull();
+        _compilation(fixedSource!, includeStubs: false).GetDiagnostics()
             .Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
     }
 
@@ -331,21 +339,23 @@ public sealed class DeclarationAnalyzerTests
     [TestMethod]
     public async Task ClassifiedStringRefactoringProducesCompilingOutput()
     {
-        using var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("RefactoringTests", LanguageNames.CSharp)
-            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-            .WithMetadataReferences(_references());
-        var source = _stubs + "class Customer { [PersonalData] public string Email { get; set; } = \"person@example.com\"; }";
-        var document = project.AddDocument("Tests.cs", SourceText.From(source));
-        var actions = new List<CodeAction>();
-        await new SensitivePropertyRefactoringProvider().ComputeRefactoringsAsync(new CodeRefactoringContext(
-            document, new TextSpan(source.LastIndexOf("Email {", StringComparison.Ordinal), 0),
-            actions.Add, CancellationToken.None)).ConfigureAwait(false);
-        var operations = await actions.Single().GetOperationsAsync(CancellationToken.None).ConfigureAwait(false);
-        var changed = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution.GetDocument(document.Id)!;
-        var compilation = await changed.Project.GetCompilationAsync().ConfigureAwait(false);
-        compilation!.GetDiagnostics().Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
-        (await changed.GetTextAsync().ConfigureAwait(false)).ToString().Should().Contain("EmailAddress.From");
+        var fixedSource = await _applyRefactoringAsync(
+            "class Customer { [PersonalData] public string Email { get; set; } = \"jane@example.com\"; }").ConfigureAwait(false);
+        fixedSource.Should().Contain("EmailAddress.From(\"jane@example.com\")");
+        var compilation = _compilation(fixedSource!, includeStubs: false);
+        compilation.GetDiagnostics().Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Should().BeEmpty();
+        (await compilation.WithAnalyzers([new DeclarationComplianceAnalyzer()], _analyzerOptions())
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false)).Should().BeEmpty();
+    }
+
+    /// <summary>An unclassified string property is left to the ARKPII001 classification fixes.</summary>
+    [TestMethod]
+    public async Task UnclassifiedStringOffersNoRefactoring()
+    {
+        var fixedSource = await _applyRefactoringAsync(
+            "class Customer { public string Email { get; set; } }").ConfigureAwait(false);
+        fixedSource.Should().BeNull();
     }
 
     /// <summary>The build-level compliance opt-out disables declaration diagnostics.</summary>
@@ -533,18 +543,46 @@ public sealed class DeclarationAnalyzerTests
     private static async Task<string> _applyFixAsync(string source, string equivalenceKey)
     {
         using var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("FixTests", LanguageNames.CSharp)
-            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-            .WithMetadataReferences(_references());
-        var document = project.AddDocument("Tests.cs", SourceText.From(_stubs + source));
+        var document = _document(workspace, source);
+        var actions = await _codeFixesAsync(document).ConfigureAwait(false);
+        return await _applyAsync(document, actions.Single(action => action.EquivalenceKey == equivalenceKey)).ConfigureAwait(false);
+    }
+
+    private static async Task<List<CodeAction>> _codeFixesAsync(Document document)
+    {
         var compilation = await document.Project.GetCompilationAsync().ConfigureAwait(false);
         var diagnostics = await compilation!.WithAnalyzers([new DeclarationComplianceAnalyzer()], _analyzerOptions())
             .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
         var actions = new List<CodeAction>();
         await new ComplianceCodeFixProvider().RegisterCodeFixesAsync(new CodeFixContext(
             document, diagnostics.Single(), (action, _) => actions.Add(action), CancellationToken.None)).ConfigureAwait(false);
-        var operations = await actions.Single(action => action.EquivalenceKey == equivalenceKey)
-            .GetOperationsAsync(CancellationToken.None).ConfigureAwait(false);
+        return actions;
+    }
+
+    /// <summary>Invokes the refactoring on the last <c>Email</c> property; returns <see langword="null"/> when none is offered.</summary>
+    private static async Task<string?> _applyRefactoringAsync(string source)
+    {
+        using var workspace = new AdhocWorkspace();
+        var document = _document(workspace, source);
+        var text = (await document.GetTextAsync().ConfigureAwait(false)).ToString();
+        var actions = new List<CodeAction>();
+        await new SensitivePropertyRefactoringProvider().ComputeRefactoringsAsync(new CodeRefactoringContext(
+            document, new TextSpan(text.LastIndexOf("Email {", StringComparison.Ordinal), 0),
+            actions.Add, CancellationToken.None)).ConfigureAwait(false);
+        return actions.Count == 0 ? null : await _applyAsync(document, actions.Single()).ConfigureAwait(false);
+    }
+
+    private static Document _document(AdhocWorkspace workspace, string source)
+    {
+        return workspace.AddProject("FixTests", LanguageNames.CSharp)
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            .WithMetadataReferences(_references())
+            .AddDocument("Tests.cs", SourceText.From(_stubs + source));
+    }
+
+    private static async Task<string> _applyAsync(Document document, CodeAction action)
+    {
+        var operations = await action.GetOperationsAsync(CancellationToken.None).ConfigureAwait(false);
         var changed = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution.GetDocument(document.Id)!;
         return (await changed.GetTextAsync().ConfigureAwait(false)).ToString();
     }
