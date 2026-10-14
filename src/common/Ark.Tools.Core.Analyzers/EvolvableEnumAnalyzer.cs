@@ -115,7 +115,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 enumType.EnumUnderlyingType.ToDisplayString()));
         }
 
-        if (!analyzedEnums.TryAdd(enumType, 0))
+        if (!analyzedEnums.TryAdd(enumType.OriginalDefinition, 0))
             return;
 
         var fields = enumType.GetMembers().OfType<IFieldSymbol>().ToImmutableArray();

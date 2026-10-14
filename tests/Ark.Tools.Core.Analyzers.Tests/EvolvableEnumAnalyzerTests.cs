@@ -195,6 +195,30 @@ public class EvolvableEnumAnalyzerTests
             .BeEquivalentTo(["ARKCORE001", "ARKCORE001", "ARKCORE002", "ARKCORE003"]);
     }
 
+    /// <summary>Verifies an enum nested in differently constructed generic types is reported once.</summary>
+    [TestMethod]
+    public async Task NestedEnumInConstructedGenerics_ShouldReportEnumErrorsOnce()
+    {
+        var diagnostics = await _analyzeAsync(
+            """
+            namespace Ark.Tools.Core
+            {
+                public struct EvolvableEnum<T> { }
+            }
+            class Outer<T>
+            {
+                public enum Status { Active = 1 }
+            }
+            class Contract
+            {
+                Ark.Tools.Core.EvolvableEnum<Outer<int>.Status> First;
+                Ark.Tools.Core.EvolvableEnum<Outer<string>.Status> Second;
+            }
+            """);
+
+        diagnostics.Select(static item => item.Id).Should().BeEquivalentTo(["ARKCORE002"]);
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
