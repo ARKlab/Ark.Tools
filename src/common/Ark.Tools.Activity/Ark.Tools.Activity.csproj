@@ -22,6 +22,11 @@
   <PropertyGroup>
     <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
+  <!-- Packing with NoBuild: resolve Ark.Tasks without building it and keep its XML and PDB in the package. -->
+  <PropertyGroup Condition="'$(NoBuild)' == 'true'">
+    <BuildProjectReferences>false</BuildProjectReferences>
+    <ResolveAssemblyReferencesFindRelatedFiles>true</ResolveAssemblyReferencesFindRelatedFiles>
+  </PropertyGroup>
   <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
     <ItemGroup>
       <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')-&gt;WithMetadataValue('PrivateAssets', 'All'))" />
