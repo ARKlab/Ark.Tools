@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -74,18 +73,15 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 return;
             }
 
-            // Enum-level diagnostics are reported once per enum, not once per EvolvableEnum<T> usage.
-            var analyzedEnums = new ConcurrentDictionary<INamedTypeSymbol, byte>(SymbolEqualityComparer.Default);
             startContext.RegisterSyntaxNodeAction(
-                syntaxContext => _analyzeGenericName(syntaxContext, facts, analyzedEnums),
+                syntaxContext => _analyzeGenericName(syntaxContext, facts),
                 Microsoft.CodeAnalysis.CSharp.SyntaxKind.GenericName);
         });
     }
 
     private static void _analyzeGenericName(
         SyntaxNodeAnalysisContext context,
-        CompilationFacts facts,
-        ConcurrentDictionary<INamedTypeSymbol, byte> analyzedEnums)
+        CompilationFacts facts)
     {
         var syntax = (GenericNameSyntax)context.Node;
         if (syntax.Identifier.ValueText != "EvolvableEnum")
@@ -100,6 +96,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
             || enumType.EnumUnderlyingType is null)
             return;
 
+        var fields = enumType.GetMembers().OfType<IFieldSymbol>().ToImmutableArray();
         var requestedBacking = wrapper.TypeArguments.Length == 1
             ? facts._int32Type
             : wrapper.TypeArguments[1];
@@ -115,10 +112,6 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 enumType.EnumUnderlyingType.ToDisplayString()));
         }
 
-        if (!analyzedEnums.TryAdd(enumType.OriginalDefinition, 0))
-            return;
-
-        var fields = enumType.GetMembers().OfType<IFieldSymbol>().ToImmutableArray();
         var hasNotSet = fields.Any(static field =>
             field.Name == "NOT_SET" && field.HasConstantValue && _isZero(field.ConstantValue));
         if (!hasNotSet)

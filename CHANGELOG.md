@@ -23,7 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.MediatorFramework.Grpc`: a build that leaves the gRPC host assembly unchanged no longer starts the `.proto` exporter. It runs again when the assembly, an `ArkAdditionalProto` file or the package changes, when any exported file is missing, or when `ArkExportProtoDir` points to a directory not exported since the last change.
 - `Ark.Tools.MediatorFramework`: `ArkApiSurface.current.txt` in `obj/` is copied only when the generated API surface changes, and `dotnet clean` now removes it.
 - `Ark.Tools.Outbox.SqlServer`: `SendAsync` writes up to 1,000 messages in one `INSERT` statement instead of one statement per message, so sending many messages takes far fewer round trips inside the business transaction. Messages keep their order.
-- `Ark.Tools.Core.Analyzers`: ARKCORE002, ARKCORE003 and ARKCORE004 are reported once per enum instead of once per `EvolvableEnum<T>` usage, so an invalid enum used in many places no longer floods the build with duplicate errors. ARKCORE001 is still reported at each usage.
 
 ### Fixed
 

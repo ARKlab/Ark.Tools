@@ -161,64 +161,6 @@ public class EvolvableEnumAnalyzerTests
             "Leave at least one unused value in enum 'FullStatus' backing type 'byte' for future members");
     }
 
-    /// <summary>Verifies enum-level errors are reported once per enum while backing mismatches are reported per usage.</summary>
-    [TestMethod]
-    public async Task InvalidEnumUsedTwice_ShouldReportEnumErrorsOnce()
-    {
-        var diagnostics = await _analyzeAsync(
-            """
-            namespace System.ComponentModel.DataAnnotations
-            {
-                public class DisplayAttribute : System.Attribute
-                {
-                    public string Name { get; set; }
-                }
-            }
-            namespace Ark.Tools.Core
-            {
-                public struct EvolvableEnum<T> { }
-            }
-            enum CompactStatus : byte
-            {
-                Active = 1,
-                [System.ComponentModel.DataAnnotations.Display(Name = "Active")]
-                Archived = 2
-            }
-            class Contract
-            {
-                Ark.Tools.Core.EvolvableEnum<CompactStatus> First;
-                Ark.Tools.Core.EvolvableEnum<CompactStatus> Second;
-            }
-            """);
-
-        diagnostics.Select(static item => item.Id).Should()
-            .BeEquivalentTo(["ARKCORE001", "ARKCORE001", "ARKCORE002", "ARKCORE003"]);
-    }
-
-    /// <summary>Verifies an enum nested in differently constructed generic types is reported once.</summary>
-    [TestMethod]
-    public async Task NestedEnumInConstructedGenerics_ShouldReportEnumErrorsOnce()
-    {
-        var diagnostics = await _analyzeAsync(
-            """
-            namespace Ark.Tools.Core
-            {
-                public struct EvolvableEnum<T> { }
-            }
-            class Outer<T>
-            {
-                public enum Status { Active = 1 }
-            }
-            class Contract
-            {
-                Ark.Tools.Core.EvolvableEnum<Outer<int>.Status> First;
-                Ark.Tools.Core.EvolvableEnum<Outer<string>.Status> Second;
-            }
-            """);
-
-        diagnostics.Select(static item => item.Id).Should().BeEquivalentTo(["ARKCORE002"]);
-    }
-
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
