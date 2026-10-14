@@ -14,6 +14,16 @@ internal abstract class OutboxContextSqlCore
 
     private static readonly HeaderSerializer _headerSerializer = new();
 
+    // 2 parameters per row keeps a full chunk under the SQL Server 2100-parameter limit.
+    private const int _maxRowsPerInsert = 1000;
+    // The VALUES list of a full chunk is the same for every send, so build it once.
+    private static readonly string _fullChunkValues = _values(_maxRowsPerInsert);
+
+    private static string _values(int messageCount)
+    {
+        return string.Join(", ", Enumerable.Range(0, messageCount).Select(static i => string.Create(CultureInfo.InvariantCulture, $"(@h{i}, @b{i}, {i})")));
+    }
+
     private protected OutboxContextSqlCore(IOutboxContextSqlConfig config)
     {
         _config = config;
@@ -30,17 +40,17 @@ internal abstract class OutboxContextSqlCore
             var schema = config.SchemaName ?? "dbo";
             var table = config.TableName;
             var full = $"[{schema}].[{table}]";
-            Insert = $@"
+            // A multi-row VALUES alone does not fix IDENTITY order; INSERT ... SELECT ... ORDER BY does.
+            Insert = (int messageCount) => $@"
                 INSERT INTO {full}
                 (
                       [Headers]
                     , [Body]
                 )
-                VALUES
-                (
-                      @pHeaders
-                    , @pBody
-                )
+                SELECT [Headers], [Body]
+                FROM (VALUES {(messageCount == _maxRowsPerInsert ? _fullChunkValues : _values(messageCount))})
+                    AS v([Headers], [Body], [Ord])
+                ORDER BY [Ord]
                 ";
 
             PeekLock = (int messageCount) => $@"
@@ -87,7 +97,7 @@ internal abstract class OutboxContextSqlCore
 
         }
 
-        public string Insert { get; }
+        public Func<int, string> Insert { get; }
         public Func<int, string> PeekLock { get; }
         public string Count { get; }
         public string Clear { get; }
@@ -96,15 +106,17 @@ internal abstract class OutboxContextSqlCore
 
     public async Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
     {
-        foreach (var b in messages.Batch(1000))
+        // One statement per chunk.
+        foreach (var b in messages.Batch(_maxRowsPerInsert))
         {
-            var parameters = b.Select(static message => new
+            var parameters = new DynamicParameters();
+            for (var i = 0; i < b.Length; i++)
             {
-                pHeaders = _headerSerializer.SerializeToString(message.Headers),
-                pBody = message.Body
-            });
+                parameters.Add(string.Create(CultureInfo.InvariantCulture, $"h{i}"), _headerSerializer.SerializeToString(b[i].Headers), DbType.String, size: -1);
+                parameters.Add(string.Create(CultureInfo.InvariantCulture, $"b{i}"), b[i].Body, DbType.Binary, size: -1);
+            }
 
-            var cmd = new CommandDefinition(_statements.Insert, parameters, transaction: _transaction, cancellationToken: ctk);
+            var cmd = new CommandDefinition(_statements.Insert(b.Length), parameters, transaction: _transaction, cancellationToken: ctk);
 
             _ = await _connection.ExecuteAsync(cmd).ConfigureAwait(false);
         }
