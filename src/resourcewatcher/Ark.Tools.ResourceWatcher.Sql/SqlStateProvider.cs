@@ -194,21 +194,24 @@ public class SqlStateProvider<[DynamicallyAccessedMembers(_extensionsMembers)] T
         await using (c.ConfigureAwait(false))
         {
             if (resourceIds == null)
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<TExtensions>>(_queryState
+                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<TExtensions>>(new CommandDefinition(_queryState
+                    , parameters: new { tenant = tenant }
+                    , cancellationToken: ctk)
                     , map
-                    , param: new { tenant = tenant }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
             else if (resourceIds.Length == 0)
                 return Enumerable.Empty<ResourceState<TExtensions>>(); //Empty array should just return empty result
             else if (resourceIds.Length < 2000) //limit is 2100
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<TExtensions>>(_queryState + " and [ResourceId] in @resources"
+                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<TExtensions>>(new CommandDefinition(_queryState + " and [ResourceId] in @resources"
+                    , parameters: new { tenant = tenant, resources = resourceIds }
+                    , cancellationToken: ctk)
                     , map
-                    , param: new { tenant = tenant, resources = resourceIds }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
             else
-                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<TExtensions>>(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
+                return await c.QueryAsync<ResourceState, EJ, MMJ, ResourceState<TExtensions>>(new CommandDefinition(_queryState + " and [ResourceId] in (SELECT [ResourceId] FROM @resources)"
+                    , parameters: new { tenant = tenant, resources = resourceIds.Select(static x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
+                    , cancellationToken: ctk)
                     , map
-                    , param: new { tenant = tenant, resources = resourceIds.Select(static x => new { ResourceId = x }).ToDataTableArk().AsTableValuedParameter("udt_ResourceIdList") }
                     , splitOn: "ExtensionsJson,ModifiedSourcesJson").ConfigureAwait(false);
         }
     }
@@ -259,7 +262,7 @@ UPDATE SET
 ;
 ";
 
-            await c.ExecuteAsync(q, new
+            await c.ExecuteAsync(new CommandDefinition(q, new
             {
                 table = st.Select(x => new
                 {
@@ -275,7 +278,7 @@ UPDATE SET
                     ExtensionsJson = _serializeExtensions(x.Extensions),
                     Exception = x.LastException?.ToString()
                 }).ToDataTableArk().AsTableValuedParameter("[udt_State_v2]")
-            }).ConfigureAwait(false);
+            }, cancellationToken: ctk)).ConfigureAwait(false);
         }
     }
 

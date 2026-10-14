@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Breaking:** `Ark.Tools.FtpClient.FtpProxy` now validates the TLS certificate of the FtpProxy service, which receives the bearer token and the FTP credentials; before, any certificate was accepted. A proxy with a self-signed or otherwise untrusted certificate now fails with a `FlurlHttpException` caused by an `AuthenticationException`: trust its certificate, or return `true` from `AcceptAnyServerCertificate` in your `IFtpClientProxyConfig` for development only.
 - The MediatorFramework Minimal API, gRPC, Rebus, MCP and Azure Functions source generators no longer keep an earlier copy of the project's compilation alive in the IDE between edits, which lowers IDE memory use.
 - `MessagingOutboxProcessor` sends each batch of outbox messages to its different queues and topics concurrently, so the outbox drains faster when it targets several destinations. Messages to the same queue or topic are still sent one at a time in outbox order; there is no ordering between different destinations.
+- `Ark.Tools.MediatorFramework.Grpc`: a build that leaves the gRPC host assembly unchanged no longer starts the `.proto` exporter. It runs again when the assembly, an `ArkAdditionalProto` file or the package changes, when any exported file is missing, or when `ArkExportProtoDir` points to a directory not exported since the last change.
+- `Ark.Tools.MediatorFramework`: `ArkApiSurface.current.txt` in `obj/` is copied only when the generated API surface changes, and `dotnet clean` now removes it.
 - `Ark.Tools.Outbox.SqlServer`: `SendAsync` writes up to 1,000 messages in one `INSERT` statement instead of one statement per message, so sending many messages takes far fewer round trips inside the business transaction. Messages keep their order.
 
 ### Fixed
@@ -25,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.Outbox.SqlServer`: the outbox now dispatches the oldest messages first, in the order they were written. Before, it sent the newest first, so under load old messages could wait indefinitely and the messages of one transaction went out in reverse order.
 - ARKPII005 is reported once per string concatenation, on the whole expression, instead of once per `+`; long concatenations are now analysed as a whole.
 - `Ark.Tools.MediatorFramework.Messaging`: receiving a Protobuf message no longer blocks a thread-pool thread while a claim-checked (DataBus) payload downloads, and cancellation now stops that download.
+- `SqlStateProvider`: `LoadStateAsync` and `SaveStateAsync` now pass their cancellation token to SQL Server, so stopping a ResourceWatcher no longer waits for a slow or blocked state query to time out.
 - `Ark.Tools.FtpClient.SftpClient`: SFTP downloads and uploads now stop when their cancellation token is cancelled, so `DownloadTimeout` and host shutdown no longer wait for a stalled transfer. A cancelled or failed transfer now closes its connection, so a pool no longer reuses a connection left with a transfer half done.
 
 ### Security
