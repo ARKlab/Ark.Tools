@@ -65,28 +65,6 @@
         "resolved": "3.5.9",
         "contentHash": "yxiTijEk4Su7Ama9Dny8HNC0tpFg7+8y5F8E2FnNuzc0+OzwAwrSxeFSRcBkW1BtC4SEiohsKFtYRH+a2QpJdQ=="
       },
-      "Azure.Core": {
-        "type": "Transitive",
-        "resolved": "1.63.0",
-        "contentHash": "5egODg5yWcRV0kkAv22jQL7YmsfupX7intDYbxZMu8giASSQVfG5+mwC+BdJOWvhFT1Y+9KzuvbUGqAVEBzsfw==",
-        "dependencies": {
-          "Microsoft.Bcl.AsyncInterfaces": "10.0.10",
-          "Microsoft.Identity.Client": "4.90.0",
-          "Microsoft.Identity.Client.Extensions.Msal": "4.90.0",
-          "System.ClientModel": "1.16.0",
-          "System.Memory.Data": "10.0.10"
-        }
-      },
-      "Microsoft.Bcl.AsyncInterfaces": {
-        "type": "Transitive",
-        "resolved": "10.0.10",
-        "contentHash": "TFI6OKYE1XZz4SGuTSH70c6SBdPpFktXsoa1gCxTr3mKrhmXirnvaS0tKz+J3ZWICEAmMpEGn59nO4ICtUpQXA=="
-      },
-      "Microsoft.IdentityModel.Abstractions": {
-        "type": "Transitive",
-        "resolved": "8.14.0",
-        "contentHash": "iwbCpSjD3ehfTwBhtSNEtKPK0ICun6ov7Ibx6ISNA9bfwIyzI2Siwyi9eJFCJBwxowK9xcA1mj+jBWiigeqgcQ=="
-      },
       "OpenTelemetry.Api.ProviderBuilderExtensions": {
         "type": "Transitive",
         "resolved": "1.19.1",
@@ -94,37 +72,6 @@
         "dependencies": {
           "OpenTelemetry.Api": "1.19.1"
         }
-      },
-      "OpenTelemetry.PersistentStorage.Abstractions": {
-        "type": "Transitive",
-        "resolved": "1.1.1",
-        "contentHash": "tsZtLJZZNYf7HIZZGm/DcYdQWKye0shFoekx59TkSkmXPB0u8bUXJZMYsdDIId+nyXcwTFdBlv5z0SQHOp+Xxg=="
-      },
-      "OpenTelemetry.PersistentStorage.FileSystem": {
-        "type": "Transitive",
-        "resolved": "1.1.1",
-        "contentHash": "f66+dhmMQgs4uYN+IbssgGRiINyw639CPWIPHt0+92Jq/VewNm7uZ/sSxQpWVorY/rmvDxfNqL1vzLebfZcczw==",
-        "dependencies": {
-          "OpenTelemetry.PersistentStorage.Abstractions": "1.1.1"
-        }
-      },
-      "System.ClientModel": {
-        "type": "Transitive",
-        "resolved": "1.16.0",
-        "contentHash": "vLljZON+8lXDUtsPP8uwsPvsBSQaUHhh8NvB+D9TQsXu5n622RLtuLyZAcyIFc98b8ixrwD0AhzUQhtg2NwJnQ==",
-        "dependencies": {
-          "System.Memory.Data": "10.0.10"
-        }
-      },
-      "System.Memory.Data": {
-        "type": "Transitive",
-        "resolved": "10.0.10",
-        "contentHash": "roR+5AeOpflUxJQlqSfsZs/Bvi1uw4KBuTkIgF1e8l0RdalG4AUn84+sjJLclEfOV85gAjc8+Pp540qjDE5UIg=="
-      },
-      "System.Security.Cryptography.ProtectedData": {
-        "type": "Transitive",
-        "resolved": "4.5.0",
-        "contentHash": "wLBKzFnDCxP12VL9ANydSYhk59fC4cvOr9ypYQLPnAj48NQIhqnjdD2yhP8yEKyBJEjERWS9DisKL7rX5eU25Q=="
       },
       "ark.tools.aspnetcore.healthchecks.otel": {
         "type": "Project"
@@ -145,49 +92,11 @@
           "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
         }
       },
-      "ark.tools.otel.azure": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.OTel": "[1.0.0, )",
-          "Azure.Monitor.OpenTelemetry.Exporter": "[1.10.0, )",
-          "OpenTelemetry.Resources.Azure": "[1.19.1-beta.2, )"
-        }
-      },
-      "Azure.Monitor.OpenTelemetry.Exporter": {
-        "type": "CentralTransitive",
-        "requested": "[1.10.0, )",
-        "resolved": "1.10.0",
-        "contentHash": "39Vc71fy1KYqU70j3sbGOqUU6wT5/eKskEuoW8R+H+J+srIyCewN6ooMTj+6lU4yFpJ0x5da2jx1GK9h48g6iw==",
-        "dependencies": {
-          "Azure.Core": "1.63.0",
-          "OpenTelemetry.Extensions.Hosting": "1.18.0",
-          "OpenTelemetry.PersistentStorage.FileSystem": "1.1.1"
-        }
-      },
       "Microsoft.Extensions.Compliance.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.10.0, )",
         "resolved": "10.10.0",
         "contentHash": "Sh3ujDRJpCMNY4x+43ljCROt4qBOoWfsL8l816RPYZS1S+Tw277r5002rbB15Sh6hFcCT8mGYBO7NtpfSYrQ0Q=="
-      },
-      "Microsoft.Identity.Client": {
-        "type": "CentralTransitive",
-        "requested": "[4.91.0, )",
-        "resolved": "4.91.0",
-        "contentHash": "u+j8hdM/Eez1j0rQVodY+4MRfsLgmsskjMgVkf74xkLWssbW4mqSgz0Tx4H0CJTtrDes00M5s4545rbLN61/uw==",
-        "dependencies": {
-          "Microsoft.IdentityModel.Abstractions": "8.14.0"
-        }
-      },
-      "Microsoft.Identity.Client.Extensions.Msal": {
-        "type": "CentralTransitive",
-        "requested": "[4.91.0, )",
-        "resolved": "4.91.0",
-        "contentHash": "6MGkonDQNMggRh1AGvzjlmnn0NLwrYq8EOBhSGSkPhL5/1Tajwe0YUbtDjbcxvFIhbGd0+DpwxFmphgUHm31Og==",
-        "dependencies": {
-          "Microsoft.Identity.Client": "4.91.0",
-          "System.Security.Cryptography.ProtectedData": "4.5.0"
-        }
       },
       "OpenTelemetry": {
         "type": "CentralTransitive",
@@ -211,15 +120,6 @@
         "contentHash": "+egJpWBRfYP3ldfexV2bmJyzOWkkOPVYikw/vUEtbUvf2exJfY3RGInXrYlubhBIH6rmNEn6sI/FmqenZJwkjw==",
         "dependencies": {
           "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
-        }
-      },
-      "OpenTelemetry.Resources.Azure": {
-        "type": "CentralTransitive",
-        "requested": "[1.19.1-beta.2, )",
-        "resolved": "1.19.1-beta.2",
-        "contentHash": "Kd/j40oO/gwPYDGMK9fMo+smH2hfAIbTmQAZ1W515FdP0DDkXCtqtTp4QtwbIcf4QsjLGDwzil/hp0hgMDObXA==",
-        "dependencies": {
-          "OpenTelemetry": "[1.19.1, 2.0.0)"
         }
       }
     }
