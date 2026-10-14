@@ -312,8 +312,9 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
                     return true;
                 }
 
-                // Only an indexer reads through to its instance; any other property is a different value.
-                if (!property.Property.IsIndexer)
+                // Only an indexer or SyncRoot (the default Exception.Data returns itself) reads through to its
+                // instance; any other property is a different value.
+                if (!property.Property.IsIndexer && property.Property.Name != "SyncRoot")
                 {
                     return false;
                 }

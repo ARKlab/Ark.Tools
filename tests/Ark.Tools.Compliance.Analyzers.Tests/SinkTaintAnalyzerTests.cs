@@ -178,6 +178,8 @@ public sealed class SinkTaintAnalyzerTests
     [DataRow("var e = new Exception(); System.Collections.IDictionary data; data = e.Data; data[\"email\"] = c.Email;")]
     [DataRow("var e = new Exception(); object data = e.Data; ((System.Collections.IDictionary)data)[\"email\"] = c.Email;")]
     [DataRow("var e = new Exception(); var data = (System.Collections.Hashtable)e.Data; data.Add(\"email\", c.Email);")]
+    [DataRow("var e = new Exception(); ((System.Collections.IDictionary)e.Data.SyncRoot)[\"email\"] = c.Email;")]
+    [DataRow("var e = new Exception(); ((System.Collections.IDictionary)e.Data.SyncRoot).Add(\"email\", c.Email);")]
     public async Task ExceptionsWithClassifiedValues_ReportError(string statement)
     {
         var diagnostics = await _analyzeAsync(_method(statement)).ConfigureAwait(false);
