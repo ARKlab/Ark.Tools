@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ARKPII005 is reported once per string concatenation, on the whole expression, instead of once per `+`; long concatenations are now analysed as a whole.
 - `Ark.Tools.MediatorFramework.Messaging`: receiving a Protobuf message no longer blocks a thread-pool thread while a claim-checked (DataBus) payload downloads, and cancellation now stops that download.
 - `SqlStateProvider`: `LoadStateAsync` and `SaveStateAsync` now pass their cancellation token to SQL Server, so stopping a ResourceWatcher no longer waits for a slow or blocked state query to time out.
+- `Ark.Tools.FtpClient.SftpClient`: SFTP downloads and uploads now stop when their cancellation token is cancelled, so `DownloadTimeout` and host shutdown no longer wait for a stalled transfer. A cancelled or failed transfer now closes its connection, so a pool no longer reuses a connection left with a transfer half done.
 
 ### Security
 
