@@ -101,20 +101,36 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                     .OrderBy(static content => content ?? string.Empty, StringComparer.Ordinal)
                     .ToImmutableArray()))
             .WithTrackingName(_specStage);
+        // The emitted source reads no locations, diagnostics or host.json, so an edit that only shifts lines leaves the
+        // emission input unchanged.
         var output = specs
-            .Select(static (spec, _) => spec)
+            .Select(static (spec, _) => new MessagingFunctionsAggregateSpec(
+                spec.Hosts.Values.Select(static host => host with
+                {
+                    Location = null,
+                    ParseDiagnostics = EquatableArray<DiagnosticSpec>.Empty,
+                    TopologyDiagnostics = EquatableArray<DiagnosticSpec>.Empty,
+                }).ToImmutableArray(),
+                EquatableArray<string?>.Empty))
             .WithTrackingName(_outputStage);
 
         context.RegisterSourceOutput(
             output,
             static (productionContext, spec) =>
-                _emit(productionContext, spec.Hosts.Values, spec.HostJson.Values));
+                _emit(productionContext, spec.Hosts.Values, spec.HostJson.Values, diagnosticsOnly: false));
+
+        // Diagnostics only, at the real source locations.
+        context.RegisterSourceOutput(
+            specs,
+            static (productionContext, spec) =>
+                _emit(productionContext, spec.Hosts.Values, spec.HostJson.Values, diagnosticsOnly: true));
     }
 
     private static void _emit(
         SourceProductionContext context,
         ImmutableArray<MessagingHostSpec> hosts,
-        ImmutableArray<string?> hostJson)
+        ImmutableArray<string?> hostJson,
+        bool diagnosticsOnly)
     {
         if (hosts.IsDefaultOrEmpty)
             return;
@@ -125,21 +141,30 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
             .ToImmutableArray();
         if (ordered.Length != 1)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
-                MessagingFunctionsDiagnostics._multipleHosts,
-                LocationSpec._toLocation(ordered[0].Location)));
+            if (diagnosticsOnly)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    MessagingFunctionsDiagnostics._multipleHosts,
+                    LocationSpec._toLocation(ordered[0].Location)));
+            }
+
             return;
         }
 
         var host = ordered[0];
-        foreach (var diagnostic in host.ParseDiagnostics)
-            context.ReportDiagnostic(diagnostic._toDiagnostic(MessagingFunctionsDiagnostics._descriptor));
+        if (diagnosticsOnly)
+        {
+            foreach (var diagnostic in host.ParseDiagnostics)
+                context.ReportDiagnostic(diagnostic._toDiagnostic(MessagingFunctionsDiagnostics._descriptor));
 
-        if (host.ValidateHostJson)
-            _validateHostJson(context, host, hostJson);
+            if (host.ValidateHostJson)
+                _validateHostJson(context, host, hostJson);
 
-        foreach (var diagnostic in host.TopologyDiagnostics)
-            context.ReportDiagnostic(diagnostic._toDiagnostic(MessagingFunctionsDiagnostics._descriptor));
+            foreach (var diagnostic in host.TopologyDiagnostics)
+                context.ReportDiagnostic(diagnostic._toDiagnostic(MessagingFunctionsDiagnostics._descriptor));
+
+            return;
+        }
 
         if (!host.IsEmittable)
             return;

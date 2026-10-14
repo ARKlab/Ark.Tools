@@ -834,6 +834,55 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorReusesEmittedSourceOnHostLineShift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: HttpHost(typeof(Marker), "/api/v{version}")]
+            public sealed class Marker { }
+            [HttpEndpoint("GET", "/source")]
+            public sealed class GetSource : IQuery<string> { }
+            [HttpEndpoint("GET", "/body")]
+            public sealed class GetWithBody : IQuery<string>
+            {
+                public string Body { get; set; } = string.Empty;
+            }
+            """;
+
+        _assertEmissionCachedOnLineShift(
+            new AzureFunctions.Generators.AzureFunctionsEndpointGenerator(),
+            source,
+            "AzureFunctionsOutput",
+            expectedOutput: "global::GetSource",
+            expectedDiagnostic: "ARKMF059");
+    }
+
+    [TestMethod]
+    public void MessagingFunctionsGeneratorReusesEmittedSourceOnHostLineShift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.AzureFunctions;
+            [assembly: MessagingFunctionsHost(
+                typeof(SenderParticipant),
+                MessagingFunctionsTriggerBinding.ServiceBus)]
+            [MessagingParticipant]
+            public sealed partial class SenderParticipant { }
+            [MessagingNetwork(Members = new[] { typeof(SenderParticipant) })]
+            public sealed partial class BookMessagingNetwork { }
+            """;
+
+        _assertEmissionCachedOnLineShift(
+            new AzureFunctions.Generators.MessagingFunctionsGenerator(),
+            source,
+            "MessagingFunctionsOutput",
+            expectedOutput: "MessagingFunctionsManifest Manifest",
+            expectedDiagnostic: "ARKMF037",
+            [MetadataReference.CreateFromFile(typeof(AzureFunctions.MessagingFunctionsHostAttribute).Assembly.Location)]);
+    }
+
+    [TestMethod]
     public void MessagingFunctionsGeneratorReusesCachedOutputOnUnrelatedEdit()
     {
         var contracts = _createReference(
@@ -984,13 +1033,14 @@ public sealed class GeneratorIncrementalityTests
         string source,
         string emissionStep,
         string expectedOutput,
-        string expectedDiagnostic)
+        string expectedDiagnostic,
+        MetadataReference[]? references = null)
     {
         var sourceTree = CSharpSyntaxTree.ParseText(source, path: "Contracts.cs");
         var compilation = CSharpCompilation.Create(
             "Incrementality",
             [sourceTree],
-            _getReferences(),
+            _getReferences().Concat(references ?? []),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [generator.AsSourceGenerator()],

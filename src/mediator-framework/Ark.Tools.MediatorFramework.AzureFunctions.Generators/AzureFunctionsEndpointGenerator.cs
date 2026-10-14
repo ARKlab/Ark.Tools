@@ -150,15 +150,36 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                         .ToImmutableArray());
             })
             .WithTrackingName(_specStage);
+        // The emitted source reads no locations, so an edit that only shifts lines leaves the emission input unchanged.
         var output = specs
-            .Select(static (spec, _) => spec)
+            .Select(static (spec, _) => new AzureFunctionsAggregateSpec(
+                spec.Hosts.Values.Select(static host => host with
+                {
+                    Location = null,
+                    MetadataEndpoints = _forEmission(host.MetadataEndpoints),
+                }).ToImmutableArray(),
+                _forEmission(spec.Endpoints)))
             .WithTrackingName(_outputStage);
 
         context.RegisterSourceOutput(
             output,
             static (productionContext, spec) =>
-                _emit(productionContext, spec.Hosts.Values, spec.Endpoints.Values));
+                _emit(productionContext, spec.Hosts.Values, spec.Endpoints.Values, diagnosticsOnly: false));
+
+        // Diagnostics only, at the real source locations.
+        context.RegisterSourceOutput(
+            specs,
+            static (productionContext, spec) =>
+                _emit(productionContext, spec.Hosts.Values, spec.Endpoints.Values, diagnosticsOnly: true));
     }
+
+    private static EquatableArray<EndpointSpec> _forEmission(EquatableArray<EndpointSpec> endpoints)
+        => endpoints.Values.Select(static endpoint => endpoint with
+        {
+            Location = null,
+            Properties = endpoint.Properties.Values.Select(static property => property with { Location = null }).ToImmutableArray(),
+            UnsettableProperties = endpoint.UnsettableProperties.Values.Select(static property => property with { Location = null }).ToImmutableArray(),
+        }).ToImmutableArray();
 
     private static EquatableArray<EndpointSpec> _metadataEndpoints(
         EquatableArray<AssemblyEndpointsSpec> referenced,
@@ -176,10 +197,18 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     private static void _emit(
         SourceProductionContext context,
         ImmutableArray<HostSpec> hosts,
-        ImmutableArray<EndpointSpec> sourceEndpoints)
+        ImmutableArray<EndpointSpec> sourceEndpoints,
+        bool diagnosticsOnly)
     {
         if (hosts.IsDefaultOrEmpty)
             return;
+
+        // Both passes filter the same endpoints; each reports diagnostics or adds the source, not both.
+        void report(Diagnostic diagnostic)
+        {
+            if (diagnosticsOnly)
+                context.ReportDiagnostic(diagnostic);
+        }
 
         var endpoints = new List<EndpointSpec>();
         var prefixByAssembly = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -191,7 +220,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             var hostLocation = LocationSpec._toLocation(host.Location);
             if (host.Prefix.IndexOf("{version}", StringComparison.Ordinal) < 0)
             {
-                context.ReportDiagnostic(Diagnostic.Create(_invalidHostPrefix, hostLocation, host.Prefix));
+                report(Diagnostic.Create(_invalidHostPrefix, hostLocation, host.Prefix));
                 continue;
             }
 
@@ -199,7 +228,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             {
                 if (!string.Equals(existingPrefix, host.Prefix, StringComparison.Ordinal))
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(
+                    report(Diagnostic.Create(
                         _conflictingHostPrefixes, hostLocation, host.MarkerAssemblyName, existingPrefix, host.Prefix));
                     continue;
                 }
@@ -211,7 +240,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
 
             foreach (var selection in host.InvalidSelections)
             {
-                context.ReportDiagnostic(Diagnostic.Create(
+                report(Diagnostic.Create(
                     _invalidHostSelection, hostLocation, selection.TypeName, selection.ListName, host.MarkerAssemblyName));
             }
 
@@ -223,7 +252,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 if (!_isSelected(candidate, host))
                     continue;
 
-                if (_reportUnboundProperties(context, candidate, hostLocation))
+                if (_reportUnboundProperties(report, candidate, hostLocation))
                     continue;
 
                 endpoints.Add(candidate with { Prefix = host.Prefix });
@@ -253,21 +282,21 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             var endpointLocation = LocationSpec._toLocation(endpoint.Location);
             if (endpoint.MessagePack)
             {
-                context.ReportDiagnostic(Diagnostic.Create(_messagePackNotSupported, endpointLocation, endpoint.TypeName));
+                report(Diagnostic.Create(_messagePackNotSupported, endpointLocation, endpoint.TypeName));
                 continue;
             }
 
             var routeKey = endpoint.Verb + "\u0000" + endpoint.Route;
             if (routeOwners.TryGetValue(routeKey, out var routeOwner))
             {
-                context.ReportDiagnostic(Diagnostic.Create(
+                report(Diagnostic.Create(
                     _duplicateRoute, endpointLocation, routeOwner, endpoint.TypeName, endpoint.Route));
                 continue;
             }
 
             if (functionOwners.TryGetValue(endpoint.FunctionName, out var functionOwner))
             {
-                context.ReportDiagnostic(Diagnostic.Create(
+                report(Diagnostic.Create(
                     _duplicateFunction, endpointLocation, functionOwner, endpoint.TypeName, endpoint.FunctionName));
                 continue;
             }
@@ -276,6 +305,9 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             functionOwners.Add(endpoint.FunctionName, endpoint.TypeName);
             valid.Add(endpoint);
         }
+
+        if (diagnosticsOnly)
+            return;
 
         var source = new StringBuilder();
         source.AppendLine("// <auto-generated />");
@@ -296,7 +328,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
     // A GET, HEAD or DELETE function binds only route and [HttpQuery] properties: report any other client
     // property instead of silently dropping it. For every verb, a route or query property must bind by the rules
     // Minimal API applies (HttpStringBinding), so a contract binds the same way on both hosts.
-    private static bool _reportUnboundProperties(SourceProductionContext context, in EndpointSpec endpoint, Location hostLocation)
+    private static bool _reportUnboundProperties(Action<Diagnostic> report, in EndpointSpec endpoint, Location hostLocation)
     {
         var noBody = endpoint.Verb is "GET" or "HEAD" or "DELETE";
         var reported = false;
@@ -309,7 +341,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
                 continue;
 
             var location = property.Location ?? endpoint.Location;
-            context.ReportDiagnostic(bound
+            report(bound
                 ? Diagnostic.Create(
                     _propertyNotConvertibleFromString,
                     location is null ? hostLocation : LocationSpec._toLocation(location),
@@ -328,7 +360,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         foreach (var property in endpoint.UnsettableProperties)
         {
             var location = property.Location ?? endpoint.Location;
-            context.ReportDiagnostic(Diagnostic.Create(
+            report(Diagnostic.Create(
                 _propertyNotSettable,
                 location is null ? hostLocation : LocationSpec._toLocation(location),
                 endpoint.TypeName,
