@@ -242,14 +242,8 @@ public class ApiHost
             .Serialization(static s =>
             {
                 // Configure Rebus to use source-generated JSON serialization (API types only, no ProblemDetails)
-                // Note: JsonSerializerOptions get locked when passed to JsonSerializerContext constructor,
-                // so we must create the context first, then create NEW options for Rebus that use this context
-                var contextOptions = Ex.CreateCoreApiJsonSerializerOptions();
-                var jsonContext = new CoreApiJsonSerializerContext(contextOptions);
-
-                // Create separate options for Rebus that reference the context
                 var rebusOptions = Ex.CreateCoreApiJsonSerializerOptions();
-                rebusOptions.TypeInfoResolver = jsonContext;
+                rebusOptions.TypeInfoResolver = CoreApiJsonSerializerContext.Default;
 
                 s.UseSystemTextJson(rebusOptions);
             })
