@@ -22,14 +22,16 @@ public sealed class SensitivePropertyRefactoringProvider : CodeRefactoringProvid
     {
         var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
         var property = root?.FindToken(context.Span.Start).Parent?.FirstAncestorOrSelf<PropertyDeclarationSyntax>();
-        if (property is null
-            || !await ComplianceCodeFixProvider._canConvertAsync(context.Document, property, context.CancellationToken).ConfigureAwait(false))
+        if (property is null)
         {
             return;
         }
 
+        // The cheap classification check runs first so unclassified properties never pay the reference search.
         var model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
-        if (model?.GetDeclaredSymbol(property, context.CancellationToken) is not { } symbol || !_isClassified(symbol))
+        if (model?.GetDeclaredSymbol(property, context.CancellationToken) is not { } symbol
+            || !_isClassified(symbol)
+            || !await ComplianceCodeFixProvider._canConvertAsync(context.Document, property, context.CancellationToken).ConfigureAwait(false))
         {
             return;
         }
