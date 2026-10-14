@@ -261,7 +261,6 @@
           "Microsoft.Extensions.Telemetry.Abstractions": "10.10.0"
         }
       }
-    },
-    "net10.0/linux-x64": {}
+    }
   }
 }
