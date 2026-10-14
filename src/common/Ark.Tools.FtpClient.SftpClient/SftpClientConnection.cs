@@ -65,17 +65,59 @@ public sealed class SftpClientConnection : FtpClientConnectionBase
     /// <returns></returns>
     public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
     {
-        await _ensureConnected(ctk).ConfigureAwait(false);
         using var ms = new MemoryStream(80 * 1024);
-        await _client.DownloadFileAsync(path, ms, ctk).ConfigureAwait(false);
+        await _transferAsync(c => _client.DownloadFileAsync(path, ms, c), ctk).ConfigureAwait(false);
         return ms.ToArray();
     }
 
     public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
     {
-        await _ensureConnected(ctk).ConfigureAwait(false);
         using var ms = new MemoryStream(content);
-        await _client.UploadFileAsync(ms, path, ctk).ConfigureAwait(false);
+        await _transferAsync(c => _client.UploadFileAsync(ms, path, c), ctk).ConfigureAwait(false);
+    }
+
+    // SSH.NET leaves a cancelled or failed transfer behind: it closes the remote file with CancellationToken.None,
+    // so a silent server holds a cancelled download for OperationTimeout, and a failed upload keeps its handle open
+    // with writes pending. Dropping the session ends the transfer and keeps the connection from being reused:
+    // a pool discards a disconnected connection and a direct caller reconnects on next use.
+    private async Task _transferAsync(Func<CancellationToken, Task> transfer, CancellationToken ctk)
+    {
+        await _ensureConnected(ctk).ConfigureAwait(false);
+
+        // SSH.NET sees the cancellation only after the session is gone, so it skips the close instead of waiting on it.
+        using var transferCts = new CancellationTokenSource();
+        var registration = ctk.Register(static s => _disconnectThenCancel(((Renci.SshNet.SftpClient, CancellationTokenSource))s!), (_client, transferCts));
+        try
+        {
+            await transfer(transferCts.Token).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            // waits for a cancellation disconnect still running, so the two never overlap
+            await registration.DisposeAsync().ConfigureAwait(false);
+            _client.Disconnect();
+
+            if (ctk.IsCancellationRequested)
+                throw new OperationCanceledException("The SFTP transfer was cancelled.", ex, ctk);
+            throw;
+        }
+        finally
+        {
+            await registration.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    [SuppressMessage("Design", "MA0045:Do not use blocking calls in a sync method (need to make calling method async)", Justification = "CancellationToken callbacks are synchronous")]
+    private static void _disconnectThenCancel((Renci.SshNet.SftpClient Client, CancellationTokenSource TransferCts) state)
+    {
+        try
+        {
+            state.Client.Disconnect();
+        }
+        finally
+        {
+            state.TransferCts.Cancel();
+        }
     }
 
     public override async Task DeleteDirectoryAsync(string path, CancellationToken ctk = default)
