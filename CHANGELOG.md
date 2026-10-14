@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `Ark.Tools.Outbox.SqlServer`: the outbox now dispatches the oldest messages first, in the order they were written. Before, it sent the newest first, so under load old messages could wait indefinitely and the messages of one transaction went out in reverse order.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added
