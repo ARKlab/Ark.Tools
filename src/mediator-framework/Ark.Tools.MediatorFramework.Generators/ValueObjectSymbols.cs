@@ -25,7 +25,7 @@ internal static class ValueObjectSymbols
         foreach (var attribute in type.GetAttributes())
         {
             if (attribute.AttributeClass is not { } attributeClass
-                || attributeClass.ContainingNamespace?.ToDisplayString() != "Vogen")
+                || !attributeClass.ContainingNamespace._isNamespace("Vogen"))
             {
                 continue;
             }
@@ -55,9 +55,9 @@ internal static class ValueObjectSymbols
     public static bool IsSensitiveValueObject(ITypeSymbol type)
     {
         return type.AllInterfaces.Any(static contract => contract is { MetadataName: "ISensitiveValue`1" }
-                && contract.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Compliance")
+                && contract.ContainingNamespace._isNamespace("Ark.Tools.Compliance"))
             || type.GetAttributes().Any(static attribute => attribute.AttributeClass is { MetadataName: "SensitiveValueObjectAttribute`1" } attributeClass
-                && attributeClass.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Compliance");
+                && attributeClass.ContainingNamespace._isNamespace("Ark.Tools.Compliance"));
     }
 
     /// <summary>
@@ -108,7 +108,7 @@ internal static class ValueObjectSymbols
         foreach (var attribute in attributes.IsDefault ? ImmutableArray<AttributeData>.Empty : attributes)
         {
             if (attribute.AttributeClass is not { } attributeClass
-                || attributeClass.ContainingNamespace?.ToDisplayString() != "Vogen"
+                || !attributeClass.ContainingNamespace._isNamespace("Vogen")
                 || attributeClass.Name != attributeName
                 || attribute.AttributeConstructor is not { } constructor)
             {

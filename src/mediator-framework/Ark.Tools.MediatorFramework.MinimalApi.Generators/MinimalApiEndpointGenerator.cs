@@ -110,8 +110,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value);
             // The referenced-assembly scan reads metadata symbols only, so it reruns when references change.
-            var referencedEndpoints = context.CompilationProvider
-                .WithComparer(MetadataReferencesComparer.Instance)
+            var referencedEndpoints = context.CompilationProvider._referencesOnly()
                 .Combine(endpointAssemblies)
                 .Select(static (pair, cancellationToken) => new EquatableArray<EndpointModel>(
                     GetReferencedEndpoints(pair.Left, pair.Right.Values, cancellationToken)))
@@ -707,14 +706,10 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static bool IsType(INamedTypeSymbol type, string metadataName, string namespaceName)
             => string.Equals(type.MetadataName, metadataName, StringComparison.Ordinal)
-                && string.Equals(type.ContainingNamespace.ToDisplayString(), namespaceName, StringComparison.Ordinal);
+                && type.ContainingNamespace._isNamespace(namespaceName);
 
         private static bool IsAttribute(AttributeData attribute, string metadataName)
-            => attribute.AttributeClass is not null
-                && string.Equals(attribute.AttributeClass.MetadataName, metadataName.Substring(metadataName.LastIndexOf('.') + 1), StringComparison.Ordinal)
-                && string.Equals(
-                    attribute.AttributeClass.ContainingNamespace.ToDisplayString(),
-                    metadataName[..metadataName.LastIndexOf('.')], StringComparison.Ordinal);
+            => attribute.AttributeClass._isFullName(metadataName);
 
         private static ImmutableArray<string> ConstructorParameters(
             INamedTypeSymbol type,
