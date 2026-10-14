@@ -194,10 +194,12 @@ The common composition should be shared by every process:
 config.Logging(logging => logging.NLog());
 config.Serialization(serializer =>
 {
-    var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    var jsonContext = new ApplicationJsonSerializerContext(contextOptions);
-    var rebusOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    rebusOptions.TypeInfoResolver = jsonContext;
+    var rebusOptions = new JsonSerializerOptions
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true
+    }.ConfigureArkDefaults();
+    rebusOptions.TypeInfoResolver = ApplicationJsonSerializerContext.Default;
     serializer.UseSystemTextJson(rebusOptions);
 });
 ```

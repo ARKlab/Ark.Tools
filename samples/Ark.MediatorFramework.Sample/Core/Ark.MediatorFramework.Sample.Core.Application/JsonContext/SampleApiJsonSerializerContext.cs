@@ -37,6 +37,13 @@ namespace Ark.MediatorFramework.Sample.Core.Application.JsonContext;
         typeof(LocalDateTimeRangeConverter),
         typeof(ZonedDateTimeRangeConverter),
     })]
+[JsonSerializable(typeof(IReadOnlyList<Book.V1.Create>), TypeInfoPropertyName = "BookV1CreateList")]
+[JsonSerializable(typeof(IReadOnlyList<Book.V1.Output>), TypeInfoPropertyName = "BookV1OutputList")]
+[JsonSerializable(typeof(IReadOnlyList<BookReview>))]
+[JsonSerializable(typeof(IReadOnlyList<ReadingActivity>))]
+[JsonSerializable(typeof(IAsyncEnumerable<BookStreamItem>))]
+// The OpenAPI document describes the streamed response as a sequence.
+[JsonSerializable(typeof(IEnumerable<BookStreamItem>))]
 [JsonSerializable(typeof(UploadResponse))]
 [JsonSerializable(typeof(GetAuditsQuery.V1), TypeInfoPropertyName = "GetAuditsQueryV1")]
 [JsonSerializable(typeof(AuditRecord))]

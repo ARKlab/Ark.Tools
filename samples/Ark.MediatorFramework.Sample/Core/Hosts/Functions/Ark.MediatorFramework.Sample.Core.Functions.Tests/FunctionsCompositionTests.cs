@@ -5,6 +5,7 @@ extern alias Audit;
 extern alias Notifications;
 extern alias Processor;
 
+using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
 using Ark.MediatorFramework.Sample.Core.Functions.Hosting;
 using Ark.Tools.MediatorFramework.AzureFunctions;
 using Ark.Tools.MediatorFramework.Messaging;
@@ -13,9 +14,11 @@ using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 using NodaTime;
 
@@ -59,6 +62,27 @@ public sealed class FunctionsCompositionTests
         provider.GetServices<IHostedService>().OfType<MessagingProcessorHost>().Should().BeEmpty();
     }
 
+    /// <summary>The Api app's HTTP JSON resolves contracts from the source-generated contexts before any reflection fallback.</summary>
+    [TestMethod]
+    public async Task ApiAppHttpJsonUsesTheSourceGeneratedContexts()
+    {
+        await using var container = FunctionsHosting.CreateContainer(_inMemoryOptions());
+        var services = new ServiceCollection();
+        services.AddLogging();
+        FunctionsHosting.AddApiProducer(
+            services,
+            container,
+            static transport => transport.UseInMemory(),
+            static dataBus => dataBus.UseInMemory(lifetime: Duration.FromHours(2)));
+        await using var provider = services.BuildServiceProvider();
+
+        var options = provider.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+
+        options.TypeInfoResolverChain.Take(2).Should().Equal(
+            SampleApiJsonSerializerContext.Default,
+            ApplicationJsonSerializerContext.Default);
+    }
+
     /// <summary>Each trigger app is generated for exactly one participant.</summary>
     [TestMethod]
     public void EachTriggerAppDeclaresOneParticipant()
@@ -70,7 +94,8 @@ public sealed class FunctionsCompositionTests
 
     /// <summary>
     /// Each trigger app finds every generated handler and never polls the outbox. Only the Processor, whose handler
-    /// publishes, selects the development pass-through; the subscribers send nothing.
+    /// publishes, selects the development pass-through; the subscribers send nothing. HTTP JSON resolves contracts from
+    /// the source-generated contexts first.
     /// </summary>
     /// <param name="app">The trigger app.</param>
     [TestMethod]
@@ -104,6 +129,9 @@ public sealed class FunctionsCompositionTests
         var hosted = provider.GetServices<IHostedService>().ToArray();
         hosted.OfType<MessagingProcessorHost>().Should().BeEmpty();
         hosted.OfType<MessagingOutboxProcessor>().Should().BeEmpty();
+        provider.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions.TypeInfoResolverChain.Take(2).Should().Equal(
+            SampleApiJsonSerializerContext.Default,
+            ApplicationJsonSerializerContext.Default);
     }
 
     /// <summary>Bridges the Processor app's container into Microsoft DI for scoped processor dispatch.</summary>

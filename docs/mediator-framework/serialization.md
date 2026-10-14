@@ -89,18 +89,26 @@ The sample uses Ark defaults plus a source-generated JSON context:
 ```csharp
 services.ConfigureHttpJsonOptions(options =>
 {
-    var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    var context = new SampleApiJsonSerializerContext(contextOptions);
     options.SerializerOptions.ConfigureArkDefaults();
+    options.SerializerOptions.RespectNullableAnnotations = true;
+    options.SerializerOptions.RespectRequiredConstructorParameters = true;
     options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(
-        context,
+        SampleApiJsonSerializerContext.Default,
         new DefaultJsonTypeInfoResolver());
 });
 ```
 Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/SampleStartup.cs)
 
-This keeps Minimal API JSON behavior explicit and fast while still allowing the
-generated endpoints to serialize normal framework shapes.
+A context used as a resolver builds its metadata for the options it is given, so
+options such as `RespectNullableAnnotations`, set on the context's own options or in
+`[JsonSourceGenerationOptions]`, do not apply. Set them on the host options.
+
+Declare every HTTP body and response type in the context, including collection
+roots such as `IReadOnlyList<BookReview>` and `IAsyncEnumerable<BookStreamItem>`.
+The reflection fallback then serves only framework shapes, such as the `IFormFile`
+that OpenAPI describes. It also hides a missing contract, so the sample's
+`HttpContractsResolveFromSourceGeneratedMetadata` test checks each endpoint's
+types against the context.
 
 ## Mediator Framework messaging JSON
 

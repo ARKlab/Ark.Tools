@@ -14,9 +14,8 @@
 - Place DTOs in `*.API` project, handlers in `*.Application` project
 - Add Reqnroll BDD tests for new features
 - Use a single `JsonSerializerContext` for all types serialized by the application (Requests, Queries, Messages)
-- Configure `JsonSerializerContext` with Ark defaults using a helper method in the Application layer (e.g., `Ex.CreateCoreApiJsonSerializerOptions()`) instead of creating options inline
-- Register `JsonSerializerContext` using `TypeInfoResolver` pattern, not `TypeInfoResolverChain`
-- Note: `JsonSerializerOptions` get locked when passed to a `JsonSerializerContext` constructor, preventing reuse for multiple contexts - create separate instances for each context
+- Register the context's `Default` instance (e.g., `CoreApiJsonSerializerContext.Default`) using the `TypeInfoResolver` pattern, not `TypeInfoResolverChain`
+- Set Ark defaults and strictness flags (`RespectNullableAnnotations`, `RespectRequiredConstructorParameters`) on the options that use the context (HTTP, MVC, Rebus), e.g. with `Ex.CreateCoreApiJsonSerializerOptions()`. A context used as a resolver follows those options, so do not create a context from its own options
 - **BusinessRuleViolations**: Derive from `Ark.Tools.Core.BusinessRuleViolation.BusinessRuleViolation`, specialize with domain-specific properties (e.g., `BookPrintingProcessAlreadyRunningViolation` with `BookId` property). The class name itself serves as the error code
 - **Controller Routing**: Always use explicit routes at the controller class level (e.g., `[Route("bookPrintProcess")]` in camelCase). Never use `[controller]` or other implicit routes. Add `[ApiVersion("1.0")]` or appropriate version on the controller. Use sub-routes on action methods (e.g., `[HttpGet("{id}")]`)
 - **Async Methods**: Always use `async` and `await` in async methods, even when the only operation is `return await task`. Do NOT optimize by returning the Task directly - this harms stacktrace clarity in production debugging

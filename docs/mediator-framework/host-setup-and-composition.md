@@ -171,10 +171,12 @@ config.Routing(configureRouting);
 config.Logging(logging => logging.NLog());
 config.Serialization(serializer =>
 {
-    var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    var jsonContext = new ApplicationJsonSerializerContext(contextOptions);
-    var rebusOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    rebusOptions.TypeInfoResolver = jsonContext;
+    var rebusOptions = new JsonSerializerOptions
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true
+    }.ConfigureArkDefaults();
+    rebusOptions.TypeInfoResolver = ApplicationJsonSerializerContext.Default;
     serializer.UseSystemTextJson(rebusOptions);
 });
 config.Options(options =>
@@ -258,18 +260,21 @@ objects. The host combines it with Ark defaults:
 ```csharp
 services.ConfigureHttpJsonOptions(options =>
 {
-    var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    var context = new SampleApiJsonSerializerContext(contextOptions);
     options.SerializerOptions.ConfigureArkDefaults();
+    options.SerializerOptions.RespectNullableAnnotations = true;
+    options.SerializerOptions.RespectRequiredConstructorParameters = true;
     options.SerializerOptions.TypeInfoResolver =
         JsonTypeInfoResolver.Combine(
-            context,
+            SampleApiJsonSerializerContext.Default,
+            ApplicationJsonSerializerContext.Default,
             new DefaultJsonTypeInfoResolver());
 });
 ```
 
-Use a new options instance for the context and for the host. The context
-constructor locks its options.
+Use the contexts' `Default` instances and set the options on the host options. A
+context used as a resolver follows the options it is given, so options passed to
+the context constructor do not apply. See
+[Serialization](serialization.md).
 
 ## Middleware order
 

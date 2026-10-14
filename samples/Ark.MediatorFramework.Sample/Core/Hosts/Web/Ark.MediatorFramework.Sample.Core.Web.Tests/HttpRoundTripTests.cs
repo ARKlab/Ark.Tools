@@ -1,14 +1,23 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.MediatorFramework.Sample.Core.Application.JsonContext;
+
 using AwesomeAssertions;
 
 using MessagePack;
 using MessagePack.Resolvers;
 
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+
 using System.Net;
 using System.Net.Mime;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.MediatorFramework.Sample.Core.Web.Tests;
 
@@ -93,6 +102,55 @@ public sealed class HttpRoundTripTests
             options,
             ctk);
         description.Description.Should().Be("Paperback print edition with 320 pages");
+    }
+
+    /// <summary>Rejects a null value for a non-nullable body member, as the JSON options respect nullable annotations.</summary>
+    [TestMethod]
+    public async Task DescribeBookEditionRejectsNullEdition()
+    {
+        await using var host = await WebInterfaceTestHost.StartAsync().ConfigureAwait(false);
+        var ctk = host.App.Lifetime.ApplicationStopping;
+        using var client = host.CreateClient(ApplicationScopes.BookRead);
+
+        using var body = _json("""{"edition":null}""");
+        using var response = await client.PostAsync(
+            new Uri("/api/v1/books/editions/describe", UriKind.Relative),
+            body,
+            ctk).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest, await response.Content.ReadAsStringAsync(ctk).ConfigureAwait(false));
+    }
+
+    /// <summary>Resolves every HTTP body and response contract from the sample's source-generated JSON contexts.</summary>
+    /// <remarks>The host keeps a reflection fallback for framework shapes, so a missing contract would not fail at runtime.</remarks>
+    [TestMethod]
+    public async Task HttpContractsResolveFromSourceGeneratedMetadata()
+    {
+        await using var host = await WebInterfaceTestHost.StartAsync().ConfigureAwait(false);
+        var options = host.App.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+        var contexts = JsonTypeInfoResolver.Combine(
+            SampleApiJsonSerializerContext.Default,
+            ApplicationJsonSerializerContext.Default);
+        var endpoints = ((IEndpointRouteBuilder)host.App).DataSources
+            .SelectMany(static source => source.Endpoints)
+            .OfType<RouteEndpoint>()
+            .Where(static endpoint => endpoint.RoutePattern.RawText?.Contains("api/v", StringComparison.Ordinal) == true)
+            .ToList();
+        var contracts = endpoints
+            .SelectMany(static endpoint => endpoint.Metadata.GetOrderedMetadata<IAcceptsMetadata>())
+            .Where(static accepts => accepts.ContentTypes.Contains(MediaTypeNames.Application.Json))
+            .Select(static accepts => accepts.RequestType)
+            .Concat(endpoints
+                .SelectMany(static endpoint => endpoint.Metadata.GetOrderedMetadata<IProducesResponseTypeMetadata>())
+                .Select(static produces => produces.Type))
+            .OfType<Type>()
+            // ASP.NET Core resolves ProblemDetails from its own context.
+            .Where(static type => type != typeof(void) && !typeof(Microsoft.AspNetCore.Mvc.ProblemDetails).IsAssignableFrom(type))
+            .Distinct()
+            .ToList();
+
+        contracts.Should().Contain(typeof(IReadOnlyList<Book.V1.Output>));
+        contracts.Where(type => contexts.GetTypeInfo(type, options) is null).Should().BeEmpty();
     }
 
     /// <summary>Streams Book items over HTTP and reads them back in order.</summary>

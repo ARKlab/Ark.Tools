@@ -130,18 +130,12 @@ public static class RebusHosting
         config.Logging(static logging => logging.NLog());
         config.Serialization(static serializer =>
         {
-            var contextOptions = new JsonSerializerOptions
-            {
-                RespectNullableAnnotations = true,
-                RespectRequiredConstructorParameters = true
-            }.ConfigureArkDefaults();
-            var jsonContext = new ApplicationJsonSerializerContext(contextOptions);
             var rebusOptions = new JsonSerializerOptions
             {
                 RespectNullableAnnotations = true,
                 RespectRequiredConstructorParameters = true
             }.ConfigureArkDefaults();
-            rebusOptions.TypeInfoResolver = jsonContext;
+            rebusOptions.TypeInfoResolver = ApplicationJsonSerializerContext.Default;
             serializer.UseSystemTextJson(rebusOptions);
         });
         config.Options(options =>
