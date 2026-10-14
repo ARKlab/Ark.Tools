@@ -89,15 +89,19 @@ The sample uses Ark defaults plus a source-generated JSON context:
 ```csharp
 services.ConfigureHttpJsonOptions(options =>
 {
-    var contextOptions = new JsonSerializerOptions().ConfigureArkDefaults();
-    var context = new SampleApiJsonSerializerContext(contextOptions);
     options.SerializerOptions.ConfigureArkDefaults();
+    options.SerializerOptions.RespectNullableAnnotations = true;
+    options.SerializerOptions.RespectRequiredConstructorParameters = true;
     options.SerializerOptions.TypeInfoResolver = JsonTypeInfoResolver.Combine(
-        context,
+        SampleApiJsonSerializerContext.Default,
         new DefaultJsonTypeInfoResolver());
 });
 ```
 Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/SampleStartup.cs)
+
+A context used as a resolver builds its metadata for the options it is given, so
+options such as `RespectNullableAnnotations`, set on the context's own options or in
+`[JsonSourceGenerationOptions]`, do not apply. Set them on the host options.
 
 This keeps Minimal API JSON behavior explicit and fast while still allowing the
 generated endpoints to serialize normal framework shapes.

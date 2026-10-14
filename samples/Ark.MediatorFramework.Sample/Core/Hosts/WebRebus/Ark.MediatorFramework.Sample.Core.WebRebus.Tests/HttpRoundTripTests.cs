@@ -58,6 +58,23 @@ public sealed class HttpRoundTripTests
             .Should().Equal("A desert classic");
     }
 
+    /// <summary>Rejects a null value for a non-nullable body member, as the JSON options respect nullable annotations.</summary>
+    [TestMethod]
+    public async Task DescribeBookEditionRejectsNullEdition()
+    {
+        await using var host = await WebInterfaceTestHost.StartAsync().ConfigureAwait(false);
+        var ctk = host.App.Lifetime.ApplicationStopping;
+        using var client = host.CreateClient(ApplicationScopes.BookRead);
+
+        using var body = _json("""{"edition":null}""");
+        using var response = await client.PostAsync(
+            new Uri("/api/v1/books/editions/describe", UriKind.Relative),
+            body,
+            ctk).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest, await response.Content.ReadAsStringAsync(ctk).ConfigureAwait(false));
+    }
+
     /// <summary>Rejects an anonymous call.</summary>
     [TestMethod]
     public async Task AnonymousCallIsUnauthorized()

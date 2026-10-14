@@ -144,25 +144,16 @@ public sealed class WebRebusStartup
         services.AddSingleton<IFormatterResolver>(messagePackResolver);
 
         // Minimal API JSON: compose the source-generated application metadata with the Ark
-        // defaults (camelCase, NodaTime, enum-as-member).
+        // defaults (camelCase, NodaTime, enum-as-member). A context used as a resolver builds its
+        // metadata for these options, so the strictness flags must be set here, not on the context.
         services.ConfigureHttpJsonOptions(static options =>
         {
-            var context = new SampleApiJsonSerializerContext(
-                new JsonSerializerOptions
-                {
-                    RespectNullableAnnotations = true,
-                    RespectRequiredConstructorParameters = true
-                }.ConfigureArkDefaults());
-            var applicationContext = new ApplicationJsonSerializerContext(
-                new JsonSerializerOptions
-                {
-                    RespectNullableAnnotations = true,
-                    RespectRequiredConstructorParameters = true
-                }.ConfigureArkDefaults());
             options.SerializerOptions.ConfigureArkDefaults();
+            options.SerializerOptions.RespectNullableAnnotations = true;
+            options.SerializerOptions.RespectRequiredConstructorParameters = true;
             options.SerializerOptions.TypeInfoResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
-                context,
-                applicationContext,
+                SampleApiJsonSerializerContext.Default,
+                ApplicationJsonSerializerContext.Default,
                 new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
         });
 
