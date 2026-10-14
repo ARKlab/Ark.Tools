@@ -267,7 +267,16 @@ var combinedResolver = JsonTypeInfoResolver.Combine(
     ArkProblemDetailsJsonSerializerContext.Default, // Error types (Priority 2)
     new DefaultJsonTypeInfoResolver());             // Reflection fallback (Priority 3)
 
-// Strictness flags go on the options that use the contexts
+// Ark defaults and strictness flags go on the options that use the contexts.
+// ArkStartupWebApi already applies the Ark defaults to the MVC options.
+services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ConfigureArkDefaults();
+    options.SerializerOptions.RespectNullableAnnotations = true;
+    options.SerializerOptions.RespectRequiredConstructorParameters = true;
+    options.SerializerOptions.TypeInfoResolver = combinedResolver;
+});
+
 services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
 {
     options.JsonSerializerOptions.RespectNullableAnnotations = true;
