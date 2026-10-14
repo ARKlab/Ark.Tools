@@ -7,23 +7,36 @@
     <_ArkProtoExportRunner Condition="'$(_ArkProtoExportRunner)' == ''">$(MSBuildThisFileDirectory)..\..\Ark.Tools.MediatorFramework.Grpc.Export\bin\$(Configuration)\net10.0\Ark.Tools.MediatorFramework.Grpc.Export.dll</_ArkProtoExportRunner>
   </PropertyGroup>
 
-  <!-- The exporter always writes ark/mediator.proto when it exports; re-export if the output was deleted -->
+  <!-- Runs before ArkExportProto checks its Outputs. One stamp per destination, so switching
+       ArkExportProtoDir does not reuse another directory's state. The stamp lists the exported
+       files; re-export when any of them was deleted. -->
   <Target Name="_ArkExportProtoResetStamp"
           BeforeTargets="ArkExportProto"
-          Condition="'$(ArkExportProto)' == 'true' And !Exists('$(ArkExportProtoDir)/ark/mediator.proto')">
-    <Delete Files="$(IntermediateOutputPath)ArkExportProto.stamp" />
+          Condition="'$(ArkExportProto)' == 'true'">
+    <PropertyGroup>
+      <_ArkExportProtoStamp>$(IntermediateOutputPath)ArkExportProto.$([MSBuild]::StableStringHash($([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(ArkExportProtoDir)')))).stamp</_ArkExportProtoStamp>
+    </PropertyGroup>
+    <ReadLinesFromFile File="$(_ArkExportProtoStamp)" Condition="Exists('$(_ArkExportProtoStamp)')">
+      <Output TaskParameter="Lines" ItemName="_ArkExportProtoManifest" />
+    </ReadLinesFromFile>
+    <Delete Files="$(_ArkExportProtoStamp)" Condition="'@(_ArkExportProtoManifest->Exists())' != '@(_ArkExportProtoManifest)'" />
   </Target>
 
   <Target Name="ArkExportProto"
           AfterTargets="Build"
           Condition="'$(ArkExportProto)' == 'true' And '$(ArkExportProtoDir)' != '' And '$(IsTestProject)' != 'true' And Exists('$(TargetDir)$(TargetName).runtimeconfig.json')"
           Inputs="$(TargetPath);$(_ArkProtoExportRunner);@(ArkAdditionalProto)"
-          Outputs="$(IntermediateOutputPath)ArkExportProto.stamp">
+          Outputs="$(_ArkExportProtoStamp)">
     <Delete Files="$(ArkExportProtoDir)/.ark-export-active" />
     <Exec Command="dotnet &quot;$(_ArkProtoExportRunner)&quot; &quot;$(TargetPath)&quot; &quot;$(ArkExportProtoDir)&quot;" />
-    <Touch Files="$(IntermediateOutputPath)ArkExportProto.stamp" AlwaysCreate="true" />
     <ItemGroup>
-      <FileWrites Include="$(IntermediateOutputPath)ArkExportProto.stamp" />
+      <_ArkExportedProto Include="$(ArkExportProtoDir)/**/*.proto" />
+      <_ArkExportedProto Include="@(ArkAdditionalProto->'$(ArkExportProtoDir)/%(Filename)%(Extension)')" Condition="Exists('$(ArkExportProtoDir)/.ark-export-active')" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_ArkExportProtoStamp)" Lines="@(_ArkExportedProto->'%(FullPath)'->Distinct())" Overwrite="true" />
+    <Touch Files="$(_ArkExportProtoStamp)" AlwaysCreate="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_ArkExportProtoStamp)" />
     </ItemGroup>
   </Target>
 
