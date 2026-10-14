@@ -68,7 +68,7 @@ assembly-wide scanning while preserving the official `[McpServerToolType]` and
 accepts JSON options only at registration time, before the service provider
 exists, so the generated factory sets `McpServerToolCreateOptions.SerializerOptions`
 from `McpToolSerializerOptions.Get(services)`: one read-only copy of
-`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per host, with
+`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per service provider, with
 `McpJsonUtilities.DefaultOptions.TypeInfoResolver` and an internal context for
 `McpAttachmentInput` appended to the resolver chain. Tool arguments, input
 schemas and structured results therefore use the same JSON options as the
@@ -323,9 +323,10 @@ The generator makes the decorated context implement
 `IMcpToolContext`, whose public `RegisterMcpTools` method is the generated
 registration sequence. `WithArkMcpTools<TContext>` requires
 `where TContext : IMcpToolContext` and invokes its static abstract
-`RegisterMcpTools` method. No context instance, runtime method lookup,
-`MethodInfo`, or reflection-based fallback is used; a context that is not
-generated fails at compile time.
+`RegisterMcpTools` method. No context instance or assembly scanning is used,
+and a context that is not generated fails at compile time. The only reflection
+is the trimming-safe `typeof(ToolType).GetMethod(nameof(ToolType.ExecuteAsync))`
+that hands each generated method to `McpServerTool.Create`.
 
 ## Generated artifacts
 
@@ -359,8 +360,15 @@ public partial class McpHostContext : IMcpToolContext
 {
     public IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
     {
-        return builder
-            .WithTools<SearchBooksTool>();
+        builder.Services.AddSingleton<McpServerTool>(static services => McpServerTool.Create(
+            typeof(SearchBooksTool).GetMethod(nameof(SearchBooksTool.ExecuteAsync))!,
+            target: null,
+            new McpServerToolCreateOptions
+            {
+                Services = services,
+                SerializerOptions = McpToolSerializerOptions.Get(services),
+            }));
+        return builder;
     }
 
     [McpServerToolType]
