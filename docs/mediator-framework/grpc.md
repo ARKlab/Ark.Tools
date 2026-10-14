@@ -86,8 +86,9 @@ Set the export directory in the host's build properties:
 Source: [`Directory.Build.props`](../../samples/Ark.MediatorFramework.Sample/Directory.Build.props)
 
 Build without running the host. The generator emits the service and `.proto`
-files. `ArkAdditionalProto` copies hand-written shared schemas beside generated
-files:
+files. Builds that leave the host assembly unchanged skip the export; delete the
+export directory to force it. `ArkAdditionalProto` copies hand-written shared
+schemas beside generated files:
 
 ```xml
 <ItemGroup>

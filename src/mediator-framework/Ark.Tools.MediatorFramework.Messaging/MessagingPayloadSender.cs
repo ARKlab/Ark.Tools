@@ -11,6 +11,12 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Builds compressed or claim-checked payloads for a messaging transport.</summary>
 public sealed class MessagingPayloadSender
 {
+    private static readonly PipeOptions _pipeOptions = new(
+        pool: MemoryPool<byte>.Shared,
+        pauseWriterThreshold: 65_536,
+        resumeWriterThreshold: 32_768,
+        useSynchronizationContext: false);
+
     private readonly IMessagingDataBus _dataBus;
     private readonly MessagingNetworkOptions _network;
     private readonly CompressionAlgorithm _algorithm;
@@ -74,12 +80,18 @@ public sealed class MessagingPayloadSender
         var transportInlineLimit = transport.GetMaximumInlinePayloadBytes(readOnlyHeaders);
         var inlineLimit = checked((int)Math.Min(transportInlineLimit, int.MaxValue));
 
-        var serialization = new Pipe(_pipeOptions());
-        var finalPayload = new Pipe(_pipeOptions());
+        var serialization = new Pipe(_pipeOptions);
         var serializeTask = _serializeAsync(codec, message, serialization.Writer, ctk);
-        var compressTask = _compressAsync(serialization.Reader, finalPayload.Writer, ctk);
+        var compressTask = Task.FromResult(false);
+        var payloadReader = serialization.Reader;
+        if (_algorithm != CompressionAlgorithm.None)
+        {
+            var finalPayload = new Pipe(_pipeOptions);
+            compressTask = _compressAsync(serialization.Reader, finalPayload.Writer, ctk);
+            payloadReader = finalPayload.Reader;
+        }
         var destinationTask = _writeDestinationAsync(
-            finalPayload.Reader,
+            payloadReader,
             inlineLimit,
             transport,
             readOnlyHeaders,
@@ -376,15 +388,6 @@ public sealed class MessagingPayloadSender
             CompressionAlgorithm.Brotli => new BrotliStream(stream, CompressionLevel.Fastest, leaveOpen: false),
             _ => throw new InvalidOperationException("Compression is not configured.")
         };
-    }
-
-    private static PipeOptions _pipeOptions()
-    {
-        return new PipeOptions(
-            pool: MemoryPool<byte>.Shared,
-            pauseWriterThreshold: 65_536,
-            resumeWriterThreshold: 32_768,
-            useSynchronizationContext: false);
     }
 
     private static void _removePayloadHeaders(IDictionary<string, string> headers)

@@ -6,6 +6,7 @@ using Ark.Tools.Solid;
 
 using AwesomeAssertions;
 
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 
 using MessagePack;
@@ -19,6 +20,7 @@ using NodaTime.Testing;
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.IO.Pipelines;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
@@ -231,6 +233,72 @@ public sealed partial class MessagingRuntimeTests
         finally
         {
             ProtobufContractRegistry<Empty>.Parse = null;
+        }
+    }
+
+    [TestMethod]
+    public async Task ProtobufCodecWaitsForPayloadWithoutBlocking()
+    {
+        try
+        {
+            ProtobufContractRegistry<StringValue>.Parse = static payload => StringValue.Parser.ParseFrom(payload);
+            var codec = new ProtobufMessagingCodec();
+            var pipe = new Pipe();
+            Task<StringValue>? deserialize = null;
+
+            // A synchronous parse blocks inside the call until the payload arrives.
+            var call = Task.Run(() =>
+            {
+                deserialize = codec.DeserializeAsync<StringValue>(pipe.Reader, default);
+            });
+            var returnedBeforePayload =
+                await Task.WhenAny(call, Task.Delay(TimeSpan.FromSeconds(5))).ConfigureAwait(false) == call;
+            await codec.SerializeAsync(new StringValue { Value = "Ada" }, pipe.Writer, default).ConfigureAwait(false);
+            await pipe.Writer.CompleteAsync().ConfigureAwait(false);
+            await call.ConfigureAwait(false);
+            var result = await deserialize!.ConfigureAwait(false);
+
+            returnedBeforePayload.Should().BeTrue();
+            result.Value.Should().Be("Ada");
+        }
+        finally
+        {
+            ProtobufContractRegistry<StringValue>.Parse = null;
+        }
+    }
+
+    [TestMethod]
+    public async Task ProtobufCodecDrainsPipeLargerThanPauseWriterThreshold()
+    {
+        try
+        {
+            ProtobufContractRegistry<StringValue>.Parse = static payload => StringValue.Parser.ParseFrom(payload);
+            var codec = new ProtobufMessagingCodec();
+            var expected = new string('a', 200_000);
+            var payload = new StringValue { Value = expected }.ToByteArray();
+            var pipe = new Pipe();
+            // The writer pauses at PauseWriterThreshold (64 KiB) until the reader advances past buffered bytes,
+            // so a reader that waits for completion without advancing would stall it forever.
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
+            var write = Task.Run(async () =>
+            {
+                for (var offset = 0; offset < payload.Length; offset += 8192)
+                {
+                    var chunk = payload.AsMemory(offset, Math.Min(8192, payload.Length - offset));
+                    await pipe.Writer.WriteAsync(chunk, timeout.Token).ConfigureAwait(false);
+                }
+                await pipe.Writer.CompleteAsync().ConfigureAwait(false);
+            }, timeout.Token);
+            var result = await codec.DeserializeAsync<StringValue>(pipe.Reader, timeout.Token).ConfigureAwait(false);
+            await write.ConfigureAwait(false);
+
+            payload.Length.Should().BeGreaterThan((int)new PipeOptions().PauseWriterThreshold);
+            result.Value.Should().Be(expected);
+        }
+        finally
+        {
+            ProtobufContractRegistry<StringValue>.Parse = null;
         }
     }
 

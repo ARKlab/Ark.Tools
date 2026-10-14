@@ -184,10 +184,6 @@ internal static class AzureFunctionsEndpointParser
     private static readonly SymbolDisplayFormat _annotatedFormat =
         SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
-    private const string _solidRequest = "global::Ark.Tools.Solid.IRequest<TResponse>";
-    private const string _solidQuery = "global::Ark.Tools.Solid.IQuery<TResult>";
-    private const string _solidCommand = "global::Ark.Tools.Solid.ICommand";
-
     /// <summary>Reads every host marker declared by an assembly attribute list.</summary>
     /// <param name="context">The attribute context.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
@@ -274,22 +270,22 @@ internal static class AzureFunctionsEndpointParser
         INamedTypeSymbol? responseSymbol = null;
         foreach (var iface in type.AllInterfaces)
         {
-            var definition = iface.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            if (definition == _solidRequest)
+            var definition = iface.OriginalDefinition;
+            if (definition._isMetadataName("Ark.Tools.Solid", "IRequest`1"))
             {
                 kind = HandlerKind.Request;
                 responseType = iface.TypeArguments[0].ToDisplayString(_annotatedFormat);
                 responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }
-            if (definition == _solidQuery)
+            if (definition._isMetadataName("Ark.Tools.Solid", "IQuery`1"))
             {
                 kind = HandlerKind.Query;
                 responseType = iface.TypeArguments[0].ToDisplayString(_annotatedFormat);
                 responseSymbol = iface.TypeArguments[0] as INamedTypeSymbol;
                 break;
             }
-            if (definition == _solidCommand)
+            if (definition._isFullName("Ark.Tools.Solid.ICommand"))
             {
                 kind = HandlerKind.Command;
                 break;
@@ -320,11 +316,11 @@ internal static class AzureFunctionsEndpointParser
                 var isBody = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(_httpBodyAttribute));
                 var isETag = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(_eTagAttribute));
                 var isString = p.Type.SpecialType == SpecialType.System_String;
-                var isAttachment = p.Type.ToDisplayString() == _arkAttachment;
+                var isAttachment = _isArkAttachment(p.Type);
                 var isAttachmentCollection = p.Type is INamedTypeSymbol collection
-                    && collection.AllInterfaces.Any(static item => item.ToDisplayString().StartsWith("System.Collections.Generic.IEnumerable<", StringComparison.Ordinal))
+                    && collection.AllInterfaces.Any(static item => item._isMetadataName("System.Collections.Generic", "IEnumerable`1"))
                     && collection.TypeArguments.Length == 1
-                    && collection.TypeArguments[0].ToDisplayString() == _arkAttachment;
+                    && _isArkAttachment(collection.TypeArguments[0]);
                 // An array of string-bindable elements, other than string[], binds from every value of a query
                 // parameter, one element per value, as Minimal API binds it natively.
                 var element = p.Type is IArrayTypeSymbol { Rank: 1 } array
@@ -400,10 +396,14 @@ internal static class AzureFunctionsEndpointParser
                     && p.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
                     && (routeNames.Contains(p.Name) || p.GetAttributes().Any(static a =>
                         a.AttributeClass is { Name: "HttpRouteAttribute" or "HttpQueryAttribute" } attributeClass
-                        && attributeClass.ToDisplayString() is _httpRouteAttribute or _httpQueryAttribute)))
+                        && (attributeClass._isFullName(_httpRouteAttribute) || attributeClass._isFullName(_httpQueryAttribute)))))
                 .Select(static p => new UnsettablePropertySpec(p.Name, LocationSpec._from(p)))
                 .ToImmutableArray());
     }
+
+    // Matches ToDisplayString() == _arkAttachment, which an annotated IArkAttachment? does not.
+    private static bool _isArkAttachment(ITypeSymbol type)
+        => type is INamedTypeSymbol { NullableAnnotation: not NullableAnnotation.Annotated } named && named._isFullName(_arkAttachment);
 
     private static EquatableArray<EndpointSpec> _readMetadataEndpoints(
         IAssemblySymbol assembly,
@@ -441,7 +441,7 @@ internal static class AzureFunctionsEndpointParser
                 if (!SymbolEqualityComparer.Default.Equals(selection.ContainingAssembly, markerAssembly)
                     || !selection.GetAttributes().Any(static attribute =>
                         attribute.AttributeClass is { Name: "HttpEndpointAttribute" } attributeClass
-                        && attributeClass.ToDisplayString() == _endpointAttribute))
+                        && attributeClass._isFullName(_endpointAttribute)))
                 {
                     builder.Add(new HostSelectionSpec(selection.Name, name));
                 }
