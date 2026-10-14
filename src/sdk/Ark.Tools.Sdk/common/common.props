@@ -42,6 +42,13 @@
     <TestingPlatformDotnetTestSupport Condition="'$(TestingPlatformDotnetTestSupport)' == ''">true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
+  <!-- Reqnroll's package props default these to false when empty, so mark them here before that happens.
+       IsTestProject may still be set in the project body, so common.targets replaces the mark with the final default. -->
+  <PropertyGroup Condition="'$(IsTestProject)' != 'false' and '$(EnableArkToolsReqnroll)' != 'false'">
+    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">ArkToolsDefault</ReqnrollUseIntermediateOutputPathForCodeBehind>
+    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">ArkToolsDefault</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">
     
     <AnalysisLevel Condition="'$(AnalysisLevel)' == ''">latest-all</AnalysisLevel>

@@ -6,6 +6,17 @@
 
 	<Import Project="$(MSBuildThisFileDirectory)tests.targets" Condition="'$(IsTestProject)' == 'true'" />
 
+  <!-- Reqnroll's props only default these when empty; its items and targets, which drive code-behind, see the final values, so resolving the mark here still applies. -->
+  <!-- An empty value also gets the default: the project body can empty a property after Reqnroll's props skipped it. -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
+    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == 'ArkToolsDefault' or '$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
+    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == 'ArkToolsDefault' or '$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsTestProject)' != 'true' or '$(EnableArkToolsReqnroll)' == 'false'">
+    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == 'ArkToolsDefault'"></ReqnrollUseIntermediateOutputPathForCodeBehind>
+    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == 'ArkToolsDefault'"></ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+  </PropertyGroup>
+
   
   <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true' and '$(ImplicitUsings)' != 'disable' and '$(EnableArkToolsGlobalUsings)' != 'false'">
     <Using Include="System.Diagnostics.CodeAnalysis" />
