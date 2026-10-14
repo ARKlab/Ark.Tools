@@ -249,6 +249,38 @@ public sealed class GeneratorIncrementalityTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorReusesEmittedSourceOnContractLineShift()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [GrpcMethod("GetSource")]
+            [ProtoContract]
+            public sealed class GetSource : IQuery<SourceResponse>
+            {
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class SourceResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            [GrpcMethod("Unsupported")]
+            public sealed class Unsupported { }
+            """;
+
+        _assertEmissionCachedOnLineShift(
+            new ArkGrpcEndpointGenerator(),
+            source,
+            "GrpcEmissionInput",
+            expectedOutput: "rpc GetSource",
+            expectedDiagnostic: "ARKMF011");
+    }
+
+    [TestMethod]
     public void GrpcGeneratorScansProtoContractsOnlyFromMappedAssembliesAndIgnoresMappingOrder()
     {
         var models = _createReference(
