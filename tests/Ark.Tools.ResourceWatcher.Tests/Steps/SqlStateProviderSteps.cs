@@ -365,7 +365,8 @@ public sealed class SqlStateProviderSteps : IDisposable
         {
             await call(cts.Token);
         }
-        catch (Exception ex) when (ex is OperationCanceledException or Microsoft.Data.SqlClient.SqlException)
+        // Only a failure caused by our token counts; any other SqlException is a real error and must fail the step.
+        catch (Exception ex) when (cts.IsCancellationRequested && ex is OperationCanceledException or Microsoft.Data.SqlClient.SqlException)
         {
             _cancelledCallException = ex;
         }
