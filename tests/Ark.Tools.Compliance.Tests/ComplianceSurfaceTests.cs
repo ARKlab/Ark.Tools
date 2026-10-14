@@ -545,6 +545,25 @@ public sealed class ComplianceSurfaceTests
         text.Should().Contain("CLASSIFIED\tExample.Customer\tPhone\tArk:PersonalData\t\tDapper,MessagePack,Newtonsoft.Json,Protobuf,System.Text.Json");
     }
 
+    /// <summary>Registration candidates share one semantic model per tree, and a new compilation never reuses a stale one.</summary>
+    [TestMethod]
+    public void Surface_ReusesSemanticModelPerCompilationAndTree()
+    {
+        var first = CSharpSyntaxTree.ParseText("namespace Example; public class A { }", path: "A.cs");
+        var second = CSharpSyntaxTree.ParseText("namespace Example; public class B { }", path: "B.cs");
+        var compilation = _createCompilation(first, second);
+        var semanticModel = typeof(ComplianceSurfaceGenerator).GetMethod(
+            "_semanticModel", BindingFlags.NonPublic | BindingFlags.Static)!;
+        SemanticModel get(Compilation owner, SyntaxTree tree) => (SemanticModel)semanticModel.Invoke(null, [owner, tree])!;
+
+        var model = get(compilation, first);
+
+        get(compilation, first).Should().BeSameAs(model);
+        get(compilation, second).Should().NotBeSameAs(model);
+        var replacement = compilation.WithAssemblyName("Replacement");
+        get(replacement, first).Should().NotBeSameAs(model).And.Match<SemanticModel>(m => m.Compilation == replacement);
+    }
+
     /// <summary>Ignore attributes suppress the corresponding serializer without erasing the classified member.</summary>
     [TestMethod]
     public void Surface_RespectsSerializerIgnoreAttributes()
