@@ -165,11 +165,33 @@ entries for those implicit packages.
 | `EnableArkToolsMtpRetry` | Enabled unless `false` | SDK restore | Set `false` |
 | `EnableArkToolsMtpTrxReport` | Enabled unless `false` | SDK restore and test arguments | Set `false` |
 | `EnableArkToolsMtpAzureDevOpsReport` | Enabled unless `false` | SDK restore | Set `false` |
-| `EnableArkToolsReqnroll` | Enabled unless `false` for test projects | Test targets | Set `false` |
-| `ReqnrollUseIntermediateOutputPathForCodeBehind` | `true` when empty for test projects | Test targets | Set a value directly |
-| `ReqnrollDeleteObsoleteCodeBehindFilesOnClean` | `true` when empty for test projects | Test targets | Set a value directly |
+| `EnableArkToolsReqnroll` | Enabled unless `false` for test projects | Early (code-behind defaults) and test targets | Set `false` |
+| `ReqnrollUseIntermediateOutputPathForCodeBehind` | `true` when empty for test projects | Early | Set a value directly |
+| `ReqnrollDeleteObsoleteCodeBehindFilesOnClean` | `true` when empty for test projects | Early | Set a value directly |
 | `EnableArkToolsTestConfig` | Enabled unless `false` for test projects | Test targets | Set `false` |
 | `EnableArkToolsAppSettings` | Enabled unless `false` | SDK targets | Set `false` |
+
+The two Reqnroll code-behind defaults put the generated `*.feature.cs` files
+under `obj/`. Reqnroll's package props set both properties to `false` when they
+are empty, so where the SDK is added decides when the defaults apply:
+
+| SDK placement | Test project named `*.Tests` or `*.UnitTests` | `IsTestProject` set only in the project file |
+| --- | --- | --- |
+| `<Sdk Name="Ark.Tools.Sdk" />` in `Directory.Build.props` | Defaults apply | Set both properties to `true` in the project file |
+| `Sdk.props` imported in `Directory.Build.props` and `Sdk.targets` in `Directory.Build.targets` | Defaults apply | Defaults apply |
+| `<Sdk Name="Ark.Tools.Sdk" />` in the project file | Set both properties to `true` | Set both properties to `true` |
+
+`<Sdk>` in `Directory.Build.props` evaluates the SDK targets there too, before
+the project file, so an `IsTestProject` value set only in the project file
+comes too late for them. With split imports, the SDK targets use the final
+`IsTestProject` and `EnableArkToolsReqnroll` values from the project file.
+With `<Sdk>` in the project file, NuGet package props are evaluated before the
+SDK props. Values set directly are always kept.
+
+Test projects that built code-behind into the project folder need one
+`dotnet clean`, which deletes the old files. Until then Reqnroll
+reports them with a warning, which the SDK's `MSBuildTreatWarningsAsErrors`
+default turns into a build error.
 
 The default test command enables TRX, mini crash dumps, mini hang dumps with a
 10-minute timeout, and `--minimum-expected-tests 1`. CI also enables
