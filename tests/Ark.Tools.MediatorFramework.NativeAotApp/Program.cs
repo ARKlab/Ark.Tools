@@ -2,12 +2,17 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.Tools.Core;
 using Ark.Tools.MediatorFramework.Generated;
+using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.Solid;
 using Ark.Tools.SystemTextJson;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.Extensions.Logging.Abstractions;
+
+using ModelContextProtocol.Client;
+using ModelContextProtocol.Protocol;
 
 using System.Data;
 using System.Net;
@@ -17,9 +22,10 @@ using System.Text.Json.Serialization.Metadata;
 namespace Ark.Tools.MediatorFramework.NativeAotApp;
 
 /// <summary>
-/// Exercises Vogen value objects through the Ark.Tools features that support Native AOT. CI runs it after a
-/// Native AOT publish; it exits non-zero when a check fails. OpenAPI is not exercised: document generation pulls
-/// ASP.NET Core MVC's model metadata, which is not Native AOT compatible.
+/// Exercises Vogen value objects through the Ark.Tools features that support Native AOT, and generated MCP tools
+/// through an in-process MCP client. CI runs it after a Native AOT publish; it exits non-zero when a check fails.
+/// OpenAPI is not exercised: document generation pulls ASP.NET Core MVC's model metadata, which is not Native AOT
+/// compatible.
 /// </summary>
 internal static class Program
 {
@@ -104,13 +110,17 @@ internal static class Program
         builder.Services.AddAuthorization(static options =>
             options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAssertion(static _ => true).Build());
         builder.Services.AddScoped<IQueryHandler<GetBookQuery, Book>, GetBookQueryHandler>();
+        builder.Services.AddScoped<IRequestHandler<UploadBookRequest, Book>, UploadBookRequestHandler>();
+        builder.Services.AddScoped<IQueryHandler<DownloadBookQuery, IArkAttachment>, DownloadBookQueryHandler>();
         builder.Services.AddArkSolidServiceProviderProcessors();
+        builder.Services.AddMcpServer().WithHttpTransport().WithArkMcpTools<AppMcpContext>();
 
         var app = builder.Build();
         await using var __app = app.ConfigureAwait(false);
         app.UseRouting();
         app.UseAuthorization();
         app.MapArkEndpoints<AppEndpointContext>();
+        app.MapMcp("/mcp");
         var ctk = app.Lifetime.ApplicationStopping;
         await app.StartAsync(ctk).ConfigureAwait(false);
 
@@ -123,7 +133,37 @@ internal static class Program
         using var bad = await http.GetAsync(new Uri("/books/not-a-guid", UriKind.Relative), ctk).ConfigureAwait(false);
         check("endpoint-rejects-invalid-value-object", () => bad.StatusCode == HttpStatusCode.BadRequest);
 
+        await _checkMcpAsync(http, new Uri(address + "/mcp"), check, ctk).ConfigureAwait(false);
+
         await app.StopAsync(CancellationToken.None).ConfigureAwait(false);
+    }
+
+    // The tools bind the app's source-generated contracts; the attachment and protocol types must come from McpToolSerializerOptions.
+    private static async Task _checkMcpAsync(HttpClient http, Uri endpoint, Action<string, Func<bool>> check, CancellationToken ctk)
+    {
+        var transport = new HttpClientTransport(
+            new HttpClientTransportOptions { Endpoint = endpoint, TransportMode = HttpTransportMode.StreamableHttp },
+            http,
+            NullLoggerFactory.Instance,
+            ownsHttpClient: false);
+        await using var __transport = transport.ConfigureAwait(false);
+        var client = await McpClient.CreateAsync(transport, cancellationToken: ctk).ConfigureAwait(false);
+        await using var __client = client.ConfigureAwait(false);
+
+        var tools = await client.ListToolsAsync(cancellationToken: ctk).ConfigureAwait(false);
+        check("mcp-list-tools", () => tools.Select(static t => t.Name).Order(StringComparer.Ordinal).SequenceEqual(["books.download", "books.get", "books.upload"], StringComparer.Ordinal));
+
+        var get = await client.CallToolAsync("books.get", new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = _id.ToString("D") }, cancellationToken: ctk).ConfigureAwait(false);
+        check("mcp-query", () => get.IsError != true && get.StructuredContent?.GetProperty("id").GetString() == _id.ToString("D"));
+
+        using var attachment = JsonDocument.Parse("""{"name":"a.txt","mimeType":"text/plain","blob":"aGVsbG8="}""");
+        var upload = await client.CallToolAsync("books.upload", new Dictionary<string, object?>(StringComparer.Ordinal) { ["attachment"] = attachment.RootElement }, cancellationToken: ctk).ConfigureAwait(false);
+        check("mcp-attachment-upload", () => upload.IsError != true && upload.StructuredContent?.GetProperty("code").GetString() == "a.txt:hello");
+
+        // Shape and a non-empty blob only: this guards the JSON resolvers, not the blob encoding.
+        var download = await client.CallToolAsync("books.download", new Dictionary<string, object?>(StringComparer.Ordinal) { ["name"] = "b.txt" }, cancellationToken: ctk).ConfigureAwait(false);
+        check("mcp-attachment-download", () => download.IsError != true
+            && download.Content.OfType<EmbeddedResourceBlock>().SingleOrDefault()?.Resource is BlobResourceContents { MimeType: "text/plain", Blob.IsEmpty: false });
     }
 
     // Native AOT cannot use ConfigureArkDefaults: add the source-generated context and the value object converter.
