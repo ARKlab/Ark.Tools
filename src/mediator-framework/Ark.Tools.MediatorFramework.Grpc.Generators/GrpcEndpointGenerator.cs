@@ -480,14 +480,10 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static bool IsType(INamedTypeSymbol type, string metadataName, string namespaceName)
             => string.Equals(type.MetadataName, metadataName, StringComparison.Ordinal)
-                && string.Equals(type.ContainingNamespace.ToDisplayString(), namespaceName, StringComparison.Ordinal);
+                && type.ContainingNamespace._isNamespace(namespaceName);
 
         private static bool IsAttribute(AttributeData attribute, string metadataName)
-            => attribute.AttributeClass is not null
-                && string.Equals(attribute.AttributeClass.MetadataName, metadataName.Substring(metadataName.LastIndexOf('.') + 1), StringComparison.Ordinal)
-                && string.Equals(
-                    attribute.AttributeClass.ContainingNamespace.ToDisplayString(),
-                    metadataName[..metadataName.LastIndexOf('.')], StringComparison.Ordinal);
+            => attribute.AttributeClass._isFullName(metadataName);
 
         private static bool IsAttachmentCollection(ITypeSymbol type, INamedTypeSymbol? attachmentType)
         {
@@ -496,11 +492,9 @@ namespace Ark.Tools.MediatorFramework.Generators
             if (type is not INamedTypeSymbol named || !named.IsGenericType
                 || !IsAttachmentType(named.TypeArguments[0], attachmentType))
                 return false;
-            return named.OriginalDefinition.ToDisplayString() is
-                "System.Collections.Generic.IEnumerable<T>" or
-                "System.Collections.Generic.List<T>" or
-                "System.Collections.Generic.IReadOnlyList<T>" or
-                "System.Collections.Generic.IReadOnlyCollection<T>";
+            var definition = named.OriginalDefinition;
+            return definition.MetadataName is "IEnumerable`1" or "List`1" or "IReadOnlyList`1" or "IReadOnlyCollection`1"
+                && definition._isMetadataName("System.Collections.Generic", definition.MetadataName);
         }
 
         private static ITypeSymbol? GetAsyncEnumerableElement(ITypeSymbol type, INamedTypeSymbol? asyncEnumerableType)
@@ -1123,7 +1117,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 if (precomputed is null)
                     exportIssue = "is a value object over '" + DisplayName(valueObjectPrimitive) + "', which has no protobuf scalar; wrap a string, Guid, bool, int, long, float or double";
             }
-            else if (element.ToDisplayString() == "System.Guid" && CompatibilityLevel(property, type) < 300)
+            else if (element is INamedTypeSymbol guid && guid._isFullName("System.Guid") && CompatibilityLevel(property, type) < 300)
             {
                 exportIssue = "is a Guid, which protobuf-net serializes as bcl.Guid below CompatibilityLevel.Level300; add [assembly: ProtoBuf.CompatibilityLevel(ProtoBuf.CompatibilityLevel.Level300)] to serialize it as a string";
             }
@@ -1385,7 +1379,7 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static bool IsEvolvableEnum(INamedTypeSymbol named) =>
             named.IsGenericType && named.Arity is 1 or 2
             && named.OriginalDefinition.Name == "EvolvableEnum"
-            && named.ContainingNamespace?.ToDisplayString() == "Ark.Tools.Core";
+            && named.ContainingNamespace._isNamespace("Ark.Tools.Core");
 
         private static string EvolvableEnumProtoType(INamedTypeSymbol type)
         {
