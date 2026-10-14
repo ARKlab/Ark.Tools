@@ -9,10 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
+- Compliance surface (`ArkComplianceSurfaceEnabled`): editing a method with many `Register` calls, such as a SimpleInjector composition root, no longer slows down the IDE, because DI container registrations are no longer analysed as serializer registrations and the remaining calls share one binding per file.
 
 ### Fixed
 
 - `DataKeyComparer` and `DataKeyHashSet`: a null key property no longer resets the hash code, so rows that differ only in the keys before a null key no longer collide and slow the set down.
+- `Ark.Tools.Outbox.SqlServer`: the outbox now dispatches the oldest messages first, in the order they were written. Before, it sent the newest first, so under load old messages could wait indefinitely and the messages of one transaction went out in reverse order.
+- ARKPII005 is reported once per string concatenation, on the whole expression, instead of once per `+`; long concatenations are now analysed as a whole.
 - `Ark.Tools.FtpClient.SftpClient`: SFTP downloads and uploads now stop when their cancellation token is cancelled, so `DownloadTimeout` and host shutdown no longer wait for a stalled transfer.
 
 ## [7.0.0-beta16] - 2026-10-13
