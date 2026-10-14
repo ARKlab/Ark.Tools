@@ -8,8 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
 - `Ark.Tools.MediatorFramework.Grpc`: a build that leaves the gRPC host assembly unchanged no longer starts the `.proto` exporter. It runs again when the assembly, an `ArkAdditionalProto` file or the package changes, or when the exported `ark/mediator.proto` is missing.
 - `Ark.Tools.MediatorFramework`: `ArkApiSurface.current.txt` in `obj/` is copied only when the generated API surface changes, and `dotnet clean` now removes it.
+
+### Fixed
+
+- `DataKeyComparer` and `DataKeyHashSet`: a null key property no longer resets the hash code, so rows that differ only in the keys before a null key no longer collide and slow the set down.
 
 ## [7.0.0-beta16] - 2026-10-13
 

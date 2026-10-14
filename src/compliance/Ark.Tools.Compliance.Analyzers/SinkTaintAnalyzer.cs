@@ -146,7 +146,8 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         var method = invocation.TargetMethod;
         var rule = sinks._getRule(method);
         // Name check first: the data-flow walk is far more expensive and only matters for these two.
-        if (method.Name is "Add" or "set_Item" && _isExceptionData(invocation.Instance, context, 0))
+        if (method.Name is "Add" or "set_Item" && _canHoldDictionary(method.ContainingType)
+            && _isExceptionData(invocation.Instance, context, 0))
         {
             rule = "ARKPII003";
         }
@@ -311,6 +312,13 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
                     return true;
                 }
 
+                // Only an indexer or SyncRoot (the default Exception.Data returns itself) reads through to its
+                // instance; any other property is a different value.
+                if (!property.Property.IsIndexer && property.Property.Name != "SyncRoot")
+                {
+                    return false;
+                }
+
                 operation = property.Instance;
             }
             else if (operation is IConversionOperation conversion)
@@ -319,6 +327,12 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             }
             else if (operation is ILocalReferenceOperation local)
             {
+                // The method-body walk is expensive: skip locals that cannot hold the IDictionary.
+                if (!_canHoldDictionary(local.Local.Type))
+                {
+                    return false;
+                }
+
                 visited ??= new HashSet<ILocalSymbol>(SymbolEqualityComparer.Default);
                 if (!visited.Add(local.Local))
                 {
@@ -344,6 +358,13 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         }
 
         return false;
+    }
+
+    private static bool _canHoldDictionary(ITypeSymbol type)
+    {
+        return type.SpecialType == SpecialType.System_Object
+            || type.TypeKind is TypeKind.Dynamic or TypeKind.TypeParameter
+            || (type is INamedTypeSymbol named && SinkConfiguration._implements(named, "System.Collections.IDictionary"));
     }
 
     private static void _check(OperationAnalysisContext context, IOperation value, string rule, DateTime today)
