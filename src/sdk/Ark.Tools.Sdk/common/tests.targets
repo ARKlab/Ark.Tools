@@ -26,12 +26,6 @@
     <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.5.1" IsImplicitlyDefined="true" PrivateAssets="all" Condition="'$(EnableArkToolsMtpAzureDevOpsReport)' != 'false'" />
   </ItemGroup>
 
-  
-  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
-    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
-    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
-  </PropertyGroup>
-
   <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
     <None Include="$(MSBuildProjectDirectory)/reqnroll*.json">
       <CopyToOutputDirectory>IfDifferent</CopyToOutputDirectory>
