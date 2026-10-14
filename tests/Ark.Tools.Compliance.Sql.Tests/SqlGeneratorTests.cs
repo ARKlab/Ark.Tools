@@ -100,7 +100,7 @@ public sealed class SqlGeneratorTests
 
         // Re-parsing the same file re-runs the transform, so a spec holding symbols would not compare equal. The edit
         // goes after the type: column specs keep their source location for diagnostics, so a line shift re-emits.
-        var edited = CSharpSyntaxTree.ParseText(policyTree.ToString() + "\n// edited\n", parseOptions);
+        var edited = CSharpSyntaxTree.ParseText(policyTree + "\n// edited\n", parseOptions);
         compilation = compilation.ReplaceSyntaxTree(policyTree, edited);
         driver = driver.RunGenerators(compilation);
 

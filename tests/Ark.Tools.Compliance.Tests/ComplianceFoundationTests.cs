@@ -367,7 +367,7 @@ public sealed class ComplianceFoundationTests
         driver = driver.RunGenerators(compilation);
 
         // Re-parsing the same file re-runs the transform, so a spec holding symbols or locations would not compare equal.
-        var shifted = CSharpSyntaxTree.ParseText("\n\n" + valueTree.ToString(), parseOptions);
+        var shifted = CSharpSyntaxTree.ParseText("\n\n" + valueTree, parseOptions);
         compilation = compilation.ReplaceSyntaxTree(valueTree, shifted);
         driver = driver.RunGenerators(compilation);
 
