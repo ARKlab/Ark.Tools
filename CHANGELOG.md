@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Breaking:** `Ark.Tools.FtpClient.FtpProxy` now validates the TLS certificate of the FtpProxy service, which receives the bearer token and the FTP credentials; before, any certificate was accepted. A proxy with a self-signed or otherwise untrusted certificate now fails with a `FlurlHttpException` caused by an `AuthenticationException`: trust its certificate, or return `true` from `AcceptAnyServerCertificate` in your `IFtpClientProxyConfig` for development only.
 - `Ark.Tools.MediatorFramework.Grpc`: a build that leaves the gRPC host assembly unchanged no longer starts the `.proto` exporter. It runs again when the assembly, an `ArkAdditionalProto` file or the package changes, or when the exported `ark/mediator.proto` is missing.
 - `Ark.Tools.MediatorFramework`: `ArkApiSurface.current.txt` in `obj/` is copied only when the generated API surface changes, and `dotnet clean` now removes it.
+- `Ark.Tools.Outbox.SqlServer`: `SendAsync` writes up to 1,000 messages in one `INSERT` statement instead of one statement per message, so sending many messages takes far fewer round trips inside the business transaction. Messages keep their order.
 
 ### Fixed
 
