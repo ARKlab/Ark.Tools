@@ -14,6 +14,16 @@ internal abstract class OutboxContextSqlCore
 
     private static readonly HeaderSerializer _headerSerializer = new();
 
+    // 2 parameters per row keeps a full chunk under the SQL Server 2100-parameter limit.
+    private const int _maxRowsPerInsert = 1000;
+    // The VALUES list of a full chunk is the same for every send, so build it once.
+    private static readonly string _fullChunkValues = _values(_maxRowsPerInsert);
+
+    private static string _values(int messageCount)
+    {
+        return string.Join(", ", Enumerable.Range(0, messageCount).Select(static i => string.Create(CultureInfo.InvariantCulture, $"(@h{i}, @b{i}, {i})")));
+    }
+
     private protected OutboxContextSqlCore(IOutboxContextSqlConfig config)
     {
         _config = config;
@@ -38,7 +48,7 @@ internal abstract class OutboxContextSqlCore
                     , [Body]
                 )
                 SELECT [Headers], [Body]
-                FROM (VALUES {string.Join(", ", Enumerable.Range(0, messageCount).Select(static i => string.Create(CultureInfo.InvariantCulture, $"(@h{i}, @b{i}, {i})")))})
+                FROM (VALUES {(messageCount == _maxRowsPerInsert ? _fullChunkValues : _values(messageCount))})
                     AS v([Headers], [Body], [Ord])
                 ORDER BY [Ord]
                 ";
@@ -95,8 +105,8 @@ internal abstract class OutboxContextSqlCore
 
     public async Task SendAsync(IEnumerable<OutboxMessage> messages, CancellationToken ctk = default)
     {
-        // One statement per chunk; 2 parameters per row keeps 1000 rows under the SQL Server 2100-parameter limit.
-        foreach (var b in messages.Batch(1000))
+        // One statement per chunk.
+        foreach (var b in messages.Batch(_maxRowsPerInsert))
         {
             var parameters = new DynamicParameters();
             for (var i = 0; i < b.Length; i++)
