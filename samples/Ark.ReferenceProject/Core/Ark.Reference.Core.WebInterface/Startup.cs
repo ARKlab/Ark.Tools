@@ -73,8 +73,10 @@ public class Startup : ArkStartupWebApi
             Tools.AspNetCore.JsonContext.ArkProblemDetailsJsonSerializerContext.Default, // Error types - source generated (Priority 2)
             new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver()); // Fallback for middleware internals (Priority 3)
 
+        // ArkStartupWebApi applies the Ark defaults to the MVC options only.
         services.ConfigureHttpJsonOptions(options =>
         {
+            System.Text.Json.Extensions.ConfigureArkDefaults(options.SerializerOptions);
             options.SerializerOptions.RespectNullableAnnotations = true;
             options.SerializerOptions.RespectRequiredConstructorParameters = true;
             options.SerializerOptions.TypeInfoResolver = combinedResolver;
