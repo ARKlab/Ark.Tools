@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ARKPII005 is reported once per string concatenation, on the whole expression, instead of once per `+`; long concatenations are now analysed as a whole.
 - `Ark.Tools.FtpClient.SftpClient`: SFTP downloads and uploads now stop when their cancellation token is cancelled, so `DownloadTimeout` and host shutdown no longer wait for a stalled transfer.
 
+### Security
+
+- Ark.Tools packages now depend on `System.Security.Cryptography.Pkcs` and `System.Security.Cryptography.Xml` 10.0.13, which fix GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7, GHSA-r955-8q5j-3h83, GHSA-7hqp-7c5m-4vq6 and GHSA-c399-9853-6jmj; earlier 10.0.x versions came in transitively.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added
