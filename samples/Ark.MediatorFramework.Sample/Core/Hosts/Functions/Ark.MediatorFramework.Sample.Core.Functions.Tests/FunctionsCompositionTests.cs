@@ -94,7 +94,8 @@ public sealed class FunctionsCompositionTests
 
     /// <summary>
     /// Each trigger app finds every generated handler and never polls the outbox. Only the Processor, whose handler
-    /// publishes, selects the development pass-through; the subscribers send nothing.
+    /// publishes, selects the development pass-through; the subscribers send nothing. HTTP JSON resolves contracts from
+    /// the source-generated contexts first.
     /// </summary>
     /// <param name="app">The trigger app.</param>
     [TestMethod]
@@ -128,6 +129,9 @@ public sealed class FunctionsCompositionTests
         var hosted = provider.GetServices<IHostedService>().ToArray();
         hosted.OfType<MessagingProcessorHost>().Should().BeEmpty();
         hosted.OfType<MessagingOutboxProcessor>().Should().BeEmpty();
+        provider.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions.TypeInfoResolverChain.Take(2).Should().Equal(
+            SampleApiJsonSerializerContext.Default,
+            ApplicationJsonSerializerContext.Default);
     }
 
     /// <summary>Bridges the Processor app's container into Microsoft DI for scoped processor dispatch.</summary>
