@@ -28,9 +28,14 @@
   <!-- Copy the generated snapshot to obj/ when compiler-generated files are enabled; diagnostics come from the analyzer -->
   <Target Name="ArkApiSurfaceWriteCurrent"
           AfterTargets="CoreCompile"
-          Condition="'$(ArkApiSurfaceEnabled)' == 'true'">
+          Condition="'$(ArkApiSurfaceEnabled)' == 'true'"
+          Inputs="$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs"
+          Outputs="$(IntermediateOutputPath)ArkApiSurface.current.txt">
     <Copy SourceFiles="$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs"
           DestinationFiles="$(IntermediateOutputPath)ArkApiSurface.current.txt"
           Condition="Exists('$(CompilerGeneratedFilesOutputPath)/Ark.Tools.MediatorFramework.ApiSurface.Generators/Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator/ArkApiSurface.g.cs')" />
+    <ItemGroup>
+      <FileWrites Include="$(IntermediateOutputPath)ArkApiSurface.current.txt" />
+    </ItemGroup>
   </Target>
 </Project>

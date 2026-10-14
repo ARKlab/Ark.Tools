@@ -813,6 +813,82 @@ public sealed class SdkPackageTests
 
     }
 
+    /// <summary>
+    /// Ensures the Reqnroll code-behind defaults survive Reqnroll's own package defaults wherever Directory.Build files add the SDK,
+    /// and follow an IsTestProject set in the project body when the SDK targets are evaluated after it.
+    /// </summary>
+    [TestMethod]
+    public async Task ReqnrollCodeBehindDefaultsFollowProjectBodyClassification()
+    {
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-reqnroll-classification");
+        var feed = _prepareSdkFixture(fixtureRoot);
+        var environment = _createSdkEnvironment(fixtureRoot);
+        // Split imports evaluate the SDK targets after the project body; <Sdk> in Directory.Build.props evaluates them before it.
+        const string splitProps = "<Project><Import Project=\"Sdk.props\" Sdk=\"Ark.Tools.Sdk\" /></Project>";
+        const string splitTargets = "<Project><Import Project=\"Sdk.targets\" Sdk=\"Ark.Tools.Sdk\" /></Project>";
+        const string sdkProps = "<Project><Sdk Name=\"Ark.Tools.Sdk\" /></Project>";
+
+        async Task<JsonDocument> EvaluateAsync(string scenario, string projectFileName, string properties, string directoryProps, string directoryTargets)
+        {
+            var project = $"""
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    {properties}
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
+  </ItemGroup>
+</Project>
+""";
+            var scenarioRoot = await _createSdkScenarioAsync(fixtureRoot, feed, scenario, projectFileName, project).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Directory.Build.props"), directoryProps).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Directory.Build.targets"), directoryTargets).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Sample.feature"), "Feature: Sample\n").ConfigureAwait(false);
+            var projectPath = Path.Join(scenarioRoot, projectFileName);
+            await _runAsync(
+                "dotnet",
+                $"msbuild \"{projectPath}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\" -p:RestoreLockedMode=false",
+                environment).ConfigureAwait(false);
+            return JsonDocument.Parse(await _runAsync(
+                "dotnet",
+                $"msbuild \"{projectPath}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:ReqnrollFeatureFile",
+                environment).ConfigureAwait(false));
+        }
+
+        static void AssertCodeBehind(JsonDocument evaluation, string useIntermediateOutputPath, string deleteObsolete, bool inObj)
+        {
+            Assert.AreEqual(useIntermediateOutputPath, _getProperty(evaluation, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
+            Assert.AreEqual(deleteObsolete, _getProperty(evaluation, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+            var codeBehind = _findItem(evaluation, "ReqnrollFeatureFile", "Sample.feature")!["CodeBehindFile"];
+            Assert.AreEqual(inObj, codeBehind.StartsWith("obj", StringComparison.Ordinal), codeBehind);
+        }
+
+        using var splitBodyTest = await EvaluateAsync(
+            "split-body-test",
+            "Consumer.Specs.csproj",
+            "<IsTestProject>true</IsTestProject><ReqnrollUseIntermediateOutputPathForCodeBehind></ReqnrollUseIntermediateOutputPathForCodeBehind><ReqnrollDeleteObsoleteCodeBehindFilesOnClean>false</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>",
+            splitProps,
+            splitTargets).ConfigureAwait(false);
+        AssertCodeBehind(splitBodyTest, "true", "false", inObj: true);
+
+        using var splitNonTest = await EvaluateAsync(
+            "split-non-test",
+            "Consumer.Specs.csproj",
+            "<ReqnrollDeleteObsoleteCodeBehindFilesOnClean>true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>",
+            splitProps,
+            splitTargets).ConfigureAwait(false);
+        AssertCodeBehind(splitNonTest, "", "true", inObj: false);
+
+        using var sdkSuffixTest = await EvaluateAsync("sdk-suffix-test", "Consumer.Tests.csproj", "", sdkProps, "<Project />").ConfigureAwait(false);
+        AssertCodeBehind(sdkSuffixTest, "true", "true", inObj: true);
+
+        // The SDK targets ran before the body, so Reqnroll's false defaults apply unless the project sets both values.
+        using var sdkBodyTest = await EvaluateAsync("sdk-body-test", "Consumer.Specs.csproj", "<IsTestProject>true</IsTestProject>", sdkProps, "<Project />").ConfigureAwait(false);
+        AssertCodeBehind(sdkBodyTest, "false", "false", inObj: false);
+    }
+
 #if false
     /// <summary>
     /// Ensures application settings and Reqnroll content semantics stay project-type aware and independently disableable.

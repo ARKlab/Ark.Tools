@@ -98,8 +98,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .Select(static (contracts, _) => new EquatableArray<ContractModel>(contracts));
         // Referenced-assembly scans read metadata symbols and documentation files only, so they rerun
         // when references change instead of on every edit.
-        var referenceScope = context.CompilationProvider
-            .WithComparer(MetadataReferencesComparer.Instance);
+        var referenceScope = context.CompilationProvider._referencesOnly();
         var referencedContracts = referenceScope
             .Combine(markerAssemblies)
             .Select(static (pair, cancellationToken) => new EquatableArray<AssemblyContracts>(

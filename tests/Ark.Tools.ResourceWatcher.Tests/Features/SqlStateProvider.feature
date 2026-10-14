@@ -148,6 +148,27 @@ Feature: SqlStateProvider Integration Tests
         And I load state for tenant "test-tenant" with empty resource IDs
         Then the loaded state should be empty
 
+    # ===== CANCELLATION =====
+    @cancellation
+    Scenario: Load state stops when cancelled while the state is locked
+        Given a new resource state for tenant "test-tenant" and resource "res-locked"
+            | Modified            |
+            | 2024-06-15T10:00:00 |
+        When I save the resource state
+        And another connection locks the state of resource "res-locked"
+        And I load state for tenant "test-tenant" cancelling after 500 milliseconds
+        Then the call should be cancelled within 5 seconds
+
+    @cancellation
+    Scenario: Save state stops when cancelled while the state is locked
+        Given a new resource state for tenant "test-tenant" and resource "res-locked"
+            | Modified            |
+            | 2024-06-15T10:00:00 |
+        When I save the resource state
+        And another connection locks the state of resource "res-locked"
+        And I save the resource state cancelling after 500 milliseconds
+        Then the call should be cancelled within 5 seconds
+
     # ===== LARGE BATCH (2000+ resources) =====
     @performance
     Scenario: Load state with more than 2000 resource IDs
