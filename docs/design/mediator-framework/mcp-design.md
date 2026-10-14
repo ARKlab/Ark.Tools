@@ -53,7 +53,7 @@ The SDK surface that this design relies on is:
 | `ModelContextProtocol.AspNetCore` | HTTP transport package; references the core server package. |
 | `AddMcpServer()` | Host service registration; returns `IMcpServerBuilder`. |
 | `WithHttpTransport(...)` | Host registration for Streamable HTTP and session options. |
-| `WithTools<TToolType>()` | Generated explicit registration of an attributed tool type using the SDK's generic, AOT-friendly path. |
+| `McpServerTool.Create(MethodInfo, ..., McpServerToolCreateOptions)` | Generated explicit registration of each attributed tool method, with `SerializerOptions` resolved from the Minimal API `JsonOptions`. |
 | `McpServerToolTypeAttribute` / `McpServerToolAttribute` | Generated tool classes and methods, including tool metadata and structured-content behavior. |
 | `DescriptionAttribute` | Generated method and parameter descriptions used for tool and input-schema documentation. |
 | `EmbeddedResourceBlock` / `BlobResourceContents` | Download result content for binary attachments; the SDK serializes the blob as base64 with a URI and MIME type. |
@@ -61,9 +61,19 @@ The SDK surface that this design relies on is:
 | `WithRequestFilters(...)` / `AddCallToolFilter(...)` | Host/application composition point for MCP request policy and error handling. |
 | `AddAuthorizationFilters()` | Host opt-in for SDK support for ASP.NET Core authorization attributes on MCP primitives. |
 
-The generated path uses the SDK's generic `WithTools<TToolType>()` registration
-for each generated tool type. It avoids assembly-wide scanning while preserving
-the official `[McpServerToolType]` and `[McpServerTool]` metadata model.
+The generated path registers one `McpServerTool` singleton per generated tool
+method, as the SDK's `WithTools<TToolType>()` does internally. It avoids
+assembly-wide scanning while preserving the official `[McpServerToolType]` and
+`[McpServerTool]` metadata model. `WithTools<TToolType>(serializerOptions)`
+accepts JSON options only at registration time, before the service provider
+exists, so the generated factory sets `McpServerToolCreateOptions.SerializerOptions`
+from `McpToolSerializerOptions.Get(services)`: one read-only copy of
+`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per service provider, with
+`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and an internal context for
+`McpAttachmentInput` appended to the resolver chain. Tool arguments, input
+schemas and structured results therefore use the same JSON options as the
+Minimal API endpoints, and attachment tools still resolve the MCP protocol
+types when reflection-based serialization is disabled (Native AOT).
 
 The SDK's current HTTP integration maps Streamable HTTP at the route supplied to
 `MapMcp`. Stateless mode is recommended when tools do not need
@@ -313,9 +323,10 @@ The generator makes the decorated context implement
 `IMcpToolContext`, whose public `RegisterMcpTools` method is the generated
 registration sequence. `WithArkMcpTools<TContext>` requires
 `where TContext : IMcpToolContext` and invokes its static abstract
-`RegisterMcpTools` method. No context instance, runtime method lookup,
-`MethodInfo`, or reflection-based fallback is used; a context that is not
-generated fails at compile time.
+`RegisterMcpTools` method. No context instance or assembly scanning is used,
+and a context that is not generated fails at compile time. The only reflection
+is the trimming-safe `typeof(ToolType).GetMethod(nameof(ToolType.ExecuteAsync))`
+that hands each generated method to `McpServerTool.Create`.
 
 ## Generated artifacts
 
@@ -329,8 +340,9 @@ the decorated partial context:
 3. A method-level `[Description]` from the contract `<remarks>` documentation.
 4. Typed contract construction and dispatch through the appropriate
    `IQueryProcessor`, `IRequestProcessor`, or `ICommandProcessor`.
-5. A generated `RegisterMcpTools` method on the context that chains one
-   `.WithTools<ToolType>()` call per tool in deterministic order.
+5. A generated `RegisterMcpTools` method on the context that registers one
+   `McpServerTool` per tool in deterministic order, using the Minimal API JSON
+   options.
 6. `IMcpToolContext` on the context, allowing the public
    `WithArkMcpTools<TContext>` builder extension to invoke the registration
    method without reflection.
@@ -346,10 +358,17 @@ illustrative):
 ```csharp
 public partial class McpHostContext : IMcpToolContext
 {
-    public IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
+    public static IMcpServerBuilder RegisterMcpTools(IMcpServerBuilder builder)
     {
-        return builder
-            .WithTools<SearchBooksTool>();
+        builder.Services.AddSingleton<McpServerTool>(static services => McpServerTool.Create(
+            typeof(SearchBooksTool).GetMethod(nameof(SearchBooksTool.ExecuteAsync))!,
+            target: null,
+            new McpServerToolCreateOptions
+            {
+                Services = services,
+                SerializerOptions = McpToolSerializerOptions.Get(services),
+            }));
+        return builder;
     }
 
     [McpServerToolType]

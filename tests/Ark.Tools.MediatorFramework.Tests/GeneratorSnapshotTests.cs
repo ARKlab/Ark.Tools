@@ -220,6 +220,9 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain(
             "public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools");
         result.Generated.Should().Contain("RegisterMcpTools");
+        result.Generated.Should().Contain("typeof(Tool0).GetMethod(nameof(Tool0.ExecuteAsync))!");
+        result.Generated.Should().Contain(
+            "SerializerOptions = global::Ark.Tools.MediatorFramework.Mcp.McpToolSerializerOptions.Get(services)");
         result.Generated.Should().Contain("IQueryProcessor");
         result.Generated.Should().Contain(
             "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(services)");
@@ -228,7 +231,7 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("Task<string>");
         result.Generated.Should().Contain("McpServerToolType");
         result.Generated.Should().Contain("McpServerTool(");
-        result.Generated.Should().NotContain("McpServerTool.Create");
+        result.Generated.Should().NotContain(".WithTools<");
     }
 
     [TestMethod]

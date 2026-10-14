@@ -2,18 +2,25 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.Compliance;
+using Ark.Tools.MediatorFramework.Mcp;
 
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 
 using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Tools.MediatorFramework.Hosting.Tests;
 
@@ -96,6 +103,67 @@ public sealed class McpHostingTests
         result.IsError.Should().NotBe(true);
         result.StructuredContent.Should().NotBeNull();
         result.StructuredContent!.Value.GetProperty("message").GetString().Should().Be("7:from-mcp");
+    }
+
+    /// <summary>
+    /// Verifies the tool JSON options resolve the MCP and attachment contracts when the application options
+    /// have no reflection fallback, keeping the application resolver first and its options unchanged.
+    /// </summary>
+    [TestMethod]
+    public void ToolSerializerOptionsAppendMcpContractsAfterApplicationResolvers()
+    {
+        var applicationResolver = new ResolvesNothing();
+        var services = new ServiceCollection();
+        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.TypeInfoResolver = applicationResolver);
+        using var provider = services.BuildServiceProvider();
+        var applicationOptions = provider.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+        applicationOptions.Invoking(static options => options.GetTypeInfo(typeof(McpAttachmentInput)))
+            .Should().Throw<NotSupportedException>();
+
+        var toolOptions = McpToolSerializerOptions.Get(provider);
+
+        toolOptions.IsReadOnly.Should().BeTrue();
+        McpToolSerializerOptions.Get(provider).Should().BeSameAs(toolOptions);
+        toolOptions.TypeInfoResolverChain[0].Should().BeSameAs(applicationResolver);
+        toolOptions.GetTypeInfo(typeof(McpAttachmentInput)).Should().NotBeNull();
+        toolOptions.GetTypeInfo(typeof(EmbeddedResourceBlock)).Should().NotBeNull();
+        applicationOptions.TypeInfoResolverChain.Should().ContainSingle();
+    }
+
+    /// <summary>Verifies a tool result is serialized with the Minimal API JSON options, so it has the HTTP response shape.</summary>
+    [TestMethod]
+    public async Task ToolResultUsesMinimalApiJsonOptions()
+    {
+        // Each fixture container backs a single host, so HTTP and MCP get one each.
+        await using var httpFixture = new HostingTestFixture();
+        await using var fixture = new HostingTestFixture();
+        await using var httpApp = httpFixture.BuildMinimalApiHost();
+        var jsonOptions = httpApp.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
+        // A non-default naming policy, so the MCP SDK defaults cannot produce the same shape by chance.
+        jsonOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+        await httpApp.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        using var httpClient = httpApp.GetTestServer().CreateClient();
+        var httpResponse = JsonNode.Parse(await httpClient.GetStringAsync(
+            new Uri("/api/v1/hosting/queries/7?Value=shared", UriKind.Relative),
+            httpApp.Lifetime.ApplicationStopping).ConfigureAwait(false));
+        await using var app = fixture.BuildMcpHost(static services => services.ConfigureHttpJsonOptions(
+            static options => options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower));
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.query",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = 7, ["value"] = "shared" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        result.StructuredContent.Should().NotBeNull();
+        result.StructuredContent!.Value.GetProperty("server_stamp").GetString().Should().Be("hosting-server");
+        var mcpResult = JsonNode.Parse(result.StructuredContent.Value.GetRawText());
+        JsonNode.DeepEquals(mcpResult, httpResponse).Should().BeTrue(
+            "MCP returned {0} while HTTP returned {1}",
+            mcpResult?.ToJsonString(),
+            httpResponse?.ToJsonString());
     }
 
     /// <summary>Verifies validation failures become safe structured MCP errors.</summary>
@@ -237,4 +305,12 @@ public sealed class McpHostingTests
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
     }
 #pragma warning restore MA0004
+
+    private sealed class ResolvesNothing : IJsonTypeInfoResolver
+    {
+        public JsonTypeInfo? GetTypeInfo(Type type, JsonSerializerOptions options)
+        {
+            return null;
+        }
+    }
 }

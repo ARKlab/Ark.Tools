@@ -227,8 +227,9 @@ public sealed class HostingTestFixture : IAsyncDisposable
     }
 
     /// <summary>Builds and maps an independent MCP host.</summary>
+    /// <param name="configureServices">Optional extra service registrations, applied before the host is built.</param>
     /// <returns>The unstarted MCP application.</returns>
-    public WebApplication BuildMcpHost()
+    public WebApplication BuildMcpHost(Action<IServiceCollection>? configureServices = null)
     {
         _throwIfDisposed();
         var builder = WebApplication.CreateBuilder();
@@ -246,6 +247,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         builder.Services.AddMcpServer()
             .WithHttpTransport()
             .WithArkMcpTools<HostingMcpContext>();
+        configureServices?.Invoke(builder.Services);
         var app = builder.Build();
         app.UseAuthentication();
         app.UseAuthorization();

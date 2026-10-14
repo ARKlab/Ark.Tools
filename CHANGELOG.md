@@ -8,10 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `Ark.Tools.MediatorFramework.Mcp`: `McpToolSerializerOptions.Get(services)` returns the JSON options used by generated MCP tools. Attachment tools now also work under Native AOT (or with reflection-based JSON disabled), because the MCP protocol and attachment contracts are appended after your own resolvers.
 - `Ark.Tools.FtpClient.FtpProxy`: `IFtpClientProxyConfig.AcceptAnyServerCertificate` (default `false`) accepts any TLS certificate from the FtpProxy service. It disables certificate validation, so use it only with a development proxy that has a self-signed certificate.
 
 ### Changed
 
+- `Ark.Tools.MediatorFramework.Mcp`: generated MCP tools serialize arguments and structured results with the Minimal API JSON options (`ConfigureHttpJsonOptions`) instead of the MCP SDK defaults, so MCP returns the same shape as the HTTP endpoints (for example `EvolvableEnum` values as names).
 - `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
 - `StorageQueueMessagingTransport`: when the transport creates its own client from a connection string or a service URI, lock renewal and abandon update only the message visibility instead of uploading the message body again, so each renewal sends no payload. A transport over an application-supplied `QueueServiceClient` still sends the body, because that client may use client-side encryption.
 - Compliance surface (`ArkComplianceSurfaceEnabled`): editing a method with many `Register` calls, such as a SimpleInjector composition root, no longer slows down the IDE, because DI container registrations are no longer analysed as serializer registrations and the remaining calls share one binding per file.

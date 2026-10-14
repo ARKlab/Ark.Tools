@@ -51,6 +51,20 @@ builder.Services
 app.MapMcp("/mcp/v{version}").RequireAuthorization();
 ```
 
+Generated tools serialize arguments, input schemas and structured results with
+the Minimal API JSON options (`Microsoft.AspNetCore.Http.Json.JsonOptions`), so
+MCP returns the same shape as the HTTP endpoints. Configure both with
+`ConfigureHttpJsonOptions`. The settings of the MCP SDK defaults
+(`McpJsonUtilities.DefaultOptions`) are not used; only their resolver is kept, as
+a fallback after yours, for the MCP protocol types.
+
+`McpToolSerializerOptions.Get(services)` builds the options the tools use, once per
+service provider: a read-only copy of the Minimal API options with the MCP protocol contracts and
+`McpAttachmentInput` appended after your own resolvers. Under Native AOT, or with
+`JsonSerializerIsReflectionEnabledByDefault=false`, add your contract types to
+the Minimal API resolver chain as you do for the HTTP endpoints; attachment tools
+need nothing more.
+
 `MapMcp` remains host-owned. Configure authentication, authorization,
 `AllowedHosts`, CORS, rate limits, request limits, and the SimpleInjector scope
 in the host. A request to `/mcp/v1` exposes contracts active in version 1, and

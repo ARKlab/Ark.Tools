@@ -835,11 +835,20 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         builder.AppendLine("    public static global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder RegisterMcpTools(global::Microsoft.Extensions.DependencyInjection.IMcpServerBuilder builder)");
         builder.AppendLine("    {");
         RenderVersionMap(builder, contracts);
-        builder.AppendLine("        return builder");
+        // WithTools<T> takes JSON options only at registration time, so each tool resolves the shared options from DI.
         for (var index = 0; index < contracts.Length; index++)
-            builder.Append("            .WithTools<Tool").Append(index).Append(">()").AppendLine(index == contracts.Length - 1 ? ";" : string.Empty);
-        if (contracts.Length == 0)
-            builder.AppendLine("            ;");
+        {
+            builder.AppendLine("        builder.Services.AddSingleton<global::ModelContextProtocol.Server.McpServerTool>(static services => global::ModelContextProtocol.Server.McpServerTool.Create(");
+            builder.Append("            typeof(Tool").Append(index).Append(").GetMethod(nameof(Tool").Append(index).AppendLine(".ExecuteAsync))!,");
+            builder.AppendLine("            target: null,");
+            builder.AppendLine("            new global::ModelContextProtocol.Server.McpServerToolCreateOptions");
+            builder.AppendLine("            {");
+            builder.AppendLine("                Services = services,");
+            builder.AppendLine("                SerializerOptions = global::Ark.Tools.MediatorFramework.Mcp.McpToolSerializerOptions.Get(services),");
+            builder.AppendLine("            }));");
+        }
+
+        builder.AppendLine("        return builder;");
         builder.AppendLine("    }");
         for (var index = 0; index < contracts.Length; index++)
             RenderTool(builder, contracts[index], index);

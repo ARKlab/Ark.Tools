@@ -1,5 +1,6 @@
 ﻿// Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
+using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
 
@@ -60,8 +61,9 @@ public sealed class PlainRow
     public Guid? ParentId { get; set; }
 }
 
-/// <summary>Reads a book through a generated Minimal API endpoint.</summary>
+/// <summary>Reads a book through a generated Minimal API endpoint and a generated MCP tool.</summary>
 [HttpEndpoint("GET", "/books/{id}")]
+[McpTool(Name = "books.get")]
 public sealed record GetBookQuery : IQuery<GetBookQuery, Book>
 {
     /// <summary>Gets the book identifier.</summary>
@@ -78,6 +80,53 @@ public sealed class GetBookQueryHandler : IQueryHandler<GetBookQuery, Book>
         return await Task.FromResult(new Book { Id = query.Id, Code = BookCode.From("B-1"), Related = [query.Id] }).ConfigureAwait(false);
     }
 }
+
+/// <summary>Uploads a book file through a generated MCP tool.</summary>
+[McpTool(Name = "books.upload")]
+public sealed record UploadBookRequest : IRequest<UploadBookRequest, Book>
+{
+    /// <summary>Gets or sets the uploaded file.</summary>
+    public IArkAttachment? Attachment { get; set; }
+}
+
+/// <summary>Handles <see cref="UploadBookRequest"/>.</summary>
+public sealed class UploadBookRequestHandler : IRequestHandler<UploadBookRequest, Book>
+{
+    /// <inheritdoc />
+    public async Task<Book> ExecuteAsync(UploadBookRequest request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var attachment = request.Attachment ?? throw new InvalidOperationException("The attachment is missing.");
+        var stream = attachment.OpenRead();
+        await using var _ = stream.ConfigureAwait(false);
+        using var reader = new StreamReader(stream);
+        var text = await reader.ReadToEndAsync(ctk).ConfigureAwait(false);
+        return new Book { Id = BookId.From(Guid.Empty), Code = BookCode.From(attachment.Name + ":" + text) };
+    }
+}
+
+/// <summary>Downloads a book file through a generated MCP tool.</summary>
+[McpTool(Name = "books.download")]
+public sealed record DownloadBookQuery : IQuery<DownloadBookQuery, IArkAttachment>
+{
+    /// <summary>Gets or sets the file name.</summary>
+    public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>Handles <see cref="DownloadBookQuery"/>.</summary>
+public sealed class DownloadBookQueryHandler : IQueryHandler<DownloadBookQuery, IArkAttachment>
+{
+    /// <inheritdoc />
+    public async Task<IArkAttachment> ExecuteAsync(DownloadBookQuery query, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return await Task.FromResult<IArkAttachment>(new ArkAttachment(query.Name, "text/plain", static () => new MemoryStream("payload"u8.ToArray()))).ConfigureAwait(false);
+    }
+}
+
+/// <summary>Selects this assembly for the generated MCP tools.</summary>
+[ArkGenerateMcpToolsForAssembly(typeof(GetBookQuery))]
+public partial class AppMcpContext;
 
 /// <summary>Selects this assembly for the generated Minimal API endpoints.</summary>
 [ArkGenerateMinimalApiForAssembly(typeof(GetBookQuery))]
