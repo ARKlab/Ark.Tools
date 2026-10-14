@@ -81,7 +81,9 @@ public sealed class NativeOutboxIntegrationTests
         await DatabaseHooks.ResetDatabaseAsync().ConfigureAwait(false);
         // 1500 messages span two 1000-row chunks.
         var messages = Enumerable.Range(0, 1500).Select(_indexedMessage).ToList();
-        var connection = new SqlConnection(DatabaseHooks.ConnectionString) { StatisticsEnabled = true };
+        var connection = new SqlConnection(DatabaseHooks.ConnectionString);
+        await using var __connection = connection.ConfigureAwait(false);
+        connection.StatisticsEnabled = true;
         await connection.OpenAsync().ConfigureAwait(false);
         var transaction = await connection.BeginTransactionAsync().ConfigureAwait(false);
         var context = new SampleDataContext(transaction, new SampleDataContextConfig(DatabaseHooks.ConnectionString));
