@@ -37,6 +37,11 @@ public class EvolvableEnumBenchmarks
         RespectRequiredConstructorParameters = true,
         Converters = { new EvolvableEnumJsonConverterFactory() },
     };
+    private static readonly JsonSerializerOptions _arkJsonOptions = new JsonSerializerOptions
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+    }.ConfigureArkDefaults();
     private static readonly StrictRecord[] _strictRecords = Enumerable.Range(0, 100)
         .Select(static index => new StrictRecord((Status)(index % 3), index))
         .ToArray();
@@ -45,6 +50,7 @@ public class EvolvableEnumBenchmarks
         .ToArray();
     private static readonly string _strictJson = JsonSerializer.Serialize(_strictRecords, _strictJsonOptions);
     private static readonly string _evolvableJson = JsonSerializer.Serialize(_evolvableRecords, _evolvableJsonOptions);
+    private static readonly string _arkJson = JsonSerializer.Serialize(_strictRecords, _arkJsonOptions);
 
     /// <summary>Measures parsing a declared enum name with <c>Enum.TryParse</c>.</summary>
     [Benchmark(Baseline = true)]
@@ -135,6 +141,13 @@ public class EvolvableEnumBenchmarks
     public int JsonDeserializeEnumArray()
     {
         return JsonSerializer.Deserialize<StrictRecord[]>(_strictJson, _strictJsonOptions)!.Length;
+    }
+
+    /// <summary>Measures string JSON deserialization of records containing a strict enum with the Ark default options.</summary>
+    [Benchmark]
+    public int JsonDeserializeArkEnumArray()
+    {
+        return JsonSerializer.Deserialize<StrictRecord[]>(_arkJson, _arkJsonOptions)!.Length;
     }
 
     /// <summary>Measures string JSON deserialization of records containing an evolvable enum.</summary>

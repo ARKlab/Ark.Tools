@@ -21,6 +21,10 @@ internal sealed class SinkFlow
     private static readonly object _protected = new();
     private static readonly object _unprotected = new();
 
+    // A type's classification is likewise a pure function of the symbol: cache the Source, or _unclassified.
+    private static readonly ConditionalWeakTable<INamedTypeSymbol, object> _typeClassifications = new();
+    private static readonly object _unclassified = new();
+
     private readonly CancellationToken _cancellationToken;
     private readonly int _maxNodes;
     private readonly int _maxDepth;
@@ -46,7 +50,7 @@ internal sealed class SinkFlow
     {
         var result = _classification(symbol)
             ?? (symbol is IPropertySymbol property ? _positionalClassification(property) : null)
-            ?? _type(type, 0, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+            ?? _type(type, 0, null);
         return _exhausted ? null : result;
     }
 
@@ -140,7 +144,7 @@ internal sealed class SinkFlow
             return null;
         }
 
-        var classifiedType = _type(operation.Type, 0, new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+        var classifiedType = _type(operation.Type, 0, null);
         if (classifiedType is not null)
         {
             return classifiedType;
@@ -382,16 +386,22 @@ internal sealed class SinkFlow
             || assembly?.StartsWith("Microsoft.", StringComparison.Ordinal) == true;
     }
 
-    private Source? _type(ITypeSymbol? type, int depth, HashSet<ITypeSymbol> visited)
+    private Source? _type(ITypeSymbol? type, int depth, HashSet<ITypeSymbol>? visited)
     {
-        if (type is null || !_enter(depth) || !visited.Add(type)
-            || _isSelfProtecting(type, _cancellationToken))
+        // Special (BCL) types never carry an Ark classification; the budget is still charged.
+        if (type is null || !_enter(depth) || type.SpecialType != SpecialType.None)
+        {
+            return null;
+        }
+
+        visited ??= new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
+        if (!visited.Add(type) || _isSelfProtecting(type, _cancellationToken))
         {
             return null;
         }
 
         var source = _classification(type);
-        if (source is not null || depth >= _maxTypeDepth || type.SpecialType != SpecialType.None)
+        if (source is not null || depth >= _maxTypeDepth)
         {
             return source;
         }
@@ -489,6 +499,22 @@ internal sealed class SinkFlow
     }
 
     private Source? _classification(ISymbol symbol)
+    {
+        if (symbol is not INamedTypeSymbol type)
+        {
+            return _computeClassification(symbol);
+        }
+
+        if (_typeClassifications.TryGetValue(type, out var cached))
+        {
+            return cached as Source;
+        }
+
+        var source = _computeClassification(type);
+        return _typeClassifications.GetValue(type, _ => (object?)source ?? _unclassified) as Source;
+    }
+
+    private Source? _computeClassification(ISymbol symbol)
     {
         var sensitive = false;
         var pseudonymous = false;

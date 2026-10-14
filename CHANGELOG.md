@@ -8,7 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
 - `MessagingOutboxProcessor` sends each batch of outbox messages to its different queues and topics concurrently, so the outbox drains faster when it targets several destinations. Messages to the same queue or topic are still sent one at a time in outbox order; there is no ordering between different destinations.
+
+### Fixed
+
+- `DataKeyComparer` and `DataKeyHashSet`: a null key property no longer resets the hash code, so rows that differ only in the keys before a null key no longer collide and slow the set down.
 
 ## [7.0.0-beta16] - 2026-10-13
 
