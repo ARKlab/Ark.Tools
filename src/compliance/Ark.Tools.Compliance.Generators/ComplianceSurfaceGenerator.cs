@@ -2,8 +2,10 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 using Microsoft.CodeAnalysis;
 
@@ -31,6 +33,10 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
         "Classified member '{0}' is absent from the baseline or its classification has been weakened. Review this privacy change before updating ArkComplianceSurface.txt",
         "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII021.md");
 
+    // Generators get a new SemanticModel per GetSemanticModel call, and each one rebinds the whole enclosing method
+    // body: calls in one method share one model per tree so binding them is not quadratic.
+    private static readonly ConditionalWeakTable<Compilation, ConcurrentDictionary<SyntaxTree, SemanticModel>> _semanticModels = new();
+
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -53,7 +59,7 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
                 static (node, _) => _isRevealCandidate(node),
                 static (syntaxContext, _) => syntaxContext.Node), enabled, context.CompilationProvider)
             .Select(static (candidate, token) => _parseReveal(
-                candidate.Compilation.GetSemanticModel(candidate.Node.SyntaxTree), candidate.Node, token))
+                _semanticModel(candidate.Compilation, candidate.Node.SyntaxTree), candidate.Node, token))
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!.Value)
             .WithTrackingName(RevealSpecsTrackingName)
@@ -63,7 +69,7 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
                 static (node, _) => _isRegistrationCandidate(node),
                 static (syntaxContext, _) => syntaxContext.Node), enabled, context.CompilationProvider)
             .Select(static (candidate, token) => _parseRegistration(
-                candidate.Compilation.GetSemanticModel(candidate.Node.SyntaxTree), candidate.Node, token))
+                _semanticModel(candidate.Compilation, candidate.Node.SyntaxTree), candidate.Node, token))
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!)
             .WithTrackingName(RegistrationSpecsTrackingName)
@@ -110,5 +116,11 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
             .Select(static (candidate, _) => candidate.Left)
             .Combine(compilation)
             .Select(static (candidate, _) => (candidate.Left, candidate.Right));
+    }
+
+    private static SemanticModel _semanticModel(Compilation compilation, SyntaxTree tree)
+    {
+        return _semanticModels.GetValue(compilation, static _ => new ConcurrentDictionary<SyntaxTree, SemanticModel>())
+            .GetOrAdd(tree, static (key, owner) => owner.GetSemanticModel(key), compilation);
     }
 }
