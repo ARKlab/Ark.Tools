@@ -371,6 +371,32 @@ public sealed class MessagingCompressionAndDataBusTests
     }
 
     [TestMethod]
+    public async Task UncompressedInlinePayloadReaderHonorsMaximumSize()
+    {
+        var receiver = new MessagingPayloadReceiver(new InMemoryMessagingDataBus(), _network(maxDecompressed: 10));
+        var headers = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        var atLimit = await receiver
+            .PreparePayloadReaderAsync(headers, new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("aaaaaaaaaa")), new TextCodec(), default)
+            .ConfigureAwait(false);
+        await using (atLimit.ConfigureAwait(false))
+        {
+            (await atLimit.DeserializeAsync<PayloadContract>(default).ConfigureAwait(false)).Value
+                .Should().Be("aaaaaaaaaa");
+        }
+
+        var overLimit = await receiver
+            .PreparePayloadReaderAsync(headers, new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes("aaaaaaaaaaa")), new TextCodec(), default)
+            .ConfigureAwait(false);
+        await using (overLimit.ConfigureAwait(false))
+        {
+            var action = () => overLimit.DeserializeAsync<PayloadContract>(default);
+            (await action.Should().ThrowAsync<MessagingFailFastException>().ConfigureAwait(false))
+                .Which.Reason.Should().Be(MessagingFailFastReason.OversizedPayload);
+        }
+    }
+
+    [TestMethod]
     public void InMemoryDataBusLifetimeMustCoverSchedulingDelay()
     {
         var network = _network();
