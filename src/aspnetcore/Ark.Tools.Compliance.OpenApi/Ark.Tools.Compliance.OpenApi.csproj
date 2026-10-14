@@ -35,4 +35,12 @@
     <ProjectReference Include="..\..\compliance\Ark.Tools.Compliance\Ark.Tools.Compliance.csproj" />
   </ItemGroup>
 
+  <!-- This library never calls AddOpenApi, so the XML comment generator output is unreachable; dropping the
+       referenced projects' XML docs stops a doc change in any dependency from forcing a recompile. -->
+  <Target Name="_ArkSkipOpenApiReferenceXml" AfterTargets="GenerateAdditionalXmlFilesForOpenApi">
+    <ItemGroup>
+      <AdditionalFiles Remove="@(AdditionalFiles)" Condition="'%(Extension)' == '.xml'" />
+    </ItemGroup>
+  </Target>
+
 </Project>
