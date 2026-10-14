@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.MediatorFramework.Grpc`: a build that leaves the gRPC host assembly unchanged no longer starts the `.proto` exporter. It runs again when the assembly, an `ArkAdditionalProto` file or the package changes, when any exported file is missing, or when `ArkExportProtoDir` points to a directory not exported since the last change.
 - `Ark.Tools.MediatorFramework`: `ArkApiSurface.current.txt` in `obj/` is copied only when the generated API surface changes, and `dotnet clean` now removes it.
 - `Ark.Tools.Outbox.SqlServer`: `SendAsync` writes up to 1,000 messages in one `INSERT` statement instead of one statement per message, so sending many messages takes far fewer round trips inside the business transaction. Messages keep their order.
+- `Ark.Tools.MediatorFramework`: with `EmitCompilerGeneratedFiles=true`, generated files now go to `obj/<Configuration>/<TargetFramework>/generated` instead of `obj/generated`, so Debug and Release builds no longer overwrite each other's files. A `CompilerGeneratedFilesOutputPath` you set yourself is still used.
 - The ARKPII001 code fix no longer offers *Use sensitive value object*, so its light bulb appears without first searching the whole solution for references. Use the *Use sensitive value object* refactoring on the classified property instead.
 
 ### Fixed

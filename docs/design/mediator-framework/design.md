@@ -892,7 +892,7 @@ snapshot differs from what is committed.
    fails with diagnostics `ARKAPI001` / `ARKAPI002`. The diagnostics include
    the transient `dotnet build -p:EmitCompilerGeneratedFiles=true` command when
    the generated snapshot needs to be inspected; the package target
-   supplies `$(BaseIntermediateOutputPath)generated`.
+   supplies `$(IntermediateOutputPath)generated`.
    `ARKAPI004` rejects malformed, reordered, duplicated, unknown, or legacy
    one-line messaging entries.
 4. The developer **accepts** the change by replacing the committed file with the
