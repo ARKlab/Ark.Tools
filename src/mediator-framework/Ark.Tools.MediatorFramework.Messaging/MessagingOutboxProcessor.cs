@@ -98,6 +98,7 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
         IReadOnlyList<OutboxMessage> messages,
         CancellationToken ctk)
     {
+        var sends = new List<PendingSend>(messages.Count);
         foreach (var message in messages)
         {
             var body = message.Body
@@ -122,47 +123,67 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
                 : dueTime is not null
                     ? "defer"
                     : "send";
-            var stopwatch = Stopwatch.StartNew();
+            sends.Add(new PendingSend(destinationKind, destination, readOnlyHeaders, payload, dueTime, operation));
+        }
 
-            try
+        // Service Bus has no cross-entity ordering: entities are sent concurrently, each one strictly in peek order.
+        // On the first failure the remaining sends are cancelled and that failure surfaces, so nothing is committed.
+        var destinations = sends.GroupBy(static send => (send.DestinationKind, send.Destination)).ToList();
+        await Parallel.ForEachAsync(
+            destinations,
+            new ParallelOptions { MaxDegreeOfParallelism = destinations.Count, CancellationToken = ctk },
+            async (destinationSends, token) =>
             {
-                if (string.Equals(destinationKind, "queue", StringComparison.Ordinal))
+                foreach (var send in destinationSends)
                 {
-                    await _transport.SendAsync(
-                        destination,
-                        readOnlyHeaders,
-                        payload,
-                        dueTime,
-                        ctk).ConfigureAwait(false);
+                    await _sendAsync(send, token).ConfigureAwait(false);
                 }
-                else if (string.Equals(destinationKind, "topic", StringComparison.Ordinal))
-                {
-                    if (dueTime is not null)
-                        throw new InvalidOperationException("Published outbox messages cannot have a due time.");
-                    await _transport.PublishAsync(
-                        destination,
-                        readOnlyHeaders,
-                        payload,
-                        ctk).ConfigureAwait(false);
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        string.Format(
-                            CultureInfo.InvariantCulture,
-                            "Native messaging outbox destination kind '{0}' is invalid.",
-                            destinationKind));
-                }
-            }
-            finally
+            }).ConfigureAwait(false);
+    }
+
+    private async Task _sendAsync(PendingSend send, CancellationToken ctk)
+    {
+        var (destinationKind, destination, readOnlyHeaders, payload, dueTime, operation) = send;
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            if (string.Equals(destinationKind, "queue", StringComparison.Ordinal))
             {
-                stopwatch.Stop();
-                MessagingMetrics.RecordClientOperation(
-                    stopwatch.Elapsed,
+                await _transport.SendAsync(
+                    destination,
                     readOnlyHeaders,
-                    operation,
-                    destination);
+                    payload,
+                    dueTime,
+                    ctk).ConfigureAwait(false);
             }
+            else if (string.Equals(destinationKind, "topic", StringComparison.Ordinal))
+            {
+                if (dueTime is not null)
+                    throw new InvalidOperationException("Published outbox messages cannot have a due time.");
+                await _transport.PublishAsync(
+                    destination,
+                    readOnlyHeaders,
+                    payload,
+                    ctk).ConfigureAwait(false);
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Native messaging outbox destination kind '{0}' is invalid.",
+                        destinationKind));
+            }
+        }
+        finally
+        {
+            stopwatch.Stop();
+            MessagingMetrics.RecordClientOperation(
+                stopwatch.Elapsed,
+                readOnlyHeaders,
+                operation,
+                destination);
         }
     }
 
@@ -184,4 +205,12 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
     {
         return headers.Remove(name, out var value) ? value : null;
     }
+
+    private sealed record PendingSend(
+        string DestinationKind,
+        string Destination,
+        IReadOnlyDictionary<string, string> Headers,
+        ReadOnlySequence<byte> Payload,
+        DateTimeOffset? DueTime,
+        string Operation);
 }

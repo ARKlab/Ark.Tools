@@ -139,6 +139,47 @@ public sealed partial class MessagingOutboxTests
     }
 
     [TestMethod]
+    public async Task ProcessorSendsDestinationsConcurrentlyAndKeepsOrderWithinEachDestination()
+    {
+        var factory = new InMemoryOutboxContextFactory();
+        await _seedAsync(factory, _queueHeaders("a1", "queue-a"), [1]).ConfigureAwait(false);
+        await _seedAsync(factory, _queueHeaders("b1", "queue-b"), [2]).ConfigureAwait(false);
+        await _seedAsync(factory, _queueHeaders("a2", "queue-a"), [3]).ConfigureAwait(false);
+        await _seedAsync(factory, _queueHeaders("b2", "queue-b"), [4]).ConfigureAwait(false);
+        var transport = new DestinationTransport(failingDestination: null, expectedSends: 4);
+        var processor = new MessagingOutboxProcessor(factory, transport, batchSize: 10);
+        await using var __processor = processor.ConfigureAwait(false);
+
+        await processor.StartAsync(default).ConfigureAwait(false);
+        await transport.WaitForExpectedSendsAsync().WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await processor.StopAsync(cts.Token).ConfigureAwait(false);
+
+        transport.MaxInFlight.Should().Be(2);
+        transport.MaxInFlightPerDestination.Should().Be(1);
+        transport.SentIds("queue-a").Should().Equal("a1", "a2");
+        transport.SentIds("queue-b").Should().Equal("b1", "b2");
+    }
+
+    [TestMethod]
+    public async Task ProcessorFailureOnOneDestinationCancelsOthersAndDoesNotCommit()
+    {
+        var factory = new InMemoryOutboxContextFactory();
+        await _seedAsync(factory, _queueHeaders("a1", "queue-a"), [1]).ConfigureAwait(false);
+        await _seedAsync(factory, _queueHeaders("b1", "queue-b"), [2]).ConfigureAwait(false);
+        var transport = new DestinationTransport(failingDestination: "queue-b", expectedSends: 0);
+        var processor = new MessagingOutboxProcessor(factory, transport, batchSize: 10);
+        await using var __processor = processor.ConfigureAwait(false);
+
+        await processor.StartAsync(default).ConfigureAwait(false);
+        await transport.WaitForSiblingCancellationAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await processor.StopAsync(cts.Token).ConfigureAwait(false);
+
+        (await _countAsync(factory).ConfigureAwait(false)).Should().Be(2);
+    }
+
+    [TestMethod]
     public async Task ProcessorCompositionRejectsDuplicatesAndResolvesOneHostedService()
     {
         var services = new ServiceCollection();
@@ -269,6 +310,13 @@ public sealed partial class MessagingOutboxTests
         };
     }
 
+    private static Dictionary<string, string> _queueHeaders(string messageId, string queue)
+    {
+        var headers = _outboxHeaders(messageId);
+        headers[MessagingHeaders.OutboxDestination] = queue;
+        return headers;
+    }
+
     private static async Task _seedAsync(
         IOutboxAsyncContextFactory factory,
         Dictionary<string, string> headers,
@@ -353,6 +401,130 @@ public sealed partial class MessagingOutboxTests
         public async Task WaitForAttemptAsync()
         {
             await _attempted.Task.ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Records per-destination order and concurrency. Every send waits until two sends are in flight, so a sequential
+    /// processor times out. With a failing destination, that destination fails once two sends are in flight and the
+    /// other destination blocks until its token is cancelled. Outbox counts skip peek-locked rows, so the success test
+    /// waits on completed sends instead of an empty outbox.
+    /// </summary>
+    private sealed class DestinationTransport : IMessagingTransport
+    {
+        private readonly string? _failingDestination;
+        private readonly Lock _gate = new();
+        private readonly List<(string Destination, string Id)> _sent = [];
+        private readonly Dictionary<string, int> _inFlightPerDestination = new(StringComparer.Ordinal);
+        private readonly TaskCompletionSource _twoInFlight =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _siblingCancelled =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _expectedSendsCompleted =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly int _expectedSends;
+        private int _inFlight;
+        private int _completedSends;
+
+        public DestinationTransport(string? failingDestination, int expectedSends)
+        {
+            _failingDestination = failingDestination;
+            _expectedSends = expectedSends;
+        }
+
+        public MessagingCapabilities Capabilities => MessagingCapabilities.SendReceive;
+
+        public long MaximumPayloadBytes => long.MaxValue;
+
+        public int MaxInFlight { get; private set; }
+
+        public int MaxInFlightPerDestination { get; private set; }
+
+        public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
+        {
+            return 0;
+        }
+
+        public IReadOnlyList<string> SentIds(string destination)
+        {
+            lock (_gate)
+            {
+                return _sent.Where(sent => sent.Destination == destination).Select(static sent => sent.Id).ToList();
+            }
+        }
+
+        public async Task WaitForSiblingCancellationAsync()
+        {
+            await _siblingCancelled.Task.ConfigureAwait(false);
+        }
+
+        public async Task WaitForExpectedSendsAsync()
+        {
+            await _expectedSendsCompleted.Task.ConfigureAwait(false);
+        }
+
+        public async Task SendAsync(
+            string queue,
+            IReadOnlyDictionary<string, string> headers,
+            ReadOnlySequence<byte> payload,
+            DateTimeOffset? dueTime,
+            CancellationToken ctk)
+        {
+            lock (_gate)
+            {
+                _sent.Add((queue, headers[MessagingHeaders.MessageId]));
+                _inFlight++;
+                MaxInFlight = Math.Max(MaxInFlight, _inFlight);
+                var perDestination = _inFlightPerDestination.GetValueOrDefault(queue) + 1;
+                _inFlightPerDestination[queue] = perDestination;
+                MaxInFlightPerDestination = Math.Max(MaxInFlightPerDestination, perDestination);
+                if (_inFlight >= 2)
+                    _twoInFlight.TrySetResult();
+            }
+
+            try
+            {
+                if (_failingDestination is null)
+                {
+                    await _twoInFlight.Task.WaitAsync(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
+                    if (Interlocked.Increment(ref _completedSends) == _expectedSends)
+                        _expectedSendsCompleted.TrySetResult();
+                }
+                else if (queue == _failingDestination)
+                {
+                    await _twoInFlight.Task.WaitAsync(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
+                    throw new InvalidOperationException("Injected transport failure.");
+                }
+                else
+                {
+                    try
+                    {
+                        await Task.Delay(Timeout.Infinite, ctk).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        _siblingCancelled.TrySetResult();
+                        throw;
+                    }
+                }
+            }
+            finally
+            {
+                lock (_gate)
+                {
+                    _inFlight--;
+                    _inFlightPerDestination[queue]--;
+                }
+            }
+        }
+
+        public async Task PublishAsync(
+            string topic,
+            IReadOnlyDictionary<string, string> headers,
+            ReadOnlySequence<byte> payload,
+            CancellationToken ctk)
+        {
+            await SendAsync(topic, headers, payload, null, ctk).ConfigureAwait(false);
         }
     }
 

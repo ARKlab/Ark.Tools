@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `MessagingOutboxProcessor` sends each batch of outbox messages to its different queues and topics concurrently, so the outbox drains faster when it targets several destinations. Messages to the same queue or topic are still sent one at a time in outbox order; there is no ordering between different destinations.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added
