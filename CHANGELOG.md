@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Ark.Tools.FtpClient.FtpProxy`: `IFtpClientProxyConfig.AcceptAnyServerCertificate` (default `false`) accepts any TLS certificate from the FtpProxy service. It disables certificate validation, so use it only with a development proxy that has a self-signed certificate.
+
+### Changed
+
+- **Breaking:** `Ark.Tools.FtpClient.FtpProxy` now validates the TLS certificate of the FtpProxy service, which receives the bearer token and the FTP credentials; before, any certificate was accepted. A proxy with a self-signed or otherwise untrusted certificate now fails with a `FlurlHttpException` caused by an `AuthenticationException`: trust its certificate, or return `true` from `AcceptAnyServerCertificate` in your `IFtpClientProxyConfig` for development only.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added
