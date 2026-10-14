@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `Ark.Tools.MediatorFramework.Grpc`: a build that leaves the gRPC host assembly unchanged no longer starts the `.proto` exporter. It runs again when the assembly, an `ArkAdditionalProto` file or the package changes, or when the exported `ark/mediator.proto` is missing.
+- `Ark.Tools.MediatorFramework`: `ArkApiSurface.current.txt` in `obj/` is copied only when the generated API surface changes, and `dotnet clean` now removes it.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added

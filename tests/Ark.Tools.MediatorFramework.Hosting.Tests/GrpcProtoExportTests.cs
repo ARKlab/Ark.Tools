@@ -225,6 +225,11 @@ public static class Program
                 "--no-restore", "-p:ArkExportProto=false").ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Output);
             Directory.Exists(output).Should().BeFalse();
+
+            result = await _runDotnetAsync("build", consumer, consumer, "--no-restore").ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            File.Exists(Path.Join(output, "Consumer.proto")).Should().BeTrue();
+            File.Exists(Path.Join(output, "hand.proto")).Should().BeTrue();
         }
         finally
         {
