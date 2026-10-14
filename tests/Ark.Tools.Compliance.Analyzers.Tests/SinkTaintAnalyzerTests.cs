@@ -275,6 +275,36 @@ public sealed class SinkTaintAnalyzerTests
         diagnostics.Should().Contain(static diagnostic => diagnostic.Id == "ARKPII005");
     }
 
+    /// <summary>A concatenation chain is analysed once and reported once, at its outermost expression.</summary>
+    [TestMethod]
+    [DataRow("var value = \"User \" + c.Email + \"!\";", "\"User \" + c.Email + \"!\"")]
+    [DataRow("var value = \"User \" + (c.Email + \"!\") + \".\";", "\"User \" + (c.Email + \"!\") + \".\"")]
+    [DataRow("var value = \"Count \" + (1 + c.Status.Length) + c.Email + \"!\";", "\"Count \" + (1 + c.Status.Length) + c.Email + \"!\"")]
+    [DataRow("var value = $\"User {c.Email}\" + \"!\" + \".\";", "$\"User {c.Email}\" + \"!\" + \".\"")]
+    [DataRow("var value = \"\"; value += c.Email + \"!\" + \".\";", "c.Email + \"!\" + \".\"")]
+    [DataRow("var value = c.Email; value += c.Email + \"!\";", "c.Email + \"!\"")]
+    [DataRow("var value = c.Email; value += \"!\";", "value")]
+    [DataRow("var value = \"User \" + sensitive + \"!\";", "\"User \" + sensitive + \"!\"")]
+    public async Task UnprotectedConcatenation_IsReportedOnceAtOutermostExpression(string statement, string expected)
+    {
+        var diagnostics = await _analyzeAsync(_method(statement)).ConfigureAwait(false);
+
+        var diagnostic = diagnostics.Should().ContainSingle().Which;
+        diagnostic.Id.Should().Be("ARKPII005");
+        var text = await diagnostic.Location.SourceTree!.GetTextAsync().ConfigureAwait(false);
+        text.ToString(diagnostic.Location.SourceSpan).Should().Be(expected);
+    }
+
+    /// <summary>A long concatenation chain is not cut off by the operation depth limit.</summary>
+    [TestMethod]
+    public async Task LongUnprotectedConcatenation_IsReportedOnce()
+    {
+        var parts = string.Join(" + ", Enumerable.Range(0, 100).Select(static index => "\"" + index.ToString(CultureInfo.InvariantCulture) + "\" + choose"));
+        var diagnostics = await _analyzeAsync(_method("var value = c.Email + " + parts + ";")).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII005");
+    }
+
     /// <summary>Explicit purposes and redacted renderings are not raw formatting violations.</summary>
     [TestMethod]
     [DataRow("var value = sensitive.Reveal(CompliancePurpose.SendTransactionalEmail);")]
