@@ -12,6 +12,7 @@ using NodaTime;
 using Reqnroll;
 using Reqnroll.Assist;
 
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 using DataTable = Reqnroll.DataTable;
@@ -47,6 +48,10 @@ public sealed class SqlStateProviderSteps : IDisposable
     private ResourceState<TestResourceExtensions>? _currentState;
     private string _currentTenant = "test-tenant";
     private readonly Instant _now = SystemClock.Instance.GetCurrentInstant();
+    private Microsoft.Data.SqlClient.SqlConnection? _lockConnection;
+    private Microsoft.Data.SqlClient.SqlTransaction? _lockTransaction;
+    private Exception? _cancelledCallException;
+    private TimeSpan _cancelledCallDuration;
 
     // Expose current state for potential injection by other step classes
     public ResourceState<TestResourceExtensions>? Current => _currentState;
@@ -329,8 +334,59 @@ public sealed class SqlStateProviderSteps : IDisposable
         state.Extensions.Should().BeNull("Extensions should be null when deserialization fails");
     }
 
+    [When(@"another connection locks the state of resource ""(.*)""")]
+    public async Task WhenAnotherConnectionLocksTheStateOfResource(string resourceId)
+    {
+        _lockConnection = new Microsoft.Data.SqlClient.SqlConnection(_dbContext.Config.DbConnectionString);
+        await _lockConnection.OpenAsync();
+        _lockTransaction = (Microsoft.Data.SqlClient.SqlTransaction)await _lockConnection.BeginTransactionAsync();
+        await _lockConnection.ExecuteAsync(
+            "UPDATE [State] SET [RetryCount] = [RetryCount] + 1 WHERE [Tenant] = @tenant AND [ResourceId] = @resourceId",
+            new { tenant = _currentTenant, resourceId },
+            _lockTransaction);
+    }
+
+    [When(@"^I load state for tenant ""([^""]*)"" cancelling after (\d+) milliseconds$")]
+    public async Task WhenILoadStateForTenantCancellingAfterMilliseconds(string tenant, int milliseconds)
+    {
+        var uniqueTenant = _dbContext.GetUniqueTenant(tenant);
+        await _callCancellingAfterAsync(async ctk => await _stateProvider!.LoadStateAsync(uniqueTenant, ctk: ctk), milliseconds);
+    }
+
+    [When(@"^I save the resource state cancelling after (\d+) milliseconds$")]
+    public async Task WhenISaveTheResourceStateCancellingAfterMilliseconds(int milliseconds)
+        => await _callCancellingAfterAsync(async ctk => await _stateProvider!.SaveStateAsync([_currentState!], ctk), milliseconds);
+
+    private async Task _callCancellingAfterAsync(Func<CancellationToken, Task> call, int milliseconds)
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(milliseconds));
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            await call(cts.Token);
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or Microsoft.Data.SqlClient.SqlException)
+        {
+            _cancelledCallException = ex;
+        }
+        _cancelledCallDuration = stopwatch.Elapsed;
+    }
+
+    [Then(@"the call should be cancelled within (\d+) seconds")]
+    public void ThenTheCallShouldBeCancelledWithinSeconds(int seconds)
+    {
+        // SqlClient reports a command cancelled while running as a SqlException whose message depends on timing,
+        // so returning well before the 30-second command timeout is what shows the token reached the command.
+        _cancelledCallException.Should().NotBeNull();
+        _cancelledCallDuration.Should().BeLessThan(TimeSpan.FromSeconds(seconds));
+    }
+
     public void Dispose()
     {
+        // Release the row lock first, or the cleanup DELETE below would wait for it.
+        _lockTransaction?.Dispose();
+        _lockConnection?.Dispose();
+
         // Clean up test data using shared DB context
         try
         {
