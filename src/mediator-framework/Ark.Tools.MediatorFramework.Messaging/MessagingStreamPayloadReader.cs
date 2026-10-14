@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Buffers;
 using System.IO.Pipelines;
 
 namespace Ark.Tools.MediatorFramework.Messaging;
@@ -8,7 +9,8 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Adapts a prepared payload stream to generated asynchronous dispatch.</summary>
 public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDisposable, IAsyncDisposable
 {
-    private readonly Func<CancellationToken, Task<Stream>> _openStream;
+    private readonly Func<CancellationToken, Task<Stream>>? _openStream;
+    private readonly ReadOnlySequence<byte> _inlinePayload;
     private readonly IMessagingCodec _codec;
     private Stream? _ownedStream;
     private bool _disposed;
@@ -32,14 +34,31 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
         _codec = codec ?? throw new ArgumentNullException(nameof(codec));
     }
 
+    /// <summary>Reads an uncompressed inline payload that is already within the size limit, without copying it.</summary>
+    internal MessagingStreamPayloadReader(ReadOnlySequence<byte> inlinePayload, IMessagingCodec codec)
+    {
+        _inlinePayload = inlinePayload;
+        _codec = codec ?? throw new ArgumentNullException(nameof(codec));
+    }
+
     /// <inheritdoc />
     public async Task<T> DeserializeAsync<T>(CancellationToken ctk) where T : class
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        var stream = await _openStream(ctk).ConfigureAwait(false);
-        var reader = PipeReader.Create(
-            stream,
-            new StreamPipeReaderOptions(leaveOpen: true));
+        Stream? stream = null;
+        PipeReader reader;
+        if (_openStream is null)
+        {
+            ctk.ThrowIfCancellationRequested();
+            reader = PipeReader.Create(_inlinePayload);
+        }
+        else
+        {
+            stream = await _openStream(ctk).ConfigureAwait(false);
+            reader = PipeReader.Create(
+                stream,
+                new StreamPipeReaderOptions(leaveOpen: true));
+        }
         try
         {
             var result = await _codec.DeserializeAsync<T>(reader, ctk).ConfigureAwait(false);
@@ -60,7 +79,8 @@ public sealed class MessagingStreamPayloadReader : IMessagingPayloadReader, IDis
         finally
         {
             await reader.CompleteAsync().ConfigureAwait(false);
-            await stream.DisposeAsync().ConfigureAwait(false);
+            if (stream is not null)
+                await stream.DisposeAsync().ConfigureAwait(false);
         }
     }
 

@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
 - Compliance surface (`ArkComplianceSurfaceEnabled`): editing a method with many `Register` calls, such as a SimpleInjector composition root, no longer slows down the IDE, because DI container registrations are no longer analysed as serializer registrations and the remaining calls share one binding per file.
 - **Breaking:** `Ark.Tools.FtpClient.FtpProxy` now validates the TLS certificate of the FtpProxy service, which receives the bearer token and the FTP credentials; before, any certificate was accepted. A proxy with a self-signed or otherwise untrusted certificate now fails with a `FlurlHttpException` caused by an `AuthenticationException`: trust its certificate, or return `true` from `AcceptAnyServerCertificate` in your `IFtpClientProxyConfig` for development only.
+- The MediatorFramework Minimal API, gRPC, Rebus, MCP and Azure Functions source generators no longer keep an earlier copy of the project's compilation alive in the IDE between edits, which lowers IDE memory use.
+- `MessagingOutboxProcessor` sends each batch of outbox messages to its different queues and topics concurrently, so the outbox drains faster when it targets several destinations. Messages to the same queue or topic are still sent one at a time in outbox order; there is no ordering between different destinations.
 - `Ark.Tools.Outbox.SqlServer`: `SendAsync` writes up to 1,000 messages in one `INSERT` statement instead of one statement per message, so sending many messages takes far fewer round trips inside the business transaction. Messages keep their order.
 
 ### Fixed
@@ -22,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `DataKeyComparer` and `DataKeyHashSet`: a null key property no longer resets the hash code, so rows that differ only in the keys before a null key no longer collide and slow the set down.
 - `Ark.Tools.Outbox.SqlServer`: the outbox now dispatches the oldest messages first, in the order they were written. Before, it sent the newest first, so under load old messages could wait indefinitely and the messages of one transaction went out in reverse order.
 - ARKPII005 is reported once per string concatenation, on the whole expression, instead of once per `+`; long concatenations are now analysed as a whole.
+- `Ark.Tools.MediatorFramework.Messaging`: receiving a Protobuf message no longer blocks a thread-pool thread while a claim-checked (DataBus) payload downloads, and cancellation now stops that download.
 - `Ark.Tools.FtpClient.SftpClient`: SFTP downloads and uploads now stop when their cancellation token is cancelled, so `DownloadTimeout` and host shutdown no longer wait for a stalled transfer. A cancelled or failed transfer now closes its connection, so a pool no longer reuses a connection left with a transfer half done.
 
 ### Security

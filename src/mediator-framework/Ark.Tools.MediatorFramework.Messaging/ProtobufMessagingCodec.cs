@@ -44,8 +44,26 @@ public sealed class ProtobufMessagingCodec : IMessagingCodec
         var parse = ProtobufContractRegistry<T>.Parse
             ?? throw new InvalidOperationException(
                 $"Protobuf contract '{typeof(T)}' has no registered MessageParser<T>.");
-        var result = parse(reader.AsStream(leaveOpen: true));
-        await Task.CompletedTask.ConfigureAwait(false);
-        return result;
+        // ParseFrom(Stream) reads synchronously, so buffer the payload asynchronously first instead of
+        // blocking a thread on DataBus I/O. The receiver bounds the payload size.
+        var read = await reader.ReadAsync(ctk).ConfigureAwait(false);
+        while (!read.IsCompleted)
+        {
+            reader.AdvanceTo(read.Buffer.Start, read.Buffer.End);
+            read = await reader.ReadAsync(ctk).ConfigureAwait(false);
+        }
+
+        try
+        {
+            var stream = new MessagingPayloadReceiver.SequenceReadStream(read.Buffer);
+            await using (stream.ConfigureAwait(false))
+            {
+                return parse(stream);
+            }
+        }
+        finally
+        {
+            reader.AdvanceTo(read.Buffer.End);
+        }
     }
 }
