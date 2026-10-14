@@ -66,7 +66,8 @@ public class SftpClientConnectionTests
 
         var act = async () => await connection.DownloadFileAsync("file.bin", cts.Token).WaitAsync(_bound, TestContext.CancellationToken).ConfigureAwait(false);
 
-        await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+        var thrown = await act.Should().ThrowAsync<OperationCanceledException>().ConfigureAwait(false);
+        thrown.Which.CancellationToken.Should().Be(cts.Token);
     }
 
     [TestMethod]

@@ -53,8 +53,18 @@ public sealed class SftpClientConnection : FtpClientConnectionBase
 
     private async Task _ensureConnected(CancellationToken ctk)
     {
-        if (!_client.IsConnected)
+        if (_client.IsConnected)
+            return;
+
+        try
+        {
             await _client.ConnectAsync(ctk).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException ex) when (ctk.IsCancellationRequested && ex.CancellationToken != ctk)
+        {
+            // SSH.NET links ctk with its connection timeout; callers expect their own token
+            throw new OperationCanceledException(ex.Message, ex, ctk);
+        }
     }
 
     /// <summary>
@@ -250,10 +260,7 @@ public sealed class SftpClientConnection : FtpClientConnectionBase
 
     public override async ValueTask ConnectAsync(CancellationToken ctk)
     {
-        if (_client.IsConnected)
-            return;
-
-        await _client.ConnectAsync(ctk).ConfigureAwait(false);
+        await _ensureConnected(ctk).ConfigureAwait(false);
     }
 
     public override ValueTask<bool> IsConnectedAsync(CancellationToken ctk = default)
