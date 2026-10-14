@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.Outbox.SqlServer`: the outbox now dispatches the oldest messages first, in the order they were written. Before, it sent the newest first, so under load old messages could wait indefinitely and the messages of one transaction went out in reverse order.
 - ARKPII005 is reported once per string concatenation, on the whole expression, instead of once per `+`; long concatenations are now analysed as a whole.
 - `Ark.Tools.MediatorFramework.Messaging`: receiving a Protobuf message no longer blocks a thread-pool thread while a claim-checked (DataBus) payload downloads, and cancellation now stops that download.
+- `SqlStateProvider`: `LoadStateAsync` and `SaveStateAsync` now pass their cancellation token to SQL Server, so stopping a ResourceWatcher no longer waits for a slow or blocked state query to time out.
 
 ### Security
 
