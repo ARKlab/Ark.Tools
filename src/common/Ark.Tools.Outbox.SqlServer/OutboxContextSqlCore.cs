@@ -58,12 +58,13 @@ internal abstract class OutboxContextSqlCore
                 ;WITH batch AS (
                     SELECT TOP ({messageCount}) *
                     FROM {full}
-                    ORDER BY Id DESC)
+                    ORDER BY Id ASC)
                 DELETE FROM batch
                 WITH (READPAST, ROWLOCK, READCOMMITTEDLOCK)
                 OUTPUT
                       DELETED.[Headers]
                     , DELETED.[Body]
+                    , DELETED.[Id]
                 ";
 
             Count = $@"
@@ -125,9 +126,10 @@ internal abstract class OutboxContextSqlCore
     {
         var cmd = new CommandDefinition(_statements.PeekLock(messageCount), transaction: _transaction, cancellationToken: ctk);
 
-        var res = await _connection.QueryAsync<(string Headers, byte[] Body)>(cmd).ConfigureAwait(false);
+        var res = await _connection.QueryAsync<(string Headers, byte[] Body, long Id)>(cmd).ConfigureAwait(false);
 
-        return res.Select(static x => new OutboxMessage
+        // OUTPUT row order is not guaranteed: sort on the client to keep insertion order
+        return res.OrderBy(static x => x.Id).Select(static x => new OutboxMessage
         {
             Body = x.Body,
             Headers = _headerSerializer.DeserializeFromString(x.Headers)

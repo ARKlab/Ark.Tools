@@ -221,6 +221,44 @@ public sealed class DeclarationAnalyzerTests
         diagnostics[0].Severity.Should().Be(DiagnosticSeverity.Error);
     }
 
+    /// <summary>Classification reached through the type, container, positional parameter or implemented member still rejects unsupported shapes.</summary>
+    [TestMethod]
+    [DataRow("[PersonalData] class Customer { public object Value; }", 1)]
+    [DataRow("[PersonalData] delegate void Callback(); class Customer { public Callback Value; }", 2)]
+    [DataRow("record Contact([PersonalData] object Value);", 1)]
+    [DataRow("interface IHolder { [PersonalData] object Value { get; } } class Holder : IHolder { public object Value => null; }", 2)]
+    public async Task IndirectlyClassifiedUnsupportedShapesAreErrors(string source, int count)
+    {
+        var diagnostics = await _analyzeAsync(source).ConfigureAwait(false);
+        diagnostics.Should().HaveCount(count).And.OnlyContain(static diagnostic => diagnostic.Id == "ARKPII010");
+    }
+
+    /// <summary>Only the interface members a declaration actually implements carry their classification or exclusion to it.</summary>
+    [TestMethod]
+    public async Task InterfaceMembersApplyOnlyToTheirImplementation()
+    {
+        var diagnostics = await _analyzeAsync("""
+            interface IClassified { [PersonalData] string Email { get; } }
+            interface IExcluded { [NotPersonalData("Template key chosen by operators, never customer input.")] string Email { get; } }
+            interface IPlain { string Email { get; } }
+            class Both : IClassified, IPlain { public string Email => ""; }
+            class Excluded : IExcluded { public string Email => ""; }
+            class Split : IClassified, IPlain { string IClassified.Email => ""; public string Email => ""; }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().HaveCount(2).And.OnlyContain(static diagnostic => diagnostic.Id == "ARKPII001");
+        var lines = new List<string>();
+        foreach (var diagnostic in diagnostics)
+        {
+            var text = await diagnostic.Location.SourceTree!.GetTextAsync().ConfigureAwait(false);
+            lines.Add(text.Lines.GetLineFromPosition(diagnostic.Location.SourceSpan.Start).ToString());
+        }
+
+        lines.Should().BeEquivalentTo(
+                "interface IPlain { string Email { get; } }",
+                "class Split : IClassified, IPlain { string IClassified.Email => \"\"; public string Email => \"\"; }");
+    }
+
     /// <summary>Concrete classified strings are safe to carry through the pipeline.</summary>
     [TestMethod]
     public async Task ConcreteClassifiedTypesAreSilent()

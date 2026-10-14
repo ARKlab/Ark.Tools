@@ -212,12 +212,14 @@ public sealed class FtpClientProxy : IFtpClientPool
         Justification = "This FTP client uses well-known DTOs for FtpProxy API communication. The types are explicitly referenced in this library and won't be trimmed.")]
     private IFlurlClient _initClient()
     {
+        var acceptAnyServerCertificate = _config.AcceptAnyServerCertificate;
         var flurlClient = new FlurlClientBuilder(_config.FtpProxyWebInterfaceBaseUri.ToString())
             .ConfigureArkDefaults()
-            .ConfigureInnerHandler(static h =>
+            .ConfigureInnerHandler(h =>
             {
+                if (acceptAnyServerCertificate)
 #pragma warning disable MA0039 // Do not write your own certificate validation method
-                h.ServerCertificateCustomValidationCallback = static (a, b, c, d) => true;
+                    h.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
 #pragma warning restore MA0039 // Do not write your own certificate validation method
             })
             .WithHeader("Accept", "application/json, text/json")

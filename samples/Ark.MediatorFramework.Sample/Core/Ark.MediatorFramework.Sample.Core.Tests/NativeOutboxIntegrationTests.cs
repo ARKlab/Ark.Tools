@@ -103,6 +103,28 @@ public sealed class NativeOutboxIntegrationTests
             Enumerable.Range(0, 1500).Select(static i => i.ToString(CultureInfo.InvariantCulture)));
     }
 
+    [TestMethod]
+    public async Task SqlPeekLockReturnsOldestMessagesInInsertionOrder()
+    {
+        if (_inMemoryProfile())
+            Assert.Inconclusive("The SQL integration profile is disabled.");
+        await DatabaseHooks.ResetDatabaseAsync().ConfigureAwait(false);
+        var factory = _sqlFactory();
+        foreach (var batch in new byte[][] { [1, 2, 3], [4, 5] })
+        {
+            var seed = await factory.CreateAsync().ConfigureAwait(false);
+            await using var __seed = seed.ConfigureAwait(false);
+            await seed.SendAsync(batch.Select(_message).ToList()).ConfigureAwait(false);
+            await seed.CommitAsync().ConfigureAwait(false);
+        }
+
+        var reader = await factory.CreateAsync().ConfigureAwait(false);
+        await using var __reader = reader.ConfigureAwait(false);
+        var peeked = await reader.PeekLockMessagesAsync(3).ConfigureAwait(false);
+
+        peeked.Select(static message => message.Body![0]).Should().Equal(1, 2, 3);
+    }
+
     private static ISampleDataContextFactory _sqlFactory()
     {
         SampleDapperMappings.Register();

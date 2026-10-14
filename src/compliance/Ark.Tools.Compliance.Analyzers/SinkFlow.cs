@@ -189,8 +189,10 @@ internal sealed class SinkFlow
             case ILocalFunctionOperation:
                 return null;
             case IBinaryOperation binary:
+                // a + b + c nests to the left: the spine does not consume depth so a long chain is still
+                // analysed as a whole; the node budget bounds it.
                 return binary.Type?.SpecialType == SpecialType.System_String
-                    ? _find(binary.LeftOperand, depth + 1) ?? _find(binary.RightOperand, depth + 1)
+                    ? _find(binary.LeftOperand, binary.LeftOperand is IBinaryOperation ? depth : depth + 1) ?? _find(binary.RightOperand, depth + 1)
                     : null;
             default:
                 return _children(operation.ChildOperations, depth + 1);
