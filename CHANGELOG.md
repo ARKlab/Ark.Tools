@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0-beta17] - 2026-10-14
+
 ### Added
 
 - `Ark.Tools.MediatorFramework.Mcp`: `McpToolSerializerOptions.Get(services)` returns the JSON options used by generated MCP tools. Attachment tools now also work under Native AOT (or with reflection-based JSON disabled), because the MCP protocol and attachment contracts are appended after your own resolvers.
