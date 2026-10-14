@@ -31,7 +31,6 @@ public static class McpServerBuilderExtensions
         where TContext : IMcpToolContext
     {
         ArgumentNullException.ThrowIfNull(builder);
-        builder.Services.TryAddSingleton<McpToolSerializerOptions.Holder>();
         var result = TContext.RegisterMcpTools(builder);
         result.Services.TryAddEnumerable(
             ServiceDescriptor.Singleton<

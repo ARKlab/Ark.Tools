@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 
 using ModelContextProtocol;
 
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -14,13 +15,15 @@ namespace Ark.Tools.MediatorFramework.Mcp;
 /// <summary>Provides the JSON options used by generated MCP tools.</summary>
 public static partial class McpToolSerializerOptions
 {
+    private static readonly ConditionalWeakTable<IServiceProvider, JsonSerializerOptions> _cache = new();
+
     /// <summary>
     /// Gets the JSON options for generated MCP tool arguments, schemas and results: a read-only copy of the
     /// Minimal API options (<c>ConfigureHttpJsonOptions</c>) with the MCP protocol contracts and
     /// <see cref="McpAttachmentInput"/> appended to the resolver chain.
     /// </summary>
     /// <param name="services">The service provider of the MCP host.</param>
-    /// <returns>The JSON options shared by the generated tools.</returns>
+    /// <returns>The JSON options shared by the generated tools; repeated calls for one provider return the same instance.</returns>
     /// <remarks>
     /// The appended resolvers come after the application's own resolvers, so they only supply metadata the
     /// application does not provide. They make attachment tools work when reflection-based serialization is
@@ -29,7 +32,7 @@ public static partial class McpToolSerializerOptions
     public static JsonSerializerOptions Get(IServiceProvider services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        return services.GetService<Holder>()?.Options ?? _create(services);
+        return _cache.GetValue(services, static provider => _create(provider));
     }
 
     private static JsonSerializerOptions _create(IServiceProvider services)
@@ -40,11 +43,6 @@ public static partial class McpToolSerializerOptions
         options.TypeInfoResolverChain.Add(McpToolJsonSerializerContext.Default);
         options.MakeReadOnly();
         return options;
-    }
-
-    internal sealed class Holder(IServiceProvider services)
-    {
-        public JsonSerializerOptions Options { get; } = _create(services);
     }
 
     [JsonSourceGenerationOptions(

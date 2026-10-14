@@ -123,6 +123,7 @@ public sealed class McpHostingTests
         var toolOptions = McpToolSerializerOptions.Get(provider);
 
         toolOptions.IsReadOnly.Should().BeTrue();
+        McpToolSerializerOptions.Get(provider).Should().BeSameAs(toolOptions);
         toolOptions.TypeInfoResolverChain[0].Should().BeSameAs(applicationResolver);
         toolOptions.GetTypeInfo(typeof(McpAttachmentInput)).Should().NotBeNull();
         toolOptions.GetTypeInfo(typeof(EmbeddedResourceBlock)).Should().NotBeNull();
