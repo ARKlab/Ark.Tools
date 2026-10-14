@@ -6,16 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Ark.Tools.FtpClient.FtpProxy`: `IFtpClientProxyConfig.AcceptAnyServerCertificate` (default `false`) accepts any TLS certificate from the FtpProxy service. It disables certificate validation, so use it only with a development proxy that has a self-signed certificate.
+
 ### Changed
 
 - `DataKeyComparer` and `DataKeyHashSet` compare and hash key properties without boxing or reflection on each call, about 3x faster on large row sets (Native AOT keeps the reflection path).
 - Compliance surface (`ArkComplianceSurfaceEnabled`): editing a method with many `Register` calls, such as a SimpleInjector composition root, no longer slows down the IDE, because DI container registrations are no longer analysed as serializer registrations and the remaining calls share one binding per file.
+- **Breaking:** `Ark.Tools.FtpClient.FtpProxy` now validates the TLS certificate of the FtpProxy service, which receives the bearer token and the FTP credentials; before, any certificate was accepted. A proxy with a self-signed or otherwise untrusted certificate now fails with a `FlurlHttpException` caused by an `AuthenticationException`: trust its certificate, or return `true` from `AcceptAnyServerCertificate` in your `IFtpClientProxyConfig` for development only.
 
 ### Fixed
 
 - `DataKeyComparer` and `DataKeyHashSet`: a null key property no longer resets the hash code, so rows that differ only in the keys before a null key no longer collide and slow the set down.
 - `Ark.Tools.Outbox.SqlServer`: the outbox now dispatches the oldest messages first, in the order they were written. Before, it sent the newest first, so under load old messages could wait indefinitely and the messages of one transaction went out in reverse order.
 - ARKPII005 is reported once per string concatenation, on the whole expression, instead of once per `+`; long concatenations are now analysed as a whole.
+
+### Security
+
+- Ark.Tools packages now depend on `System.Security.Cryptography.Pkcs` and `System.Security.Cryptography.Xml` 10.0.13, which fix GHSA-846f-f764-76mx, GHSA-2fmv-rv2c-59x7, GHSA-r955-8q5j-3h83, GHSA-7hqp-7c5m-4vq6 and GHSA-c399-9853-6jmj; earlier 10.0.x versions came in transitively.
 
 ## [7.0.0-beta16] - 2026-10-13
 
