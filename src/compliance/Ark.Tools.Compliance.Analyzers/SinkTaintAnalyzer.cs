@@ -96,19 +96,22 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
 
                 break;
             case IInterpolatedStringOperation interpolation:
-                if (!_isInsideConfiguredSink(interpolation, sinks, context.CancellationToken))
+                if (!_isConcatenationOperand(interpolation)
+                    && !_isInsideConfiguredSink(interpolation, sinks, context.CancellationToken))
                 {
                     _check(context, interpolation, "ARKPII005", today);
                 }
                 break;
             case IBinaryOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String } binary:
-                if (!_isInsideConfiguredSink(binary, sinks, context.CancellationToken))
+                if (!_isConcatenationOperand(binary)
+                    && !_isInsideConfiguredSink(binary, sinks, context.CancellationToken))
                 {
                     _check(context, binary, "ARKPII005", today);
                 }
                 break;
             case IConversionOperation { IsImplicit: true, Type.SpecialType: SpecialType.System_String } conversion:
-                if (!_isInsideConfiguredSink(conversion, sinks, context.CancellationToken))
+                if (!_isConcatenationOperand(conversion)
+                    && !_isInsideConfiguredSink(conversion, sinks, context.CancellationToken))
                 {
                     _check(context, conversion.Operand, "ARKPII005", today);
                 }
@@ -241,6 +244,13 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             && invocation.Instance is null
             && argument.Parameter?.Ordinal == 0
             && SinkFlow._isFrameworkType(argument.Parameter.Type);
+    }
+
+    /// <summary>The outermost concatenation is checked as a whole, so its parts are not analysed and reported again.</summary>
+    private static bool _isConcatenationOperand(IOperation operation)
+    {
+        return operation.Parent is IBinaryOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String }
+            or ICompoundAssignmentOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String };
     }
 
     private static bool _isInsideConfiguredSink(

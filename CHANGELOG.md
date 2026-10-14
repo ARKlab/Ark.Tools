@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- ARKPII005 is reported once per string concatenation, on the whole expression, instead of once per `+`; long concatenations are now analysed as a whole.
+
 ## [7.0.0-beta16] - 2026-10-13
 
 ### Added
