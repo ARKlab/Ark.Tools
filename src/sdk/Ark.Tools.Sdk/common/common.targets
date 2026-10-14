@@ -6,10 +6,11 @@
 
 	<Import Project="$(MSBuildThisFileDirectory)tests.targets" Condition="'$(IsTestProject)' == 'true'" />
 
-  <!-- Reqnroll reads these only when items and targets run, so clearing a props default here still takes effect. -->
-  <PropertyGroup Condition="'$(IsTestProject)' != 'true' or '$(EnableArkToolsReqnroll)' == 'false'">
-    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(_ArkReqnrollCodeBehindInObjDefaulted)' == 'true'"></ReqnrollUseIntermediateOutputPathForCodeBehind>
-    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(_ArkReqnrollDeleteObsoleteDefaulted)' == 'true'"></ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+  <!-- Reqnroll reads these only in items and targets, which see the final property values, so resolving the mark here still applies. -->
+  <PropertyGroup>
+    <_ArkReqnrollCodeBehindDefault Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">true</_ArkReqnrollCodeBehindDefault>
+    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == 'ArkToolsDefault'">$(_ArkReqnrollCodeBehindDefault)</ReqnrollUseIntermediateOutputPathForCodeBehind>
+    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == 'ArkToolsDefault'">$(_ArkReqnrollCodeBehindDefault)</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
   </PropertyGroup>
 
   

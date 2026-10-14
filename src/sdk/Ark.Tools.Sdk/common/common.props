@@ -42,13 +42,11 @@
     <TestingPlatformDotnetTestSupport Condition="'$(TestingPlatformDotnetTestSupport)' == ''">true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
-  <!-- Set in props: Reqnroll's package props default these to false, so a default set in targets never applies.
-       IsTestProject may still be set later in the project body, so common.targets clears the defaults that do not apply. -->
+  <!-- Reqnroll's package props default these to false when empty, so mark them here before that happens.
+       IsTestProject may still be set in the project body, so common.targets replaces the mark with the final default. -->
   <PropertyGroup Condition="'$(IsTestProject)' != 'false' and '$(EnableArkToolsReqnroll)' != 'false'">
-    <_ArkReqnrollCodeBehindInObjDefaulted Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</_ArkReqnrollCodeBehindInObjDefaulted>
-    <_ArkReqnrollDeleteObsoleteDefaulted Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">true</_ArkReqnrollDeleteObsoleteDefaulted>
-    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
-    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+    <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">ArkToolsDefault</ReqnrollUseIntermediateOutputPathForCodeBehind>
+    <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">ArkToolsDefault</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' and '$(UsingMicrosoftBuildSqlSdk)' != 'true'">

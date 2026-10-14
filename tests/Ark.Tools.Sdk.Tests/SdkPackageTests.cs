@@ -845,6 +845,7 @@ public sealed class SdkPackageTests
             await File.WriteAllTextAsync(
                 Path.Join(scenarioRoot, "Directory.Build.targets"),
                 "<Project><Import Project=\"Sdk.targets\" Sdk=\"Ark.Tools.Sdk\" /></Project>").ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(scenarioRoot, "Sample.feature"), "Feature: Sample\n").ConfigureAwait(false);
             var projectPath = Path.Join(scenarioRoot, "Consumer.Specs.csproj");
             await _runAsync(
                 "dotnet",
@@ -852,7 +853,7 @@ public sealed class SdkPackageTests
                 environment).ConfigureAwait(false);
             return JsonDocument.Parse(await _runAsync(
                 "dotnet",
-                $"msbuild \"{projectPath}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean",
+                $"msbuild \"{projectPath}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean -getItem:ReqnrollFeatureFile",
                 environment).ConfigureAwait(false));
         }
 
@@ -861,10 +862,15 @@ public sealed class SdkPackageTests
             "<IsTestProject>true</IsTestProject><ReqnrollDeleteObsoleteCodeBehindFilesOnClean>false</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>").ConfigureAwait(false);
         Assert.AreEqual("true", _getProperty(bodyTest, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
         Assert.AreEqual("false", _getProperty(bodyTest, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+        var bodyTestCodeBehind = _findItem(bodyTest, "ReqnrollFeatureFile", "Sample.feature")!["CodeBehindFile"];
+        Assert.IsTrue(bodyTestCodeBehind.StartsWith("obj", StringComparison.Ordinal), bodyTestCodeBehind);
 
-        using var nonTest = await EvaluateAsync("non-test", "").ConfigureAwait(false);
+        using var nonTest = await EvaluateAsync(
+            "non-test",
+            "<ReqnrollDeleteObsoleteCodeBehindFilesOnClean>true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>").ConfigureAwait(false);
         Assert.AreEqual("", _getProperty(nonTest, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
-        Assert.AreEqual("", _getProperty(nonTest, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+        Assert.AreEqual("true", _getProperty(nonTest, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+        Assert.AreEqual("Sample.feature.cs", _findItem(nonTest, "ReqnrollFeatureFile", "Sample.feature")!["CodeBehindFile"]);
     }
 
 #if false
