@@ -323,10 +323,17 @@ public sealed partial class ComplianceSurfaceGenerator
             "Reveal: " + (text ?? "(dynamic purpose)") + " [" + (category ?? "(dynamic category)") + "]");
     }
 
+    // Only the serializer shapes: Register<T>() or Register<T>(arg), and RegisterBuiltIn() or RegisterBuiltIn(arg).
+    // DI calls such as container.Register<IFoo, Foo>() or container.Register(typeof(IFoo), ...) are never bound.
     private static bool _isRegistrationCandidate(SyntaxNode node)
     {
-        return node is InvocationExpressionSyntax invocation
-            && _invocationName(invocation) is "Register" or "RegisterBuiltIn";
+        return node is InvocationExpressionSyntax { ArgumentList.Arguments.Count: <= 1 } invocation
+            && _invocationSimpleName(invocation) switch
+            {
+                GenericNameSyntax { Identifier.ValueText: "Register", TypeArgumentList.Arguments.Count: 1 } => true,
+                IdentifierNameSyntax { Identifier.ValueText: "RegisterBuiltIn" } => true,
+                _ => false,
+            };
     }
 
     private static RegistrationSpec? _parseRegistration(SemanticModel model, SyntaxNode node, CancellationToken token)
@@ -369,13 +376,13 @@ public sealed partial class ComplianceSurfaceGenerator
         return typeNames.Items.Length == 0 ? null : new RegistrationSpec(serializer, typeNames);
     }
 
-    private static string? _invocationName(InvocationExpressionSyntax invocation)
+    private static SimpleNameSyntax? _invocationSimpleName(InvocationExpressionSyntax invocation)
     {
         return invocation.Expression switch
         {
-            MemberAccessExpressionSyntax memberAccess => memberAccess.Name.Identifier.ValueText,
-            MemberBindingExpressionSyntax memberBinding => memberBinding.Name.Identifier.ValueText,
-            SimpleNameSyntax simpleName => simpleName.Identifier.ValueText,
+            MemberAccessExpressionSyntax memberAccess => memberAccess.Name,
+            MemberBindingExpressionSyntax memberBinding => memberBinding.Name,
+            SimpleNameSyntax simpleName => simpleName,
             _ => null,
         };
     }

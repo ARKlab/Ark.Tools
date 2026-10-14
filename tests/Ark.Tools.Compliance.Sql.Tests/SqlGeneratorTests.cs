@@ -73,7 +73,10 @@ public sealed class SqlGeneratorTests
             .Should().BeLessThan(original.Sql.Single().IndexOf(".[z]", StringComparison.Ordinal));
     }
 
-    /// <summary>SQL generator inputs are cached as immutable specifications rather than Roslyn symbols.</summary>
+    /// <summary>
+    /// SQL generator inputs are cached as immutable specifications rather than Roslyn symbols: re-parsing the
+    /// unchanged type reuses the output, while an edit to the mapped type regenerates it.
+    /// </summary>
     [TestMethod]
     public void GeneratorCachesImmutableSpecifications()
     {
@@ -85,25 +88,43 @@ public sealed class SqlGeneratorTests
                 public string Email { get; set; } = "";
             }
             """);
+        var policyTree = compilation.SyntaxTrees.Single();
+        var parseOptions = (CSharpParseOptions)policyTree.Options;
         var options = new GeneratorDriverOptions(
             IncrementalGeneratorOutputKind.None,
             trackIncrementalGeneratorSteps: true);
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             generators: [new SqlPolicyGenerator().AsSourceGenerator()],
             driverOptions: options);
-
-        driver = driver.RunGenerators(compilation);
         driver = driver.RunGenerators(compilation);
 
-        var outputs = driver.GetRunResult().Results
-            .SelectMany(static result => result.TrackedSteps.Values)
-            .SelectMany(static runs => runs)
-            .SelectMany(static run => run.Outputs);
-        outputs.Select(static output => output.Value)
+        // Re-parsing the same file re-runs the transform, so a spec holding symbols would not compare equal. The edit
+        // goes after the type: column specs keep their source location for diagnostics, so a line shift re-emits.
+        var edited = CSharpSyntaxTree.ParseText(policyTree + "\n// edited\n", parseOptions);
+        compilation = compilation.ReplaceSyntaxTree(policyTree, edited);
+        driver = driver.RunGenerators(compilation);
+
+        var result = driver.GetRunResult().Results.Single();
+        result.TrackedSteps.Values.SelectMany(static runs => runs).SelectMany(static run => run.Outputs)
+            .Select(static output => output.Value)
             .Any(static value => value is INamedTypeSymbol or ImmutableArray<INamedTypeSymbol>)
             .Should().BeFalse();
-        outputs.Select(static output => output.Reason)
-            .Should().Contain(IncrementalStepRunReason.Cached);
+        result.TrackedSteps[WellKnownGeneratorOutputs.SourceOutput].SelectMany(static run => run.Outputs)
+            .Should().NotBeEmpty()
+            .And.OnlyContain(static output =>
+                output.Reason == IncrementalStepRunReason.Cached || output.Reason == IncrementalStepRunReason.Unchanged);
+
+        compilation = compilation.ReplaceSyntaxTree(
+            edited,
+            CSharpSyntaxTree.ParseText(
+                policyTree.ToString().Replace("StoragePolicy.Masked", "StoragePolicy.None", StringComparison.Ordinal),
+                parseOptions));
+        driver = driver.RunGenerators(compilation);
+
+        driver.GetRunResult().Results.Single().TrackedSteps[WellKnownGeneratorOutputs.SourceOutput]
+            .SelectMany(static run => run.Outputs)
+            .Select(static output => output.Reason)
+            .Should().Contain(IncrementalStepRunReason.Modified);
     }
 
     /// <summary>Unresolved variables are preserved for SQLCMD or build-time substitution.</summary>

@@ -342,35 +342,53 @@ public sealed class ComplianceFoundationTests
         uncategorized.Should().Throw<ArgumentException>();
     }
 
-    /// <summary>Sensitive value generator inputs are cached as immutable specifications.</summary>
+    /// <summary>
+    /// Sensitive value generator inputs are cached as immutable specifications: a line shift reuses the output,
+    /// while an edit to the value object regenerates it.
+    /// </summary>
     [TestMethod]
     public void SensitiveValueGeneratorCachesUnchangedInputs()
     {
-        var compilation = _createCompilation("""
+        const string source = """
             [Ark.Tools.Compliance.SensitiveValueObject<string>(Ark.Tools.Compliance.ArkRedaction.Erase)]
             public readonly partial struct GeneratedSensitiveValue
             {
             }
-            """);
+            """;
+        var compilation = _createCompilation(source);
+        var valueTree = compilation.SyntaxTrees.Single();
+        var parseOptions = (CSharpParseOptions)valueTree.Options;
         var options = new GeneratorDriverOptions(
             IncrementalGeneratorOutputKind.None,
             trackIncrementalGeneratorSteps: true);
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [new Ark.Tools.Compliance.Generators.SensitiveValueObjectGenerator().AsSourceGenerator()],
             driverOptions: options);
-
-        driver = driver.RunGenerators(compilation);
         driver = driver.RunGenerators(compilation);
 
-        var outputs = driver.GetRunResult().Results
-            .SelectMany(static result => result.TrackedSteps.Values)
-            .SelectMany(static runs => runs)
-            .SelectMany(static run => run.Outputs)
-            .ToArray();
-        outputs.Any(static output => output.Value is INamedTypeSymbol)
+        // Re-parsing the same file re-runs the transform, so a spec holding symbols or locations would not compare equal.
+        var shifted = CSharpSyntaxTree.ParseText("\n\n" + valueTree, parseOptions);
+        compilation = compilation.ReplaceSyntaxTree(valueTree, shifted);
+        driver = driver.RunGenerators(compilation);
+
+        var result = driver.GetRunResult().Results.Single();
+        result.TrackedSteps.Values.SelectMany(static runs => runs).SelectMany(static run => run.Outputs)
+            .Any(static output => output.Value is INamedTypeSymbol)
             .Should().BeFalse();
-        outputs.Select(static output => output.Reason)
-            .Should().Contain(IncrementalStepRunReason.Cached);
+        result.TrackedSteps[WellKnownGeneratorOutputs.SourceOutput].SelectMany(static run => run.Outputs)
+            .Should().NotBeEmpty()
+            .And.OnlyContain(static output =>
+                output.Reason == IncrementalStepRunReason.Cached || output.Reason == IncrementalStepRunReason.Unchanged);
+
+        compilation = compilation.ReplaceSyntaxTree(
+            shifted,
+            CSharpSyntaxTree.ParseText(source.Replace("ArkRedaction.Erase", "ArkRedaction.Mask", StringComparison.Ordinal), parseOptions));
+        driver = driver.RunGenerators(compilation);
+
+        driver.GetRunResult().Results.Single().TrackedSteps[WellKnownGeneratorOutputs.SourceOutput]
+            .SelectMany(static run => run.Outputs)
+            .Select(static output => output.Reason)
+            .Should().Contain(IncrementalStepRunReason.Modified);
     }
 
     private static string _runGenerator(string source)
