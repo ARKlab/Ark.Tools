@@ -42,8 +42,11 @@
     <TestingPlatformDotnetTestSupport Condition="'$(TestingPlatformDotnetTestSupport)' == ''">true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
-  <!-- Set in props: Reqnroll's package props default these to false, so a default set in targets never applies. -->
-  <PropertyGroup Condition="'$(IsTestProject)' == 'true' and '$(EnableArkToolsReqnroll)' != 'false'">
+  <!-- Set in props: Reqnroll's package props default these to false, so a default set in targets never applies.
+       IsTestProject may still be set later in the project body, so common.targets clears the defaults that do not apply. -->
+  <PropertyGroup Condition="'$(IsTestProject)' != 'false' and '$(EnableArkToolsReqnroll)' != 'false'">
+    <_ArkReqnrollCodeBehindInObjDefaulted Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</_ArkReqnrollCodeBehindInObjDefaulted>
+    <_ArkReqnrollDeleteObsoleteDefaulted Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">true</_ArkReqnrollDeleteObsoleteDefaulted>
     <ReqnrollUseIntermediateOutputPathForCodeBehind Condition="'$(ReqnrollUseIntermediateOutputPathForCodeBehind)' == ''">true</ReqnrollUseIntermediateOutputPathForCodeBehind>
     <ReqnrollDeleteObsoleteCodeBehindFilesOnClean Condition="'$(ReqnrollDeleteObsoleteCodeBehindFilesOnClean)' == ''">true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
   </PropertyGroup>

@@ -813,6 +813,60 @@ public sealed class SdkPackageTests
 
     }
 
+    /// <summary>
+    /// Ensures the Reqnroll code-behind defaults follow an IsTestProject set in the project body and survive Reqnroll's own package defaults.
+    /// </summary>
+    [TestMethod]
+    public async Task ReqnrollCodeBehindDefaultsFollowProjectBodyClassification()
+    {
+        var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
+        var fixtureRoot = Path.Join(root, "artifacts", "sdk-reqnroll-classification");
+        var feed = _prepareSdkFixture(fixtureRoot);
+        var environment = _createSdkEnvironment(fixtureRoot);
+
+        async Task<JsonDocument> EvaluateAsync(string scenario, string properties)
+        {
+            var project = $"""
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    {properties}
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
+  </ItemGroup>
+</Project>
+""";
+            var scenarioRoot = await _createSdkScenarioAsync(fixtureRoot, feed, scenario, "Consumer.Specs.csproj", project).ConfigureAwait(false);
+            // Importing the SDK from Directory.Build.props evaluates its props before Reqnroll's package props.
+            await File.WriteAllTextAsync(
+                Path.Join(scenarioRoot, "Directory.Build.props"),
+                "<Project><Import Project=\"Sdk.props\" Sdk=\"Ark.Tools.Sdk\" /></Project>").ConfigureAwait(false);
+            await File.WriteAllTextAsync(
+                Path.Join(scenarioRoot, "Directory.Build.targets"),
+                "<Project><Import Project=\"Sdk.targets\" Sdk=\"Ark.Tools.Sdk\" /></Project>").ConfigureAwait(false);
+            var projectPath = Path.Join(scenarioRoot, "Consumer.Specs.csproj");
+            await _runAsync(
+                "dotnet",
+                $"msbuild \"{projectPath}\" -target:Restore -p:RestoreConfigFile=\"{Path.Join(scenarioRoot, "NuGet.Config")}\" -p:RestoreLockedMode=false",
+                environment).ConfigureAwait(false);
+            return JsonDocument.Parse(await _runAsync(
+                "dotnet",
+                $"msbuild \"{projectPath}\" -getProperty:ReqnrollUseIntermediateOutputPathForCodeBehind,ReqnrollDeleteObsoleteCodeBehindFilesOnClean",
+                environment).ConfigureAwait(false));
+        }
+
+        using var bodyTest = await EvaluateAsync(
+            "body-test",
+            "<IsTestProject>true</IsTestProject><ReqnrollDeleteObsoleteCodeBehindFilesOnClean>false</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>").ConfigureAwait(false);
+        Assert.AreEqual("true", _getProperty(bodyTest, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
+        Assert.AreEqual("false", _getProperty(bodyTest, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+
+        using var nonTest = await EvaluateAsync("non-test", "").ConfigureAwait(false);
+        Assert.AreEqual("", _getProperty(nonTest, "ReqnrollUseIntermediateOutputPathForCodeBehind"));
+        Assert.AreEqual("", _getProperty(nonTest, "ReqnrollDeleteObsoleteCodeBehindFilesOnClean"));
+    }
+
 #if false
     /// <summary>
     /// Ensures application settings and Reqnroll content semantics stay project-type aware and independently disableable.

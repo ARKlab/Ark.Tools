@@ -165,7 +165,7 @@ entries for those implicit packages.
 | `EnableArkToolsMtpRetry` | Enabled unless `false` | SDK restore | Set `false` |
 | `EnableArkToolsMtpTrxReport` | Enabled unless `false` | SDK restore and test arguments | Set `false` |
 | `EnableArkToolsMtpAzureDevOpsReport` | Enabled unless `false` | SDK restore | Set `false` |
-| `EnableArkToolsReqnroll` | Enabled unless `false` for test projects | Early (code-behind defaults) and test targets | Set `false` before SDK props |
+| `EnableArkToolsReqnroll` | Enabled unless `false` for test projects | Early (code-behind defaults) and test targets | Set `false` |
 | `ReqnrollUseIntermediateOutputPathForCodeBehind` | `true` when empty for test projects | Early | Set a value directly |
 | `ReqnrollDeleteObsoleteCodeBehindFilesOnClean` | `true` when empty for test projects | Early | Set a value directly |
 | `EnableArkToolsTestConfig` | Enabled unless `false` for test projects | Test targets | Set `false` |
@@ -175,7 +175,9 @@ The two Reqnroll code-behind defaults put the generated `*.feature.cs` files
 under `obj/`. Reqnroll's package props set both properties to `false` when they
 are empty, so the defaults apply only when the SDK props are evaluated first,
 for example when `Directory.Build.props` imports `Sdk.props` from
-`Ark.Tools.Sdk`. With `<Sdk Name="Ark.Tools.Sdk" />`, NuGet package props are
+`Ark.Tools.Sdk`. The SDK targets drop the defaults when the final
+`IsTestProject` or `EnableArkToolsReqnroll` value turns them off, so both can
+be set in the project file. With `<Sdk Name="Ark.Tools.Sdk" />`, NuGet package props are
 evaluated first: set both properties to `true` in the project or in
 `Directory.Build.props`. Test projects that built code-behind into the project
 folder need one `dotnet clean`, which deletes the old files. Until then Reqnroll
