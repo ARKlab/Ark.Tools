@@ -3,9 +3,11 @@
 
 using AwesomeAssertions;
 
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ark.Tools.Core.Tests;
 
@@ -87,6 +89,14 @@ public class EvolvableEnumJsonConverterTests
         Blank = 1,
     }
 
+    private enum Aliased
+    {
+        NOT_SET = 0,
+        [EnumMember(Value = "wire")]
+        [Display(Name = "Shown")]
+        Member = 1,
+    }
+
     // Longer than the converters' 128-char stack buffer, so it is read through the allocating path.
     private const string _longName = "long-"
         + "0123456789012345678901234567890123456789"
@@ -99,6 +109,16 @@ public class EvolvableEnumJsonConverterTests
         RespectNullableAnnotations = true,
         RespectRequiredConstructorParameters = true
     }.ConfigureArkDefaults();
+
+    private static EvolvableEnum<Aliased> _readAliased(
+        JsonConverter<EvolvableEnum<Aliased>> converter,
+        byte[] utf8,
+        JsonSerializerOptions options)
+    {
+        var reader = new Utf8JsonReader(utf8);
+        reader.Read();
+        return converter.Read(ref reader, typeof(EvolvableEnum<Aliased>), options);
+    }
 
     private static JsonSerializerOptions _createIntegerOptions()
     {
@@ -262,6 +282,33 @@ public class EvolvableEnumJsonConverterTests
         // Assert
         alias.Value.Should().Be(LongNamed.Long);
         blank.Value.Should().Be(BlankNamed.Blank);
+    }
+
+    /// <summary>Verifies that the written name and the other names FromName accepts are read without allocating.</summary>
+    [TestMethod]
+    [DataRow("\"wire\"")]
+    [DataRow("\"Member\"")]
+    [DataRow("\"Shown\"")]
+    public void DefaultFormat_ShouldReadAcceptedNamesWithoutAllocating(string json)
+    {
+        // Arrange
+        var options = _createDefaultOptions();
+        var converter = (JsonConverter<EvolvableEnum<Aliased>>)options.GetConverter(typeof(EvolvableEnum<Aliased>));
+        var utf8 = Encoding.UTF8.GetBytes(json);
+        var result = _readAliased(converter, utf8, options);
+
+        // Act
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 100; i++)
+        {
+            _readAliased(converter, utf8, options);
+        }
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        // Assert
+        result.Value.Should().Be(Aliased.Member);
+        allocated.Should().Be(0);
     }
 
     /// <summary>Verifies that an empty name is still rejected.</summary>

@@ -5,9 +5,12 @@ using Ark.Tools.Compliance;
 using Ark.Tools.Core;
 
 using System.Collections.Frozen;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -164,7 +167,7 @@ internal static class EvolvableEnumJsonConverter
         {
             _format = format;
             _encodedNames = _createEncodedNames<TEnum, int>(encoder);
-            _knownNames = _createKnownNames(_encodedNames, EvolvableEnum<TEnum>.FromName);
+            _knownNames = _createKnownNames<TEnum, EvolvableEnum<TEnum>>(EvolvableEnum<TEnum>.FromName);
         }
 
         public override EvolvableEnum<TEnum> Read(
@@ -207,7 +210,7 @@ internal static class EvolvableEnumJsonConverter
         {
             _format = format;
             _encodedNames = _createEncodedNames<TEnum, TBacking>(encoder);
-            _knownNames = _createKnownNames(_encodedNames, EvolvableEnum<TEnum, TBacking>.FromName);
+            _knownNames = _createKnownNames<TEnum, EvolvableEnum<TEnum, TBacking>>(EvolvableEnum<TEnum, TBacking>.FromName);
         }
 
         public override EvolvableEnum<TEnum, TBacking> Read(
@@ -256,13 +259,24 @@ internal static class EvolvableEnumJsonConverter
         return names.ToFrozenDictionary(StringComparer.Ordinal);
     }
 
-    // Caches FromName for the declared names, so reading them needs no string. FromName throws on blank names.
-    private static FrozenDictionary<string, TValue>.AlternateLookup<ReadOnlySpan<char>> _createKnownNames<TValue>(
-        FrozenDictionary<string, JsonEncodedText> encodedNames,
-        Func<string, TValue> fromName)
+    // Caches FromName for every name it accepts (member names and the annotation names EvolvableEnum reads), so reading
+    // them needs no string. Each entry is FromName's own result, so a cache hit cannot differ. FromName throws on blank names.
+    private static FrozenDictionary<string, TValue>.AlternateLookup<ReadOnlySpan<char>> _createKnownNames<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum,
+        TValue>(Func<string, TValue> fromName)
+        where TEnum : struct, Enum
     {
-        return encodedNames.Keys
+        return typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static)
+            .SelectMany(static field => new[]
+            {
+                field.Name,
+                field.GetCustomAttribute<EnumMemberAttribute>(inherit: false)?.Value,
+                field.GetCustomAttribute<DisplayAttribute>(inherit: false)?.GetName(),
+                field.GetCustomAttribute<DisplayNameAttribute>(inherit: false)?.DisplayName,
+            })
+            .OfType<string>()
             .Where(static name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.Ordinal)
             .ToFrozenDictionary(static name => name, fromName, StringComparer.Ordinal)
             .GetAlternateLookup<ReadOnlySpan<char>>();
     }
