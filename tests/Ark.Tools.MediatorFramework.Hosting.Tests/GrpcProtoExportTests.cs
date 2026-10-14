@@ -217,6 +217,22 @@ public static class Program
             result.ExitCode.Should().Be(0, result.Output);
             File.GetLastWriteTimeUtc(generatedProto).Should().Be(timestamp);
 
+            var mediatorProto = Path.Join(output, "ark", "mediator.proto");
+            var expectedMediatorProto = await File.ReadAllTextAsync(mediatorProto).ConfigureAwait(false);
+            await File.WriteAllTextAsync(mediatorProto, "stale").ConfigureAwait(false);
+            File.SetLastWriteTimeUtc(Path.Join(consumer, "bin", "Debug", "net10.0", "Ark.Tools.MediatorFramework.Grpc.dll"), DateTime.UtcNow);
+            result = await _runDotnetAsync("build", consumer, consumer, "--no-restore", "-t:ArkExportProto").ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            (await File.ReadAllTextAsync(mediatorProto).ConfigureAwait(false)).Should().Be(expectedMediatorProto);
+
+            foreach (var exported in new[] { Path.Join(output, "ark", "nodatime.proto"), Path.Join(output, "hand.proto") })
+            {
+                File.Delete(exported);
+                result = await _runDotnetAsync("build", consumer, consumer, "--no-restore").ConfigureAwait(false);
+                result.ExitCode.Should().Be(0, result.Output);
+                File.Exists(exported).Should().BeTrue();
+            }
+
             Directory.Delete(output, recursive: true);
             result = await _runDotnetAsync(
                 "build",
@@ -225,6 +241,59 @@ public static class Program
                 "--no-restore", "-p:ArkExportProto=false").ConfigureAwait(false);
             result.ExitCode.Should().Be(0, result.Output);
             Directory.Exists(output).Should().BeFalse();
+
+            result = await _runDotnetAsync("build", consumer, consumer, "--no-restore").ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            File.Exists(Path.Join(output, "Consumer.proto")).Should().BeTrue();
+            File.Exists(Path.Join(output, "hand.proto")).Should().BeTrue();
+        }
+        finally
+        {
+            _deleteTemporaryDirectory(fixture);
+        }
+    }
+
+    /// <summary>Verifies switching back to an export directory re-exports a contract changed meanwhile.</summary>
+    [TestMethod]
+    public async Task PackedConsumerReexportsWhenSwitchingBackToAnExportDirectory()
+    {
+        var fixture = _createTemporaryDirectory();
+        try
+        {
+            var feed = await _packageFeed.Value.ConfigureAwait(false);
+            var consumer = Path.Join(fixture, "consumer");
+            Directory.CreateDirectory(consumer);
+            await File.WriteAllTextAsync(Path.Join(consumer, "Consumer.csproj"), _packedProject(string.Empty)).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(consumer, "Program.cs"), _generatedConsumerSource()).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Join(consumer, "NuGet.Config"), _nugetConfig(feed)).ConfigureAwait(false);
+            var first = Path.Join(consumer, "first");
+            var second = Path.Join(consumer, "second");
+
+            var result = await _runDotnetAsync(
+                "build",
+                consumer,
+                consumer,
+                "--configfile", Path.Join(consumer, "NuGet.Config"), "-p:ArkExportProtoDir=" + first).ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            (await File.ReadAllTextAsync(Path.Join(first, "Consumer.proto")).ConfigureAwait(false)).Should().NotContain("Ping2");
+
+            await File.WriteAllTextAsync(Path.Join(consumer, "Program.cs"), _generatedConsumerSource() + """
+
+[GrpcMethod, GrpcService("Consumer")]
+[ProtoBuf.ProtoContract]
+public sealed record Ping2 : IRequest<Ping2, Pong>
+{
+    [ProtoBuf.ProtoMember(1)]
+    public string Value { get; set; } = string.Empty;
+}
+""").ConfigureAwait(false);
+            result = await _runDotnetAsync("build", consumer, consumer, "--no-restore", "-p:ArkExportProtoDir=" + second).ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            (await File.ReadAllTextAsync(Path.Join(second, "Consumer.proto")).ConfigureAwait(false)).Should().Contain("Ping2");
+
+            result = await _runDotnetAsync("build", consumer, consumer, "--no-restore", "-p:ArkExportProtoDir=" + first).ConfigureAwait(false);
+            result.ExitCode.Should().Be(0, result.Output);
+            (await File.ReadAllTextAsync(Path.Join(first, "Consumer.proto")).ConfigureAwait(false)).Should().Contain("Ping2");
         }
         finally
         {
