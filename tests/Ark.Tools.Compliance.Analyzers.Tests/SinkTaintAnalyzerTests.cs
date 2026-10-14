@@ -274,7 +274,8 @@ public sealed class SinkTaintAnalyzerTests
 
         var diagnostic = diagnostics.Should().ContainSingle().Which;
         diagnostic.Id.Should().Be("ARKPII005");
-        diagnostic.Location.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan).Should().Be(expected);
+        var text = await diagnostic.Location.SourceTree!.GetTextAsync().ConfigureAwait(false);
+        text.ToString(diagnostic.Location.SourceSpan).Should().Be(expected);
     }
 
     /// <summary>A long concatenation chain is not cut off by the operation depth limit.</summary>
