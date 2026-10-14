@@ -15,8 +15,9 @@ using System.Security.Cryptography;
 namespace Ark.Tools.FtpClient.SftpClient.Tests;
 
 /// <summary>
-/// SFTP transfers, including cancellation while the server has stopped answering mid-transfer. These tests need a real SFTP server:
-/// set ARK_SFTP_TEST_URI to sftp://user:password@host:port/writable-folder, e.g. for a local
+/// SFTP transfers, including cancellation while the server has stopped answering. The round-trip and mid-transfer
+/// tests need a real SFTP server and are skipped without one; the never-answers test is self-contained.
+/// Set ARK_SFTP_TEST_URI to sftp://user:password@host:port/writable-folder, e.g. for a local
 /// <c>docker run -p 127.0.0.1:2222:22 atmoz/sftp:alpine ark:ark:::upload</c> use sftp://ark:ark@127.0.0.1:2222/upload.
 /// </summary>
 [TestClass]
