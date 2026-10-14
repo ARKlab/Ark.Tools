@@ -4,14 +4,14 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(ArkApiSurfaceEnabled)' != 'false' AND '$(EmitCompilerGeneratedFiles)' == 'true'">
-    <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+    <CompilerGeneratedFilesOutputPath Condition="'$(CompilerGeneratedFilesOutputPath)' == ''">$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <Target Name="ArkApiSurfaceSetCompilerGeneratedFilesOutputPath"
           BeforeTargets="CoreCompile"
           Condition="'$(ArkApiSurfaceEnabled)' != 'false' AND '$(EmitCompilerGeneratedFiles)' == 'true' AND '$(_ArkToolsCompilerGeneratedFilesOutputPathSpecified)' != 'true'">
     <PropertyGroup>
-      <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
+      <CompilerGeneratedFilesOutputPath>$(IntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
   </Target>
 

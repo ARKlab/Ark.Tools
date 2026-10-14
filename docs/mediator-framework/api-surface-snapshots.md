@@ -17,7 +17,7 @@ application project or pass them transiently on the command line:
 | --- | --- | --- | --- |
 | `ArkApiSurfaceEnabled` | `true` | Generates the current surface and compares it with a baseline when one exists. | Normal application builds. |
 | `ArkApiSurfaceEnabled=false` | — | Does not generate or compare snapshots. | A temporary local experiment before a public API exists. Do not use it to accept a released API change. |
-| `EmitCompilerGeneratedFiles=true` | `false` | Emits compiler-generated `.g.cs` files; the package target supplies `$(BaseIntermediateOutputPath)generated` when no path is provided and enables the `ArkApiSurface.current.txt` convenience copy target. | Transiently inspect or bootstrap a snapshot. |
+| `EmitCompilerGeneratedFiles=true` | `false` | Emits compiler-generated `.g.cs` files; the package target supplies `$(IntermediateOutputPath)generated` when no path is provided and enables the `ArkApiSurface.current.txt` convenience copy target. | Transiently inspect or bootstrap a snapshot. |
 | `ArkApiSurface.txt` | absent | The accepted, committed baseline in the application project directory. | The project is ready to track a public surface. |
 | `obj/<Configuration>/<TargetFramework>/ArkApiSurface.current.txt` | generated only when `EmitCompilerGeneratedFiles=true` | The current surface copied during the build. Its path follows the SDK intermediate-output path. | Review and copy this file after accepting a deliberate change. |
 
