@@ -271,15 +271,31 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         {
             type = ComplianceSymbolFacts._unwrapNullable(type);
             var positionalCounterpart = _positionalCounterpart(symbol, context.CancellationToken);
-            var isPositionalProperty = symbol is IPropertySymbol && positionalCounterpart is not null;
-            var knownSafeDotNetType = ComplianceSymbolFacts._isKnownSafeDotNetType(type, facts);
-            var inherited = _inheritedMembers(symbol, context.CancellationToken);
+            // A positional record property is reported through its parameter, and a known safe type never
+            // reports: skip the classification walks whose result could not produce a diagnostic.
+            if ((symbol is IPropertySymbol && positionalCounterpart is not null)
+                || ComplianceSymbolFacts._isKnownSafeDotNetType(type, facts))
+            {
+                return;
+            }
+
+            var nameMatches = lexicon._matches(symbol.Name, context.CancellationToken);
+            var unsupportedShape = type.SpecialType == SpecialType.System_Object
+                || type.TypeKind is TypeKind.Dynamic or TypeKind.Delegate
+                || (type is INamedTypeSymbol && ComplianceSymbolFacts._hasAttribute(type, facts._vogenValueObjectAttribute));
+            if (!nameMatches && !unsupportedShape)
+            {
+                return;
+            }
+
+            IReadOnlyList<ISymbol> inherited = Array.Empty<ISymbol>();
             var classified = isClassified(symbol)
                 || isClassified(type)
                 || isClassified(symbol.ContainingType)
                 || isClassified(positionalCounterpart);
             if (!classified)
             {
+                inherited = _inheritedMembers(symbol, context.CancellationToken);
                 foreach (var candidate in inherited)
                 {
                     context.CancellationToken.ThrowIfCancellationRequested();
@@ -291,8 +307,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 }
             }
 
-            if (!isPositionalProperty && !knownSafeDotNetType && !classified
-                && lexicon._matches(symbol.Name, context.CancellationToken)
+            if (!classified && nameMatches
                 && !ComplianceSymbolFacts._hasAttribute(symbol, facts._notPersonalDataAttribute))
             {
                 var inheritedExclusion = false;
@@ -312,7 +327,7 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
                 }
             }
 
-            if (classified && !isPositionalProperty)
+            if (classified && unsupportedShape)
             {
                 _checkType(context, symbol, type, location, facts);
             }
@@ -369,13 +384,12 @@ public sealed class DeclarationComplianceAnalyzer : DiagnosticAnalyzer
         foreach (var @interface in symbol.ContainingType.AllInterfaces)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            foreach (var candidate in @interface.GetMembers())
+            foreach (var candidate in @interface.GetMembers(symbol.Name))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (candidate.Name == symbol.Name
-                    && SymbolEqualityComparer.Default.Equals(
-                        symbol.ContainingType.FindImplementationForInterfaceMember(candidate),
-                        symbol))
+                if (SymbolEqualityComparer.Default.Equals(
+                    symbol.ContainingType.FindImplementationForInterfaceMember(candidate),
+                    symbol))
                 {
                     members.Add(candidate);
                 }
