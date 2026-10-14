@@ -104,6 +104,7 @@ internal sealed class EnumNames : JsonNamingPolicy
     private readonly FrozenDictionary<string, string> _enumMembers;
     private readonly JsonNamingPolicy? _inner;
     private readonly FrozenSet<string> _exact;
+    private readonly FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> _exactBySpan;
     private readonly FrozenDictionary<string, string> _byIgnoreCase;
 
     public EnumNames(
@@ -123,6 +124,7 @@ internal sealed class EnumNames : JsonNamingPolicy
             .ToList();
 
         _exact = jsonNames.ToFrozenSet(StringComparer.Ordinal);
+        _exactBySpan = _exact.GetAlternateLookup<ReadOnlySpan<char>>();
         _byIgnoreCase = jsonNames
             .DistinctBy(static n => n, StringComparer.OrdinalIgnoreCase)
             .ToFrozenDictionary(static n => n, static n => n, StringComparer.OrdinalIgnoreCase);
@@ -131,6 +133,12 @@ internal sealed class EnumNames : JsonNamingPolicy
     public override string ConvertName(string name)
     {
         return _enumMembers.TryGetValue(name, out var value) ? value : _inner?.ConvertName(name) ?? name;
+    }
+
+    /// <summary>Returns whether <paramref name="value"/> is a name as written, so it needs no re-casing.</summary>
+    public bool IsExact(ReadOnlySpan<char> value)
+    {
+        return _exactBySpan.Contains(value);
     }
 
     /// <summary>Returns <paramref name="value"/> itself when no name needs re-casing, otherwise the canonical form.</summary>
@@ -201,6 +209,14 @@ internal sealed class CaseInsensitiveEnumConverter<TEnum> : JsonConverter<TEnum>
 
     private bool _tryCanonicalize(ref Utf8JsonReader reader, [NotNullWhen(true)] out string? canonical)
     {
+        // Exact names, the common case, are checked without allocating a string.
+        Span<char> buffer = stackalloc char[ShortJsonString.MaxLength];
+        if (ShortJsonString.TryCopy(ref reader, buffer, out var written) && _names.IsExact(buffer[..written]))
+        {
+            canonical = null;
+            return false;
+        }
+
         var value = reader.GetString()!;
         canonical = _names.Canonicalize(value);
         if (ReferenceEquals(canonical, value))

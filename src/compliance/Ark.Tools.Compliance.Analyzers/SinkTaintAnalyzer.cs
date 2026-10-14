@@ -96,19 +96,22 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
 
                 break;
             case IInterpolatedStringOperation interpolation:
-                if (!_isInsideConfiguredSink(interpolation, sinks, context.CancellationToken))
+                if (!_isConcatenationOperand(interpolation)
+                    && !_isInsideConfiguredSink(interpolation, sinks, context.CancellationToken))
                 {
                     _check(context, interpolation, "ARKPII005", today);
                 }
                 break;
             case IBinaryOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String } binary:
-                if (!_isInsideConfiguredSink(binary, sinks, context.CancellationToken))
+                if (!_isConcatenationOperand(binary)
+                    && !_isInsideConfiguredSink(binary, sinks, context.CancellationToken))
                 {
                     _check(context, binary, "ARKPII005", today);
                 }
                 break;
             case IConversionOperation { IsImplicit: true, Type.SpecialType: SpecialType.System_String } conversion:
-                if (!_isInsideConfiguredSink(conversion, sinks, context.CancellationToken))
+                if (!_isConcatenationOperand(conversion)
+                    && !_isInsideConfiguredSink(conversion, sinks, context.CancellationToken))
                 {
                     _check(context, conversion.Operand, "ARKPII005", today);
                 }
@@ -129,8 +132,11 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
 
                 if (assignment is ICompoundAssignmentOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String })
                 {
-                    _check(context, assignment.Value, "ARKPII005", today);
-                    _check(context, assignment.Target, "ARKPII005", today);
+                    // One report per statement: the target is checked only when the appended value is clean.
+                    if (!_check(context, assignment.Value, "ARKPII005", today))
+                    {
+                        _check(context, assignment.Target, "ARKPII005", today);
+                    }
                 }
 
                 break;
@@ -146,7 +152,8 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         var method = invocation.TargetMethod;
         var rule = sinks._getRule(method);
         // Name check first: the data-flow walk is far more expensive and only matters for these two.
-        if (method.Name is "Add" or "set_Item" && _isExceptionData(invocation.Instance, context, 0))
+        if (method.Name is "Add" or "set_Item" && _canHoldDictionary(method.ContainingType)
+            && _isExceptionData(invocation.Instance, context, 0))
         {
             rule = "ARKPII003";
         }
@@ -243,6 +250,13 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             && SinkFlow._isFrameworkType(argument.Parameter.Type);
     }
 
+    /// <summary>The outermost concatenation is checked as a whole, so its parts are not analysed and reported again.</summary>
+    private static bool _isConcatenationOperand(IOperation operation)
+    {
+        return operation.Parent is IBinaryOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String }
+            or ICompoundAssignmentOperation { OperatorKind: BinaryOperatorKind.Add, Type.SpecialType: SpecialType.System_String };
+    }
+
     private static bool _isInsideConfiguredSink(
         IOperation operation,
         SinkConfiguration sinks,
@@ -311,6 +325,13 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
                     return true;
                 }
 
+                // Only an indexer or SyncRoot (the default Exception.Data returns itself) reads through to its
+                // instance; any other property is a different value.
+                if (!property.Property.IsIndexer && property.Property.Name != "SyncRoot")
+                {
+                    return false;
+                }
+
                 operation = property.Instance;
             }
             else if (operation is IConversionOperation conversion)
@@ -319,6 +340,12 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             }
             else if (operation is ILocalReferenceOperation local)
             {
+                // The method-body walk is expensive: skip locals that cannot hold the IDictionary.
+                if (!_canHoldDictionary(local.Local.Type))
+                {
+                    return false;
+                }
+
                 visited ??= new HashSet<ILocalSymbol>(SymbolEqualityComparer.Default);
                 if (!visited.Add(local.Local))
                 {
@@ -346,7 +373,14 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
-    private static void _check(OperationAnalysisContext context, IOperation value, string rule, DateTime today)
+    private static bool _canHoldDictionary(ITypeSymbol type)
+    {
+        return type.SpecialType == SpecialType.System_Object
+            || type.TypeKind is TypeKind.Dynamic or TypeKind.TypeParameter
+            || (type is INamedTypeSymbol named && SinkConfiguration._implements(named, "System.Collections.IDictionary"));
+    }
+
+    private static bool _check(OperationAnalysisContext context, IOperation value, string rule, DateTime today)
     {
         var options = context.Options.AnalyzerConfigOptionsProvider.GetOptions(value.Syntax.SyntaxTree);
         var source = new SinkFlow(options, context.CancellationToken)._find(value);
@@ -354,11 +388,12 @@ public sealed class SinkTaintAnalyzer : DiagnosticAnalyzer
             || _reviewed(context.ContainingSymbol, rule, today, context.CancellationToken)
             || _reviewed(source._symbol, rule, today, context.CancellationToken))
         {
-            return;
+            return false;
         }
 
         context.ReportDiagnostic(Diagnostic.Create(_getDescriptor(rule), value.Syntax.GetLocation(),
             source._symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), source._classification));
+        return true;
     }
 
     private static DiagnosticDescriptor _getDescriptor(string rule)
