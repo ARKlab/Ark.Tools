@@ -73,6 +73,12 @@ The generated `CompliancePolicies.sql` is identical to the old output.
   saves 10-14 seconds of restore but spends as much or more downloading the cache.
 - `dotnet pack --no-build` in CI saves about 25 seconds, but `GenerateSbom`
   failed intermittently without the build step. Not worth the flakiness.
+  Later finding: the failures were measured on a machine limited to 128 inotify
+  instances per user. `GenerateSbom` (Microsoft.Sbom.Targets 4.1.13) builds a
+  .NET host per package and its configuration reload leaks one inotify instance
+  in the MSBuild node, so a pack of about 100 packages ran out. GitHub's Ubuntu
+  runners allow 1280, and CI now sets `DOTNET_hostBuilder__reloadConfigOnChange=false`
+  on the pack step, so the no-build pack was adopted.
 - `ILLink.RoslynAnalyzer` is the largest analyzer by CPU time (about 30% of
   analyzer time in a cold build). It enforces the trimming/AOT annotations, so
   it stays enabled.

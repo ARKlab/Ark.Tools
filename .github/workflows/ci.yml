@@ -94,7 +94,11 @@ jobs:
       run: dotnet build --no-restore --configuration Debug
 
     # Packs the src/ projects from the build above; packing the whole solution would build it again.
+    # GenerateSbom builds a .NET host per package whose config reload leaks an inotify instance in the
+    # long-lived MSBuild nodes; turning reload off keeps the pack clear of fs.inotify.max_user_instances.
     - name: 'Pack projects (package validation and SBOM)'
+      env:
+        DOTNET_hostBuilder__reloadConfigOnChange: 'false'
       run: |
         grep -o '<Project Path="src/[^"]*"' Ark.Tools.slnx | cut -d'"' -f2 \
           | jq -R . | jq -s --arg sln "$PWD/Ark.Tools.slnx" '{solution: {path: $sln, projects: .}}' > "$RUNNER_TEMP/ark-tools-packages.slnf"
