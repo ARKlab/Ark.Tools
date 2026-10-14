@@ -154,6 +154,8 @@ public sealed class WebRebusStartup
             options.SerializerOptions.TypeInfoResolver = System.Text.Json.Serialization.Metadata.JsonTypeInfoResolver.Combine(
                 SampleApiJsonSerializerContext.Default,
                 ApplicationJsonSerializerContext.Default,
+                // Only framework shapes, such as the IFormFile that OpenAPI describes, reach the reflection fallback:
+                // the contexts cover every contract (see HttpContractsResolveFromSourceGeneratedMetadata).
                 new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver());
         });
 

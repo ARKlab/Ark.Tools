@@ -22,7 +22,8 @@ design is in
   leak into the public API.
 - The same handler pipeline applies validation, authorization, auditing, and
   optimistic-concurrency retry regardless of the caller.
-- JSON uses source-generated metadata and Ark.Tools defaults. The
+- JSON uses source-generated metadata for every HTTP contract, checked by a
+  test, and Ark.Tools defaults. The
   `JsonSerializerContext` classes live in the Application project, outside the
   contracts assembly, so they see the converters Vogen generates.
 - Domain values are value objects rather than primitives: Vogen types such as
