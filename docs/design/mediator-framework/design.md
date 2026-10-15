@@ -662,7 +662,8 @@ Recurring Minimal API hosting concerns are **library features**
   endpoint that **content-negotiates** between `application/json` and
   `application/x-msgpack` on both the request `Content-Type` and the `Accept`
   header. When MessagePack is enabled, an `IFormatterResolver` **must** be
-  registered in DI and configured explicitly — there is **no** built-in
+  registered with `AddArkMessagePack`, which builds the serializer options once
+  as a DI singleton, and configured explicitly — there is **no** built-in
   fallback resolver; generated endpoint mapping validates every enabled contract
   at startup and aggregates missing formatter failures. Request deserialization
   uses `MessagePackSecurity.UntrustedData`; response serialization keeps the

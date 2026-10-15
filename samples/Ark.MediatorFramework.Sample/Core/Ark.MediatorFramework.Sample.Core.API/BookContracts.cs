@@ -67,6 +67,9 @@ public static class Book
             /// <summary>Gets the generated book description.</summary>
             public BookDescription Description { get; init; }
 
+            /// <summary>Gets the identifier of the audit of the operation that last wrote the book.</summary>
+            public AuditId AuditId { get; init; }
+
             /// <summary>Gets the opaque concurrency token.</summary>
             [ETag]
             public string? ETag { get; init; }

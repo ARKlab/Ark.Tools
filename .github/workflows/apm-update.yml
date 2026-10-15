@@ -1,0 +1,55 @@
+name: "APM lock maintenance"
+
+# Replaces Renovate lock file maintenance for apm.lock.yaml: Renovate deletes the
+# lockfile before `apm install`, so apm skips the committed generated files.
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: 'Refresh apm.lock.yaml'
+    runs-on: 'ubuntu-26.04'
+    env:
+      BRANCH: 'chore/apm-lock-maintenance'
+      GITHUB_APM_PAT: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v7
+      with:
+        # The PR targets master, so a manual run from another branch must not carry its commits
+        ref: master
+
+    - name: 'Install APM'
+      uses: microsoft/apm-action@v1
+      with:
+        setup-only: true
+        apm-version: 0.33.0
+
+    - name: 'Update dependencies and generated files'
+      run: apm update --yes
+
+    - name: 'Verify committed Copilot and Claude agents match the lockfile'
+      run: apm audit --ci
+
+    - name: 'Open pull request'
+      run: |
+        if [ -z "$(git status --porcelain)" ]; then
+          echo 'No changes'
+          exit 0
+        fi
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        git switch -C "$BRANCH"
+        git add -A
+        git commit -m 'chore(deps): apm lock file maintenance'
+        git push --force origin "$BRANCH"
+        if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[]')" ]; then
+          gh pr create --base master --head "$BRANCH" --title 'chore(deps): apm lock file maintenance' --body 'Runs `apm update --yes` and `apm audit --ci` with apm 0.33.0.'
+        fi

@@ -34,9 +34,9 @@
       },
       "ReferenceTrimmer": {
         "type": "Direct",
-        "requested": "[3.5.9, )",
-        "resolved": "3.5.9",
-        "contentHash": "yxiTijEk4Su7Ama9Dny8HNC0tpFg7+8y5F8E2FnNuzc0+OzwAwrSxeFSRcBkW1BtC4SEiohsKFtYRH+a2QpJdQ=="
+        "requested": "[3.5.13, )",
+        "resolved": "3.5.13",
+        "contentHash": "uLH5tr4EHR405vHe5Y33qBNvp4uBB8S3DdN5TUg0QFAKQM4NHBF7PhMUXh9xGBzJlAnRDXLtVEHcMhvGVWtFJg=="
       },
       "Asp.Versioning.Abstractions": {
         "type": "Transitive",
@@ -150,11 +150,6 @@
         "type": "Transitive",
         "resolved": "10.0.2",
         "contentHash": "LG9Yll3B5aNpxv0+D47g6LiOiKBIlodhcHdQwcYzo8VeexFLGqx5ymetmA2aBRyo9cCcWsQWrFsdbsr8LvmWDw=="
-      },
-      "Microsoft.Build.Framework": {
-        "type": "Transitive",
-        "resolved": "18.0.2",
-        "contentHash": "sOSb+0J4G/jCBW/YqmRuL0eOMXgfw1KQLdC9TkbvfA5xs7uNm+PBQXJCOzSJGXtZcZrtXozcwxPmUiRUbmd7FA=="
       },
       "Microsoft.CodeAnalysis.Analyzers": {
         "type": "Transitive",
@@ -955,6 +950,12 @@
         "dependencies": {
           "Microsoft.OpenApi": "[2.12.2, 3.0.0)"
         }
+      },
+      "Microsoft.Build.Framework": {
+        "type": "CentralTransitive",
+        "requested": "[18.0.2, )",
+        "resolved": "18.0.2",
+        "contentHash": "sOSb+0J4G/jCBW/YqmRuL0eOMXgfw1KQLdC9TkbvfA5xs7uNm+PBQXJCOzSJGXtZcZrtXozcwxPmUiRUbmd7FA=="
       },
       "Microsoft.CodeAnalysis.CSharp": {
         "type": "CentralTransitive",

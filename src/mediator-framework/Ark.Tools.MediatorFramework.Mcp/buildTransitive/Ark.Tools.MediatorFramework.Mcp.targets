@@ -1,0 +1,45 @@
+<Project>
+  <!--
+  The MCP generator reads contract XML documentation only from AdditionalFiles. This target passes the
+  XML documentation of referenced projects, and opt-in of referenced NuGet packages, so contracts declared
+  in another assembly keep their tool descriptions. Set ArkMcpIncludeReferencedXmlDocs=false to opt out.
+  The files are copied to the intermediate output as <AssemblyName>.arkmcpdoc because other generators, such as
+  the ASP.NET Core OpenAPI XML comment generator, read every .xml AdditionalFile and fail on member ids that
+  several referenced files document, such as the internal Polyfill types each project compiles.
+  -->
+  <PropertyGroup>
+    <ArkMcpIncludeReferencedXmlDocs Condition="'$(ArkMcpIncludeReferencedXmlDocs)' == ''">true</ArkMcpIncludeReferencedXmlDocs>
+    <ArkMcpIncludePackageXmlDocs Condition="'$(ArkMcpIncludePackageXmlDocs)' == ''">false</ArkMcpIncludePackageXmlDocs>
+  </PropertyGroup>
+
+  <Target Name="_ArkMcpCollectReferencedXmlDocumentation"
+          DependsOnTargets="ResolveAssemblyReferences"
+          Condition="'$(ArkMcpIncludeReferencedXmlDocs)' == 'true' And '@(Analyzer->AnyHaveMetadataValue('Filename', 'Ark.Tools.MediatorFramework.Mcp.Generators'))' == 'true'">
+    <ItemGroup>
+      <_ArkMcpXmlDocumentation Include="@(ReferencePath->'%(RootDir)%(Directory)%(Filename).xml')"
+                               Condition="'%(ReferencePath.ReferenceSourceTarget)' == 'ProjectReference'" />
+      <_ArkMcpXmlDocumentation Include="@(ReferencePath->'%(RootDir)%(Directory)%(Filename).xml')"
+                               Condition="'$(ArkMcpIncludePackageXmlDocs)' == 'true' And '%(ReferencePath.NuGetPackageId)' != '' And '%(ReferencePath.FrameworkReferenceName)' == ''" />
+      <_ArkMcpXmlDocumentation Remove="@(_ArkMcpXmlDocumentation)" Condition="!Exists('%(FullPath)')" />
+      <_ArkMcpXmlDocumentation Remove="@(AdditionalFiles->'%(FullPath)');@(DocFileItem->'%(FullPath)')" />
+      <_ArkMcpDocumentation Include="@(_ArkMcpXmlDocumentation->Distinct())"
+                            Destination="$(IntermediateOutputPath)ArkMcp/%(_ArkMcpXmlDocumentation.Filename).arkmcpdoc" />
+      <_ArkMcpXmlDocumentation Remove="@(_ArkMcpXmlDocumentation)" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+  Copies when size or timestamp differ, not only when the source is newer, so a reference that moves to an older file
+  with the same name, such as a downgraded package, refreshes the copy. Unchanged copies keep their timestamp, so
+  CoreCompile stays incremental.
+  -->
+  <Target Name="ArkMcpAddReferencedXmlDocumentation"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="_ArkMcpCollectReferencedXmlDocumentation">
+    <Copy SourceFiles="@(_ArkMcpDocumentation)" DestinationFiles="@(_ArkMcpDocumentation->'%(Destination)')" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <AdditionalFiles Include="@(_ArkMcpDocumentation->'%(Destination)')" />
+      <FileWrites Include="@(_ArkMcpDocumentation->'%(Destination)')" />
+    </ItemGroup>
+  </Target>
+</Project>

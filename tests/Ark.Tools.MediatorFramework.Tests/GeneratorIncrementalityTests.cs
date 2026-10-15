@@ -382,6 +382,8 @@ public sealed class GeneratorIncrementalityTests
 
         _getStepReasons(driver, "GrpcReferencedProtoContracts").Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
+        _getStepReasons(driver, "GrpcReferencedEndpoints").Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
         _describeOutput(driver).Should().Be(original);
     }
 
@@ -431,6 +433,56 @@ public sealed class GeneratorIncrementalityTests
             cachedSteps: ["RebusReferencedEndpoints", "RebusReferencedNetworks", "RebusReferencedLegacyEndpoints"],
             unchangedSteps: ["RebusMappingParser", "RebusEndpointParser", "RebusHostParser", "RebusHostModel"],
             expectedOutput: ["typeBased.Map<global::RebusContracts.ReferencedCommand>(\"referenced\")", "sealed partial class OrdersRebusHost", "Map<global::RebusContracts.ProcessOrder>(\"orders\")"]);
+    }
+
+    [TestMethod]
+    public void RebusGeneratorDoesNotRescanReferencesOnDuplicateMapping()
+    {
+        var contracts = _createReference(
+            "RebusDuplicateContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            namespace RebusDuplicateContracts;
+            public sealed class Marker { }
+            [RebusMessage(OwnerQueue = "referenced")]
+            public sealed class ReferencedCommand : ICommand { }
+            """);
+        const string mapping = "RegisterArkRebusHandlersFromAssembly<RebusDuplicateContracts.Marker>();";
+        static string Host(string body) => $$"""
+            public static class Startup
+            {
+                public static void Configure()
+                {
+                    {{body}}
+                }
+                private static void RegisterArkRebusHandlersFromAssembly<T>() { }
+            }
+            """;
+        var tree = CSharpSyntaxTree.ParseText(Host(mapping), path: "Startup.cs");
+        var compilation = CSharpCompilation.Create(
+            "Incrementality",
+            [tree],
+            _getReferences().Append(contracts),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ArkRebusEndpointGenerator().AsSourceGenerator()],
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        driver = driver.RunGenerators(compilation);
+        var original = _describeOutput(driver);
+        original.Should().Contain("global::RebusDuplicateContracts.ReferencedCommand");
+
+        // A second mapping of the same assembly selects nothing new, so the scan must not run again.
+        compilation = compilation.ReplaceSyntaxTree(
+            tree,
+            CSharpSyntaxTree.ParseText(Host(mapping + "\n" + mapping), path: "Startup.cs"));
+        driver = driver.RunGenerators(compilation);
+
+        _getStepReasons(driver, "RebusReferencedEndpoints").Should().NotBeEmpty()
+            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
+        _describeOutput(driver).Should().Be(original);
     }
 
     [TestMethod]
@@ -492,7 +544,7 @@ public sealed class GeneratorIncrementalityTests
             source,
             source.Replace("Creates an order.", "Creates a new order.", StringComparison.Ordinal),
             [contracts],
-            cachedSteps: ["McpReferencedContracts", "McpReferencedDocumentation"],
+            cachedSteps: ["McpReferencedContracts"],
             unchangedSteps: ["McpMarkerParser", "McpContractParser", "McpDocumentationParser", "McpModel"],
             expectedOutput: ["Description(\"Lists orders.\")", "Description(\"Creates an order.\")", "global::McpContracts.ListOrders(", "global::CreateOrder("],
             additionalTexts: [documentation]);
@@ -547,8 +599,6 @@ public sealed class GeneratorIncrementalityTests
         _describeOutput(driver).Should().Be(original);
         _getStepReasons(driver, "McpDocumentationParser").Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
-        _getStepReasons(driver, "McpReferencedDocumentation").Should().NotBeEmpty()
-            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
         _getOutputReasons(driver).Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
     }
@@ -602,8 +652,6 @@ public sealed class GeneratorIncrementalityTests
         _describeOutput(driver).Should().Be(original);
         _getStepReasons(driver, "McpDocumentationParser").Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Unchanged);
-        _getStepReasons(driver, "McpReferencedDocumentation").Should().NotBeEmpty()
-            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
         _getOutputReasons(driver).Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
     }

@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Compliance
-- **Diagnostic message:** `Classified member '{0}' is absent from the baseline or its classification has been weakened. Review this privacy change before updating ArkComplianceSurface.txt`
+- **Diagnostic message:** `Classified member '{0}' is absent from the baseline or its classification has been weakened. Review this privacy change before updating ArkComplianceSurface.txt.`
 
 ## What it checks
 

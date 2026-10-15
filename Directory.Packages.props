@@ -86,7 +86,7 @@
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.19.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.20.0" />
     <PackageVersion Include="OpenTelemetry.Resources.Azure" Version="1.19.1-beta.2" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.10.0" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.Profiler" Version="1.0.1-beta.7" />
@@ -159,6 +159,7 @@
     <PackageVersion Include="RavenDB.Client" Version="7.2.6" />
     <PackageVersion Include="Microsoft.Extensions.DiagnosticAdapter" Version="3.1.32" />
     <!-- BUILD TOOLS -->
+    <PackageVersion Include="Microsoft.Build.Framework" Version="18.0.2" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="5.0.0" />

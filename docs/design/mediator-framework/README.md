@@ -26,6 +26,7 @@ lives in [`docs/plans/mediator-framework/`](../../plans/mediator-framework/READM
 | [`aot-di-comparison.md`](aot-di-comparison.md) | Verified comparison of Native AOT composition with open-generic decorators: Microsoft DI helpers and generators, Scrutor, Pure.DI. |
 | [`native-aot-investigation.md`](native-aot-investigation.md) | Native AOT prototype: what runs end to end, the Ark.Tools and Azure Functions gaps, and recommendations. |
 | [`value-object-libraries.md`](value-object-libraries.md) | Vogen vs Meziantou.Framework.StronglyTypedId for value objects across JSON, binding, gRPC, FluentValidation, Dapper and OpenAPI. |
+| [`generator-shared-contract-model.md`](generator-shared-contract-model.md) | Decision to share contract parsing between the generators as linked source, and the steps to get there. |
 | [`research.md`](research.md) | Evaluation of open-source alternatives, comparison with gRPC JSON transcoding, capability/library mapping. |
 | [`migration-from-mvc.md`](../../mediator-framework/migration-from-mvc.md) | Incremental migration guidance, including the MVC compatibility escape hatch. |
 

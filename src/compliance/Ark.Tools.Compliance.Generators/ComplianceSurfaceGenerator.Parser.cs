@@ -22,13 +22,18 @@ public sealed partial class ComplianceSurfaceGenerator
     // members: classify each named type once, without keeping its compilation alive.
     private static readonly ConditionalWeakTable<INamedTypeSymbol, string[]> _valueTypeClassifications = new();
 
-    private static TypeSpec? _parseType(SemanticModel model, SyntaxNode node, CancellationToken token)
+    private static TypeSpec? _parseType(
+        SemanticModel model,
+        SyntaxNode node,
+        ImmutableEquatableArray<string> baselineTypes,
+        CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
         if (model.GetDeclaredSymbol(node, token) is not INamedTypeSymbol type)
             return null;
 
         string? typeName = null;
+        var inBaseline = false;
         SortedSet<string>? typeClassifications = null;
         var members = new List<MemberSpec>();
         // Parameters of one method come in a row: format the method signature once for all of them.
@@ -39,9 +44,10 @@ public sealed partial class ComplianceSurfaceGenerator
             token.ThrowIfCancellationRequested();
             // The type-level facts are hoisted out of the member loop: computing them per member
             // dominated generator time on large compilations.
-            typeName ??= _name(type);
             if (typeClassifications is null)
             {
+                typeName = _name(type);
+                inBaseline = baselineTypes.Items.BinarySearch(typeName, StringComparer.Ordinal) >= 0;
                 typeClassifications = new SortedSet<string>(StringComparer.Ordinal);
                 _classifications(type, typeClassifications);
             }
@@ -52,7 +58,9 @@ public sealed partial class ComplianceSurfaceGenerator
                 methodName = containing.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
             }
 
-            members.Add(_parseMember(member, type, typeName, typeClassifications, methodName, token));
+            var spec = _parseMember(member, type, typeName!, inBaseline, typeClassifications, methodName, token);
+            if (spec is not null)
+                members.Add(spec);
         }
 
         return members.Count == 0
@@ -92,10 +100,11 @@ public sealed partial class ComplianceSurfaceGenerator
         };
     }
 
-    private static MemberSpec _parseMember(
+    private static MemberSpec? _parseMember(
         ISymbol member,
         INamedTypeSymbol type,
         string typeName,
+        bool inBaseline,
         SortedSet<string> typeClassifications,
         string? methodName,
         CancellationToken token)
@@ -118,6 +127,10 @@ public sealed partial class ComplianceSurfaceGenerator
         }
 
         classifications?.Remove("Ark:InfrastructureSecret");
+        // Outside baseline types an unclassified member cannot be a weakened baseline entry.
+        if (!inBaseline && (classifications is null || classifications.Count == 0))
+            return null;
+
         var name = _memberName(member, methodName);
         var key = typeName + "\t" + name;
         if (classifications is null || classifications.Count == 0)

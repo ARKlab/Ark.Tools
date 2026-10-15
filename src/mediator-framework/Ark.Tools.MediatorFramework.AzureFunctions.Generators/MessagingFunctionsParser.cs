@@ -89,19 +89,8 @@ internal readonly record struct MessagingHostSpec(
 /// <summary>Parses Azure Functions messaging hosts into symbol-free specifications.</summary>
 internal static class MessagingFunctionsParser
 {
-    private const string _participantAttribute =
-        "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
     private const string _hostAttribute =
         "Ark.Tools.MediatorFramework.AzureFunctions.MessagingFunctionsHostAttribute";
-    /// <summary>The messaging network attribute metadata name.</summary>
-    internal const string _networkAttribute =
-        "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
-    private const string _messageAttribute =
-        "Ark.Tools.MediatorFramework.MessageAttribute";
-    private const string _eventAttribute =
-        "Ark.Tools.MediatorFramework.EventAttribute";
-    private const string _apiGroupAttribute =
-        "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const int _serviceBusBinding = 0;
     private const int _storageQueueBinding = 1;
 
@@ -144,7 +133,7 @@ internal static class MessagingFunctionsParser
         EquatableArray<string> assemblyNames,
         CancellationToken cancellationToken)
     {
-        var networkAttribute = compilation.GetTypeByMetadataName(_networkAttribute);
+        var networkAttribute = compilation.GetTypeByMetadataName(ContractSymbols.MessagingNetworkAttribute);
         if (networkAttribute is null || assemblyNames.IsEmpty)
             return EquatableArray<MessagingNetworkReference>.Empty;
 
@@ -175,7 +164,7 @@ internal static class MessagingFunctionsParser
         CancellationToken cancellationToken)
     {
         var hostAttribute = compilation.GetTypeByMetadataName(_hostAttribute);
-        var networkAttribute = compilation.GetTypeByMetadataName(_networkAttribute);
+        var networkAttribute = compilation.GetTypeByMetadataName(ContractSymbols.MessagingNetworkAttribute);
         var hosts = ImmutableArray.CreateBuilder<MessagingHostSpec>();
         foreach (var attribute in compilation.Assembly.GetAttributes())
         {
@@ -204,7 +193,7 @@ internal static class MessagingFunctionsParser
         return new MessagingNetworkReference(
             network.ContainingAssembly?.Name ?? string.Empty,
             _metadataName(network),
-            _types(attribute, "Members").Select(_metadataName).ToImmutableArray());
+            ContractSymbols.NamedTypes(attribute, "Members").Select(_metadataName).ToImmutableArray());
     }
 
     private static string _metadataName(INamedTypeSymbol type)
@@ -236,11 +225,11 @@ internal static class MessagingFunctionsParser
             binding,
             string.Empty,
             string.Empty,
-            _string(attribute, "ManagedIdentityConfigurationKey"),
+            ContractSymbols.NamedString(attribute, "ManagedIdentityConfigurationKey"),
             null,
-            _typeNames(_types(attribute, "IncomingSteps")),
-            _typeNames(_types(attribute, "OutgoingSteps")),
-            _bool(attribute, "StrictStorageQueueHostSettings"),
+            _typeNames(ContractSymbols.NamedTypes(attribute, "IncomingSteps")),
+            _typeNames(ContractSymbols.NamedTypes(attribute, "OutgoingSteps")),
+            ContractSymbols.NamedBool(attribute, "StrictStorageQueueHostSettings"),
             EquatableArray<MessagingSubscriptionSpec>.Empty,
             EquatableArray<MessagingTopicSpec>.Empty,
             EquatableArray<MessagingTopicSpec>.Empty,
@@ -255,7 +244,7 @@ internal static class MessagingFunctionsParser
             false);
 
         var participantAttribute = participant.GetAttributes().FirstOrDefault(static candidate =>
-            candidate.AttributeClass._isFullName(_participantAttribute));
+            candidate.AttributeClass._isFullName(ContractSymbols.MessagingParticipantAttribute));
         if (participantAttribute is null)
         {
             diagnostics.Add(_diagnostic(MessagingFunctionsDiagnostics._invalidParticipant, location, participantDisplayName));
@@ -283,9 +272,9 @@ internal static class MessagingFunctionsParser
         }
 
         var (networkType, networkAttribute) = networks[0];
-        var identity = _string(participantAttribute, "Identity") ?? _identity(participant);
-        var processes = _types(participantAttribute, "Processes");
-        var subscribes = _types(participantAttribute, "Subscribes");
+        var identity = ContractSymbols.NamedString(participantAttribute, "Identity") ?? _identity(participant);
+        var processes = ContractSymbols.NamedTypes(participantAttribute, "Processes");
+        var subscribes = ContractSymbols.NamedTypes(participantAttribute, "Subscribes");
         foreach (var contract in processes)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -294,25 +283,25 @@ internal static class MessagingFunctionsParser
                     diagnostics.Add(_diagnostic(descriptor, LocationSpec._from(contractLocation), arguments)),
                 contract,
                 participant,
-                _int(participantAttribute, "DefaultSerializer"));
+                ContractSymbols.NamedInt(participantAttribute, "DefaultSerializer"));
         }
-        foreach (var member in _types(networkAttribute, "Members"))
+        foreach (var member in ContractSymbols.NamedTypes(networkAttribute, "Members"))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var memberAttribute = member.GetAttributes().FirstOrDefault(static candidate =>
-                candidate.AttributeClass._isFullName(_participantAttribute));
+                candidate.AttributeClass._isFullName(ContractSymbols.MessagingParticipantAttribute));
             if (memberAttribute is null)
                 continue;
-            foreach (var contract in _types(memberAttribute, "Publishes"))
+            foreach (var contract in ContractSymbols.NamedTypes(memberAttribute, "Publishes"))
                 MessagingContractTopologyValidator._validate(
                     (descriptor, contractLocation, arguments) =>
                         diagnostics.Add(_diagnostic(descriptor, LocationSpec._from(contractLocation), arguments)),
                     contract,
                     member,
-                    _int(memberAttribute, "DefaultSerializer"));
+                    ContractSymbols.NamedInt(memberAttribute, "DefaultSerializer"));
         }
 
-        var retryType = _type(participantAttribute, "Retry");
+        var retryType = ContractSymbols.NamedType(participantAttribute, "Retry");
         var hasConsumers = !processes.IsDefaultOrEmpty || !subscribes.IsDefaultOrEmpty;
         var validateHostJson = false;
         if (binding == _storageQueueBinding && hasConsumers)
@@ -329,12 +318,12 @@ internal static class MessagingFunctionsParser
             validateHostJson = true;
         }
 
-        var lifecycle = _int(networkAttribute, "ResourceLifecycle");
+        var lifecycle = ContractSymbols.NamedInt(networkAttribute, "ResourceLifecycle");
         spec = spec with
         {
             NetworkTypeName = networkType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             Identity = identity,
-            Connection = _string(attribute, "ConnectionConfigurationKey") ?? networkType.Name,
+            Connection = ContractSymbols.NamedString(attribute, "ConnectionConfigurationKey") ?? networkType.Name,
             RetryTypeName = retryType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             HasIdentityQueue = hasConsumers,
             SenderOnly = !hasConsumers,
@@ -408,7 +397,7 @@ internal static class MessagingFunctionsParser
                 SymbolEqualityComparer.Default.Equals(declaration.AttributeClass, networkAttribute));
             if (attribute is null)
                 continue;
-            if (!_types(attribute, "Members").Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
+            if (!ContractSymbols.NamedTypes(attribute, "Members").Any(member => SymbolEqualityComparer.Default.Equals(member, participant)))
                 continue;
 
             networks.Add((type, attribute));
@@ -431,9 +420,9 @@ internal static class MessagingFunctionsParser
         ImmutableArray<INamedTypeSymbol> subscribedEvents,
         CancellationToken cancellationToken)
     {
-        var members = _types(networkAttribute, "Members")
+        var members = ContractSymbols.NamedTypes(networkAttribute, "Members")
             .Select(static member => (Type: member, Attribute: member.GetAttributes().FirstOrDefault(static attribute =>
-                attribute.AttributeClass._isFullName(_participantAttribute))))
+                attribute.AttributeClass._isFullName(ContractSymbols.MessagingParticipantAttribute))))
             .Where(static item => item.Attribute is not null)
             .ToArray();
         var subscriptions = ImmutableArray.CreateBuilder<MessagingSubscriptionSpec>();
@@ -443,7 +432,7 @@ internal static class MessagingFunctionsParser
         {
             cancellationToken.ThrowIfCancellationRequested();
             var publishers = members.Where(item =>
-                    _types(item.Attribute, "Publishes").Any(contract =>
+                    ContractSymbols.NamedTypes(item.Attribute, "Publishes").Any(contract =>
                         SymbolEqualityComparer.Default.Equals(contract, subscribedEvent)))
                 .ToArray();
             if (publishers.Length != 1)
@@ -456,8 +445,8 @@ internal static class MessagingFunctionsParser
                 return null;
             }
 
-            var supportedProtocols = _ints(participantAttribute, "Serializers");
-            var publisherProtocol = _int(publishers[0].Attribute!, "DefaultSerializer");
+            var supportedProtocols = ContractSymbols.NamedInts(participantAttribute, "Serializers");
+            var publisherProtocol = ContractSymbols.NamedInt(publishers[0].Attribute!, "DefaultSerializer");
             if (!supportedProtocols.Contains(publisherProtocol))
             {
                 diagnostics.Add(_diagnostic(
@@ -470,12 +459,12 @@ internal static class MessagingFunctionsParser
                         2 => "Protobuf",
                         _ => "Json",
                     },
-                    _string(publishers[0].Attribute, "Identity") ?? publishers[0].Type.ToDisplayString(),
+                    ContractSymbols.NamedString(publishers[0].Attribute, "Identity") ?? publishers[0].Type.ToDisplayString(),
                     subscribedEvent.ToDisplayString()));
                 return null;
             }
 
-            var publisherIdentity = _string(publishers[0].Attribute, "Identity") ?? _identity(publishers[0].Type);
+            var publisherIdentity = ContractSymbols.NamedString(publishers[0].Attribute, "Identity") ?? _identity(publishers[0].Type);
             var topic = publisherIdentity + "-" + _contractName(subscribedEvent);
             subscriptions.Add(new MessagingSubscriptionSpec(topic, participantIdentity, participantIdentity));
         }
@@ -488,15 +477,15 @@ internal static class MessagingFunctionsParser
         CancellationToken cancellationToken)
     {
         var topics = ImmutableArray.CreateBuilder<MessagingTopicSpec>();
-        foreach (var member in _types(networkAttribute, "Members"))
+        foreach (var member in ContractSymbols.NamedTypes(networkAttribute, "Members"))
         {
             cancellationToken.ThrowIfCancellationRequested();
             var participant = member.GetAttributes().FirstOrDefault(static attribute =>
-                attribute.AttributeClass._isFullName(_participantAttribute));
+                attribute.AttributeClass._isFullName(ContractSymbols.MessagingParticipantAttribute));
             if (participant is null)
                 continue;
-            var ownerIdentity = _string(participant, "Identity") ?? _identity(member);
-            foreach (var contract in _types(participant, "Publishes"))
+            var ownerIdentity = ContractSymbols.NamedString(participant, "Identity") ?? _identity(member);
+            foreach (var contract in ContractSymbols.NamedTypes(participant, "Publishes"))
             {
                 topics.Add(new MessagingTopicSpec(
                     contract.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -565,11 +554,11 @@ internal static class MessagingFunctionsParser
     private static string _contractName(INamedTypeSymbol contract)
     {
         var attribute = contract.GetAttributes().FirstOrDefault(static candidate =>
-            (candidate.AttributeClass._isFullName(_messageAttribute) || candidate.AttributeClass._isFullName(_eventAttribute)));
-        if (_string(attribute, "Name") is { } explicitName)
+            (candidate.AttributeClass._isFullName(ContractSymbols.MessageAttribute) || candidate.AttributeClass._isFullName(ContractSymbols.EventAttribute)));
+        if (ContractSymbols.NamedString(attribute, "Name") is { } explicitName)
             return explicitName;
         var group = contract.GetAttributes()
-            .FirstOrDefault(static candidate => candidate.AttributeClass._isFullName(_apiGroupAttribute))
+            .FirstOrDefault(static candidate => candidate.AttributeClass._isFullName(ContractSymbols.ApiGroupAttribute))
             ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
         return _normalizeLogical(group) + "." + _normalizeLogical(contract.Name);
     }
@@ -616,57 +605,5 @@ internal static class MessagingFunctionsParser
             foreach (var descendant in _nestedTypes(nested, cancellationToken))
                 yield return descendant;
         }
-    }
-
-    private static ImmutableArray<INamedTypeSymbol> _types(AttributeData? attribute, string name)
-    {
-        if (attribute is null)
-            return ImmutableArray<INamedTypeSymbol>.Empty;
-        var value = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value;
-        return value.Kind == TypedConstantKind.Array
-            ? value.Values
-                .Where(static item => item.Value is INamedTypeSymbol)
-                .Select(static item => (INamedTypeSymbol)item.Value!)
-                .ToImmutableArray()
-            : ImmutableArray<INamedTypeSymbol>.Empty;
-    }
-
-    private static INamedTypeSymbol? _type(AttributeData attribute, string name)
-    {
-        return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
-            as INamedTypeSymbol;
-    }
-
-    private static bool _bool(AttributeData attribute, string name)
-    {
-        return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
-            is true;
-    }
-
-    private static int _int(AttributeData attribute, string name)
-    {
-        return attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
-            is int value
-            ? value
-            : 0;
-    }
-
-    private static ImmutableArray<int> _ints(AttributeData? attribute, string name)
-    {
-        if (attribute is null)
-            return ImmutableArray<int>.Empty;
-        var value = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value;
-        return value.Kind == TypedConstantKind.Array
-            ? value.Values
-                .Where(static item => item.Value is int)
-                .Select(static item => (int)item.Value!)
-                .ToImmutableArray()
-            : ImmutableArray<int>.Empty;
-    }
-
-    private static string? _string(AttributeData? attribute, string name)
-    {
-        return attribute?.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value
-            as string;
     }
 }
