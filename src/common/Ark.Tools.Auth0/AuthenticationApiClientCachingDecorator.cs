@@ -253,7 +253,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(ResourceOwnerTokenRequest r)
     {
-        return $"ResourceOwnerTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Username)}{_hashKey(r.Realm)}{_hashKey(r.Audience)}{_hashKey(r.Scope)}";
+        return $"ResourceOwnerTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Username)}{_hashKey(r.Password)}{_hashKey(r.Realm)}{_hashKey(r.Audience)}{_hashKey(r.Scope)}";
     }
 
     public async Task<UserInfo> GetUserInfoAsync(
