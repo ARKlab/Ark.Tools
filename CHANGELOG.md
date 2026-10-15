@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.MediatorFramework.Mcp`: MCP attachment uploads larger than the size limit are rejected before the base64 is decoded, and attachment downloads read seekable streams into an exact-size buffer, so large attachments use about half the memory.
 - `Ark.Tools.Http`: `BufferedJsonMediaTypeFormatter` no longer copies an already-buffered response body into a second buffer, halving memory for large JSON responses, and the MessagePack Flurl helpers reuse one serializer options and formatter per resolver instead of creating them on each call.
 - `Ark.Tools.MediatorFramework.Messaging.Azure`: the Azure Blob DataBus reads a payload attachment with a single request instead of two, so large messages start processing sooner.
+- **Breaking:** `Ark.Tools.MediatorFramework.Mcp`: MCP tool descriptions now come only from XML documentation passed to the compiler; the MCP generator no longer reads documentation files from disk. The MCP package passes referenced projects' XML documentation to the generator automatically, as `<AssemblyName>.arkmcpdoc` copies in the intermediate output so other generators (such as the ASP.NET Core OpenAPI one) do not read them; opt out with `ArkMcpIncludeReferencedXmlDocs=false`. Contracts from referenced NuGet packages keep their descriptions only with `ArkMcpIncludePackageXmlDocs=true`.
 
 ### Fixed
 
