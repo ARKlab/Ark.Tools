@@ -78,6 +78,7 @@ public sealed class GeneratorSnapshotTests
         var options = (MessagePackSerializerOptions)method.Invoke(null, [context])!;
 
         options.Security.Should().BeSameAs(MessagePackSecurity.UntrustedData);
+        method.Invoke(null, [context]).Should().BeSameAs(options, "options are cached per resolver");
     }
 
     [TestMethod]
