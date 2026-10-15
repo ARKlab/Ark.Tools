@@ -213,6 +213,7 @@
     <Project Path="tests/Ark.Tools.FtpClient.FluentFtp.Tests/Ark.Tools.FtpClient.FluentFtp.Tests.csproj" />
     <Project Path="tests/Ark.Tools.FtpClient.FtpProxy.Tests/Ark.Tools.FtpClient.FtpProxy.Tests.csproj" />
     <Project Path="tests/Ark.Tools.FtpClient.SftpClient.Tests/Ark.Tools.FtpClient.SftpClient.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.Http.Tests/Ark.Tools.Http.Tests.csproj" />
     <Project Path="tests/Ark.Tools.MessagePack.Tests/Ark.Tools.MessagePack.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Protobuf.Tests/Ark.Tools.Protobuf.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Core.Tests/Ark.Tools.Core.Tests.csproj" />

@@ -7,7 +7,14 @@ public sealed class BufferedJsonMediaTypeFormatter : JsonMediaTypeFormatter
 {
     public override async Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger, CancellationToken cancellationToken)
     {
-        using var buffer = new MemoryStream(16 * 1024);
+        // A seekable stream is already buffered in memory (HttpCompletionOption.ResponseContentRead), so Newtonsoft's sync reads cannot block on the network.
+        if (readStream.CanSeek)
+            return await base.ReadFromStreamAsync(type, readStream, content, formatterLogger, cancellationToken).ConfigureAwait(false);
+
+        var contentLength = content?.Headers.ContentLength ?? 0;
+        var capacity = contentLength > 0 && contentLength <= Array.MaxLength ? (int)contentLength : 16 * 1024;
+
+        using var buffer = new MemoryStream(capacity);
         await readStream.CopyToAsync(buffer, 81920, cancellationToken).ConfigureAwait(false);
 
         buffer.Seek(0, SeekOrigin.Begin);
