@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `Ark.Tools.MediatorFramework.Mcp`: MCP attachment uploads larger than the size limit are rejected before the base64 is decoded, and attachment downloads read seekable streams into an exact-size buffer, so large attachments use about half the memory.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed

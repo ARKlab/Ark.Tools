@@ -1,6 +1,7 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Buffers.Text;
 using System.Text.Json.Serialization;
 
 using FluentValidation;
@@ -34,17 +35,19 @@ public sealed class McpAttachmentInput
         if (allowedContentTypes is not null && !allowedContentTypes.Contains(MimeType))
             throw new ValidationException([new ValidationFailure(nameof(MimeType), "The attachment MIME type is not allowed.")]);
 
-        byte[] bytes;
-        try
-        {
-            bytes = Convert.FromBase64String(Blob);
-        }
-        catch (FormatException)
-        {
-            throw new ValidationException([new ValidationFailure(nameof(Blob), "Attachment blob must be base64.")]);
-        }
-        if (bytes.LongLength > maximumBytes)
+        // Validate and size the payload without allocating, so oversized uploads are rejected before decoding.
+        if (!Base64.IsValid(Blob, out var decodedLength))
+            throw _notBase64();
+        if (decodedLength > maximumBytes)
             throw new ValidationException([new ValidationFailure(nameof(Blob), "The attachment exceeds the configured size limit.")]);
+        var bytes = new byte[decodedLength];
+        if (!Convert.TryFromBase64String(Blob, bytes, out _))
+            throw _notBase64();
         return new ArkAttachment(Name, MimeType, () => new MemoryStream(bytes, writable: false));
+    }
+
+    private static ValidationException _notBase64()
+    {
+        return new ValidationException([new ValidationFailure(nameof(Blob), "Attachment blob must be base64.")]);
     }
 }

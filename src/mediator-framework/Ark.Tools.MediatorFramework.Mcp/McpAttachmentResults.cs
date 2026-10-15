@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using System.Buffers;
+
 using ModelContextProtocol.Protocol;
 
 using FluentValidation;
@@ -24,27 +26,64 @@ public static class McpAttachmentResults
         ArgumentNullException.ThrowIfNull(attachment);
         var input = attachment.OpenRead();
         await using var _ = input.ConfigureAwait(false);
-        using var output = new MemoryStream();
-        var buffer = new byte[81920];
-        long total = 0;
-        int read;
-        while ((read = await input.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false)) > 0)
-        {
-            total += read;
-            if (total > maximumBytes)
-                throw new ValidationException(
-                    [new ValidationFailure("attachment", "The attachment exceeds the configured download limit.")]);
-            await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
-        }
+        var payload = input.CanSeek
+            ? await _readSeekableAsync(input, maximumBytes, cancellationToken).ConfigureAwait(false)
+            : await _readUnseekableAsync(input, maximumBytes, cancellationToken).ConfigureAwait(false);
 
         // Blob carries the base64 text as UTF-8; FromBytes encodes the raw attachment bytes.
         var resource = BlobResourceContents.FromBytes(
-            output.GetBuffer().AsMemory(0, (int)output.Length),
+            payload,
             "ark://" + Guid.NewGuid().ToString("N") + "/" + Uri.EscapeDataString(attachment.Name),
             attachment.ContentType);
         return new EmbeddedResourceBlock
         {
             Resource = resource,
         };
+    }
+
+    private static async Task<ReadOnlyMemory<byte>> _readSeekableAsync(
+        Stream input,
+        long maximumBytes,
+        CancellationToken cancellationToken)
+    {
+        // The length is known up front: reject before reading and allocate the exact payload size.
+        var remaining = input.Length - input.Position;
+        if (remaining > maximumBytes)
+            throw _tooLarge();
+        var payload = new byte[remaining];
+        await input.ReadExactlyAsync(payload, cancellationToken).ConfigureAwait(false);
+        return payload;
+    }
+
+    private static async Task<ReadOnlyMemory<byte>> _readUnseekableAsync(
+        Stream input,
+        long maximumBytes,
+        CancellationToken cancellationToken)
+    {
+        using var output = new MemoryStream();
+        var buffer = ArrayPool<byte>.Shared.Rent(81920);
+        try
+        {
+            int read;
+            while ((read = await input.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false)) > 0)
+            {
+                if (output.Length + read > maximumBytes)
+                    throw _tooLarge();
+                await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        // Expose the MemoryStream buffer directly to avoid copying the final payload.
+        return output.GetBuffer().AsMemory(0, (int)output.Length);
+    }
+
+    private static ValidationException _tooLarge()
+    {
+        return new ValidationException(
+            [new ValidationFailure("attachment", "The attachment exceeds the configured download limit.")]);
     }
 }
