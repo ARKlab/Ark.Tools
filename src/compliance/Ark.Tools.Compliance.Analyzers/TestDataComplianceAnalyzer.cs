@@ -41,7 +41,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
     // Every pattern requires an '@' or a digit; values without one cannot match and skip the regex scan.
     private static readonly char[] _candidates = "@0123456789".ToCharArray();
     // Shared by every scan without findings; callers only read it.
-    private static readonly List<Finding> _noFindings = new();
+    private static readonly IReadOnlyList<Finding> _noFindings = Array.Empty<Finding>();
     private readonly ImmutableArray<Pattern> _patterns;
 
     /// <summary>Initializes a new instance of the <see cref="TestDataComplianceAnalyzer"/> class.</summary>
@@ -317,13 +317,13 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
 
     private readonly struct ScanResult
     {
-        internal ScanResult(List<Finding> findings, bool timedOut)
+        internal ScanResult(IReadOnlyList<Finding> findings, bool timedOut)
         {
             _findings = findings;
             _timedOut = timedOut;
         }
 
-        internal List<Finding> _findings { get; }
+        internal IReadOnlyList<Finding> _findings { get; }
         internal bool _timedOut { get; }
     }
 }
