@@ -46,6 +46,18 @@
       "depNameTemplate": "dotnet-sdk",
       "datasourceTemplate": "dotnet-version",
       "versioningTemplate": "semver"
+    },
+    {
+      "description": "Azure Functions Core Tools installed with npm in the workflows",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "azure-functions-core-tools@(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "azure-functions-core-tools",
+      "datasourceTemplate": "npm"
     }
   ]
 }
