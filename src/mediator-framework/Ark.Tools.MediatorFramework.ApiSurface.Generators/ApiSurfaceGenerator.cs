@@ -38,7 +38,9 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     private const string ApiGroup = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const string Versioning = "Ark.Tools.MediatorFramework.VersioningAttribute";
     private const string McpTool = "Ark.Tools.MediatorFramework.McpToolAttribute";
+    private static readonly string[] _contractAttributes = [Http, Grpc, Rebus, Message, Event, Participant, Network, McpTool];
     private const string SpecStage = "ApiSurfaceSpecs";
+    private const string TypeSpecStage = "ApiSurfaceTypeSpec";
     private const string OutputStage = "ApiSurfaceOutput";
     private const string LinesStage = "ApiSurfaceLines";
     private const string BaselineStage = "ApiSurfaceBaseline";
@@ -90,34 +92,19 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
                 return string.Equals(v, "true", StringComparison.OrdinalIgnoreCase);
             });
 
-        var httpTypes = _specsForAttribute(context, Http, enabledProvider)
-            .Collect();
-        var grpcTypes = _specsForAttribute(context, Grpc, enabledProvider)
-            .Collect();
-        var rebusTypes = _specsForAttribute(context, Rebus, enabledProvider)
-            .Collect();
-        var messageTypes = _specsForAttribute(context, Message, enabledProvider)
-            .Collect();
-        var eventTypes = _specsForAttribute(context, Event, enabledProvider)
-            .Collect();
-        var participantTypes = _specsForAttribute(context, Participant, enabledProvider)
-            .Collect();
-        var networkTypes = _specsForAttribute(context, Network, enabledProvider)
-            .Collect();
-        var mcpTypes = _specsForAttribute(context, McpTool, enabledProvider)
-            .Collect();
-        var contractSpecs = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
-            .Combine(messageTypes).Combine(eventTypes).Combine(participantTypes).Combine(networkTypes).Combine(mcpTypes)
-            .Select(static (pair, _) =>
-            {
-                var (((((((http, grpc), rebus), messages), events), participants), networks), mcp) = pair;
-                return new ApiSurfaceAggregateSpec(
-                    http.AddRange(grpc).AddRange(rebus)
-                        .AddRange(messages).AddRange(events).AddRange(participants).AddRange(networks).AddRange(mcp)
-                        .Distinct()
-                        .OrderBy(static spec => spec.FullyQualifiedIdentity, StringComparer.Ordinal)
-                        .ToImmutableArray());
-            })
+        // One provider per transport attribute; each type is walked only by the provider of its first attribute in this list.
+        var collected = _specsForAttribute(context, 0, enabledProvider).Collect();
+        for (var i = 1; i < _contractAttributes.Length; i++)
+        {
+            collected = collected.Combine(_specsForAttribute(context, i, enabledProvider).Collect())
+                .Select(static (pair, _) => pair.Left.AddRange(pair.Right));
+        }
+
+        var contractSpecs = collected
+            .Select(static (all, _) => new ApiSurfaceAggregateSpec(
+                all.Distinct()
+                    .OrderBy(static spec => spec.FullyQualifiedIdentity, StringComparer.Ordinal)
+                    .ToImmutableArray()))
             .WithTrackingName(SpecStage);
         var surfaceProvider = contractSpecs
             .Select(static (spec, cancellationToken) => BuildSurface(spec.Types.Values, cancellationToken))
@@ -263,24 +250,40 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static IncrementalValuesProvider<ApiSurfaceTypeSpec> _specsForAttribute(
         IncrementalGeneratorInitializationContext context,
-        string attributeName,
+        int attributeIndex,
         IncrementalValueProvider<bool> enabled)
     {
         // The deep walk runs only after the opt-in gate: only syntax nodes cross it, so an opted-out project parses nothing.
         return context.SyntaxProvider.ForAttributeWithMetadataName(
-                attributeName,
+                _contractAttributes[attributeIndex],
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetNode)
             .Combine(enabled)
             .Where(static pair => pair.Right)
             .Select(static (pair, _) => pair.Left)
             .Combine(context.CompilationProvider)
-            .Select(static (pair, cancellationToken) =>
+            .Select((pair, cancellationToken) =>
                 pair.Right.GetSemanticModel(pair.Left.SyntaxTree).GetDeclaredSymbol(pair.Left, cancellationToken) is INamedTypeSymbol type
+                    && !_hasEarlierContractAttribute(type, attributeIndex)
                     ? ReadTypeSpec(type, cancellationToken)
                     : (ApiSurfaceTypeSpec?)null)
+            .WithTrackingName(TypeSpecStage)
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!.Value);
+    }
+
+    private static bool _hasEarlierContractAttribute(INamedTypeSymbol type, int attributeIndex)
+    {
+        foreach (var attribute in type.GetAttributes())
+        {
+            for (var i = 0; i < attributeIndex; i++)
+            {
+                if (attribute.AttributeClass._isFullName(_contractAttributes[i]))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     private static ApiSurfaceTypeSpec ReadTypeSpec(INamedTypeSymbol type, CancellationToken cancellationToken)
