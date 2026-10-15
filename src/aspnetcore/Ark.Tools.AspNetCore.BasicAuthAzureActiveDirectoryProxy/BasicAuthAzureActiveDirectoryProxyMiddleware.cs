@@ -22,24 +22,41 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     private static readonly ResiliencePipeline _retry = new ResiliencePipelineBuilder()
         .AddRetry(new RetryStrategyOptions
         {
-            ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+            // Credential errors (400 invalid_grant) are not retried: each retry counts as a failed login for Smart Lockout.
+            ShouldHandle = static args => ValueTask.FromResult(args.Outcome.Exception is { } ex && _isTransient(ex, args.Context.CancellationToken)),
             MaxRetryAttempts = 2,
             Delay = TimeSpan.Zero,
         })
         .Build();
 
     public BasicAuthAzureActiveDirectoryProxyMiddleware(RequestDelegate next, BasicAuthAzureActiveDirectoryProxyConfig config, ILogger<BasicAuthAzureActiveDirectoryProxyMiddleware> logger)
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        : this(next, config, logger, new HttpClientHandler()
+        {
+            AutomaticDecompression = System.Net.DecompressionMethods.All,
+            CheckCertificateRevocationList = true,
+        })
+#pragma warning restore CA2000 // Dispose objects before losing scope
+    {
+    }
+
+    internal BasicAuthAzureActiveDirectoryProxyMiddleware(RequestDelegate next, BasicAuthAzureActiveDirectoryProxyConfig config, ILogger<BasicAuthAzureActiveDirectoryProxyMiddleware> logger, HttpMessageHandler handler)
     {
         _next = next;
         _config = config;
         _logger = logger;
-#pragma warning disable CA2000 // Dispose objects before losing scope
-        _client = new HttpClient(new HttpClientHandler()
+        _client = new HttpClient(handler);
+    }
+
+    private static bool _isTransient(Exception ex, CancellationToken cancellationToken)
+    {
+        return ex switch
         {
-            AutomaticDecompression = System.Net.DecompressionMethods.All,
-            CheckCertificateRevocationList = true,
-        });
-#pragma warning restore CA2000 // Dispose objects before losing scope
+            HttpRequestException { StatusCode: null } => true,
+            HttpRequestException { StatusCode: { } status } => status is System.Net.HttpStatusCode.RequestTimeout or System.Net.HttpStatusCode.TooManyRequests || (int)status >= 500,
+            OperationCanceledException => !cancellationToken.IsCancellationRequested,
+            _ => false,
+        };
     }
 
     public void Dispose()
@@ -93,10 +110,10 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
                         var result = await _retry
                             .ExecuteAsync(async ct =>
                             {
-                                using var res = await _client.PostAsync(url, content, context.RequestAborted).ConfigureAwait(false);
+                                using var res = await _client.PostAsync(url, content, ct).ConfigureAwait(false);
                                 res.EnsureSuccessStatusCode();
 
-                                var payload = await res.Content.ReadAsStringAsync(context.RequestAborted).ConfigureAwait(false);
+                                var payload = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
                                 return JsonSerializer.Deserialize<OAuthResult>(payload);
                             }, context.RequestAborted).ConfigureAwait(false);
 
