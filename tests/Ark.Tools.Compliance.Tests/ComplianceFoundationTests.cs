@@ -350,6 +350,52 @@ public sealed class ComplianceFoundationTests
     }
 
     /// <summary>
+    /// Direct redaction renders the same text through the string and span paths for each mode,
+    /// and the span path rejects a destination shorter than the redacted length.
+    /// </summary>
+    /// <param name="redaction">The redaction mode.</param>
+    /// <param name="expected">The expected redacted text.</param>
+    [TestMethod]
+    [DataRow(ArkRedaction.Erase, "***")]
+    [DataRow(ArkRedaction.Mask, "***")]
+    [DataRow(ArkRedaction.None, "secret-value")]
+    [DataRow(ArkRedaction.Hmac, "***")]
+    [DataRow((ArkRedaction)99, "***")]
+    public void ComplianceRedactor_RedactsTextAndSpansPerMode(ArkRedaction redaction, string expected)
+    {
+        var redactor = new ComplianceRedactor();
+
+        _assertRedacts(redactor, redaction, "secret-value", expected);
+    }
+
+    /// <summary>
+    /// A keyed direct redactor renders the HMAC digest through the string and span paths.
+    /// </summary>
+    [TestMethod]
+    public void ComplianceRedactor_RedactsHmacTextAndSpansWithKey()
+    {
+        var key = RandomNumberGenerator.GetBytes(32);
+        var redactor = new ComplianceRedactor(new ComplianceRedactionOptions { HmacKey = key });
+        var expected = "hmac:" + Convert.ToHexString(HMACSHA256.HashData(key, Encoding.UTF8.GetBytes("secret-value")));
+
+        _assertRedacts(redactor, ArkRedaction.Hmac, "secret-value", expected);
+    }
+
+    private static void _assertRedacts(ComplianceRedactor redactor, ArkRedaction redaction, string source, string expected)
+    {
+        var spanRedactor = redactor.GetRedactor(redaction);
+        var length = spanRedactor.GetRedactedLength(source.AsSpan());
+        var buffer = new char[length];
+        var written = spanRedactor.Redact(source.AsSpan(), buffer.AsSpan());
+        var tooSmall = () => spanRedactor.Redact(source.AsSpan(), new char[length - 1].AsSpan());
+
+        redactor.Redact(source, redaction).Should().Be(expected);
+        length.Should().Be(expected.Length);
+        new string(buffer, 0, written).Should().Be(expected);
+        tooSmall.Should().Throw<ArgumentException>();
+    }
+
+    /// <summary>
     /// Custom purposes retain a greppable reason plus category and named purposes compare by value.
     /// </summary>
     [TestMethod]
