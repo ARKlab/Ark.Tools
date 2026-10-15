@@ -79,9 +79,11 @@ public sealed class ContractSolidKindAnalyzer : DiagnosticAnalyzer
         var isRequest = false;
         var isCommand = false;
 
-        // A non-generic interface is its own OriginalDefinition, so this also matches ICommand.
-        foreach (var originalDefinition in type.AllInterfaces.Select(static i => i.OriginalDefinition))
+        foreach (var implementedInterface in type.AllInterfaces)
         {
+            // A non-generic interface is its own OriginalDefinition, so this also matches ICommand.
+            var originalDefinition = implementedInterface.OriginalDefinition;
+
             isQuery |= SymbolEqualityComparer.Default.Equals(originalDefinition, query1)
                 || SymbolEqualityComparer.Default.Equals(originalDefinition, query2);
             isRequest |= SymbolEqualityComparer.Default.Equals(originalDefinition, request1)
