@@ -40,6 +40,12 @@ public sealed class SqlPolicyAnalyzer : DiagnosticAnalyzer
                 start.Compilation,
                 options);
 
+            // Only types marked [SqlDataPolicy] can report, so skip compilations that cannot reference it.
+            if (facts._sqlDataPolicyAttribute is null)
+            {
+                return;
+            }
+
             start.RegisterSymbolAction(symbolContext => _analyzeType(symbolContext, facts), SymbolKind.NamedType);
         });
     }
