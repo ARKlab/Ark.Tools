@@ -255,6 +255,97 @@ public sealed class McpHostingTests
         blob.MimeType.Should().Be("text/plain");
     }
 
+    /// <summary>Verifies an oversized base64 upload is rejected with the size-limit error.</summary>
+    [TestMethod]
+    public void RejectsOversizedUpload()
+    {
+        var input = new McpAttachmentInput
+        {
+            Name = "big.bin",
+            Blob = Convert.ToBase64String(new byte[11]),
+        };
+
+        input.Invoking(static i => i.ToAttachment(maximumBytes: 10))
+            .Should().Throw<FluentValidation.ValidationException>()
+            .Which.Errors.Should().ContainSingle(static e => e.ErrorMessage == "The attachment exceeds the configured size limit.");
+    }
+
+    /// <summary>Verifies a base64 upload at the limit with line breaks is decoded as before.</summary>
+    [TestMethod]
+    public async Task DecodesUploadAtLimitWithLineBreaks()
+    {
+        var input = new McpAttachmentInput
+        {
+            Name = "hello.txt",
+            Blob = "aGVsbG8g\r\nd29ybGQ=",
+        };
+
+        var attachment = input.ToAttachment(maximumBytes: 11);
+
+        var stream = attachment.OpenRead();
+        await using var _ = stream.ConfigureAwait(false);
+        using var reader = new StreamReader(stream);
+        (await reader.ReadToEndAsync().ConfigureAwait(false)).Should().Be("hello world");
+    }
+
+    /// <summary>Verifies invalid base64 is rejected with the format error.</summary>
+    [TestMethod]
+    public void RejectsInvalidBase64Upload()
+    {
+        var input = new McpAttachmentInput { Name = "bad.bin", Blob = "not base64!" };
+
+        input.Invoking(static i => i.ToAttachment())
+            .Should().Throw<FluentValidation.ValidationException>()
+            .Which.Errors.Should().ContainSingle(static e => e.ErrorMessage == "Attachment blob must be base64.");
+    }
+
+    /// <summary>Verifies downloads from seekable and unseekable streams honour the limit.</summary>
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public async Task DownloadHonoursLimit(bool seekable)
+    {
+        var content = "downloaded content"u8.ToArray();
+        var attachment = new ArkAttachment("d.txt", "text/plain", () => new TestStream(content, seekable));
+
+        var block = await McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length)
+            .ConfigureAwait(false);
+        ((BlobResourceContents)block.Resource).DecodedData.ToArray().Should().Equal(content);
+
+        await FluentActions.Awaiting(() => McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length - 1))
+            .Should().ThrowAsync<FluentValidation.ValidationException>().ConfigureAwait(false);
+    }
+
+    /// <summary>Verifies a seekable stream reporting zero length is still read, within the limit.</summary>
+    [TestMethod]
+    public async Task DownloadReadsSeekableStreamReportingZeroLength()
+    {
+        var content = "proc-like content"u8.ToArray();
+        var attachment = new ArkAttachment("p.txt", "text/plain", () => new ZeroLengthStream(content));
+
+        var block = await McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length)
+            .ConfigureAwait(false);
+        ((BlobResourceContents)block.Resource).DecodedData.ToArray().Should().Equal(content);
+
+        await FluentActions.Awaiting(() => McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length - 1))
+            .Should().ThrowAsync<FluentValidation.ValidationException>().ConfigureAwait(false);
+    }
+
+    /// <summary>Verifies a seekable stream longer than it reports is read in full and still checked against the limit.</summary>
+    [TestMethod]
+    public async Task DownloadReadsSeekableStreamGrowingBeyondReportedLength()
+    {
+        var content = "growing!"u8.ToArray();
+        var attachment = new ArkAttachment("g.txt", "text/plain", () => new ShortLengthStream(content, content.Length / 2));
+
+        var block = await McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length)
+            .ConfigureAwait(false);
+        ((BlobResourceContents)block.Resource).DecodedData.ToArray().Should().Equal(content);
+
+        await FluentActions.Awaiting(() => McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length - 2))
+            .Should().ThrowAsync<FluentValidation.ValidationException>().ConfigureAwait(false);
+    }
+
     /// <summary>Verifies each MCP version exposes only contracts active in that version.</summary>
     [TestMethod]
     public async Task ListsToolsForContractVersion()
@@ -305,6 +396,21 @@ public sealed class McpHostingTests
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
     }
 #pragma warning restore MA0004
+
+    private sealed class TestStream(byte[] content, bool seekable) : MemoryStream(content, writable: false)
+    {
+        public override bool CanSeek => seekable;
+    }
+
+    private sealed class ZeroLengthStream(byte[] content) : MemoryStream(content, writable: false)
+    {
+        public override long Length => 0;
+    }
+
+    private sealed class ShortLengthStream(byte[] content, long reportedLength) : MemoryStream(content, writable: false)
+    {
+        public override long Length => reportedLength;
+    }
 
     private sealed class ResolvesNothing : IJsonTypeInfoResolver
     {
