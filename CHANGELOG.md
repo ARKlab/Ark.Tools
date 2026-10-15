@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy` now forwards the access token returned by Azure AD. Before, it never read `access_token` from the token response and sent an empty `Authorization: Bearer` header, so every basic-auth request failed authentication.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed
