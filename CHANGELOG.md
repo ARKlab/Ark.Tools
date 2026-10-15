@@ -269,3 +269,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.
 - `Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy` now forwards the access token returned by Azure AD. Before, it never read `access_token` from the token response and sent an empty `Authorization: Bearer` header, so every basic-auth request failed authentication.
+- `Ark.Tools.Compliance.Sql`: the task that writes the compliance SQL scripts now ships precompiled in the package (`tasks/netstandard2.0`) instead of being compiled on every MSBuild node, so clean builds of compliance-enabled projects are a few seconds faster.
