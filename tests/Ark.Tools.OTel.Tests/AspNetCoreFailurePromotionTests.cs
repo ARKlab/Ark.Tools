@@ -30,7 +30,9 @@ public sealed class AspNetCoreFailurePromotionTests
     [DataRow(ActivityKind.Server, 500, true, false, false, false, ActivityStatusCode.Error, true)]
     [DataRow(ActivityKind.Client, 404, true, false, false, false, ActivityStatusCode.Error, true)]
     [DataRow(ActivityKind.Client, 404, true, true, false, false, ActivityStatusCode.Unset, false)]
-    [DataRow(ActivityKind.Internal, 0, false, false, true, false, ActivityStatusCode.Unset, true)]
+    // An exception event without the Error status is not a failure: the producer decides.
+    [DataRow(ActivityKind.Internal, 0, false, false, true, false, ActivityStatusCode.Unset, false)]
+    [DataRow(ActivityKind.Internal, 0, true, false, true, false, ActivityStatusCode.Error, true)]
     public void AddArkAspNetCoreOpenTelemetry_PromotesOnlyFailures(
         ActivityKind kind,
         int httpStatus,

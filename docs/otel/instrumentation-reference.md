@@ -308,13 +308,12 @@ processors. It can be promoted if it fails.
 
 ### Completion and failure promotion
 
-`ArkFailurePromotionProcessor` promotes a `RecordOnly` span when any of these
-conditions is true:
-
-- `ActivityStatusCode.Error`
-- an event named `exception`
-- `http.response.status_code >= 500`, unless the status is `ActivityStatusCode.Ok`
-- non-zero `rpc.grpc.status_code`, unless the status is `ActivityStatusCode.Ok`
+`ArkFailurePromotionProcessor` promotes a `RecordOnly` span only when its status
+is `ActivityStatusCode.Error`. An `exception` event, an HTTP 5xx code or a gRPC
+error code on an `Unset` or `Ok` span does not make it a failure: the producer
+of the span decides. See
+[Failure-first troubleshooting](sampling.md#failure-first-troubleshooting) for the
+instrumentations that set `Error`.
 
 HTTP 4xx codes alone are not failures: a 4xx span is promoted only when its
 status is `ActivityStatusCode.Error`. OpenTelemetry HTTP client

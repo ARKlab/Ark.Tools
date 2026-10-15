@@ -38,7 +38,7 @@ The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 
 - **Adaptive rate control**: Dynamically adjusts sampling to hit a total target rate of root traces (default: 1 trace/second)
 - **Per-operation token buckets**: Each operation (HTTP route, message handler, etc.) gets a fair share of the budget, so rare operations are still represented
-- **Failure preservation**: All spans with error status, exceptions, or HTTP 5xx status codes are **always sampled** regardless of the rate limit
+- **Failure preservation**: All spans that end with `Error` status are **always sampled** regardless of the rate limit; the instrumentation sets it for HTTP 5xx responses, exceptions and failed dependencies
 
 ### Pre-filtering (Noise Reduction)
 

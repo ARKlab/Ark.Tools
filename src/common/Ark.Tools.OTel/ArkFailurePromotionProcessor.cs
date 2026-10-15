@@ -15,7 +15,7 @@ namespace Ark.Tools.OTel;
 /// <para>
 /// The <see cref="ArkAdaptiveSampler"/> returns <see cref="OpenTelemetry.Trace.SamplingDecision.RecordOnly"/>
 /// (not <c>Drop</c>) for rate-limited spans. This processor inspects each completed span and, when
-/// a failure is detected, promotes the failing span <b>and its entire parent chain</b> to
+/// a failure (a span ending with <see cref="ActivityStatusCode.Error"/> status) is detected, promotes the failing span <b>and its entire parent chain</b> to
 /// <see cref="OpenTelemetry.Trace.SamplingDecision.RecordAndSample"/> by restoring the
 /// <see cref="ActivityTraceFlags.Recorded"/> flag.
 /// </para>
@@ -122,45 +122,10 @@ public sealed class ArkFailurePromotionProcessor : BaseProcessor<Activity>
         activity.SetTag(ArkAdaptiveSampler._sampleRateTag, 100.0);
     }
 
+    // The producer of a span decides whether it failed: an Unset or Ok span is not a failure,
+    // whatever its exception events or response codes.
     private static bool _isFailure(Activity activity)
     {
-        // Error status set explicitly.
-        if (activity.Status == ActivityStatusCode.Error)
-            return true;
-
-        // Exception events recorded on the span.
-        foreach (var evt in activity.Events)
-        {
-            if (string.Equals(evt.Name, "exception", StringComparison.Ordinal))
-                return true;
-        }
-
-        // Status codes are a fallback for instrumentation that does not set the span status.
-        // An explicit Ok status is the application's decision and is not overridden.
-        if (activity.Status == ActivityStatusCode.Ok)
-            return false;
-
-        // HTTP response status code >= 500. HTTP 4xx follows the span status, so a processor
-        // that clears the error status marks an expected 4xx outcome.
-        var statusCodeTag = activity.GetTagItem("http.response.status_code");
-        if (statusCodeTag is int httpCode && httpCode >= 500)
-            return true;
-
-        if (statusCodeTag is string httpCodeStr
-            && int.TryParse(httpCodeStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var parsedCode)
-            && parsedCode >= 500)
-            return true;
-
-        // gRPC status codes (0 = OK).
-        var grpcStatus = activity.GetTagItem("rpc.grpc.status_code");
-        if (grpcStatus is int grpcCode && grpcCode != 0)
-            return true;
-
-        if (grpcStatus is string grpcStr
-            && int.TryParse(grpcStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var parsedGrpc)
-            && parsedGrpc != 0)
-            return true;
-
-        return false;
+        return activity.Status == ActivityStatusCode.Error;
     }
 }

@@ -16,7 +16,7 @@ namespace Ark.Tools.OTel;
 /// The sampler combines three mechanisms:
 /// </para>
 /// <list type="bullet">
-/// <item><description><b>Failure preservation</b>: spans with error status or exception events are always exported.</description></item>
+/// <item><description><b>Failure preservation</b>: spans with <see cref="ActivityStatusCode.Error"/> status are always exported.</description></item>
 /// <item><description><b>Per-operation token buckets</b>: each distinct operation gets its own token bucket,
 /// ensuring rare code paths are sampled fairly relative to high-frequency ones.</description></item>
 /// <item><description><b>Adaptive rate control</b>: the refill rates are periodically adjusted from the observed

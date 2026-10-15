@@ -22,12 +22,12 @@ record-only data that can still be promoted when troubleshooting needs it.
 | Local unsampled parent | Record only |
 | Remote unsampled parent, `RespectRemoteParentSampling` `false` (default) | Budget decision, as a root |
 | Remote unsampled parent, `RespectRemoteParentSampling` `true` | Record only |
-| Failed span or exception | Promote to sampled |
+| Span that ends with `Error` status | Promote to sampled |
 | HTTP 4xx response without error status | Success; do not promote |
 | HTTP 4xx response with error status | Promote to sampled |
 
 `RecordOnly` is deliberate. It preserves the activity long enough for the completion
-processor to inspect status, exception events, and response codes.
+processor to inspect its status.
 
 Only the roots that the bucket logic decides count in the budget: dropped and filtered spans do
 not. The sampler applies the pre-filter rules (HTTP `OPTIONS`, SQL commits) and every
@@ -49,8 +49,7 @@ application already set it.
 
 At completion, `ArkFailurePromotionProcessor`:
 
-1. Treats explicit error status, exception events, HTTP 5xx+, and non-zero gRPC status as
-   failures.
+1. Treats a span as a failure only when its status is `Error`.
 2. Registers the trace as failed.
 3. Promotes the failing span and all live local ancestors.
 4. Promotes siblings that finish after the failure is observed.
@@ -58,6 +57,27 @@ At completion, `ArkFailurePromotionProcessor`:
 
 Siblings that ended before the failure was observed cannot be recovered. This is the
 intentional boundary that avoids retaining every operation indefinitely.
+
+The code that produces a span decides whether it failed, through its status. An `Unset` or `Ok`
+span is not a failure, even with an `exception` event, an HTTP 5xx code or a gRPC error code: Ark
+does not second-guess the producer. The instrumentations Ark wires set `Error` by convention:
+
+| Instrumentation | Sets `Error` on |
+|---|---|
+| ASP.NET Core server | 5xx responses and exceptions that escape the pipeline |
+| `HttpClient` (.NET 9 and later: the runtime's own spans) | 4xx and 5xx responses and exceptions |
+| SQL Client | failed commands |
+| Azure SDK (`Azure.*` sources) | failed operations, with `error.type` |
+| Rebus `OpenTelemetryStep`, MediatorFramework messaging steps, Outbox, ResourceWatcher | exceptions |
+| MediatorFramework gRPC server (`ArkGrpcErrorInterceptor`) | unexpected exceptions, which it maps to `Internal` |
+
+gRPC has no other status mapping by default. A gRPC call ends with HTTP 200, so the ASP.NET Core
+instrumentation leaves the request span `Unset` unless its experimental
+`OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` support is on, and
+`Grpc.Net.Client` never sets the status of its client spans. Add
+`OpenTelemetry.Instrumentation.GrpcNetClient` to mark failed gRPC client calls, or set `Error`
+where you handle them. Code of your own that records an exception on a span must also set `Error`
+if the span failed.
 
 HTTP 4xx codes are not failures by themselves: a 4xx span is promoted only when its status is
 `Error`. Ark does not change the status of server 4xx spans, see [HTTP 4xx status](#http-4xx-status).
