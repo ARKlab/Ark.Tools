@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `Ark.Tools.MediatorFramework.Mcp`: MCP attachment uploads larger than the size limit are rejected before the base64 is decoded, and attachment downloads read seekable streams into an exact-size buffer, so large attachments use about half the memory.
 
+### Fixed
+
+- `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed
