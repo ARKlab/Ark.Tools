@@ -25,8 +25,15 @@ public sealed class ComplianceLayout : Layout
 
     protected override void RenderFormattedMessage(LogEventInfo logEvent, StringBuilder target)
     {
-        var rendered = _inner.Render(logEvent);
-        target.Append(_scannerProvider()?.Scan(rendered) ?? rendered);
+        var scanner = _scannerProvider();
+        if (scanner is not { IsEnabled: true })
+        {
+            // Scanning off is the default: render straight into NLog's pooled builder to skip an extra string per event.
+            _inner.Render(logEvent, target);
+            return;
+        }
+
+        target.Append(scanner.Scan(_inner.Render(logEvent)));
     }
 
     protected override string GetFormattedMessage(LogEventInfo logEvent)
