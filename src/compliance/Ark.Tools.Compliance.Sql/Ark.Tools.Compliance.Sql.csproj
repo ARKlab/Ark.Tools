@@ -3,6 +3,8 @@
   <PropertyGroup>
     <Description>Explicit SQL storage policies and opt-in SQLCMD compliance templates.</Description>
     <PackageTags>Ark;Compliance;Privacy;PII;Sql</PackageTags>
+    <!-- NU5100 is expected: the MSBuild task assembly under tasks/ is loaded by the targets, not referenced. -->
+    <NoWarn>$(NoWarn);NU5100</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +12,10 @@
     <ProjectReference Include="../Ark.Tools.Compliance.Generators/Ark.Tools.Compliance.Generators.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <None Include="buildTransitive/Ark.Tools.Compliance.Sql.targets" Pack="true" PackagePath="buildTransitive" />
+    <ProjectReference Include="../Ark.Tools.Compliance.Sql.Tasks/Ark.Tools.Compliance.Sql.Tasks.csproj"
+                      ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="../Ark.Tools.Compliance.Sql.Tasks/bin/$(Configuration)/netstandard2.0/Ark.Tools.Compliance.Sql.Tasks.dll"
+          Pack="true" PackagePath="tasks/netstandard2.0" Visible="false" />
   </ItemGroup>
 
 </Project>

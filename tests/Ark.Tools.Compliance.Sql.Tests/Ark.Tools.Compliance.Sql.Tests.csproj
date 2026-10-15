@@ -21,6 +21,15 @@
           Link="Fixtures/Ark.Tools.Compliance.Sql.targets" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The fixture runs import Fixtures/Ark.Tools.Compliance.Sql.targets, so the task goes where the package puts it. -->
+  <PropertyGroup>
+    <ArkComplianceSqlTasksAssembly>$(MSBuildThisFileDirectory)../../src/compliance/Ark.Tools.Compliance.Sql.Tasks/bin/$(Configuration)/netstandard2.0/Ark.Tools.Compliance.Sql.Tasks.dll</ArkComplianceSqlTasksAssembly>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(ArkComplianceSqlTasksAssembly)" Link="tasks/netstandard2.0/Ark.Tools.Compliance.Sql.Tasks.dll"
+          CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
   <Import Project="../../src/compliance/Ark.Tools.Compliance.Sql/buildTransitive/Ark.Tools.Compliance.Sql.targets" />
 
   <Target Name="_CopySqlFixtures" AfterTargets="ArkGenerateComplianceSql">

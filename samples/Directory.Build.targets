@@ -123,4 +123,12 @@
             Condition="'$(EnableArkToolsCompliance)' == 'true' And '$(MSBuildProjectExtension)' == '.csproj'" />
    <Import Project="$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Sql\buildTransitive\Ark.Tools.Compliance.Sql.targets"
             Condition="'$(EnableArkToolsCompliance)' == 'true' And '$(MSBuildProjectExtension)' == '.csproj'" />
+   <!-- The package ships the SQL template task under tasks/; from source, build it and use its output. -->
+   <PropertyGroup Condition="'$(EnableArkToolsCompliance)' == 'true' And '$(MSBuildProjectExtension)' == '.csproj'">
+      <ArkComplianceSqlTasksAssembly>$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Sql.Tasks\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Sql.Tasks.dll</ArkComplianceSqlTasksAssembly>
+   </PropertyGroup>
+   <ItemGroup Condition="'$(EnableArkToolsCompliance)' == 'true' And '$(MSBuildProjectExtension)' == '.csproj'">
+      <ProjectReference Include="$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Sql.Tasks\Ark.Tools.Compliance.Sql.Tasks.csproj"
+                        ReferenceOutputAssembly="false" PrivateAssets="all" />
+   </ItemGroup>
 </Project>

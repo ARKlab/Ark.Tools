@@ -5,6 +5,7 @@
   </Folder>
   <Folder Name="/src/compliance/">
     <Project Path="src/compliance/Ark.Tools.Compliance.Sql/Ark.Tools.Compliance.Sql.csproj" />
+    <Project Path="src/compliance/Ark.Tools.Compliance.Sql.Tasks/Ark.Tools.Compliance.Sql.Tasks.csproj" />
     <Project Path="src/compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
     <Project Path="src/compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj" />
     <Project Path="src/compliance/Ark.Tools.Compliance.Analyzers/Ark.Tools.Compliance.Analyzers.csproj" />

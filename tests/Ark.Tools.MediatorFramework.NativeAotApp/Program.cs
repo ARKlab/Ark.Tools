@@ -3,6 +3,7 @@
 using Ark.Tools.Core;
 using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.MediatorFramework.Mcp;
+using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
 using Ark.Tools.SystemTextJson;
 
@@ -118,7 +119,7 @@ internal static class Program
         builder.Services.AddScoped<IRequestHandler<UploadBookRequest, Book>, UploadBookRequestHandler>();
         builder.Services.AddScoped<IQueryHandler<DownloadBookQuery, IArkAttachment>, DownloadBookQueryHandler>();
         builder.Services.AddScoped<IRequestHandler<RenameBookRequest, RenamedBook>, RenameBookRequestHandler>();
-        builder.Services.AddSingleton<IFormatterResolver>(_messagePackResolver);
+        builder.Services.AddArkMessagePack(_messagePackResolver);
         builder.Services.AddArkSolidServiceProviderProcessors();
         builder.Services.AddMcpServer().WithHttpTransport().WithArkMcpTools<AppMcpContext>();
 
