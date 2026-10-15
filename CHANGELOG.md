@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - `Ark.Tools.AspNetCore.BasicAuthAuth0Proxy` and `Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy` no longer retry a login rejected by the identity provider, such as a wrong password. One bad Basic-auth request now counts as one failed login instead of three or four, so users are not locked out sooner, and on Auth0 it fails at once instead of after up to 6 seconds. Network errors, timeouts, 408, 429 and 5xx responses are still retried, and an aborted request stops the retries.
-- `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
+- `Ark.Tools.MediatorFramework.AzureFunctions`: HTTP endpoints returning `IAsyncEnumerable<T>` now stream items as they are produced, as on the Minimal API host. Before, the generator never detected the streaming response and buffered the whole result.- `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
 
 ## [7.0.0-beta18] - 2026-10-15
 
