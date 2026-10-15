@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `ComplianceLayout` no longer builds an extra copy of each log line when PII scanning is off (the default), so the layouts set by `NLogConfigurer` allocate less per event.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed
