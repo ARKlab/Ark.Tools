@@ -1,6 +1,8 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
+using Ark.Tools.Compliance;
+
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
 
@@ -41,6 +43,20 @@ public class AuthenticationApiClientCachingDecoratorTests
         var inner = new Mock<IAuthenticationApiClient>();
         inner.Setup(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(static () => _tokenResponse(TimeSpan.FromHours(-1)));
+        using var sut = new AuthenticationApiClientCachingDecorator(inner.Object);
+
+        await sut.GetTokenAsync(_request);
+        await sut.GetTokenAsync(_request);
+
+        inner.Verify(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [TestMethod]
+    public async Task GetTokenAsync_TokenExpiringWithinSafetyMargin_IsNotCached()
+    {
+        var inner = new Mock<IAuthenticationApiClient>();
+        inner.Setup(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(static () => _tokenResponse(TimeSpan.FromSeconds(30)));
         using var sut = new AuthenticationApiClientCachingDecorator(inner.Object);
 
         await sut.GetTokenAsync(_request);
@@ -95,6 +111,20 @@ public class AuthenticationApiClientCachingDecoratorTests
     }
 
     [TestMethod]
+    public async Task GetTokenAsync_ResourceOwnerRequestsWithDifferentFields_AreCachedSeparately()
+    {
+        var inner = new Mock<IAuthenticationApiClient>();
+        inner.Setup(static x => x.GetTokenAsync(It.IsAny<ResourceOwnerTokenRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(static () => _tokenResponse(TimeSpan.FromHours(1)));
+        using var sut = new AuthenticationApiClientCachingDecorator(inner.Object);
+
+        await sut.GetTokenAsync(_resourceOwnerRequest("first-value"));
+        await sut.GetTokenAsync(_resourceOwnerRequest("second-value"));
+
+        inner.Verify(static x => x.GetTokenAsync(It.IsAny<ResourceOwnerTokenRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [TestMethod]
     public async Task GetUserInfoAsync_ValidToken_IsCached()
     {
         var accessToken = _jwt(TimeSpan.FromHours(1));
@@ -116,6 +146,17 @@ public class AuthenticationApiClientCachingDecoratorTests
         {
             AccessToken = _jwt(expiresIn),
             ExpiresIn = (int)expiresIn.TotalSeconds,
+        };
+    }
+
+    private static ResourceOwnerTokenRequest _resourceOwnerRequest([Secret] string secretValue)
+    {
+        return new ResourceOwnerTokenRequest
+        {
+            ClientId = "client",
+            Username = "user",
+            Password = secretValue,
+            Audience = "audience",
         };
     }
 
