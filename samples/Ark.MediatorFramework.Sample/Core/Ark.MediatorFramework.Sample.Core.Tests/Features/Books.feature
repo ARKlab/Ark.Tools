@@ -91,6 +91,17 @@ Feature: Books
                 | UserId    | EntityType   | Operation         |
                 | application-test-user | Output | Book_CreateRequest.V1 |
 
+        Scenario: Audit a bulk book creation as one operation
+            When I bulk create books with
+                | Title   | Author  | Genre   |
+                | Dune    | Herbert | Fiction |
+                | Emma    | Austen  | Fiction |
+                | Ulysses | Joyce   | Fiction |
+            Then the book audits are
+                | UserId                | EntityType | Operation                 |
+                | application-test-user | Output     | Book_BulkCreateRequest.V1 |
+            And the 3 bulk-created books reference the book audit
+
     Rule: Book covers retain metadata and bytes
 
         Scenario: Upload and download a book cover
