@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `Ark.Tools.MediatorFramework`: the Minimal API generator now collapses line breaks and repeated whitespace in `[Description]` text, as the gRPC generator already did, so a contract gets the same OpenAPI summary and gRPC comment on both transports.
+- `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
 
 ## [7.0.0-beta18] - 2026-10-15
 
