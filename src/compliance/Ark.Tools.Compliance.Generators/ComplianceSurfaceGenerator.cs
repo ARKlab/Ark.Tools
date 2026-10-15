@@ -30,7 +30,7 @@ public sealed partial class ComplianceSurfaceGenerator : IIncrementalGenerator
 
     private static readonly DiagnosticDescriptor _weakened = new(
         "ARKPII021", "Classified member removed or weakened",
-        "Classified member '{0}' is absent from the baseline or its classification has been weakened. Review this privacy change before updating ArkComplianceSurface.txt",
+        "Classified member '{0}' is absent from the baseline or its classification has been weakened. Review this privacy change before updating ArkComplianceSurface.txt.",
         "Compliance", DiagnosticSeverity.Error, isEnabledByDefault: true, helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKPII021.md");
 
     // Generators get a new SemanticModel per GetSemanticModel call, and each one rebinds the whole enclosing method

@@ -693,7 +693,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 Path.Join(directory, assemblyXmlFileName),
                 Path.GetFullPath(Path.Join(directory, "..", assemblyXmlFileName)),
             };
+            // Fallback for referenced contract assemblies whose XML docs are not passed as AdditionalFiles.
+#pragma warning disable RS1035 // Do not do file IO in analyzers
             var documentationFile = candidates.FirstOrDefault(File.Exists);
+#pragma warning restore RS1035
             if (documentationFile is null)
                 continue;
 
