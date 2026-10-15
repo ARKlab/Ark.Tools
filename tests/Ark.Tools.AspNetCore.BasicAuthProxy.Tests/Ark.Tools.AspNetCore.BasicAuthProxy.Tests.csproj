@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Moq" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy/Ark.Tools.AspNetCore.BasicAuthAuth0Proxy.csproj" />
+    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy/Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy.csproj" />
+  </ItemGroup>
+
+</Project>

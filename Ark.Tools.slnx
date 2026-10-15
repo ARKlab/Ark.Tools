@@ -208,6 +208,7 @@
     <Project Path="tests/Ark.Tools.Core.Analyzers.Tests/Ark.Tools.Core.Analyzers.Tests.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.MinimalApi.Tests/Ark.Tools.AspNetCore.MinimalApi.Tests.csproj" />
     <Project Path="tests/Ark.Tools.AspNetCore.ProblemDetails.Tests/Ark.Tools.AspNetCore.ProblemDetails.Tests.csproj" />
+    <Project Path="tests/Ark.Tools.AspNetCore.BasicAuthProxy.Tests/Ark.Tools.AspNetCore.BasicAuthProxy.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Dapper.Tests/Ark.Tools.Dapper.Tests.csproj" />
     <Project Path="tests/Ark.Tools.Auth0.Tests/Ark.Tools.Auth0.Tests.csproj" />
     <Project Path="tests/Ark.Tools.FtpClient.FluentFtp.Tests/Ark.Tools.FtpClient.FluentFtp.Tests.csproj" />
