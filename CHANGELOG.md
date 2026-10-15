@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Ark.Tools.Http`: `PostJsonStreamAsync<T>(value, JsonTypeInfo<T>)` on `IFlurlRequest`, `Url` and `string` sends a JSON body serialized straight into the request stream, so large uploads no longer build the whole body as a string first. It is trimming and AOT safe.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed
