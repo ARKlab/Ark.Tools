@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.1] - 2026-10-15
+
 ### Changed
 
 - Updated dependencies to their latest minor and patch versions (Microsoft.Extensions/AspNetCore 10.0.13, Swashbuckle 10.3.0, NLog 6.2.2, Rebus 8.9.5, Microsoft.Data.SqlClient 7.1.1 and others) and the .NET SDK to 10.0.402.
