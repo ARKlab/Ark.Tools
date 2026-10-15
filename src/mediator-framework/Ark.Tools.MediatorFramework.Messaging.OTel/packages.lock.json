@@ -34,9 +34,9 @@
       },
       "OpenTelemetry.Api": {
         "type": "Direct",
-        "requested": "[1.19.1, )",
-        "resolved": "1.19.1",
-        "contentHash": "9JKIH+xrV0HNTFjQC8zrx9gZpDOMEljN5Htg/U0VE2IvO3N+7bKALCCsGy5tp09marX5dd8UkrgQFoLaulIBRw=="
+        "requested": "[1.20.0, )",
+        "resolved": "1.20.0",
+        "contentHash": "kLqqAdAF6q+mbS5Rp6YJ+hbGwbt+vQC8spJh3TpRGvZPGZK+DbEB0B/Fq4YqiMKkqsdShehJZfxfVjlzGb2B3Q=="
       },
       "Polyfill": {
         "type": "Direct",
@@ -262,7 +262,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "NLog": "[6.2.1, )"
+          "NLog": "[6.2.2, )"
         }
       },
       "ark.tools.core": {
@@ -302,7 +302,7 @@
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Microsoft.Data.SqlClient": "[7.1.1, )",
-          "NLog": "[6.2.1, )",
+          "NLog": "[6.2.2, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
           "NLog.MailKit": "[6.1.5, )",
@@ -326,7 +326,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "NLog": "[6.2.1, )"
+          "NLog": "[6.2.2, )"
         }
       },
       "ark.tools.solid": {
@@ -557,9 +557,9 @@
       },
       "NLog": {
         "type": "CentralTransitive",
-        "requested": "[6.2.1, )",
-        "resolved": "6.2.1",
-        "contentHash": "fTGNuJyzkgDc1TBEGXF+FMT4b6kB7gygkSN3dLei2Ziiwx/rugXA+OyyFWZ60P1G/+SzzSKiWHlQ4OklC8AgRg=="
+        "requested": "[6.2.2, )",
+        "resolved": "6.2.2",
+        "contentHash": "Hoxigm/d7wY/+y4y2ILF2ERSojhxgLd8ASBZQbrnm52jB5NHkF4AWW5tZzMxJ/HTOp0bLwClGOokrA31iSXuMA=="
       },
       "NLog.Database": {
         "type": "CentralTransitive",
