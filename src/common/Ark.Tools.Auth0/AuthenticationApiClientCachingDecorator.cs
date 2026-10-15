@@ -22,6 +22,8 @@ namespace Ark.Tools.Auth0;
 
 public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient, IDisposable
 {
+    private static readonly TimeSpan _expirationSafetyMargin = TimeSpan.FromSeconds(60);
+
     private readonly IAuthenticationApiClient _inner;
     [Secret]
     private readonly MemoryCache _cache = new(new MemoryCacheOptions());
@@ -65,7 +67,8 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         var expAccessToken = _expiresIn(r.AccessToken);
         var expIdToken = TimeSpan.FromSeconds(r.ExpiresIn);
 
-        return new[] { expAccessToken, expIdToken }.Min();
+        // Stop serving a token before it expires so it does not expire in flight or under clock skew.
+        return new[] { expAccessToken, expIdToken }.Min() - _expirationSafetyMargin;
     }
 
     private static TimeSpan _expiresIn(

@@ -50,6 +50,20 @@ public class AuthenticationApiClientCachingDecoratorTests
     }
 
     [TestMethod]
+    public async Task GetTokenAsync_TokenExpiringWithinSafetyMargin_IsNotCached()
+    {
+        var inner = new Mock<IAuthenticationApiClient>();
+        inner.Setup(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(static () => _tokenResponse(TimeSpan.FromSeconds(30)));
+        using var sut = new AuthenticationApiClientCachingDecorator(inner.Object);
+
+        await sut.GetTokenAsync(_request);
+        await sut.GetTokenAsync(_request);
+
+        inner.Verify(static x => x.GetTokenAsync(It.IsAny<ClientCredentialsTokenRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [TestMethod]
     public async Task GetTokenAsync_ConcurrentSameKey_CallsInnerOnce()
     {
         var gate = new TaskCompletionSource<AccessTokenResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
