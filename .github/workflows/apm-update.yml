@@ -22,6 +22,9 @@ jobs:
     steps:
     - name: 'Checkout'
       uses: actions/checkout@v7
+      with:
+        # The PR targets master, so a manual run from another branch must not carry its commits
+        ref: master
 
     - name: 'Install APM'
       uses: microsoft/apm-action@v1
