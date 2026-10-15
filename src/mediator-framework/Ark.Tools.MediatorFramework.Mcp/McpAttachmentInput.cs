@@ -41,7 +41,7 @@ public sealed class McpAttachmentInput
         if (decodedLength > maximumBytes)
             throw new ValidationException([new ValidationFailure(nameof(Blob), "The attachment exceeds the configured size limit.")]);
         var bytes = new byte[decodedLength];
-        if (!Convert.TryFromBase64String(Blob, bytes, out _))
+        if (!Convert.TryFromBase64String(Blob, bytes, out var written) || written != decodedLength)
             throw _notBase64();
         return new ArkAttachment(Name, MimeType, () => new MemoryStream(bytes, writable: false));
     }

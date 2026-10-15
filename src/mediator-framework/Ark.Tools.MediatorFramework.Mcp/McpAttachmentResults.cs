@@ -49,13 +49,14 @@ public static class McpAttachmentResults
         // The length is known up front: reject before reading and allocate the exact payload size.
         var remaining = input.Length - input.Position;
         // Some seekable streams (e.g. Linux /proc files) report 0 yet yield data: stream them with the limit.
-        if (remaining == 0)
+        if (remaining <= 0)
             return await _readUnseekableAsync(input, maximumBytes, cancellationToken).ConfigureAwait(false);
         if (remaining > maximumBytes)
             throw _tooLarge();
         var payload = new byte[remaining];
-        await input.ReadExactlyAsync(payload, cancellationToken).ConfigureAwait(false);
-        return payload;
+        // A stream that shrinks while being read yields what it has, as the unbounded read did.
+        var read = await input.ReadAtLeastAsync(payload, payload.Length, throwOnEndOfStream: false, cancellationToken).ConfigureAwait(false);
+        return payload.AsMemory(0, read);
     }
 
     private static async Task<ReadOnlyMemory<byte>> _readUnseekableAsync(
@@ -79,7 +80,8 @@ public static class McpAttachmentResults
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(buffer);
+            // The chunk held attachment bytes: clear it before other pool renters can see it.
+            ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
         }
 
         // Expose the MemoryStream buffer directly to avoid copying the final payload.
