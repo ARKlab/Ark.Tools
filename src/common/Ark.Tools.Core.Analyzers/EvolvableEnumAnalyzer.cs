@@ -97,6 +97,10 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
             return;
 
         var fields = enumType.GetMembers().OfType<IFieldSymbol>().ToImmutableArray();
+        // Enum-level rules are reported at each usage, not at the enum declaration: one diagnostic per usage
+        // stays distinct and is found by document-scoped (IDE) analysis without state shared across callbacks.
+        var usageLocation = syntax.TypeArgumentList.Arguments[0].GetLocation();
+        var enumLocation = enumType.Locations.FirstOrDefault() ?? Location.None;
         var requestedBacking = wrapper.TypeArguments.Length == 1
             ? facts._int32Type
             : wrapper.TypeArguments[1];
@@ -106,7 +110,7 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
             context.ReportDiagnostic(Diagnostic.Create(
                 _backingTypeMismatch,
                 syntax.TypeArgumentList.Arguments[wrapper.TypeArguments.Length - 1].GetLocation(),
-                additionalLocations: [enumType.Locations.FirstOrDefault() ?? Location.None],
+                additionalLocations: [enumLocation],
                 requestedBacking.ToDisplayString(),
                 enumType.ToDisplayString(),
                 enumType.EnumUnderlyingType.ToDisplayString()));
@@ -118,8 +122,8 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 _missingNotSet,
-                enumType.Locations.FirstOrDefault() ?? syntax.TypeArgumentList.Arguments[0].GetLocation(),
-                additionalLocations: [syntax.TypeArgumentList.Arguments[0].GetLocation()],
+                usageLocation,
+                additionalLocations: [enumLocation],
                 enumType.ToDisplayString()));
         }
 
@@ -127,7 +131,8 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 _fullEnum,
-                enumType.Locations.FirstOrDefault() ?? syntax.TypeArgumentList.Arguments[0].GetLocation(),
+                usageLocation,
+                additionalLocations: [enumLocation],
                 enumType.ToDisplayString(),
                 enumType.EnumUnderlyingType.ToDisplayString()));
         }
@@ -141,8 +146,12 @@ public sealed class EvolvableEnumAnalyzer : DiagnosticAnalyzer
                 {
                     context.ReportDiagnostic(Diagnostic.Create(
                         _duplicateName,
-                        field.Locations.FirstOrDefault() ?? syntax.GetLocation(),
-                        additionalLocations: [previous.Locations.FirstOrDefault() ?? Location.None],
+                        usageLocation,
+                        additionalLocations:
+                        [
+                            field.Locations.FirstOrDefault() ?? Location.None,
+                            previous.Locations.FirstOrDefault() ?? Location.None,
+                        ],
                         messageArgs: [name]));
                 }
 
