@@ -179,7 +179,6 @@ internal static class AzureFunctionsEndpointParser
     private const string _httpBodyAttribute = "Ark.Tools.MediatorFramework.HttpBodyAttribute";
     private const string _eTagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";
     private const string _arkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
-    private const string _asyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
     // Keeps `?` on a nullable reference result: the generated ExecuteAsync<TQuery, TResult> call must match the contract.
     private static readonly SymbolDisplayFormat _annotatedFormat =
         SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
@@ -386,8 +385,7 @@ internal static class AzureFunctionsEndpointParser
             maxFileCount,
             maxRequestBodySizeBytes,
             allowedContentTypes,
-            responseSymbol is { } responseNamed
-                && responseNamed.OriginalDefinition.ToDisplayString() == _asyncEnumerable,
+            responseSymbol._isMetadataName("System.Collections.Generic", "IAsyncEnumerable`1"),
             type.IsRecord,
             _constructorParameters(type, properties),
             // The function sets bound properties after constructing the contract, so it cannot bind these.

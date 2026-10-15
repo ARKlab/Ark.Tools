@@ -6,9 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `ARKCORE002`, `ARKCORE003` and `ARKCORE004` are now reported on each `EvolvableEnum<T>` usage instead of the enum declaration, so an invalid enum used N times no longer shows N identical errors at its declaration and IDE analysis shows the error in the file that uses the enum. The enum declaration (or the clashing members for `ARKCORE003`) is attached as an additional location. A `#pragma` or `[SuppressMessage]` that targets these rules must now be placed at the usage.
+
 ### Fixed
 
-- `Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy` now forwards the access token returned by Azure AD. Before, it never read `access_token` from the token response and sent an empty `Authorization: Bearer` header, so every basic-auth request failed authentication.
+- `Ark.Tools.MediatorFramework.AzureFunctions`: HTTP endpoints returning `IAsyncEnumerable<T>` now stream items as they are produced, as on the Minimal API host. Before, the generator never detected the streaming response and buffered the whole result.
+- `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
 
 ## [7.0.0-beta18] - 2026-10-15
 
