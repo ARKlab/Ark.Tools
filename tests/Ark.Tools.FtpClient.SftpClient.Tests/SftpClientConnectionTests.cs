@@ -32,11 +32,14 @@ public class SftpClientConnectionTests
     public TestContext TestContext { get; set; } = null!;
 
     [TestMethod]
-    public async Task UploadThenDownloadFileAsync_ShouldRoundTripTheContentAndStayConnected()
+    [DataRow(0)]
+    [DataRow(1000)]
+    [DataRow(_fileSize)]
+    public async Task UploadThenDownloadFileAsync_ShouldRoundTripTheContentAndStayConnected(int fileSize)
     {
         var server = _getServer();
         var path = $"{server.Folder}/{Guid.NewGuid():N}.bin";
-        var content = new byte[_fileSize];
+        var content = new byte[fileSize];
         RandomNumberGenerator.Fill(content);
         using var serverConfig = server.CreateConfig(server.Endpoint);
         using var connection = new SftpClientConnection(serverConfig);

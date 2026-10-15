@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `Ark.Tools.FtpClient.SftpClient`: `DownloadFileAsync` sizes its buffer from the remote file and returns it without a final copy, so a download allocates about the file size instead of about 3x.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed
