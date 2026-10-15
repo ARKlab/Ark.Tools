@@ -5870,6 +5870,31 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public async Task ContractSolidKindAnalyzerRejectsLegacyCommandCombinedWithRequest()
+    {
+        var diagnostics = await _runAnalyzerResult<ContractSolidKindAnalyzer>(
+            """
+            using Ark.Tools.Solid;
+            public sealed class PrintBook : ICommand, IRequest<PrintBook, int> { }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF021");
+    }
+
+    [TestMethod]
+    public async Task ContractSolidKindAnalyzerAcceptsContractsWithOneSolidKind()
+    {
+        var diagnostics = await _runAnalyzerResult<ContractSolidKindAnalyzer>(
+            """
+            using Ark.Tools.Solid;
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            public sealed class GetBook : IQuery<GetBook, int> { }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMF021");
+    }
+
+    [TestMethod]
     public void MessagingNetworkGeneratorEmitsResolvedNetworkDefaults()
     {
         var result = _runGeneratorResult<MessagingNetworkGenerator>(
