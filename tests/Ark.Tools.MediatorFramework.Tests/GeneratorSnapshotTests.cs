@@ -1030,9 +1030,13 @@ public sealed class GeneratorSnapshotTests
             public sealed class ContractMarker { }
             [HttpEndpoint("GET", "/stream")]
             public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
+            [HttpEndpoint("POST", "/stream", SuccessStatusCode = 201)]
+            public sealed class PostStream : IRequest<IAsyncEnumerable<string>> { }
             """);
 
         result.Generated.Should().Contain("ArkAzureFunctionsHttp.WriteJsonStreamAsync(request.HttpContext.Response, _result, cancellationToken)");
+        result.Generated.Should().Contain("request.HttpContext.Response.StatusCode = 200;");
+        result.Generated.Should().Contain("request.HttpContext.Response.StatusCode = 201;");
         result.Generated.Should().NotContain("ArkAzureFunctionsHttp.Json(request.HttpContext, _result");
     }
 
