@@ -331,6 +331,21 @@ public sealed class McpHostingTests
             .Should().ThrowAsync<FluentValidation.ValidationException>().ConfigureAwait(false);
     }
 
+    /// <summary>Verifies a seekable stream longer than it reports is read in full and still checked against the limit.</summary>
+    [TestMethod]
+    public async Task DownloadReadsSeekableStreamGrowingBeyondReportedLength()
+    {
+        var content = "growing!"u8.ToArray();
+        var attachment = new ArkAttachment("g.txt", "text/plain", () => new ShortLengthStream(content, content.Length / 2));
+
+        var block = await McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length)
+            .ConfigureAwait(false);
+        ((BlobResourceContents)block.Resource).DecodedData.ToArray().Should().Equal(content);
+
+        await FluentActions.Awaiting(() => McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length - 2))
+            .Should().ThrowAsync<FluentValidation.ValidationException>().ConfigureAwait(false);
+    }
+
     /// <summary>Verifies each MCP version exposes only contracts active in that version.</summary>
     [TestMethod]
     public async Task ListsToolsForContractVersion()
@@ -390,6 +405,11 @@ public sealed class McpHostingTests
     private sealed class ZeroLengthStream(byte[] content) : MemoryStream(content, writable: false)
     {
         public override long Length => 0;
+    }
+
+    private sealed class ShortLengthStream(byte[] content, long reportedLength) : MemoryStream(content, writable: false)
+    {
+        public override long Length => reportedLength;
     }
 
     private sealed class ResolvesNothing : IJsonTypeInfoResolver

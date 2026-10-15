@@ -26,9 +26,7 @@ public static class McpAttachmentResults
         ArgumentNullException.ThrowIfNull(attachment);
         var input = attachment.OpenRead();
         await using var _ = input.ConfigureAwait(false);
-        var payload = input.CanSeek
-            ? await _readSeekableAsync(input, maximumBytes, cancellationToken).ConfigureAwait(false)
-            : await _readUnseekableAsync(input, maximumBytes, cancellationToken).ConfigureAwait(false);
+        var payload = await _readAsync(input, maximumBytes, cancellationToken).ConfigureAwait(false);
 
         // Blob carries the base64 text as UTF-8; FromBytes encodes the raw attachment bytes.
         var resource = BlobResourceContents.FromBytes(
@@ -41,30 +39,17 @@ public static class McpAttachmentResults
         };
     }
 
-    private static async Task<ReadOnlyMemory<byte>> _readSeekableAsync(
+    private static async Task<ReadOnlyMemory<byte>> _readAsync(
         Stream input,
         long maximumBytes,
         CancellationToken cancellationToken)
     {
-        // The length is known up front: reject before reading and allocate the exact payload size.
-        var remaining = input.Length - input.Position;
-        // Some seekable streams (e.g. Linux /proc files) report 0 yet yield data: stream them with the limit.
-        if (remaining <= 0)
-            return await _readUnseekableAsync(input, maximumBytes, cancellationToken).ConfigureAwait(false);
-        if (remaining > maximumBytes)
+        // A seekable stream's length only presizes the buffer: it can be wrong (e.g. Linux /proc files report 0)
+        // or change while being read, so the limit is always enforced on the bytes actually read.
+        var expected = input.CanSeek ? input.Length - input.Position : 0;
+        if (expected > maximumBytes)
             throw _tooLarge();
-        var payload = new byte[remaining];
-        // A stream that shrinks while being read yields what it has, as the unbounded read did.
-        var read = await input.ReadAtLeastAsync(payload, payload.Length, throwOnEndOfStream: false, cancellationToken).ConfigureAwait(false);
-        return payload.AsMemory(0, read);
-    }
-
-    private static async Task<ReadOnlyMemory<byte>> _readUnseekableAsync(
-        Stream input,
-        long maximumBytes,
-        CancellationToken cancellationToken)
-    {
-        using var output = new MemoryStream();
+        using var output = new MemoryStream(expected > 0 ? (int)expected : 0);
         const int ChunkSize = 81920;
         var buffer = ArrayPool<byte>.Shared.Rent(ChunkSize);
         try
