@@ -392,8 +392,13 @@ public sealed class ComplianceFoundationTests
         _assertRenders(default(TestSensitiveValue), "***");
         _assertRenders(TestMaskedValue.From(string.Empty), "***");
         _assertRenders(default(TestMaskedValue), "***");
-        _assertRenders(TestHmacValue.From(string.Empty), "***");
-        _assertRenders(default(TestHmacValue), "***");
+        // The generated HMAC type reads its key from this variable, so the expectation follows it.
+        var hmacKey = Environment.GetEnvironmentVariable("ARK_TOOLS_COMPLIANCE_HMAC_KEY");
+        var expectedHmac = string.IsNullOrWhiteSpace(hmacKey)
+            ? "***"
+            : "hmac:" + Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(hmacKey), Array.Empty<byte>()));
+        _assertRenders(TestHmacValue.From(string.Empty), expectedHmac);
+        _assertRenders(default(TestHmacValue), expectedHmac);
         _assertRenders(TestClearValue.From(string.Empty), string.Empty);
         _assertRenders(default(TestClearValue), string.Empty);
     }
@@ -428,7 +433,7 @@ public sealed class ComplianceFoundationTests
     private static void _assertRenders<T>(T value, string expected)
         where T : ISpanFormattable
     {
-        var buffer = new char[16];
+        var buffer = new char[expected.Length];
         var formatted = value.TryFormat(buffer.AsSpan(), out var written, default, null);
 
         formatted.Should().BeTrue();
