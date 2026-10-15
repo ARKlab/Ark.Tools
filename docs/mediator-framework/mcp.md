@@ -26,6 +26,15 @@ of that MCP argument.
 HTTP placement attributes such as `[HttpRoute]`, `[HttpQuery]`, and `[HttpBody]`
 are ignored: every public bindable property is an MCP argument.
 
+When contracts live in another assembly, the generator reads their XML
+documentation only from `AdditionalFiles`; it never reads files from disk. The
+package adds the XML documentation of referenced projects automatically. Set
+`ArkMcpIncludePackageXmlDocs=true` to also add the XML documentation of
+referenced NuGet packages, or `ArkMcpIncludeReferencedXmlDocs=false` to turn
+both off and pass the files yourself. Every analyzer and generator in the
+compilation sees `AdditionalFiles`, including the ASP.NET Core OpenAPI XML
+documentation generator.
+
 ## Compose the host
 
 Declare a partial context in the host project and select the contract assembly:

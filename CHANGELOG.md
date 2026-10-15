@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- MCP tool descriptions now come only from XML documentation passed to the compiler as `AdditionalFiles`; the MCP generator no longer reads documentation files from disk next to referenced assemblies.
+- MCP tool descriptions now come only from XML documentation passed to the compiler as `AdditionalFiles`; the MCP generator no longer reads documentation files from disk. The MCP package now adds referenced projects' XML documentation automatically (opt out with `ArkMcpIncludeReferencedXmlDocs=false`); referenced NuGet packages' XML documentation is opt-in with `ArkMcpIncludePackageXmlDocs=true`.
 
 ## [7.0.0-beta18] - 2026-10-15
 

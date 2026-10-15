@@ -1,0 +1,30 @@
+<Project>
+  <!--
+  The MCP generator reads contract XML documentation only from AdditionalFiles. This target passes the
+  XML documentation of referenced projects, and opt-in of referenced NuGet packages, so contracts declared
+  in another assembly keep their tool descriptions. Set ArkMcpIncludeReferencedXmlDocs=false to opt out.
+  Package XML files are opt-in (ArkMcpIncludePackageXmlDocs=true) because every analyzer and generator in
+  the compilation sees AdditionalFiles, including the ASP.NET Core OpenAPI XML generator.
+  -->
+  <PropertyGroup>
+    <ArkMcpIncludeReferencedXmlDocs Condition="'$(ArkMcpIncludeReferencedXmlDocs)' == ''">true</ArkMcpIncludeReferencedXmlDocs>
+    <ArkMcpIncludePackageXmlDocs Condition="'$(ArkMcpIncludePackageXmlDocs)' == ''">false</ArkMcpIncludePackageXmlDocs>
+  </PropertyGroup>
+
+  <!-- Runs before the OpenAPI XML target so project-level filters placed after that target also apply here. -->
+  <Target Name="ArkMcpAddReferencedXmlDocumentation"
+          BeforeTargets="CoreCompile;GenerateAdditionalXmlFilesForOpenApi"
+          DependsOnTargets="ResolveAssemblyReferences"
+          Condition="'$(ArkMcpIncludeReferencedXmlDocs)' == 'true' And '@(Analyzer->AnyHaveMetadataValue('Filename', 'Ark.Tools.MediatorFramework.Mcp.Generators'))' == 'true'">
+    <ItemGroup>
+      <_ArkMcpXmlDocumentation Include="@(ReferencePath->'%(RootDir)%(Directory)%(Filename).xml')"
+                               Condition="'%(ReferencePath.ReferenceSourceTarget)' == 'ProjectReference'" />
+      <_ArkMcpXmlDocumentation Include="@(ReferencePath->'%(RootDir)%(Directory)%(Filename).xml')"
+                               Condition="'$(ArkMcpIncludePackageXmlDocs)' == 'true' And '%(ReferencePath.NuGetPackageId)' != '' And '%(ReferencePath.FrameworkReferenceName)' == ''" />
+      <_ArkMcpXmlDocumentation Remove="@(_ArkMcpXmlDocumentation)" Condition="!Exists('%(FullPath)')" />
+      <_ArkMcpXmlDocumentation Remove="@(AdditionalFiles->'%(FullPath)');@(DocFileItem->'%(FullPath)')" />
+      <AdditionalFiles Include="@(_ArkMcpXmlDocumentation->Distinct())" />
+      <_ArkMcpXmlDocumentation Remove="@(_ArkMcpXmlDocumentation)" />
+    </ItemGroup>
+  </Target>
+</Project>
