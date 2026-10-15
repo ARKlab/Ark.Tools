@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `Ark.Tools.MediatorFramework`: with `ArkApiSurfaceEnabled=false` the API surface generator no longer reads your contracts or emits `ArkApiSurface.g.cs`, so opted-out projects no longer pay for the surface on each edit and build.
+
 ## [7.0.0-beta17] - 2026-10-14
 
 ### Added
