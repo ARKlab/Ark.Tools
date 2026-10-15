@@ -3,17 +3,16 @@
   The MCP generator reads contract XML documentation only from AdditionalFiles. This target passes the
   XML documentation of referenced projects, and opt-in of referenced NuGet packages, so contracts declared
   in another assembly keep their tool descriptions. Set ArkMcpIncludeReferencedXmlDocs=false to opt out.
-  Package XML files are opt-in (ArkMcpIncludePackageXmlDocs=true) because every analyzer and generator in
-  the compilation sees AdditionalFiles, including the ASP.NET Core OpenAPI XML generator.
+  The files are copied to the intermediate output as <AssemblyName>.arkmcpdoc because other generators, such as
+  the ASP.NET Core OpenAPI XML comment generator, read every .xml AdditionalFile and fail on member ids that
+  several referenced files document, such as the internal Polyfill types each project compiles.
   -->
   <PropertyGroup>
     <ArkMcpIncludeReferencedXmlDocs Condition="'$(ArkMcpIncludeReferencedXmlDocs)' == ''">true</ArkMcpIncludeReferencedXmlDocs>
     <ArkMcpIncludePackageXmlDocs Condition="'$(ArkMcpIncludePackageXmlDocs)' == ''">false</ArkMcpIncludePackageXmlDocs>
   </PropertyGroup>
 
-  <!-- Runs before the OpenAPI XML target so project-level filters placed after that target also apply here. -->
-  <Target Name="ArkMcpAddReferencedXmlDocumentation"
-          BeforeTargets="CoreCompile;GenerateAdditionalXmlFilesForOpenApi"
+  <Target Name="_ArkMcpCollectReferencedXmlDocumentation"
           DependsOnTargets="ResolveAssemblyReferences"
           Condition="'$(ArkMcpIncludeReferencedXmlDocs)' == 'true' And '@(Analyzer->AnyHaveMetadataValue('Filename', 'Ark.Tools.MediatorFramework.Mcp.Generators'))' == 'true'">
     <ItemGroup>
@@ -23,8 +22,22 @@
                                Condition="'$(ArkMcpIncludePackageXmlDocs)' == 'true' And '%(ReferencePath.NuGetPackageId)' != '' And '%(ReferencePath.FrameworkReferenceName)' == ''" />
       <_ArkMcpXmlDocumentation Remove="@(_ArkMcpXmlDocumentation)" Condition="!Exists('%(FullPath)')" />
       <_ArkMcpXmlDocumentation Remove="@(AdditionalFiles->'%(FullPath)');@(DocFileItem->'%(FullPath)')" />
-      <AdditionalFiles Include="@(_ArkMcpXmlDocumentation->Distinct())" />
+      <_ArkMcpDocumentation Include="@(_ArkMcpXmlDocumentation->Distinct())"
+                            Destination="$(IntermediateOutputPath)ArkMcp/%(_ArkMcpXmlDocumentation.Filename).arkmcpdoc" />
       <_ArkMcpXmlDocumentation Remove="@(_ArkMcpXmlDocumentation)" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Skipped when the copies are up to date; MSBuild still adds the items below for a skipped target. -->
+  <Target Name="ArkMcpAddReferencedXmlDocumentation"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="_ArkMcpCollectReferencedXmlDocumentation"
+          Inputs="@(_ArkMcpDocumentation)"
+          Outputs="@(_ArkMcpDocumentation->'%(Destination)')">
+    <Copy SourceFiles="@(_ArkMcpDocumentation)" DestinationFiles="@(_ArkMcpDocumentation->'%(Destination)')" />
+    <ItemGroup>
+      <AdditionalFiles Include="@(_ArkMcpDocumentation->'%(Destination)')" />
+      <FileWrites Include="@(_ArkMcpDocumentation->'%(Destination)')" />
     </ItemGroup>
   </Target>
 </Project>

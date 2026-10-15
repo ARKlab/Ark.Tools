@@ -423,6 +423,41 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    [DataRow("/obj/ArkMcp/McpContracts.arkmcpdoc", true)]
+    [DataRow("/documentation/McpContracts.xml", true)]
+    [DataRow("/documentation/McpContracts.txt", false)]
+    public void McpGeneratorReadsDocumentationByExtension(string path, bool read)
+    {
+        var contracts = _createMetadataReference(
+            "McpContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            namespace McpContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class ListOrders : ICommand { }
+            """);
+
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            [ArkGenerateMcpToolsForAssembly(typeof(McpContracts.Marker))]
+            public partial class McpContext { }
+            """,
+            [
+                new TestAdditionalText(
+                    path,
+                    """<doc><members><member name="T:McpContracts.ListOrders"><summary>Lists documented orders.</summary></member></members></doc>"""),
+            ],
+            contracts);
+
+        result.Generated.Contains("Description(\"Lists documented orders.\")", StringComparison.Ordinal).Should().Be(read);
+    }
+
+    [TestMethod]
     public async Task McpGeneratorIgnoresReferencedAssemblyXmlDocumentationOnDisk()
     {
         var contracts = await _createMetadataReferenceWithXmlAsync(

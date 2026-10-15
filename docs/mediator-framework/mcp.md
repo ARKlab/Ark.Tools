@@ -28,12 +28,14 @@ are ignored: every public bindable property is an MCP argument.
 
 When contracts live in another assembly, the generator reads their XML
 documentation only from `AdditionalFiles`; it never reads files from disk. The
-package adds the XML documentation of referenced projects automatically. Set
-`ArkMcpIncludePackageXmlDocs=true` to also add the XML documentation of
+package copies the XML documentation of referenced projects to the intermediate
+output as `<AssemblyName>.arkmcpdoc` and passes the copies as `AdditionalFiles`.
+The MCP-only extension keeps the files away from generators that read every
+`.xml` additional file, such as the ASP.NET Core OpenAPI XML comment generator.
+Set `ArkMcpIncludePackageXmlDocs=true` to also pass the XML documentation of
 referenced NuGet packages, or `ArkMcpIncludeReferencedXmlDocs=false` to turn
-both off and pass the files yourself. Every analyzer and generator in the
-compilation sees `AdditionalFiles`, including the ASP.NET Core OpenAPI XML
-documentation generator.
+both off. The generator also reads `.xml` and `.arkmcpdoc` files you add to
+`AdditionalFiles` yourself; per assembly, the first file by path wins.
 
 ## Compose the host
 

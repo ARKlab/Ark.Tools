@@ -40,6 +40,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private const string ReferencedContractsTrackingName = "McpReferencedContracts";
     private const string ModelTrackingName = "McpModel";
     private const string EmissionInputTrackingName = "McpEmissionInput";
+    // Referenced documentation copied by Ark.Tools.MediatorFramework.Mcp.targets, hidden from generators that read every .xml file.
+    private const string ReferencedDocumentationExtension = ".arkmcpdoc";
 
     private static readonly DiagnosticDescriptor InvalidName = new(
         "ARKMF050", "Use a valid MCP tool name", "MCP tool name '{0}' is invalid; rename the tool to a valid MCP identifier",
@@ -118,7 +120,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         // Each relevant XML file is parsed on its own, keeping only the members the emitter looks up,
         // so editing one file or an unrelated one does not reparse the others.
         var additionalDocumentation = context.AdditionalTextsProvider
-            .Where(static text => string.Equals(Path.GetExtension(text.Path), ".xml", StringComparison.OrdinalIgnoreCase))
+            .Where(static text => IsDocumentationFile(text.Path))
             .Combine(documentationRequest)
             .Where(static pair => !pair.Right.MemberIds.IsEmpty && pair.Right.AssemblyNames.Values.Contains(
                 Path.GetFileNameWithoutExtension(pair.Left.Path), StringComparer.Ordinal))
@@ -248,6 +250,13 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             new LinePositionSpan(
                 new LinePosition(location.StartLine, location.StartCharacter),
                 new LinePosition(location.EndLine, location.EndCharacter)));
+
+    private static bool IsDocumentationFile(string path)
+    {
+        var extension = Path.GetExtension(path);
+        return string.Equals(extension, ".xml", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ReferencedDocumentationExtension, StringComparison.OrdinalIgnoreCase);
+    }
 
     private static DocumentationFileModel GetDocumentationFile(
         AdditionalText text,
