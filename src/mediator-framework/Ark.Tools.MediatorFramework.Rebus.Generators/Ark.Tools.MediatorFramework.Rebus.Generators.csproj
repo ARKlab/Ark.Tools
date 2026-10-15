@@ -30,6 +30,7 @@
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/MessagingContractTopologyValidator.cs" Link="MessagingContractTopologyValidator.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/GeneratorSpecPrimitives.cs" Link="GeneratorSpecPrimitives.cs" />
+    <Compile Include="../Ark.Tools.MediatorFramework.Generators/ContractSymbols.cs" Link="ContractSymbols.cs" />
   </ItemGroup>
 
 </Project>
