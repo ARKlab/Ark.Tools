@@ -64,11 +64,13 @@ public static class McpAttachmentResults
         CancellationToken cancellationToken)
     {
         using var output = new MemoryStream();
-        var buffer = ArrayPool<byte>.Shared.Rent(81920);
+        const int ChunkSize = 81920;
+        var buffer = ArrayPool<byte>.Shared.Rent(ChunkSize);
         try
         {
             int read;
-            while ((read = await input.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false)) > 0)
+            // Rent may return a larger array; cap each read so the MemoryStream grows in fixed chunks.
+            while ((read = await input.ReadAsync(buffer.AsMemory(0, ChunkSize), cancellationToken).ConfigureAwait(false)) > 0)
             {
                 if (output.Length + read > maximumBytes)
                     throw _tooLarge();
