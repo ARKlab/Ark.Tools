@@ -148,6 +148,42 @@ public sealed class RuntimeRedactionTests
         output.Should().NotContain("alice@private-domain.test");
     }
 
+    /// <summary>PII scanning covers the message but not the timestamp/level/logger prefix of a text line.</summary>
+    [TestMethod]
+    public void PiiScan_SkipsTextLinePrefix()
+    {
+        const string loggerShortName = "+12025550100";
+        new PiiScanner(PiiScanMode.MessageAndProperties).Scan(loggerShortName)
+            .Should().Contain(ComplianceRedactor.Marker, "the logger name must look like PII for this test to be meaningful");
+
+        var output = _capture(static configurer => configurer.WithComplianceRedaction(static options =>
+            options.PiiScan = PiiScanMode.MessageAndProperties), static logger =>
+        {
+            LogManager.GetLogger("Compliance." + loggerShortName)
+                .Info(CultureInfo.InvariantCulture, "{Message}", "contact alice@private-domain.test");
+        });
+
+        output.Should().Contain(loggerShortName);
+        output.Should().Contain(ComplianceRedactor.Marker);
+        output.Should().NotContain("alice@private-domain.test");
+    }
+
+    /// <summary>The text line keeps the public <see cref="NLogConfigurer.TextLineLayout"/> format.</summary>
+    [TestMethod]
+    public void TextLine_MatchesPublicLayout()
+    {
+        var logEvent = new LogEventInfo(LogLevel.Warn, "Compliance.Runtime.Tests", CultureInfo.InvariantCulture,
+            "failed {Value}", [42])
+        {
+            Exception = new InvalidOperationException("ordinary failure"),
+        };
+        var expected = Layout.FromString(NLogConfigurer.TextLineLayout).Render(logEvent);
+
+        var output = _capture(null, logger => logger.Log(logEvent));
+
+        output.Should().Be(expected + Environment.NewLine);
+    }
+
     /// <summary>Pattern scanning classifies phone and postal-address matches independently from email.</summary>
     [TestMethod]
     public void PiiScan_MasksPhoneAndPostalAddress()

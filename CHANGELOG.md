@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `Ark.Tools.NLog`: with PII scanning on, console, file, debugger and mail text lines scan only the message and exception text, not the timestamp, level and logger prefix, so log events without PII-like content no longer pay for the regex.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed
