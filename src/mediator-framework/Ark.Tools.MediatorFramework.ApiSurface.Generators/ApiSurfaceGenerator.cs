@@ -79,21 +79,32 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var httpTypes = _specsForAttribute(context, Http)
+        // Read opt-out flag from MSBuild global properties
+        var enabledProvider = context.AnalyzerConfigOptionsProvider
+            .Select(static (opts, _) =>
+            {
+                opts.GlobalOptions.TryGetValue("build_property.ArkApiSurfaceEnabled", out var v);
+                // Only enable when the MSBuild property is explicitly set to "true"
+                // (propagated via CompilerVisibleProperty in the buildTransitive .targets).
+                // Absent means the project did not opt in or the .targets was not imported.
+                return string.Equals(v, "true", StringComparison.OrdinalIgnoreCase);
+            });
+
+        var httpTypes = _specsForAttribute(context, Http, enabledProvider)
             .Collect();
-        var grpcTypes = _specsForAttribute(context, Grpc)
+        var grpcTypes = _specsForAttribute(context, Grpc, enabledProvider)
             .Collect();
-        var rebusTypes = _specsForAttribute(context, Rebus)
+        var rebusTypes = _specsForAttribute(context, Rebus, enabledProvider)
             .Collect();
-        var messageTypes = _specsForAttribute(context, Message)
+        var messageTypes = _specsForAttribute(context, Message, enabledProvider)
             .Collect();
-        var eventTypes = _specsForAttribute(context, Event)
+        var eventTypes = _specsForAttribute(context, Event, enabledProvider)
             .Collect();
-        var participantTypes = _specsForAttribute(context, Participant)
+        var participantTypes = _specsForAttribute(context, Participant, enabledProvider)
             .Collect();
-        var networkTypes = _specsForAttribute(context, Network)
+        var networkTypes = _specsForAttribute(context, Network, enabledProvider)
             .Collect();
-        var mcpTypes = _specsForAttribute(context, McpTool)
+        var mcpTypes = _specsForAttribute(context, McpTool, enabledProvider)
             .Collect();
         var contractSpecs = httpTypes.Combine(grpcTypes).Combine(rebusTypes)
             .Combine(messageTypes).Combine(eventTypes).Combine(participantTypes).Combine(networkTypes).Combine(mcpTypes)
@@ -117,8 +128,12 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             .WithTrackingName(LinesStage);
 
         // Emit the .g.cs snapshot file (unchanged behaviour)
-        context.RegisterSourceOutput(linesProvider, static (spc, lines) =>
+        context.RegisterSourceOutput(linesProvider.Combine(enabledProvider), static (spc, pair) =>
         {
+            var (lines, isEnabled) = pair;
+            if (!isEnabled)
+                return;
+
             var text = string.Join("\n", lines) + (lines.Count == 0 ? string.Empty : "\n");
             spc.AddSource("ArkApiSurface.g.cs", "/*\n" + text.Replace("*/", "* /") + "*/\n");
         });
@@ -127,17 +142,6 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var baselineProvider = context.AdditionalTextsProvider
             .Where(static f => string.Equals(Path.GetFileName(f.Path), "ArkApiSurface.txt", StringComparison.OrdinalIgnoreCase))
             .Collect();
-
-        // Read opt-out flag from MSBuild global properties
-        var enabledProvider = context.AnalyzerConfigOptionsProvider
-            .Select(static (opts, _) =>
-            {
-                opts.GlobalOptions.TryGetValue("build_property.ArkApiSurfaceEnabled", out var v);
-                // Only enable when the MSBuild property is explicitly set to "true"
-                // (propagated via CompilerVisibleProperty in the buildTransitive .targets).
-                // Absent means the project did not opt in or the .targets was not imported.
-                return string.Equals(v, "true", StringComparison.OrdinalIgnoreCase);
-            });
 
         // Parse the baseline once per baseline or opt-in change; skipped entirely when disabled.
         var baselineSpecProvider = baselineProvider.Combine(enabledProvider)
@@ -259,15 +263,22 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
 
     private static IncrementalValuesProvider<ApiSurfaceTypeSpec> _specsForAttribute(
         IncrementalGeneratorInitializationContext context,
-        string attributeName)
+        string attributeName,
+        IncrementalValueProvider<bool> enabled)
     {
-        return context.SyntaxProvider.ForAttributeWithMetadataName<ApiSurfaceTypeSpec?>(
+        // The deep walk runs only after the opt-in gate: only syntax nodes cross it, so an opted-out project parses nothing.
+        return context.SyntaxProvider.ForAttributeWithMetadataName(
                 attributeName,
                 static (node, _) => node is TypeDeclarationSyntax,
-                static (attributeContext, cancellationToken) =>
-                    attributeContext.TargetSymbol is INamedTypeSymbol type
-                        ? ReadTypeSpec(type, cancellationToken)
-                        : null)
+                static (attributeContext, _) => attributeContext.TargetNode)
+            .Combine(enabled)
+            .Where(static pair => pair.Right)
+            .Select(static (pair, _) => pair.Left)
+            .Combine(context.CompilationProvider)
+            .Select(static (pair, cancellationToken) =>
+                pair.Right.GetSemanticModel(pair.Left.SyntaxTree).GetDeclaredSymbol(pair.Left, cancellationToken) is INamedTypeSymbol type
+                    ? ReadTypeSpec(type, cancellationToken)
+                    : (ApiSurfaceTypeSpec?)null)
             .Where(static spec => spec is not null)
             .Select(static (spec, _) => spec!.Value);
     }

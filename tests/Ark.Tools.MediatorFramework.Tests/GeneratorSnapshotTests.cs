@@ -33,6 +33,13 @@ namespace Ark.Tools.MediatorFramework.Tests;
 [TestClass]
 public sealed class GeneratorSnapshotTests
 {
+    // The API surface generator runs only when opted in, as the buildTransitive targets do by default.
+    private static readonly TestAnalyzerConfigOptionsProvider _apiSurfaceEnabledOptions = new(
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["build_property.ArkApiSurfaceEnabled"] = "true",
+        });
+
     private static readonly ImmutableArray<MetadataReference> _platformReferences =
         ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? string.Empty)
         .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
@@ -4712,7 +4719,8 @@ public sealed class GeneratorSnapshotTests
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             generators: [new TGenerator().AsSourceGenerator()],
-            additionalTexts: additionalTexts);
+            additionalTexts: additionalTexts,
+            optionsProvider: _apiSurfaceEnabledOptions);
 
         return (driver.RunGenerators(compilation), compilation);
     }
@@ -4908,6 +4916,7 @@ public sealed class GeneratorSnapshotTests
             trackIncrementalGeneratorSteps: true);
         GeneratorDriver driver = CSharpGeneratorDriver.Create(
             [generator.AsSourceGenerator()],
+            optionsProvider: _apiSurfaceEnabledOptions,
             driverOptions: options);
 
         return (driver.RunGenerators(compilation), compilation);
@@ -5047,7 +5056,7 @@ public sealed class GeneratorSnapshotTests
             """;
 
         // Get the actual current snapshot from the generator
-        var snapshot = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
+        var snapshot = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: true).Generated;
 
         var result = _runApiSurfaceGeneratorResult(source, baseline: snapshot, enabled: true);
 
@@ -5070,6 +5079,49 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI001");
         result.Diagnostics.Should().NotContain(static d => d.Id == "ARKAPI002");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorEmitsNothingAndParsesNoContractWhenDisabled()
+    {
+        const string source = """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("GET", "/items/{id}")]
+            public sealed class GetItem : IQuery<string> { public string Id { get; set; } = string.Empty; }
+            """;
+
+        var (withContract, withContractSpecs) = _runDisabledApiSurfaceGenerator(source);
+        var (_, withoutContractSpecs) = _runDisabledApiSurfaceGenerator("public sealed class Unrelated { }");
+
+        withContract.GeneratedSources.Should().BeEmpty();
+        withContract.Diagnostics.Should().BeEmpty();
+        withContractSpecs.Should().Be(withoutContractSpecs);
+    }
+
+    private static (GeneratorRunResult Result, object? Specs) _runDisabledApiSurfaceGenerator(string source)
+    {
+        var compilation = CSharpCompilation.Create(
+            "ApiSurfaceDisabled",
+            [CSharpSyntaxTree.ParseText(source)],
+            _platformReferences.Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            ]),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator().AsSourceGenerator()],
+            optionsProvider: new TestAnalyzerConfigOptionsProvider(
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["build_property.ArkApiSurfaceEnabled"] = "false",
+                }),
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+        var result = driver.RunGenerators(compilation).GetRunResult().Results.Single();
+        return (result, result.TrackedSteps["ApiSurfaceSpecs"].Single().Outputs.Single().Value);
     }
 
     [TestMethod]
@@ -5149,7 +5201,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class BookMessagingNetwork { }
             """;
 
-        var snapshot = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: false).Generated;
+        var snapshot = _runApiSurfaceGeneratorResult(source, baseline: null, enabled: true).Generated;
 
         snapshot.Should().Contain(
             """
@@ -5220,7 +5272,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class SecondMessage { }
             """;
 
-        var baseline = _runApiSurfaceGeneratorResult(baselineSource, baseline: null, enabled: false).Generated;
+        var baseline = _runApiSurfaceGeneratorResult(baselineSource, baseline: null, enabled: true).Generated;
         var result = _runApiSurfaceGeneratorResult(changedSource, baseline, enabled: true);
 
         result.Diagnostics.Should().Contain(
@@ -5291,7 +5343,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class ANetwork { }
             """,
             baseline: null,
-            enabled: false).Generated;
+            enabled: true).Generated;
 
         generated.IndexOf("EVENT ", StringComparison.Ordinal).Should().BeLessThan(0);
         generated.IndexOf("MESSAGE AMessage", StringComparison.Ordinal)
