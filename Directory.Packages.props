@@ -125,7 +125,7 @@
     <PackageVersion Include="DotNetDiag.HealthChecks.UI" Version="10.0.16" />
     <PackageVersion Include="DotNetDiag.HealthChecks.UI.Client" Version="10.0.16" />
     <PackageVersion Include="DotNetDiag.HealthChecks.UI.InMemory.Storage" Version="10.0.16" />
-    <PackageVersion Include="KubernetesClient" Version="19.0.2" />
+    <PackageVersion Include="KubernetesClient" Version="21.0.8" />
     <!-- SQL -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
     <PackageVersion Include="Dapper" Version="2.1.89" />
