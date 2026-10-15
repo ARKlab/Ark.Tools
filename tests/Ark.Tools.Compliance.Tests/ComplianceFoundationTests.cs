@@ -381,6 +381,61 @@ public sealed class ComplianceFoundationTests
         _assertRedacts(redactor, ArkRedaction.Hmac, "secret-value", expected);
     }
 
+    /// <summary>
+    /// Empty and default generated values render the same text through ToString and TryFormat:
+    /// the marker for redacting modes and an empty string for None.
+    /// </summary>
+    [TestMethod]
+    public void SensitiveValueObject_EmptyAndDefaultRenderConsistently()
+    {
+        _assertRenders(TestSensitiveValue.From(string.Empty), "***");
+        _assertRenders(default(TestSensitiveValue), "***");
+        _assertRenders(TestMaskedValue.From(string.Empty), "***");
+        _assertRenders(default(TestMaskedValue), "***");
+        _assertRenders(TestHmacValue.From(string.Empty), "***");
+        _assertRenders(default(TestHmacValue), "***");
+        _assertRenders(TestClearValue.From(string.Empty), string.Empty);
+        _assertRenders(default(TestClearValue), string.Empty);
+    }
+
+    /// <summary>
+    /// Direct redaction of an empty value matches the span path for every mode.
+    /// </summary>
+    /// <param name="redaction">The redaction mode.</param>
+    /// <param name="expected">The expected redacted text.</param>
+    [TestMethod]
+    [DataRow(ArkRedaction.Erase, "***")]
+    [DataRow(ArkRedaction.Mask, "***")]
+    [DataRow(ArkRedaction.Hmac, "***")]
+    public void ComplianceRedactor_RedactsEmptyValuePerMode(ArkRedaction redaction, string expected)
+    {
+        _assertRedacts(new ComplianceRedactor(), redaction, string.Empty, expected);
+    }
+
+    /// <summary>
+    /// Direct redaction of an empty value passes through None and hashes with a configured HMAC key.
+    /// </summary>
+    [TestMethod]
+    public void ComplianceRedactor_RedactsEmptyValueForNoneAndKeyedHmac()
+    {
+        var key = RandomNumberGenerator.GetBytes(32);
+        var keyed = new ComplianceRedactor(new ComplianceRedactionOptions { HmacKey = key });
+
+        new ComplianceRedactor().Redact(string.Empty, ArkRedaction.None).Should().BeEmpty();
+        _assertRedacts(keyed, ArkRedaction.Hmac, string.Empty, "hmac:" + Convert.ToHexString(HMACSHA256.HashData(key, Array.Empty<byte>())));
+    }
+
+    private static void _assertRenders<T>(T value, string expected)
+        where T : ISpanFormattable
+    {
+        var buffer = new char[16];
+        var formatted = value.TryFormat(buffer.AsSpan(), out var written, default, null);
+
+        formatted.Should().BeTrue();
+        new string(buffer, 0, written).Should().Be(expected);
+        value.ToString().Should().Be(expected);
+    }
+
     private static void _assertRedacts(ComplianceRedactor redactor, ArkRedaction redaction, string source, string expected)
     {
         var spanRedactor = redactor.GetRedactor(redaction);
@@ -497,6 +552,24 @@ public sealed class ComplianceFoundationTests
 /// <summary>Test-only generated sensitive value object.</summary>
 [SensitiveValueObject<string>(ArkRedaction.Erase)]
 public readonly partial struct TestSensitiveValue
+{
+}
+
+/// <summary>Test-only masked sensitive value object.</summary>
+[SensitiveValueObject<string>(ArkRedaction.Mask)]
+public readonly partial struct TestMaskedValue
+{
+}
+
+/// <summary>Test-only HMAC sensitive value object.</summary>
+[SensitiveValueObject<string>(ArkRedaction.Hmac)]
+public readonly partial struct TestHmacValue
+{
+}
+
+/// <summary>Test-only pass-through sensitive value object.</summary>
+[SensitiveValueObject<string>(ArkRedaction.None)]
+public readonly partial struct TestClearValue
 {
 }
 

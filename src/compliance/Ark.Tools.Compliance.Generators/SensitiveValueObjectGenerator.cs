@@ -269,7 +269,13 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <inheritdoc />");
-        builder.AppendLine("    public override string ToString() => _redactor.Redact(_value ?? string.Empty);");
+        builder.AppendLine("    public override string ToString()");
+        builder.AppendLine("    {");
+        builder.AppendLine("        // Redactor.Redact(string) returns \"\" for empty input; keep the span path's marker.");
+        builder.AppendLine("        var value = _value ?? string.Empty;");
+        builder.AppendLine("        return string.Create(_redactor.GetRedactedLength(global::System.MemoryExtensions.AsSpan(value)), value,");
+        builder.AppendLine("            static (destination, state) => _redactor.Redact(global::System.MemoryExtensions.AsSpan(state), destination));");
+        builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <inheritdoc />");
         builder.AppendLine("    public string ToString(string? format, global::System.IFormatProvider? formatProvider) => ToString();");

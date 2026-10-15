@@ -45,7 +45,9 @@ public sealed class ComplianceRedactor
         // Erase/Mask always render the fixed marker, so skip the redactor and its allocations.
         return redaction switch
         {
-            ArkRedaction.Hmac => _hmac.Redact(value),
+            // Redactor.Redact(string) returns "" for empty input; keep the span path's output.
+            ArkRedaction.Hmac => string.Create(_hmac.GetRedactedLength(value), (_hmac, value),
+                static (destination, state) => state._hmac.Redact(state.value, destination)),
             ArkRedaction.None => value,
             _ => ArkErasingRedactor.Marker,
         };
