@@ -4,13 +4,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Primitives;
 
-using System.Buffers;
-
 namespace Ark.Tools.AspNetCore.CommaSeparatedParameters;
 
 public sealed class SeparatedQueryValueProvider : QueryStringValueProvider
 {
-    private readonly SearchValues<char> _separatorSearchValues;
     private readonly char _separator;
     private readonly string? _key;
 
@@ -22,7 +19,6 @@ public sealed class SeparatedQueryValueProvider : QueryStringValueProvider
         : base(BindingSource.Query, values, CultureInfo.InvariantCulture)
     {
         _separator = separator;
-        _separatorSearchValues = SearchValues.Create([separator]);
         _key = key;
     }
 
@@ -49,7 +45,7 @@ public sealed class SeparatedQueryValueProvider : QueryStringValueProvider
     {
         foreach (var value in values)
         {
-            if (value != null && value.AsSpan().IndexOfAny(_separatorSearchValues) > 0)
+            if (value != null && value.AsSpan().IndexOf(_separator) > 0)
                 return true;
         }
         return false;
