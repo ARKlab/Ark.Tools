@@ -30,7 +30,12 @@ public sealed class SensitivePropertyRefactoringProvider : CodeRefactoringProvid
 
         // The cheap classification check runs first so unclassified properties never pay the reference search.
         var model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
-        if (model?.GetDeclaredSymbol(property, context.CancellationToken) is not { } symbol
+        if (model is null)
+        {
+            return;
+        }
+
+        if (model.GetDeclaredSymbol(property, context.CancellationToken) is not { } symbol
             || !_isClassified(symbol, model.Compilation)
             || !await ComplianceCodeFixProvider._canConvertAsync(context.Document, property, context.CancellationToken).ConfigureAwait(false))
         {
