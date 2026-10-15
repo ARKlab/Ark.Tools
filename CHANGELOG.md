@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Breaking:** `Ark.Tools.MediatorFramework.Mcp`: MCP tool descriptions now come only from XML documentation passed to the compiler; the MCP generator no longer reads documentation files from disk. The MCP package passes referenced projects' XML documentation to the generator automatically, as `<AssemblyName>.arkmcpdoc` copies in the intermediate output so other generators (such as the ASP.NET Core OpenAPI one) do not read them; opt out with `ArkMcpIncludeReferencedXmlDocs=false`. Contracts from referenced NuGet packages keep their descriptions only with `ArkMcpIncludePackageXmlDocs=true`.
 - **Breaking:** `Ark.Tools.MediatorFramework.MinimalApi` hosts with MessagePack endpoints must call `services.AddArkMessagePack(resolver)` instead of registering `IFormatterResolver` directly; without it they fail with an `InvalidOperationException` at startup, or on the first MessagePack response for hosts whose MessagePack endpoints only return data.
 - `Ark.Tools.MediatorFramework.MinimalApi`: MessagePack responses of generated Minimal API endpoints are written straight to the response pipe, and the serializer options and `Accept` parsing no longer allocate per request; the bytes on the wire are unchanged.
+- `Ark.Tools.Compliance.Sql`: the task that writes the compliance SQL scripts now ships precompiled in the package (`tasks/netstandard2.0`) instead of being compiled on every MSBuild node, so clean builds of compliance-enabled projects are a few seconds faster.
 
 ### Fixed
 
@@ -31,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.AspNetCore.BasicAuthAuth0Proxy` and `Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy` no longer retry a login rejected by the identity provider, such as a wrong password. One bad Basic-auth request now counts as one failed login instead of three or four, so users are not locked out sooner, and on Auth0 it fails at once instead of after up to 6 seconds. Network errors, timeouts, 408, 429 and 5xx responses are still retried, and an aborted request stops the retries.
 - `Ark.Tools.MediatorFramework`: the Minimal API generator now collapses line breaks and repeated whitespace in `[Description]` text, as the gRPC generator already did, so a contract gets the same OpenAPI summary and gRPC comment on both transports.
 - `Ark.Tools.MediatorFramework.MinimalApi`: Minimal API endpoints with `AcceptsMessagePack` now read and write JSON with the `JsonTypeInfo` from the host's HTTP JSON options, so Native AOT publishes no longer report IL2026/IL3050 from Ark.Tools for them. If those options have no metadata for a request or response type, the JSON call now throws `NotSupportedException` instead of falling back to reflection.
+- `Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy` now forwards the access token returned by Azure AD. Before, it never read `access_token` from the token response and sent an empty `Authorization: Bearer` header, so every basic-auth request failed authentication.
 
 ## [7.0.0-beta18] - 2026-10-15
 
@@ -274,5 +276,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - `ArkAdaptiveSampler` measures elapsed time with a monotonic clock, so system clock changes no longer distort trace rate limiting.
-- `Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy` now forwards the access token returned by Azure AD. Before, it never read `access_token` from the token response and sent an empty `Authorization: Bearer` header, so every basic-auth request failed authentication.
-- `Ark.Tools.Compliance.Sql`: the task that writes the compliance SQL scripts now ships precompiled in the package (`tasks/netstandard2.0`) instead of being compiled on every MSBuild node, so clean builds of compliance-enabled projects are a few seconds faster.
