@@ -20,9 +20,6 @@ public interface ISampleDataContext : IOutboxAsyncContext
     /// <summary>Writes an audit entry.</summary>
     Task WriteAuditAsync(AuditEntry audit, CancellationToken ctk = default);
 
-    /// <summary>Writes multiple audit entries with as few round trips as possible.</summary>
-    Task WriteAuditsAsync(IReadOnlyCollection<AuditEntry> audits, CancellationToken ctk = default);
-
     /// <summary>Reads audit records.</summary>
     Task<PagedResult<AuditRecord>> ReadAuditsAsync(GetAuditsQuery.V1 query, CancellationToken ctk = default);
 
@@ -143,35 +140,6 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             audit.Timestamp,
         }, Transaction, cancellationToken: ctk);
         await Connection.ExecuteAsync(command).ConfigureAwait(false);
-    }
-
-    /// <summary>Saves audit records in the current transaction with one multi-row INSERT per chunk.</summary>
-    public async Task WriteAuditsAsync(IReadOnlyCollection<AuditEntry> audits, CancellationToken ctk = default)
-    {
-        ArgumentNullException.ThrowIfNull(audits);
-        // 6 parameters per row: 300 rows stay below the SQL Server limits of 2100 parameters and 1000 VALUES rows.
-        var sql = new StringBuilder();
-        foreach (var chunk in audits.Chunk(300))
-        {
-            sql.Clear().Append("INSERT INTO [dbo].[Audit] ([Id], [UserId], [EntityType], [Identifier], [Operation], [Timestamp]) VALUES ");
-            var parameters = new DynamicParameters();
-            for (var i = 0; i < chunk.Length; i++)
-            {
-                var audit = chunk[i];
-                if (i > 0)
-                    sql.Append(", ");
-                sql.Append(CultureInfo.InvariantCulture, $"(@Id{i}, @UserId{i}, @EntityType{i}, @Identifier{i}, @Operation{i}, @Timestamp{i})");
-                parameters.Add(string.Create(CultureInfo.InvariantCulture, $"Id{i}"), audit.Id);
-                parameters.Add(string.Create(CultureInfo.InvariantCulture, $"UserId{i}"), audit.UserId);
-                parameters.Add(string.Create(CultureInfo.InvariantCulture, $"EntityType{i}"), audit.EntityType);
-                parameters.Add(string.Create(CultureInfo.InvariantCulture, $"Identifier{i}"), audit.Identifier);
-                parameters.Add(string.Create(CultureInfo.InvariantCulture, $"Operation{i}"), audit.Operation);
-                parameters.Add(string.Create(CultureInfo.InvariantCulture, $"Timestamp{i}"), audit.Timestamp);
-            }
-
-            var command = new CommandDefinition(sql.ToString(), parameters, Transaction, cancellationToken: ctk);
-            await Connection.ExecuteAsync(command).ConfigureAwait(false);
-        }
     }
 
     /// <summary>Reads a page of audit records in the current transaction.</summary>

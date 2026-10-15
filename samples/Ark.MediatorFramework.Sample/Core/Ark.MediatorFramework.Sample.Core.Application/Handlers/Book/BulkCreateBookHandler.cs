@@ -44,19 +44,17 @@ public sealed class BulkCreateBookHandler :
             .ToArray();
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
-        var userId = _user.GetUserIdOrAnonymous();
-        var timestamp = _clock.GetCurrentInstant();
-        var audits = books
-            .Select(book => new AuditEntry
-            {
-                UserId = userId,
-                EntityType = nameof(Book.V1.Output),
-                Identifier = book.Id.Value.ToString("D"),
-                Operation = typeof(Book_BulkCreateRequest).Name + "." + typeof(Book_BulkCreateRequest.V1).Name,
-                Timestamp = timestamp,
-            })
-            .ToArray();
-        await context.WriteAuditsAsync(audits, ctk).ConfigureAwait(false);
+        // Bulk is a single operation, so it gets a single audit that identifies the operation itself.
+        var auditId = AuditId.New();
+        await context.WriteAuditAsync(new AuditEntry
+        {
+            Id = auditId,
+            UserId = _user.GetUserIdOrAnonymous(),
+            EntityType = nameof(Book.V1.Output),
+            Identifier = auditId.Value.ToString("D"),
+            Operation = typeof(Book_BulkCreateRequest).Name + "." + typeof(Book_BulkCreateRequest.V1).Name,
+            Timestamp = _clock.GetCurrentInstant(),
+        }, ctk).ConfigureAwait(false);
         var created = await context.BulkInsertBooksAsync(books, ctk).ConfigureAwait(false);
         await context.CommitAsync(ctk).ConfigureAwait(false);
         return created.ToArray();

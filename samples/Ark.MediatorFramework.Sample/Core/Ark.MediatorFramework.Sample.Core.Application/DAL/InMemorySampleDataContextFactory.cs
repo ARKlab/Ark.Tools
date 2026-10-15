@@ -82,13 +82,6 @@ public sealed class InMemorySampleDataContextFactory : ISampleDataContextFactory
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
-        public async Task WriteAuditsAsync(IReadOnlyCollection<AuditEntry> audits, CancellationToken ctk = default)
-        {
-            ArgumentNullException.ThrowIfNull(audits);
-            foreach (var audit in audits)
-                await WriteAuditAsync(audit, ctk).ConfigureAwait(false);
-        }
-
         public async Task<PagedResult<AuditRecord>> ReadAuditsAsync(
             GetAuditsQuery.V1 query,
             CancellationToken ctk = default)
