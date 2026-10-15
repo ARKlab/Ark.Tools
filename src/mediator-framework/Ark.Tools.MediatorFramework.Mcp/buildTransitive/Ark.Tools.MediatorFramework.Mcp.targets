@@ -28,13 +28,15 @@
     </ItemGroup>
   </Target>
 
-  <!-- Skipped when the copies are up to date; MSBuild still adds the items below for a skipped target. -->
+  <!--
+  Copies when size or timestamp differ, not only when the source is newer, so a reference that moves to an older file
+  with the same name, such as a downgraded package, refreshes the copy. Unchanged copies keep their timestamp, so
+  CoreCompile stays incremental.
+  -->
   <Target Name="ArkMcpAddReferencedXmlDocumentation"
           BeforeTargets="CoreCompile"
-          DependsOnTargets="_ArkMcpCollectReferencedXmlDocumentation"
-          Inputs="@(_ArkMcpDocumentation)"
-          Outputs="@(_ArkMcpDocumentation->'%(Destination)')">
-    <Copy SourceFiles="@(_ArkMcpDocumentation)" DestinationFiles="@(_ArkMcpDocumentation->'%(Destination)')" />
+          DependsOnTargets="_ArkMcpCollectReferencedXmlDocumentation">
+    <Copy SourceFiles="@(_ArkMcpDocumentation)" DestinationFiles="@(_ArkMcpDocumentation->'%(Destination)')" SkipUnchangedFiles="true" />
     <ItemGroup>
       <AdditionalFiles Include="@(_ArkMcpDocumentation->'%(Destination)')" />
       <FileWrites Include="@(_ArkMcpDocumentation->'%(Destination)')" />

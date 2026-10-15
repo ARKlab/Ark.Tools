@@ -62,6 +62,20 @@ public sealed class McpReferencedXmlDocsTargetTests
         files.Should().BeEquivalentTo("existing/Existing.xml", "obj/ArkMcp/ProjLib.arkmcpdoc");
     }
 
+    /// <summary>
+    /// A reference that moves to a file with the same name but an older timestamp, such as a downgraded package,
+    /// still refreshes the copy, which a newer-than check would keep stale.
+    /// </summary>
+    [TestMethod]
+    public async Task MovedReferenceWithOlderDocumentationRefreshesCopy()
+    {
+        string? copy = null;
+        await _runAsync([[], ["-p:ProjLibDirectory=proj-older"]],
+            async directory => copy = await File.ReadAllTextAsync(Path.Join(directory, "obj/ArkMcp/ProjLib.arkmcpdoc")).ConfigureAwait(false))
+            .ConfigureAwait(false);
+        copy.Should().Be("<doc>older</doc>");
+    }
+
     /// <summary>The target does nothing when the MCP generator is not among the analyzers.</summary>
     [TestMethod]
     public async Task WithoutMcpGeneratorAddsNothing()
@@ -72,6 +86,11 @@ public sealed class McpReferencedXmlDocsTargetTests
 
     private static async Task<string[]> _runAsync(int runs, params string[] arguments)
     {
+        return await _runAsync([.. Enumerable.Repeat(arguments, runs)], null).ConfigureAwait(false);
+    }
+
+    private static async Task<string[]> _runAsync(string[][] runs, Func<string, Task>? inspect)
+    {
         var directory = Path.Join(AppContext.BaseDirectory, "McpTargetRuns", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory);
         try
@@ -81,17 +100,22 @@ public sealed class McpReferencedXmlDocsTargetTests
                 Directory.CreateDirectory(Path.Join(directory, Path.GetDirectoryName(xml)));
                 await File.WriteAllTextAsync(Path.Join(directory, xml), "<doc />").ConfigureAwait(false);
             }
+            var older = Path.Join(directory, "proj-older", "ProjLib.xml");
+            Directory.CreateDirectory(Path.GetDirectoryName(older)!);
+            await File.WriteAllTextAsync(older, "<doc>older</doc>").ConfigureAwait(false);
+            File.SetLastWriteTimeUtc(older, DateTime.UtcNow.AddDays(-1));
             var root = Path.GetFullPath("../../../../..", AppContext.BaseDirectory);
             var project = new XDocument(new XElement("Project",
-                new XElement("PropertyGroup", new XElement("IntermediateOutputPath", "obj/")),
+                new XElement("PropertyGroup", new XElement("IntermediateOutputPath", "obj/"),
+                    new XElement("ProjLibDirectory", new XAttribute("Condition", "'$(ProjLibDirectory)' == ''"), "proj")),
                 new XElement("ItemGroup",
                     new XElement("Analyzer", new XAttribute("Include", "analyzers/Ark.Tools.MediatorFramework.Mcp.Generators.dll"),
                         new XAttribute("Condition", "'$(WithoutMcpGenerator)' != 'true'")),
                     new XElement("Analyzer", new XAttribute("Include", "analyzers/Other.Generators.dll")),
                     new XElement("AdditionalFiles", new XAttribute("Include", "existing/Existing.xml")),
                     new XElement("DocFileItem", new XAttribute("Include", "own/Own.xml")),
-                    _reference("proj/ProjLib.dll", new XElement("ReferenceSourceTarget", "ProjectReference")),
-                    _reference("proj/ProjLib.dll", new XElement("ReferenceSourceTarget", "ProjectReference")),
+                    _reference("$(ProjLibDirectory)/ProjLib.dll", new XElement("ReferenceSourceTarget", "ProjectReference")),
+                    _reference("$(ProjLibDirectory)/ProjLib.dll", new XElement("ReferenceSourceTarget", "ProjectReference")),
                     _reference("existing/Existing.dll", new XElement("ReferenceSourceTarget", "ProjectReference")),
                     _reference("own/Own.dll", new XElement("ReferenceSourceTarget", "ProjectReference")),
                     _reference("missing/Missing.dll", new XElement("ReferenceSourceTarget", "ProjectReference")),
@@ -108,9 +132,13 @@ public sealed class McpReferencedXmlDocsTargetTests
             var projectPath = Path.Join(directory, "app.proj");
             project.Save(projectPath);
 
-            for (var run = 0; run < runs; run++)
+            foreach (var arguments in runs)
             {
                 await _msbuildAsync(directory, projectPath, arguments).ConfigureAwait(false);
+            }
+            if (inspect is not null)
+            {
+                await inspect(directory).ConfigureAwait(false);
             }
 
             var lines = await File.ReadAllLinesAsync(Path.Join(directory, "outputs.txt")).ConfigureAwait(false);
