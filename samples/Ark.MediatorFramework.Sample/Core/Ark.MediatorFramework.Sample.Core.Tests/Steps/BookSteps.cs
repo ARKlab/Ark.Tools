@@ -102,6 +102,16 @@ public sealed class BookSteps
         audits.Data.Should().AllSatisfy(static audit => audit.Identifier.Should().Be(audit.Id.Value.ToString("D")));
     }
 
+    /// <summary>Asserts that every bulk-created book references the single book audit.</summary>
+    /// <param name="count">The expected number of created books.</param>
+    [Then("the (.*) bulk-created books reference the book audit")]
+    public async Task BulkCreatedBooksReferenceTheBookAudit(int count)
+    {
+        var audit = (await _books.ReadBookAuditsAsync().ConfigureAwait(false)).Data.Single();
+        _books.BulkCreated.Should().HaveCount(count)
+            .And.AllSatisfy(book => book.AuditId.Should().Be(audit.Id));
+    }
+
     /// <summary>Loads the active book through its query contract.</summary>
     [When("I retrieve the current book")]
     public async Task RetrieveCurrentBook()

@@ -49,6 +49,9 @@ public sealed class BookDriver
     /// <summary>Gets the latest reading activity list.</summary>
     public IReadOnlyList<ReadingActivity>? Activities { get; private set; }
 
+    /// <summary>Gets the books created by the latest bulk request.</summary>
+    public IReadOnlyList<Book.V1.Output> BulkCreated { get; private set; } = [];
+
     /// <summary>Gets whether the scenario has an active book.</summary>
     public bool HasCurrent => _current is not null;
 
@@ -68,7 +71,7 @@ public sealed class BookDriver
     /// <param name="ctk">The cancellation token.</param>
     public async Task BulkCreateAsync(IReadOnlyList<Book.V1.Create> inputs, CancellationToken ctk = default)
     {
-        await _context.DispatchRequestAsync<Book_BulkCreateRequest.V1, IReadOnlyList<Book.V1.Output>>(
+        BulkCreated = await _context.DispatchRequestAsync<Book_BulkCreateRequest.V1, IReadOnlyList<Book.V1.Output>>(
             new Book_BulkCreateRequest.V1(inputs), ctk).ConfigureAwait(false);
     }
 

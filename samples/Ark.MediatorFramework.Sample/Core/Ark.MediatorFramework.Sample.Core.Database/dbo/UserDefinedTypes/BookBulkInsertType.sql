@@ -5,5 +5,6 @@ CREATE TYPE [dbo].[BookBulkInsertType] AS TABLE
     [Author] NVARCHAR(100) NOT NULL,
     [Genre] NVARCHAR(30) NOT NULL,
     [ISBN] NVARCHAR(20) NULL,
-    [Description] NVARCHAR(400) NOT NULL
+    [Description] NVARCHAR(400) NOT NULL,
+    [AuditId] UNIQUEIDENTIFIER NOT NULL
 )

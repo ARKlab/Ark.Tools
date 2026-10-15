@@ -100,6 +100,7 @@ Feature: Books
             Then the book audits are
                 | UserId                | EntityType | Operation                 |
                 | application-test-user | Output     | Book_BulkCreateRequest.V1 |
+            And the 3 bulk-created books reference the book audit
 
     Rule: Book covers retain metadata and bytes
 

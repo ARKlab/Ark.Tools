@@ -34,18 +34,18 @@ public sealed class BulkCreateBookHandler :
         CancellationToken ctk = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        // Bulk is a single operation, so it gets a single audit that every created book references.
+        var auditId = AuditId.New();
         var books = request.Data
-            .Select(static data => CreateBookHandler._createResponse(
+            .Select(data => CreateBookHandler._createResponse(
                 BookId.New(),
                 data.Title,
                 data.Author,
                 data.Genre,
-                data.ISBN))
+                data.ISBN) with { AuditId = auditId })
             .ToArray();
         var context = await _factory.CreateAsync(ctk).ConfigureAwait(false);
         await using var __ctx = context.ConfigureAwait(false);
-        // Bulk is a single operation, so it gets a single audit that identifies the operation itself.
-        var auditId = AuditId.New();
         await context.WriteAuditAsync(new AuditEntry
         {
             Id = auditId,
