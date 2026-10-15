@@ -723,6 +723,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         else if (endpoint.IsStreaming)
         {
+            source.Append("        request.HttpContext.Response.StatusCode = ")
+                .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
             source.AppendLine("        await global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteJsonStreamAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
         }
