@@ -50,6 +50,24 @@ public sealed class NativeOutboxIntegrationTests
     }
 
     [TestMethod]
+    public async Task BatchAuditsSpanningMultipleChunksAreAllWritten()
+    {
+        if (_inMemoryProfile())
+            Assert.Inconclusive("The SQL integration profile is disabled.");
+        await DatabaseHooks.ResetDatabaseAsync().ConfigureAwait(false);
+        var factory = _sqlFactory();
+        var audits = Enumerable.Range(0, 301).Select(static _ => _audit(AuditId.New())).ToArray();
+        var context = await factory.CreateAsync().ConfigureAwait(false);
+        await using (var _ = context.ConfigureAwait(false))
+        {
+            await context.WriteAuditsAsync(audits).ConfigureAwait(false);
+            await context.CommitAsync().ConfigureAwait(false);
+        }
+
+        (await _countAsync("Audit").ConfigureAwait(false)).Should().Be(301);
+    }
+
+    [TestMethod]
     public async Task ConcurrentSqlPeekLocksSelectDifferentRowsAndRollbackReleasesThem()
     {
         if (_inMemoryProfile())
