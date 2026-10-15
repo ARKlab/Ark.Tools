@@ -75,9 +75,17 @@ public sealed class SftpClientConnection : FtpClientConnectionBase
     /// <returns></returns>
     public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
     {
-        using var ms = new MemoryStream(80 * 1024);
-        await _transferAsync(c => _client.DownloadFileAsync(path, ms, c), ctk).ConfigureAwait(false);
-        return ms.ToArray();
+        using var ms = new MemoryStream();
+        await _transferAsync(async c =>
+        {
+            // Sizing the buffer to the remote file avoids growing it by doubling and copying it again at the end.
+            var size = (await _client.GetAttributesAsync(path, c).ConfigureAwait(false)).Size;
+            ms.Capacity = size >= 0 && size <= Array.MaxLength ? (int)size : 80 * 1024;
+            await _client.DownloadFileAsync(path, ms, c).ConfigureAwait(false);
+        }, ctk).ConfigureAwait(false);
+
+        // The buffer holds exactly the content unless the file changed size between stat and read: then copy as before.
+        return ms.Length == ms.Capacity ? ms.GetBuffer() : ms.ToArray();
     }
 
     public override async Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default)
