@@ -1907,6 +1907,55 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorWalksMultiTransportContractOnce()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/prints/{id}")]
+            [GrpcMethod("Recalculate")]
+            [RebusMessage]
+            public sealed class RecalculatePrint : IRequest<RecalculatePrint, string>
+            {
+                public int Id { get; set; }
+            }
+            """;
+        var compilation = CSharpCompilation.Create(
+            "ApiSurfaceSingleWalk",
+            [CSharpSyntaxTree.ParseText(source)],
+            _platformReferences.Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            ]),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator().AsSourceGenerator()],
+            optionsProvider: new TestAnalyzerConfigOptionsProvider(
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["build_property.ArkApiSurfaceEnabled"] = "true",
+                }),
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+
+        var result = driver.RunGenerators(compilation).GetRunResult().Results.Single();
+
+        result.Diagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error && !d.Id.StartsWith("ARKAPI", StringComparison.Ordinal))
+            .Should().BeEmpty();
+        result.TrackedSteps["ApiSurfaceTypeSpec"]
+            .SelectMany(static step => step.Outputs)
+            .Count(static output => output.Value is not null)
+            .Should().Be(1);
+        result.GeneratedSources.Single().SourceText.ToString()
+            .Split("CONTRACT RecalculatePrint.Id : int").Length.Should().Be(2);
+    }
+
+    [TestMethod]
     public void ApiSurfaceGeneratorEmitsExplicitEntriesForEvolvableEnumMembers()
     {
         const string source =
