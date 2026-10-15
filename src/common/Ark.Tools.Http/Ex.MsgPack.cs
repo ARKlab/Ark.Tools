@@ -14,7 +14,8 @@ public static partial class Ex
 {
     // Keyed weakly on the resolver so cached entries do not keep caller-owned resolvers alive.
     private static readonly ConditionalWeakTable<IFormatterResolver, MessagePackSerializerOptions> _msgPackOptions = new();
-    private static readonly ConditionalWeakTable<IFormatterResolver, MessagePackMediaTypeFormatter> _msgPackFormatters = new();
+    // Keyed on the DefaultOptions snapshot too, because the formatter bakes DefaultOptions in and callers may replace them at runtime.
+    private static readonly ConditionalWeakTable<MessagePackSerializerOptions, ConditionalWeakTable<IFormatterResolver, MessagePackMediaTypeFormatter>> _msgPackFormatters = new();
 
     private static MessagePackSerializerOptions _getMsgPackOptions(IFormatterResolver formatterResolver)
     {
@@ -23,7 +24,9 @@ public static partial class Ex
 
     private static MessagePackMediaTypeFormatter _getMsgPackFormatter(IFormatterResolver formatterResolver)
     {
-        return _msgPackFormatters.GetValue(formatterResolver, static r => new MessagePackMediaTypeFormatter(r));
+        var defaults = MessagePackSerializer.DefaultOptions;
+        return _msgPackFormatters.GetValue(defaults, static _ => new())
+            .GetValue(formatterResolver, r => new MessagePackMediaTypeFormatter(defaults.WithResolver(r)));
     }
 
     public static async Task<T?> ReceiveMsgPack<T>(this Task<IFlurlResponse> response, IFormatterResolver formatterResolver)

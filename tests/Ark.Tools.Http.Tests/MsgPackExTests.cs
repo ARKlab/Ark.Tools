@@ -61,6 +61,45 @@ public sealed class MsgPackExTests
             .Should().BeEquivalentTo(payload);
     }
 
+    /// <summary>Verifies that replacing <see cref="MessagePackSerializer.DefaultOptions"/> is honoured by later POSTs with the same resolver.</summary>
+    [TestMethod]
+    [DoNotParallelize]
+    public async Task PostMsgPackAsync_DefaultOptionsChanged_UsesNewDefaults()
+    {
+        // Long enough to exceed the LZ4 minimum length, so compression changes the bytes on the wire.
+        var payload = new Payload { Name = new string('a', 500), Value = 42 };
+        var compressed = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
+        var bodies = new List<byte[]>();
+        var original = MessagePackSerializer.DefaultOptions;
+        using var httpTest = new HttpTest();
+
+        try
+        {
+            MessagePackSerializer.DefaultOptions = MessagePackSerializerOptions.Standard;
+            using var first = await _postCapturingBodyAsync(payload, bodies);
+            MessagePackSerializer.DefaultOptions = compressed;
+            using var second = await _postCapturingBodyAsync(payload, bodies);
+        }
+        finally
+        {
+            MessagePackSerializer.DefaultOptions = original;
+        }
+
+        var firstContent = (ObjectContent)httpTest.CallLog[0].HttpRequestMessage.Content!;
+        var secondContent = (ObjectContent)httpTest.CallLog[1].HttpRequestMessage.Content!;
+        secondContent.Formatter.Should().NotBeSameAs(firstContent.Formatter);
+        bodies[0].Should().Equal(MessagePackSerializer.Serialize(payload, MessagePackSerializerOptions.Standard.WithResolver(_resolver), TestContext.CancellationToken));
+        bodies[1].Should().Equal(MessagePackSerializer.Serialize(payload, compressed.WithResolver(_resolver), TestContext.CancellationToken));
+    }
+
+    private async Task<IFlurlResponse> _postCapturingBodyAsync(Payload payload, List<byte[]> bodies)
+    {
+        return await new FlurlRequest(_url)
+            .BeforeCall(async call => bodies.Add(await call.HttpRequestMessage.Content!.ReadAsByteArrayAsync(TestContext.CancellationToken).ConfigureAwait(false)))
+            .PostMsgPackAsync(payload, _resolver, cancellationToken: TestContext.CancellationToken)
+            .ConfigureAwait(false);
+    }
+
     /// <summary>MessagePack test payload.</summary>
     public sealed class Payload
     {

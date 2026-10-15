@@ -21,12 +21,17 @@ public sealed class MessagePackMediaTypeFormatter : MediaTypeFormatter
     }
 
     public MessagePackMediaTypeFormatter(IFormatterResolver resolver)
+        : this(resolver == null
+            ? MessagePackSerializer.DefaultOptions
+            : MessagePackSerializer.DefaultOptions.WithResolver(resolver))
+    {
+    }
+
+    internal MessagePackMediaTypeFormatter(MessagePackSerializerOptions options)
     {
         SupportedMediaTypes.Add(DefaultMediaType);
 
-        _options = resolver == null
-            ? MessagePackSerializer.DefaultOptions
-            : MessagePackSerializer.DefaultOptions.WithResolver(resolver);
+        _options = options;
     }
 
     public override bool CanReadType(Type type)
