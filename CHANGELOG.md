@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Ark.Tools.MediatorFramework.MinimalApi`: `services.AddArkMessagePack(resolver)` registers the MessagePack resolver for generated Minimal API endpoints and builds their serializer options once.
+
 ### Changed
 
+- **Breaking:** `Ark.Tools.MediatorFramework.MinimalApi` hosts with MessagePack endpoints must call `services.AddArkMessagePack(resolver)` instead of registering `IFormatterResolver` directly; without it they fail with an `InvalidOperationException` at startup, or on the first MessagePack response for hosts whose MessagePack endpoints only return data.
 - `Ark.Tools.MediatorFramework.MinimalApi`: MessagePack responses of generated Minimal API endpoints are written straight to the response pipe, and the serializer options and `Accept` parsing no longer allocate per request; the bytes on the wire are unchanged.
 
 ## [7.0.0-beta18] - 2026-10-15

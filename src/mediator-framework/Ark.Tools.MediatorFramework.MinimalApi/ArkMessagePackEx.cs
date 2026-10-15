@@ -5,8 +5,6 @@ using MessagePack;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-using System.Runtime.CompilerServices;
-
 namespace Ark.Tools.MediatorFramework.MinimalApi;
 
 /// <summary>Minimal API helpers for MessagePack request and response serialization.</summary>
@@ -14,9 +12,6 @@ namespace Ark.Tools.MediatorFramework.MinimalApi;
 public static class ArkMessagePackEx
 {
     private const string _messagePackMediaType = "application/x-msgpack";
-
-    // The resolver is a DI singleton: build both option sets once per resolver instead of cloning them per request.
-    private static readonly ConditionalWeakTable<IFormatterResolver, SerializerOptions> _optionsByResolver = new();
 
     /// <summary>Reads a request using MessagePack or JSON content negotiation.</summary>
     /// <typeparam name="TRequest">The request type accepted by the handler.</typeparam>
@@ -55,7 +50,7 @@ public static class ArkMessagePackEx
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(validators);
 
-        var resolver = services.GetRequiredService<IFormatterResolver>();
+        var resolver = _getOptions(services).Resolver;
         var failures = new List<string>();
         foreach (var validator in validators)
         {
@@ -158,11 +153,13 @@ public static class ArkMessagePackEx
     public static bool PrefersMessagePackForGeneratedEndpoint(string? accept)
         => _prefersMessagePack(accept);
 
-    private static SerializerOptions _getOptions(HttpContext context)
-    {
-        var resolver = context.RequestServices.GetRequiredService<IFormatterResolver>();
-        return _optionsByResolver.GetValue(resolver, static r => new SerializerOptions(r));
-    }
+    private static ArkMessagePackOptionsHolder _getOptions(HttpContext context)
+        => _getOptions(context.RequestServices);
+
+    private static ArkMessagePackOptionsHolder _getOptions(IServiceProvider services)
+        => services.GetService<ArkMessagePackOptionsHolder>()
+            ?? throw new InvalidOperationException(
+                "MessagePack is not configured for the generated Minimal API endpoints. Call services.AddArkMessagePack(resolver) when registering services.");
 
     private static MessagePackSerializerOptions _getDeserializationOptions(HttpContext context)
         => _getOptions(context).Deserialization;
@@ -210,19 +207,6 @@ public static class ArkMessagePackEx
 
             parameters = parameters[(semicolon + 1)..];
         }
-    }
-
-    private sealed class SerializerOptions
-    {
-        public SerializerOptions(IFormatterResolver resolver)
-        {
-            Serialization = MessagePackSerializerOptions.Standard.WithResolver(resolver);
-            Deserialization = Serialization.WithSecurity(MessagePackSecurity.UntrustedData);
-        }
-
-        public MessagePackSerializerOptions Serialization { get; }
-
-        public MessagePackSerializerOptions Deserialization { get; }
     }
 
     private sealed class MessagePackResult<T> : IResult
