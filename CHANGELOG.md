@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- `Ark.Tools.FtpClient.SftpClient`: `DownloadFileAsync` sizes its buffer from the remote file and returns it without a final copy, so a download allocates about the file size instead of about 3x.
 - `ARKCORE002`, `ARKCORE003` and `ARKCORE004` are now reported on each `EvolvableEnum<T>` usage instead of the enum declaration, so an invalid enum used N times no longer shows N identical errors at its declaration and IDE analysis shows the error in the file that uses the enum. The enum declaration (or the clashing members for `ARKCORE003`) is attached as an additional location. A `#pragma` or `[SuppressMessage]` that targets these rules must now be placed at the usage.
 
 ### Fixed
