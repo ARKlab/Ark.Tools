@@ -1019,6 +1019,24 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void AzureFunctionsGeneratorStreamsAsyncEnumerableResponse()
+    {
+        var result = _runGeneratorResult<AzureFunctionsEndpointGenerator>(
+            """
+            using System.Collections.Generic;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+            public sealed class ContractMarker { }
+            [HttpEndpoint("GET", "/stream")]
+            public sealed class GetStream : IQuery<IAsyncEnumerable<string>> { }
+            """);
+
+        result.Generated.Should().Contain("ArkAzureFunctionsHttp.WriteJsonStreamAsync(request.HttpContext.Response, _result, cancellationToken)");
+        result.Generated.Should().NotContain("ArkAzureFunctionsHttp.Json(request.HttpContext, _result");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorStreamsWithTheConfiguredSuccessStatus()
     {
         var minimal = _runGenerator<ArkMinimalApiEndpointGenerator>(
