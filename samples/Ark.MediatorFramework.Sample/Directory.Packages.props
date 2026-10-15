@@ -63,7 +63,7 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageVersion Include="Microsoft.SqlServer.DacFx" Version="170.5.96" />
-    <PackageVersion Include="KubernetesClient" Version="19.0.2" />
+    <PackageVersion Include="KubernetesClient" Version="21.0.8" />
     <PackageVersion Include="MessagePack" Version="3.1.12" />
     <PackageVersion Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.11.0" />
     <PackageVersion Include="Moq" Version="4.21.0" />
