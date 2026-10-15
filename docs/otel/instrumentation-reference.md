@@ -308,13 +308,12 @@ processors. It can be promoted if it fails.
 
 ### Completion and failure promotion
 
-`ArkFailurePromotionProcessor` promotes a `RecordOnly` span when any of these
-conditions is true:
-
-- `ActivityStatusCode.Error`
-- an event named `exception`
-- `http.response.status_code >= 500`, unless the status is `ActivityStatusCode.Ok`
-- non-zero `rpc.grpc.status_code`, unless the status is `ActivityStatusCode.Ok`
+`ArkFailurePromotionProcessor` promotes a `RecordOnly` span only when its status
+is `ActivityStatusCode.Error`. An `exception` event, an HTTP 5xx code or a gRPC
+error code on an `Unset` or `Ok` span does not make it a failure: the producer
+of the span decides. See
+[Failure-first troubleshooting](sampling.md#failure-first-troubleshooting) for the
+instrumentations that set `Error`.
 
 HTTP 4xx codes alone are not failures: a 4xx span is promoted only when its
 status is `ActivityStatusCode.Error`. OpenTelemetry HTTP client
@@ -328,8 +327,9 @@ The processor promotes the failing span and live local ancestors, registers the
 trace as failed, and promotes siblings or descendants that complete after the
 failure is observed. Siblings already completed cannot be recovered.
 
-`WebApi4xxAsSuccessProcessor` clears the error status for HTTP 400–499 server
-spans. Ark registers it before `ArkFailurePromotionProcessor`.
+Ark does not change the status of server 4xx spans: the instrumentation leaves
+them `Unset`, and an `Error` set by the application or by an unhandled
+exception is kept and promoted. See [HTTP 4xx status](sampling.md#http-4xx-status).
 
 Processors run in registration order. To run your own processor before
 failure promotion, register it before calling the Ark setup:

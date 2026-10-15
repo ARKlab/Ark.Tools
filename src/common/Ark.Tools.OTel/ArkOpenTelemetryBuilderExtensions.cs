@@ -121,7 +121,6 @@ public static class ArkOpenTelemetryBuilderExtensions
                     };
                 })
                 .AddProcessor(new ArkSqlClientSpanProcessor(arkOtelConfig.IncludeSqlQueryText))
-                .AddProcessor(new WebApi4xxAsSuccessProcessor())
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
                 .AddProcessor(nlogDatabaseFilter)
                 .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction))

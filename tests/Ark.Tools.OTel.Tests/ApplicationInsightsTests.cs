@@ -61,7 +61,9 @@ public sealed class ApplicationInsightsTests
     public void ClassifiesClientAndServerSpans()
     {
         // Qualified: the enclosing Ark.Tools.OTel namespace has an OpenTelemetry processor with the same name.
+#pragma warning disable CS0618 // Obsolete, still supported as an opt-in.
         using var processor = new Ark.Tools.AspNetCore.ApplicationInsights.WebApi4xxAsSuccessProcessor();
+#pragma warning restore CS0618
         using var source = new ActivitySource(Guid.NewGuid().ToString());
         using var listener = _createListener(source);
         using var request = _createActivity(source, ActivityKind.Server, 404);

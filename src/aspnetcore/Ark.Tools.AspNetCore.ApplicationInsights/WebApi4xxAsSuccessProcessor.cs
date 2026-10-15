@@ -13,11 +13,12 @@ namespace Ark.Tools.AspNetCore.ApplicationInsights;
 /// <remarks>
 /// In REST APIs, client errors (400-499) are typically expected business outcomes rather than
 /// server-side failures. This processor clears the error status on 4xx spans so they are
-/// not counted as errors in Application Insights and are not promoted by the failure promotion processor.
-/// <see cref="ActivityStatusCode.Unset"/> is intentional: ASP.NET Core OpenTelemetry instrumentation
-/// uses <c>Error</c> for server 4xx responses and <c>Unset</c> for non-error responses. <c>Ok</c>
-/// would assert a stronger success signal than the instrumentation's default.
+/// not promoted by the failure promotion processor. The ASP.NET Core OpenTelemetry instrumentation
+/// already leaves server 4xx responses <c>Unset</c>, so this processor only clears an <c>Error</c>
+/// that the application or an unhandled exception set, and Application Insights still counts the
+/// <c>Unset</c> 4xx requests as failed.
 /// </remarks>
+[Obsolete("Clearing Error hides 4xx failures that the application or the instrumentation reported, and Application Insights still counts Unset 4xx requests as failed. Set ActivityStatusCode.Ok in your own processor instead.", UrlFormat = "https://github.com/ARKlab/Ark.Tools/blob/master/docs/otel/sampling.md#http-4xx-status")]
 public sealed class WebApi4xxAsSuccessProcessor : BaseProcessor<Activity>
 {
     /// <summary>

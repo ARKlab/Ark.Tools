@@ -19,6 +19,7 @@ using Microsoft.Extensions.Options;
 
 using NLog;
 
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 
@@ -192,6 +193,9 @@ public sealed class ArkGrpcErrorInterceptor : Interceptor
             return _createRpcException(StatusCode.Aborted, concurrencyException.Message);
 
         _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing a gRPC request.");
+        // The call still ends with HTTP 200, so the request span is Unset unless the producer marks it failed.
+        Activity.Current?.SetTag("error.type", exception.GetType().FullName);
+        Activity.Current?.SetStatus(ActivityStatusCode.Error);
         var unexpectedStatus = new Google.Rpc.Status
         {
             Code = (int)StatusCode.Internal,

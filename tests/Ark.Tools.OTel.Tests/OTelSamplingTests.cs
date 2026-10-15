@@ -1306,46 +1306,33 @@ public class ArkFailurePromotionProcessorTests
             "a span with ActivityStatusCode.Error must be promoted even when rate-limited");
     }
 
-    // ── failure promotion: exception event ────────────────────────────────
+    // ── failure promotion: only the Error status ───────────────────────────
 
     /// <summary>
-    /// A rate-limited span with an OTel exception event must be promoted.
+    /// The producer of a span decides whether it failed: a rate-limited span whose status is
+    /// <see cref="ActivityStatusCode.Unset"/> is not promoted, whatever its exception events or codes.
     /// </summary>
     [TestMethod]
-    public void FailurePromotion_ExceptionEvent_SpanIsPromotedAndExported()
+    [DataRow("exception", 0)]
+    [DataRow("http.response.status_code", 500)]
+    [DataRow("rpc.grpc.status_code", 5)]
+    public void FailurePromotion_UnsetStatus_IsNotPromoted(string signal, int code)
     {
         var registry = new FailedTraceRegistry();
         using var pipeline = _nearZeroPipeline(
-            nameof(FailurePromotion_ExceptionEvent_SpanIsPromotedAndExported), registry);
+            $"{nameof(FailurePromotion_UnsetStatus_IsNotPromoted)}.{signal}.{code}", registry);
 
-        using var act = pipeline.StartRoot("OP_EXCEPTION");
+        using var act = pipeline.StartRoot("OP_UNSET");
         act.Should().NotBeNull();
-        act!.AddException(new InvalidOperationException("boom"));
+        if (signal == "exception")
+            act!.AddException(new InvalidOperationException("boom"));
+        else
+            act!.SetTag(signal, code);
         act.Stop();
 
-        pipeline.Exported.Should().ContainSingle(
-            "a span with an exception event must be promoted");
-    }
-
-    // ── failure promotion: HTTP 5xx ────────────────────────────────────────
-
-    /// <summary>
-    /// A rate-limited span with <c>http.response.status_code</c> >= 500 must be promoted.
-    /// </summary>
-    [TestMethod]
-    public void FailurePromotion_Http500Tag_SpanIsPromotedAndExported()
-    {
-        var registry = new FailedTraceRegistry();
-        using var pipeline = _nearZeroPipeline(
-            nameof(FailurePromotion_Http500Tag_SpanIsPromotedAndExported), registry);
-
-        using var act = pipeline.StartRoot("GET /api/fail");
-        act.Should().NotBeNull();
-        act!.SetTag("http.response.status_code", 500);
-        act.Stop();
-
-        pipeline.Exported.Should().ContainSingle(
-            "a span with HTTP 500 must be promoted");
+        act.Status.Should().Be(ActivityStatusCode.Unset);
+        pipeline.Exported.Should().BeEmpty("only an Error status makes a span a failure");
+        registry.IsFailed(act.TraceId).Should().BeFalse();
     }
 
     // ── failure promotion: HTTP 4xx follows the span status ───────────────
@@ -1418,7 +1405,7 @@ public class ArkFailurePromotionProcessorTests
     }
 
     /// <summary>
-    /// An explicit <see cref="ActivityStatusCode.Ok"/> status is final and is not overridden by an HTTP 5xx or gRPC error code.
+    /// An <see cref="ActivityStatusCode.Ok"/> span is not a failure, whatever its HTTP 5xx or gRPC error code.
     /// </summary>
     [TestMethod]
     [DataRow("http.response.status_code", 503)]
@@ -1435,7 +1422,7 @@ public class ArkFailurePromotionProcessorTests
         act.SetStatus(ActivityStatusCode.Ok);
         act.Stop();
 
-        pipeline.Exported.Should().BeEmpty("an explicit Ok status opts the span out of status-code promotion");
+        pipeline.Exported.Should().BeEmpty("an Ok span is not a failure, whatever its codes");
     }
 
     private sealed class ClearStatusProcessor : BaseProcessor<Activity>

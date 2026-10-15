@@ -8,7 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Breaking:** Rebus consumers using `OpenTelemetryStep` now treat the sender of a message as a remote parent, as incoming HTTP requests and MediatorFramework messages already did. With the default `RespectRemoteParentSampling = false`, a Rebus worker samples its messages with its own `TracesPerSecond` budget instead of following the sender's sampled flag, so you will see more worker spans and some traces that start in the middle of a chain. To keep the previous behaviour, set `OTel:ArkAdaptiveSampler:RespectRemoteParentSampling` to `true`; it then applies to every remote parent of the host, incoming HTTP requests included.
+- **Breaking:** the Ark OpenTelemetry setups (`AddArkOpenTelemetry`, `AddArkAspNetCoreOpenTelemetry`, `AddArkOpenTelemetryForWorkerHost`) no longer register `WebApi4xxAsSuccessProcessor`, so a server 4xx span keeps the status its producer set. The ASP.NET Core instrumentation leaves 4xx requests `Unset`, so nothing changes for them; a 4xx request that the application or an unhandled exception marked as `Error` now stays failed and is promoted by failure promotion. Application Insights shows `Unset` 4xx requests as failed whether or not the processor runs: to show them as successes, set `ActivityStatusCode.Ok` in your own processor, see [HTTP 4xx status](docs/otel/sampling.md#http-4xx-status). To keep the previous behaviour, register `WebApi4xxAsSuccessProcessor` yourself before the Ark setup.
+- **Breaking:** `ArkFailurePromotionProcessor` promotes a span only when its status is `Error`. An `Unset` or `Ok` span with an `exception` event, an HTTP 5xx code or a gRPC error code is no longer promoted, because the code that produces a span decides whether it failed. The instrumentations Ark wires set `Error` on failures, so their failures are still kept. If your own code records an exception on a span (`AddException`) without setting the status, also call `SetStatus(ActivityStatusCode.Error)` to keep promoting it.
 - `Ark.Tools.MediatorFramework`: with `ArkApiSurfaceEnabled=false` the API surface generator no longer reads your contracts or emits `ArkApiSurface.g.cs`, so opted-out projects no longer pay for the surface on each edit and build.
+
+### Deprecated
+
+- `WebApi4xxAsSuccessProcessor` (in `Ark.Tools.OTel` and `Ark.Tools.AspNetCore.ApplicationInsights`) is obsolete: it erases an `Error` set on purpose and does not make Application Insights count 4xx requests as successful. Set `ActivityStatusCode.Ok` in your own processor instead.
+
+### Fixed
+
+- `OpenTelemetryStep` now sends the W3C trace state of the current span in the `TraceStateString` header. The receiving step already read that header, but no sender wrote it, so trace state was lost across Rebus messages.
+- `ArkGrpcErrorInterceptor` marks the request span as `Error`, with `error.type`, when it maps an unexpected exception to the gRPC `Internal` status. Before, the span stayed `Unset` because the call ends with HTTP 200, so failed gRPC calls were not kept by failure promotion.
 
 ## [7.0.0-beta17] - 2026-10-14
 

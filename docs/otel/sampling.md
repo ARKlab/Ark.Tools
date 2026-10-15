@@ -1,6 +1,6 @@
 # Adaptive sampling in Ark.Tools
 
-Updated: 2026-10-13
+Updated: 2026-10-15
 
 ## Decision
 
@@ -22,12 +22,12 @@ record-only data that can still be promoted when troubleshooting needs it.
 | Local unsampled parent | Record only |
 | Remote unsampled parent, `RespectRemoteParentSampling` `false` (default) | Budget decision, as a root |
 | Remote unsampled parent, `RespectRemoteParentSampling` `true` | Record only |
-| Failed span or exception | Promote to sampled |
+| Span that ends with `Error` status | Promote to sampled |
 | HTTP 4xx response without error status | Success; do not promote |
 | HTTP 4xx response with error status | Promote to sampled |
 
 `RecordOnly` is deliberate. It preserves the activity long enough for the completion
-processor to inspect status, exception events, and response codes.
+processor to inspect its status.
 
 Only the roots that the bucket logic decides count in the budget: dropped and filtered spans do
 not. The sampler applies the pre-filter rules (HTTP `OPTIONS`, SQL commits) and every
@@ -49,8 +49,7 @@ application already set it.
 
 At completion, `ArkFailurePromotionProcessor`:
 
-1. Treats explicit error status, exception events, HTTP 5xx+, and non-zero gRPC status as
-   failures.
+1. Treats a span as a failure only when its status is `Error`.
 2. Registers the trace as failed.
 3. Promotes the failing span and all live local ancestors.
 4. Promotes siblings that finish after the failure is observed.
@@ -59,10 +58,101 @@ At completion, `ArkFailurePromotionProcessor`:
 Siblings that ended before the failure was observed cannot be recovered. This is the
 intentional boundary that avoids retaining every operation indefinitely.
 
+The code that produces a span decides whether it failed, through its status. An `Unset` or `Ok`
+span is not a failure, even with an `exception` event, an HTTP 5xx code or a gRPC error code: Ark
+does not second-guess the producer. The instrumentations Ark wires set `Error` by convention:
+
+| Instrumentation | Sets `Error` on |
+|---|---|
+| ASP.NET Core server | 5xx responses and exceptions that escape the pipeline |
+| `HttpClient` (.NET 9 and later: the runtime's own spans) | 4xx and 5xx responses and exceptions |
+| SQL Client | failed commands |
+| Azure SDK (`Azure.*` sources) | failed operations, with `error.type` |
+| Rebus `OpenTelemetryStep`, MediatorFramework messaging steps, Outbox, ResourceWatcher | exceptions |
+| MediatorFramework gRPC server (`ArkGrpcErrorInterceptor`) | unexpected exceptions, which it maps to `Internal` |
+
+gRPC has no other status mapping by default. A gRPC call ends with HTTP 200, so the ASP.NET Core
+instrumentation leaves the request span `Unset` unless its experimental
+`OTEL_DOTNET_EXPERIMENTAL_ASPNETCORE_ENABLE_GRPC_INSTRUMENTATION` support is on, and
+`Grpc.Net.Client` never sets the status of its client spans. Add
+`OpenTelemetry.Instrumentation.GrpcNetClient` to mark failed gRPC client calls, or set `Error`
+where you handle them. Code of your own that records an exception on a span must also set `Error`
+if the span failed.
+
 HTTP 4xx codes are not failures by themselves: a 4xx span is promoted only when its status is
-`Error`. `WebApi4xxAsSuccessProcessor` runs before failure promotion and clears the error status
-for 400-499 server responses. An application processor registered before the Ark setup can clear
-the status of expected client errors, such as Azure Storage 404 or 409, in the same way.
+`Error`. Ark does not change the status of server 4xx spans, see [HTTP 4xx status](#http-4xx-status).
+An application processor registered before the Ark setup can clear the status of expected client
+errors, such as Azure Storage 404 or 409.
+
+## HTTP 4xx status
+
+The code that produces a span decides whether it failed. Some 4xx responses are errors, most are
+not, and Ark does not erase that decision: a server 4xx is not an Ark failure, and Ark leaves its
+status as the instrumentation or the application set it.
+
+- **OpenTelemetry convention.** A server 4xx leaves the span status `Unset`, a server 5xx is
+  `Error`, and a client 4xx or 5xx is `Error`
+  ([HTTP spans, Status](https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/http/http-spans.md?plain=1#L82-L113)).
+- **ASP.NET Core instrumentation** (`OpenTelemetry.Instrumentation.AspNetCore` 1.19.0) follows it:
+  the status comes from the response code only while it is still `Unset`, with a lower bound of
+  500 for server spans
+  ([SpanHelper](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/Instrumentation.AspNetCore-1.19.0/src/Shared/SpanHelper.cs#L20-L25),
+  [HttpInListener](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/Instrumentation.AspNetCore-1.19.0/src/OpenTelemetry.Instrumentation.AspNetCore/Implementation/HttpInListener.cs#L385-L388)).
+  It sets `Error` and `error.type` whatever the final response code when it receives
+  `Microsoft.AspNetCore.Hosting.UnhandledException` or `Microsoft.AspNetCore.Diagnostics.UnhandledException`
+  ([HttpInListener.OnException](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/Instrumentation.AspNetCore-1.19.0/src/OpenTelemetry.Instrumentation.AspNetCore/Implementation/HttpInListener.cs#L433-L440)).
+- **ASP.NET Core 10** writes `Hosting.UnhandledException` only when an exception escapes the
+  pipeline
+  ([HostingApplicationDiagnostics](https://github.com/dotnet/aspnetcore/blob/v10.0.9/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L217-L225)),
+  and `Diagnostics.UnhandledException` only from the developer exception page
+  ([DeveloperExceptionPageMiddlewareImpl](https://github.com/dotnet/aspnetcore/blob/v10.0.9/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L165-L169)).
+  `UseExceptionHandler` writes `Microsoft.AspNetCore.Diagnostics.HandledException` instead, which
+  the instrumentation does not handle, unless diagnostics are suppressed: by default when an
+  `IExceptionHandler` handled the exception, and as the application decides with
+  `ExceptionHandlerOptions.SuppressDiagnosticsCallback`
+  ([ExceptionHandlerMiddlewareImpl](https://github.com/dotnet/aspnetcore/blob/v10.0.9/src/Middleware/Diagnostics/src/ExceptionHandler/ExceptionHandlerMiddlewareImpl.cs#L218-L255)).
+  MVC exception filters raise neither event. So an exception that the application maps to a 4xx
+  response, for example with `ArkProblemDetailsExceptionHandler`, leaves the span `Unset`.
+- **Application Insights** (`Azure.Monitor.OpenTelemetry.Exporter` 1.10.0) marks a request as
+  successful when its status is `Ok`, failed when it is `Error`, and, when it is `Unset`, successful
+  only for response codes below 400
+  ([RequestData](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/Customizations/Models/RequestData.cs#L87-L100)).
+  The `requests/failed` standard metric uses the same rule
+  ([StandardMetricsExtractionProcessor](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/Internals/StandardMetricsExtractionProcessor.cs#L211)),
+  and a dependency is successful unless its status is `Error`
+  ([RemoteDependencyData](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/Customizations/Models/RemoteDependencyData.cs#L78)).
+  So Application Insights shows a server 4xx that follows the OpenTelemetry convention as a failed
+  request. This is the exporter's rule, not an Ark failure: Ark does not promote the span.
+
+An application that wants its 4xx requests shown as successes sets `Ok` itself. Leave an `Error`
+in place, so 4xx responses that the application or an unhandled exception marked as failed stay
+failed:
+
+```csharp
+public sealed class ClientErrorsAsSuccessProcessor : BaseProcessor<Activity>
+{
+    public override void OnEnd(Activity data)
+    {
+        if (data.Kind == ActivityKind.Server
+            && data.Status == ActivityStatusCode.Unset
+            && data.GetTagItem("http.response.status_code") is int code and >= 400 and < 500)
+            data.SetStatus(ActivityStatusCode.Ok);
+    }
+}
+
+// Before the Ark setup, so the processor runs before the exporter.
+services.ConfigureOpenTelemetryTracerProvider(tracing =>
+    tracing.AddProcessor(new ClientErrorsAsSuccessProcessor()));
+```
+
+An application that wants some 4xx responses to be errors, such as a 409 that should never
+happen, sets `Error` on the request span, for example with
+`Activity.Current?.SetStatus(ActivityStatusCode.Error, "...")` in the endpoint: the instrumentation
+keeps it, and Ark promotes the span.
+
+`WebApi4xxAsSuccessProcessor` is no longer registered by the Ark setups and is obsolete. It set
+every server 4xx span to `Unset`, which erased an `Error` set on purpose and did not change how
+Application Insights counts the request.
 
 ## Root rate control
 
@@ -139,6 +229,23 @@ callers that use a different sampler, such as the classic Application Insights S
 decide for the service. Traces that cross services which decide differently can then be
 incomplete; failure promotion applies either way. Set it to `true` to follow the W3C sampled
 flag of the remote parent instead: such spans then carry no sample rate (itemCount 1).
+
+The option applies to every remote parent of the host, not to one transport:
+
+| Incoming span | Parent read from |
+|---|---|
+| ASP.NET Core request | `traceparent` (and `tracestate`) HTTP headers |
+| Rebus message (`OpenTelemetryStep`, `ark.tools.rebus.process`) | `Diagnostic-Id` and `TraceStateString` message headers |
+| MediatorFramework message (`OpenTelemetryIncomingStep`, `amf.message.process`) | `Diagnostic-Id` message header |
+
+So with the default a Rebus or MediatorFramework worker samples its messages with its own
+budget, and some of its traces start in the middle of a chain whose sender was not sampled. A
+worker that should keep only the messages whose sender was sampled, and keep all of them, sets
+`OTel:ArkAdaptiveSampler:RespectRemoteParentSampling` to `true`; that also applies to the HTTP
+requests the same host receives.
+
+The legacy `ApplicationInsightsStep` of `Ark.Tools.Rebus.ApplicationInsights` starts its span
+without an `ActivitySource`, so no sampler sees it: it always follows the sender's sampled flag.
 
 `OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
 (`AddArkOpenTelemetry` or `AddArkAspNetCoreOpenTelemetry` when given an `IConfiguration`,

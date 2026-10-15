@@ -38,7 +38,7 @@ The `ArkAdaptiveSampler` implements intelligent, cost-efficient sampling:
 
 - **Adaptive rate control**: Dynamically adjusts sampling to hit a total target rate of root traces (default: 1 trace/second)
 - **Per-operation token buckets**: Each operation (HTTP route, message handler, etc.) gets a fair share of the budget, so rare operations are still represented
-- **Failure preservation**: All spans with error status, exceptions, or HTTP 5xx status codes are **always sampled** regardless of the rate limit
+- **Failure preservation**: All spans that end with `Error` status are **always sampled** regardless of the rate limit; the instrumentation sets it for HTTP 5xx responses, exceptions and failed dependencies
 
 ### Pre-filtering (Noise Reduction)
 
@@ -265,7 +265,7 @@ reads only `ApplicationInsights:ArkAdaptiveSampler`.
 | `SamplingPercentageDecreaseTimeout` | `00:01:00` | How often to evaluate and adjust the sampling rate |
 | `EnablePerOperationBucketing` | `true` | Whether each operation gets its own token bucket and a max-min fair share of `TracesPerSecond` |
 | `MaxOperationBuckets` | `100` | Maximum distinct operations to track (prevents memory unbounded growth) |
-| `RespectRemoteParentSampling` | `false` | Whether the sampled flag of a remote parent decides for the service; `false` applies the local budget to spans with a remote parent |
+| `RespectRemoteParentSampling` | `false` | Whether the sampled flag of a remote parent decides for the service; `false` applies the local budget to spans with a remote parent. It applies to every remote parent of the host: incoming HTTP requests and incoming Rebus and MediatorFramework messages |
 
 ### Snapshot Collector
 

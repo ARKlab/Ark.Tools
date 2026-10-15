@@ -18,6 +18,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.FileProviders;
 
+using System.Diagnostics;
+
 namespace Ark.Tools.MediatorFramework.Tests;
 
 /// <summary>Verifies environment-aware gRPC exception detail serialization.</summary>
@@ -61,6 +63,36 @@ public sealed class GrpcErrorInterceptorTests
             .Unpack<DebugInfo>()
             .Detail.Should()
             .Contain("AwaitUnexpectedException");
+    }
+
+    [TestMethod]
+    public async Task MarksTheRequestSpanFailedOnUnexpectedException()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor();
+        using var request = new Activity("request");
+        request.Start();
+
+        Func<Task> action = interceptor.AwaitUnexpectedException;
+        await action.Should().ThrowAsync<RpcException>();
+
+        request.Status.Should().Be(ActivityStatusCode.Error);
+        request.GetTagItem("error.type").Should().Be(typeof(InvalidOperationException).FullName);
+    }
+
+    [TestMethod]
+    public async Task LeavesTheRequestSpanUnsetOnExpectedFailure()
+    {
+        var interceptor = new ArkGrpcErrorInterceptor();
+        using var request = new Activity("request");
+        request.Start();
+
+        Func<Task> action = () => interceptor.UnaryServerHandler(
+            new Empty(),
+            new TestServerCallContext(),
+            static (_, _) => Task.FromException<Empty>(new EntityTagMismatchException("etag")));
+        await action.Should().ThrowAsync<RpcException>();
+
+        request.Status.Should().Be(ActivityStatusCode.Unset);
     }
 
     [TestMethod]
