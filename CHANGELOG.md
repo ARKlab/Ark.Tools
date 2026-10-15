@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- `Ark.Tools.Http`: `BufferedJsonMediaTypeFormatter` no longer copies an already-buffered response body into a second buffer, halving memory for large JSON responses, and the MessagePack Flurl helpers reuse one serializer options and formatter per resolver instead of creating them on each call.
 - `ARKCORE002`, `ARKCORE003` and `ARKCORE004` are now reported on each `EvolvableEnum<T>` usage instead of the enum declaration, so an invalid enum used N times no longer shows N identical errors at its declaration and IDE analysis shows the error in the file that uses the enum. The enum declaration (or the clashing members for `ARKCORE003`) is attached as an additional location. A `#pragma` or `[SuppressMessage]` that targets these rules must now be placed at the usage.
 
 ### Fixed
