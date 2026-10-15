@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `Ark.Tools.MediatorFramework.AzureFunctions`: HTTP endpoints returning `IAsyncEnumerable<T>` now stream items as they are produced, as on the Minimal API host. Before, the generator never detected the streaming response and buffered the whole result.
 - `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
+- `Ark.Tools.MediatorFramework.MinimalApi`: an `Accept` header with a fractional MessagePack quality such as `application/x-msgpack;q=0.5` now gets a MessagePack response. Before, any `q` value starting with `0` was treated as a refusal and the response was JSON; now only `q=0` refuses MessagePack.
 
 ## [7.0.0-beta18] - 2026-10-15
 
