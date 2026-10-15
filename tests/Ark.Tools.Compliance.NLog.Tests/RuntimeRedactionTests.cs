@@ -7,7 +7,10 @@ using Ark.Tools.NLog;
 using AwesomeAssertions;
 
 using global::NLog;
+using global::NLog.Config;
 using global::NLog.Layouts;
+using global::NLog.Targets;
+using global::NLog.Targets.Wrappers;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -182,6 +185,30 @@ public sealed class RuntimeRedactionTests
         var output = _capture(null, logger => logger.Log(logEvent));
 
         output.Should().Be(expected + Environment.NewLine);
+    }
+
+    /// <summary>Scope properties survive an async target, which renders on another thread.</summary>
+    /// <param name="mode">The PII scan mode.</param>
+    [TestMethod]
+    [DataRow(PiiScanMode.Off)]
+    [DataRow(PiiScanMode.MessageAndProperties)]
+    public void ComplianceLayout_KeepsScopePropertiesInAsyncTarget(PiiScanMode mode)
+    {
+        using var memory = new MemoryTarget("memory")
+        {
+            Layout = new ComplianceLayout(new JsonLayout { IncludeScopeProperties = true }, () => new PiiScanner(mode)),
+        };
+        var configuration = new LoggingConfiguration();
+        using var async = new AsyncTargetWrapper("async", memory);
+        configuration.AddRuleForAllLevels(async);
+        using var factory = new LogFactory { Configuration = configuration };
+        var logger = factory.GetLogger("Compliance.Runtime.Tests");
+
+        using (ScopeContext.PushProperty("scopeKey", "scope-value"))
+            logger.Info(CultureInfo.InvariantCulture, "scoped");
+        factory.Flush();
+
+        memory.Logs.Should().ContainSingle().Which.Should().Contain("scope-value");
     }
 
     /// <summary>Pattern scanning classifies phone and postal-address matches independently from email.</summary>
