@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0-beta18] - 2026-10-15
+
 ### Changed
 
 - **Breaking:** Rebus consumers using `OpenTelemetryStep` now treat the sender of a message as a remote parent, as incoming HTTP requests and MediatorFramework messages already did. With the default `RespectRemoteParentSampling = false`, a Rebus worker samples its messages with its own `TracesPerSecond` budget instead of following the sender's sampled flag, so you will see more worker spans and some traces that start in the middle of a chain. To keep the previous behaviour, set `OTel:ArkAdaptiveSampler:RespectRemoteParentSampling` to `true`; it then applies to every remote parent of the host, incoming HTTP requests included.
