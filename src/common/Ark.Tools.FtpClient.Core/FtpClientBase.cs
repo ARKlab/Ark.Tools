@@ -46,6 +46,12 @@ public abstract class FtpClientBase : IFtpClient
 
     public virtual async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
     {
+        return await _listFilesRecursiveInParallelAsync(startPath, skipFolder, ctk).ConfigureAwait(false);
+    }
+
+    // Lists up to MaxListingRecursiveParallelism folders at once, each through its own ListDirectoryAsync call.
+    private protected async Task<IEnumerable<FtpEntry>> _listFilesRecursiveInParallelAsync(string startPath, Predicate<FtpEntry>? skipFolder, CancellationToken ctk)
+    {
         _logger.Trace(CultureInfo.InvariantCulture, "List files starting from path: {Path}", startPath);
         startPath ??= "./";
 

@@ -24,6 +24,19 @@ public sealed class FtpClientPool : FtpClientWithConnectionBase, IFtpClientPool
         _pool = new ConcurrentStack<IFtpClientConnection>();
     }
 
+    /// <summary>
+    /// Lists the files under <paramref name="startPath"/> recursively, listing up to <see cref="PoolMaxSize"/> folders
+    /// at once, each on a connection rented from the pool. The order of the returned files is not defined.
+    /// </summary>
+    /// <param name="startPath">The folder to start from.</param>
+    /// <param name="skipFolder">Returns true for the folders that must not be listed.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The files found.</returns>
+    public override async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
+    {
+        return await _listFilesRecursiveInParallelAsync(startPath, skipFolder, ctk).ConfigureAwait(false);
+    }
+
     protected override async Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
     {
         IFtpClientConnection? result = null;

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `FtpClientPool.ListFilesRecursiveAsync` lists folders in parallel on up to `PoolMaxSize` pooled connections, and the FTP ResourceWatcher lists its `FoldersToWatch` at the same time, so listing large trees is faster. The order of the listed files is no longer the folder walk order.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed

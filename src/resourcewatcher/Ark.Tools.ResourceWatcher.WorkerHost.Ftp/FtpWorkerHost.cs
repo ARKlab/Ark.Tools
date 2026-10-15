@@ -89,17 +89,13 @@ public sealed class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpM
         public async Task<IEnumerable<FtpMetadata>> GetMetadata(FtpFilter filter, CancellationToken ctk = default)
         {
 
-            IEnumerable<FtpMetadata> res = Array.Empty<FtpMetadata>();
             using var cts1 = new CancellationTokenSource(_config.ListingTimeout);
             using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ctk);
-            foreach (var f in filter.FoldersToWatch)
-            {
-                bool skipFolder(FtpEntry x) => filter.FolderFilter?.Invoke(x.FullPath) == false;
+            bool skipFolder(FtpEntry x) => filter.FolderFilter?.Invoke(x.FullPath) == false;
 
-                var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token).ConfigureAwait(false);
-                res = res.Concat(list.Select(static e => new FtpMetadata(e)));
-            }
-            return res.ToList();
+            // the pool bounds the open connections, so the folders can be listed at once
+            var lists = await Task.WhenAll(filter.FoldersToWatch.Select(f => _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token))).ConfigureAwait(false);
+            return lists.SelectMany(static l => l).Select(static e => new FtpMetadata(e)).ToList();
         }
 
         public async Task<FtpFile<TPayload>?> GetResource(FtpMetadata metadata, IResourceTrackedState<FtpResourceExtensions>? lastState, CancellationToken ctk = default)
