@@ -544,7 +544,7 @@ public sealed class GeneratorIncrementalityTests
             source,
             source.Replace("Creates an order.", "Creates a new order.", StringComparison.Ordinal),
             [contracts],
-            cachedSteps: ["McpReferencedContracts", "McpReferencedDocumentation"],
+            cachedSteps: ["McpReferencedContracts"],
             unchangedSteps: ["McpMarkerParser", "McpContractParser", "McpDocumentationParser", "McpModel"],
             expectedOutput: ["Description(\"Lists orders.\")", "Description(\"Creates an order.\")", "global::McpContracts.ListOrders(", "global::CreateOrder("],
             additionalTexts: [documentation]);
@@ -599,8 +599,6 @@ public sealed class GeneratorIncrementalityTests
         _describeOutput(driver).Should().Be(original);
         _getStepReasons(driver, "McpDocumentationParser").Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
-        _getStepReasons(driver, "McpReferencedDocumentation").Should().NotBeEmpty()
-            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
         _getOutputReasons(driver).Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
     }
@@ -654,8 +652,6 @@ public sealed class GeneratorIncrementalityTests
         _describeOutput(driver).Should().Be(original);
         _getStepReasons(driver, "McpDocumentationParser").Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Unchanged);
-        _getStepReasons(driver, "McpReferencedDocumentation").Should().NotBeEmpty()
-            .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
         _getOutputReasons(driver).Should().NotBeEmpty()
             .And.OnlyContain(static reason => reason == IncrementalStepRunReason.Cached);
     }

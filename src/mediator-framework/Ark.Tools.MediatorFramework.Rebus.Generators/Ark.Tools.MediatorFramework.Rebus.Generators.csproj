@@ -9,10 +9,8 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <RunAnalyzers>false</RunAnalyzers>
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateSBOM>false</GenerateSBOM>
     <Description>Source generator for Ark.Tools MediatorFramework Rebus message-bus transport handler registration</Description>
     <PackageTags>Ark;C#;.NET;Framework;Mediator;Rebus;Source Generator;Roslyn</PackageTags>
@@ -23,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <GlobalAnalyzerConfigFiles Include="../../Generators.globalconfig" />
   </ItemGroup>
 
   <ItemGroup>
