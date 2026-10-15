@@ -25,15 +25,12 @@ namespace Ark.Tools.MediatorFramework.Mcp.Generators;
 public sealed class McpToolGenerator : IIncrementalGenerator
 {
     private const string MarkerAttribute = "Ark.Tools.MediatorFramework.Mcp.ArkGenerateMcpToolsForAssemblyAttribute";
-    private const string ToolAttribute = "Ark.Tools.MediatorFramework.McpToolAttribute";
     private const string Query1 = "Ark.Tools.Solid.IQuery`1";
     private const string Query2 = "Ark.Tools.Solid.IQuery`2";
     private const string Request1 = "Ark.Tools.Solid.IRequest`1";
     private const string Request2 = "Ark.Tools.Solid.IRequest`2";
     private const string Command = "Ark.Tools.Solid.ICommand";
     private const string GenericCommand = "Ark.Tools.Solid.ICommand`1";
-    private const string ApiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
-    private const string HttpEndpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
     private const string MarkerParserTrackingName = "McpMarkerParser";
     private const string DocumentationParserTrackingName = "McpDocumentationParser";
     private const string ContractParserTrackingName = "McpContractParser";
@@ -86,7 +83,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 .OrderBy(static assemblyName => assemblyName, StringComparer.Ordinal)
                 .ToImmutableArray()));
         var sourceContracts = context.SyntaxProvider.ForAttributeWithMetadataName(
-                ToolAttribute,
+                ContractSymbols.McpToolAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol type
                     ? CreateContract(type, attributeContext.Attributes[0])
@@ -430,7 +427,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         ImmutableArray<string> assemblyNames,
         CancellationToken cancellationToken)
     {
-        var toolAttributeType = compilation.GetTypeByMetadataName(ToolAttribute);
+        var toolAttributeType = compilation.GetTypeByMetadataName(ContractSymbols.McpToolAttribute);
         var builder = ImmutableArray.CreateBuilder<AssemblyContracts>(assemblyNames.Length);
         foreach (var assemblyName in assemblyNames)
         {
@@ -491,16 +488,16 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         if (kind is null)
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(UnsupportedContract, location, contractName));
 
-        var name = GetString(toolAttribute, "Name") ?? contractName;
+        var name = ContractSymbols.NamedString(toolAttribute, "Name") ?? contractName;
         var apiGroup = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ApiGroupAttribute));
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ContractSymbols.ApiGroupAttribute));
         var groupName = apiGroup?.ConstructorArguments.FirstOrDefault().Value as string;
         if (!string.IsNullOrWhiteSpace(groupName))
             name = groupName + "." + name;
         var version = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName("Ark.Tools.MediatorFramework.VersioningAttribute"));
-        var introduced = version is null ? 1 : GetInt(version, "Introduced");
-        var retired = version is null ? 0 : GetInt(version, "Retired");
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ContractSymbols.VersioningAttribute));
+        var introduced = version is null ? 1 : ContractSymbols.NamedInt(version, "Introduced");
+        var retired = version is null ? 0 : ContractSymbols.NamedInt(version, "Retired");
 
         if (name.Length is 0 or > 128 || name.Any(character => !(char.IsLetterOrDigit(character) || character is '_' or '-' or '.')))
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(InvalidName, location, name));
@@ -523,10 +520,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(MissingConstructor, location, contractName));
 
         var httpEndpoint = type.GetAttributes()
-            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(HttpEndpointAttribute));
+            .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ContractSymbols.HttpEndpointAttribute));
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
-            ? GetBool(toolAttribute, "AllowAnonymous", false)
-            : GetBool(httpEndpoint, "AllowAnonymous", false);
+            ? ContractSymbols.NamedBool(toolAttribute, "AllowAnonymous", false)
+            : ContractSymbols.NamedBool(httpEndpoint, "AllowAnonymous", false);
         var hasDescription = TryGetDescription(type, out var attributeDescription);
 
         return new ContractModel(
@@ -537,10 +534,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             name,
             introduced,
             retired,
-            GetBool(toolAttribute, "ReadOnly", kind == HandlerKind.Query),
-            GetBool(toolAttribute, "Destructive", kind != HandlerKind.Query),
-            GetBool(toolAttribute, "Idempotent", false),
-            GetBool(toolAttribute, "OpenWorld", true),
+            ContractSymbols.NamedBool(toolAttribute, "ReadOnly", kind == HandlerKind.Query),
+            ContractSymbols.NamedBool(toolAttribute, "Destructive", kind != HandlerKind.Query),
+            ContractSymbols.NamedBool(toolAttribute, "Idempotent", false),
+            ContractSymbols.NamedBool(toolAttribute, "OpenWorld", true),
             allowAnonymous,
             kind.Value,
             responseType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
@@ -778,19 +775,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return attribute is not null;
     }
 
-    private static string? GetString(AttributeData attribute, string name)
-        => attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value as string;
-
-    private static bool GetBool(AttributeData? attribute, string name, bool fallback)
-        => attribute?.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value is bool value
-            ? value
-            : fallback;
-
     private static bool HasNamedArgument(AttributeData attribute, string name)
         => attribute.NamedArguments.Any(argument => argument.Key == name);
-
-    private static int GetInt(AttributeData attribute, string name)
-        => attribute.NamedArguments.FirstOrDefault(argument => argument.Key == name).Value.Value is int value ? value : 0;
 
     private static string Render(ContextModel contextModel, ImmutableArray<ToolModel> contracts)
     {
