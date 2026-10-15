@@ -103,34 +103,27 @@ public sealed class AzureBlobMessagingDataBus :
         var expectedHash = _parseHash(expectedSha256);
         var blob = _container.GetBlobClient(_options.Prefix + attachmentId);
 
-        BlobProperties properties;
+        // One GET returns both the metadata to validate and the body stream.
+        BlobDownloadStreamingResult download;
         try
         {
-            properties = await blob.GetPropertiesAsync(cancellationToken: ctk)
-                .ConfigureAwait(false);
+            download = (await blob.DownloadStreamingAsync(cancellationToken: ctk)
+                .ConfigureAwait(false)).Value;
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
             throw _attachmentFailure("The payload attachment is missing.", ex);
         }
 
-        if (properties.ContentLength != expectedLength
-            || !_metadataMatches(properties.Metadata, expectedLength, expectedHash))
+        if (download.Details.ContentLength != expectedLength
+            || !_metadataMatches(download.Details.Metadata, expectedLength, expectedHash))
         {
+            download.Dispose();
             throw _attachmentFailure(
                 "The payload attachment metadata does not match the envelope.");
         }
 
-        try
-        {
-            var stream = await blob.OpenReadAsync(cancellationToken: ctk)
-                .ConfigureAwait(false);
-            return new Sha256ValidatingReadStream(stream, expectedLength, expectedSha256);
-        }
-        catch (RequestFailedException ex) when (ex.Status == 404)
-        {
-            throw _attachmentFailure("The payload attachment is missing.", ex);
-        }
+        return new Sha256ValidatingReadStream(download.Content, expectedLength, expectedSha256);
     }
 
     /// <inheritdoc />

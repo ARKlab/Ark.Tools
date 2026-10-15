@@ -43,6 +43,27 @@ public sealed class ComplianceFoundationTests
     }
 
     /// <summary>
+    /// Generated TryFormat redacts straight into the destination without allocating and rejects short buffers.
+    /// </summary>
+    [TestMethod]
+    public void SensitiveValueObject_TryFormatDoesNotAllocate()
+    {
+        var value = TestSensitiveValue.From("secret-value");
+        var buffer = new char[3];
+        value.TryFormat(buffer.AsSpan(), out _, default, null);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var formatted = value.TryFormat(buffer.AsSpan(), out var written, default, null);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        formatted.Should().BeTrue();
+        new string(buffer, 0, written).Should().Be("***");
+        allocated.Should().Be(0);
+        value.TryFormat(new char[2].AsSpan(), out var shortWritten, default, null).Should().BeFalse();
+        shortWritten.Should().Be(0);
+    }
+
+    /// <summary>
     /// The generated JSON converter writes cleartext for transport and restores safe rendering.
     /// </summary>
     [TestMethod]
@@ -329,6 +350,112 @@ public sealed class ComplianceFoundationTests
     }
 
     /// <summary>
+    /// Direct redaction renders the same text through the string and span paths for each mode,
+    /// and the span path rejects a destination shorter than the redacted length.
+    /// </summary>
+    /// <param name="redaction">The redaction mode.</param>
+    /// <param name="expected">The expected redacted text.</param>
+    [TestMethod]
+    [DataRow(ArkRedaction.Erase, "***")]
+    [DataRow(ArkRedaction.Mask, "***")]
+    [DataRow(ArkRedaction.None, "secret-value")]
+    [DataRow(ArkRedaction.Hmac, "***")]
+    [DataRow((ArkRedaction)99, "***")]
+    public void ComplianceRedactor_RedactsTextAndSpansPerMode(ArkRedaction redaction, string expected)
+    {
+        var redactor = new ComplianceRedactor();
+
+        _assertRedacts(redactor, redaction, "secret-value", expected);
+    }
+
+    /// <summary>
+    /// A keyed direct redactor renders the HMAC digest through the string and span paths.
+    /// </summary>
+    [TestMethod]
+    public void ComplianceRedactor_RedactsHmacTextAndSpansWithKey()
+    {
+        var key = RandomNumberGenerator.GetBytes(32);
+        var redactor = new ComplianceRedactor(new ComplianceRedactionOptions { HmacKey = key });
+        var expected = "hmac:" + Convert.ToHexString(HMACSHA256.HashData(key, Encoding.UTF8.GetBytes("secret-value")));
+
+        _assertRedacts(redactor, ArkRedaction.Hmac, "secret-value", expected);
+    }
+
+    /// <summary>
+    /// Empty and default generated values render the same text through ToString and TryFormat:
+    /// the marker for redacting modes and an empty string for None.
+    /// </summary>
+    [TestMethod]
+    public void SensitiveValueObject_EmptyAndDefaultRenderConsistently()
+    {
+        _assertRenders(TestSensitiveValue.From(string.Empty), "***");
+        _assertRenders(default(TestSensitiveValue), "***");
+        _assertRenders(TestMaskedValue.From(string.Empty), "***");
+        _assertRenders(default(TestMaskedValue), "***");
+        // The generated HMAC type reads its key from this variable, so the expectation follows it.
+        var hmacKey = Environment.GetEnvironmentVariable("ARK_TOOLS_COMPLIANCE_HMAC_KEY");
+        var expectedHmac = string.IsNullOrWhiteSpace(hmacKey)
+            ? "***"
+            : "hmac:" + Convert.ToHexString(HMACSHA256.HashData(Encoding.UTF8.GetBytes(hmacKey), Array.Empty<byte>()));
+        _assertRenders(TestHmacValue.From(string.Empty), expectedHmac);
+        _assertRenders(default(TestHmacValue), expectedHmac);
+        _assertRenders(TestClearValue.From(string.Empty), string.Empty);
+        _assertRenders(default(TestClearValue), string.Empty);
+    }
+
+    /// <summary>
+    /// Direct redaction of an empty value matches the span path for every mode.
+    /// </summary>
+    /// <param name="redaction">The redaction mode.</param>
+    /// <param name="expected">The expected redacted text.</param>
+    [TestMethod]
+    [DataRow(ArkRedaction.Erase, "***")]
+    [DataRow(ArkRedaction.Mask, "***")]
+    [DataRow(ArkRedaction.Hmac, "***")]
+    public void ComplianceRedactor_RedactsEmptyValuePerMode(ArkRedaction redaction, string expected)
+    {
+        _assertRedacts(new ComplianceRedactor(), redaction, string.Empty, expected);
+    }
+
+    /// <summary>
+    /// Direct redaction of an empty value passes through None and hashes with a configured HMAC key.
+    /// </summary>
+    [TestMethod]
+    public void ComplianceRedactor_RedactsEmptyValueForNoneAndKeyedHmac()
+    {
+        var key = RandomNumberGenerator.GetBytes(32);
+        var keyed = new ComplianceRedactor(new ComplianceRedactionOptions { HmacKey = key });
+
+        new ComplianceRedactor().Redact(string.Empty, ArkRedaction.None).Should().BeEmpty();
+        _assertRedacts(keyed, ArkRedaction.Hmac, string.Empty, "hmac:" + Convert.ToHexString(HMACSHA256.HashData(key, Array.Empty<byte>())));
+    }
+
+    private static void _assertRenders<T>(T value, string expected)
+        where T : ISpanFormattable
+    {
+        var buffer = new char[expected.Length];
+        var formatted = value.TryFormat(buffer.AsSpan(), out var written, default, null);
+
+        formatted.Should().BeTrue();
+        new string(buffer, 0, written).Should().Be(expected);
+        value.ToString().Should().Be(expected);
+    }
+
+    private static void _assertRedacts(ComplianceRedactor redactor, ArkRedaction redaction, string source, string expected)
+    {
+        var spanRedactor = redactor.GetRedactor(redaction);
+        var length = spanRedactor.GetRedactedLength(source.AsSpan());
+        var buffer = new char[length];
+        var written = spanRedactor.Redact(source.AsSpan(), buffer.AsSpan());
+        var tooSmall = () => spanRedactor.Redact(source.AsSpan(), new char[length - 1].AsSpan());
+
+        redactor.Redact(source, redaction).Should().Be(expected);
+        length.Should().Be(expected.Length);
+        new string(buffer, 0, written).Should().Be(expected);
+        tooSmall.Should().Throw<ArgumentException>();
+    }
+
+    /// <summary>
     /// Custom purposes retain a greppable reason plus category and named purposes compare by value.
     /// </summary>
     [TestMethod]
@@ -430,6 +557,24 @@ public sealed class ComplianceFoundationTests
 /// <summary>Test-only generated sensitive value object.</summary>
 [SensitiveValueObject<string>(ArkRedaction.Erase)]
 public readonly partial struct TestSensitiveValue
+{
+}
+
+/// <summary>Test-only masked sensitive value object.</summary>
+[SensitiveValueObject<string>(ArkRedaction.Mask)]
+public readonly partial struct TestMaskedValue
+{
+}
+
+/// <summary>Test-only HMAC sensitive value object.</summary>
+[SensitiveValueObject<string>(ArkRedaction.Hmac)]
+public readonly partial struct TestHmacValue
+{
+}
+
+/// <summary>Test-only pass-through sensitive value object.</summary>
+[SensitiveValueObject<string>(ArkRedaction.None)]
+public readonly partial struct TestClearValue
 {
 }
 

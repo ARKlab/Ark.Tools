@@ -324,6 +324,68 @@ public sealed class ComplianceSurfaceTests
             .Diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII020");
     }
 
+    /// <summary>A classified member losing its attribute inside a baseline type is still a weakened classification.</summary>
+    [TestMethod]
+    public void Surface_RemovingClassificationInBaselineTypeIsWeakening()
+    {
+        const string source = """
+            using Ark.Tools.Compliance;
+            namespace Example;
+            public class Customer
+            {
+                [PersonalData] public string Email { get; set; } = "";
+                [PersonalData] public string Phone { get; set; } = "";
+            }
+            public class Order
+            {
+                public string Number { get; set; } = "";
+            }
+            """;
+        var baseline = _run(source).Text;
+
+        var result = _run(source.Replace("[PersonalData] public string Phone", "public string Phone", StringComparison.Ordinal),
+            baseline, enabled: true);
+
+        result.Diagnostics.Select(static diagnostic => diagnostic.Id).Should().Equal("ARKPII020", "ARKPII021");
+        result.Diagnostics.Should().OnlyContain(static diagnostic => diagnostic.GetMessage(System.Globalization.CultureInfo.InvariantCulture)
+            .Contains("Example.Customer.Phone", StringComparison.Ordinal));
+    }
+
+    /// <summary>A type absent from the baseline that loses its last classified member is ordinary drift only.</summary>
+    [TestMethod]
+    public void Surface_RenamedTypeLosingLastClassificationIsOrdinaryDrift()
+    {
+        var baseline = _run(_personalMember).Text;
+
+        _run(_personalMember.Replace("class Customer", "class Client", StringComparison.Ordinal)
+                .Replace("[PersonalData]", string.Empty, StringComparison.Ordinal), baseline, enabled: true)
+            .Diagnostics.Should().ContainSingle().Which.Id.Should().Be("ARKPII020");
+    }
+
+    /// <summary>Only types with a classified member or named in the baseline produce a member spec.</summary>
+    [TestMethod]
+    public void Surface_SkipsUnclassifiedTypesOutsideBaseline()
+    {
+        var compilation = _createCompilation(CSharpSyntaxTree.ParseText(_personalMember + """
+
+            public class Order
+            {
+                public string Number { get; set; } = "";
+                public void Ship(string carrier) { }
+            }
+            """));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            [new ComplianceSurfaceGenerator().AsSourceGenerator()],
+            additionalTexts: [new BaselineText("ArkComplianceSurface.txt", _run(_personalMember).Text)],
+            optionsProvider: new OptionsProvider(enabled: true, complianceEnabled: true),
+            driverOptions: new GeneratorDriverOptions(IncrementalGeneratorOutputKind.None, trackIncrementalGeneratorSteps: true));
+
+        var result = driver.RunGenerators(compilation).GetRunResult().Results.Single();
+
+        result.Diagnostics.Should().BeEmpty();
+        result.TrackedSteps["ComplianceSurfaceMemberSpecs"].SelectMany(static step => step.Outputs).Should().ContainSingle();
+    }
+
     /// <summary>Malformed and ambiguous baselines fail closed.</summary>
     [TestMethod]
     public void Surface_RejectsMalformedDuplicateAndMultipleBaselines()

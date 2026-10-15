@@ -84,6 +84,34 @@ public sealed class BookSteps
             await _books.CreateAsync(input).ConfigureAwait(false);
     }
 
+    /// <summary>Creates books from a table in one bulk request.</summary>
+    /// <param name="table">The create request data.</param>
+    [When("I bulk create books with")]
+    public async Task BulkCreateBooks(Table table)
+    {
+        await _books.BulkCreateAsync(table.CreateSet<Book.V1.Create>().ToArray()).ConfigureAwait(false);
+    }
+
+    /// <summary>Asserts the book audits and that each identifies its own operation.</summary>
+    /// <param name="table">The expected audits.</param>
+    [Then("the book audits are")]
+    public async Task BookAuditsAre(Table table)
+    {
+        var audits = await _books.ReadBookAuditsAsync().ConfigureAwait(false);
+        table.CompareToSet(audits.Data);
+        audits.Data.Should().AllSatisfy(static audit => audit.Identifier.Should().Be(audit.Id.Value.ToString("D")));
+    }
+
+    /// <summary>Asserts that every bulk-created book references the single book audit.</summary>
+    /// <param name="count">The expected number of created books.</param>
+    [Then("the (.*) bulk-created books reference the book audit")]
+    public async Task BulkCreatedBooksReferenceTheBookAudit(int count)
+    {
+        var audit = (await _books.ReadBookAuditsAsync().ConfigureAwait(false)).Data.Single();
+        _books.BulkCreated.Should().HaveCount(count)
+            .And.AllSatisfy(book => book.AuditId.Should().Be(audit.Id));
+    }
+
     /// <summary>Loads the active book through its query contract.</summary>
     [When("I retrieve the current book")]
     public async Task RetrieveCurrentBook()

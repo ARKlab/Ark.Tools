@@ -36,8 +36,10 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
             ?? throw new EntityNotFoundException($"Book '{request.Id}' was not found.");
         if (!string.Equals(request.ETag, current.ETag, StringComparison.Ordinal))
             throw new EntityTagMismatchException($"The ETag for book '{request.Id}' did not match.");
+        var auditId = AuditId.New();
         var book = current with
         {
+            AuditId = auditId,
             Title = request.Data.Title,
             Author = request.Data.Author,
             Genre = request.Data.Genre,
@@ -49,6 +51,7 @@ public sealed class UpdateBookHandler : IRequestHandler<Book_UpdateRequest.V1, B
             ?? throw new EntityNotFoundException($"Book '{request.Id}' was not found after update.");
         await context.WriteAuditAsync(new AuditEntry
         {
+            Id = auditId,
             UserId = _user.GetUserIdOrAnonymous(),
             EntityType = nameof(Book.V1.Output),
             Identifier = book.Id.Value.ToString("D"),

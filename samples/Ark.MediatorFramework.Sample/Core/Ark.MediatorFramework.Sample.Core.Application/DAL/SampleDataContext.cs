@@ -190,10 +190,10 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     public async Task<Book.V1.Output> SaveBookAsync(Book.V1.Output book, CancellationToken ctk = default)
     {
         const string sql = """
-            INSERT INTO [dbo].[Book] ([Id], [Title], [Author], [Genre], [ISBN], [Description])
+            INSERT INTO [dbo].[Book] ([Id], [Title], [Author], [Genre], [ISBN], [Description], [AuditId])
             OUTPUT INSERTED.[Id], INSERTED.[Title], INSERTED.[Author], INSERTED.[Genre],
-                   INSERTED.[ISBN], INSERTED.[Description], INSERTED.[RowVersion] AS [ETag]
-            VALUES (@Id, @Title, @Author, @Genre, @ISBN, @Description);
+                   INSERTED.[ISBN], INSERTED.[Description], INSERTED.[AuditId], INSERTED.[RowVersion] AS [ETag]
+            VALUES (@Id, @Title, @Author, @Genre, @ISBN, @Description, @AuditId);
             """;
         var command = new CommandDefinition(sql, new
         {
@@ -203,6 +203,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.Genre,
             book.ISBN,
             book.Description,
+            book.AuditId,
         }, Transaction, cancellationToken: ctk);
         var row = await Connection.QuerySingleAsync<BookRow>(command).ConfigureAwait(false);
         return row.ToResponse();
@@ -220,7 +221,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.Author,
             book.Genre,
             book.ISBN,
-            book.Description));
+            book.Description,
+            book.AuditId));
         var parameters = new
         {
             Books = rows.ToDataTableArk().AsTableValuedParameter("dbo.BookBulkInsertType"),
@@ -233,7 +235,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 [Author],
                 [Genre],
                 [ISBN],
-                [Description]
+                [Description],
+                [AuditId]
             )
             OUTPUT
                 INSERTED.[Id],
@@ -242,6 +245,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 INSERTED.[Genre],
                 INSERTED.[ISBN],
                 INSERTED.[Description],
+                INSERTED.[AuditId],
                 INSERTED.[RowVersion] AS [ETag]
             SELECT
                 [Id],
@@ -249,7 +253,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 [Author],
                 [Genre],
                 [ISBN],
-                [Description]
+                [Description],
+                [AuditId]
             FROM @Books;
             """;
         var command = new CommandDefinition(
@@ -267,7 +272,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         CancellationToken ctk = default)
     {
         const string sql = """
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [AuditId], [RowVersion] AS [ETag]
             FROM [dbo].[Book]
             WHERE [Id] = @Id;
             """;
@@ -285,7 +290,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 [Author] = @Author,
                 [Genre] = @Genre,
                 [ISBN] = @ISBN,
-                [Description] = @Description
+                [Description] = @Description,
+                [AuditId] = @AuditId
             WHERE [Id] = @Id
               AND [RowVersion] = TRY_CONVERT(VARBINARY(8), @ETag, 1);
             """;
@@ -297,6 +303,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
             book.Genre,
             book.ISBN,
             book.Description,
+            book.AuditId,
             book.ETag,
         }, Transaction, cancellationToken: ctk);
         return await Connection.ExecuteAsync(command).ConfigureAwait(false) == 1;
@@ -318,7 +325,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         var orderBy = _buildBookOrderBy(query.Sort ?? []);
         var sql = $"""
-            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [RowVersion] AS [ETag]
+            SELECT [Id], [Title], [Author], [Genre], [ISBN], [Description], [AuditId], [RowVersion] AS [ETag]
             FROM [dbo].[Book]
             WHERE (@Title IS NULL OR [Title] = @Title)
               AND (@Author IS NULL OR [Author] = @Author)
@@ -615,7 +622,8 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         PersonName Author,
         EvolvableEnum<Book.V1.Genre> Genre,
         Isbn? ISBN,
-        BookDescription Description);
+        BookDescription Description,
+        AuditId AuditId);
 
     private sealed class BookRow
     {
@@ -625,6 +633,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
         public EvolvableEnum<Book.V1.Genre> Genre { get; set; }
         public Isbn? ISBN { get; set; }
         public BookDescription Description { get; set; }
+        public AuditId AuditId { get; set; }
         public byte[] ETag { get; set; } = [];
 
         public Book.V1.Output ToResponse()
@@ -637,6 +646,7 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
                 Genre = Genre,
                 ISBN = ISBN,
                 Description = Description,
+                AuditId = AuditId,
                 ETag = "0x" + Convert.ToHexString(ETag),
             };
         }

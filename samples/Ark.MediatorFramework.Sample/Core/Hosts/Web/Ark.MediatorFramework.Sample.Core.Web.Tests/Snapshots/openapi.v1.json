@@ -1083,6 +1083,9 @@
           "description": {
             "$ref": "#/components/schemas/BookDescription"
           },
+          "auditId": {
+            "$ref": "#/components/schemas/AuditId"
+          },
           "eTag": {
             "type": [
               "null",

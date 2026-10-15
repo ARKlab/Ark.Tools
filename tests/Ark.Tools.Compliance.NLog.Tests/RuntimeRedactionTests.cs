@@ -7,7 +7,10 @@ using Ark.Tools.NLog;
 using AwesomeAssertions;
 
 using global::NLog;
+using global::NLog.Config;
 using global::NLog.Layouts;
+using global::NLog.Targets;
+using global::NLog.Targets.Wrappers;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -146,6 +149,66 @@ public sealed class RuntimeRedactionTests
 
         output.Should().Contain(ComplianceRedactor.Marker);
         output.Should().NotContain("alice@private-domain.test");
+    }
+
+    /// <summary>PII scanning covers the message but not the timestamp/level/logger prefix of a text line.</summary>
+    [TestMethod]
+    public void PiiScan_SkipsTextLinePrefix()
+    {
+        const string loggerShortName = "+12025550100";
+        new PiiScanner(PiiScanMode.MessageAndProperties).Scan(loggerShortName)
+            .Should().Contain(ComplianceRedactor.Marker, "the logger name must look like PII for this test to be meaningful");
+
+        var output = _capture(static configurer => configurer.WithComplianceRedaction(static options =>
+            options.PiiScan = PiiScanMode.MessageAndProperties), static logger =>
+        {
+            LogManager.GetLogger("Compliance." + loggerShortName)
+                .Info(CultureInfo.InvariantCulture, "{Message}", "contact alice@private-domain.test");
+        });
+
+        output.Should().Contain(loggerShortName);
+        output.Should().Contain(ComplianceRedactor.Marker);
+        output.Should().NotContain("alice@private-domain.test");
+    }
+
+    /// <summary>The text line keeps the public <see cref="NLogConfigurer.TextLineLayout"/> format.</summary>
+    [TestMethod]
+    public void TextLine_MatchesPublicLayout()
+    {
+        var logEvent = new LogEventInfo(LogLevel.Warn, "Compliance.Runtime.Tests", CultureInfo.InvariantCulture,
+            "failed {Value}", [42])
+        {
+            Exception = new InvalidOperationException("ordinary failure"),
+        };
+        var expected = Layout.FromString(NLogConfigurer.TextLineLayout).Render(logEvent);
+
+        var output = _capture(null, logger => logger.Log(logEvent));
+
+        output.Should().Be(expected + Environment.NewLine);
+    }
+
+    /// <summary>Scope properties survive an async target, which renders on another thread.</summary>
+    /// <param name="mode">The PII scan mode.</param>
+    [TestMethod]
+    [DataRow(PiiScanMode.Off)]
+    [DataRow(PiiScanMode.MessageAndProperties)]
+    public void ComplianceLayout_KeepsScopePropertiesInAsyncTarget(PiiScanMode mode)
+    {
+        using var memory = new MemoryTarget("memory")
+        {
+            Layout = new ComplianceLayout(new JsonLayout { IncludeScopeProperties = true }, () => new PiiScanner(mode)),
+        };
+        var configuration = new LoggingConfiguration();
+        using var async = new AsyncTargetWrapper("async", memory);
+        configuration.AddRuleForAllLevels(async);
+        using var factory = new LogFactory { Configuration = configuration };
+        var logger = factory.GetLogger("Compliance.Runtime.Tests");
+
+        using (ScopeContext.PushProperty("scopeKey", "scope-value"))
+            logger.Info(CultureInfo.InvariantCulture, "scoped");
+        factory.Flush();
+
+        memory.Logs.Should().ContainSingle().Which.Should().Contain("scope-value");
     }
 
     /// <summary>Pattern scanning classifies phone and postal-address matches independently from email.</summary>

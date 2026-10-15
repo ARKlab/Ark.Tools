@@ -66,11 +66,15 @@ namespace Ark.Tools.MediatorFramework.Generators
             var endpointAssemblies = endpointMappings
                 .SelectMany(static (mapping, _) => mapping.Assemblies.Values.Select(static assembly => assembly.Name))
                 .Collect()
-                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies));
+                // Order and duplicates of the mapping calls do not matter, so they must not rescan metadata.
+                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(static assemblyName => assemblyName, StringComparer.Ordinal)
+                    .ToImmutableArray()));
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     GrpcMethodAttribute,
                     static (node, _) => node is TypeDeclarationSyntax,
-                    static (attributeContext, _) => ExtractSourceEndpoint(attributeContext))
+                    static (attributeContext, cancellationToken) => ExtractSourceEndpoint(attributeContext, cancellationToken))
                 .WithTrackingName(EndpointParserTrackingName)
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value)
@@ -85,18 +89,14 @@ namespace Ark.Tools.MediatorFramework.Generators
             var sourceProtoContracts = context.SyntaxProvider.ForAttributeWithMetadataName(
                     ProtoContractAttribute,
                     static (node, _) => node is BaseTypeDeclarationSyntax,
-                    static (attributeContext, _) => ExtractSourceProtoContract(attributeContext))
+                    static (attributeContext, cancellationToken) => ExtractSourceProtoContract(attributeContext, cancellationToken))
                 .WithTrackingName(ProtoContractParserTrackingName)
                 .Where(static contract => contract is not null)
                 .Select(static (contract, _) => contract!)
                 .Collect()
                 .Select(static (contracts, _) => new EquatableArray<ProtoContractModel>(contracts));
-            // Sorted and distinct so that reordering mapping calls does not rescan; any source endpoint widens the scope.
+            // Any source endpoint widens the scope.
             var protoContractScope = endpointAssemblies
-                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies.Values
-                    .Distinct(StringComparer.Ordinal)
-                    .OrderBy(static name => name, StringComparer.Ordinal)
-                    .ToImmutableArray()))
                 .Combine(sourceEndpoints.Collect().Select(static (endpoints, _) => !endpoints.IsEmpty));
             var referencedProtoContracts = referenceScope
                 .Combine(protoContractScope)
@@ -147,7 +147,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 static (spc, diagnostics) => ReportDiagnostics(spc, diagnostics));
         }
 
-        private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
+        private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
         {
             if (context.TargetSymbol is not INamedTypeSymbol type)
                 return null;
@@ -161,7 +161,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 : type.GetAttributes().FirstOrDefault(
                     attribute => SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, grpcServiceAttribute));
             return Extract(type, grpc, grpcService, apiGroupAttribute, attachmentType,
-                context.SemanticModel.Compilation.GetTypeByMetadataName(AsyncEnumerable));
+                context.SemanticModel.Compilation.GetTypeByMetadataName(AsyncEnumerable), cancellationToken);
         }
 
         private static AssemblyMapping? GetAssemblyMapping(
@@ -304,7 +304,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         continue;
 
                     var grpcService = attrs.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, grpcServiceAttr));
-                    var model = Extract(type, grpc, grpcService, apiGroupAttr, attachmentType, asyncEnumerableType);
+                    var model = Extract(type, grpc, grpcService, apiGroupAttr, attachmentType, asyncEnumerableType, cancellationToken);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -369,7 +369,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             AttributeData? grpcService,
             INamedTypeSymbol? apiGroupAttribute,
             INamedTypeSymbol? attachmentType,
-            INamedTypeSymbol? asyncEnumerableType)
+            INamedTypeSymbol? asyncEnumerableType,
+            CancellationToken cancellationToken)
         {
             string? response = null;
             var kind = HandlerKind.None;
@@ -439,14 +440,15 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ?? apiGroup
                 ?? defaultGroup;
 
+            var documentation = XmlDocumentation.Read(type, cancellationToken);
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 GeneratedName(type),
                 grpcMethod,
                 group,
                 response,
-                XmlDocumentation.Summary(type),
-                XmlDocumentation.Remarks(type),
+                documentation.Summary,
+                documentation.Remarks,
                 kind,
                 grpcIntroducedIn,
                 grpcRetiredIn,
@@ -1039,10 +1041,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine();
         }
 
-        private static ProtoContractModel? ExtractSourceProtoContract(GeneratorAttributeSyntaxContext context)
+        private static ProtoContractModel? ExtractSourceProtoContract(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
         {
             return context.TargetSymbol is INamedTypeSymbol type
-                ? CreateProtoContract(type, context.Attributes[0])
+                ? CreateProtoContract(type, context.Attributes[0], cancellationToken)
                 : null;
         }
 
@@ -1072,7 +1074,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     var protoContract = type.GetAttributes().FirstOrDefault(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, protoAttribute));
                     if (protoContract is not null)
-                        result.Add(CreateProtoContract(type, protoContract));
+                        result.Add(CreateProtoContract(type, protoContract, cancellationToken));
                 }
             }
             return result.ToImmutable();
@@ -1098,7 +1100,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             return closure;
         }
 
-        private static ProtoMemberModel CreateProtoMember(INamedTypeSymbol type, IPropertySymbol property, AttributeData protoMember)
+        private static ProtoMemberModel CreateProtoMember(INamedTypeSymbol type, IPropertySymbol property, AttributeData protoMember, CancellationToken cancellationToken)
         {
             var element = ProtoElementType(property.Type);
             var valueObjectPrimitive = ValueObjectSymbols.GetPrimitive(element);
@@ -1125,7 +1127,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             return new ProtoMemberModel(
                 property.Name,
                 property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                XmlDocumentation.Summary(property),
+                XmlDocumentation.Summary(property, cancellationToken),
                 protoMember.ConstructorArguments.FirstOrDefault().Value is int number ? number : 0,
                 IsRepeatedProtoType(property.Type),
                 precomputed,
@@ -1188,7 +1190,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ?? 200;
         }
 
-        private static ProtoContractModel CreateProtoContract(INamedTypeSymbol type, AttributeData protoContract)
+        private static ProtoContractModel CreateProtoContract(INamedTypeSymbol type, AttributeData protoContract, CancellationToken cancellationToken)
         {
             var members = AllProperties(type)
                 .Select(property => new
@@ -1198,7 +1200,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                         attribute.AttributeClass._isFullName("ProtoBuf.ProtoMemberAttribute")),
                 })
                 .Where(item => item.Attribute is not null)
-                .Select(item => CreateProtoMember(type, item.Property, item.Attribute!))
+                .Select(item => CreateProtoMember(type, item.Property, item.Attribute!, cancellationToken))
                 .Where(member => member.Number > 0)
                 .ToImmutableArray();
 
@@ -1221,7 +1223,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             return new ProtoContractModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 string.IsNullOrWhiteSpace(name) ? GeneratedName(type) : name!,
-                XmlDocumentation.Summary(type),
+                XmlDocumentation.Summary(type, cancellationToken),
                 new EquatableArray<ProtoMemberModel>(members),
                 new EquatableArray<ProtoIncludeModel>(includes));
         }

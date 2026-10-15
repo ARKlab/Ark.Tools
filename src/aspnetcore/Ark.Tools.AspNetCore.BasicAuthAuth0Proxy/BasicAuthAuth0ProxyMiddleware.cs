@@ -4,6 +4,7 @@ using Ark.Tools.Auth0;
 
 using Auth0.AuthenticationApi;
 using Auth0.AuthenticationApi.Models;
+using Auth0.Core.Exceptions;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,13 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
     private readonly ILogger<BasicAuthAuth0ProxyMiddleware> _logger;
 
     public BasicAuthAuth0ProxyMiddleware(RequestDelegate next, BasicAuthAuth0ProxyConfig config, ILogger<BasicAuthAuth0ProxyMiddleware> logger)
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        : this(next, config, logger, new AuthenticationApiClient($"{config.Domain}"))
+#pragma warning restore CA2000 // Dispose objects before losing scope
+    {
+    }
+
+    internal BasicAuthAuth0ProxyMiddleware(RequestDelegate next, BasicAuthAuth0ProxyConfig config, ILogger<BasicAuthAuth0ProxyMiddleware> logger, IAuthenticationApiClient auth0)
     {
         _next = next;
         _config = config;
@@ -30,16 +38,33 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
         _policy = new ResiliencePipelineBuilder()
             .AddRetry(new RetryStrategyOptions
             {
-                ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                // Credential errors (403 invalid_grant) are not retried: each retry counts as a failed login for brute-force protection.
+                ShouldHandle = static args => ValueTask.FromResult(args.Outcome.Exception is { } ex && _isTransient(ex, args.Context.CancellationToken)),
                 MaxRetryAttempts = 3,
                 Delay = TimeSpan.FromSeconds(1),
                 BackoffType = DelayBackoffType.Linear,
             })
             .Build();
 
-#pragma warning disable CA2000 // Dispose objects before losing scope
-        _auth0 = new AuthenticationApiClientCachingDecorator(new AuthenticationApiClient($"{_config.Domain}"));
-#pragma warning restore CA2000 // Dispose objects before losing scope
+        _auth0 = new AuthenticationApiClientCachingDecorator(auth0);
+    }
+
+    private static bool _isTransient(Exception ex, CancellationToken cancellationToken)
+    {
+        return ex switch
+        {
+            RateLimitApiException => true,
+            ErrorApiException { StatusCode: var status } => _isTransient(status),
+            HttpRequestException { StatusCode: null } => true,
+            HttpRequestException { StatusCode: { } status } => _isTransient(status),
+            OperationCanceledException => !cancellationToken.IsCancellationRequested,
+            _ => false,
+        };
+    }
+
+    private static bool _isTransient(System.Net.HttpStatusCode status)
+    {
+        return status is System.Net.HttpStatusCode.RequestTimeout or System.Net.HttpStatusCode.TooManyRequests || (int)status >= 500;
     }
 
     public void Dispose()
@@ -86,7 +111,7 @@ public sealed class BasicAuthAuth0ProxyMiddleware : IDisposable
                                     ClientSecret = _config.ProxySecret,
                                     Realm = _config.Realm!,
                                     Scope = "openid profile email",
-                                }, context.RequestAborted).ConfigureAwait(false);
+                                }, ct).ConfigureAwait(false);
 
                                 return result.AccessToken;
                             }, context.RequestAborted).ConfigureAwait(false);
