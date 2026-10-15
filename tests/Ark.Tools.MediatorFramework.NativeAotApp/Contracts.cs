@@ -4,6 +4,8 @@ using Ark.Tools.MediatorFramework.Mcp;
 using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
 
+using MessagePack;
+
 using System.Text.Json.Serialization;
 
 using Vogen;
@@ -124,6 +126,36 @@ public sealed class DownloadBookQueryHandler : IQueryHandler<DownloadBookQuery, 
     }
 }
 
+/// <summary>Renames a book through a generated Minimal API endpoint that negotiates JSON or MessagePack.</summary>
+[HttpEndpoint("POST", "/books/rename", AcceptsMessagePack = true)]
+[MessagePackObject]
+public sealed record RenameBookRequest : IRequest<RenameBookRequest, RenamedBook>
+{
+    /// <summary>Gets the new code.</summary>
+    [Key(0)]
+    public required string Code { get; init; }
+}
+
+/// <summary>The renamed book.</summary>
+[MessagePackObject]
+public sealed record RenamedBook
+{
+    /// <summary>Gets the code.</summary>
+    [Key(0)]
+    public required string Code { get; init; }
+}
+
+/// <summary>Handles <see cref="RenameBookRequest"/>.</summary>
+public sealed class RenameBookRequestHandler : IRequestHandler<RenameBookRequest, RenamedBook>
+{
+    /// <inheritdoc />
+    public async Task<RenamedBook> ExecuteAsync(RenameBookRequest request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return await Task.FromResult(new RenamedBook { Code = request.Code + "-renamed" }).ConfigureAwait(false);
+    }
+}
+
 /// <summary>Selects this assembly for the generated MCP tools.</summary>
 [ArkGenerateMcpToolsForAssembly(typeof(GetBookQuery))]
 public partial class AppMcpContext;
@@ -136,6 +168,8 @@ public partial class AppEndpointContext;
 [JsonSourceGenerationOptions(RespectNullableAnnotations = true, RespectRequiredConstructorParameters = true, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(Book))]
 [JsonSerializable(typeof(GetBookQuery))]
+[JsonSerializable(typeof(RenameBookRequest))]
+[JsonSerializable(typeof(RenamedBook))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
 [JsonSerializable(typeof(Microsoft.AspNetCore.Http.HttpValidationProblemDetails))]
 public sealed partial class AppJsonContext : JsonSerializerContext;

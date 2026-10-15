@@ -60,7 +60,7 @@ public sealed class GeneratorSnapshotTests
             "value",
             CancellationToken.None);
 
-        action.Should().Throw<InvalidOperationException>();
+        action.Should().Throw<InvalidOperationException>().WithMessage("*AddArkMessagePack*");
     }
 
     [TestMethod]
@@ -69,7 +69,7 @@ public sealed class GeneratorSnapshotTests
         var context = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection()
-                .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+                .AddArkMessagePack(StandardResolver.Instance)
                 .BuildServiceProvider(),
         };
         var method = typeof(ArkMessagePackEx)
@@ -78,13 +78,14 @@ public sealed class GeneratorSnapshotTests
         var options = (MessagePackSerializerOptions)method.Invoke(null, [context])!;
 
         options.Security.Should().BeSameAs(MessagePackSecurity.UntrustedData);
+        method.Invoke(null, [context]).Should().BeSameAs(options, "options are cached per resolver");
     }
 
     [TestMethod]
     public void MessagePackFormatterValidationNamesUnformattableContracts()
     {
         var services = new ServiceCollection()
-            .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+            .AddArkMessagePack(StandardResolver.Instance)
             .BuildServiceProvider();
 
         Action action = () => Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ValidateMessagePackContracts(
@@ -101,7 +102,7 @@ public sealed class GeneratorSnapshotTests
         var context = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection()
-                .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+                .AddArkMessagePack(StandardResolver.Instance)
                 .BuildServiceProvider(),
         };
         context.Request.Headers.Accept = "application/x-msgpack";
@@ -1929,6 +1930,55 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorWalksMultiTransportContractOnce()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Rebus;
+            using Ark.Tools.Solid;
+            [HttpEndpoint("POST", "/prints/{id}")]
+            [GrpcMethod("Recalculate")]
+            [RebusMessage]
+            public sealed class RecalculatePrint : IRequest<RecalculatePrint, string>
+            {
+                public int Id { get; set; }
+            }
+            """;
+        var compilation = CSharpCompilation.Create(
+            "ApiSurfaceSingleWalk",
+            [CSharpSyntaxTree.ParseText(source)],
+            _platformReferences.Concat(
+            [
+                MetadataReference.CreateFromFile(typeof(HttpEndpointAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(RebusMessageAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(IRequest<>).Assembly.Location),
+            ]),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        GeneratorDriver driver = CSharpGeneratorDriver.Create(
+            generators: [new Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator().AsSourceGenerator()],
+            optionsProvider: new TestAnalyzerConfigOptionsProvider(
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["build_property.ArkApiSurfaceEnabled"] = "true",
+                }),
+            driverOptions: new GeneratorDriverOptions(
+                IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+
+        var result = driver.RunGenerators(compilation).GetRunResult().Results.Single();
+
+        result.Diagnostics.Where(static d => d.Severity == DiagnosticSeverity.Error && !d.Id.StartsWith("ARKAPI", StringComparison.Ordinal))
+            .Should().BeEmpty();
+        result.TrackedSteps["ApiSurfaceTypeSpec"]
+            .SelectMany(static step => step.Outputs)
+            .Count(static output => output.Value is not null)
+            .Should().Be(1);
+        result.GeneratedSources.Single().SourceText.ToString()
+            .Split("CONTRACT RecalculatePrint.Id : int").Length.Should().Be(2);
+    }
+
+    [TestMethod]
     public void ApiSurfaceGeneratorEmitsExplicitEntriesForEvolvableEnumMembers()
     {
         const string source =
@@ -2229,6 +2279,54 @@ public sealed class GeneratorSnapshotTests
             static diagnostic => diagnostic.Id == "ARKMF055");
         generatedMcpCompilation.GetDiagnostics().Should().NotContain(
             static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+    }
+
+    [TestMethod]
+    public void MinimalApiAndGrpcNormalizeDescriptionAttributesTheSameWay()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Description("a\n  b")]
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                [Description("c\n  d")]
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"a b\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"c d\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [Description("a\n  b")]
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse>
+            {
+                [Description("c\n  d")]
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class DocumentedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        grpc.Should().Contain("// a b");
+        grpc.Should().Contain("// c d");
     }
 
     [TestMethod]

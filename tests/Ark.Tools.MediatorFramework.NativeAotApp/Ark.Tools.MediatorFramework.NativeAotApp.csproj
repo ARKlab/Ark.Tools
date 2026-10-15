@@ -15,6 +15,9 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <!-- Non-production smoke test: redaction registration (ARKPII013) not required -->
     <NoWarn>$(NoWarn);ARKPII013</NoWarn>
+    <!-- MessagePack is not annotated for trimming, so it reports one collapsed warning per assembly; Ark.Tools projects
+         are trimmable and still report each IL2xxx/IL3xxx warning individually. -->
+    <NoWarn>$(NoWarn);IL2104;IL3053</NoWarn>
     <!-- Pinned so the lock file is the same on every OS and the referenced libraries restore without a RID. CI runs on linux-x64. -->
     <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
     <InterceptorsNamespaces>$(InterceptorsNamespaces);Ark.Tools.Core.Generated</InterceptorsNamespaces>
