@@ -328,8 +328,9 @@ The processor promotes the failing span and live local ancestors, registers the
 trace as failed, and promotes siblings or descendants that complete after the
 failure is observed. Siblings already completed cannot be recovered.
 
-`WebApi4xxAsSuccessProcessor` clears the error status for HTTP 400–499 server
-spans. Ark registers it before `ArkFailurePromotionProcessor`.
+Ark does not change the status of server 4xx spans: the instrumentation leaves
+them `Unset`, and an `Error` set by the application or by an unhandled
+exception is kept and promoted. See [HTTP 4xx status](sampling.md#http-4xx-status).
 
 Processors run in registration order. To run your own processor before
 failure promotion, register it before calling the Ark setup:

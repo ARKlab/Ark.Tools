@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Breaking:** Rebus consumers using `OpenTelemetryStep` now treat the sender of a message as a remote parent, as incoming HTTP requests and MediatorFramework messages already did. With the default `RespectRemoteParentSampling = false`, a Rebus worker samples its messages with its own `TracesPerSecond` budget instead of following the sender's sampled flag, so you will see more worker spans and some traces that start in the middle of a chain. To keep the previous behaviour, set `OTel:ArkAdaptiveSampler:RespectRemoteParentSampling` to `true`; it then applies to every remote parent of the host, incoming HTTP requests included.
+- **Breaking:** the Ark OpenTelemetry setups (`AddArkOpenTelemetry`, `AddArkAspNetCoreOpenTelemetry`, `AddArkOpenTelemetryForWorkerHost`) no longer register `WebApi4xxAsSuccessProcessor`, so a server 4xx span keeps the status its producer set. The ASP.NET Core instrumentation leaves 4xx requests `Unset`, so nothing changes for them; a 4xx request that the application or an unhandled exception marked as `Error` now stays failed and is promoted by failure promotion. Application Insights shows `Unset` 4xx requests as failed whether or not the processor runs: to show them as successes, set `ActivityStatusCode.Ok` in your own processor, see [HTTP 4xx status](docs/otel/sampling.md#http-4xx-status). To keep the previous behaviour, register `WebApi4xxAsSuccessProcessor` yourself before the Ark setup.
+
+### Deprecated
+
+- `WebApi4xxAsSuccessProcessor` (in `Ark.Tools.OTel` and `Ark.Tools.AspNetCore.ApplicationInsights`) is obsolete: it erases an `Error` set on purpose and does not make Application Insights count 4xx requests as successful. Set `ActivityStatusCode.Ok` in your own processor instead.
 
 ### Fixed
 

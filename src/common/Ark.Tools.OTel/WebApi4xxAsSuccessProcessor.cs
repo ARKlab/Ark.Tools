@@ -10,6 +10,12 @@ namespace Ark.Tools.OTel;
 /// <summary>
 /// Marks HTTP server spans for 4xx responses as non-errors.
 /// </summary>
+/// <remarks>
+/// Not registered by the Ark setups: register it yourself, before the Ark setup, to keep the old behaviour.
+/// It sets the status of every server 4xx span to <see cref="ActivityStatusCode.Unset"/>, also when the
+/// application or the instrumentation set <see cref="ActivityStatusCode.Error"/> on purpose.
+/// </remarks>
+[Obsolete("Clearing Error hides 4xx failures that the application or the instrumentation reported, and Application Insights still counts Unset 4xx requests as failed. Set ActivityStatusCode.Ok in your own processor instead.", UrlFormat = "https://github.com/ARKlab/Ark.Tools/blob/master/docs/otel/sampling.md#http-4xx-status")]
 public sealed class WebApi4xxAsSuccessProcessor : BaseProcessor<Activity>
 {
     /// <inheritdoc/>

@@ -60,9 +60,79 @@ Siblings that ended before the failure was observed cannot be recovered. This is
 intentional boundary that avoids retaining every operation indefinitely.
 
 HTTP 4xx codes are not failures by themselves: a 4xx span is promoted only when its status is
-`Error`. `WebApi4xxAsSuccessProcessor` runs before failure promotion and clears the error status
-for 400-499 server responses. An application processor registered before the Ark setup can clear
-the status of expected client errors, such as Azure Storage 404 or 409, in the same way.
+`Error`. Ark does not change the status of server 4xx spans, see [HTTP 4xx status](#http-4xx-status).
+An application processor registered before the Ark setup can clear the status of expected client
+errors, such as Azure Storage 404 or 409.
+
+## HTTP 4xx status
+
+The code that produces a span decides whether it failed. Some 4xx responses are errors, most are
+not, and Ark does not erase that decision: a server 4xx is not an Ark failure, and Ark leaves its
+status as the instrumentation or the application set it.
+
+- **OpenTelemetry convention.** A server 4xx leaves the span status `Unset`, a server 5xx is
+  `Error`, and a client 4xx or 5xx is `Error`
+  ([HTTP spans, Status](https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/http/http-spans.md?plain=1#L82-L113)).
+- **ASP.NET Core instrumentation** (`OpenTelemetry.Instrumentation.AspNetCore` 1.19.0) follows it:
+  the status comes from the response code only while it is still `Unset`, with a lower bound of
+  500 for server spans
+  ([SpanHelper](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/Instrumentation.AspNetCore-1.19.0/src/Shared/SpanHelper.cs#L20-L25),
+  [HttpInListener](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/Instrumentation.AspNetCore-1.19.0/src/OpenTelemetry.Instrumentation.AspNetCore/Implementation/HttpInListener.cs#L385-L388)).
+  It sets `Error` and `error.type` whatever the final response code when it receives
+  `Microsoft.AspNetCore.Hosting.UnhandledException` or `Microsoft.AspNetCore.Diagnostics.UnhandledException`
+  ([HttpInListener.OnException](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/Instrumentation.AspNetCore-1.19.0/src/OpenTelemetry.Instrumentation.AspNetCore/Implementation/HttpInListener.cs#L433-L440)).
+- **ASP.NET Core 10** writes `Hosting.UnhandledException` only when an exception escapes the
+  pipeline
+  ([HostingApplicationDiagnostics](https://github.com/dotnet/aspnetcore/blob/v10.0.9/src/Hosting/Hosting/src/Internal/HostingApplicationDiagnostics.cs#L217-L225)),
+  and `Diagnostics.UnhandledException` only from the developer exception page
+  ([DeveloperExceptionPageMiddlewareImpl](https://github.com/dotnet/aspnetcore/blob/v10.0.9/src/Middleware/Diagnostics/src/DeveloperExceptionPage/DeveloperExceptionPageMiddlewareImpl.cs#L165-L169)).
+  `UseExceptionHandler` writes `Microsoft.AspNetCore.Diagnostics.HandledException` instead, which
+  the instrumentation does not handle, unless diagnostics are suppressed: by default when an
+  `IExceptionHandler` handled the exception, and as the application decides with
+  `ExceptionHandlerOptions.SuppressDiagnosticsCallback`
+  ([ExceptionHandlerMiddlewareImpl](https://github.com/dotnet/aspnetcore/blob/v10.0.9/src/Middleware/Diagnostics/src/ExceptionHandler/ExceptionHandlerMiddlewareImpl.cs#L218-L255)).
+  MVC exception filters raise neither event. So an exception that the application maps to a 4xx
+  response, for example with `ArkProblemDetailsExceptionHandler`, leaves the span `Unset`.
+- **Application Insights** (`Azure.Monitor.OpenTelemetry.Exporter` 1.10.0) marks a request as
+  successful when its status is `Ok`, failed when it is `Error`, and, when it is `Unset`, successful
+  only for response codes below 400
+  ([RequestData](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/Customizations/Models/RequestData.cs#L87-L100)).
+  The `requests/failed` standard metric uses the same rule
+  ([StandardMetricsExtractionProcessor](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/Internals/StandardMetricsExtractionProcessor.cs#L211)),
+  and a dependency is successful unless its status is `Error`
+  ([RemoteDependencyData](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/Customizations/Models/RemoteDependencyData.cs#L78)).
+  So Application Insights shows a server 4xx that follows the OpenTelemetry convention as a failed
+  request. This is the exporter's rule, not an Ark failure: Ark does not promote the span.
+
+An application that wants its 4xx requests shown as successes sets `Ok` itself. Leave an `Error`
+in place, so 4xx responses that the application or an unhandled exception marked as failed stay
+failed:
+
+```csharp
+public sealed class ClientErrorsAsSuccessProcessor : BaseProcessor<Activity>
+{
+    public override void OnEnd(Activity data)
+    {
+        if (data.Kind == ActivityKind.Server
+            && data.Status == ActivityStatusCode.Unset
+            && data.GetTagItem("http.response.status_code") is int code and >= 400 and < 500)
+            data.SetStatus(ActivityStatusCode.Ok);
+    }
+}
+
+// Before the Ark setup, so the processor runs before the exporter.
+services.ConfigureOpenTelemetryTracerProvider(tracing =>
+    tracing.AddProcessor(new ClientErrorsAsSuccessProcessor()));
+```
+
+An application that wants some 4xx responses to be errors, such as a 409 that should never
+happen, sets `Error` on the request span, for example with
+`Activity.Current?.SetStatus(ActivityStatusCode.Error, "...")` in the endpoint: the instrumentation
+keeps it, and Ark promotes the span.
+
+`WebApi4xxAsSuccessProcessor` is no longer registered by the Ark setups and is obsolete. It set
+every server 4xx span to `Unset`, which erased an `Error` set on purpose and did not change how
+Application Insights counts the request.
 
 ## Root rate control
 
