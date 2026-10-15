@@ -169,16 +169,17 @@ public class SftpClientConnectionTests
         }
         finally
         {
-            foreach (var file in files)
+            // the setup may have stopped before creating every path
+            var existingFiles = files.ToAsyncEnumerable().Where(async (f, ct) => await sftp.ExistsAsync(f, ct).ConfigureAwait(false));
+            await foreach (var file in existingFiles.WithCancellation(TestContext.CancellationToken).ConfigureAwait(false))
             {
-                if (await sftp.ExistsAsync(file, TestContext.CancellationToken).ConfigureAwait(false))
-                    await sftp.DeleteFileAsync(file, TestContext.CancellationToken).ConfigureAwait(false);
+                await sftp.DeleteFileAsync(file, TestContext.CancellationToken).ConfigureAwait(false);
             }
 
-            foreach (var folder in folders.SelectMany(static f => new[] { $"{f}/sub", f }).Append(root))
+            var existingFolders = folders.SelectMany(static f => new[] { $"{f}/sub", f }).Append(root).ToAsyncEnumerable().Where(async (f, ct) => await sftp.ExistsAsync(f, ct).ConfigureAwait(false));
+            await foreach (var folder in existingFolders.WithCancellation(TestContext.CancellationToken).ConfigureAwait(false))
             {
-                if (await sftp.ExistsAsync(folder, TestContext.CancellationToken).ConfigureAwait(false))
-                    await sftp.DeleteDirectoryAsync(folder, TestContext.CancellationToken).ConfigureAwait(false);
+                await sftp.DeleteDirectoryAsync(folder, TestContext.CancellationToken).ConfigureAwait(false);
             }
         }
     }
