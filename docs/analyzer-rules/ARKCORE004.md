@@ -8,6 +8,8 @@
 
 This Ark.Tools diagnostic identifies the condition described above and reports it at the relevant declaration, contract, or generated-code input. The diagnostic message includes the contextual symbol and the required correction where applicable.
 
+The diagnostic is reported once for each `EvolvableEnum<T>` or `EvolvableEnum<T, TBacking>` usage, on the enum type argument of that usage, with the enum declaration as an additional location. An invalid enum used in several places therefore gets one diagnostic per usage, each in the file that contains the usage.
+
 ## How to fix it
 
 Apply the correction stated by the diagnostic. Do not suppress the rule when changing the declaration, contract, host configuration, or data flow is possible.

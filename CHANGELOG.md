@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `ARKCORE002`, `ARKCORE003` and `ARKCORE004` are now reported on each `EvolvableEnum<T>` usage instead of the enum declaration, so an invalid enum used N times no longer shows N identical errors at its declaration and IDE analysis shows the error in the file that uses the enum. The enum declaration (or the clashing members for `ARKCORE003`) is attached as an additional location. A `#pragma` or `[SuppressMessage]` that targets these rules must now be placed at the usage.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed
