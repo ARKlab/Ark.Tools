@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Composition;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
@@ -30,7 +31,7 @@ public sealed class SensitivePropertyRefactoringProvider : CodeRefactoringProvid
         // The cheap classification check runs first so unclassified properties never pay the reference search.
         var model = await context.Document.GetSemanticModelAsync(context.CancellationToken).ConfigureAwait(false);
         if (model?.GetDeclaredSymbol(property, context.CancellationToken) is not { } symbol
-            || !_isClassified(symbol)
+            || !_isClassified(symbol, model.Compilation)
             || !await ComplianceCodeFixProvider._canConvertAsync(context.Document, property, context.CancellationToken).ConfigureAwait(false))
         {
             return;
@@ -43,18 +44,23 @@ public sealed class SensitivePropertyRefactoringProvider : CodeRefactoringProvid
             "UseSensitiveValueObject"));
     }
 
-    private static bool _isClassified(ISymbol symbol)
+    private static bool _isClassified(ISymbol symbol, Compilation compilation)
     {
+        var classificationAttributes = new[]
+        {
+            compilation.GetTypeByMetadataName("Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.PersonalDataAttribute"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.SensitivePersonalDataAttribute"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.UserCredentialsAttribute"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.InfrastructureSecretAttribute"),
+            compilation.GetTypeByMetadataName("Ark.Tools.Compliance.PseudonymousAttribute"),
+        };
+
         foreach (var attribute in symbol.GetAttributes())
         {
             for (var type = attribute.AttributeClass; type is not null; type = type.BaseType)
             {
-                if (type.ToDisplayString() is "Microsoft.Extensions.Compliance.Classification.DataClassificationAttribute"
-                    or "Ark.Tools.Compliance.PersonalDataAttribute"
-                    or "Ark.Tools.Compliance.SensitivePersonalDataAttribute"
-                    or "Ark.Tools.Compliance.UserCredentialsAttribute"
-                    or "Ark.Tools.Compliance.InfrastructureSecretAttribute"
-                    or "Ark.Tools.Compliance.PseudonymousAttribute")
+                if (classificationAttributes.Contains(type, SymbolEqualityComparer.Default))
                 {
                     return true;
                 }
