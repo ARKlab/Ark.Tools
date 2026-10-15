@@ -20,7 +20,6 @@ using Ark.Tools.Rebus;
 using Ark.Tools.Solid;
 using Ark.Tools.Solid.SimpleInjector;
 
-using MessagePack;
 using MessagePack.Resolvers;
 
 using Scalar.AspNetCore;
@@ -140,8 +139,8 @@ public sealed class WebRebusStartup
             MessagePack.NodaTime.NodatimeResolver.Instance,
             DynamicEnumAsStringResolver.Instance,
             StandardResolver.Instance);
-        // The generated Minimal API endpoints read the resolver from dependency injection.
-        services.AddSingleton<IFormatterResolver>(messagePackResolver);
+        // The generated Minimal API endpoints require the resolver to be registered with AddArkMessagePack.
+        services.AddArkMessagePack(messagePackResolver);
 
         // Minimal API JSON: compose the source-generated application metadata with the Ark
         // defaults (camelCase, NodaTime, enum-as-member). A context used as a resolver builds its

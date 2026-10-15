@@ -60,7 +60,7 @@ public sealed class GeneratorSnapshotTests
             "value",
             CancellationToken.None);
 
-        action.Should().Throw<InvalidOperationException>();
+        action.Should().Throw<InvalidOperationException>().WithMessage("*AddArkMessagePack*");
     }
 
     [TestMethod]
@@ -69,7 +69,7 @@ public sealed class GeneratorSnapshotTests
         var context = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection()
-                .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+                .AddArkMessagePack(StandardResolver.Instance)
                 .BuildServiceProvider(),
         };
         var method = typeof(ArkMessagePackEx)
@@ -78,13 +78,14 @@ public sealed class GeneratorSnapshotTests
         var options = (MessagePackSerializerOptions)method.Invoke(null, [context])!;
 
         options.Security.Should().BeSameAs(MessagePackSecurity.UntrustedData);
+        method.Invoke(null, [context]).Should().BeSameAs(options, "options are cached per resolver");
     }
 
     [TestMethod]
     public void MessagePackFormatterValidationNamesUnformattableContracts()
     {
         var services = new ServiceCollection()
-            .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+            .AddArkMessagePack(StandardResolver.Instance)
             .BuildServiceProvider();
 
         Action action = () => Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.ValidateMessagePackContracts(
@@ -101,7 +102,7 @@ public sealed class GeneratorSnapshotTests
         var context = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection()
-                .AddSingleton<IFormatterResolver>(StandardResolver.Instance)
+                .AddArkMessagePack(StandardResolver.Instance)
                 .BuildServiceProvider(),
         };
         context.Request.Headers.Accept = "application/x-msgpack";
