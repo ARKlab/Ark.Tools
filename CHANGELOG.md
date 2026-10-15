@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `FtpWorkerHost` keeps its FTP connection pool for the life of the host instead of rebuilding it on every run, so runs no longer reconnect and log in again (and FtpProxy no longer creates a new HTTP client per run). Pooled connections now stay open between runs; one dropped by a server idle timeout fails its first command and is covered by the existing listing and download retries.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed

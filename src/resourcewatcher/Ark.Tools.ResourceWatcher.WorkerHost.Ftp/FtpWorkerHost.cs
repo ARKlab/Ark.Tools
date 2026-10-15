@@ -32,6 +32,11 @@ public sealed class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpM
     /// </summary>
     /// <typeparam name="TFtpFactory">IFtpClientFactory implementation</typeparam>
     /// <param name="deps">Callback to register additinal dependencies of the TFtpFactory</param>
+    /// <remarks>
+    /// The FTP client pool is created once and reused by every run, so pooled connections stay open between runs.
+    /// A connection left idle longer than the server idle timeout may be half-open: the first command on it can fail
+    /// and is then covered by the listing and download retries.
+    /// </remarks>
     public void UseFtpClientPoolFactory<TFtpFactory>(Action<Dependencies>? deps = null)
         where TFtpFactory : class, IFtpClientPoolFactory
     {
@@ -39,7 +44,7 @@ public sealed class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpM
         {
             deps?.Invoke(r);
             r.Container.RegisterSingleton<IFtpClientPoolFactory, TFtpFactory>();
-        }, Lifestyle.Scoped);
+        }, Lifestyle.Singleton);
     }
 
     /// <summary>

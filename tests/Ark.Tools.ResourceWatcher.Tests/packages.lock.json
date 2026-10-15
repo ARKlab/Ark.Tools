@@ -654,6 +654,15 @@
           "NodaTime": "[3.3.5, )"
         }
       },
+      "ark.tools.ftpclient.core": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
+          "Ark.Tools.Core": "[1.0.0, )",
+          "Ark.Tools.NLog": "[1.0.0, )",
+          "Polly.Core": "[8.8.0, )"
+        }
+      },
       "ark.tools.http": {
         "type": "Project",
         "dependencies": {
@@ -757,6 +766,13 @@
         "dependencies": {
           "Ark.Tools.ResourceWatcher": "[1.0.0, )",
           "Ark.Tools.SimpleInjector": "[1.0.0, )"
+        }
+      },
+      "ark.tools.resourcewatcher.workerhost.ftp": {
+        "type": "Project",
+        "dependencies": {
+          "Ark.Tools.FtpClient.Core": "[1.0.0, )",
+          "Ark.Tools.ResourceWatcher.WorkerHost": "[1.0.0, )"
         }
       },
       "ark.tools.resourcewatcher.workerhost.sql": {
@@ -1181,6 +1197,12 @@
           "Microsoft.Extensions.Hosting.Abstractions": "10.0.0",
           "OpenTelemetry": "1.19.1"
         }
+      },
+      "Polly.Core": {
+        "type": "CentralTransitive",
+        "requested": "[8.8.0, )",
+        "resolved": "8.8.0",
+        "contentHash": "TewV9uNFsoRFggoFbTAGFwsMYPuckA+wTIpQPyhLL9BANRPQRENz2S4bwATrB3HBOakN5oKLFIllPiDnVecmJg=="
       },
       "Reqnroll": {
         "type": "CentralTransitive",
