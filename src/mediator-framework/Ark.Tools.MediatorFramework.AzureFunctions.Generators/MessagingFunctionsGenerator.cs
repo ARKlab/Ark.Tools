@@ -50,7 +50,7 @@ public sealed class MessagingFunctionsGenerator : IIncrementalGenerator
                 .ToImmutableArray()
                 ._toEquatableArray());
         var sourceNetworks = context.SyntaxProvider.ForAttributeWithMetadataName(
-                MessagingFunctionsParser._networkAttribute,
+                ContractSymbols.MessagingNetworkAttribute,
                 static (_, _) => true,
                 static (attributeContext, _) => MessagingFunctionsParser._readNetwork(attributeContext))
             .WithTrackingName(_networkStage)

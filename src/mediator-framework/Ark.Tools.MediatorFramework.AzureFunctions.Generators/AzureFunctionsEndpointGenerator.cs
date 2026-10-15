@@ -112,7 +112,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .WithTrackingName(_hostSpecStage)
             .Collect();
         var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
-                AzureFunctionsEndpointParser._endpointAttribute,
+                ContractSymbols.HttpEndpointAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol type
                     ? AzureFunctionsEndpointParser._readEndpoint(type, attributeContext.Attributes[0])

@@ -172,12 +172,6 @@ internal static class AzureFunctionsEndpointParser
     // ponytail: [GeneratedRegex] is not available for netstandard2.0 targets; static field compiles and caches once.
     private static readonly Regex _routeParamRegex = new(@"\{(?<param>[^}:]+)(?::[^}]+)?\}", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
 
-    internal const string _endpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
-    private const string _versioningAttribute = "Ark.Tools.MediatorFramework.VersioningAttribute";
-    private const string _httpRouteAttribute = "Ark.Tools.MediatorFramework.HttpRouteAttribute";
-    private const string _httpQueryAttribute = "Ark.Tools.MediatorFramework.HttpQueryAttribute";
-    private const string _httpBodyAttribute = "Ark.Tools.MediatorFramework.HttpBodyAttribute";
-    private const string _eTagAttribute = "Ark.Tools.MediatorFramework.ETagAttribute";
     private const string _arkAttachment = "Ark.Tools.MediatorFramework.IArkAttachment";
     private const string _asyncEnumerable = "System.Collections.Generic.IAsyncEnumerable`1";
     // Keeps `?` on a nullable reference result: the generated ExecuteAsync<TQuery, TResult> call must match the contract.
@@ -200,8 +194,8 @@ internal static class AzureFunctionsEndpointParser
                 continue;
 
             var markerAssembly = marker.ContainingAssembly;
-            var included = _getTypes(host, "IncludedContracts");
-            var excluded = _getTypes(host, "ExcludedContracts");
+            var included = ContractSymbols.NamedTypes(host, "IncludedContracts");
+            var excluded = ContractSymbols.NamedTypes(host, "ExcludedContracts");
             var markerIsInSource = marker.Locations.Any(static location => location.IsInSource);
 
             builder.Add(new HostSpec(
@@ -229,7 +223,7 @@ internal static class AzureFunctionsEndpointParser
         ImmutableArray<string> assemblyNames,
         CancellationToken cancellationToken)
     {
-        var endpointAttribute = compilation.GetTypeByMetadataName(_endpointAttribute);
+        var endpointAttribute = compilation.GetTypeByMetadataName(ContractSymbols.HttpEndpointAttribute);
         var builder = ImmutableArray.CreateBuilder<AssemblyEndpointsSpec>(assemblyNames.Length);
         foreach (var assemblyName in assemblyNames)
         {
@@ -256,15 +250,15 @@ internal static class AzureFunctionsEndpointParser
             return null;
 
         var versioning = type.GetAttributes()
-            .FirstOrDefault(static item => item.AttributeClass._isFullName(_versioningAttribute));
-        var introduced = _getNamedInt(versioning, "Introduced", 1);
-        var retired = _getNamedInt(versioning, "Retired", 0);
-        var messagePack = _getNamedBool(attribute, "AcceptsMessagePack");
-        var successStatusCode = _getNamedInt(attribute, "SuccessStatusCode", 200);
-        var nullResultStatusCode = _getNamedInt(attribute, "NullResultStatusCode", 0);
-        var maxFileCount = _getNamedInt(attribute, "MaxFileCount", 0);
-        var maxRequestBodySizeBytes = _getNamedLong(attribute, "MaxRequestBodySizeBytes", 0);
-        var allowedContentTypes = _getNamedStrings(attribute, "AllowedContentTypes");
+            .FirstOrDefault(static item => item.AttributeClass._isFullName(ContractSymbols.VersioningAttribute));
+        var introduced = ContractSymbols.NamedInt(versioning, "Introduced", 1);
+        var retired = ContractSymbols.NamedInt(versioning, "Retired", 0);
+        var messagePack = ContractSymbols.NamedBool(attribute, "AcceptsMessagePack");
+        var successStatusCode = ContractSymbols.NamedInt(attribute, "SuccessStatusCode", 200);
+        var nullResultStatusCode = ContractSymbols.NamedInt(attribute, "NullResultStatusCode", 0);
+        var maxFileCount = ContractSymbols.NamedInt(attribute, "MaxFileCount", 0);
+        var maxRequestBodySizeBytes = ContractSymbols.NamedLong(attribute, "MaxRequestBodySizeBytes", 0);
+        var allowedContentTypes = ContractSymbols.NamedStrings(attribute, "AllowedContentTypes");
         var kind = HandlerKind.None;
         string? responseType = null;
         INamedTypeSymbol? responseSymbol = null;
@@ -309,12 +303,12 @@ internal static class AzureFunctionsEndpointParser
             .Select(p =>
             {
                 var routeAttr = p.GetAttributes()
-                    .FirstOrDefault(static a => a.AttributeClass._isFullName(_httpRouteAttribute));
+                    .FirstOrDefault(static a => a.AttributeClass._isFullName(ContractSymbols.HttpRouteAttribute));
                 var bindingName = routeAttr?.ConstructorArguments.FirstOrDefault().Value as string ?? p.Name;
                 var isRoute = routeAttr is not null || routeNames.Contains(p.Name);
-                var isQuery = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(_httpQueryAttribute));
-                var isBody = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(_httpBodyAttribute));
-                var isETag = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(_eTagAttribute));
+                var isQuery = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(ContractSymbols.HttpQueryAttribute));
+                var isBody = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(ContractSymbols.HttpBodyAttribute));
+                var isETag = p.GetAttributes().Any(static a => a.AttributeClass._isFullName(ContractSymbols.ETagAttribute));
                 var isString = p.Type.SpecialType == SpecialType.System_String;
                 var isAttachment = _isArkAttachment(p.Type);
                 var isAttachmentCollection = p.Type is INamedTypeSymbol collection
@@ -357,7 +351,7 @@ internal static class AzureFunctionsEndpointParser
             ? null
             : _allProperties(responseSymbol)
                 .FirstOrDefault(static property => property.GetAttributes().Any(static attribute =>
-                    attribute.AttributeClass._isFullName(_eTagAttribute)))
+                    attribute.AttributeClass._isFullName(ContractSymbols.ETagAttribute)))
                 ?.Name;
         var bodyProperty = properties.FirstOrDefault(static property => property.IsBody);
 
@@ -377,7 +371,7 @@ internal static class AzureFunctionsEndpointParser
             kind,
             responseType ?? "global::System.Void",
             properties,
-            _getNamedBool(attribute, "AllowAnonymous"),
+            ContractSymbols.NamedBool(attribute, "AllowAnonymous"),
             successStatusCode,
             nullResultStatusCode,
             responseETagProperty,
@@ -396,7 +390,7 @@ internal static class AzureFunctionsEndpointParser
                     && p.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
                     && (routeNames.Contains(p.Name) || p.GetAttributes().Any(static a =>
                         a.AttributeClass is { Name: "HttpRouteAttribute" or "HttpQueryAttribute" } attributeClass
-                        && (attributeClass._isFullName(_httpRouteAttribute) || attributeClass._isFullName(_httpQueryAttribute)))))
+                        && (attributeClass._isFullName(ContractSymbols.HttpRouteAttribute) || attributeClass._isFullName(ContractSymbols.HttpQueryAttribute)))))
                 .Select(static p => new UnsettablePropertySpec(p.Name, LocationSpec._from(p)))
                 .ToImmutableArray());
     }
@@ -441,7 +435,7 @@ internal static class AzureFunctionsEndpointParser
                 if (!SymbolEqualityComparer.Default.Equals(selection.ContainingAssembly, markerAssembly)
                     || !selection.GetAttributes().Any(static attribute =>
                         attribute.AttributeClass is { Name: "HttpEndpointAttribute" } attributeClass
-                        && attributeClass._isFullName(_endpointAttribute)))
+                        && attributeClass._isFullName(ContractSymbols.HttpEndpointAttribute)))
                 {
                     builder.Add(new HostSelectionSpec(selection.Name, name));
                 }
@@ -468,17 +462,6 @@ internal static class AzureFunctionsEndpointParser
         return constructor is null
             ? ImmutableArray<string>.Empty
             : constructor.Parameters.Select(static parameter => parameter.Name).ToImmutableArray();
-    }
-
-    private static ImmutableArray<INamedTypeSymbol> _getTypes(AttributeData attribute, string name)
-    {
-        var argument = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        if (argument.Kind != TypedConstantKind.Array)
-            return ImmutableArray<INamedTypeSymbol>.Empty;
-        return argument.Values
-            .Where(static value => value.Value is INamedTypeSymbol)
-            .Select(static value => (INamedTypeSymbol)value.Value!)
-            .ToImmutableArray();
     }
 
     private static IEnumerable<INamedTypeSymbol> _allTypes(INamespaceSymbol space, CancellationToken cancellationToken)
@@ -515,37 +498,6 @@ internal static class AzureFunctionsEndpointParser
         for (var current = type; current is not null; current = current.BaseType)
             foreach (var member in current.GetMembers().OfType<IPropertySymbol>())
                 yield return member;
-    }
-
-    private static int _getNamedInt(AttributeData? attribute, string name, int fallback)
-    {
-        if (attribute is null)
-            return fallback;
-
-        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        return value.Value is int number ? number : fallback;
-    }
-
-    private static long _getNamedLong(AttributeData? attribute, string name, long fallback)
-    {
-        if (attribute is null)
-            return fallback;
-
-        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        return value.Value is long number ? number : fallback;
-    }
-
-    private static bool _getNamedBool(AttributeData attribute, string name)
-    {
-        return attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value.Value is true;
-    }
-
-    private static EquatableArray<string> _getNamedStrings(AttributeData attribute, string name)
-    {
-        var value = attribute.NamedArguments.FirstOrDefault(item => item.Key == name).Value;
-        return value.Kind == TypedConstantKind.Array
-            ? value.Values.Where(static item => item.Value is string).Select(static item => (string)item.Value!).ToImmutableArray()
-            : ImmutableArray<string>.Empty;
     }
 
     private static string _typeName(INamedTypeSymbol type)
