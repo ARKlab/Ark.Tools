@@ -5,14 +5,17 @@ namespace Ark.Tools.Http;
 
 public sealed class BufferedJsonMediaTypeFormatter : JsonMediaTypeFormatter
 {
+    private const int _maxInitialCapacity = 1024 * 1024;
+
     public override async Task<object> ReadFromStreamAsync(Type type, Stream readStream, HttpContent content, IFormatterLogger formatterLogger, CancellationToken cancellationToken)
     {
         // A seekable stream is already buffered in memory (HttpCompletionOption.ResponseContentRead), so Newtonsoft's sync reads cannot block on the network.
         if (readStream.CanSeek)
             return await base.ReadFromStreamAsync(type, readStream, content, formatterLogger, cancellationToken).ConfigureAwait(false);
 
+        // Content-Length is untrusted: cap the presize so a huge advertised length cannot allocate before any byte arrives; the buffer still grows as data arrives.
         var contentLength = content?.Headers.ContentLength ?? 0;
-        var capacity = contentLength > 0 && contentLength <= Array.MaxLength ? (int)contentLength : 16 * 1024;
+        var capacity = contentLength > 0 ? (int)Math.Min(contentLength, _maxInitialCapacity) : 16 * 1024;
 
         using var buffer = new MemoryStream(capacity);
         await readStream.CopyToAsync(buffer, 81920, cancellationToken).ConfigureAwait(false);

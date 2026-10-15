@@ -47,6 +47,22 @@ public sealed class BufferedJsonMediaTypeFormatterTests
         result.Should().Be(new Payload("Customer A", 42));
     }
 
+    /// <summary>Verifies that a huge advertised Content-Length does not presize the buffer to that length.</summary>
+    [TestMethod]
+    public async Task ReadFromStreamAsync_HugeContentLength_DoesNotAllocateAdvertisedSize()
+    {
+        var formatter = new BufferedJsonMediaTypeFormatter();
+        using var content = new ByteArrayContent(_json);
+        content.Headers.ContentLength = Array.MaxLength;
+        await using var stream = new NonSeekableStream(new MemoryStream(_json));
+        var allocatedBefore = GC.GetTotalAllocatedBytes(precise: true);
+
+        var result = await formatter.ReadFromStreamAsync(typeof(Payload), stream, content, null!, TestContext.CancellationToken);
+
+        result.Should().Be(new Payload("Customer A", 42));
+        (GC.GetTotalAllocatedBytes(precise: true) - allocatedBefore).Should().BeLessThan(Array.MaxLength / 2);
+    }
+
     /// <summary>Gets or sets the MSTest context.</summary>
     public TestContext TestContext { get; set; } = null!;
 
