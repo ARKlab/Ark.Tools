@@ -1,6 +1,6 @@
 # Adaptive sampling in Ark.Tools
 
-Updated: 2026-10-13
+Updated: 2026-10-15
 
 ## Decision
 
@@ -139,6 +139,23 @@ callers that use a different sampler, such as the classic Application Insights S
 decide for the service. Traces that cross services which decide differently can then be
 incomplete; failure promotion applies either way. Set it to `true` to follow the W3C sampled
 flag of the remote parent instead: such spans then carry no sample rate (itemCount 1).
+
+The option applies to every remote parent of the host, not to one transport:
+
+| Incoming span | Parent read from |
+|---|---|
+| ASP.NET Core request | `traceparent` (and `tracestate`) HTTP headers |
+| Rebus message (`OpenTelemetryStep`, `ark.tools.rebus.process`) | `Diagnostic-Id` and `TraceStateString` message headers |
+| MediatorFramework message (`OpenTelemetryIncomingStep`, `amf.message.process`) | `Diagnostic-Id` message header |
+
+So with the default a Rebus or MediatorFramework worker samples its messages with its own
+budget, and some of its traces start in the middle of a chain whose sender was not sampled. A
+worker that should keep only the messages whose sender was sampled, and keep all of them, sets
+`OTel:ArkAdaptiveSampler:RespectRemoteParentSampling` to `true`; that also applies to the HTTP
+requests the same host receives.
+
+The legacy `ApplicationInsightsStep` of `Ark.Tools.Rebus.ApplicationInsights` starts its span
+without an `ActivitySource`, so no sampler sees it: it always follows the sender's sampled flag.
 
 `OTel:ArkAdaptiveSampler` is the canonical section for the OpenTelemetry setup
 (`AddArkOpenTelemetry` or `AddArkAspNetCoreOpenTelemetry` when given an `IConfiguration`,

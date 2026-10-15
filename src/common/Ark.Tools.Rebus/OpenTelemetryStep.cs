@@ -73,6 +73,8 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
         var activity = Activity.Current;
         if (activity?.Id is not null)
             message.Headers["Diagnostic-Id"] = activity.Id;
+        if (activity?.TraceStateString is not null)
+            message.Headers["TraceStateString"] = activity.TraceStateString;
 
         await next().ConfigureAwait(false);
     }
@@ -81,7 +83,7 @@ public sealed class OpenTelemetryStep : IIncomingStep, IOutgoingStep
     {
         var diagnosticId = message.Headers.GetValueOrNull("Diagnostic-Id");
         if (string.IsNullOrWhiteSpace(diagnosticId)
-            || !ActivityContext.TryParse(diagnosticId, message.Headers.GetValueOrNull("TraceStateString"), out var context))
+            || !ActivityContext.TryParse(diagnosticId, message.Headers.GetValueOrNull("TraceStateString"), isRemote: true, out var context))
         {
             return default;
         }

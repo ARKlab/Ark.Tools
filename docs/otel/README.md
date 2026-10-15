@@ -265,7 +265,7 @@ reads only `ApplicationInsights:ArkAdaptiveSampler`.
 | `SamplingPercentageDecreaseTimeout` | `00:01:00` | How often to evaluate and adjust the sampling rate |
 | `EnablePerOperationBucketing` | `true` | Whether each operation gets its own token bucket and a max-min fair share of `TracesPerSecond` |
 | `MaxOperationBuckets` | `100` | Maximum distinct operations to track (prevents memory unbounded growth) |
-| `RespectRemoteParentSampling` | `false` | Whether the sampled flag of a remote parent decides for the service; `false` applies the local budget to spans with a remote parent |
+| `RespectRemoteParentSampling` | `false` | Whether the sampled flag of a remote parent decides for the service; `false` applies the local budget to spans with a remote parent. It applies to every remote parent of the host: incoming HTTP requests and incoming Rebus and MediatorFramework messages |
 
 ### Snapshot Collector
 
