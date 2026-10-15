@@ -150,9 +150,10 @@ public sealed class SampleDataContext : AbstractSqlAsyncContextWithOutbox<Sample
     {
         ArgumentNullException.ThrowIfNull(audits);
         // 6 parameters per row: 300 rows stay below the SQL Server limits of 2100 parameters and 1000 VALUES rows.
+        var sql = new StringBuilder();
         foreach (var chunk in audits.Chunk(300))
         {
-            var sql = new StringBuilder("INSERT INTO [dbo].[Audit] ([Id], [UserId], [EntityType], [Identifier], [Operation], [Timestamp]) VALUES ");
+            sql.Clear().Append("INSERT INTO [dbo].[Audit] ([Id], [UserId], [EntityType], [Identifier], [Operation], [Timestamp]) VALUES ");
             var parameters = new DynamicParameters();
             for (var i = 0; i < chunk.Length; i++)
             {
