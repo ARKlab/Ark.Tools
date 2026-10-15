@@ -3,6 +3,7 @@
 
 using AwesomeAssertions;
 
+using Flurl.Http;
 using Flurl.Http.Testing;
 
 using MessagePack;
@@ -42,16 +43,20 @@ public sealed class MsgPackExTests
     public async Task PostAndPutMsgPackAsync_SameResolver_ReuseFormatter()
     {
         var payload = new Payload { Name = "Customer A", Value = 42 };
+        byte[]? body = null;
         using var httpTest = new HttpTest();
 
-        using var post = await _url.PostMsgPackAsync(payload, _resolver, cancellationToken: TestContext.CancellationToken);
+        // The helpers dispose the request content after sending, so the body is captured while the call is in flight.
+        using var post = await new FlurlRequest(_url)
+            .BeforeCall(async call => body = await call.HttpRequestMessage.Content!.ReadAsByteArrayAsync(TestContext.CancellationToken).ConfigureAwait(false))
+            .PostMsgPackAsync(payload, _resolver, cancellationToken: TestContext.CancellationToken);
         using var put = await _url.PutMsgPackAsync(payload, _resolver, cancellationToken: TestContext.CancellationToken);
 
         var postContent = (ObjectContent)httpTest.CallLog[0].HttpRequestMessage.Content!;
         var putContent = (ObjectContent)httpTest.CallLog[1].HttpRequestMessage.Content!;
         putContent.Formatter.Should().BeSameAs(postContent.Formatter);
 
-        var body = await postContent.ReadAsByteArrayAsync(TestContext.CancellationToken);
+        body.Should().NotBeNull();
         MessagePackSerializer.Deserialize<Payload>(body, MessagePackSerializerOptions.Standard.WithResolver(_resolver), TestContext.CancellationToken)
             .Should().BeEquivalentTo(payload);
     }
