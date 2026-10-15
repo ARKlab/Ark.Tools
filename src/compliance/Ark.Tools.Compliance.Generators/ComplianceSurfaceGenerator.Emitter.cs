@@ -160,6 +160,27 @@ public sealed partial class ComplianceSurfaceGenerator
             || (previous == "Ark:PersonalData" && current == "Ark:SensitivePersonalData");
     }
 
+    // Validation is left to _parse: an extra name only keeps more members, and a bad baseline fails before they are used.
+    private static ImmutableEquatableArray<string> _baselineTypes(
+        ImmutableEquatableArray<string?> files,
+        CancellationToken token)
+    {
+        var types = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var file in files.Items)
+        {
+            if (file is null)
+                continue;
+            foreach (var line in file.Split('\n'))
+            {
+                token.ThrowIfCancellationRequested();
+                var fields = line.Split('\t');
+                if (fields.Length > 2 && fields[0] == "CLASSIFIED")
+                    types.Add(fields[1]);
+            }
+        }
+        return new ImmutableEquatableArray<string>(types.ToImmutableArray());
+    }
+
     private static bool _parse(string text, out Dictionary<string, Entry> entries)
     {
         entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
