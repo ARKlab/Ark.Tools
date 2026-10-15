@@ -9,11 +9,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `ARKCORE002`, `ARKCORE003` and `ARKCORE004` are now reported on each `EvolvableEnum<T>` usage instead of the enum declaration, so an invalid enum used N times no longer shows N identical errors at its declaration and IDE analysis shows the error in the file that uses the enum. The enum declaration (or the clashing members for `ARKCORE003`) is attached as an additional location. A `#pragma` or `[SuppressMessage]` that targets these rules must now be placed at the usage.
+- `ComplianceLayout` no longer builds an extra copy of each log line when PII scanning is off (the default), so the layouts set by `NLogConfigurer` allocate less per event.
+- `Ark.Tools.NLog`: with PII scanning on, console, file, debugger and mail text lines scan only the message and exception text, not the timestamp, level and logger prefix, so log events without PII-like content no longer pay for the regex.
+- Generated sensitive value objects (`EmailAddress`, `PersonName`, ...) format into a span (`TryFormat`, used by NLog, string interpolation and `StringBuilder`) without allocating, and `ToString()` and `ComplianceRedactor.Redact` allocate at most one string; the output is unchanged.
+- `Ark.Tools.FtpClient.SftpClient`: `DownloadFileAsync` sizes its buffer from the remote file and returns it without a final copy, so a download allocates about the file size instead of about 3x.
+- `Ark.Tools.MediatorFramework.Mcp`: MCP attachment uploads larger than the size limit are rejected before the base64 is decoded, and attachment downloads read seekable streams into an exact-size buffer, so large attachments use about half the memory.
+- `Ark.Tools.Http`: `BufferedJsonMediaTypeFormatter` no longer copies an already-buffered response body into a second buffer, halving memory for large JSON responses, and the MessagePack Flurl helpers reuse one serializer options and formatter per resolver instead of creating them on each call.
+- `Ark.Tools.MediatorFramework.Messaging.Azure`: the Azure Blob DataBus reads a payload attachment with a single request instead of two, so large messages start processing sooner.
 
 ### Fixed
 
 - `Ark.Tools.MediatorFramework.AzureFunctions`: HTTP endpoints returning `IAsyncEnumerable<T>` now stream items as they are produced, as on the Minimal API host. Before, the generator never detected the streaming response and buffered the whole result.
 - `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
+- `Ark.Tools.AspNetCore.BasicAuthAuth0Proxy` and `Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy` no longer retry a login rejected by the identity provider, such as a wrong password. One bad Basic-auth request now counts as one failed login instead of three or four, so users are not locked out sooner, and on Auth0 it fails at once instead of after up to 6 seconds. Network errors, timeouts, 408, 429 and 5xx responses are still retried, and an aborted request stops the retries.
+- `Ark.Tools.MediatorFramework`: the Minimal API generator now collapses line breaks and repeated whitespace in `[Description]` text, as the gRPC generator already did, so a contract gets the same OpenAPI summary and gRPC comment on both transports.
+- `Ark.Tools.MediatorFramework.MinimalApi`: Minimal API endpoints with `AcceptsMessagePack` now read and write JSON with the `JsonTypeInfo` from the host's HTTP JSON options, so Native AOT publishes no longer report IL2026/IL3050 from Ark.Tools for them. If those options have no metadata for a request or response type, the JSON call now throws `NotSupportedException` instead of falling back to reflection.
 
 ## [7.0.0-beta18] - 2026-10-15
 
