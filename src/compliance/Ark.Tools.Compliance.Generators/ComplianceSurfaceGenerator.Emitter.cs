@@ -166,10 +166,8 @@ public sealed partial class ComplianceSurfaceGenerator
         CancellationToken token)
     {
         var types = new SortedSet<string>(StringComparer.Ordinal);
-        foreach (var file in files.Items)
+        foreach (var file in files.Items.OfType<string>())
         {
-            if (file is null)
-                continue;
             foreach (var line in file.Split('\n'))
             {
                 token.ThrowIfCancellationRequested();
