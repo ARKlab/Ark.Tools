@@ -6,6 +6,7 @@ using Microsoft.Build.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -58,9 +59,8 @@ public sealed class ArkWriteComplianceSqlTemplates : ITask
         var expected = new HashSet<string>(StringComparer.Ordinal);
         foreach (var file in GeneratedFiles)
         {
-            foreach (var line in File.ReadLines(file.ItemSpec))
+            foreach (var line in File.ReadLines(file.ItemSpec).Where(static l => l.StartsWith(_marker, StringComparison.Ordinal)))
             {
-                if (!line.StartsWith(_marker, StringComparison.Ordinal)) continue;
                 var start = _marker.Length;
                 var separator = line.IndexOf(':', start);
                 if (separator <= start || separator == line.Length - 1)
@@ -108,8 +108,8 @@ public sealed class ArkWriteComplianceSqlTemplates : ITask
         // A removed opt-in must not leave a stale deployable policy behind.
         if (Directory.Exists(OutputDirectory))
         {
-            foreach (var old in Directory.GetFiles(OutputDirectory, "policy-*.compliance.sql"))
-                if (!expected.Contains(Path.GetFullPath(old))) File.Delete(old);
+            foreach (var old in Directory.GetFiles(OutputDirectory, "policy-*.compliance.sql").Where(f => !expected.Contains(Path.GetFullPath(f))))
+                File.Delete(old);
         }
         OutputFiles = outputs.ToArray();
         return true;
