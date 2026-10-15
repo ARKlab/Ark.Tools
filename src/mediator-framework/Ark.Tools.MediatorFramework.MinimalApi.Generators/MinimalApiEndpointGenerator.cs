@@ -105,7 +105,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     HttpEndpointAttribute,
                     static (node, _) => node is TypeDeclarationSyntax,
-                    static (attributeContext, _) => ExtractSourceEndpoint(attributeContext))
+                    static (attributeContext, cancellationToken) => ExtractSourceEndpoint(attributeContext, cancellationToken))
                 .WithTrackingName(EndpointParserTrackingName)
                 .Where(static endpoint => endpoint is not null)
                 .Select(static (endpoint, _) => endpoint!.Value);
@@ -186,7 +186,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                    return etagResult;");
         }
 
-        private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context)
+        private static EndpointModel? ExtractSourceEndpoint(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
         {
             if (context.TargetSymbol is not INamedTypeSymbol type)
                 return null;
@@ -206,7 +206,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 compilation.GetTypeByMetadataName(AsyncEnumerable),
                 compilation.GetTypeByMetadataName(List),
                 compilation.GetTypeByMetadataName(ReadOnlyList),
-                compilation.GetTypeByMetadataName(ReadOnlyCollection));
+                compilation.GetTypeByMetadataName(ReadOnlyCollection),
+                cancellationToken);
         }
 
         private static EndpointAssemblyMapping? GetAssemblyMapping(
@@ -368,7 +369,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                         asyncEnumerableType,
                         listType,
                         readOnlyListType,
-                        readOnlyCollectionType);
+                        readOnlyCollectionType,
+                        cancellationToken);
                     if (model is not null)
                         builder.Add(model.Value);
                 }
@@ -432,7 +434,8 @@ namespace Ark.Tools.MediatorFramework.Generators
             INamedTypeSymbol? asyncEnumerableType,
             INamedTypeSymbol? listType,
             INamedTypeSymbol? readOnlyListType,
-            INamedTypeSymbol? readOnlyCollectionType)
+            INamedTypeSymbol? readOnlyCollectionType,
+            CancellationToken cancellationToken)
         {
             string? response = null;
             ITypeSymbol? responseType = null;
@@ -529,7 +532,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     return new PropertyModel(
                         property.Name,
                         property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        XmlDocumentation.Summary(property),
+                        XmlDocumentation.Summary(property, cancellationToken),
                         property.Type.SpecialType == SpecialType.System_String,
                         isRoute,
                         routeName
@@ -654,11 +657,12 @@ namespace Ark.Tools.MediatorFramework.Generators
                     .ToImmutableArray()
                 : properties;
 
+            var documentation = XmlDocumentation.Read(type, cancellationToken);
             return new EndpointModel(
                 type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 GeneratedName(type),
-                XmlDocumentation.Summary(type),
-                XmlDocumentation.Remarks(type),
+                documentation.Summary,
+                documentation.Remarks,
                 apiGroup ?? defaultTag,
                 verb,
                 template!,

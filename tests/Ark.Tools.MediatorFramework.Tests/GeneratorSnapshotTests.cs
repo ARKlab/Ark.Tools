@@ -2210,6 +2210,54 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiAndGrpcNormalizeDescriptionAttributesTheSameWay()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            [Description("a\n  b")]
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                [Description("c\n  d")]
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"a b\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"c d\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [Description("a\n  b")]
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse>
+            {
+                [Description("c\n  d")]
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class DocumentedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        grpc.Should().Contain("// a b");
+        grpc.Should().Contain("// c d");
+    }
+
+    [TestMethod]
     public void GeneratorsNormalizeMultilineAndEntityEncodedXmlDocumentation()
     {
         var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
