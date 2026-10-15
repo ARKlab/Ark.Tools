@@ -43,6 +43,27 @@ public sealed class ComplianceFoundationTests
     }
 
     /// <summary>
+    /// Generated TryFormat redacts straight into the destination without allocating and rejects short buffers.
+    /// </summary>
+    [TestMethod]
+    public void SensitiveValueObject_TryFormatDoesNotAllocate()
+    {
+        var value = TestSensitiveValue.From("secret-value");
+        var buffer = new char[3];
+        value.TryFormat(buffer.AsSpan(), out _, default, null);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var formatted = value.TryFormat(buffer.AsSpan(), out var written, default, null);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        formatted.Should().BeTrue();
+        new string(buffer, 0, written).Should().Be("***");
+        allocated.Should().Be(0);
+        value.TryFormat(new char[2].AsSpan(), out var shortWritten, default, null).Should().BeFalse();
+        shortWritten.Should().Be(0);
+    }
+
+    /// <summary>
     /// The generated JSON converter writes cleartext for transport and restores safe rendering.
     /// </summary>
     [TestMethod]

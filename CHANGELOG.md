@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Generated sensitive value objects (`EmailAddress`, `PersonName`, ...) format into a span (`TryFormat`, used by NLog, string interpolation and `StringBuilder`) without allocating, and `ToString()` and `ComplianceRedactor.Redact` allocate at most one string; the output is unchanged.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed

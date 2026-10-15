@@ -42,9 +42,12 @@ public sealed class ComplianceRedactor
     public string Redact(string value, ArkRedaction redaction)
     {
         ArgumentNullException.ThrowIfNull(value);
-        var redactor = GetRedactor(redaction);
-        var buffer = new char[redactor.GetRedactedLength(value.AsSpan())];
-        var length = redactor.Redact(value.AsSpan(), buffer);
-        return new string(buffer, 0, length);
+        // Erase/Mask always render the fixed marker, so skip the redactor and its allocations.
+        return redaction switch
+        {
+            ArkRedaction.Hmac => _hmac.Redact(value),
+            ArkRedaction.None => value,
+            _ => ArkErasingRedactor.Marker,
+        };
     }
 }

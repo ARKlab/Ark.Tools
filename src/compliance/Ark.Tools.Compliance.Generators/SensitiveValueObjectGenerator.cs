@@ -269,7 +269,7 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.AppendLine("    }");
         builder.AppendLine();
         builder.AppendLine("    /// <inheritdoc />");
-        builder.AppendLine("    public override string ToString() => _redact(_value ?? string.Empty);");
+        builder.AppendLine("    public override string ToString() => _redactor.Redact(_value ?? string.Empty);");
         builder.AppendLine();
         builder.AppendLine("    /// <inheritdoc />");
         builder.AppendLine("    public string ToString(string? format, global::System.IFormatProvider? formatProvider) => ToString();");
@@ -277,14 +277,13 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.AppendLine("    /// <inheritdoc />");
         builder.AppendLine("    public bool TryFormat(global::System.Span<char> destination, out int charsWritten, global::System.ReadOnlySpan<char> format, global::System.IFormatProvider? provider)");
         builder.AppendLine("    {");
-        builder.AppendLine("        var redacted = ToString();");
-        builder.AppendLine("        if (redacted.AsSpan().Length > destination.Length)");
+        builder.AppendLine("        var value = global::System.MemoryExtensions.AsSpan(_value ?? string.Empty);");
+        builder.AppendLine("        if (_redactor.GetRedactedLength(value) > destination.Length)");
         builder.AppendLine("        {");
         builder.AppendLine("            charsWritten = 0;");
         builder.AppendLine("            return false;");
         builder.AppendLine("        }");
-        builder.AppendLine("        redacted.AsSpan().CopyTo(destination);");
-        builder.AppendLine("        charsWritten = redacted.Length;");
+        builder.AppendLine("        charsWritten = _redactor.Redact(value, destination);");
         builder.AppendLine("        return true;");
         builder.AppendLine("    }");
         builder.AppendLine();
@@ -302,13 +301,6 @@ public sealed class SensitiveValueObjectGenerator : IIncrementalGenerator
         builder.AppendLine();
         builder.Append("    private static readonly global::Microsoft.Extensions.Compliance.Redaction.Redactor _redactor = ")
             .Append(redactor).AppendLine(";");
-        builder.AppendLine();
-        builder.AppendLine("    private static string _redact(string value)");
-        builder.AppendLine("    {");
-        builder.AppendLine("        var buffer = new char[_redactor.GetRedactedLength(value.AsSpan())];");
-        builder.AppendLine("        var length = _redactor.Redact(value.AsSpan(), buffer);");
-        builder.AppendLine("        return new string(buffer, 0, length);");
-        builder.AppendLine("    }");
         builder.AppendLine();
         if (!settings.HasValidate)
             builder.AppendLine("    private static global::Ark.Tools.Compliance.ValidationResult _validate(string value) => global::Ark.Tools.Compliance.ValidationResult.Ok;");
