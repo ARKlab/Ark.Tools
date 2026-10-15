@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - `Ark.Tools.MediatorFramework.MinimalApi`: Minimal API endpoints with `AcceptsMessagePack` now read and write JSON with the `JsonTypeInfo` from the host's HTTP JSON options, so Native AOT publishes no longer report IL2026/IL3050 from Ark.Tools for them. If those options have no metadata for a request or response type, the JSON call now throws `NotSupportedException` instead of falling back to reflection.
+- `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
 
 ## [7.0.0-beta18] - 2026-10-15
 
