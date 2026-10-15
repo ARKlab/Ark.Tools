@@ -18,10 +18,9 @@ public static class ArkMessagePackEx
     /// <param name="context">The current HTTP context.</param>
     /// <param name="cancellationToken">The request cancellation token.</param>
     /// <returns>The deserialized request, or <see langword="null"/> for an empty body.</returns>
-    [UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2026",
-        Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
+    /// <exception cref="NotSupportedException">
+    /// Thrown when the host's HTTP JSON options have no metadata for <typeparamref name="TRequest"/>.
+    /// </exception>
     public static async Task<TRequest?> ReadRequestAsync<TRequest>(
         HttpContext context,
         CancellationToken cancellationToken)
@@ -34,7 +33,11 @@ public static class ArkMessagePackEx
                 context.Request.Body,
                 _getDeserializationOptions(context),
                 cancellationToken).ConfigureAwait(false)
-            : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
+            : await context.Request.ReadFromJsonAsync(
+                (System.Text.Json.Serialization.Metadata.JsonTypeInfo<TRequest>)context.RequestServices
+                    .GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>()
+                    .Value.SerializerOptions.GetTypeInfo(typeof(TRequest)),
+                cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Validates the MessagePack formatters required by generated endpoints.</summary>
@@ -87,10 +90,6 @@ public static class ArkMessagePackEx
     /// <param name="successStatusCode">The status code for a non-null response.</param>
     /// <param name="nullResultStatusCode">The status code for a null response.</param>
     /// <returns>An HTTP result using the negotiated response format.</returns>
-    [UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2026",
-        Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
     public static IResult WriteResponse<TResponse>(
         HttpContext context,
         TResponse response,
@@ -104,7 +103,7 @@ public static class ArkMessagePackEx
             return Results.StatusCode(nullResultStatusCode);
 
         if (!_prefersMessagePack(context.Request.Headers.Accept))
-            return Results.Json(response, statusCode: successStatusCode);
+            return ArkGeneratedEndpoint.Json(response, successStatusCode);
 
         return new MessagePackResult<TResponse>(response, _getOptions(context), successStatusCode, cancellationToken);
     }

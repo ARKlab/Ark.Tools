@@ -39,4 +39,8 @@
     <ProjectReference Include="../../compliance/Ark.Tools.Compliance.Abstractions/Ark.Tools.Compliance.Abstractions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ark.Tools.AspNetCore.BasicAuthProxy.Tests" />
+  </ItemGroup>
+
 </Project>

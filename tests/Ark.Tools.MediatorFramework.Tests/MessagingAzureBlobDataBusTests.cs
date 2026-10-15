@@ -50,6 +50,27 @@ public sealed class MessagingAzureBlobDataBusTests
     }
 
     [TestMethod]
+    public async Task EmptyAttachmentRoundTrips()
+    {
+        var provider = _provider("empty", "network-e/");
+        await provider.ValidateAsync(default).ConfigureAwait(false);
+        var hash = Convert.ToHexString(SHA256.HashData(Array.Empty<byte>()));
+
+        var attachmentId = await provider
+            .StoreAsync(ReadOnlySequence<byte>.Empty, default)
+            .ConfigureAwait(false);
+        var stream = await provider
+            .OpenReadAsync(attachmentId, 0, hash, default)
+            .ConfigureAwait(false);
+        await using (stream.ConfigureAwait(false))
+        {
+            using var read = new MemoryStream();
+            await stream.CopyToAsync(read).ConfigureAwait(false);
+            read.Length.Should().Be(0);
+        }
+    }
+
+    [TestMethod]
     public async Task WrongLengthAndCorruptedContentFailIntegrity()
     {
         var provider = _provider("integrity", "network-b/");
