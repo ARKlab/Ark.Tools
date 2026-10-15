@@ -46,11 +46,11 @@
       },
       "OpenTelemetry.Instrumentation.SqlClient": {
         "type": "Direct",
-        "requested": "[1.19.0, )",
-        "resolved": "1.19.0",
-        "contentHash": "JYdCD0Hkn0+hbSNTjDWENIlsR0CquiH2g6g2jme8Pv1GdDKjJ4/hQnOPJ3vX6XNV/RLf5T1551FeX4DncbdmXw==",
+        "requested": "[1.20.0, )",
+        "resolved": "1.20.0",
+        "contentHash": "qZGMdMkfKVS8s9Jyw8053HfZzCGQE3AXAsLq2VvaBb3LwePb147hxycTvBDGirXOCK8Rkrd6g65G32T9JFw2nw==",
         "dependencies": {
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.19.0, 2.0.0)"
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.20.0, 2.0.0)"
         }
       },
       "Polyfill": {
@@ -61,9 +61,9 @@
       },
       "ReferenceTrimmer": {
         "type": "Direct",
-        "requested": "[3.5.9, )",
-        "resolved": "3.5.9",
-        "contentHash": "yxiTijEk4Su7Ama9Dny8HNC0tpFg7+8y5F8E2FnNuzc0+OzwAwrSxeFSRcBkW1BtC4SEiohsKFtYRH+a2QpJdQ=="
+        "requested": "[3.5.13, )",
+        "resolved": "3.5.13",
+        "contentHash": "uLH5tr4EHR405vHe5Y33qBNvp4uBB8S3DdN5TUg0QFAKQM4NHBF7PhMUXh9xGBzJlAnRDXLtVEHcMhvGVWtFJg=="
       },
       "OpenTelemetry.Api.ProviderBuilderExtensions": {
         "type": "Transitive",
@@ -89,7 +89,7 @@
           "OpenTelemetry": "[1.20.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.20.0, )",
           "OpenTelemetry.Instrumentation.Http": "[1.20.0, )",
-          "OpenTelemetry.Instrumentation.SqlClient": "[1.19.0, )"
+          "OpenTelemetry.Instrumentation.SqlClient": "[1.20.0, )"
         }
       },
       "Microsoft.Extensions.Compliance.Abstractions": {
