@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Ark.Tools.MediatorFramework.MinimalApi`: `services.AddArkMessagePack(resolver)` registers the MessagePack resolver for generated Minimal API endpoints and builds their serializer options once.
+
 ### Changed
 
 - `ARKCORE002`, `ARKCORE003` and `ARKCORE004` are now reported on each `EvolvableEnum<T>` usage instead of the enum declaration, so an invalid enum used N times no longer shows N identical errors at its declaration and IDE analysis shows the error in the file that uses the enum. The enum declaration (or the clashing members for `ARKCORE003`) is attached as an additional location. A `#pragma` or `[SuppressMessage]` that targets these rules must now be placed at the usage.
@@ -17,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.Http`: `BufferedJsonMediaTypeFormatter` no longer copies an already-buffered response body into a second buffer, halving memory for large JSON responses, and the MessagePack Flurl helpers reuse one serializer options and formatter per resolver instead of creating them on each call.
 - `Ark.Tools.MediatorFramework.Messaging.Azure`: the Azure Blob DataBus reads a payload attachment with a single request instead of two, so large messages start processing sooner.
 - **Breaking:** `Ark.Tools.MediatorFramework.Mcp`: MCP tool descriptions now come only from XML documentation passed to the compiler; the MCP generator no longer reads documentation files from disk. The MCP package passes referenced projects' XML documentation to the generator automatically, as `<AssemblyName>.arkmcpdoc` copies in the intermediate output so other generators (such as the ASP.NET Core OpenAPI one) do not read them; opt out with `ArkMcpIncludeReferencedXmlDocs=false`. Contracts from referenced NuGet packages keep their descriptions only with `ArkMcpIncludePackageXmlDocs=true`.
+- **Breaking:** `Ark.Tools.MediatorFramework.MinimalApi` hosts with MessagePack endpoints must call `services.AddArkMessagePack(resolver)` instead of registering `IFormatterResolver` directly; without it they fail with an `InvalidOperationException` at startup, or on the first MessagePack response for hosts whose MessagePack endpoints only return data.
+- `Ark.Tools.MediatorFramework.MinimalApi`: MessagePack responses of generated Minimal API endpoints are written straight to the response pipe, and the serializer options and `Accept` parsing no longer allocate per request; the bytes on the wire are unchanged.
 
 ### Fixed
 
