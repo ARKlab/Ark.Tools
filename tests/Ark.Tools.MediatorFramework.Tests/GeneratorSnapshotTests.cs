@@ -423,7 +423,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public async Task McpGeneratorPreservesReferencedAssemblyXmlDocumentationFallback()
+    public async Task McpGeneratorIgnoresReferencedAssemblyXmlDocumentationOnDisk()
     {
         var contracts = await _createMetadataReferenceWithXmlAsync(
             "LegacyMcpContracts",
@@ -450,7 +450,7 @@ public sealed class GeneratorSnapshotTests
             [],
             contracts);
 
-        result.Generated.Should().Contain("Description(\"Lists legacy orders.\")");
+        result.Generated.Should().NotContain("Lists legacy orders.");
     }
 
     [TestMethod]
@@ -491,7 +491,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public async Task McpGeneratorFallsBackToReferencedXmlDocumentationWhenFirstAdditionalFileIsMalformed()
+    public async Task McpGeneratorIgnoresLaterXmlDocumentationWhenFirstAdditionalFileIsMalformed()
     {
         var contracts = await _createMetadataReferenceWithXmlAsync(
             "MalformedMcpContracts",
@@ -523,8 +523,8 @@ public sealed class GeneratorSnapshotTests
             ],
             contracts);
 
-        // The malformed first-by-path file wins its assembly, so later additional files are not consulted.
-        result.Generated.Should().Contain("Description(\"Lists referenced orders.\")");
+        // The malformed first-by-path file wins its assembly, so neither later additional files nor files on disk are consulted.
+        result.Generated.Should().NotContain("Lists referenced orders.");
         result.Generated.Should().NotContain("Lists orders from b.");
     }
 
