@@ -48,6 +48,9 @@ public static class McpAttachmentResults
     {
         // The length is known up front: reject before reading and allocate the exact payload size.
         var remaining = input.Length - input.Position;
+        // Some seekable streams (e.g. Linux /proc files) report 0 yet yield data: stream them with the limit.
+        if (remaining == 0)
+            return await _readUnseekableAsync(input, maximumBytes, cancellationToken).ConfigureAwait(false);
         if (remaining > maximumBytes)
             throw _tooLarge();
         var payload = new byte[remaining];

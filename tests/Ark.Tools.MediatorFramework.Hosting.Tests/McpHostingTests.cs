@@ -316,6 +316,21 @@ public sealed class McpHostingTests
             .Should().ThrowAsync<FluentValidation.ValidationException>().ConfigureAwait(false);
     }
 
+    /// <summary>Verifies a seekable stream reporting zero length is still read, within the limit.</summary>
+    [TestMethod]
+    public async Task DownloadReadsSeekableStreamReportingZeroLength()
+    {
+        var content = "proc-like content"u8.ToArray();
+        var attachment = new ArkAttachment("p.txt", "text/plain", () => new ZeroLengthStream(content));
+
+        var block = await McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length)
+            .ConfigureAwait(false);
+        ((BlobResourceContents)block.Resource).DecodedData.ToArray().Should().Equal(content);
+
+        await FluentActions.Awaiting(() => McpAttachmentResults.ToEmbeddedResourceAsync(attachment, maximumBytes: content.Length - 1))
+            .Should().ThrowAsync<FluentValidation.ValidationException>().ConfigureAwait(false);
+    }
+
     /// <summary>Verifies each MCP version exposes only contracts active in that version.</summary>
     [TestMethod]
     public async Task ListsToolsForContractVersion()
@@ -370,6 +385,11 @@ public sealed class McpHostingTests
     private sealed class TestStream(byte[] content, bool seekable) : MemoryStream(content, writable: false)
     {
         public override bool CanSeek => seekable;
+    }
+
+    private sealed class ZeroLengthStream(byte[] content) : MemoryStream(content, writable: false)
+    {
+        public override long Length => 0;
     }
 
     private sealed class ResolvesNothing : IJsonTypeInfoResolver
