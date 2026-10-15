@@ -28,47 +28,48 @@
   <ItemGroup>
     <!-- 3rd party packages used by this sample -->
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.2" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.2" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
     <PackageVersion Include="ExcelDataReader" Version="3.9.0" />
     <PackageVersion Include="ExcelDataReader.DataSet" Version="3.9.0" />
-    <PackageVersion Include="Microsoft.Identity.Web" Version="4.15.0" />
+    <PackageVersion Include="Microsoft.Identity.Web" Version="4.16.1" />
     <PackageVersion Include="Microsoft.SqlServer.DacFx" Version="170.5.96" />
     <PackageVersion Include="netDumbster" Version="3.1.1" />
     <PackageVersion Include="Polly" Version="8.8.0" />
     
     <!-- Testing packages -->
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
-    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.4.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.4.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.2" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.4.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.4.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.4.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.1" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.4.1" />
-    <PackageVersion Include="MSTest.TestAdapter" Version="4.4.1" />
-    <PackageVersion Include="MSTest.TestFramework" Version="4.4.1" />
-    <PackageVersion Include="MSTest.Analyzers" Version="4.4.1" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CrashDump" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HangDump" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.HotReload" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.Retry" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.5.1" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.5.1" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.5.1" />
+    <PackageVersion Include="MSTest.Analyzers" Version="4.5.1" />
     <PackageVersion Include="Moq" Version="4.21.0" />
-    <PackageVersion Include="NodaTime.Testing" Version="3.3.4" />
+    <PackageVersion Include="NodaTime.Testing" Version="3.3.5" />
     <PackageVersion Include="Reqnroll.MsTest" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
     
     <!-- Security patches for transitive dependencies -->
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.DataProtection" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection" Version="10.0.13" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.12" />
-    <PackageVersion Include="MailKit" Version="4.17.0" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+    <PackageVersion Include="MailKit" Version="4.18.1" />
 
     <!-- Build tools -->
-    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.401" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.402" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.290" />
-    <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.303" />
+    <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
     <PackageVersion Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.13" />
   </ItemGroup>
