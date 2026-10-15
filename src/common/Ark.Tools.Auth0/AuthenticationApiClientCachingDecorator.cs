@@ -22,6 +22,8 @@ namespace Ark.Tools.Auth0;
 
 public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApiClient, IDisposable
 {
+    private static readonly TimeSpan _expirationSafetyMargin = TimeSpan.FromSeconds(60);
+
     private readonly IAuthenticationApiClient _inner;
     [Secret]
     private readonly MemoryCache _cache = new(new MemoryCacheOptions());
@@ -65,7 +67,8 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
         var expAccessToken = _expiresIn(r.AccessToken);
         var expIdToken = TimeSpan.FromSeconds(r.ExpiresIn);
 
-        return new[] { expAccessToken, expIdToken }.Min();
+        // Stop serving a token before it expires so it does not expire in flight or under clock skew.
+        return new[] { expAccessToken, expIdToken }.Min() - _expirationSafetyMargin;
     }
 
     private static TimeSpan _expiresIn(
@@ -250,7 +253,7 @@ public sealed class AuthenticationApiClientCachingDecorator : IAuthenticationApi
 
     private static string _getKey(ResourceOwnerTokenRequest r)
     {
-        return $"ResourceOwnerTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Username)}{_hashKey(r.Realm)}{_hashKey(r.Audience)}{_hashKey(r.Scope)}";
+        return $"ResourceOwnerTokenRequest{_hashKey(r.ClientId)}{_hashKey(r.Username)}{_hashKey(r.Password)}{_hashKey(r.Realm)}{_hashKey(r.Audience)}{_hashKey(r.Scope)}";
     }
 
     public async Task<UserInfo> GetUserInfoAsync(
