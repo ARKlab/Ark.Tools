@@ -9,6 +9,7 @@ using Polly;
 using Polly.Retry;
 
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Ark.Tools.AspNetCore.BasicAuthAzureActiveDirectoryProxy;
 
@@ -135,15 +136,9 @@ public sealed class BasicAuthAzureActiveDirectoryProxyMiddleware : IDisposable
     [UnconditionalSuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by deserializer")]
     sealed record OAuthResult
     {
-        [NotPersonalData("OAuth token type is a scheme name such as Bearer.")]
-        public string? Token_Type { get; set; }
-        public string? Scope { get; set; }
-        public int Expires_In { get; set; }
-        public int Ext_Expires_In { get; set; }
-        public int Expires_On { get; set; }
-        public int Not_Before { get; set; }
-        public Uri? Resource { get; set; }
+        // Only the field we use: the v1 endpoint sends expires_in and the other numbers as strings.
         [Secret]
+        [JsonPropertyName("access_token")]
         public string? Access_Token { get; set; }
     }
 }
