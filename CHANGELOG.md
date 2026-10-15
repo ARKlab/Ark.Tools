@@ -6,14 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added
-
-- `Ark.Tools.MediatorFramework.MinimalApi`: `services.AddArkMessagePack(resolver)` registers the MessagePack resolver for generated Minimal API endpoints and builds their serializer options once.
-
 ### Changed
 
-- **Breaking:** `Ark.Tools.MediatorFramework.MinimalApi` hosts with MessagePack endpoints must call `services.AddArkMessagePack(resolver)` instead of registering `IFormatterResolver` directly; without it they fail with an `InvalidOperationException` at startup, or on the first MessagePack response for hosts whose MessagePack endpoints only return data.
-- `Ark.Tools.MediatorFramework.MinimalApi`: MessagePack responses of generated Minimal API endpoints are written straight to the response pipe, and the serializer options and `Accept` parsing no longer allocate per request; the bytes on the wire are unchanged.
+- `ARKCORE002`, `ARKCORE003` and `ARKCORE004` are now reported on each `EvolvableEnum<T>` usage instead of the enum declaration, so an invalid enum used N times no longer shows N identical errors at its declaration and IDE analysis shows the error in the file that uses the enum. The enum declaration (or the clashing members for `ARKCORE003`) is attached as an additional location. A `#pragma` or `[SuppressMessage]` that targets these rules must now be placed at the usage.
+
+### Fixed
+
+- `Ark.Tools.MediatorFramework.AzureFunctions`: HTTP endpoints returning `IAsyncEnumerable<T>` now stream items as they are produced, as on the Minimal API host. Before, the generator never detected the streaming response and buffered the whole result.
+- `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
 
 ## [7.0.0-beta18] - 2026-10-15
 

@@ -161,11 +161,80 @@ public class EvolvableEnumAnalyzerTests
             "Leave at least one unused value in enum 'FullStatus' backing type 'byte' for future members");
     }
 
+    /// <summary>
+    /// Verifies document-scoped analysis reports enum-level diagnostics once per usage, in the usage's document,
+    /// whatever order the documents are analyzed in.
+    /// </summary>
+    [TestMethod]
+    public async Task UsagesInSeveralDocuments_ShouldReportDistinctDiagnosticsPerDocument()
+    {
+        var treeA = CSharpSyntaxTree.ParseText(
+            """
+            namespace System.ComponentModel.DataAnnotations
+            {
+                public class DisplayAttribute : System.Attribute
+                {
+                    public string Name { get; set; }
+                }
+            }
+            namespace Ark.Tools.Core
+            {
+                public struct EvolvableEnum<T> { }
+            }
+            enum Status
+            {
+                [System.ComponentModel.DataAnnotations.Display(Name = "same")]
+                Active = 1,
+                [System.ComponentModel.DataAnnotations.Display(Name = "same")]
+                Archived = 2
+            }
+            class ContractA
+            {
+                Ark.Tools.Core.EvolvableEnum<Status> Value;
+            }
+            """,
+            path: "A.cs");
+        var treeB = CSharpSyntaxTree.ParseText(
+            """
+            class ContractB
+            {
+                Ark.Tools.Core.EvolvableEnum<Status> Value;
+            }
+            """,
+            path: "B.cs");
+        var compilation = _createCompilation(treeA, treeB);
+        var withAnalyzers = compilation.WithAnalyzers([new EvolvableEnumAnalyzer()]);
+
+        var diagnosticsB = await withAnalyzers
+            .GetAnalyzerSemanticDiagnosticsAsync(compilation.GetSemanticModel(treeB), null, CancellationToken.None)
+            .ConfigureAwait(false);
+        var diagnosticsA = await withAnalyzers
+            .GetAnalyzerSemanticDiagnosticsAsync(compilation.GetSemanticModel(treeA), null, CancellationToken.None)
+            .ConfigureAwait(false);
+
+        diagnosticsB.Select(static item => item.Id).Should().BeEquivalentTo(["ARKCORE002", "ARKCORE003"]);
+        diagnosticsA.Select(static item => item.Id).Should().BeEquivalentTo(["ARKCORE002", "ARKCORE003"]);
+        diagnosticsB.Should().OnlyContain(static item => item.Location.SourceTree!.FilePath == "B.cs");
+        diagnosticsA.Should().OnlyContain(static item => item.Location.SourceTree!.FilePath == "A.cs");
+        diagnosticsA.Concat(diagnosticsB).Should().OnlyContain(static item =>
+            item.AdditionalLocations.All(static location => location.SourceTree!.FilePath == "A.cs"));
+    }
+
     private static async Task<ImmutableArray<Diagnostic>> _analyzeAsync(string source)
+    {
+        var compilation = _createCompilation(CSharpSyntaxTree.ParseText(source));
+
+        return await compilation
+            .WithAnalyzers([new EvolvableEnumAnalyzer()])
+            .GetAnalyzerDiagnosticsAsync()
+            .ConfigureAwait(false);
+    }
+
+    private static CSharpCompilation _createCompilation(params SyntaxTree[] trees)
     {
         var compilation = CSharpCompilation.Create(
             "AnalyzerTests",
-            [CSharpSyntaxTree.ParseText(source)],
+            trees,
             [MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
              MetadataReference.CreateFromFile(typeof(DisplayAttribute).Assembly.Location),
              MetadataReference.CreateFromFile(typeof(EnumMemberAttribute).Assembly.Location)],
@@ -173,9 +242,6 @@ public class EvolvableEnumAnalyzerTests
 
         compilation.GetDiagnostics().Where(static item => item.Severity == DiagnosticSeverity.Error).Should().BeEmpty();
 
-        return await compilation
-            .WithAnalyzers([new EvolvableEnumAnalyzer()])
-            .GetAnalyzerDiagnosticsAsync()
-            .ConfigureAwait(false);
+        return compilation;
     }
 }
