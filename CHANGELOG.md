@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - MCP tool descriptions now come only from XML documentation passed to the compiler as `AdditionalFiles`; the MCP generator no longer reads documentation files from disk. The MCP package now adds referenced projects' XML documentation automatically (opt out with `ArkMcpIncludeReferencedXmlDocs=false`); referenced NuGet packages' XML documentation is opt-in with `ArkMcpIncludePackageXmlDocs=true`.
 
+### Fixed
+
+- `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed
