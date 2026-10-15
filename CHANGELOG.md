@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `Ark.Tools.Compliance.Sql`: the task that writes the compliance SQL scripts now ships precompiled in the package (`tasks/netstandard2.0`) instead of being compiled on every MSBuild node, so clean builds of compliance-enabled projects are a few seconds faster.
+
 ## [7.0.0-beta18] - 2026-10-15
 
 ### Changed

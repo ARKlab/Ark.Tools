@@ -118,8 +118,8 @@ public sealed class SqlBuildTargetTests
     }
 
     /// <summary>
-    /// An unchanged build skips the template task, and with it the inline task compilation, but still lists the
-    /// scripts; changing a token value runs the task again.
+    /// An unchanged build skips the template task but still lists the scripts; changing a token value runs the task
+    /// again.
     /// </summary>
     [TestMethod]
     public async Task UnchangedInputsSkipTheTaskButStillListScripts()
