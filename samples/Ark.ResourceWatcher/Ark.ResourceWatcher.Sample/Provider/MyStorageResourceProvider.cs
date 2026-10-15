@@ -6,6 +6,7 @@ using Ark.Tools.ResourceWatcher;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using Flurl.Http;
+using Flurl.Http.Configuration;
 
 using NodaTime;
 
@@ -46,7 +47,7 @@ public sealed class MyStorageResourceProvider : IResourceProvider<MyMetadata, My
     /// <param name="clock">The clock for timestamps.</param>
     public MyStorageResourceProvider(IArkFlurlClientFactory clientFactory, IMyStorageResourceProviderConfig config, IClock clock)
     {
-        _client = clientFactory.Get(config.ProviderUrl);
+        _client = clientFactory.Get(config.ProviderUrl, static s => s.JsonSerializer = new DefaultJsonSerializer(SampleJson.HttpOptions));
         _clock = clock;
     }
 

@@ -6,6 +6,7 @@ using Ark.Tools.Http;
 using Ark.Tools.ResourceWatcher.WorkerHost;
 
 using Flurl.Http;
+using Flurl.Http.Configuration;
 
 using NLog;
 
@@ -29,7 +30,7 @@ public sealed class MyResourceProcessor : IResourceProcessor<MyResource, MyMetad
     /// <param name="config"></param>
     public MyResourceProcessor(IArkFlurlClientFactory clientFactory, IMyResourceProcessorConfig config)
     {
-        _client = clientFactory.Get(config.SinkUrl);
+        _client = clientFactory.Get(config.SinkUrl, static s => s.JsonSerializer = new DefaultJsonSerializer(SampleJson.HttpOptions));
     }
 
     /// <inheritdoc/>

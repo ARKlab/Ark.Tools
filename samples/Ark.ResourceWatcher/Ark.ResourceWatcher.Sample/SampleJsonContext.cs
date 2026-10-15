@@ -1,7 +1,9 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 using Ark.ResourceWatcher.Sample.Dto;
+using Ark.ResourceWatcher.Sample.Provider;
 
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Ark.ResourceWatcher.Sample;
@@ -25,19 +27,21 @@ namespace Ark.ResourceWatcher.Sample;
 /// <item><description>To reduce memory footprint (smaller metadata)</description></item>
 /// </list>
 /// <para>
-/// <b>How to use with SqlStateProvider:</b>
+/// The sample's HTTP clients use this context through <see cref="SampleJson.HttpOptions"/>.
+/// </para>
+/// <para>
+/// <b>How to use with SqlStateProvider</b> (needs the <c>Ark.Tools.ResourceWatcher.WorkerHost.Sql</c> package):
 /// </para>
 /// <code>
-/// // Create config with JSON context
-/// var config = new SqlStateProviderConfigWithContext
+/// // Config that hands the context to the SqlStateProvider
+/// public sealed class MySqlStateProviderConfig : ISqlStateProviderConfig
 /// {
-///     DbConnectionString = connectionString,
-///     ExtensionsJsonContext = SampleJsonContext.Default
-/// };
-/// 
-/// // Register state provider with typed extensions
-/// services.AddSingleton&lt;IStateProvider&lt;MyExtensions&gt;&gt;(sp =&gt;
-///     new SqlStateProvider&lt;MyExtensions&gt;(config, connectionManager));
+///     public required string DbConnectionString { get; init; }
+///     public JsonSerializerContext? ExtensionsJsonContext => SampleJsonContext.Default;
+/// }
+///
+/// // In the MyWorkerHost constructor, instead of UseStateProvider&lt;InMemStateProvider&lt;MyExtensions&gt;&gt;()
+/// this.UseSqlStateProvider(new MySqlStateProviderConfig { DbConnectionString = connectionString });
 /// </code>
 /// <para>
 /// The <see cref="JsonSerializableAttribute"/> tells the compiler which types need
@@ -49,11 +53,30 @@ namespace Ark.ResourceWatcher.Sample;
     RespectNullableAnnotations = true,
     RespectRequiredConstructorParameters = true)]
 [JsonSerializable(typeof(MyExtensions))]
-public sealed partial class SampleJsonContext : JsonSerializerContext
+[JsonSerializable(typeof(MyListResponse))]
+[JsonSerializable(typeof(SinkDto))]
+internal sealed partial class SampleJsonContext : JsonSerializerContext
 {
     // This class is partial - the compiler generates the implementation at build time
     // The generated code provides:
-    // - Metadata for serializing MyExtensions
+    // - Metadata for serializing MyExtensions and the HTTP DTOs
     // - Optimized serialization/deserialization methods
     // - No runtime reflection needed
+}
+
+/// <summary>
+/// JSON options for the sample's HTTP clients.
+/// </summary>
+internal static class SampleJson
+{
+    /// <summary>
+    /// Gets the Ark default options with <see cref="SampleJsonContext"/> as the only metadata source.
+    /// </summary>
+    /// <remarks>
+    /// A type missing from <see cref="SampleJsonContext"/> fails instead of falling back to reflection.
+    /// </remarks>
+    public static JsonSerializerOptions HttpOptions { get; } = new JsonSerializerOptions(ArkSerializerOptions.JsonOptions)
+    {
+        TypeInfoResolver = SampleJsonContext.Default
+    };
 }
