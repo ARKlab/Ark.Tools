@@ -1,9 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-global using Microsoft.AspNetCore.Builder;
-global using Microsoft.AspNetCore.Http;
-
 using Ark.Tools.Compliance;
 using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.Authorization;
