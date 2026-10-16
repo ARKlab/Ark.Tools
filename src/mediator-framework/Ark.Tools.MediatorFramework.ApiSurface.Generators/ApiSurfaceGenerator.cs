@@ -993,13 +993,8 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             lines.Add($"{kind} {name}.{field.Name}={Convert.ToString(field.ConstantValue, CultureInfo.InvariantCulture)}");
     }
 
-    private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
-    {
-        for (var current = type; current is not null; current = current.BaseType)
-            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
-                if (!IsGeneratedSurface(property))
-                    yield return property;
-    }
+    private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type) =>
+        ContractProperties.All(type).Where(static property => !IsGeneratedSurface(property));
 
     private static bool IsGeneratedSurface(ISymbol symbol) =>
         symbol.GetAttributes().Any(attribute =>

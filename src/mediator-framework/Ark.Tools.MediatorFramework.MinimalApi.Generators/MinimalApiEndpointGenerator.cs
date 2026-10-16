@@ -519,7 +519,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Select(match => match.Groups[1].Value)
                 .Where(name => !string.Equals(name, "version", StringComparison.OrdinalIgnoreCase))
                 , StringComparer.OrdinalIgnoreCase);
-            var properties = AllProperties(type)
+            var properties = ContractProperties.All(type)
                 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
                 .Select(property =>
                 {
@@ -562,7 +562,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                 diagnostics.Add(new DiagnosticInfo(DiagnosticDescriptors.InvalidContractShape, type.Name, GetLocation(http)));
             var etagProperties = properties.Where(property => property.IsETag).ToArray();
             var responseETagProperties = responseType is INamedTypeSymbol namedResponse && etagAttr is not null
-                ? AllProperties(namedResponse)
+                ? ContractProperties.All(namedResponse)
 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic && property.GetAttributes().Any(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, etagAttr))).ToArray()
                 : Array.Empty<IPropertySymbol>();
@@ -601,7 +601,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             var routes = new HashSet<string>(
                 properties.Where(property => property.IsRoute).Select(property => property.Name),
                 StringComparer.Ordinal);
-            foreach (var property in AllProperties(type)
+            foreach (var property in ContractProperties.All(type)
                 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic))
             {
                 var bodyShaped = HasAttribute(property, httpBodyAttr)
@@ -1214,13 +1214,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                     => "global::System.Collections.Immutable.ImmutableArray.CreateRange(" + property.Name + ")",
                 _ => property.Name,
             };
-        }
-
-        private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
-        {
-            for (var current = type; current is not null; current = current.BaseType)
-                foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
-                    yield return property;
         }
 
         private static void EmitETagAssignment(StringBuilder sb, EndpointModel endpoint)

@@ -417,7 +417,7 @@ namespace Ark.Tools.MediatorFramework.Generators
                     LocationSpec.Create(GetLocation(grpc)),
                     type.Name));
 
-            var attachmentProperties = AllProperties(type)
+            var attachmentProperties = ContractProperties.All(type)
 .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic && (IsAttachmentType(property.Type, attachmentType) || IsAttachmentCollection(property.Type, attachmentType))).ToArray();
             var attachmentRequest = kind == HandlerKind.Command || attachmentProperties.Length == 0
                 ? AttachmentRequestKind.None
@@ -1192,7 +1192,7 @@ namespace Ark.Tools.MediatorFramework.Generators
 
         private static ProtoContractModel CreateProtoContract(INamedTypeSymbol type, AttributeData protoContract, CancellationToken cancellationToken)
         {
-            var members = AllProperties(type)
+            var members = ContractProperties.All(type)
                 .Select(property => new
                 {
                     Property = property,
@@ -1400,13 +1400,6 @@ namespace Ark.Tools.MediatorFramework.Generators
                 SpecialType.System_UInt64 => "uint64",
                 _ => null,
             };
-
-        private static IEnumerable<IPropertySymbol> AllProperties(INamedTypeSymbol type)
-        {
-            for (var current = type; current is not null; current = current.BaseType)
-                foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
-                    yield return property;
-        }
 
         private static string SnakeCase(string value)
         {
