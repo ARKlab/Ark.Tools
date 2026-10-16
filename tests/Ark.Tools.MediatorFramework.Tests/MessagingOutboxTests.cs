@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using System.Buffers;
+using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -203,6 +205,96 @@ public sealed partial class MessagingOutboxTests
         await processor.StopAsync(cts.Token).ConfigureAwait(false);
 
         (await _countAsync(factory).ConfigureAwait(false)).Should().Be(2);
+    }
+
+    [TestMethod]
+    public async Task ProcessorSendsEachDestinationAsOneBatchInPeekOrder()
+    {
+        var factory = new InMemoryOutboxContextFactory();
+        var dueTime = DateTimeOffset.Parse("2030-01-01T00:00:00Z", CultureInfo.InvariantCulture);
+        await _seedAsync(factory, _queueHeaders("a1", "queue-a"), [1]).ConfigureAwait(false);
+        await _seedAsync(factory, _queueHeaders("b1", "queue-b"), [2]).ConfigureAwait(false);
+        var scheduled = _queueHeaders("a2", "queue-a");
+        scheduled[MessagingHeaders.OutboxDueTime] = dueTime.ToString("O", CultureInfo.InvariantCulture);
+        await _seedAsync(factory, scheduled, [3]).ConfigureAwait(false);
+        var published = _queueHeaders("t1", "topic-t");
+        published[MessagingHeaders.OutboxDestinationKind] = "topic";
+        await _seedAsync(factory, published, [4]).ConfigureAwait(false);
+        var transport = new BatchRecordingTransport(failingDestination: null, expectedCalls: 3);
+        var processor = new MessagingOutboxProcessor(factory, transport, batchSize: 10);
+        await using var __processor = processor.ConfigureAwait(false);
+
+        await processor.StartAsync(default).ConfigureAwait(false);
+        await transport.WaitForExpectedCallsAsync().WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await processor.StopAsync(cts.Token).ConfigureAwait(false);
+
+        transport.Calls.Should().HaveCount(3);
+        var queueA = transport.Calls.Single(static call => call.Destination == "queue-a");
+        queueA.IsTopic.Should().BeFalse();
+        queueA.Ids.Should().Equal("a1", "a2");
+        queueA.DueTimes.Should().Equal(null, dueTime);
+        transport.Calls.Single(static call => call.Destination == "queue-b").Ids.Should().Equal("b1");
+        var topic = transport.Calls.Single(static call => call.Destination == "topic-t");
+        topic.IsTopic.Should().BeTrue();
+        topic.Ids.Should().Equal("t1");
+        transport.SingleSends.Should().Be(0);
+    }
+
+    [TestMethod]
+    public async Task ProcessorBatchFailureOnOneDestinationCancelsOthersAndDoesNotCommit()
+    {
+        var factory = new InMemoryOutboxContextFactory();
+        await _seedAsync(factory, _queueHeaders("a1", "queue-a"), [1]).ConfigureAwait(false);
+        await _seedAsync(factory, _queueHeaders("b1", "queue-b"), [2]).ConfigureAwait(false);
+        var transport = new BatchRecordingTransport(failingDestination: "queue-a", expectedCalls: 0);
+        var processor = new MessagingOutboxProcessor(factory, transport, batchSize: 10);
+        await using var __processor = processor.ConfigureAwait(false);
+
+        await processor.StartAsync(default).ConfigureAwait(false);
+        await transport.WaitForSiblingCancellationAsync().WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await processor.StopAsync(cts.Token).ConfigureAwait(false);
+
+        (await _countAsync(factory).ConfigureAwait(false)).Should().Be(2);
+    }
+
+    [TestMethod]
+    public async Task ProcessorRecordsOneClientOperationPerBatchedMessage()
+    {
+        const string queue = "batch-metrics-queue";
+        var measurements = new ConcurrentQueue<double>();
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = static (instrument, subscriber) =>
+        {
+            if (instrument.Meter.Name == OpenTelemetryProcessingMetricsStep.MeterName
+                && instrument.Name == MessagingMetrics.ClientOperationDurationName)
+                subscriber.EnableMeasurementEvents(instrument);
+        };
+        listener.SetMeasurementEventCallback<double>((_, value, tags, _) =>
+        {
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "messaging.destination.name" && Equals(tag.Value, queue))
+                    measurements.Enqueue(value);
+            }
+        });
+        listener.Start();
+        var factory = new InMemoryOutboxContextFactory();
+        await _seedAsync(factory, _queueHeaders("m1", queue), [1]).ConfigureAwait(false);
+        await _seedAsync(factory, _queueHeaders("m2", queue), [2]).ConfigureAwait(false);
+        await _seedAsync(factory, _queueHeaders("m3", queue), [3]).ConfigureAwait(false);
+        var transport = new BatchRecordingTransport(failingDestination: null, expectedCalls: 1);
+        var processor = new MessagingOutboxProcessor(factory, transport, batchSize: 10);
+        await using var __processor = processor.ConfigureAwait(false);
+
+        await processor.StartAsync(default).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        while (measurements.Count < 3)
+            await Task.Delay(10, cts.Token).ConfigureAwait(false);
+        await processor.StopAsync(cts.Token).ConfigureAwait(false);
+
+        measurements.Should().Equal(1.5, 2.5, 3.5);
     }
 
     [TestMethod]
@@ -553,6 +645,123 @@ public sealed partial class MessagingOutboxTests
             await SendAsync(topic, headers, payload, null, ctk).ConfigureAwait(false);
         }
     }
+
+    /// <summary>
+    /// Records batch calls. Each message's returned duration is its index plus 1.5 seconds. With a failing destination,
+    /// that destination fails once both destinations are in flight and the other blocks until its token is cancelled.
+    /// </summary>
+    private sealed class BatchRecordingTransport : IMessagingBatchTransport
+    {
+        private readonly string? _failingDestination;
+        private readonly int _expectedCalls;
+        private readonly ConcurrentQueue<BatchCall> _calls = new();
+        private readonly TaskCompletionSource _twoInFlight =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _siblingCancelled =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _expectedCallsCompleted =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _inFlight;
+        private int _completedCalls;
+        private int _singleSends;
+
+        public BatchRecordingTransport(string? failingDestination, int expectedCalls)
+        {
+            _failingDestination = failingDestination;
+            _expectedCalls = expectedCalls;
+        }
+
+        public MessagingCapabilities Capabilities =>
+            MessagingCapabilities.SendReceive
+            | MessagingCapabilities.PubSub
+            | MessagingCapabilities.ScheduledSend;
+
+        public long MaximumPayloadBytes => long.MaxValue;
+
+        public IReadOnlyList<BatchCall> Calls => [.. _calls];
+
+        public int SingleSends => Volatile.Read(ref _singleSends);
+
+        public long MeasureNativeHeaders(IReadOnlyDictionary<string, string> headers)
+        {
+            return 0;
+        }
+
+        public async Task WaitForExpectedCallsAsync()
+        {
+            await _expectedCallsCompleted.Task.ConfigureAwait(false);
+        }
+
+        public async Task WaitForSiblingCancellationAsync()
+        {
+            await _siblingCancelled.Task.ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<TimeSpan>> SendBatchAsync(
+            string destination,
+            bool isTopic,
+            IReadOnlyList<MessagingBatchEntry> messages,
+            CancellationToken ctk)
+        {
+            _calls.Enqueue(new BatchCall(
+                destination,
+                isTopic,
+                messages.Select(static message => message.Headers[MessagingHeaders.MessageId]).ToList(),
+                messages.Select(static message => message.DueTime).ToList()));
+            if (Interlocked.Increment(ref _inFlight) >= 2)
+                _twoInFlight.TrySetResult();
+
+            if (destination == _failingDestination)
+            {
+                await _twoInFlight.Task.WaitAsync(TimeSpan.FromSeconds(5), ctk).ConfigureAwait(false);
+                throw new InvalidOperationException("Injected batch failure.");
+            }
+
+            if (_failingDestination is not null)
+            {
+                try
+                {
+                    await Task.Delay(Timeout.Infinite, ctk).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    _siblingCancelled.TrySetResult();
+                    throw;
+                }
+            }
+
+            if (Interlocked.Increment(ref _completedCalls) == _expectedCalls)
+                _expectedCallsCompleted.TrySetResult();
+            return messages.Select(static (_, index) => TimeSpan.FromSeconds(index + 1.5)).ToList();
+        }
+
+        public async Task SendAsync(
+            string queue,
+            IReadOnlyDictionary<string, string> headers,
+            ReadOnlySequence<byte> payload,
+            DateTimeOffset? dueTime,
+            CancellationToken ctk)
+        {
+            Interlocked.Increment(ref _singleSends);
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task PublishAsync(
+            string topic,
+            IReadOnlyDictionary<string, string> headers,
+            ReadOnlySequence<byte> payload,
+            CancellationToken ctk)
+        {
+            Interlocked.Increment(ref _singleSends);
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+    }
+
+    private sealed record BatchCall(
+        string Destination,
+        bool IsTopic,
+        IReadOnlyList<string> Ids,
+        IReadOnlyList<DateTimeOffset?> DueTimes);
 
     private sealed record SentEnvelope(
         string Destination,
