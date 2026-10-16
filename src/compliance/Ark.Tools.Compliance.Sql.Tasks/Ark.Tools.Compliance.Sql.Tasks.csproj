@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks></TargetFrameworks>
+    <!-- netstandard2.0 loads in both .NET Framework (Visual Studio) and .NET MSBuild. -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Description>Precompiled MSBuild task that renders the Ark.Tools.Compliance.Sql policy scripts.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- MSBuild provides this assembly at run time. -->
+    <PackageReference Include="Microsoft.Build.Framework" PrivateAssets="all" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+</Project>

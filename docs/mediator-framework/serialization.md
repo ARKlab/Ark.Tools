@@ -30,7 +30,8 @@ public sealed record CreateGreetingRequest : IRequest<GreetingResponse>
 ```
 Source: [`BookStreamingContracts.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookStreamingContracts.cs)
 
-Register an `IFormatterResolver` that can format every MessagePack contract.
+Register an `IFormatterResolver` that can format every MessagePack contract with
+`AddArkMessagePack` from `Ark.Tools.MediatorFramework.MinimalApi`.
 The sample composes NodaTime, enum-as-string, and the standard resolver:
 
 ```csharp
@@ -38,10 +39,13 @@ var messagePackResolver = CompositeResolver.Create(
     MessagePack.NodaTime.NodatimeResolver.Instance,
     DynamicEnumAsStringResolver.Instance,
     StandardResolver.Instance);
-services.AddSingleton<IFormatterResolver>(messagePackResolver);
+services.AddArkMessagePack(messagePackResolver);
 ```
 
-The generated Minimal API endpoints read the resolver from dependency injection.
+`AddArkMessagePack` registers the resolver and builds the serializer options once.
+The call is required: a host with MessagePack endpoints that does not make it fails
+with an `InvalidOperationException`, at startup when it maps endpoints that read
+MessagePack bodies, otherwise on the first MessagePack response.
 `AddMessagePackFormatter` from `Ark.Tools.AspNetCore.MessagePack` configures MVC
 formatters only, so a Minimal API host does not need it.
 Source: [`SampleStartup.cs`](../../samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.WebInterface/SampleStartup.cs)

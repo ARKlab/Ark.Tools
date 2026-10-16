@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Tools.MediatorFramework.Hosting.Contracts;
+using Ark.Tools.MediatorFramework.MinimalApi;
 
 using AwesomeAssertions;
 
@@ -83,5 +84,37 @@ public sealed class MinimalApiSerializationTests
             app.Lifetime.ApplicationStopping);
         result.Should().NotBeNull();
         result!.Message.Should().Be("12:packed:message-pack");
+    }
+
+    /// <summary>Verifies Accept header parsing for MessagePack negotiation.</summary>
+    /// <param name="accept">The Accept header value.</param>
+    /// <param name="expected">Whether MessagePack should be preferred.</param>
+    [TestMethod]
+    [DataRow(null, false)]
+    [DataRow("", false)]
+    [DataRow("application/json", false)]
+    [DataRow("application/x-msgpack", true)]
+    [DataRow("APPLICATION/X-MSGPACK", true)]
+    [DataRow("application/json, application/x-msgpack", true)]
+    [DataRow(" application/x-msgpack ; charset=utf-8 ", true)]
+    [DataRow("application/x-msgpack;q=1", true)]
+    [DataRow("application/x-msgpack; q=0", false)]
+    [DataRow("application/x-msgpack;level=1; Q=0", false)]
+    [DataRow("application/x-msgpack;q=0, application/x-msgpack", true)]
+    [DataRow("application/x-msgpack-ext", false)]
+    [DataRow("text/plain;p=application/x-msgpack", false)]
+    [DataRow(",,application/x-msgpack,", true)]
+    [DataRow("application/x-msgpack;q=0.5, application/json;q=0.4", true)]
+    [DataRow("application/x-msgpack;q=0.5", true)]
+    [DataRow("application/x-msgpack;q=0.001", true)]
+    [DataRow("application/x-msgpack;q=0.000", false)]
+    [DataRow("application/x-msgpack;q=0.", false)]
+    [DataRow("application/x-msgpack;q=", true)]
+    [DataRow("application/x-msgpack;q=abc", true)]
+    [DataRow("application/x-msgpack;q=0x", true)]
+    [DataRow("application/x-msgpack;q=-0", true)]
+    public void ParsesAcceptHeader(string? accept, bool expected)
+    {
+        ArkMessagePackEx.PrefersMessagePackForGeneratedEndpoint(accept).Should().Be(expected);
     }
 }

@@ -98,7 +98,14 @@ jobs:
         global-json-file: global.json
 
     - name: 'Install Azure Functions Core Tools'
-      run: npm install --global azure-functions-core-tools@4.14.0
+      # The package's postinstall downloads from cdn.functions.azure.com; retry transient network errors
+      run: |
+        for attempt in 1 2 3; do
+          npm install --global azure-functions-core-tools@4.16.0 && exit 0
+          echo "Attempt $attempt failed, retrying in 15s"
+          sleep 15
+        done
+        exit 1
 
     - name: 'Restore packages'
       run: dotnet restore --locked-mode

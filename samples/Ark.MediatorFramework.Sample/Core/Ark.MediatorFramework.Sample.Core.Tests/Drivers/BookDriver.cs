@@ -49,6 +49,9 @@ public sealed class BookDriver
     /// <summary>Gets the latest reading activity list.</summary>
     public IReadOnlyList<ReadingActivity>? Activities { get; private set; }
 
+    /// <summary>Gets the books created by the latest bulk request.</summary>
+    public IReadOnlyList<Book.V1.Output> BulkCreated { get; private set; } = [];
+
     /// <summary>Gets whether the scenario has an active book.</summary>
     public bool HasCurrent => _current is not null;
 
@@ -61,6 +64,29 @@ public sealed class BookDriver
     {
         _current = await _context.DispatchRequestAsync<Book_CreateRequest.V1, Book.V1.Output>(
             new Book_CreateRequest.V1(input), ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Creates books in one bulk request.</summary>
+    /// <param name="inputs">The book creation fields.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    public async Task BulkCreateAsync(IReadOnlyList<Book.V1.Create> inputs, CancellationToken ctk = default)
+    {
+        BulkCreated = await _context.DispatchRequestAsync<Book_BulkCreateRequest.V1, IReadOnlyList<Book.V1.Output>>(
+            new Book_BulkCreateRequest.V1(inputs), ctk).ConfigureAwait(false);
+    }
+
+    /// <summary>Reads all book audit records.</summary>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The book audit records.</returns>
+    public async Task<PagedResult<AuditRecord>> ReadBookAuditsAsync(CancellationToken ctk = default)
+    {
+        return await _context.DispatchQueryAsync<GetAuditsQuery.V1, PagedResult<AuditRecord>>(
+            new GetAuditsQuery.V1
+            {
+                EntityType = nameof(Book.V1.Output),
+                Limit = 25,
+            },
+            ctk).ConfigureAwait(false);
     }
 
     /// <summary>Retrieves the active book through its query contract.</summary>

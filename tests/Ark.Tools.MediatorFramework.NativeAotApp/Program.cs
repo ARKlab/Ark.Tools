@@ -3,12 +3,16 @@
 using Ark.Tools.Core;
 using Ark.Tools.MediatorFramework.Generated;
 using Ark.Tools.MediatorFramework.Mcp;
+using Ark.Tools.MediatorFramework.MinimalApi;
 using Ark.Tools.Solid;
 using Ark.Tools.SystemTextJson;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using MessagePack;
+using MessagePack.Resolvers;
+
 using Microsoft.Extensions.Logging.Abstractions;
 
 using ModelContextProtocol.Client;
@@ -16,6 +20,7 @@ using ModelContextProtocol.Protocol;
 
 using System.Data;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
@@ -30,6 +35,7 @@ namespace Ark.Tools.MediatorFramework.NativeAotApp;
 internal static class Program
 {
     private static readonly Guid _id = Guid.Parse("8f1c4d6e-0a52-4c39-9a7e-2f1b3c4d5e6f");
+    private static readonly IFormatterResolver _messagePackResolver = CompositeResolver.Create(GeneratedMessagePackResolver.Instance, BuiltinResolver.Instance);
 
     private static async Task Main(string[] args)
     {
@@ -112,6 +118,8 @@ internal static class Program
         builder.Services.AddScoped<IQueryHandler<GetBookQuery, Book>, GetBookQueryHandler>();
         builder.Services.AddScoped<IRequestHandler<UploadBookRequest, Book>, UploadBookRequestHandler>();
         builder.Services.AddScoped<IQueryHandler<DownloadBookQuery, IArkAttachment>, DownloadBookQueryHandler>();
+        builder.Services.AddScoped<IRequestHandler<RenameBookRequest, RenamedBook>, RenameBookRequestHandler>();
+        builder.Services.AddArkMessagePack(_messagePackResolver);
         builder.Services.AddArkSolidServiceProviderProcessors();
         builder.Services.AddMcpServer().WithHttpTransport().WithArkMcpTools<AppMcpContext>();
 
@@ -133,9 +141,32 @@ internal static class Program
         using var bad = await http.GetAsync(new Uri("/books/not-a-guid", UriKind.Relative), ctk).ConfigureAwait(false);
         check("endpoint-rejects-invalid-value-object", () => bad.StatusCode == HttpStatusCode.BadRequest);
 
+        await _checkMessagePackEndpointAsync(http, check, ctk).ConfigureAwait(false);
         await _checkMcpAsync(http, new Uri(address + "/mcp"), check, ctk).ConfigureAwait(false);
 
         await app.StopAsync(CancellationToken.None).ConfigureAwait(false);
+    }
+
+    // A MessagePack-negotiated endpoint must still serve JSON through the host's source-generated metadata.
+    private static async Task _checkMessagePackEndpointAsync(HttpClient http, Action<string, Func<bool>> check, CancellationToken ctk)
+    {
+        var uri = new Uri("/books/rename", UriKind.Relative);
+        var request = new RenameBookRequest { Code = "B-2" };
+
+        using var json = await http.PostAsJsonAsync(uri, request, AppJsonContext.Default.RenameBookRequest, ctk).ConfigureAwait(false);
+        var jsonBody = await json.Content.ReadAsStringAsync(ctk).ConfigureAwait(false);
+        check("messagepack-endpoint-json", () => json.StatusCode == HttpStatusCode.OK
+            && string.Equals(jsonBody, """{"code":"B-2-renamed"}""", StringComparison.Ordinal));
+
+        var options = MessagePackSerializerOptions.Standard.WithResolver(_messagePackResolver);
+        using var content = new ByteArrayContent(MessagePackSerializer.Serialize(request, options, ctk));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/x-msgpack");
+        using var message = new HttpRequestMessage(HttpMethod.Post, uri) { Content = content };
+        message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-msgpack"));
+        using var packed = await http.SendAsync(message, ctk).ConfigureAwait(false);
+        var packedBody = await packed.Content.ReadAsByteArrayAsync(ctk).ConfigureAwait(false);
+        check("messagepack-endpoint-msgpack", () => packed.StatusCode == HttpStatusCode.OK
+            && MessagePackSerializer.Deserialize<RenamedBook>(packedBody, options, ctk).Code == "B-2-renamed");
     }
 
     // The tools bind the app's source-generated contracts; the attachment and protocol types must come from McpToolSerializerOptions.

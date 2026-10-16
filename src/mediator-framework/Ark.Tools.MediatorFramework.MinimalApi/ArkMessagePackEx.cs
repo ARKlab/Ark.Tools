@@ -18,10 +18,9 @@ public static class ArkMessagePackEx
     /// <param name="context">The current HTTP context.</param>
     /// <param name="cancellationToken">The request cancellation token.</param>
     /// <returns>The deserialized request, or <see langword="null"/> for an empty body.</returns>
-    [UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2026",
-        Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
+    /// <exception cref="NotSupportedException">
+    /// Thrown when the host's HTTP JSON options have no metadata for <typeparamref name="TRequest"/>.
+    /// </exception>
     public static async Task<TRequest?> ReadRequestAsync<TRequest>(
         HttpContext context,
         CancellationToken cancellationToken)
@@ -34,7 +33,11 @@ public static class ArkMessagePackEx
                 context.Request.Body,
                 _getDeserializationOptions(context),
                 cancellationToken).ConfigureAwait(false)
-            : await context.Request.ReadFromJsonAsync<TRequest>(cancellationToken).ConfigureAwait(false);
+            : await context.Request.ReadFromJsonAsync(
+                (System.Text.Json.Serialization.Metadata.JsonTypeInfo<TRequest>)context.RequestServices
+                    .GetRequiredService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>()
+                    .Value.SerializerOptions.GetTypeInfo(typeof(TRequest)),
+                cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Validates the MessagePack formatters required by generated endpoints.</summary>
@@ -50,7 +53,7 @@ public static class ArkMessagePackEx
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(validators);
 
-        var resolver = services.GetRequiredService<IFormatterResolver>();
+        var resolver = _getOptions(services).Resolver;
         var failures = new List<string>();
         foreach (var validator in validators)
         {
@@ -87,10 +90,6 @@ public static class ArkMessagePackEx
     /// <param name="successStatusCode">The status code for a non-null response.</param>
     /// <param name="nullResultStatusCode">The status code for a null response.</param>
     /// <returns>An HTTP result using the negotiated response format.</returns>
-    [UnconditionalSuppressMessage(
-        "Trimming",
-        "IL2026",
-        Justification = "The endpoint delegate's request and response types are statically supplied by the application call site.")]
     public static IResult WriteResponse<TResponse>(
         HttpContext context,
         TResponse response,
@@ -104,9 +103,9 @@ public static class ArkMessagePackEx
             return Results.StatusCode(nullResultStatusCode);
 
         if (!_prefersMessagePack(context.Request.Headers.Accept))
-            return Results.Json(response, statusCode: successStatusCode);
+            return ArkGeneratedEndpoint.Json(response, successStatusCode);
 
-        return new MessagePackResult<TResponse>(response, _getOptions(context), successStatusCode, cancellationToken);
+        return new MessagePackResult<TResponse>(response, _getOptions(context).Serialization, successStatusCode, cancellationToken);
     }
 
     /// <summary>Buffers and writes a streaming response as one MessagePack array.</summary>
@@ -144,7 +143,7 @@ public static class ArkMessagePackEx
             items.Add(item);
         }
 
-        return new MessagePackResult<List<T>>(items, _getOptions(context), successStatusCode, cancellationToken);
+        return new MessagePackResult<List<T>>(items, _getOptions(context).Serialization, successStatusCode, cancellationToken);
     }
 
     /// <summary>Checks whether a generated endpoint should use MessagePack.</summary>
@@ -153,14 +152,16 @@ public static class ArkMessagePackEx
     public static bool PrefersMessagePackForGeneratedEndpoint(string? accept)
         => _prefersMessagePack(accept);
 
-    private static MessagePackSerializerOptions _getOptions(HttpContext context)
-    {
-        var resolver = context.RequestServices.GetRequiredService<IFormatterResolver>();
-        return MessagePackSerializerOptions.Standard.WithResolver(resolver);
-    }
+    private static ArkMessagePackOptionsHolder _getOptions(HttpContext context)
+        => _getOptions(context.RequestServices);
+
+    private static ArkMessagePackOptionsHolder _getOptions(IServiceProvider services)
+        => services.GetService<ArkMessagePackOptionsHolder>()
+            ?? throw new InvalidOperationException(
+                "MessagePack is not configured for the generated Minimal API endpoints. Call services.AddArkMessagePack(resolver) when registering services.");
 
     private static MessagePackSerializerOptions _getDeserializationOptions(HttpContext context)
-        => _getOptions(context).WithSecurity(MessagePackSecurity.UntrustedData);
+        => _getOptions(context).Deserialization;
 
     private static bool _isMessagePack(string? contentType)
         => contentType?.StartsWith(_messagePackMediaType, StringComparison.OrdinalIgnoreCase) == true;
@@ -172,10 +173,42 @@ public static class ArkMessagePackEx
             || !accept.Contains(_messagePackMediaType, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        return accept.Split(',', StringSplitOptions.TrimEntries)
-            .Select(static value => value.Split(';', StringSplitOptions.TrimEntries))
-            .Any(static parts => string.Equals(parts[0], _messagePackMediaType, StringComparison.OrdinalIgnoreCase)
-                && !parts.Skip(1).Any(static parameter => parameter.StartsWith("q=0", StringComparison.OrdinalIgnoreCase)));
+        var remaining = accept.AsSpan();
+        while (!remaining.IsEmpty)
+        {
+            var comma = remaining.IndexOf(',');
+            var entry = comma < 0 ? remaining : remaining[..comma];
+            remaining = comma < 0 ? [] : remaining[(comma + 1)..];
+
+            var semicolon = entry.IndexOf(';');
+            var mediaType = (semicolon < 0 ? entry : entry[..semicolon]).Trim();
+            if (!mediaType.Equals(_messagePackMediaType, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (semicolon < 0 || !_hasZeroQuality(entry[(semicolon + 1)..]))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool _hasZeroQuality(ReadOnlySpan<char> parameters)
+    {
+        while (true)
+        {
+            var semicolon = parameters.IndexOf(';');
+            var parameter = (semicolon < 0 ? parameters : parameters[..semicolon]).Trim();
+            // RFC 9110 12.4.2: only q=0 refuses; a malformed q is not a refusal.
+            if (parameter.StartsWith("q=", StringComparison.OrdinalIgnoreCase)
+                && double.TryParse(parameter[2..], System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var quality)
+                && quality <= 0)
+                return true;
+
+            if (semicolon < 0)
+                return false;
+
+            parameters = parameters[(semicolon + 1)..];
+        }
     }
 
     private sealed class MessagePackResult<T> : IResult
@@ -197,12 +230,25 @@ public static class ArkMessagePackEx
         {
             httpContext.Response.StatusCode = _statusCode;
             httpContext.Response.ContentType = _messagePackMediaType;
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, httpContext.RequestAborted);
-            await MessagePackSerializer.SerializeAsync(
-                httpContext.Response.Body,
-                _value,
-                _options,
-                cts.Token).ConfigureAwait(false);
+
+            // Generated endpoints pass RequestAborted itself, so linking would only allocate.
+            var requestAborted = httpContext.RequestAborted;
+            if (!_cancellationToken.CanBeCanceled || _cancellationToken == requestAborted)
+            {
+                await _writeAsync(httpContext, requestAborted).ConfigureAwait(false);
+                return;
+            }
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, requestAborted);
+            await _writeAsync(httpContext, cts.Token).ConfigureAwait(false);
+        }
+
+        private async Task _writeAsync(HttpContext httpContext, CancellationToken cancellationToken)
+        {
+            // Serialize straight into the response pipe, avoiding the intermediate buffer copy of the Stream overload.
+            var writer = httpContext.Response.BodyWriter;
+            MessagePackSerializer.Serialize(writer, _value, _options, cancellationToken);
+            await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 }

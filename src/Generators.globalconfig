@@ -1,0 +1,15 @@
+is_global = true
+# Above Ark.Tools.MeziantouAnalyzer.globalconfig (91) so the overrides below win.
+global_level = 100
+
+# Source generator projects run analyzers so the Microsoft.CodeAnalysis RS* rules guard them.
+# The Meziantou style and performance rules below fire on pre-existing generator code and are
+# out of scope for that guardrail; fix them and remove the matching line here.
+dotnet_diagnostic.MA0002.severity = none
+dotnet_diagnostic.MA0009.severity = none
+dotnet_diagnostic.MA0028.severity = none
+dotnet_diagnostic.MA0040.severity = none
+dotnet_diagnostic.MA0045.severity = none
+dotnet_diagnostic.MA0186.severity = none
+dotnet_diagnostic.MA0194.severity = none
+dotnet_diagnostic.MA0217.severity = none

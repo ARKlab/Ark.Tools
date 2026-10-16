@@ -1,7 +1,6 @@
 // Copyright (C) 2024 Ark Energy S.r.l. All rights reserved.
 // Licensed under the MIT License. See LICENSE file for license information.
 
-using Ark.Tools.AspNetCore.MessagePackFormatter;
 using Ark.Tools.AspNetCore.MinimalApi;
 using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Compliance;
@@ -193,7 +192,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
                 container.RegisterInstance(services.GetRequiredService<IHttpContextAccessor>());
         });
         builder.Services.AddArkProblemDetailsExceptionHandler();
-        builder.Services.AddMessagePackFormatter(StandardResolver.Instance);
+        builder.Services.AddArkMessagePack(StandardResolver.Instance);
         builder.Services.AddOpenApi("v1", _configureOpenApi);
         builder.Services.AddOpenApi("v2", _configureOpenApi);
         var app = builder.Build();

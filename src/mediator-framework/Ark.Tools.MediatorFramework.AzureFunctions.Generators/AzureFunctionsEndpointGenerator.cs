@@ -112,7 +112,7 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
             .WithTrackingName(_hostSpecStage)
             .Collect();
         var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
-                AzureFunctionsEndpointParser._endpointAttribute,
+                ContractSymbols.HttpEndpointAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol type
                     ? AzureFunctionsEndpointParser._readEndpoint(type, attributeContext.Attributes[0])
@@ -723,6 +723,8 @@ public sealed class AzureFunctionsEndpointGenerator : IIncrementalGenerator
         }
         else if (endpoint.IsStreaming)
         {
+            source.Append("        request.HttpContext.Response.StatusCode = ")
+                .Append(endpoint.SuccessStatusCode.ToString(CultureInfo.InvariantCulture)).AppendLine(";");
             source.AppendLine("        await global::Ark.Tools.MediatorFramework.AzureFunctions.ArkAzureFunctionsHttp.WriteJsonStreamAsync(request.HttpContext.Response, _result, cancellationToken).ConfigureAwait(false);");
             source.AppendLine("        return global::Microsoft.AspNetCore.Http.Results.Empty;");
         }

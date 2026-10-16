@@ -40,6 +40,8 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         new Pattern(PersonalDataKind.PostalAddress, PersonalDataPatterns._postalAddress));
     // Every pattern requires an '@' or a digit; values without one cannot match and skip the regex scan.
     private static readonly char[] _candidates = "@0123456789".ToCharArray();
+    // Shared by every scan without findings; callers only read it.
+    private static readonly IReadOnlyList<Finding> _noFindings = Array.Empty<Finding>();
     private readonly ImmutableArray<Pattern> _patterns;
 
     /// <summary>Initializes a new instance of the <see cref="TestDataComplianceAnalyzer"/> class.</summary>
@@ -129,15 +131,20 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                 return;
             }
 
-            if (!_isTestProject(fileContext.Compilation, fileContext.Options.AnalyzerConfigOptionsProvider.GlobalOptions)
-                && !_isTestPath(fileContext.AdditionalFile.Path))
+            // The extension check is the cheapest filter and rejects most additional files (lexicons, sinks, release notes).
+            var file = fileContext.AdditionalFile;
+            if (!file.Path.EndsWith(".feature", StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
-            var file = fileContext.AdditionalFile;
-            if (!file.Path.EndsWith(".feature", StringComparison.OrdinalIgnoreCase)
-                || file.GetText(fileContext.CancellationToken) is not { } text)
+            if (!_isTestProject(fileContext.Compilation, fileContext.Options.AnalyzerConfigOptionsProvider.GlobalOptions)
+                && !_isTestPath(file.Path))
+            {
+                return;
+            }
+
+            if (file.GetText(fileContext.CancellationToken) is not { } text)
             {
                 return;
             }
@@ -145,13 +152,12 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
             foreach (var line in text.Lines)
             {
                 fileContext.CancellationToken.ThrowIfCancellationRequested();
-                var content = line.ToString();
-                if (!content.TrimStart().StartsWith("|", StringComparison.Ordinal))
+                if (!_isTableRow(text, line))
                 {
                     continue;
                 }
 
-                var result = _find(content, _patterns, fileContext.CancellationToken);
+                var result = _find(line.ToString(), _patterns, fileContext.CancellationToken);
                 foreach (var match in result._findings)
                 {
                     fileContext.CancellationToken.ThrowIfCancellationRequested();
@@ -199,6 +205,20 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         return false;
     }
 
+    // Tests the first non-whitespace character in place, so lines outside tables are never materialised.
+    private static bool _isTableRow(SourceText text, TextLine line)
+    {
+        for (var i = line.Start; i < line.End; i++)
+        {
+            if (!char.IsWhiteSpace(text[i]))
+            {
+                return text[i] == '|';
+            }
+        }
+
+        return false;
+    }
+
     private static bool _isTestPath(string path)
     {
         var normalized = "/" + path.Replace('\\', '/');
@@ -213,12 +233,13 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var findings = new List<Finding>();
-        var timedOut = false;
         if (value.IndexOfAny(_candidates) < 0)
         {
-            return new ScanResult(findings, timedOut);
+            return new ScanResult(_noFindings, timedOut: false);
         }
+
+        List<Finding>? findings = null;
+        var timedOut = false;
 
         foreach (var pattern in patterns)
         {
@@ -235,6 +256,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
                     }
 
                     var span = new TextSpan(match.Index, match.Length);
+                    findings ??= new List<Finding>();
                     var overlaps = false;
                     foreach (var finding in findings)
                     {
@@ -257,7 +279,7 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
             }
         }
 
-        return new ScanResult(findings, timedOut);
+        return new ScanResult(findings ?? _noFindings, timedOut);
     }
 
     private sealed class Pattern
@@ -295,13 +317,13 @@ public sealed class TestDataComplianceAnalyzer : DiagnosticAnalyzer
 
     private readonly struct ScanResult
     {
-        internal ScanResult(List<Finding> findings, bool timedOut)
+        internal ScanResult(IReadOnlyList<Finding> findings, bool timedOut)
         {
             _findings = findings;
             _timedOut = timedOut;
         }
 
-        internal List<Finding> _findings { get; }
+        internal IReadOnlyList<Finding> _findings { get; }
         internal bool _timedOut { get; }
     }
 }
