@@ -63,12 +63,17 @@ internal static class XmlDocumentation
 
     private static string? _text(XElement? element)
     {
-        return element is null ? null : _normalize(element);
+        if (element is null)
+            return null;
+
+        // Whitespace is collapsed once on the finished text, so link labels keep their boundary spaces.
+        var normalized = string.Join(' ', _extract(element).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return normalized.Length == 0 ? null : normalized;
     }
 
-    private static string? _normalize(XElement element)
+    private static string _extract(XElement element)
     {
-        var text = string.Concat(element.Nodes().Select(static node => node switch
+        return string.Concat(element.Nodes().Select(static node => node switch
         {
             XText value => value.Value,
             XElement child when child.Name.LocalName == "see" && child.Attribute("cref") is { } cref
@@ -76,16 +81,20 @@ internal static class XmlDocumentation
             XElement child when child.Name.LocalName == "see" && child.Attribute("langword") is { } langword
                 => langword.Value,
             XElement child when child.Name.LocalName == "see" && child.Attribute("href") is { } href
-                => _normalize(child) ?? href.Value,
+                => _label(child, href.Value),
             XElement child when child.Name.LocalName is "paramref" or "typeparamref"
                 => child.Attribute("name")?.Value ?? string.Empty,
             // Line breaks and paragraphs separate words even when written without surrounding whitespace.
             XElement child when child.Name.LocalName is "br" or "para"
-                => " " + _normalize(child) + " ",
-            XElement child => _normalize(child) ?? string.Empty,
+                => " " + _extract(child) + " ",
+            XElement child => _extract(child),
             _ => string.Empty,
         }));
-        var normalized = string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+    }
+
+    private static string _label(XElement link, string url)
+    {
+        var label = _extract(link);
+        return string.IsNullOrWhiteSpace(label) ? url : label;
     }
 }

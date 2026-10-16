@@ -2632,6 +2632,44 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsKeepWhitespaceInsideLinkLabels()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>Read<see href="https://example.com/a"> the guide </see>now.</summary>
+            /// <remarks>See<see href="https://example.com/b"> </see>.</remarks>
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>The <see cref="System.String"/>s identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"Read the guide now.\")");
+        minimalApi.Should().Contain("WithDescription(\"Seehttps://example.com/b.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"The Strings identifier.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>Read<see href="https://example.com/a"> the guide </see>now.</summary>
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse> { }
+            [ProtoContract]
+            public sealed class DocumentedResponse { }
+            """);
+
+        grpc.Should().Contain("// Read the guide now.");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
