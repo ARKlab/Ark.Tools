@@ -1353,9 +1353,10 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public void McpGeneratorSetsAPrivateSetterFromAContextNestedInTheContract()
+    public void McpGeneratorReportsAPrivateSetterEvenFromAContextNestedInTheContract()
     {
-        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+        // Like Minimal API and Azure Functions, MCP binds only public setters, whatever the context layout.
+        var (_, errors) = _runAndCompile<McpToolGenerator>(
             """
             using Ark.Tools.MediatorFramework;
             using Ark.Tools.MediatorFramework.Mcp;
@@ -1371,7 +1372,35 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
+        errors.Select(static error => error.Id).Should().Equal("ARKMF053");
+    }
+
+    [TestMethod]
+    public void McpGeneratorSkipsConstructorsWhoseParameterTypesDoNotMatch()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            public class BaseRequest
+            {
+                public string Audit { get; set; } = string.Empty;
+            }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed class UpdateItem : BaseRequest, IRequest<UpdateItem, string>
+            {
+                public UpdateItem() { }
+                public UpdateItem(int audit) { Audit = audit.ToString(System.Globalization.CultureInfo.InvariantCulture); }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
         errors.Should().BeEmpty();
+        generated.Should().Contain("new global::UpdateItem()");
         generated.Should().Contain("Audit = audit,");
     }
 
