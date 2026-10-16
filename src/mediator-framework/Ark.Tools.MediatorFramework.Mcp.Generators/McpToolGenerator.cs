@@ -979,7 +979,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static string ToParameterName(string name)
     {
         var parameterName = char.ToLowerInvariant(name[0]) + name.Substring(1);
-        return SyntaxFacts.GetKeywordKind(parameterName) == SyntaxKind.None ? parameterName : "@" + parameterName;
+        // await is contextual, but reserved inside the async adapter.
+        return SyntaxFacts.GetKeywordKind(parameterName) == SyntaxKind.None && parameterName != "await" ? parameterName : "@" + parameterName;
     }
 
     private static string ToInputType(ITypeSymbol type)

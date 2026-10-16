@@ -1499,6 +1499,7 @@ public sealed class GeneratorSnapshotTests
         public string Request { get; init; } = string.Empty;
         public string Result { get; init; } = string.Empty;
         public string Event { get; init; } = string.Empty;
+        public string Await { get; init; } = string.Empty;
         """;
 
     [TestMethod]
@@ -1525,7 +1526,7 @@ public sealed class GeneratorSnapshotTests
         errors.Should().BeEmpty();
         // The tool's input schema keeps the property names, so the parameters are not renamed.
         generated.Should().Contain("string services,").And.Contain("string cancellationToken,")
-            .And.Contain("string request,").And.Contain("string result,").And.Contain("string @event,");
+            .And.Contain("string request,").And.Contain("string result,").And.Contain("string @event,").And.Contain("string @await,");
     }
 
     [TestMethod]
