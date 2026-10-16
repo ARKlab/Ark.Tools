@@ -13,6 +13,6 @@ public class DefaultFtpClientFactory : IFtpClientFactory
 
     public IFtpClient Create(FtpConfig ftpConfig)
     {
-        return new FtpClient(ftpConfig, 2, _connectionFactory);
+        return new FtpClient(ftpConfig, _connectionFactory);
     }
 }

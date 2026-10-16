@@ -126,7 +126,11 @@
             Condition="'$(EnableArkToolsCompliance)' == 'true' And '$(MSBuildProjectExtension)' == '.csproj'" />
    <!-- The package ships the SQL template task under tasks/; from source, build it and use its output. -->
    <PropertyGroup Condition="'$(EnableArkToolsCompliance)' == 'true' And '$(MSBuildProjectExtension)' == '.csproj'">
-      <ArkComplianceSqlTasksAssembly>$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Sql.Tasks\bin\$(Configuration)\netstandard2.0\Ark.Tools.Compliance.Sql.Tasks.dll</ArkComplianceSqlTasksAssembly>
+      <!-- A solution that doesn't contain the project (the samples' own) drops our Configuration for it
+           (AssignProjectConfiguration), so it builds in its default Debug one. -->
+      <_ArkComplianceSqlTasksConfiguration>$(Configuration)</_ArkComplianceSqlTasksConfiguration>
+      <_ArkComplianceSqlTasksConfiguration Condition="'$(CurrentSolutionConfigurationContents)' != '' And !$(CurrentSolutionConfigurationContents.Contains('Ark.Tools.Compliance.Sql.Tasks.csproj'))">Debug</_ArkComplianceSqlTasksConfiguration>
+      <ArkComplianceSqlTasksAssembly>$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Sql.Tasks\bin\$(_ArkComplianceSqlTasksConfiguration)\netstandard2.0\Ark.Tools.Compliance.Sql.Tasks.dll</ArkComplianceSqlTasksAssembly>
    </PropertyGroup>
    <ItemGroup Condition="'$(EnableArkToolsCompliance)' == 'true' And '$(MSBuildProjectExtension)' == '.csproj'">
       <ProjectReference Include="$(ArkToolsSourceRoot)compliance\Ark.Tools.Compliance.Sql.Tasks\Ark.Tools.Compliance.Sql.Tasks.csproj"

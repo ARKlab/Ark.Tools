@@ -138,6 +138,55 @@ public class SftpClientConnectionTests
         }
     }
 
+    [TestMethod]
+    public async Task PoolListFilesRecursiveAsync_ShouldListEveryFileOnSeveralConnections()
+    {
+        var server = _getServer();
+        var root = $"{server.Folder}/{Guid.NewGuid():N}";
+        var folders = Enumerable.Range(0, 6).Select(i => $"{root}/d{i}").ToList();
+        var files = folders.Select(static f => $"{f}/sub/file.txt").ToList();
+        using var sftp = new Renci.SshNet.SftpClient(server.Endpoint.Host, server.Endpoint.Port, server.Credentials.UserName, server.Credentials.Password);
+        await sftp.ConnectAsync(TestContext.CancellationToken).ConfigureAwait(false);
+        try
+        {
+            await sftp.CreateDirectoryAsync(root, TestContext.CancellationToken).ConfigureAwait(false);
+            foreach (var folder in folders)
+            {
+                await sftp.CreateDirectoryAsync(folder, TestContext.CancellationToken).ConfigureAwait(false);
+                await sftp.CreateDirectoryAsync($"{folder}/sub", TestContext.CancellationToken).ConfigureAwait(false);
+                using var content = new MemoryStream([1]);
+                await sftp.UploadFileAsync(content, $"{folder}/sub/file.txt", TestContext.CancellationToken).ConfigureAwait(false);
+            }
+
+            // only counts connections: listings stay far below the 1 MiB after which the first connection stalls
+            var proxy = StallingProxy.Start(server.Endpoint);
+            await using var proxyScope = proxy.ConfigureAwait(false);
+            using var proxyConfig = server.CreateConfig(proxy.Endpoint);
+            using var pool = new FtpClientPool(3, proxyConfig, new SFtpClientConnectionFactory());
+            using var listCts = new CancellationTokenSource(_bound);
+
+            var entries = await pool.ListFilesRecursiveAsync(root, ctk: listCts.Token).ConfigureAwait(false);
+
+            entries.Select(static e => e.FullPath).Should().BeEquivalentTo(files);
+            proxy.Connections.Should().BeGreaterThan(1, "the pool must list folders in parallel on its connections");
+        }
+        finally
+        {
+            // the setup may have stopped before creating every path
+            var existingFiles = files.ToAsyncEnumerable().Where(async (f, ct) => await sftp.ExistsAsync(f, ct).ConfigureAwait(false));
+            await foreach (var file in existingFiles.WithCancellation(TestContext.CancellationToken).ConfigureAwait(false))
+            {
+                await sftp.DeleteFileAsync(file, TestContext.CancellationToken).ConfigureAwait(false);
+            }
+
+            var existingFolders = folders.SelectMany(static f => new[] { $"{f}/sub", f }).Append(root).ToAsyncEnumerable().Where(async (f, ct) => await sftp.ExistsAsync(f, ct).ConfigureAwait(false));
+            await foreach (var folder in existingFolders.WithCancellation(TestContext.CancellationToken).ConfigureAwait(false))
+            {
+                await sftp.DeleteDirectoryAsync(folder, TestContext.CancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
     // Uses its own connection: the test's connection may have been disconnected by the cancellation under test.
     private static async Task _deleteRemoteFileAsync(SftpServer server, string path)
     {

@@ -104,6 +104,15 @@ public sealed class MinimalApiSerializationTests
     [DataRow("application/x-msgpack-ext", false)]
     [DataRow("text/plain;p=application/x-msgpack", false)]
     [DataRow(",,application/x-msgpack,", true)]
+    [DataRow("application/x-msgpack;q=0.5, application/json;q=0.4", true)]
+    [DataRow("application/x-msgpack;q=0.5", true)]
+    [DataRow("application/x-msgpack;q=0.001", true)]
+    [DataRow("application/x-msgpack;q=0.000", false)]
+    [DataRow("application/x-msgpack;q=0.", false)]
+    [DataRow("application/x-msgpack;q=", true)]
+    [DataRow("application/x-msgpack;q=abc", true)]
+    [DataRow("application/x-msgpack;q=0x", true)]
+    [DataRow("application/x-msgpack;q=-0", true)]
     public void ParsesAcceptHeader(string? accept, bool expected)
     {
         ArkMessagePackEx.PrefersMessagePackForGeneratedEndpoint(accept).Should().Be(expected);

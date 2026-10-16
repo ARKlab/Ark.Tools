@@ -2063,7 +2063,7 @@ public sealed class GeneratorSnapshotTests
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
-        first.Should().Contain("CONTRACT Operations.Items.GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
+        first.Should().Contain("CONTRACT Operations.Items.GetItem -> Response [group=Ark] [http=GET /v{version}/items] [grpc=GetItem] [version=1-2]");
         first.Should().Contain("CONTRACT Operations.Items.GetItem.Id : int");
         first.Should().Contain("CONTRACT Response");
         first.Should().NotContain("GRPC-FIELD");
@@ -2091,6 +2091,40 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("ENUM Status.Active=1");
         generated.Should().Contain("ENUM Status.Archived=2");
         generated.Should().NotContain("EVOLVABLE-ENUM");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorTracksMcpToolContracts()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Item
+            {
+                public string Name { get; set; } = "";
+            }
+            [ApiGroup("books")]
+            [Versioning(Introduced = 2)]
+            [McpTool(Name = "get")]
+            public sealed class GetBook : IQuery<Item>
+            {
+                public int Id { get; set; }
+            }
+            [HttpEndpoint("POST", "/items")]
+            [McpTool]
+            public sealed class CreateItem : IRequest<Item>
+            {
+                public string Name { get; set; } = "";
+            }
+            """;
+
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("CONTRACT GetBook -> Item [group=books] [mcp=books.get] [version=2+]");
+        generated.Should().Contain("CONTRACT GetBook.Id : int");
+        generated.Should().Contain("CONTRACT Item.Name : string");
+        generated.Should().Contain("CONTRACT CreateItem -> Item [group=Ark] [http=POST /items] [mcp=CreateItem] [version=1+]");
     }
 
     [TestMethod]
@@ -2551,6 +2585,60 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiAndGrpcUseXmlDocumentationWhenDescriptionAttributeIsEmpty()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>XML endpoint summary.</summary>
+            /// <remarks>XML endpoint remarks.</remarks>
+            [Description("  ")]
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>XML property summary.</summary>
+                [Description]
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"XML endpoint summary.\")");
+        minimalApi.Should().Contain("WithDescription(\"XML endpoint remarks.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"XML property summary.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>XML endpoint summary.</summary>
+            [Description("")]
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse>
+            {
+                /// <summary>XML property summary.</summary>
+                [Description]
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class DocumentedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        grpc.Should().Contain("// XML endpoint summary.");
+        grpc.Should().Contain("// XML property summary.");
+    }
+
+    [TestMethod]
     public void GeneratorsNormalizeMultilineAndEntityEncodedXmlDocumentation()
     {
         var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
@@ -2651,6 +2739,120 @@ public sealed class GeneratorSnapshotTests
             """);
 
         grpc.Should().Contain("// The inherited String identifier.");
+    }
+
+    [TestMethod]
+    public void GeneratorsSeparateXmlDocumentationLineBreaksAndParagraphs()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>First line.<br/>Second line.</summary>
+            /// <remarks><para>First paragraph.</para><para>Second paragraph.</para></remarks>
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>The <see cref="System.String"/>s identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"First line. Second line.\")");
+        minimalApi.Should().Contain("WithDescription(\"First paragraph. Second paragraph.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"The Strings identifier.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>First line.<br/>Second line.</summary>
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse> { }
+            [ProtoContract]
+            public sealed class DocumentedResponse { }
+            """);
+
+        grpc.Should().Contain("// First line. Second line.");
+    }
+
+    [TestMethod]
+    public void GeneratorsKeepTheTextOfLangwordParamrefAndHrefReferences()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>Returns <see langword="null"/> for <paramref name="id"/> of <typeparamref name="T"/>.</summary>
+            /// <remarks>See <see href="https://example.com/a">the guide</see> or <see href="https://example.com/b"/>.</remarks>
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>The <see cref="System.String"/> identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"Returns null for id of T.\")");
+        minimalApi.Should().Contain("WithDescription(\"See the guide or https://example.com/b.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"The String identifier.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>Returns <see langword="null"/> for <paramref name="id"/>.</summary>
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse> { }
+            [ProtoContract]
+            public sealed class DocumentedResponse { }
+            """);
+
+        grpc.Should().Contain("// Returns null for id.");
+    }
+
+    [TestMethod]
+    public void GeneratorsKeepWhitespaceInsideLinkLabels()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>Read<see href="https://example.com/a"> the guide </see>now.</summary>
+            /// <remarks>See<see href="https://example.com/b"> </see>.</remarks>
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>The <see cref="System.String"/>s identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"Read the guide now.\")");
+        minimalApi.Should().Contain("WithDescription(\"Seehttps://example.com/b.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"The Strings identifier.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>Read<see href="https://example.com/a"> the guide </see>now.</summary>
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse> { }
+            [ProtoContract]
+            public sealed class DocumentedResponse { }
+            """);
+
+        grpc.Should().Contain("// Read the guide now.");
     }
 
     [TestMethod]
