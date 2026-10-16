@@ -170,6 +170,7 @@ public sealed class ServiceBusMessagingTransport :
     /// <remarks>
     /// The envelopes go in order into <see cref="ServiceBusMessageBatch"/>es of at most <see cref="MaximumPayloadSizeBytes"/>.
     /// A scheduled envelope travels in the same batch with <see cref="ServiceBusMessage.ScheduledEnqueueTime"/> set.
+    /// An envelope that does not fit an empty batch is sent on its own, in order.
     /// </remarks>
     public async Task<IReadOnlyList<TimeSpan>> SendBatchAsync(
         string destination,
@@ -200,16 +201,16 @@ public sealed class ServiceBusMessagingTransport :
             var end = start;
             while (end < messages.Count && batch.TryAddMessage(_toNativeMessage(messages[end])))
                 end++;
+            var stopwatch = Stopwatch.StartNew();
             if (end == start)
             {
-                throw new InvalidOperationException(
-                    string.Format(
-                        CultureInfo.InvariantCulture,
-                        "An outbox message for '{0}' does not fit an empty Service Bus batch.",
-                        destination));
+                // The batch envelope adds overhead, so a message a single send accepts can miss an empty batch: send it alone.
+                await sender.SendMessageAsync(_toNativeMessage(messages[start]), ctk).ConfigureAwait(false);
+                durations[start] = stopwatch.Elapsed;
+                start++;
+                continue;
             }
 
-            var stopwatch = Stopwatch.StartNew();
             await sender.SendMessagesAsync(batch, ctk).ConfigureAwait(false);
             stopwatch.Stop();
             for (var i = start; i < end; i++)

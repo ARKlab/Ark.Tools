@@ -115,24 +115,26 @@ public sealed class ServiceBusMessagingBatchSendTests
 
     [TestMethod]
     [Timeout(60_000, CooperativeCancellation = true)]
-    public async Task SendBatchRejectsAMessageThatCannotFitAnEmptyBatch()
+    public async Task SendBatchDeliversANearLimitMessageInOrder()
     {
-        var headers = _entry("big", []).Headers;
-        var payload = new byte[ServiceBusMessagingTransport.MaximumPayloadSizeBytes - _transport.MeasureNativeHeaders(headers)];
-        var entries = new List<MessagingBatchEntry> { new(headers, new ReadOnlySequence<byte>(payload), null) };
-
-        try
+        // Close to the limit, the batch envelope's overhead can push a message out of an empty batch; it must still
+        // be delivered, in order, as a single send would deliver it.
+        var bigHeaders = _entry("big", []).Headers;
+        var bigLength = (int)(ServiceBusMessagingTransport.MaximumPayloadSizeBytes - _transport.MeasureNativeHeaders(bigHeaders) - 1024);
+        var entries = new List<MessagingBatchEntry>
         {
-            await _transport.SendBatchAsync(_queueName, false, entries, default).ConfigureAwait(false);
-        }
-        catch (InvalidOperationException)
-        {
-            return;
-        }
+            _entry("m1", [1]),
+            _entry("big", new byte[bigLength]),
+            _entry("m3", [3]),
+        };
 
-        // The emulator accepted the largest message the size validation allows, so it must be delivered intact.
-        var received = await _receiveAsync(1, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
-        received.Single().Body.ToArray().Should().HaveCount(payload.Length);
+        var durations = await _transport.SendBatchAsync(_queueName, false, entries, default).ConfigureAwait(false);
+
+        durations.Should().HaveCount(3);
+        var received = await _receiveAsync(3, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+        received.Select(static message => (string)message.ApplicationProperties[MessagingHeaders.MessageId])
+            .Should().Equal("m1", "big", "m3");
+        received[1].Body.ToArray().Should().HaveCount(bigLength);
     }
 
     private static MessagingBatchEntry _entry(string messageId, byte[] payload)

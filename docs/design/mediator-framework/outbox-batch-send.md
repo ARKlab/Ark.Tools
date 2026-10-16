@@ -88,8 +88,9 @@ per-destination body changes: one batch call instead of a loop of single sends.
   service would reject above its batch size limit.
 - Each message keeps today's size validation (`_validateSize`) and today's native
   conversion (`_toNativeMessage`), so the wire format is unchanged.
-- A message that does not fit an empty batch fails the poll with a clear
-  `InvalidOperationException`, the same outcome as today's single send failing.
+- A message that does not fit an empty batch, because the batch envelope adds
+  overhead, is sent on its own with today's single send, in order. A message
+  that single sends accept must stay deliverable.
 
 ### Failure
 

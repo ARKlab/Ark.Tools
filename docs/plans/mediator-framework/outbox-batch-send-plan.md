@@ -25,7 +25,7 @@
 2. A destination with more messages than fit one Service Bus batch: they arrive in peek order across several batches. Test in Task 2.
 3. A queue that mixes immediate and scheduled messages in one poll: the immediate messages arrive at once, the scheduled ones only at their due time, and all headers survive. Test in Task 2.
 4. A transport that doesn't implement the batch interface, such as Storage Queues, in-memory, or a wrapper: it behaves exactly as today. Covered by the existing `MessagingOutboxTests`, which must stay green unchanged.
-5. A single message that passes `_validateSize` but doesn't fit an empty batch: it fails with an `InvalidOperationException` and doesn't loop forever. Test in Task 2.
+5. A single message that passes `_validateSize` but doesn't fit an empty batch: it is sent on its own, in order, and the loop always advances. Test in Task 2.
 
 ---
 
@@ -65,7 +65,7 @@
   - `SendBatchDeliversMessagesInOrderWithHeaders`: 5 entries with ids `m1..m5` and a custom header. Receive all 5 and assert the order `m1..m5`, headers and bodies equal, and returned durations count `5`.
   - `SendBatchSplitsAcrossServiceBusBatchesInOrder`: 12 entries of ~60 KB payload each, which forces several batches under the 256 KB limit. Assert all 12 are received in order.
   - `SendBatchSchedulesMessagesWithADueTime`: `m1` immediate and `m2` due 5 s ahead. Assert `m1` is received at once. Assert `m2` is not received within 1 s, and that `PeekMessagesAsync` shows it with `ScheduledEnqueueTime` equal to the due time (allow 1 s of tolerance).
-  - `SendBatchRejectsAMessageThatCannotFitAnEmptyBatch`: an entry whose payload plus headers equals exactly `MaximumPayloadSizeBytes`. Assert `InvalidOperationException` and no infinite loop (use a test timeout). If `TryAddMessage` accepts it on the emulator, assert it is delivered instead, and note in the PR that the empty-batch guard is unreachable at the 256 KB validation limit.
+  - `SendBatchDeliversANearLimitMessageInOrder`: `m1`, a message 1 KB under the size limit, and `m3`. Assert all three are delivered in order, with the large body intact. (Revised after review: a message that doesn't fit an empty batch is sent on its own instead of failing the poll.)
 - [ ] **Step 2: Run** `docker compose up -d`, wait for `http://127.0.0.1:5300/health`, then `dotnet test tests/Ark.Tools.MediatorFramework.Tests --filter "FullyQualifiedName~ServiceBusMessagingBatchSendTests"`. Expected: fails to compile.
 - [ ] **Step 3: Implement `SendBatchAsync`.**
   - Map the destination with `ToNativeEntityName` and reuse the `_senders` cache.
@@ -73,7 +73,7 @@
   - Build messages with `_toNativeMessage`, and set `ScheduledEnqueueTime` when `DueTime` has a value.
   - Fill `ServiceBusMessageBatch`es with `TryAddMessage` in order and send each with `SendMessagesAsync` when full and at the end.
   - Time each send and assign its duration to the messages it carried.
-  - Throw `InvalidOperationException` (invariant-culture message naming the destination) when a message doesn't fit an empty batch.
+  - Send a message that doesn't fit an empty batch on its own with `SendMessageAsync`, in order.
   - Dispose every batch.
 - [ ] **Step 4: Run** the same filter. Expected: pass. Then run the existing `ServiceBusMessagingTransportConformanceTests` and `MessagingOutboxTests`; expected: pass.
   - If the scheduled test fails because the emulator ignores `ScheduledEnqueueTime` on batch sends, change only the scheduled entries to today's per-message `ScheduleMessageAsync` (as the spec's fallback says), and record that in the PR.
