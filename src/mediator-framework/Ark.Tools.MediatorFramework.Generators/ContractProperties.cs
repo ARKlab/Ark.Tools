@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Microsoft.CodeAnalysis;
 
@@ -25,11 +26,8 @@ internal static class ContractProperties
         var seen = new HashSet<string>(StringComparer.Ordinal);
         for (var current = type; current is not null; current = current.BaseType)
         {
-            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
-            {
-                if (seen.Add(property.Name))
-                    yield return property;
-            }
+            foreach (var property in current.GetMembers().OfType<IPropertySymbol>().Where(p => seen.Add(p.Name)))
+                yield return property;
         }
     }
 }
