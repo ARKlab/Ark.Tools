@@ -1353,6 +1353,58 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorSetsAPrivateSetterFromAContextNestedInTheContract()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed partial record UpdateItem : IRequest<UpdateItem, string>
+            {
+                public string Audit { get; private set; } = string.Empty;
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public partial class McpContext { }
+            }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("Audit = audit,");
+    }
+
+    [TestMethod]
+    public void McpGeneratorSkipsConstructorsItCannotCall()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            public class BaseRequest
+            {
+                public string Audit { get; set; } = string.Empty;
+            }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed class UpdateItem : BaseRequest, IRequest<UpdateItem, string>
+            {
+                public UpdateItem() { }
+                private UpdateItem(string audit) { Audit = audit; }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("new global::UpdateItem()");
+        generated.Should().Contain("Audit = audit,");
+    }
+
+    [TestMethod]
     public void McpGeneratorDefaultsIntroducedToOneLikeTheVersioningAttribute()
     {
         // [Versioning] without Introduced means version 1, as the attribute's default and the other generators say.

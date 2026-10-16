@@ -189,7 +189,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 .ToImmutableArray(),
             GetPartialTypeDeclaration(type),
             GetTypeConstraints(type),
-            GetHintName(type));
+            GetHintName(type),
+            containingTypes.Append(type).Select(GetMetadataName).ToImmutableArray());
     }
 
     private static bool AllContainingTypesArePartial(INamedTypeSymbol type)
@@ -334,10 +335,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 }
             }
 
+            var marker = group.First();
             var distinctContracts = contracts
                 .GroupBy(static contract => contract.TypeFullName, StringComparer.Ordinal)
                 .Select(static grouping => grouping.First())
                 .OrderBy(static contract => contract.TypeFullName, StringComparer.Ordinal)
+                .Select(contract => Bind(contract, marker.Context.AccessScopes))
                 .ToImmutableArray();
             foreach (var contract in distinctContracts)
             {
@@ -347,7 +350,6 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     documentationAssemblyNames.Add(property.Documentation.AssemblyName);
             }
 
-            var marker = group.First();
             contextGroups.Add(new ContextGroup(marker.Context, marker.InvalidLocation, distinctContracts));
         }
 
@@ -509,16 +511,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .OrderBy(property => property.MetadataName, StringComparer.Ordinal)
             .ToImmutableArray();
         var diagnostics = new List<DiagnosticInfo>();
-        foreach (var property in properties)
-        {
-            if (property.IsIndexer || !IsSettable(property, compilation) && !HasConstructorParameter(type, property))
-                diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
-        }
+        foreach (var property in properties.Where(static property => property.IsIndexer))
+            diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
         if (diagnostics.Count > 0)
             return ContractModel.Invalid(typeFullName, assemblyName, location, diagnostics.ToArray());
-        var constructor = FindConstructor(type, properties, compilation);
-        if (constructor is null)
-            return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(MissingConstructor, location, contractName));
 
         var httpEndpoint = type.GetAttributes()
             .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ContractSymbols.HttpEndpointAttribute));
@@ -552,15 +548,23 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     property.Name,
                     ToInputType(property.Type),
                     IsAttachment(property.Type),
-                    IsSettable(property, compilation),
+                    false,
                     TryGetDescription(property, out var propertyDescription),
                     propertyDescription,
-                    CreateDocumentationSource(property)))
+                    CreateDocumentationSource(property),
+                    property.SetMethod is null ? null : CreateAccess(property.SetMethod, type, compilation),
+                    property.Locations.FirstOrDefault()))
                 .ToImmutableArray(),
-            constructor.Parameters.Select(static parameter => parameter.Name).ToImmutableArray(),
+            EquatableArray<string>.Empty,
             location)
         {
             IsSelfTyped = IsSelfTyped(type),
+            ContractName = contractName,
+            Constructors = type.Constructors
+                .Select(constructor => new ConstructorModel(
+                    constructor.Parameters.Select(static parameter => parameter.Name).ToImmutableArray(),
+                    CreateAccess(constructor, type, compilation)))
+                .ToImmutableArray(),
         };
     }
 
@@ -614,14 +618,55 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return new ToolModel(contract, description.Length == 0 ? null : description, propertyDescriptions);
     }
 
-    // The generated adapter assigns the property from the MCP context class, so only a setter accessible
-    // within the generating assembly counts: public, or internal and protected internal where visible.
-    private static bool IsSettable(IPropertySymbol property, Compilation compilation)
-        => property.SetMethod is { } setter && compilation.IsSymbolAccessibleWithin(setter, compilation.Assembly);
+    // The generated tool calls the setter or constructor from the MCP context, which is unknown here. Records
+    // whether any type of the generating assembly can call it, else the contract or base types whose nested
+    // types can: only those can reach a private or protected member through the contract.
+    private static AccessModel CreateAccess(ISymbol member, INamedTypeSymbol contract, Compilation compilation)
+    {
+        if (compilation.IsSymbolAccessibleWithin(member, compilation.Assembly, contract))
+            return new AccessModel(true, EquatableArray<string>.Empty);
 
-    private static bool HasConstructorParameter(INamedTypeSymbol type, IPropertySymbol property)
-        => type.Constructors.Any(constructor => constructor.Parameters.Any(parameter =>
-            string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase)));
+        var withinTypes = ImmutableArray.CreateBuilder<string>();
+        for (var current = contract; current is not null; current = current.BaseType)
+        {
+            if (compilation.IsSymbolAccessibleWithin(member, current, contract))
+                withinTypes.Add(GetMetadataName(current));
+        }
+
+        return new AccessModel(false, withinTypes.ToImmutable());
+    }
+
+    // Binds the contract for one MCP context: a setter or constructor counts only if the context's tools can call it.
+    private static ContractModel Bind(ContractModel contract, EquatableArray<string> accessScopes)
+    {
+        if (!contract.IsValid)
+            return contract;
+
+        var properties = contract.Properties
+            .Select(property => property with { HasSetter = property.SetterAccess?.IsAccessibleFrom(accessScopes) == true })
+            .ToImmutableArray();
+        var constructors = contract.Constructors
+            .Where(constructor => constructor.Access.IsAccessibleFrom(accessScopes))
+            .ToImmutableArray();
+        var diagnostics = properties
+            .Where(property => !property.HasSetter && !constructors.Any(constructor => constructor.ParameterNames.Contains(property.Name, StringComparer.OrdinalIgnoreCase)))
+            .Select(property => new DiagnosticInfo(UnsupportedMember, property.Location, contract.ContractName, property.Name))
+            .ToArray();
+        if (diagnostics.Length > 0)
+            return ContractModel.Invalid(contract.TypeFullName, contract.AssemblyName, contract.Location, diagnostics);
+
+        var constructor = constructors
+            .Where(candidate => candidate.ParameterNames.All(parameter =>
+                properties.Any(property => string.Equals(property.Name, parameter, StringComparison.OrdinalIgnoreCase))))
+            .Where(candidate => properties.Where(static property => !property.HasSetter).All(property =>
+                candidate.ParameterNames.Contains(property.Name, StringComparer.OrdinalIgnoreCase)))
+            .OrderByDescending(static candidate => candidate.ParameterNames.Count)
+            .FirstOrDefault();
+        if (constructor is null)
+            return ContractModel.Invalid(contract.TypeFullName, contract.AssemblyName, contract.Location, new DiagnosticInfo(MissingConstructor, contract.Location, contract.ContractName));
+
+        return contract with { Properties = properties, ConstructorParameters = constructor.ParameterNames };
+    }
 
     private static bool IsAttachment(ITypeSymbol type)
         => type is INamedTypeSymbol namedType
@@ -946,15 +991,6 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             ? ToParameterName(property.Name) + ".ToAttachment()"
             : ToParameterName(property.Name);
 
-    private static IMethodSymbol? FindConstructor(INamedTypeSymbol type, ImmutableArray<IPropertySymbol> properties, Compilation compilation)
-        => type.Constructors
-            .Where(candidate => candidate.Parameters.All(parameter =>
-                properties.Any(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase))))
-            .Where(candidate => properties.Where(property => !IsSettable(property, compilation)).All(property =>
-                candidate.Parameters.Any(parameter => string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase))))
-            .OrderByDescending(candidate => candidate.Parameters.Length)
-            .FirstOrDefault();
-
     private static string Escape(string value)
         => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
@@ -972,7 +1008,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         EquatableArray<string> ContainingDeclarations,
         string Declaration,
         string Constraints,
-        string HintName);
+        string HintName,
+        EquatableArray<string> AccessScopes);
     private readonly record struct MarkerLocation(
         string FilePath,
         int Start,
@@ -1021,7 +1058,17 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         bool HasSetter,
         bool HasDescriptionAttribute,
         string? AttributeDescription,
-        DocumentationSource Documentation);
+        DocumentationSource Documentation,
+        AccessModel? SetterAccess,
+        Location? Location);
+
+    private readonly record struct AccessModel(bool FromAssembly, EquatableArray<string> WithinTypes)
+    {
+        public bool IsAccessibleFrom(EquatableArray<string> accessScopes)
+            => FromAssembly || WithinTypes.Any(accessScopes.Contains);
+    }
+
+    private sealed record ConstructorModel(EquatableArray<string> ParameterNames, AccessModel Access);
 
     private sealed record ContractModel(
         string TypeFullName,
@@ -1049,7 +1096,16 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     {
         public bool IsSelfTyped { get; init; }
 
-        public ContractModel ForEmission() => this with { Location = null, Diagnostics = EquatableArray<DiagnosticInfo>.Empty };
+        public string ContractName { get; init; } = string.Empty;
+
+        public EquatableArray<ConstructorModel> Constructors { get; init; } = EquatableArray<ConstructorModel>.Empty;
+
+        public ContractModel ForEmission() => this with
+        {
+            Location = null,
+            Diagnostics = EquatableArray<DiagnosticInfo>.Empty,
+            Properties = Properties.Values.Select(static property => property with { Location = null }).ToImmutableArray(),
+        };
 
         public static ContractModel Invalid(
             string typeFullName,
