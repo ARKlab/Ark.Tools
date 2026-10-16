@@ -2560,6 +2560,44 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsKeepTheTextOfLangwordParamrefAndHrefReferences()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>Returns <see langword="null"/> for <paramref name="id"/> of <typeparamref name="T"/>.</summary>
+            /// <remarks>See <see href="https://example.com/a">the guide</see> or <see href="https://example.com/b"/>.</remarks>
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>The <see cref="System.String"/> identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"Returns null for id of T.\")");
+        minimalApi.Should().Contain("WithDescription(\"See the guide or https://example.com/b.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"The String identifier.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>Returns <see langword="null"/> for <paramref name="id"/>.</summary>
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse> { }
+            [ProtoContract]
+            public sealed class DocumentedResponse { }
+            """);
+
+        grpc.Should().Contain("// Returns null for id.");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(

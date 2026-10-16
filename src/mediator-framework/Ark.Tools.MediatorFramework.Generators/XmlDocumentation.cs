@@ -71,8 +71,14 @@ internal static class XmlDocumentation
         var text = string.Concat(element.Nodes().Select(static node => node switch
         {
             XText value => value.Value,
-            XElement child when child.Name.LocalName == "see"
-                => child.Attribute("cref")?.Value.TrimStart("!:".ToCharArray()).Split('.').LastOrDefault() ?? string.Empty,
+            XElement child when child.Name.LocalName == "see" && child.Attribute("cref") is { } cref
+                => cref.Value.TrimStart("!:".ToCharArray()).Split('.').LastOrDefault() ?? string.Empty,
+            XElement child when child.Name.LocalName == "see" && child.Attribute("langword") is { } langword
+                => langword.Value,
+            XElement child when child.Name.LocalName == "see" && child.Attribute("href") is { } href
+                => _normalize(child) ?? href.Value,
+            XElement child when child.Name.LocalName is "paramref" or "typeparamref"
+                => child.Attribute("name")?.Value ?? string.Empty,
             // Line breaks and paragraphs separate words even when written without surrounding whitespace.
             XElement child when child.Name.LocalName is "br" or "para"
                 => " " + _normalize(child) + " ",
