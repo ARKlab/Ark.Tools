@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0-beta19] - 2026-10-16
+
 ### Added
 
 - `Ark.Tools.MediatorFramework.MinimalApi`: `services.AddArkMessagePack(resolver)` registers the MessagePack resolver for generated Minimal API endpoints and builds their serializer options once.
