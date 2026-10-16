@@ -24,7 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Breaking:** `Ark.Tools.MediatorFramework.MinimalApi` hosts with MessagePack endpoints must call `services.AddArkMessagePack(resolver)` instead of registering `IFormatterResolver` directly; without it they fail with an `InvalidOperationException` at startup, or on the first MessagePack response for hosts whose MessagePack endpoints only return data.
 - `Ark.Tools.MediatorFramework.MinimalApi`: MessagePack responses of generated Minimal API endpoints are written straight to the response pipe, and the serializer options and `Accept` parsing no longer allocate per request; the bytes on the wire are unchanged.
 - `Ark.Tools.Compliance.Sql`: the task that writes the compliance SQL scripts now ships precompiled in the package (`tasks/netstandard2.0`) instead of being compiled on every MSBuild node, so clean builds of compliance-enabled projects are a few seconds faster.
-- `FtpClientPool.ListFilesRecursiveAsync` lists folders in parallel on up to `PoolMaxSize` pooled connections, and the FTP ResourceWatcher lists its `FoldersToWatch` at the same time, so listing large trees is faster. The order of the listed files is no longer the folder walk order.
+- **Breaking:** `Ark.Tools.FtpClient.Core`: `FtpClientBase.MaxListingRecursiveParallelism` and the `FtpClient` and `FtpClientBase` constructor overloads taking a listing parallelism are removed, as they had no effect; drop the `int` argument. `FtpClient` still lists recursively on one connection, one folder at a time.
+- `FtpClientPool.ListFilesRecursiveAsync` now lists folders in parallel on up to `PoolMaxSize` pooled connections, and the FTP ResourceWatcher lists its `FoldersToWatch` at the same time, so listing large trees is faster. The order of the listed files is no longer the folder walk order.
 
 ### Fixed
 

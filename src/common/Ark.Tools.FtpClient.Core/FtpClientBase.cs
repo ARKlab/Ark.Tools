@@ -18,16 +18,10 @@ public abstract class FtpClientBase : IFtpClient
 
     [Secret]
     public NetworkCredential Credentials { get; }
-    public int MaxListingRecursiveParallelism { get; }
 
     public FtpConfig FtpConfig { get; }
 
     protected FtpClientBase(FtpConfig ftpConfig)
-        : this(ftpConfig, 3)
-    {
-    }
-
-    protected FtpClientBase(FtpConfig ftpConfig, int maxListingRecursiveParallelism)
     {
         ArgumentNullException.ThrowIfNull(ftpConfig);
         ArgumentNullException.ThrowIfNull(ftpConfig.Uri);
@@ -35,7 +29,6 @@ public abstract class FtpClientBase : IFtpClient
 
         Uri = ftpConfig.Uri;
         Credentials = ftpConfig.Credentials;
-        MaxListingRecursiveParallelism = maxListingRecursiveParallelism;
 
         FtpConfig = ftpConfig;
     }
@@ -44,87 +37,69 @@ public abstract class FtpClientBase : IFtpClient
     public abstract Task<IEnumerable<FtpEntry>> ListDirectoryAsync(string path = "./", CancellationToken ctk = default);
     public abstract Task UploadFileAsync(string path, byte[] content, CancellationToken ctk = default);
 
+    /// <summary>
+    /// Lists the files under <paramref name="startPath"/> recursively, one folder at a time through <see cref="ListDirectoryAsync"/>.
+    /// </summary>
+    /// <param name="startPath">The folder to start from.</param>
+    /// <param name="skipFolder">Returns true for the folders that must not be listed.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The files found.</returns>
     public virtual async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
-    {
-        return await _listFilesRecursiveInParallelAsync(startPath, skipFolder, ctk).ConfigureAwait(false);
-    }
-
-    // Lists up to MaxListingRecursiveParallelism folders at once, each through its own ListDirectoryAsync call.
-    private protected async Task<IEnumerable<FtpEntry>> _listFilesRecursiveInParallelAsync(string startPath, Predicate<FtpEntry>? skipFolder, CancellationToken ctk)
     {
         _logger.Trace(CultureInfo.InvariantCulture, "List files starting from path: {Path}", startPath);
         startPath ??= "./";
 
-        if (skipFolder == null)
-            skipFolder = static x => false;
+        Stack<string> pendingFolders = new();
+        pendingFolders.Push(startPath);
+        List<FtpEntry> files = new();
 
-        Stack<FtpEntry> pendingFolders = new();
-        IEnumerable<FtpEntry> files = new List<FtpEntry>();
-        List<Task<IEnumerable<FtpEntry>>> running = new();
-
-        async Task<IEnumerable<FtpEntry>> listFolderAsync(string path, CancellationToken ct)
+        while (pendingFolders.TryPop(out var path))
         {
-            var retrier = new ResiliencePipelineBuilder()
-                .AddRetry(new RetryStrategyOptions
-                {
-                    ShouldHandle = new PredicateBuilder().Handle<Exception>(),
-                    MaxRetryAttempts = 1,
-                    Delay = TimeSpan.FromSeconds(1),
-                    BackoffType = DelayBackoffType.Constant,
-                    OnRetry = args =>
-                    {
-                        _logger.Warn(args.Outcome.Exception, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, args.RetryDelay);
-                        return default;
-                    },
-                })
-                .Build();
+            var list = await _listFolderWithRetryAsync(path, ctk).ConfigureAwait(false);
 
-            return await retrier.ExecuteAsync(async ct1 =>
-            {
-                return await ListDirectoryAsync(path, ct1).ConfigureAwait(false);
-            }, ct).ConfigureAwait(false);
+            foreach (var d in _foldersToList(list, skipFolder))
+                pendingFolders.Push(d.FullPath);
 
-
+            files.AddRange(list.Where(static x => !x.IsDirectory));
         }
-
-        void startListing(string path)
-        {
-            running.Add(Task.Run(() => listFolderAsync(path, ctk), ctk));
-        }
-
-        startListing(startPath);
-
-        try
-        {
-            while (running.Count > 0)
-            {
-                var t = await Task.WhenAny(running).ConfigureAwait(false);
-
-                var list = await t.ConfigureAwait(false);
-                running.Remove(t); // remove only if successful
-
-                foreach (var d in list.Where(static x => x.IsDirectory && !x.Name.Equals(".", StringComparison.Ordinal) && !x.Name.Equals("..", StringComparison.Ordinal)))
-                {
-                    if (skipFolder.Invoke(d))
-                        _logger.Info(CultureInfo.InvariantCulture, "Skipping folder: {Path}", d.FullPath);
-                    else
-                        pendingFolders.Push(d);
-                }
-
-                files = files.Concat(list.Where(static x => !x.IsDirectory).ToList());
-
-                while (pendingFolders.Count > 0 && running.Count < this.MaxListingRecursiveParallelism)
-                    startListing(pendingFolders.Pop().FullPath);
-            }
-        }
-        catch
-        {
-            await Task.WhenAll(running).ConfigureAwait(false); // this still contains the failed one 
-            throw;
-        }
-
 
         return files;
+    }
+
+    // Retries a failed folder listing once, as both the sequential and the pool walk do.
+    private protected async Task<IEnumerable<FtpEntry>> _listFolderWithRetryAsync(string path, CancellationToken ctk)
+    {
+        var retrier = new ResiliencePipelineBuilder()
+            .AddRetry(new RetryStrategyOptions
+            {
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+                MaxRetryAttempts = 1,
+                Delay = TimeSpan.FromSeconds(1),
+                BackoffType = DelayBackoffType.Constant,
+                OnRetry = args =>
+                {
+                    _logger.Warn(args.Outcome.Exception, CultureInfo.InvariantCulture, "Failed to list folder {Path}. Try again in {Sleep} ...", path, args.RetryDelay);
+                    return default;
+                },
+            })
+            .Build();
+
+        return await retrier.ExecuteAsync(async ct1 =>
+        {
+            return await ListDirectoryAsync(path, ct1).ConfigureAwait(false);
+        }, ctk).ConfigureAwait(false);
+    }
+
+    // The sub folders of a listing to walk next, without '.', '..' and the folders skipFolder rejects.
+    private protected static IEnumerable<FtpEntry> _foldersToList(IEnumerable<FtpEntry> list, Predicate<FtpEntry>? skipFolder)
+    {
+        foreach (var d in list.Where(static x => x.IsDirectory && !x.Name.Equals(".", StringComparison.Ordinal) && !x.Name.Equals("..", StringComparison.Ordinal)))
+        {
+            if (skipFolder?.Invoke(d) == true)
+                _logger.Info(CultureInfo.InvariantCulture, "Skipping folder: {Path}", d.FullPath);
+            else
+                yield return d;
+        }
     }
 
     public abstract Task DeleteFileAsync(string path, CancellationToken ctk = default);
