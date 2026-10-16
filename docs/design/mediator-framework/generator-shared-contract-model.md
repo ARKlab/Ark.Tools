@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted ([#1184](https://github.com/ARKlab/Ark.Tools/issues/1184)). Step 1 implemented.
+Accepted ([#1184](https://github.com/ARKlab/Ark.Tools/issues/1184)). Step 1 and the first part of step 2 implemented.
 
 ## Context
 
@@ -42,7 +42,10 @@ runtime packages could load different versions of it from several paths.
 
 1. `ContractSymbols.cs`: contract attribute metadata names and named-argument
    readers. Adopted generator by generator; generated output stays byte-identical.
-2. Shared property walk. Characterization test first, then the most correct
-   behaviour; every generated-output difference is listed in the pull request.
+2. Shared property walk. `ContractProperties.cs` replaces the identical walks in
+   the API surface, Azure Functions, gRPC and Minimal API generators and in
+   `HttpStringBinding.cs`, with byte-identical output. Then, with a
+   characterization test first, the most correct behaviour; every
+   generated-output difference is listed in the pull request.
 3. Shared contract specification, once the in-flight changes to the API surface
    and gRPC generators have merged.
