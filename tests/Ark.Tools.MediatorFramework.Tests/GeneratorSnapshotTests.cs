@@ -1877,7 +1877,7 @@ public sealed class GeneratorSnapshotTests
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
-        first.Should().Contain("CONTRACT Operations.Items.GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
+        first.Should().Contain("CONTRACT Operations.Items.GetItem -> Response [group=Ark] [http=GET /v{version}/items] [grpc=GetItem] [version=1-2]");
         first.Should().Contain("CONTRACT Operations.Items.GetItem.Id : int");
         first.Should().Contain("CONTRACT Response");
         first.Should().NotContain("GRPC-FIELD");
@@ -1905,6 +1905,40 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain("ENUM Status.Active=1");
         generated.Should().Contain("ENUM Status.Archived=2");
         generated.Should().NotContain("EVOLVABLE-ENUM");
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorTracksMcpToolContracts()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Item
+            {
+                public string Name { get; set; } = "";
+            }
+            [ApiGroup("books")]
+            [Versioning(Introduced = 2)]
+            [McpTool(Name = "get")]
+            public sealed class GetBook : IQuery<Item>
+            {
+                public int Id { get; set; }
+            }
+            [HttpEndpoint("POST", "/items")]
+            [McpTool]
+            public sealed class CreateItem : IRequest<Item>
+            {
+                public string Name { get; set; } = "";
+            }
+            """;
+
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("CONTRACT GetBook -> Item [group=books] [mcp=books.get] [version=2+]");
+        generated.Should().Contain("CONTRACT GetBook.Id : int");
+        generated.Should().Contain("CONTRACT Item.Name : string");
+        generated.Should().Contain("CONTRACT CreateItem -> Item [group=Ark] [http=POST /items] [mcp=CreateItem] [version=1+]");
     }
 
     [TestMethod]
