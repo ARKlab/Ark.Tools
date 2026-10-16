@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `Ark.Tools.MediatorFramework.Mcp`: an MCP contract property whose setter the generated tool cannot call (for example `private set` or `protected init`) and that no constructor takes now reports `ARKMF053`, instead of generating code that fails with CS0272.
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools now include the properties a contract inherits from its base types and use the same versioning defaults as the other transports, so a contract with `[Versioning]` but no `Introduced` is available from version 1.
 - `Ark.Tools.MediatorFramework`: contracts that override a base property or hide it with `new` now get one binding for it, from the most-derived declaration. Before, the Minimal API and Azure Functions endpoints failed to compile and gRPC mapped the property twice.
 - `Ark.Tools.MediatorFramework.AzureFunctions`: HTTP endpoints returning `IAsyncEnumerable<T>` now stream items as they are produced, as on the Minimal API host. Before, the generator never detected the streaming response and buffered the whole result.

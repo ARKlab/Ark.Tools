@@ -87,7 +87,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 ContractSymbols.McpToolAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol type
-                    ? CreateContract(type, attributeContext.Attributes[0])
+                    ? CreateContract(type, attributeContext.Attributes[0], attributeContext.SemanticModel.Compilation)
                     : null)
             .WithTrackingName(ContractParserTrackingName)
             .Where(static contract => contract is not null)
@@ -442,7 +442,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     .Select(type => (Type: type, Attribute: type.GetAttributes().FirstOrDefault(attribute =>
                         SymbolEqualityComparer.Default.Equals(attribute.AttributeClass, toolAttributeType))))
                     .Where(static item => item.Attribute is not null)
-                    .Select(static item => CreateContract(item.Type, item.Attribute!))
+                    .Select(item => CreateContract(item.Type, item.Attribute!, compilation))
                     .ToImmutableArray();
             builder.Add(new AssemblyContracts(assemblyName, contracts));
         }
@@ -480,7 +480,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     /// Reads everything a tool needs from the contract symbol. Validation diagnostics that do not depend
     /// on XML documentation are captured here; documentation is resolved at the output boundary.
     /// </summary>
-    private static ContractModel CreateContract(INamedTypeSymbol type, AttributeData toolAttribute)
+    private static ContractModel CreateContract(INamedTypeSymbol type, AttributeData toolAttribute, Compilation compilation)
     {
         var kind = GetHandlerKind(type, out var responseType);
         var location = toolAttribute.ApplicationSyntaxReference?.GetSyntax().GetLocation();
@@ -511,12 +511,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var diagnostics = new List<DiagnosticInfo>();
         foreach (var property in properties)
         {
-            if (property.IsIndexer || property.SetMethod is null && !HasConstructorParameter(type, property))
+            if (property.IsIndexer || !IsSettable(property, compilation) && !HasConstructorParameter(type, property))
                 diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
         }
         if (diagnostics.Count > 0)
             return ContractModel.Invalid(typeFullName, assemblyName, location, diagnostics.ToArray());
-        var constructor = FindConstructor(type, properties);
+        var constructor = FindConstructor(type, properties, compilation);
         if (constructor is null)
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(MissingConstructor, location, contractName));
 
@@ -552,7 +552,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     property.Name,
                     ToInputType(property.Type),
                     IsAttachment(property.Type),
-                    property.SetMethod is not null,
+                    IsSettable(property, compilation),
                     TryGetDescription(property, out var propertyDescription),
                     propertyDescription,
                     CreateDocumentationSource(property)))
@@ -613,6 +613,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
         return new ToolModel(contract, description.Length == 0 ? null : description, propertyDescriptions);
     }
+
+    // The generated adapter assigns the property from the MCP context class, so only a setter accessible
+    // within the generating assembly counts: public, or internal and protected internal where visible.
+    private static bool IsSettable(IPropertySymbol property, Compilation compilation)
+        => property.SetMethod is { } setter && compilation.IsSymbolAccessibleWithin(setter, compilation.Assembly);
 
     private static bool HasConstructorParameter(INamedTypeSymbol type, IPropertySymbol property)
         => type.Constructors.Any(constructor => constructor.Parameters.Any(parameter =>
@@ -941,11 +946,11 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             ? ToParameterName(property.Name) + ".ToAttachment()"
             : ToParameterName(property.Name);
 
-    private static IMethodSymbol? FindConstructor(INamedTypeSymbol type, ImmutableArray<IPropertySymbol> properties)
+    private static IMethodSymbol? FindConstructor(INamedTypeSymbol type, ImmutableArray<IPropertySymbol> properties, Compilation compilation)
         => type.Constructors
             .Where(candidate => candidate.Parameters.All(parameter =>
                 properties.Any(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase))))
-            .Where(candidate => properties.Where(property => property.SetMethod is null).All(property =>
+            .Where(candidate => properties.Where(property => !IsSettable(property, compilation)).All(property =>
                 candidate.Parameters.Any(parameter => string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase))))
             .OrderByDescending(candidate => candidate.Parameters.Length)
             .FirstOrDefault();

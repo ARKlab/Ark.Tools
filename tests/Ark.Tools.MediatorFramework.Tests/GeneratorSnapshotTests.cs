@@ -1302,6 +1302,57 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    [DataRow("public record BaseRequest { public string Audit { get; protected init; } = string.Empty; }", "BaseRequest, ")]
+    [DataRow("public record BaseRequest { }", "BaseRequest, ", "public string Audit { get; private set; } = string.Empty;")]
+    [DataRow("public record BaseRequest { }", "BaseRequest, ", "public string Audit { get; protected set; } = string.Empty;")]
+    public void McpGeneratorReportsPropertiesItCannotSet(string baseType, string inheritance, string member = "")
+    {
+        var (_, errors) = _runAndCompile<McpToolGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            {{baseType}}
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem : {{inheritance}}IRequest<UpdateItem, string>
+            {
+                public int Id { get; init; }
+                {{member}}
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Select(static error => error.Id).Should().Equal("ARKMF053");
+    }
+
+    [TestMethod]
+    public void McpGeneratorBindsAPropertyWithAnInaccessibleSetterThroughTheConstructor()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed class UpdateItem : IRequest<UpdateItem, string>
+            {
+                public UpdateItem(string audit) { Audit = audit; }
+                public string Audit { get; private set; }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("new global::UpdateItem(audit)");
+    }
+
+    [TestMethod]
     public void McpGeneratorDefaultsIntroducedToOneLikeTheVersioningAttribute()
     {
         // [Versioning] without Introduced means version 1, as the attribute's default and the other generators say.
