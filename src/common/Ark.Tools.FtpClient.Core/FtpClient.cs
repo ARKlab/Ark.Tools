@@ -13,12 +13,6 @@ public sealed class FtpClient : FtpClientWithConnectionBase
         _connectionFactory = connectionFactory;
     }
 
-    public FtpClient(FtpConfig ftpConfig, int maxListingParallelism, IFtpClientConnectionFactory connectionFactory)
-        : base(ftpConfig, maxListingParallelism)
-    {
-        _connectionFactory = connectionFactory;
-    }
-
     protected override Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)
     {
         return Task.FromResult(_connectionFactory.Create(FtpConfig));

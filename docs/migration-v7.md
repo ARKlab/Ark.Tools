@@ -210,7 +210,18 @@ Swashbuckle filters, and the `Ark.Tools.Core` exceptions. A class that derives
 from one of them no longer compiles (`CS0509`). Wrap the type and delegate to
 it, or register your own implementation of the interface it implements.
 
-## 9. Validate the migration
+## 9. Drop the FTP listing parallelism
+
+`FtpClientBase.MaxListingRecursiveParallelism` and the constructors that took a
+listing parallelism (`FtpClient(FtpConfig, int, IFtpClientConnectionFactory)`
+and the protected `FtpClientBase(FtpConfig, int)` and
+`FtpClientWithConnectionBase(FtpConfig, int)`) are removed; they had no effect.
+Drop the `int` argument. `FtpClient` still lists recursively on one connection,
+one folder at a time. `FtpClientPool` lists up to `PoolMaxSize` folders at once,
+each on its own pooled connection, so size the pool to the number of connections
+the server allows. The order of the files it returns is not defined.
+
+## 10. Validate the migration
 
 ```bash
 dotnet restore

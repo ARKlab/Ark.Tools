@@ -17,11 +17,6 @@ public abstract class FtpClientWithConnectionBase : FtpClientBase
     {
     }
 
-    protected FtpClientWithConnectionBase(FtpConfig ftpConfig, int maxListingRecursiveParallelism)
-        : base(ftpConfig, maxListingRecursiveParallelism)
-    {
-    }
-
     public override async Task<byte[]> DownloadFileAsync(string path, CancellationToken ctk = default)
     {
         using var client = await GetConnection(ctk).ConfigureAwait(false);

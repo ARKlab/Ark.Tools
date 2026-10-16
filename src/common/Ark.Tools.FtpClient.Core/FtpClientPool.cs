@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See LICENSE file for license information. 
 using Ark.Tools.Compliance;
 
+using NLog;
+
 using System.Collections.Concurrent;
 
 namespace Ark.Tools.FtpClient.Core;
@@ -9,6 +11,8 @@ namespace Ark.Tools.FtpClient.Core;
 
 public sealed class FtpClientPool : FtpClientWithConnectionBase, IFtpClientPool
 {
+    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+
     public int PoolMaxSize { get; }
 
     private readonly SemaphoreSlim _semaphore;
@@ -16,12 +20,64 @@ public sealed class FtpClientPool : FtpClientWithConnectionBase, IFtpClientPool
     private readonly IFtpClientConnectionFactory _connectionFactory;
 
     public FtpClientPool(int poolMaxSize, FtpConfig ftpConfig, IFtpClientConnectionFactory connectionFactory)
-        : base(ftpConfig, poolMaxSize)
+        : base(ftpConfig)
     {
         PoolMaxSize = poolMaxSize;
         _connectionFactory = connectionFactory;
         _semaphore = new SemaphoreSlim(poolMaxSize, poolMaxSize);
         _pool = new ConcurrentStack<IFtpClientConnection>();
+    }
+
+    /// <summary>
+    /// Lists the files under <paramref name="startPath"/> recursively, listing up to <see cref="PoolMaxSize"/> folders
+    /// at once, each on a connection rented from the pool. The order of the returned files is not defined.
+    /// </summary>
+    /// <param name="startPath">The folder to start from.</param>
+    /// <param name="skipFolder">Returns true for the folders that must not be listed.</param>
+    /// <param name="ctk">The cancellation token.</param>
+    /// <returns>The files found.</returns>
+    public override async Task<IEnumerable<FtpEntry>> ListFilesRecursiveAsync(string startPath = "./", Predicate<FtpEntry>? skipFolder = null, CancellationToken ctk = default)
+    {
+        _logger.Trace(CultureInfo.InvariantCulture, "List files starting from path: {Path}", startPath);
+        startPath ??= "./";
+
+        Stack<FtpEntry> pendingFolders = new();
+        List<FtpEntry> files = new();
+        List<Task<IEnumerable<FtpEntry>>> running = new();
+
+        // each listing rents its own pooled connection in ListDirectoryAsync, so the semaphore still caps the connections
+        void startListing(string path)
+        {
+            running.Add(Task.Run(() => _listFolderWithRetryAsync(path, ctk), ctk));
+        }
+
+        startListing(startPath);
+
+        try
+        {
+            while (running.Count > 0)
+            {
+                var t = await Task.WhenAny(running).ConfigureAwait(false);
+
+                var list = await t.ConfigureAwait(false);
+                running.Remove(t); // remove only if successful
+
+                foreach (var d in _foldersToList(list, skipFolder))
+                    pendingFolders.Push(d);
+
+                files.AddRange(list.Where(static x => !x.IsDirectory));
+
+                while (pendingFolders.Count > 0 && running.Count < PoolMaxSize)
+                    startListing(pendingFolders.Pop().FullPath);
+            }
+        }
+        catch
+        {
+            await Task.WhenAll(running).ConfigureAwait(false); // this still contains the failed one
+            throw;
+        }
+
+        return files;
     }
 
     protected override async Task<IFtpClientConnection> GetConnection(CancellationToken ctk = default)

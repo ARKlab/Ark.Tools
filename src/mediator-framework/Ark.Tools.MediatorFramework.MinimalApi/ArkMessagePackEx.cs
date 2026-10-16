@@ -198,7 +198,10 @@ public static class ArkMessagePackEx
         {
             var semicolon = parameters.IndexOf(';');
             var parameter = (semicolon < 0 ? parameters : parameters[..semicolon]).Trim();
-            if (parameter.StartsWith("q=0", StringComparison.OrdinalIgnoreCase))
+            // RFC 9110 12.4.2: only q=0 refuses; a malformed q is not a refusal.
+            if (parameter.StartsWith("q=", StringComparison.OrdinalIgnoreCase)
+                && double.TryParse(parameter[2..], System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var quality)
+                && quality <= 0)
                 return true;
 
             if (semicolon < 0)
