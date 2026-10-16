@@ -15,7 +15,7 @@ internal static class XmlDocumentation
 {
     /// <summary>
     /// Returns the summary and remarks of <paramref name="symbol"/>, parsing its XML documentation at most once.
-    /// A <c>[Description]</c> attribute wins over the XML summary and suppresses the remarks.
+    /// A non-empty <c>[Description]</c> attribute wins over the XML summary and suppresses the remarks.
     /// </summary>
     public static (string? Summary, string? Remarks) Read(ISymbol symbol, CancellationToken cancellationToken)
     {
@@ -41,7 +41,8 @@ internal static class XmlDocumentation
         description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
         if (description is not null)
             description = string.Join(' ', description.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        return attribute is not null;
+        // An empty or whitespace-only [Description] falls back to the XML documentation.
+        return !string.IsNullOrEmpty(description);
     }
 
     private static XElement? _parse(ISymbol symbol, CancellationToken cancellationToken)

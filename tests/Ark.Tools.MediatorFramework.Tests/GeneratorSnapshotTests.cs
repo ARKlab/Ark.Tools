@@ -2365,6 +2365,60 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void MinimalApiAndGrpcUseXmlDocumentationWhenDescriptionAttributeIsEmpty()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>XML endpoint summary.</summary>
+            /// <remarks>XML endpoint remarks.</remarks>
+            [Description("  ")]
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>XML property summary.</summary>
+                [Description]
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"XML endpoint summary.\")");
+        minimalApi.Should().Contain("WithDescription(\"XML endpoint remarks.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"XML property summary.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>XML endpoint summary.</summary>
+            [Description("")]
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse>
+            {
+                /// <summary>XML property summary.</summary>
+                [Description]
+                [ProtoMember(1)]
+                public string Id { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class DocumentedResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        grpc.Should().Contain("// XML endpoint summary.");
+        grpc.Should().Contain("// XML property summary.");
+    }
+
+    [TestMethod]
     public void GeneratorsNormalizeMultilineAndEntityEncodedXmlDocumentation()
     {
         var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
