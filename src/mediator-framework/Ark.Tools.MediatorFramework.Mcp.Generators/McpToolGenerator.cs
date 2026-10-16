@@ -966,9 +966,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
         string FreeName(string name)
         {
-            while (!taken.Add(name))
-                name = "_" + name;
-            return name;
+            var candidate = name;
+            for (var underscores = 1; !taken.Add(candidate); underscores++)
+                candidate = new string('_', underscores) + name;
+            return candidate;
         }
     }
 
