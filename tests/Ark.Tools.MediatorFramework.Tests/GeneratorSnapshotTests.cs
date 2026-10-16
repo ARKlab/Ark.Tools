@@ -1581,6 +1581,39 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GrpcGeneratorReadsProtoMemberFromTheOverriddenProperty()
+    {
+        var (generated, errors) = _runAndCompile<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [ProtoContract]
+            public class BaseRequest
+            {
+                [ProtoMember(1)]
+                public virtual string Audit { get; set; } = string.Empty;
+            }
+            [GrpcMethod("Update")]
+            [GrpcService("Items")]
+            [ProtoContract]
+            public sealed class Update : BaseRequest, IRequest<Update, UpdateResponse>
+            {
+                public override string Audit { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class UpdateResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, " audit = 1;").Should().Be(1);
+    }
+
+    [TestMethod]
     public void ApiSurfaceGeneratorListsOverriddenAndHiddenPropertiesOnce()
     {
         var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(_overriddenAndHiddenContract);
