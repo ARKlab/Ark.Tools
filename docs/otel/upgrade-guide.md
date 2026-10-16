@@ -81,7 +81,7 @@ ResourceWatcher operation names and attributes use OTel naming conventions.
 | ResourceWatcher fetch/state spans | AI dependency telemetry with `Type=ProcessStep` | OTel internal spans with lowercase dot-separated names | Replace dependency-type filters with span-name filters |
 | ResourceWatcher exceptions | AI `ExceptionTelemetry` | OTel exception event plus error status on the operation span | Query exception events/status instead of exception item type |
 | ResourceWatcher event warnings | AI event telemetry | OTel span/event attributes | Update event-type filters; retain tenant/resource attributes |
-| HTTP 4xx | AI processor clears failure | OTel processor clears server span error status | Keep 4xx-as-success alert rules at the span-status level |
+| HTTP 4xx | AI processor clears failure | `AddArkAzureOpenTelemetry` sets `Ok` on `Unset` server 4xx spans; `Error` stays failed | Keep 4xx-as-success alert rules at the span-status level; see [HTTP 4xx status](sampling.md#http-4xx-status) |
 | Registration | Hosting package implicitly added AI | No automatic registration | Add one explicit OTel or AI setup call |
 
 The main unavoidable dashboard changes are the telemetry item type and OTel naming.

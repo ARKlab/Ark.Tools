@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `Ark.Tools.MediatorFramework.Mcp`: an MCP contract property whose setter the generated tool cannot call (for example `private set` or `protected init`) and that no constructor takes now reports `ARKMF053`, instead of generating code that fails with CS0272.
+- `Ark.Tools.MediatorFramework.Mcp`: MCP tools now include the properties a contract inherits from its base types and use the same versioning defaults as the other transports, so a contract with `[Versioning]` but no `Introduced` is available from version 1.
+- `Ark.Tools.MediatorFramework`: contracts that override a base property or hide it with `new` now get one binding for it, from the most-derived declaration. Before, the Minimal API and Azure Functions endpoints failed to compile and gRPC mapped the property twice.
+
+## [7.0.0-beta19] - 2026-10-16
+
 ### Added
 
 - `Ark.Tools.MediatorFramework.MinimalApi`: `services.AddArkMessagePack(resolver)` registers the MessagePack resolver for generated Minimal API endpoints and builds their serializer options once.
@@ -27,12 +35,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.Compliance.Sql`: the task that writes the compliance SQL scripts now ships precompiled in the package (`tasks/netstandard2.0`) instead of being compiled on every MSBuild node, so clean builds of compliance-enabled projects are a few seconds faster.
 - **Breaking:** `Ark.Tools.FtpClient.Core`: `FtpClientBase.MaxListingRecursiveParallelism` and the `FtpClient` and `FtpClientBase` constructor overloads taking a listing parallelism are removed, as they had no effect; drop the `int` argument. `FtpClient` still lists recursively on one connection, one folder at a time.
 - `FtpClientPool.ListFilesRecursiveAsync` now lists folders in parallel on up to `PoolMaxSize` pooled connections, and the FTP ResourceWatcher lists its `FoldersToWatch` at the same time, so listing large trees is faster. The order of the listed files is no longer the folder walk order.
+- `Ark.Tools.OTel.Azure`: Application Insights shows server 4xx requests as successful again when the application uses `AddArkAzureOpenTelemetry`, as with Ark v6: the setup sets `ActivityStatusCode.Ok` on server 4xx spans left `Unset`. A 4xx request marked `Error` by the application or by an unhandled exception stays failed. To keep showing `Unset` 4xx requests as failed, pass `clientErrorsAsSuccess: false`, see [HTTP 4xx status](docs/otel/sampling.md#http-4xx-status).
 
 ### Fixed
 
-- `Ark.Tools.MediatorFramework.Mcp`: an MCP contract property whose setter the generated tool cannot call (for example `private set` or `protected init`) and that no constructor takes now reports `ARKMF053`, instead of generating code that fails with CS0272.
-- `Ark.Tools.MediatorFramework.Mcp`: MCP tools now include the properties a contract inherits from its base types and use the same versioning defaults as the other transports, so a contract with `[Versioning]` but no `Introduced` is available from version 1.
-- `Ark.Tools.MediatorFramework`: contracts that override a base property or hide it with `new` now get one binding for it, from the most-derived declaration. Before, the Minimal API and Azure Functions endpoints failed to compile and gRPC mapped the property twice.
 - `Ark.Tools.MediatorFramework.AzureFunctions`: HTTP endpoints returning `IAsyncEnumerable<T>` now stream items as they are produced, as on the Minimal API host. Before, the generator never detected the streaming response and buffered the whole result.
 - `AuthenticationApiClientCachingDecorator` stops serving a cached token 60 seconds before it expires, so callers (including `BasicAuthAuth0ProxyMiddleware`) no longer get a token that expires in flight and fails with 401. A token valid for 60 seconds or less is not cached.
 - `Ark.Tools.MediatorFramework.MinimalApi`: an `Accept` header with a fractional MessagePack quality such as `application/x-msgpack;q=0.5` now gets a MessagePack response. Before, any `q` value starting with `0` was treated as a refusal and the response was JSON; now only `q=0` refuses MessagePack.

@@ -80,7 +80,8 @@ where you handle them. Code of your own that records an exception on a span must
 if the span failed.
 
 HTTP 4xx codes are not failures by themselves: a 4xx span is promoted only when its status is
-`Error`. Ark does not change the status of server 4xx spans, see [HTTP 4xx status](#http-4xx-status).
+`Error`. Ark does not change the status of server 4xx spans, except that the Ark Azure setup sets
+`Ok` on `Unset` ones, see [HTTP 4xx status](#http-4xx-status).
 An application processor registered before the Ark setup can clear the status of expected client
 errors, such as Azure Storage 404 or 409.
 
@@ -121,12 +122,33 @@ status as the instrumentation or the application set it.
   ([StandardMetricsExtractionProcessor](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/Internals/StandardMetricsExtractionProcessor.cs#L211)),
   and a dependency is successful unless its status is `Error`
   ([RemoteDependencyData](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/Customizations/Models/RemoteDependencyData.cs#L78)).
-  So Application Insights shows a server 4xx that follows the OpenTelemetry convention as a failed
-  request. This is the exporter's rule, not an Ark failure: Ark does not promote the span.
+  So, left alone, Application Insights shows a server 4xx that follows the OpenTelemetry convention
+  as a failed request. This is the exporter's rule, not an Ark failure: Ark does not promote the span.
+- **Live metrics** (same exporter) count a request as failed only when its status is `Error`: the
+  response code is read but never used, so `Unset` and `Ok` 4xx requests are both successes there
+  ([DocumentHelper](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/LiveMetrics/Internals/DataCollection/DocumentHelper.cs#L181-L246)).
 
-An application that wants its 4xx requests shown as successes sets `Ok` itself. Leave an `Error`
-in place, so 4xx responses that the application or an unhandled exception marked as failed stay
-failed:
+`AddArkAzureOpenTelemetry` sets `Ok` on server spans that end with a 4xx code and an `Unset`
+status, so Application Insights shows them as successful requests, as with Ark v6 and the
+Application Insights SDK. A 4xx that the application or an unhandled exception marked as `Error`
+stays failed, and an `Ok` set by the application is kept. The processor runs after the Ark
+processors, failure promotion included, and after the application processors registered before
+the Ark setup; the exporter adds its own processors (live metrics, standard metrics, export) when
+the host starts, after it
+([ExporterRegistrationHostedService](https://github.com/Azure/azure-sdk-for-net/blob/Azure.Monitor.OpenTelemetry.Exporter_1.10.0/sdk/monitor/Azure.Monitor.OpenTelemetry.Exporter/src/ExporterRegistrationHostedService.cs#L65-L77)).
+It is registered only when the connection string is configured. Failure promotion does not change:
+`Unset` and `Ok` spans are not failures. To keep the exporter's default and show `Unset` 4xx
+requests as failed, pass `clientErrorsAsSuccess: false`:
+
+```csharp
+services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(configuration: configuration)
+    .AddArkAzureOpenTelemetry(configuration, clientErrorsAsSuccess: false);
+```
+
+A setup that exports to Azure Monitor without `AddArkAzureOpenTelemetry` sets `Ok` itself. Leave an
+`Error` in place, so 4xx responses that the application or an unhandled exception marked as failed
+stay failed:
 
 ```csharp
 public sealed class ClientErrorsAsSuccessProcessor : BaseProcessor<Activity>
@@ -152,7 +174,9 @@ keeps it, and Ark promotes the span.
 
 `WebApi4xxAsSuccessProcessor` is no longer registered by the Ark setups and is obsolete. It set
 every server 4xx span to `Unset`, which erased an `Error` set on purpose and did not change how
-Application Insights counts the request.
+Application Insights counts the request. An application that still registers it before the Ark setup
+with `AddArkAzureOpenTelemetry` gets `Unset` from it and then `Ok`, so every server 4xx, `Error` included,
+is shown as a success.
 
 ## Root rate control
 

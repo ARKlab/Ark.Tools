@@ -88,10 +88,17 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
     /// sampler also reads the legacy <c>ApplicationInsights:ArkAdaptiveSampler</c> section, overridden by
     /// <c>OTel:ArkAdaptiveSampler</c>.
     /// </param>
+    /// <param name="clientErrorsAsSuccess">
+    /// When Azure Monitor is enabled, sets <see cref="ActivityStatusCode.Ok"/> on server spans that end with an HTTP
+    /// 4xx code and an <see cref="ActivityStatusCode.Unset"/> status, so Application Insights shows them as successful
+    /// requests. Spans marked <see cref="ActivityStatusCode.Error"/> stay failed. Set to <see langword="false"/> to
+    /// keep the exporter's default, which shows <see cref="ActivityStatusCode.Unset"/> 4xx requests as failed.
+    /// </param>
     /// <returns>The original OpenTelemetry builder.</returns>
     public static OpenTelemetryBuilder AddArkAzureOpenTelemetry(
         this OpenTelemetryBuilder builder,
-        IConfiguration? configuration = null)
+        IConfiguration? configuration = null,
+        bool clientErrorsAsSuccess = true)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
@@ -130,6 +137,10 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
 
         builder.Services.AddLogging(static logging =>
             logging.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error));
+        // After the Ark chain and the processors registered so far; the exporter adds its own processors when the
+        // host starts, so they run after this one.
+        if (clientErrorsAsSuccess)
+            builder.WithTracing(static tracing => tracing.AddProcessor(new AzureMonitorClientErrorsAsSuccessProcessor()));
         builder.UseAzureMonitorExporter(options => options.ConnectionString = connectionString);
 
         // UseAzureMonitorExporter sets its own sampler; set Ark's again so the later registration wins.
