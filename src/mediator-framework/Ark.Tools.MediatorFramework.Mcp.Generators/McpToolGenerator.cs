@@ -493,14 +493,13 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             name = groupName + "." + name;
         var version = type.GetAttributes()
             .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ContractSymbols.VersioningAttribute));
-        var introduced = version is null ? 1 : ContractSymbols.NamedInt(version, "Introduced");
+        var introduced = ContractSymbols.NamedInt(version, "Introduced", 1);
         var retired = version is null ? 0 : ContractSymbols.NamedInt(version, "Retired");
 
         if (name.Length is 0 or > 128 || name.Any(character => !(char.IsLetterOrDigit(character) || character is '_' or '-' or '.')))
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(InvalidName, location, name));
 
-        var properties = type.GetMembers()
-            .OfType<IPropertySymbol>()
+        var properties = ContractProperties.All(type)
             .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
             .OrderBy(property => property.MetadataName, StringComparer.Ordinal)
             .ToImmutableArray();

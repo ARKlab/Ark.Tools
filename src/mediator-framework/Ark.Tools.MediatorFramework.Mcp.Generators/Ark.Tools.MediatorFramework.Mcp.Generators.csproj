@@ -17,5 +17,6 @@
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/GeneratorSpecPrimitives.cs" Link="GeneratorSpecPrimitives.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/ContractSymbols.cs" Link="ContractSymbols.cs" />
+    <Compile Include="../Ark.Tools.MediatorFramework.Generators/ContractProperties.cs" Link="ContractProperties.cs" />
   </ItemGroup>
 </Project>

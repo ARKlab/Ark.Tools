@@ -1241,6 +1241,63 @@ public sealed class GeneratorSnapshotTests
         """;
 
     [TestMethod]
+    public void McpGeneratorIncludesInheritedProperties()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            public record BaseRequest
+            {
+                public string Audit { get; init; } = string.Empty;
+            }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem(int Id) : BaseRequest, IRequest<UpdateItem, string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("string audit");
+        generated.Should().Contain("Audit = audit,");
+    }
+
+    [TestMethod]
+    public void McpGeneratorDefaultsIntroducedToOneLikeTheVersioningAttribute()
+    {
+        // [Versioning] without Introduced means version 1, as the attribute's default and the other generators say.
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Gets an item.</summary>
+            [McpTool(Name = "items.get")]
+            [Versioning]
+            public sealed record GetItem(int Id) : IQuery<GetItem, string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("[1] = [\"items.get\"]");
+    }
+
+    [TestMethod]
+    public void McpGeneratorBindsOverriddenAndHiddenPropertiesOnce()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(_overriddenAndHiddenContract);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, "Audit = audit,").Should().Be(1);
+        _occurrences(generated, "Tenant = tenant,").Should().Be(1);
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorBindsOverriddenAndHiddenPropertiesOnce()
     {
         // The generated endpoint calls (MapGroup, Produces) rely on the Web SDK's implicit usings.
