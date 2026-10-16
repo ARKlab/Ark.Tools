@@ -1908,6 +1908,40 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void ApiSurfaceGeneratorTracksMcpToolContracts()
+    {
+        const string source =
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            public sealed class Item
+            {
+                public string Name { get; set; } = "";
+            }
+            [ApiGroup("books")]
+            [Versioning(Introduced = 2)]
+            [McpTool(Name = "get")]
+            public sealed class GetBook : IQuery<Item>
+            {
+                public int Id { get; set; }
+            }
+            [HttpEndpoint("POST", "/items")]
+            [McpTool]
+            public sealed class CreateItem : IRequest<Item>
+            {
+                public string Name { get; set; } = "";
+            }
+            """;
+
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
+
+        generated.Should().Contain("CONTRACT GetBook -> Item [group=books] [mcp=books.get] [mcp-version=2+]");
+        generated.Should().Contain("CONTRACT GetBook.Id : int");
+        generated.Should().Contain("CONTRACT Item.Name : string");
+        generated.Should().Contain("CONTRACT CreateItem -> Item [group=Ark] [http=POST /items] [version=1+] [mcp=CreateItem] [mcp-version=1+]");
+    }
+
+    [TestMethod]
     public void ApiSurfaceGeneratorTracksFieldsOfMessageOnlyContract()
     {
         const string source =

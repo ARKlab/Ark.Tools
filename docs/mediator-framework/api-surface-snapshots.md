@@ -93,7 +93,9 @@ END
 Source: [`ArkApiSurface.txt`](../../samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/ArkApiSurface.txt)
 
 The `CONTRACT` line identifies the request, result, route, gRPC method, group,
-and version range. Following lines describe public members and protobuf tags.
+and version range. A contract marked `[McpTool]` adds `[mcp=<tool name>]` and
+`[mcp-version=<range>]`; the tool name is the one the MCP generator exposes,
+including the `[ApiGroup]` prefix. Following lines describe public members and protobuf tags.
 `ENUM Type.Member=value` and `EVOLVABLE-ENUM Type.Member=value` lines list
 every member and numeric value of a plain enum or an
 `EvolvableEnum<TEnum>`-wrapped enum reached from a contract, so adding,

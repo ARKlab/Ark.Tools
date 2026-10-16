@@ -1,4 +1,13 @@
 ﻿/*
+CONTRACT Book.V1.Output
+CONTRACT Book.V1.Output.AuditId : AuditId
+CONTRACT Book.V1.Output.Author : PersonName
+CONTRACT Book.V1.Output.Description : BookDescription
+CONTRACT Book.V1.Output.ETag : string?
+CONTRACT Book.V1.Output.Genre : EvolvableEnum<Book.V1.Genre>
+CONTRACT Book.V1.Output.ISBN : Isbn?
+CONTRACT Book.V1.Output.Id : BookId
+CONTRACT Book.V1.Output.Title : BookTitle
 CONTRACT BookEditionDescription
 CONTRACT BookEditionDescription.Description : string
 CONTRACT BookEditionDescription.Edition.Kind : BookEditionKind
@@ -11,6 +20,13 @@ CONTRACT BookReview.Text : ReviewText
 CONTRACT BookReview.UserId : UserId
 CONTRACT Book_BulkCreateRequest.V1 -> IReadOnlyList<Book.V1.Output> [group=Ark] [http=POST /api/v{version}/books/bulk] [version=1+]
 CONTRACT Book_BulkCreateRequest.V1.Data : IReadOnlyList<Book.V1.Create>
+CONTRACT Book_CreateRequest.V1 -> Book.V1.Output [group=Ark] [mcp=books.create] [mcp-version=1+]
+CONTRACT Book_CreateRequest.V1.Data.Author : PersonName
+CONTRACT Book_CreateRequest.V1.Data.Genre : EvolvableEnum<Book.V1.Genre>
+CONTRACT Book_CreateRequest.V1.Data.ISBN : Isbn?
+CONTRACT Book_CreateRequest.V1.Data.Title : BookTitle
+CONTRACT Book_GetQuery.V1 -> Book.V1.Output [group=Ark] [mcp=books.get] [mcp-version=1+]
+CONTRACT Book_GetQuery.V1.Id : BookId
 CONTRACT CreateBookReviewRequest.V1 -> BookReview [group=Ark] [http=POST /api/v{version}/books/{bookId}/reviews] [version=1+]
 CONTRACT CreateBookReviewRequest.V1.BookId : BookId
 CONTRACT CreateBookReviewRequest.V1.Rating : ReviewRating
@@ -66,6 +82,11 @@ CONTRACT UploadResponse.Length : long
 CONTRACT UploadResponse.Name : string
 ENUM BookEditionKind.Digital=1
 ENUM BookEditionKind.Print=0
+EVOLVABLE-ENUM Book.V1.Genre.Fiction=1
+EVOLVABLE-ENUM Book.V1.Genre.NOT_SET=0
+EVOLVABLE-ENUM Book.V1.Genre.NonFiction=2
+EVOLVABLE-ENUM Book.V1.Genre.Science=3
+EVOLVABLE-ENUM Book.V1.Genre.Technology=4
 EVOLVABLE-ENUM ReadingActivityKind.Finished=3
 EVOLVABLE-ENUM ReadingActivityKind.NOT_SET=0
 EVOLVABLE-ENUM ReadingActivityKind.Progressed=2

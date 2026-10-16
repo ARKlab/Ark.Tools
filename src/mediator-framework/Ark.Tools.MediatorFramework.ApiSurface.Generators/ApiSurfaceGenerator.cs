@@ -636,17 +636,19 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         var @event = Find(Event);
         var participant = Find(Participant);
         var network = Find(Network);
+        var mcp = Find(McpTool);
         if (http is null && grpc is null && rebus is null
-            && message is null && @event is null && participant is null && network is null)
+            && message is null && @event is null && participant is null && network is null && mcp is null)
             return;
 
         var request = TypeName(type);
         AddMessagingLines(messagingBlocks, locBuilder, type, message, @event, participant, network, networkMemberships);
-        if (http is null && grpc is null && rebus is null && message is null && @event is null)
+        if (http is null && grpc is null && rebus is null && message is null && @event is null && mcp is null)
             return;
         var result = ResultType(type);
         var metadata = new List<string>();
-        var group = StringArgument(Find(ApiGroup), 0) ?? "Ark";
+        var apiGroup = StringArgument(Find(ApiGroup), 0);
+        var group = apiGroup ?? "Ark";
         var versioning = Find(Versioning);
         var introduced = IntArgument(versioning, "Introduced", 1);
         var retired = IntArgument(versioning, "Retired", 0);
@@ -663,6 +665,14 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         {
             metadata.Add($"grpc={StringArgument(grpc, 0) ?? type.Name}");
             metadata.Add($"grpc-version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
+        }
+
+        if (mcp is not null)
+        {
+            // Same name resolution as the MCP generator: the ApiGroup prefix applies only when declared.
+            var tool = StringNamed(mcp, "Name") ?? type.Name;
+            metadata.Add($"mcp={(string.IsNullOrWhiteSpace(apiGroup) ? tool : apiGroup + "." + tool)}");
+            metadata.Add($"mcp-version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
 
         lines.Add($"CONTRACT {request} -> {TypeName(result)} [group={group}]"
