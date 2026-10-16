@@ -17,17 +17,25 @@ internal static class ContractProperties
 {
     /// <summary>
     /// Gets the properties declared by the type and then by each of its base types, without filtering.
-    /// An overridden or hidden property is returned once, from the most-derived type that declares it.
+    /// Each name is returned once, as name lookup from outside the type sees it: the most-derived public
+    /// declaration, or the most-derived declaration when none of that name is public. So an overridden or
+    /// hidden property comes from the most-derived type, but a non-public <see langword="new"/> member
+    /// never hides a public base one.
     /// </summary>
     /// <param name="type">The contract type.</param>
     /// <returns>The declared properties, most-derived type first.</returns>
     public static IEnumerable<IPropertySymbol> All(INamedTypeSymbol type)
     {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var declared = new List<IPropertySymbol>();
         for (var current = type; current is not null; current = current.BaseType)
-        {
-            foreach (var property in current.GetMembers().OfType<IPropertySymbol>().Where(p => seen.Add(p.Name)))
-                yield return property;
-        }
+            declared.AddRange(current.GetMembers().OfType<IPropertySymbol>());
+
+        var publicNames = new HashSet<string>(
+            declared.Where(static property => property.DeclaredAccessibility == Accessibility.Public).Select(static property => property.Name),
+            StringComparer.Ordinal);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        return declared.Where(property =>
+            (property.DeclaredAccessibility == Accessibility.Public || !publicNames.Contains(property.Name))
+            && seen.Add(property.Name));
     }
 }

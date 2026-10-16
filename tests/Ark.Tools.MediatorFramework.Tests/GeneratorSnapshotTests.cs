@@ -1464,6 +1464,54 @@ public sealed class GeneratorSnapshotTests
         _occurrences(generated, "Tenant = ").Should().Be(1);
     }
 
+    // A private new member does not hide the public base property from callers outside the type.
+    private const string _privatelyHiddenContract =
+        """
+        using Ark.Tools.MediatorFramework;
+        using Ark.Tools.Solid;
+        [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+        public sealed class ContractMarker { }
+        public record BaseRequest
+        {
+            [HttpQuery]
+            public string Tenant { get; init; } = string.Empty;
+        }
+        [HttpEndpoint("POST", "/items/{id}")]
+        public sealed record Update : BaseRequest, IRequest<Update, string>
+        {
+            [HttpRoute]
+            public System.Guid Id { get; init; }
+            private new string Tenant { get; init; } = string.Empty;
+        }
+        """;
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsAPublicBasePropertyHiddenByAPrivateOne()
+    {
+        var (generated, errors) = _runAndCompile<ArkMinimalApiEndpointGenerator>(
+            """
+            global using Microsoft.AspNetCore.Builder;
+            global using Microsoft.AspNetCore.Http;
+            global using Microsoft.AspNetCore.Routing;
+            global using Microsoft.Extensions.DependencyInjection;
+
+            """ + _privatelyHiddenContract);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Tenant\")] string Tenant");
+        _occurrences(generated, " Tenant = Tenant").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorBindsAPublicBasePropertyHiddenByAPrivateOne()
+    {
+        var (generated, errors) = _runAndCompile<AzureFunctionsEndpointGenerator>(_privatelyHiddenContract);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("_qs_Tenant");
+        _occurrences(generated, "Tenant = ").Should().Be(1);
+    }
+
     [TestMethod]
     public void GrpcGeneratorMapsOverriddenAndHiddenPropertiesOnce()
     {

@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `Ark.Tools.MediatorFramework.Mcp`: an MCP contract property whose setter the generated tool cannot call (for example `private set` or `protected init`) and that no constructor takes now reports `ARKMF053`, instead of generating code that fails with CS0272.
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools now include the properties a contract inherits from its base types and use the same versioning defaults as the other transports, so a contract with `[Versioning]` but no `Introduced` is available from version 1.
-- `Ark.Tools.MediatorFramework`: contracts that override a base property or hide it with `new` now get one binding for it, from the most-derived declaration. Before, the Minimal API and Azure Functions endpoints failed to compile and gRPC mapped the property twice.
+- `Ark.Tools.MediatorFramework`: contracts that override a base property or hide it with `new` now get one binding for it, from the most-derived public declaration; a non-public `new` property does not hide the public one it shadows. Before, the Minimal API and Azure Functions endpoints failed to compile and gRPC mapped the property twice.
 
 ## [7.0.0-beta19] - 2026-10-16
 
