@@ -10,6 +10,7 @@ using Polly.Retry;
 
 using SimpleInjector;
 
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 
 namespace Ark.Tools.ResourceWatcher.WorkerHost.Ftp;
@@ -89,16 +90,20 @@ public sealed class FtpWorkerHost<TPayload> : WorkerHost<FtpFile<TPayload>, FtpM
         public async Task<IEnumerable<FtpMetadata>> GetMetadata(FtpFilter filter, CancellationToken ctk = default)
         {
 
-            IEnumerable<FtpMetadata> res = Array.Empty<FtpMetadata>();
             using var cts1 = new CancellationTokenSource(_config.ListingTimeout);
             using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cts1.Token, ctk);
-            foreach (var f in filter.FoldersToWatch)
-            {
-                bool skipFolder(FtpEntry x) => filter.FolderFilter?.Invoke(x.FullPath) == false;
+            bool skipFolder(FtpEntry x) => filter.FolderFilter?.Invoke(x.FullPath) == false;
 
-                var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: cts2.Token).ConfigureAwait(false);
-                res = res.Concat(list.Select(static e => new FtpMetadata(e)));
-            }
+            // list the folders concurrently, but never more than MaxConcurrentConnections at once:
+            // proxy-backed clients don't share the pool's connection limit
+            var res = new ConcurrentBag<FtpMetadata>();
+            var options = new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, _config.MaxConcurrentConnections), CancellationToken = cts2.Token };
+            await Parallel.ForEachAsync(filter.FoldersToWatch, options, async (f, ct) =>
+            {
+                var list = await _ftpClient.ListFilesRecursiveAsync(f, filter.FolderFilter == null ? null : skipFolder, ctk: ct).ConfigureAwait(false);
+                foreach (var e in list)
+                    res.Add(new FtpMetadata(e));
+            }).ConfigureAwait(false);
             return res.ToList();
         }
 
