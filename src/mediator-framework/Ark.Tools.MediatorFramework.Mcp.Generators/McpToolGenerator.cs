@@ -512,13 +512,13 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var diagnostics = new List<DiagnosticInfo>();
         foreach (var property in properties)
         {
-            if (property.IsIndexer || !HasPublicSetter(property) && !constructors.Any(constructor => constructor.Parameters.Any(parameter =>
+            if (property.IsIndexer || !HasPublicSetter(type, property) && !constructors.Any(constructor => constructor.Parameters.Any(parameter =>
                 string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase))))
                 diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
         }
         if (diagnostics.Count > 0)
             return ContractModel.Invalid(typeFullName, assemblyName, location, diagnostics.ToArray());
-        var constructor = FindConstructor(constructors, properties);
+        var constructor = FindConstructor(type, constructors, properties);
         if (constructor is null)
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(MissingConstructor, location, contractName));
 
@@ -554,7 +554,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     property.Name,
                     ToInputType(property.Type),
                     IsAttachment(property.Type),
-                    HasPublicSetter(property),
+                    HasPublicSetter(type, property),
                     TryGetDescription(property, out var propertyDescription),
                     propertyDescription,
                     CreateDocumentationSource(property)))
@@ -617,8 +617,24 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     }
 
     // Like Minimal API and Azure Functions, the generated tool only calls public setters and constructors.
-    private static bool HasPublicSetter(IPropertySymbol property)
-        => property.SetMethod is { DeclaredAccessibility: Accessibility.Public };
+    // An object initializer on the contract would bind a non-public member of the same name declared closer to
+    // the contract, so a public property hidden that way is not settable.
+    private static bool HasPublicSetter(INamedTypeSymbol type, IPropertySymbol property)
+        => property.SetMethod is { DeclaredAccessibility: Accessibility.Public } && !IsHiddenByNonPublic(type, property);
+
+    // The walk returns the most-derived public declaration, so any member of that name in a more-derived type is non-public.
+    private static bool IsHiddenByNonPublic(INamedTypeSymbol type, IPropertySymbol property)
+    {
+        for (var current = type;
+            current is not null && !SymbolEqualityComparer.Default.Equals(current, property.ContainingType);
+            current = current.BaseType)
+        {
+            if (!current.GetMembers(property.Name).IsEmpty)
+                return true;
+        }
+
+        return false;
+    }
 
     // A constructor is usable when it is public and each parameter takes a contract property of the same type by value.
     private static ImmutableArray<IMethodSymbol> UsableConstructors(INamedTypeSymbol type, ImmutableArray<IPropertySymbol> properties)
@@ -952,9 +968,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             ? ToParameterName(property.Name) + ".ToAttachment()"
             : ToParameterName(property.Name);
 
-    private static IMethodSymbol? FindConstructor(ImmutableArray<IMethodSymbol> constructors, ImmutableArray<IPropertySymbol> properties)
+    private static IMethodSymbol? FindConstructor(INamedTypeSymbol type, ImmutableArray<IMethodSymbol> constructors, ImmutableArray<IPropertySymbol> properties)
         => constructors
-            .Where(candidate => properties.Where(property => !HasPublicSetter(property)).All(property =>
+            .Where(candidate => properties.Where(property => !HasPublicSetter(type, property)).All(property =>
                 candidate.Parameters.Any(parameter => string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase))))
             .OrderByDescending(candidate => candidate.Parameters.Length)
             .FirstOrDefault();

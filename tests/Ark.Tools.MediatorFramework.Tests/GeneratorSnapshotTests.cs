@@ -1376,6 +1376,33 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorReportsAPublicPropertyHiddenByAnInternalOne()
+    {
+        // The object initializer would bind the internal int Audit, not the public string one the tool reads.
+        var (_, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            public class BaseRequest
+            {
+                public string Audit { get; set; } = string.Empty;
+            }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed class UpdateItem : BaseRequest, IRequest<UpdateItem, string>
+            {
+                internal new int Audit { get; set; }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Select(static error => error.Id).Should().Equal("ARKMF053");
+    }
+
+    [TestMethod]
     public void McpGeneratorSkipsConstructorsWhoseParameterTypesDoNotMatch()
     {
         var (generated, errors) = _runAndCompile<McpToolGenerator>(

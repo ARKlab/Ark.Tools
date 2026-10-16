@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **Breaking:** `Ark.Tools.MediatorFramework.Mcp`: like Minimal API and Azure Functions, MCP tools now set only properties with a public setter and call only public constructors whose parameters match the contract properties by name and type. A property the tool can neither set nor pass to such a constructor reports `ARKMF053`. Before, a non-public setter or a constructor parameter of another type produced code that failed to compile (CS0272, CS1503, CS0122), except for an MCP context nested in the contract, where a private setter compiled: that layout now needs a public setter or a matching public constructor.
+- **Breaking:** `Ark.Tools.MediatorFramework.Mcp`: like Minimal API and Azure Functions, MCP tools now set only properties with a public setter and call only public constructors whose parameters match the contract properties by name and type. A property the tool can neither set nor pass to such a constructor, including a public property hidden by a non-public `new` member of the contract, reports `ARKMF053`. Before, a non-public setter or a constructor parameter of another type produced code that failed to compile (CS0272, CS1503, CS0122), except for an MCP context nested in the contract, where a private setter compiled: that layout now needs a public setter or a matching public constructor.
 
 ### Fixed
 
