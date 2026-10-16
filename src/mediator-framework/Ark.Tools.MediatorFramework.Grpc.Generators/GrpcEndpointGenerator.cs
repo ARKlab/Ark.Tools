@@ -1209,8 +1209,8 @@ namespace Ark.Tools.MediatorFramework.Generators
         {
             var members = ContractProperties.All(type)
                 .Select(ProtoMemberDeclaration)
-                .Where(static declaration => declaration is not null)
-                .Select(declaration => CreateProtoMember(type, declaration!.Value.Property, declaration.Value.Attribute, cancellationToken))
+                .OfType<(IPropertySymbol Property, AttributeData Attribute)>()
+                .Select(declaration => CreateProtoMember(type, declaration.Property, declaration.Attribute, cancellationToken))
                 .Where(member => member.Number > 0)
                 .ToImmutableArray();
 
