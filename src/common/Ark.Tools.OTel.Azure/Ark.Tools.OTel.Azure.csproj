@@ -32,4 +32,8 @@
     <None Include="buildTransitive/Ark.Tools.OTel.Azure.props" Pack="true" PackagePath="buildTransitive" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ark.Tools.OTel.Tests" />
+  </ItemGroup>
+
 </Project>

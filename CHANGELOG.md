@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Ark.Tools.Compliance.Sql`: the task that writes the compliance SQL scripts now ships precompiled in the package (`tasks/netstandard2.0`) instead of being compiled on every MSBuild node, so clean builds of compliance-enabled projects are a few seconds faster.
 - **Breaking:** `Ark.Tools.FtpClient.Core`: `FtpClientBase.MaxListingRecursiveParallelism` and the `FtpClient` and `FtpClientBase` constructor overloads taking a listing parallelism are removed, as they had no effect; drop the `int` argument. `FtpClient` still lists recursively on one connection, one folder at a time.
 - `FtpClientPool.ListFilesRecursiveAsync` now lists folders in parallel on up to `PoolMaxSize` pooled connections, and the FTP ResourceWatcher lists its `FoldersToWatch` at the same time, so listing large trees is faster. The order of the listed files is no longer the folder walk order.
+- `Ark.Tools.OTel.Azure`: Application Insights shows server 4xx requests as successful again when the application uses `AddArkAzureOpenTelemetry`, as with Ark v6: the setup sets `ActivityStatusCode.Ok` on server 4xx spans left `Unset`. A 4xx request marked `Error` by the application or by an unhandled exception stays failed. To keep showing `Unset` 4xx requests as failed, pass `clientErrorsAsSuccess: false`, see [HTTP 4xx status](docs/otel/sampling.md#http-4xx-status).
 
 ### Fixed
 

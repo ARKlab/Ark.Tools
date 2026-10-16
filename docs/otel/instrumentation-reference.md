@@ -329,7 +329,9 @@ failure is observed. Siblings already completed cannot be recovered.
 
 Ark does not change the status of server 4xx spans: the instrumentation leaves
 them `Unset`, and an `Error` set by the application or by an unhandled
-exception is kept and promoted. See [HTTP 4xx status](sampling.md#http-4xx-status).
+exception is kept and promoted. `AddArkAzureOpenTelemetry` sets `Ok` on the
+`Unset` ones, so Application Insights shows them as successes. See
+[HTTP 4xx status](sampling.md#http-4xx-status).
 
 Processors run in registration order. To run your own processor before
 failure promotion, register it before calling the Ark setup:
