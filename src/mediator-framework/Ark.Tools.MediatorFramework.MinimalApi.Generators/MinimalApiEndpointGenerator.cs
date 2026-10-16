@@ -31,6 +31,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
         private const string HttpEndpointAttribute = "Ark.Tools.MediatorFramework.HttpEndpointAttribute";
+        // Endpoint conventions are emitted as static calls so the generated file does not depend on the consumer's usings.
+        private const string OpenApiExtensions = "Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions";
+        private const string RoutingExtensions = "Microsoft.AspNetCore.Builder.RoutingEndpointConventionBuilderExtensions";
+        private const string AuthorizationExtensions = "Microsoft.AspNetCore.Builder.AuthorizationEndpointConventionBuilderExtensions";
         private const string ArkGenerateMinimalApiForAssemblyAttribute = "Ark.Tools.MediatorFramework.MinimalApi.ArkGenerateMinimalApiForAssemblyAttribute";
         private const string HttpQueryAttribute = "Ark.Tools.MediatorFramework.HttpQueryAttribute";
         private const string HttpBodyAttribute = "Ark.Tools.MediatorFramework.HttpBodyAttribute";
@@ -919,7 +923,7 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("        /// <summary>Maps every [HttpEndpoint]-declared handler to a Minimal API endpoint. TAssemblyMarker selects the assembly scanned for attributed contracts.</summary>");
             sb.AppendLine("        public static global::Microsoft.AspNetCore.Routing.RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>(this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints, global::System.Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null, string? versionPrefix = null)");
             sb.AppendLine("        {");
-            sb.AppendLine("            var group = endpoints.MapGroup(string.Empty);");
+            sb.AppendLine("            var group = global::Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapGroup(endpoints, string.Empty);");
             sb.AppendLine("            var missingHandlers = new global::System.Collections.Generic.List<string>();");
             foreach (var item in items.Where(static item => item.IsValid))
             {
@@ -1043,9 +1047,11 @@ namespace Ark.Tools.MediatorFramework.Generators
                             var responseSchema = e.IsStreaming
                                 ? "global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">"
                                 : e.Response;
-                            sb.AppendLine("            })" + MapClose(currentEndpointIndex) + ".Accepts<" + BodyType(e) + ">(\"application/json\", \"application/x-msgpack\").Produces<" + responseSchema + ">("
-                                + SuccessStatusCode(e) + ", \"application/json\", \"application/x-msgpack\").Produces(" + NullResultStatusCode(e)
-                                + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
+                            sb.AppendLine("            })" + MapClose(currentEndpointIndex,
+                                Convention(OpenApiExtensions, "Accepts<" + BodyType(e) + ">", "\"application/json\", \"application/x-msgpack\"")
+                                + Convention(OpenApiExtensions, "Produces<" + responseSchema + ">", SuccessStatusCode(e) + ", \"application/json\", \"application/x-msgpack\"")
+                                + Convention(OpenApiExtensions, "Produces", NullResultStatusCode(e).ToString(System.Globalization.CultureInfo.InvariantCulture))
+                                + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e)));
                             continue;
                         }
                         var parameters = explicitBindings
@@ -1077,8 +1083,9 @@ namespace Ark.Tools.MediatorFramework.Generators
                                 EmitMessagePackStreamingResult(sb, e);
                             else
                                 sb.AppendLine("                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkGeneratedEndpoint.Json(global::Ark.Tools.MediatorFramework.MinimalApi.ArkStreaming.WithCancellation(result, cancellationToken), " + SuccessStatusCode(e) + ");");
-                            sb.AppendLine("            })" + MapClose(currentEndpointIndex) + ".Produces<global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">>(" + SuccessStatusCode(e) + responseContentTypes + ")"
-                                + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
+                            sb.AppendLine("            })" + MapClose(currentEndpointIndex,
+                                Convention(OpenApiExtensions, "Produces<global::System.Collections.Generic.IEnumerable<" + e.StreamElement + ">>", SuccessStatusCode(e) + responseContentTypes)
+                                + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e)));
                             continue;
                         }
                         sb.AppendLine("                if (result is null)");
@@ -1087,8 +1094,10 @@ namespace Ark.Tools.MediatorFramework.Generators
                         sb.AppendLine(e.AcceptsMessagePack
                             ? "                return global::Ark.Tools.MediatorFramework.MinimalApi.ArkMessagePackEx.WriteResponse(httpContext, result, cancellationToken, " + SuccessStatusCode(e) + ", " + NullResultStatusCode(e) + ");"
                             : "                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(e) + ";");
-                        sb.AppendLine("            })" + MapClose(currentEndpointIndex) + ".Produces<" + e.Response + ">(" + SuccessStatusCode(e) + responseContentTypes + ").Produces(" + NullResultStatusCode(e)
-                            + ")" + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e) + ";");
+                        sb.AppendLine("            })" + MapClose(currentEndpointIndex,
+                            Convention(OpenApiExtensions, "Produces<" + e.Response + ">", SuccessStatusCode(e) + responseContentTypes)
+                            + Convention(OpenApiExtensions, "Produces", NullResultStatusCode(e).ToString(System.Globalization.CultureInfo.InvariantCulture))
+                            + ProblemMetadata(e) + OpenApiMetadata(e, version, maxVersion) + AuthorizationMetadata(e)));
                     }
                 }
             }
@@ -1281,10 +1290,12 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)" + NullResult(endpoint) + ";");
             EmitResponseETagAssignment(sb, endpoint);
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)" + SuccessResult(endpoint) + ";");
-            sb.Append("            })").Append(MapClose(index)).Append(".Accepts<").Append(attachment.IsAttachmentCollection ? "global::Microsoft.AspNetCore.Http.IFormFileCollection" : "global::Microsoft.AspNetCore.Http.IFormFile").Append(">(\"multipart/form-data\")").Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(MultipartMetadata(endpoint))
-                .Append(".Produces<").Append(endpoint.Response).Append(">(").Append(SuccessStatusCode(endpoint))
-                .Append(").Produces(").Append(NullResultStatusCode(endpoint)).Append(')')
-                .Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+            sb.Append("            })").AppendLine(MapClose(index,
+                Convention(OpenApiExtensions, "Accepts<" + (attachment.IsAttachmentCollection ? "global::Microsoft.AspNetCore.Http.IFormFileCollection" : "global::Microsoft.AspNetCore.Http.IFormFile") + ">", "\"multipart/form-data\"")
+                + ProblemMetadata(endpoint) + OpenApiMetadata(endpoint, version, maxVersion) + MultipartMetadata(endpoint)
+                + Convention(OpenApiExtensions, "Produces<" + endpoint.Response + ">", SuccessStatusCode(endpoint).ToString(System.Globalization.CultureInfo.InvariantCulture))
+                + Convention(OpenApiExtensions, "Produces", NullResultStatusCode(endpoint).ToString(System.Globalization.CultureInfo.InvariantCulture))
+                + AuthorizationMetadata(endpoint)));
         }
 
         private static void EmitAllowedContentTypeCheck(StringBuilder sb, EndpointModel endpoint, string fileVariable)
@@ -1317,8 +1328,10 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                if (result is null)");
             sb.AppendLine("                    return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.NotFound();");
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.Results.File(result.OpenRead(), result.ContentType, fileDownloadName: global::Ark.Tools.MediatorFramework.ArkAttachmentName.Sanitize(result.Name));");
-            sb.Append("            })").Append(MapClose(index)).Append(".Produces(200, contentType: \"application/octet-stream\").Produces(404)")
-                .Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion)).Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+            sb.Append("            })").AppendLine(MapClose(index,
+                Convention(OpenApiExtensions, "Produces", "200, contentType: \"application/octet-stream\"")
+                + Convention(OpenApiExtensions, "Produces", "404")
+                + ProblemMetadata(endpoint) + OpenApiMetadata(endpoint, version, maxVersion) + AuthorizationMetadata(endpoint)));
         }
 
         private static void EmitCommandEndpoint(
@@ -1352,20 +1365,20 @@ namespace Ark.Tools.MediatorFramework.Generators
             sb.AppendLine("                var processor = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(httpContext.RequestServices);");
             sb.AppendLine("                await processor.ExecuteAsync<" + endpoint.TypeFullName + ">(request, cancellationToken).ConfigureAwait(false);");
             sb.AppendLine("                return (global::Microsoft.AspNetCore.Http.IResult)global::Microsoft.AspNetCore.Http.TypedResults.NoContent();");
-            sb.Append("            })").Append(MapClose(index)).Append(ProblemMetadata(endpoint)).Append(OpenApiMetadata(endpoint, version, maxVersion));
-            sb.Append(".Produces(204)");
-            sb.Append(AuthorizationMetadata(endpoint)).AppendLine(";");
+            sb.Append("            })").AppendLine(MapClose(index,
+                ProblemMetadata(endpoint) + OpenApiMetadata(endpoint, version, maxVersion)
+                + Convention(OpenApiExtensions, "Produces", "204")
+                + AuthorizationMetadata(endpoint)));
         }
 
         private static string MultipartMetadata(EndpointModel endpoint)
         {
             var metadata = new StringBuilder();
             if (!endpoint.RequireAntiforgery)
-                metadata.Append(" /* Bearer-token API upload: antiforgery validation is intentionally disabled. */.DisableAntiforgery()");
+                metadata.Append(" /* Bearer-token API upload: antiforgery validation is intentionally disabled. */").Append(Convention(RoutingExtensions, "DisableAntiforgery"));
             if (endpoint.MaxRequestBodySizeBytes > 0)
-                metadata.Append(".WithMetadata(new global::Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(")
-                    .Append(endpoint.MaxRequestBodySizeBytes)
-                    .Append("L))");
+                metadata.Append(Convention(RoutingExtensions, "WithMetadata",
+                    "new global::Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(" + endpoint.MaxRequestBodySizeBytes + "L)"));
             return metadata.ToString();
         }
 
@@ -1394,9 +1407,9 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static string AuthorizationMetadata(EndpointModel endpoint)
         {
             if (endpoint.AllowAnonymous)
-                return ".AllowAnonymous()";
+                return Convention(AuthorizationExtensions, "AllowAnonymous");
 
-            return ".RequireAuthorization()";
+            return Convention(AuthorizationExtensions, "RequireAuthorization");
         }
 
         private static string ProblemMetadata(EndpointModel endpoint)
@@ -1414,16 +1427,15 @@ namespace Ark.Tools.MediatorFramework.Generators
             void AppendProblem(int statusCode)
             {
                 if (declaredStatuses.Add(statusCode))
-                    metadata.Append(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(")
-                        .Append(statusCode)
-                        .Append(", \"application/problem+json\")");
+                    metadata.Append(Convention(OpenApiExtensions, "Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>",
+                        statusCode + ", \"application/problem+json\""));
             }
         }
 
         private static string OpenApiMetadata(EndpointModel endpoint, int version, int maxVersion)
             => (endpoint.Summary is null && endpoint.Remarks is null && endpoint.Properties.All(property => property.Description is null)
                     ? string.Empty
-                    : ".WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkDocumentationMetadata("
+                    : Convention(RoutingExtensions, "WithMetadata", "new global::Ark.Tools.MediatorFramework.MinimalApi.ArkDocumentationMetadata("
                         + (endpoint.Summary is null ? "null" : Literal(endpoint.Summary)) + ", "
                         + (endpoint.Remarks is null ? "null" : Literal(endpoint.Remarks)) + ", "
                         + "new global::System.Collections.Generic.Dictionary<string, string>(global::System.StringComparer.OrdinalIgnoreCase)"
@@ -1431,17 +1443,17 @@ namespace Ark.Tools.MediatorFramework.Generators
                         + string.Join(", ", endpoint.Properties
                             .Where(property => property.Description is not null)
                             .Select(property => " [" + Literal(property.Name) + "] = " + Literal(property.Description!)))
-                        + " }))")
-                + (endpoint.Summary is null ? string.Empty : ".WithSummary(" + Literal(endpoint.Summary) + ")")
-                + (endpoint.Remarks is null ? string.Empty : ".WithDescription(" + Literal(endpoint.Remarks) + ")")
-                + ".WithGroupName(" + Literal("v" + version)
-                + ").WithTags(" + Literal(endpoint.ApiGroup)
-                + ").WithName(" + Literal(OperationName(endpoint, version, maxVersion)) + ")"
+                        + " })"))
+                + (endpoint.Summary is null ? string.Empty : Convention(OpenApiExtensions, "WithSummary", Literal(endpoint.Summary)))
+                + (endpoint.Remarks is null ? string.Empty : Convention(OpenApiExtensions, "WithDescription", Literal(endpoint.Remarks)))
+                + Convention(RoutingExtensions, "WithGroupName", Literal("v" + version))
+                + Convention(OpenApiExtensions, "WithTags", Literal(endpoint.ApiGroup))
+                + Convention(RoutingExtensions, "WithName", Literal(OperationName(endpoint, version, maxVersion)))
                 + (endpoint.ETagProperty is null && endpoint.ResponseETagProperty is null
                     ? string.Empty
-                    : ".WithMetadata(new global::Ark.Tools.MediatorFramework.MinimalApi.ArkETagParameterMetadata("
+                    : Convention(RoutingExtensions, "WithMetadata", "new global::Ark.Tools.MediatorFramework.MinimalApi.ArkETagParameterMetadata("
                         + (endpoint.ETagProperty is null ? "false" : "true") + ", "
-                        + (endpoint.ResponseETagProperty is null ? "false" : "true") + "))");
+                        + (endpoint.ResponseETagProperty is null ? "false" : "true") + ")"));
 
         private static string OperationName(EndpointModel endpoint, int version, int maxVersion)
             => ActiveVersions(endpoint, maxVersion).Count() > 1
@@ -1523,11 +1535,16 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static string ShortTypeName(string type)
             => Regex.Replace(type, "global::(?:[A-Za-z_][A-Za-z0-9_]*\\.)*", string.Empty);
 
-        private static string MapClose(int index) => ", PopulateArkEndpoint" + index + ", CreateArkEndpoint" + index + ")";
+        // Closes the Map call opened by EmitMapOpen, then applies the conventions to the scoped endpointBuilder.
+        private static string MapClose(int index, string conventions)
+            => ", PopulateArkEndpoint" + index + ", CreateArkEndpoint" + index + ");" + conventions + " }";
+
+        private static string Convention(string extensions, string method, string arguments = "")
+            => " global::" + extensions + "." + method + "(endpointBuilder" + (arguments.Length == 0 ? string.Empty : ", " + arguments) + ");";
 
         private static void EmitMapOpen(StringBuilder sb, StringBuilder? members, int index, string verb, string templateExpression, IReadOnlyList<LambdaParameter> parameters)
         {
-            sb.Append("            global::Ark.Tools.MediatorFramework.MinimalApi.ArkGeneratedEndpoint.Map(group, ").Append(templateExpression)
+            sb.Append("            { var endpointBuilder = global::Ark.Tools.MediatorFramework.MinimalApi.ArkGeneratedEndpoint.Map(group, ").Append(templateExpression)
                 .Append(", ").Append(Literal(verb)).Append(", (ArkEndpoint").Append(index).AppendLine("Handler)(static async (");
             for (var i = 0; i < parameters.Count; i++)
             {

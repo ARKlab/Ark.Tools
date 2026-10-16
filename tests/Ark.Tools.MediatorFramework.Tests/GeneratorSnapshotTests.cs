@@ -1495,15 +1495,8 @@ public sealed class GeneratorSnapshotTests
     [TestMethod]
     public void MinimalApiGeneratorBindsOverriddenAndHiddenPropertiesOnce()
     {
-        // The generated endpoint calls (MapGroup, Produces) rely on the Web SDK's implicit usings.
         var (generated, errors) = _runAndCompile<ArkMinimalApiEndpointGenerator>(
-            """
-            global using Microsoft.AspNetCore.Builder;
-            global using Microsoft.AspNetCore.Http;
-            global using Microsoft.AspNetCore.Routing;
-            global using Microsoft.Extensions.DependencyInjection;
-
-            """ + _overriddenAndHiddenContract);
+            _overriddenAndHiddenContract);
 
         errors.Should().BeEmpty();
         _occurrences(generated, " Audit = Audit").Should().Be(1);
@@ -1545,13 +1538,7 @@ public sealed class GeneratorSnapshotTests
     public void MinimalApiGeneratorBindsAPublicBasePropertyHiddenByAPrivateOne()
     {
         var (generated, errors) = _runAndCompile<ArkMinimalApiEndpointGenerator>(
-            """
-            global using Microsoft.AspNetCore.Builder;
-            global using Microsoft.AspNetCore.Http;
-            global using Microsoft.AspNetCore.Routing;
-            global using Microsoft.Extensions.DependencyInjection;
-
-            """ + _privatelyHiddenContract);
+            _privatelyHiddenContract);
 
         errors.Should().BeEmpty();
         generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Tenant\")] string Tenant");
@@ -2638,10 +2625,10 @@ public sealed class GeneratorSnapshotTests
         result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 1)");
         result.Generated.Should().Contain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 2)");
         result.Generated.Should().NotContain("VersionedRoute(versionPrefix, \"/api/v{version}/greetings/{id}\", true, 3)");
-        result.Generated.Should().Contain("WithGroupName(\"v1\")");
-        result.Generated.Should().Contain("WithTags(\"Ark\")");
-        result.Generated.Should().Contain("WithName(\"GetGreeting_v1\")");
-        result.Generated.Should().Contain("WithName(\"GetGreeting_v2\")");
+        result.Generated.Should().Contain("WithGroupName(endpointBuilder, \"v1\")");
+        result.Generated.Should().Contain("WithTags(endpointBuilder, \"Ark\")");
+        result.Generated.Should().Contain("WithName(endpointBuilder, \"GetGreeting_v1\")");
+        result.Generated.Should().Contain("WithName(endpointBuilder, \"GetGreeting_v2\")");
     }
 
     [TestMethod]
@@ -2703,8 +2690,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("WithSummary(\"Gets a documented value.\")");
-        generated.Should().Contain("WithDescription(\"The value is read from the contract.\")");
+        generated.Should().Contain("WithSummary(endpointBuilder, \"Gets a documented value.\")");
+        generated.Should().Contain("WithDescription(endpointBuilder, \"The value is read from the contract.\")");
         generated.Should().Contain("ArkDocumentationMetadata");
         generated.Should().Contain("[\"Id\"] = \"The route identifier.\"");
 
@@ -2739,7 +2726,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        minimalApi.Should().Contain("WithSummary(\"Attribute endpoint description.\")");
+        minimalApi.Should().Contain("WithSummary(endpointBuilder, \"Attribute endpoint description.\")");
         minimalApi.Should().Contain("[\"Id\"] = \"Attribute property description.\"");
         minimalApi.Should().NotContain("XML endpoint");
         minimalApi.Should().NotContain("XML property");
@@ -2862,7 +2849,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        minimalApi.Should().Contain("WithSummary(\"a b\")");
+        minimalApi.Should().Contain("WithSummary(endpointBuilder, \"a b\")");
         minimalApi.Should().Contain("[\"Id\"] = \"c d\"");
 
         var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
@@ -2913,8 +2900,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        minimalApi.Should().Contain("WithSummary(\"XML endpoint summary.\")");
-        minimalApi.Should().Contain("WithDescription(\"XML endpoint remarks.\")");
+        minimalApi.Should().Contain("WithSummary(endpointBuilder, \"XML endpoint summary.\")");
+        minimalApi.Should().Contain("WithDescription(endpointBuilder, \"XML endpoint remarks.\")");
         minimalApi.Should().Contain("[\"Id\"] = \"XML property summary.\"");
 
         var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
@@ -2973,8 +2960,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        minimalApi.Should().Contain("WithSummary(\"First line second line where left > right.\")");
-        minimalApi.Should().Contain("WithDescription(\"A multiline explanation with an entity > 0.\")");
+        minimalApi.Should().Contain("WithSummary(endpointBuilder, \"First line second line where left > right.\")");
+        minimalApi.Should().Contain("WithDescription(endpointBuilder, \"A multiline explanation with an entity > 0.\")");
         minimalApi.Should().Contain("[\"Id\"] = \"The documented identifier.\"");
 
         var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
@@ -3067,8 +3054,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        minimalApi.Should().Contain("WithSummary(\"First line. Second line.\")");
-        minimalApi.Should().Contain("WithDescription(\"First paragraph. Second paragraph.\")");
+        minimalApi.Should().Contain("WithSummary(endpointBuilder, \"First line. Second line.\")");
+        minimalApi.Should().Contain("WithDescription(endpointBuilder, \"First paragraph. Second paragraph.\")");
         minimalApi.Should().Contain("[\"Id\"] = \"The Strings identifier.\"");
 
         var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
@@ -3105,8 +3092,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        minimalApi.Should().Contain("WithSummary(\"Returns null for id of T.\")");
-        minimalApi.Should().Contain("WithDescription(\"See the guide or https://example.com/b.\")");
+        minimalApi.Should().Contain("WithSummary(endpointBuilder, \"Returns null for id of T.\")");
+        minimalApi.Should().Contain("WithDescription(endpointBuilder, \"See the guide or https://example.com/b.\")");
         minimalApi.Should().Contain("[\"Id\"] = \"The String identifier.\"");
 
         var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
@@ -3143,8 +3130,8 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        minimalApi.Should().Contain("WithSummary(\"Read the guide now.\")");
-        minimalApi.Should().Contain("WithDescription(\"Seehttps://example.com/b.\")");
+        minimalApi.Should().Contain("WithSummary(endpointBuilder, \"Read the guide now.\")");
+        minimalApi.Should().Contain("WithDescription(endpointBuilder, \"Seehttps://example.com/b.\")");
         minimalApi.Should().Contain("[\"Id\"] = \"The Strings identifier.\"");
 
         var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
@@ -3179,7 +3166,7 @@ public sealed class GeneratorSnapshotTests
             public sealed class Second : IQuery<string> { }
             """);
 
-        result.Generated.Should().Contain("WithTags(\"Public\")");
+        result.Generated.Should().Contain("WithTags(endpointBuilder, \"Public\")");
 
         var result2 = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(
             """
@@ -3590,11 +3577,11 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("RouteGroupBuilder MapArkEndpointsFromAssembly<TAssemblyMarker>");
         generated.Should().Contain("Action<global::Microsoft.AspNetCore.Routing.RouteGroupBuilder>? configure = null");
-        generated.Should().Contain("var group = endpoints.MapGroup(string.Empty);");
+        generated.Should().Contain("var group = global::Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapGroup(endpoints, string.Empty);");
         generated.Should().Contain("ArkGeneratedEndpoint.Map(group, template0V1, \"GET\"");
-        generated.Should().Contain(".RequireAuthorization()");
-        generated.Should().NotContain(".RequireAuthorization(\"admin\")");
-        generated.Should().Contain(".AllowAnonymous()");
+        generated.Should().Contain("global::Microsoft.AspNetCore.Builder.AuthorizationEndpointConventionBuilderExtensions.RequireAuthorization(endpointBuilder);");
+        generated.Should().NotContain("RequireAuthorization(endpointBuilder, \"admin\")");
+        generated.Should().Contain("global::Microsoft.AspNetCore.Builder.AuthorizationEndpointConventionBuilderExtensions.AllowAnonymous(endpointBuilder);");
         generated.Should().Contain("configure?.Invoke(group);");
         generated.Should().Contain("return group;");
         generated.Should().Contain("Missing mediator handler registrations");
@@ -3625,12 +3612,12 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(403, \"application/problem+json\")");
-        generated.Should().Contain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\")");
-        (generated.Split(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(400, \"application/problem+json\")").Length - 1).Should().Be(1);
-        (generated.Split(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\")").Length - 1).Should().Be(1);
-        generated.Should().NotContain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(400, \"application/problem+json\").Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(400");
-        generated.Should().NotContain(".Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500, \"application/problem+json\").Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(500");
+        generated.Should().Contain("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(endpointBuilder, 403, \"application/problem+json\")");
+        generated.Should().Contain("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(endpointBuilder, 500, \"application/problem+json\")");
+        (generated.Split("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(endpointBuilder, 400, \"application/problem+json\")").Length - 1).Should().Be(1);
+        (generated.Split("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(endpointBuilder, 500, \"application/problem+json\")").Length - 1).Should().Be(1);
+        generated.Should().NotContain("ProblemDetails>(endpointBuilder, 400, \"application/problem+json\"); global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(endpointBuilder, 400");
+        generated.Should().NotContain("ProblemDetails>(endpointBuilder, 500, \"application/problem+json\"); global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces<global::Microsoft.AspNetCore.Mvc.ProblemDetails>(endpointBuilder, 500");
     }
 
     [TestMethod]
@@ -3649,7 +3636,7 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("ICommandProcessor");
         generated.Should().Contain("TypedResults.NoContent()");
-        generated.Should().Contain(".Produces(204)");
+        generated.Should().Contain("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces(endpointBuilder, 204);");
     }
 
     [TestMethod]
@@ -3728,7 +3715,7 @@ public sealed class GeneratorSnapshotTests
         generated.Should().Contain(
             "ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(httpContext.RequestServices)");
         generated.Should().Contain("TypedResults.NoContent()");
-        generated.Should().Contain(".Produces(204)");
+        generated.Should().Contain("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces(endpointBuilder, 204);");
         generated.Should().NotContain("Rebus.Bus.IBus");
         generated.Should().NotContain("202");
     }
@@ -3752,8 +3739,8 @@ public sealed class GeneratorSnapshotTests
 
         generated.Should().Contain("TypedResults.NotFound()");
         generated.Should().Contain("ArkGeneratedEndpoint.Json(result, 201)");
-        generated.Should().Contain(".Produces<string>(201).Produces(200)");
-        generated.Should().Contain(".Produces<string>(200).Produces(404)");
+        generated.Should().Contain("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces<string>(endpointBuilder, 201); global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces(endpointBuilder, 200);");
+        generated.Should().Contain("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces<string>(endpointBuilder, 200); global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Produces(endpointBuilder, 404);");
     }
 
     [TestMethod]
@@ -4359,7 +4346,7 @@ public sealed class GeneratorSnapshotTests
 
         result.Diagnostics.Should().BeEmpty();
         result.Generated.Should().NotContain("ReadRequestAsync");
-        result.Generated.Should().NotContain(".Accepts<");
+        result.Generated.Should().NotContain("global::Microsoft.AspNetCore.Http.OpenApiRouteHandlerBuilderExtensions.Accepts<");
         result.Generated.Should().NotContain("ValidateMessagePackContracts");
         result.Generated.Should().Contain("var request = new global::GetBook {");
         result.Generated.Should().Contain("var request = new global::StreamBooks { Count = Count, Ids = Ids };");
@@ -4848,10 +4835,10 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(\"multipart/form-data\")");
+        generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFile>(endpointBuilder, \"multipart/form-data\")");
         generated.Should().Contain("form.Files.Count != 1");
         generated.Should().Contain("Attachment = new global::Ark.Tools.MediatorFramework.ArkAttachment");
-        generated.Should().Contain("DisableAntiforgery()");
+        generated.Should().Contain("DisableAntiforgery(endpointBuilder);");
         generated.Should().Contain("RequestSizeLimitAttribute(1024L)");
         generated.Should().Contain("Contains(new[] { \"text/plain\" }, file.ContentType");
     }
@@ -4870,7 +4857,7 @@ public sealed class GeneratorSnapshotTests
             }
             """);
 
-        generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFileCollection>(\"multipart/form-data\")");
+        generated.Should().Contain("Accepts<global::Microsoft.AspNetCore.Http.IFormFileCollection>(endpointBuilder, \"multipart/form-data\")");
         generated.Should().Contain("form.Files.Count > 3");
         generated.Should().Contain("The number of uploaded files exceeds the configured limit of 3.");
         generated.Should().Contain("Enumerable.Select(form.Files");
