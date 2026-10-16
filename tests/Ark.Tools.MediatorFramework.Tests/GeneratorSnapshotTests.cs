@@ -2946,6 +2946,46 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorReadsDocumentationLikeTheOtherTransports()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using System.ComponentModel;
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Returns <see langword="null"/> for <paramref name="id"/>
+            /// when left &gt; right.</summary>
+            /// <remarks>See <see cref="System.String"/>.</remarks>
+            [McpTool(Name = "items.get")]
+            public sealed record GetItem : IQuery<GetItem, string>
+            {
+                /// <summary>XML property summary.</summary>
+                [Description]
+                public string Id { get; init; } = string.Empty;
+                [Description("c\n  d")]
+                public string Name { get; init; } = string.Empty;
+            }
+            /// <summary>XML endpoint summary.</summary>
+            [Description("  ")]
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem : IRequest<UpdateItem, string>
+            {
+                public int Id { get; init; }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("Description(\"Returns null for id when left > right. See String.\")");
+        generated.Should().Contain("Description(\"XML property summary.\")] string id");
+        generated.Should().Contain("Description(\"c d\")] string name");
+        generated.Should().Contain("Description(\"XML endpoint summary.\")");
+    }
+
+    [TestMethod]
     public void MinimalApiAndGrpcUseXmlDocumentationWhenDescriptionAttributeIsEmpty()
     {
         var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
