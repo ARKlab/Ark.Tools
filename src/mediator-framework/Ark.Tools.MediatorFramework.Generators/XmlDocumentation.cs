@@ -15,7 +15,7 @@ internal static class XmlDocumentation
 {
     /// <summary>
     /// Returns the summary and remarks of <paramref name="symbol"/>, parsing its XML documentation at most once.
-    /// A <c>[Description]</c> attribute wins over the XML summary and suppresses the remarks.
+    /// A non-empty <c>[Description]</c> attribute wins over the XML summary and suppresses the remarks.
     /// </summary>
     public static (string? Summary, string? Remarks) Read(ISymbol symbol, CancellationToken cancellationToken)
     {
@@ -41,7 +41,8 @@ internal static class XmlDocumentation
         description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
         if (description is not null)
             description = string.Join(' ', description.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        return attribute is not null;
+        // An empty or whitespace-only [Description] falls back to the XML documentation.
+        return !string.IsNullOrEmpty(description);
     }
 
     private static XElement? _parse(ISymbol symbol, CancellationToken cancellationToken)
@@ -62,20 +63,38 @@ internal static class XmlDocumentation
 
     private static string? _text(XElement? element)
     {
-        return element is null ? null : _normalize(element);
+        if (element is null)
+            return null;
+
+        // Whitespace is collapsed once on the finished text, so link labels keep their boundary spaces.
+        var normalized = string.Join(' ', _extract(element).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        return normalized.Length == 0 ? null : normalized;
     }
 
-    private static string? _normalize(XElement element)
+    private static string _extract(XElement element)
     {
-        var text = string.Concat(element.Nodes().Select(static node => node switch
+        return string.Concat(element.Nodes().Select(static node => node switch
         {
             XText value => value.Value,
-            XElement child when child.Name.LocalName == "see"
-                => child.Attribute("cref")?.Value.TrimStart("!:".ToCharArray()).Split('.').LastOrDefault() ?? string.Empty,
-            XElement child => _normalize(child) ?? string.Empty,
+            XElement child when child.Name.LocalName == "see" && child.Attribute("cref") is { } cref
+                => cref.Value.TrimStart("!:".ToCharArray()).Split('.').LastOrDefault() ?? string.Empty,
+            XElement child when child.Name.LocalName == "see" && child.Attribute("langword") is { } langword
+                => langword.Value,
+            XElement child when child.Name.LocalName == "see" && child.Attribute("href") is { } href
+                => _label(child, href.Value),
+            XElement child when child.Name.LocalName is "paramref" or "typeparamref"
+                => child.Attribute("name")?.Value ?? string.Empty,
+            // Line breaks and paragraphs separate words even when written without surrounding whitespace.
+            XElement child when child.Name.LocalName is "br" or "para"
+                => " " + _extract(child) + " ",
+            XElement child => _extract(child),
             _ => string.Empty,
         }));
-        var normalized = string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+    }
+
+    private static string _label(XElement link, string url)
+    {
+        var label = _extract(link);
+        return string.IsNullOrWhiteSpace(label) ? url : label;
     }
 }
