@@ -555,6 +555,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     ToInputType(property.Type),
                     IsAttachment(property.Type),
                     HasPublicSetter(type, property),
+                    property.IsRequired,
                     TryGetDescription(property, out var propertyDescription),
                     propertyDescription,
                     CreateDocumentationSource(property)))
@@ -563,6 +564,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             location)
         {
             IsSelfTyped = IsSelfTyped(type),
+            ConstructorSetsRequiredMembers = constructor.GetAttributes().Any(attribute =>
+                attribute.AttributeClass._isFullName("System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute")),
         };
     }
 
@@ -886,6 +889,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 ? propertyDescription
                 : string.Empty) + ")] "
             + property.InputType + " " + ToParameterName(property.Name));
+        // The parameters keep the property names, which are the tool's input schema, so the adapter's own identifiers give way.
+        var taken = new HashSet<string>(model.Properties.Select(static property => ToParameterName(property.Name)), StringComparer.Ordinal);
+        var services = FreeName("services");
+        var cancellationToken = FreeName("cancellationToken");
+        var request = FreeName("request");
+        var result = FreeName("result");
 
         builder.AppendLine();
         builder.AppendLine("    [global::ModelContextProtocol.Server.McpServerToolType]");
@@ -906,9 +915,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .AppendLine("]");
         builder.Append("        public static async ").Append(returnType).Append(" ExecuteAsync(")
             .Append(string.Join(", ", parameters)).Append(model.Properties.Count > 0 ? ", " : string.Empty)
-            .Append("global::System.IServiceProvider services, global::System.Threading.CancellationToken cancellationToken)").AppendLine();
+            .Append("global::System.IServiceProvider ").Append(services).Append(", global::System.Threading.CancellationToken ").Append(cancellationToken).Append(')').AppendLine();
         builder.AppendLine("        {");
-        builder.Append("            var request = new ").Append(model.TypeFullName).Append("(");
+        builder.Append("            var ").Append(request).Append(" = new ").Append(model.TypeFullName).Append("(");
         builder.Append(string.Join(", ", model.ConstructorParameters.Select(parameter =>
             ToParameterName(model.Properties.First(property => string.Equals(property.Name, parameter, StringComparison.OrdinalIgnoreCase)).Name)
             + (model.Properties.First(property => string.Equals(property.Name, parameter, StringComparison.OrdinalIgnoreCase)).IsAttachment
@@ -919,7 +928,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             builder.AppendLine(")");
             builder.AppendLine("            {");
             foreach (var property in settable)
-                if (!model.ConstructorParameters.Any(parameter => string.Equals(parameter, property.Name, StringComparison.OrdinalIgnoreCase)))
+                // Without [SetsRequiredMembers] on the constructor, C# requires the initializer for every required member.
+                if (property.IsRequired && !model.ConstructorSetsRequiredMembers
+                    || !model.ConstructorParameters.Any(parameter => string.Equals(parameter, property.Name, StringComparison.OrdinalIgnoreCase)))
                     builder.Append("                ").Append(property.Name).Append(" = ").Append(ToInputValue(property)).AppendLine(",");
             builder.AppendLine("            };");
         }
@@ -927,36 +938,48 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             builder.AppendLine(");");
         if (model.Kind == HandlerKind.Query)
         {
-            builder.Append("            var result = await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(services).ExecuteAsync<")
-                .Append(TypedDispatchArguments(model)).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
+            builder.Append("            var ").Append(result).Append(" = await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IQueryProcessor>(").Append(services).Append(").ExecuteAsync<")
+                .Append(TypedDispatchArguments(model)).Append(">(").Append(request).Append(", ").Append(cancellationToken).Append(").ConfigureAwait(false);").AppendLine();
             if (attachmentResponse)
-                builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToEmbeddedResourceAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
+                builder.Append("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToEmbeddedResourceAsync(").Append(result)
+                    .Append(", cancellationToken: ").Append(cancellationToken).AppendLine(").ConfigureAwait(false);");
             else
-                builder.AppendLine("            return result;");
+                builder.Append("            return ").Append(result).AppendLine(";");
         }
         else if (model.Kind == HandlerKind.Request)
         {
-            builder.Append("            var result = await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IRequestProcessor>(services).ExecuteAsync<")
-                .Append(TypedDispatchArguments(model)).Append(">(request, cancellationToken).ConfigureAwait(false);").AppendLine();
+            builder.Append("            var ").Append(result).Append(" = await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.IRequestProcessor>(").Append(services).Append(").ExecuteAsync<")
+                .Append(TypedDispatchArguments(model)).Append(">(").Append(request).Append(", ").Append(cancellationToken).Append(").ConfigureAwait(false);").AppendLine();
             if (attachmentResponse)
-                builder.AppendLine("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToEmbeddedResourceAsync(result, cancellationToken: cancellationToken).ConfigureAwait(false);");
+                builder.Append("            return await global::Ark.Tools.MediatorFramework.Mcp.McpAttachmentResults.ToEmbeddedResourceAsync(").Append(result)
+                    .Append(", cancellationToken: ").Append(cancellationToken).AppendLine(").ConfigureAwait(false);");
             else
-                builder.AppendLine("            return result;");
+                builder.Append("            return ").Append(result).AppendLine(";");
         }
         else
         {
-            builder.Append("            await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(services).ExecuteAsync")
-                .Append(model.IsSelfTyped ? "<" + model.TypeFullName + ">" : string.Empty).AppendLine("(request, cancellationToken).ConfigureAwait(false);");
+            builder.Append("            await global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Ark.Tools.Solid.ICommandProcessor>(").Append(services).Append(").ExecuteAsync")
+                .Append(model.IsSelfTyped ? "<" + model.TypeFullName + ">" : string.Empty).Append('(').Append(request).Append(", ").Append(cancellationToken).AppendLine(").ConfigureAwait(false);");
         }
         builder.AppendLine("        }");
         builder.AppendLine("    }");
+
+        string FreeName(string name)
+        {
+            while (!taken.Add(name))
+                name = "_" + name;
+            return name;
+        }
     }
 
     private static string TypedDispatchArguments(ContractModel model)
         => model.IsSelfTyped ? model.TypeFullName + ", " + model.ResponseType : model.ResponseType!;
 
     private static string ToParameterName(string name)
-        => char.ToLowerInvariant(name[0]) + name.Substring(1);
+    {
+        var parameterName = char.ToLowerInvariant(name[0]) + name.Substring(1);
+        return SyntaxFacts.GetKeywordKind(parameterName) == SyntaxKind.None ? parameterName : "@" + parameterName;
+    }
 
     private static string ToInputType(ITypeSymbol type)
         => IsAttachment(type)
@@ -1039,6 +1062,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         string InputType,
         bool IsAttachment,
         bool HasSetter,
+        bool IsRequired,
         bool HasDescriptionAttribute,
         string? AttributeDescription,
         DocumentationSource Documentation);
@@ -1068,6 +1092,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         Location? Location)
     {
         public bool IsSelfTyped { get; init; }
+
+        public bool ConstructorSetsRequiredMembers { get; init; }
 
         public ContractModel ForEmission() => this with { Location = null, Diagnostics = EquatableArray<DiagnosticInfo>.Empty };
 

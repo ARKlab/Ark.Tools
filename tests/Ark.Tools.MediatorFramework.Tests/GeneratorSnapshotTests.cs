@@ -1492,6 +1492,70 @@ public sealed class GeneratorSnapshotTests
         _occurrences(generated, "Tenant = tenant,").Should().Be(1);
     }
 
+    private const string _adapterNameMembers =
+        """
+        public string Services { get; init; } = string.Empty;
+        public string CancellationToken { get; init; } = string.Empty;
+        public string Request { get; init; } = string.Empty;
+        public string Result { get; init; } = string.Empty;
+        public string Event { get; init; } = string.Empty;
+        """;
+
+    [TestMethod]
+    [DataRow("", _adapterNameMembers)]
+    [DataRow("public record BaseRequest { " + _adapterNameMembers + " }", "")]
+    public void McpGeneratorBindsPropertiesNamedLikeAdapterIdentifiersOrKeywords(string baseMembers, string members)
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            {{(baseMembers.Length == 0 ? "public record BaseRequest { }" : baseMembers)}}
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem : BaseRequest, IRequest<UpdateItem, string>
+            {
+                {{members}}
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        // The tool's input schema keeps the property names, so the parameters are not renamed.
+        generated.Should().Contain("string services,").And.Contain("string cancellationToken,")
+            .And.Contain("string request,").And.Contain("string result,").And.Contain("string @event,");
+    }
+
+    [TestMethod]
+    [DataRow("public record BaseRequest { }", "public required string Audit { get; init; }")]
+    [DataRow("public record BaseRequest { public required string Audit { get; init; } }", "")]
+    public void McpGeneratorSetsRequiredMembersTheChosenConstructorDoesNotSet(string baseType, string member)
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            {{baseType}}
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem : BaseRequest, IRequest<UpdateItem, string>
+            {
+                [System.Diagnostics.CodeAnalysis.SetsRequiredMembers]
+                public UpdateItem() { }
+                public UpdateItem(string audit) { Audit = audit; }
+                {{member}}
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, "Audit = audit,").Should().Be(1);
+    }
+
     [TestMethod]
     public void MinimalApiGeneratorBindsOverriddenAndHiddenPropertiesOnce()
     {
