@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted ([#1184](https://github.com/ARKlab/Ark.Tools/issues/1184)). Step 1 and the first part of step 2 implemented.
+Accepted and implemented ([#1184](https://github.com/ARKlab/Ark.Tools/issues/1184)). Steps 1 and 2 are done; step 3 was dropped.
 
 ## Context
 
@@ -47,5 +47,10 @@ runtime packages could load different versions of it from several paths.
    `HttpStringBinding.cs`, with byte-identical output. Then, with a
    characterization test first, the most correct behaviour; every
    generated-output difference is listed in the pull request.
-3. Shared contract specification, once the in-flight changes to the API surface
-   and gRPC generators have merged.
+   Done in [#1242](https://github.com/ARKlab/Ark.Tools/pull/1242) and
+   [#1243](https://github.com/ARKlab/Ark.Tools/pull/1243). The MCP generator also
+   reads XML documentation and `[Description]` attributes through the shared
+   `XmlDocumentation.cs`, like the Minimal API and gRPC generators.
+3. ~~Shared contract specification.~~ Dropped: each generator keeps its own
+   specification, including source `Location`, so that `#pragma` and editorconfig
+   suppression of its diagnostics keep working.
