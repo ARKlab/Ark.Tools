@@ -2468,6 +2468,44 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void GeneratorsSeparateXmlDocumentationLineBreaksAndParagraphs()
+    {
+        var minimalApi = _runGenerator<ArkMinimalApiEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            /// <summary>First line.<br/>Second line.</summary>
+            /// <remarks><para>First paragraph.</para><para>Second paragraph.</para></remarks>
+            [HttpEndpoint("GET", "/documented")]
+            public sealed class GetDocumented : IQuery<string>
+            {
+                /// <summary>The <see cref="System.String"/>s identifier.</summary>
+                public string Id { get; set; } = string.Empty;
+            }
+            """);
+
+        minimalApi.Should().Contain("WithSummary(\"First line. Second line.\")");
+        minimalApi.Should().Contain("WithDescription(\"First paragraph. Second paragraph.\")");
+        minimalApi.Should().Contain("[\"Id\"] = \"The Strings identifier.\"");
+
+        var grpc = _runGenerator<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            /// <summary>First line.<br/>Second line.</summary>
+            [GrpcService("Documentation")]
+            [GrpcMethod("GetDocumented")]
+            [ProtoContract]
+            public sealed class GetDocumented : IQuery<DocumentedResponse> { }
+            [ProtoContract]
+            public sealed class DocumentedResponse { }
+            """);
+
+        grpc.Should().Contain("// First line. Second line.");
+    }
+
+    [TestMethod]
     public void MinimalApiGeneratorUsesApiGroupAndReportsDuplicateOperationNames()
     {
         var result = _runGeneratorResult<ArkMinimalApiEndpointGenerator>(

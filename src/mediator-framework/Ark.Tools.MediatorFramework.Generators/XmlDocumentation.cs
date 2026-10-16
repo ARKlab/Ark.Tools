@@ -72,6 +72,9 @@ internal static class XmlDocumentation
             XText value => value.Value,
             XElement child when child.Name.LocalName == "see"
                 => child.Attribute("cref")?.Value.TrimStart("!:".ToCharArray()).Split('.').LastOrDefault() ?? string.Empty,
+            // Line breaks and paragraphs separate words even when written without surrounding whitespace.
+            XElement child when child.Name.LocalName is "br" or "para"
+                => " " + _normalize(child) + " ",
             XElement child => _normalize(child) ?? string.Empty,
             _ => string.Empty,
         }));
