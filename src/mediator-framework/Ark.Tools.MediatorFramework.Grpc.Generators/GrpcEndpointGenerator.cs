@@ -1190,15 +1190,16 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ?? 200;
         }
 
-        // The walk returns the most-derived declaration; an override that does not repeat [ProtoMember] keeps the base tag.
-        private static AttributeData? ProtoMemberAttribute(IPropertySymbol property)
+        // The walk returns the most-derived declaration. An override that does not repeat [ProtoMember] keeps the
+        // base declaration's tag and proto metadata, so the declaration carrying it is the one read.
+        private static (IPropertySymbol Property, AttributeData Attribute)? ProtoMemberDeclaration(IPropertySymbol property)
         {
             for (var current = property; current is not null; current = current.OverriddenProperty)
             {
                 var attribute = current.GetAttributes().FirstOrDefault(static attribute =>
                     attribute.AttributeClass._isFullName("ProtoBuf.ProtoMemberAttribute"));
                 if (attribute is not null)
-                    return attribute;
+                    return (current, attribute);
             }
 
             return null;
@@ -1207,13 +1208,9 @@ namespace Ark.Tools.MediatorFramework.Generators
         private static ProtoContractModel CreateProtoContract(INamedTypeSymbol type, AttributeData protoContract, CancellationToken cancellationToken)
         {
             var members = ContractProperties.All(type)
-                .Select(property => new
-                {
-                    Property = property,
-                    Attribute = ProtoMemberAttribute(property),
-                })
-                .Where(item => item.Attribute is not null)
-                .Select(item => CreateProtoMember(type, item.Property, item.Attribute!, cancellationToken))
+                .Select(ProtoMemberDeclaration)
+                .Where(static declaration => declaration is not null)
+                .Select(declaration => CreateProtoMember(type, declaration!.Value.Property, declaration.Value.Attribute, cancellationToken))
                 .Where(member => member.Number > 0)
                 .ToImmutableArray();
 
