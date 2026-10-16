@@ -43,4 +43,5 @@
                       ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+  <Import Project="../../src/mediator-framework/Ark.Tools.MediatorFramework.Mcp/buildTransitive/Ark.Tools.MediatorFramework.Mcp.targets" />
 </Project>

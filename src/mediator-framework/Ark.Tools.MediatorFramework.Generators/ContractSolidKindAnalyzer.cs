@@ -54,14 +54,7 @@ public sealed class ContractSolidKindAnalyzer : DiagnosticAnalyzer
                 if (type.IsAbstract)
                     return;
 
-                var kindCount = 0;
-                if (_implements(type, query1, query2))
-                    kindCount++;
-                if (_implements(type, request1, request2))
-                    kindCount++;
-                if (_implements(type, command0, command1))
-                    kindCount++;
-                if (kindCount <= 1)
+                if (!_hasMultipleKinds(type, query1, query2, request1, request2, command0, command1))
                     return;
 
                 var location = type.Locations.FirstOrDefault(static candidate => candidate.IsInSource);
@@ -73,12 +66,35 @@ public sealed class ContractSolidKindAnalyzer : DiagnosticAnalyzer
         });
     }
 
-    private static bool _implements(INamedTypeSymbol type, params INamedTypeSymbol?[] definitions)
+    private static bool _hasMultipleKinds(
+        INamedTypeSymbol type,
+        INamedTypeSymbol? query1,
+        INamedTypeSymbol? query2,
+        INamedTypeSymbol? request1,
+        INamedTypeSymbol? request2,
+        INamedTypeSymbol? command0,
+        INamedTypeSymbol? command1)
     {
-        return type.AllInterfaces.Any(@interface => definitions.Any(definition =>
-            definition is not null
-            && (
-                SymbolEqualityComparer.Default.Equals(@interface.OriginalDefinition, definition)
-                || SymbolEqualityComparer.Default.Equals(@interface, definition))));
+        var isQuery = false;
+        var isRequest = false;
+        var isCommand = false;
+
+        foreach (var implementedInterface in type.AllInterfaces)
+        {
+            // A non-generic interface is its own OriginalDefinition, so this also matches ICommand.
+            var originalDefinition = implementedInterface.OriginalDefinition;
+
+            isQuery |= SymbolEqualityComparer.Default.Equals(originalDefinition, query1)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, query2);
+            isRequest |= SymbolEqualityComparer.Default.Equals(originalDefinition, request1)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, request2);
+            isCommand |= SymbolEqualityComparer.Default.Equals(originalDefinition, command0)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, command1);
+
+            if ((isQuery ? 1 : 0) + (isRequest ? 1 : 0) + (isCommand ? 1 : 0) > 1)
+                return true;
+        }
+
+        return false;
     }
 }

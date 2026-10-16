@@ -18,11 +18,6 @@ namespace Ark.Tools.MediatorFramework.Generators;
 [Generator(LanguageNames.CSharp)]
 public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 {
-    private const string _networkAttribute = "Ark.Tools.MediatorFramework.MessagingNetworkAttribute";
-    private const string _participantAttribute = "Ark.Tools.MediatorFramework.MessagingParticipantAttribute";
-    private const string _messageAttribute = "Ark.Tools.MediatorFramework.MessageAttribute";
-    private const string _eventAttribute = "Ark.Tools.MediatorFramework.EventAttribute";
-    private const string _apiGroupAttribute = "Ark.Tools.MediatorFramework.ApiGroupAttribute";
     private const string _requestNamespace = "Ark.Tools.Solid";
     private const string _commandInterface = "Ark.Tools.Solid.ICommand`1";
     private const string _commandInterfaceName = "ICommand`1";
@@ -141,7 +136,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         // emission rerun only when a network, participant, contract or referenced runtime type changes.
         var networks = context.SyntaxProvider
             .ForAttributeWithMetadataName(
-                _networkAttribute,
+                ContractSymbols.MessagingNetworkAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol symbol
                     ? _readNetwork(symbol)
@@ -153,7 +148,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
             .Select(static (values, _) => new EquatableArray<Network>(values));
         var participants = context.SyntaxProvider
             .ForAttributeWithMetadataName(
-                _participantAttribute,
+                ContractSymbols.MessagingParticipantAttribute,
                 static (node, _) => node is TypeDeclarationSyntax,
                 static (attributeContext, _) => attributeContext.TargetSymbol is INamedTypeSymbol symbol
                     ? _readParticipant(symbol)
@@ -483,8 +478,8 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static Network _readNetwork(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().First(static attribute =>
-            attribute.AttributeClass._isFullName(_networkAttribute));
-        var members = _types(attribute, "Members");
+            attribute.AttributeClass._isFullName(ContractSymbols.MessagingNetworkAttribute));
+        var members = ContractSymbols.NamedTypes(attribute, "Members");
         return new Network(
             _readType(symbol),
             symbol.ToDisplayString(),
@@ -501,22 +496,22 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static Participant? _readParticipant(INamedTypeSymbol symbol)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(static attribute =>
-            attribute.AttributeClass._isFullName(_participantAttribute));
+            attribute.AttributeClass._isFullName(ContractSymbols.MessagingParticipantAttribute));
         if (attribute is null)
             return null;
 
-        var explicitIdentity = _string(attribute, "Identity");
+        var explicitIdentity = ContractSymbols.NamedString(attribute, "Identity");
         var identity = explicitIdentity ?? _normalizeIdentity(symbol.Name.EndsWith("Participant", StringComparison.Ordinal)
             ? symbol.Name.Substring(0, symbol.Name.Length - "Participant".Length)
             : symbol.Name);
         var serializers = _enums(attribute, "Serializers");
         var compression = _enum(attribute, "Compression");
-        var compressionMinimumSizeBytes = _int(attribute, "CompressionMinimumSizeBytes");
-        var retryType = _type(attribute, "Retry");
+        var compressionMinimumSizeBytes = ContractSymbols.NamedInt(attribute, "CompressionMinimumSizeBytes");
+        var retryType = ContractSymbols.NamedType(attribute, "Retry");
         var retry = retryType is null ? null : _readRetry(retryType);
-        var processes = _types(attribute, "Processes");
-        var publishes = _types(attribute, "Publishes");
-        var subscribes = _types(attribute, "Subscribes");
+        var processes = ContractSymbols.NamedTypes(attribute, "Processes");
+        var publishes = ContractSymbols.NamedTypes(attribute, "Publishes");
+        var subscribes = ContractSymbols.NamedTypes(attribute, "Subscribes");
         return new Participant(
             _readType(symbol),
             identity,
@@ -677,11 +672,11 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         _contractAttributes(INamedTypeSymbol symbol)
     {
         var message = symbol.GetAttributes().FirstOrDefault(static attribute =>
-            attribute.AttributeClass._isFullName(_messageAttribute));
+            attribute.AttributeClass._isFullName(ContractSymbols.MessageAttribute));
         var @event = symbol.GetAttributes().FirstOrDefault(static attribute =>
-            attribute.AttributeClass._isFullName(_eventAttribute));
+            attribute.AttributeClass._isFullName(ContractSymbols.EventAttribute));
         var source = message ?? @event;
-        return (message, @event, _string(source, "Name"), _strings(source, "FormerNames"));
+        return (message, @event, ContractSymbols.NamedString(source, "Name"), ContractSymbols.NamedStrings(source, "FormerNames"));
     }
 
     // Equivalent to ^V\d+$ on the type name.
@@ -708,7 +703,7 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
     private static string _defaultContractName(INamedTypeSymbol symbol)
     {
         var group = symbol.GetAttributes()
-            .FirstOrDefault(static attribute => attribute.AttributeClass._isFullName(_apiGroupAttribute))
+            .FirstOrDefault(static attribute => attribute.AttributeClass._isFullName(ContractSymbols.ApiGroupAttribute))
             ?.ConstructorArguments.FirstOrDefault().Value as string ?? "Ark";
         return _normalizeLogical(group) + "." + _normalizeLogical(symbol.Name);
     }
@@ -1461,30 +1456,10 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
         context._report(descriptor, contract.Location, arguments);
     }
 
-    private static ImmutableArray<INamedTypeSymbol> _types(AttributeData attribute, string name)
-    {
-        var value = _named(attribute, name);
-        if (value.Kind != TypedConstantKind.Array)
-            return ImmutableArray<INamedTypeSymbol>.Empty;
-        return value.Values
-            .Where(static item => item.Value is INamedTypeSymbol)
-            .Select(static item => (INamedTypeSymbol)item.Value!)
-            .ToImmutableArray();
-    }
-
-    private static ImmutableArray<string> _strings(AttributeData? attribute, string name)
-    {
-        if (attribute is null)
-            return ImmutableArray<string>.Empty;
-        var value = _named(attribute, name);
-        if (value.Kind != TypedConstantKind.Array)
-            return ImmutableArray<string>.Empty;
-        return value.Values.Where(static item => item.Value is string).Select(static item => (string)item.Value!).ToImmutableArray();
-    }
-
+    // _enums and _enum stay local: they cast instead of skipping non-int values like ContractSymbols.NamedInts/NamedInt.
     private static ImmutableArray<int> _enums(AttributeData attribute, string name)
     {
-        var value = _named(attribute, name);
+        var value = ContractSymbols.NamedArgument(attribute, name);
         if (value.Kind != TypedConstantKind.Array)
             return ImmutableArray<int>.Empty;
         return value.Values.Select(static item => (int)item.Value!).ToImmutableArray();
@@ -1492,41 +1467,14 @@ public sealed class MessagingNetworkGenerator : IIncrementalGenerator
 
     private static int _enum(AttributeData attribute, string name)
     {
-        var value = _named(attribute, name);
+        var value = ContractSymbols.NamedArgument(attribute, name);
         return value.Value is null ? default : (int)value.Value;
-    }
-
-    private static int _int(AttributeData attribute, string name)
-    {
-        var value = _named(attribute, name);
-        return value.Value is int integer ? integer : default;
     }
 
     private static int? _optionalInt(AttributeData attribute, string name)
     {
-        var value = _named(attribute, name);
+        var value = ContractSymbols.NamedArgument(attribute, name);
         return value.Value is int integer ? integer : null;
-    }
-
-    private static string? _string(AttributeData? attribute, string name)
-    {
-        var value = attribute is null ? default : _named(attribute, name);
-        return value.Value as string;
-    }
-
-    private static INamedTypeSymbol? _type(AttributeData attribute, string name)
-    {
-        return _named(attribute, name).Value as INamedTypeSymbol;
-    }
-
-    private static TypedConstant _named(AttributeData attribute, string name)
-    {
-        foreach (var argument in attribute.NamedArguments)
-        {
-            if (argument.Key == name)
-                return argument.Value;
-        }
-        return default;
     }
 
     private static DiagnosticDescriptor _descriptor(string id)

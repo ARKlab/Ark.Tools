@@ -424,7 +424,42 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public async Task McpGeneratorPreservesReferencedAssemblyXmlDocumentationFallback()
+    [DataRow("/obj/ArkMcp/McpContracts.arkmcpdoc", true)]
+    [DataRow("/documentation/McpContracts.xml", true)]
+    [DataRow("/documentation/McpContracts.txt", false)]
+    public void McpGeneratorReadsDocumentationByExtension(string path, bool read)
+    {
+        var contracts = _createMetadataReference(
+            "McpContracts",
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            namespace McpContracts;
+            public sealed class Marker { }
+            [McpTool]
+            public sealed class ListOrders : ICommand { }
+            """);
+
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            [ArkGenerateMcpToolsForAssembly(typeof(McpContracts.Marker))]
+            public partial class McpContext { }
+            """,
+            [
+                new TestAdditionalText(
+                    path,
+                    """<doc><members><member name="T:McpContracts.ListOrders"><summary>Lists documented orders.</summary></member></members></doc>"""),
+            ],
+            contracts);
+
+        result.Generated.Contains("Description(\"Lists documented orders.\")", StringComparison.Ordinal).Should().Be(read);
+    }
+
+    [TestMethod]
+    public async Task McpGeneratorIgnoresReferencedAssemblyXmlDocumentationOnDisk()
     {
         var contracts = await _createMetadataReferenceWithXmlAsync(
             "LegacyMcpContracts",
@@ -451,7 +486,7 @@ public sealed class GeneratorSnapshotTests
             [],
             contracts);
 
-        result.Generated.Should().Contain("Description(\"Lists legacy orders.\")");
+        result.Generated.Should().NotContain("Lists legacy orders.");
     }
 
     [TestMethod]
@@ -492,7 +527,7 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
-    public async Task McpGeneratorFallsBackToReferencedXmlDocumentationWhenFirstAdditionalFileIsMalformed()
+    public async Task McpGeneratorIgnoresLaterXmlDocumentationWhenFirstAdditionalFileIsMalformed()
     {
         var contracts = await _createMetadataReferenceWithXmlAsync(
             "MalformedMcpContracts",
@@ -524,8 +559,8 @@ public sealed class GeneratorSnapshotTests
             ],
             contracts);
 
-        // The malformed first-by-path file wins its assembly, so later additional files are not consulted.
-        result.Generated.Should().Contain("Description(\"Lists referenced orders.\")");
+        // The malformed first-by-path file wins its assembly, so neither later additional files nor files on disk are consulted.
+        result.Generated.Should().NotContain("Lists referenced orders.");
         result.Generated.Should().NotContain("Lists orders from b.");
     }
 
@@ -5987,6 +6022,31 @@ public sealed class GeneratorSnapshotTests
         diagnostics.Should().Contain(static diagnostic =>
             diagnostic.Id == "ARKMF021"
             && diagnostic.GetMessage().Contains("can implement only one of IQuery, IRequest, or ICommand"));
+    }
+
+    [TestMethod]
+    public async Task ContractSolidKindAnalyzerRejectsLegacyCommandCombinedWithRequest()
+    {
+        var diagnostics = await _runAnalyzerResult<ContractSolidKindAnalyzer>(
+            """
+            using Ark.Tools.Solid;
+            public sealed class PrintBook : ICommand, IRequest<PrintBook, int> { }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().ContainSingle(static diagnostic => diagnostic.Id == "ARKMF021");
+    }
+
+    [TestMethod]
+    public async Task ContractSolidKindAnalyzerAcceptsContractsWithOneSolidKind()
+    {
+        var diagnostics = await _runAnalyzerResult<ContractSolidKindAnalyzer>(
+            """
+            using Ark.Tools.Solid;
+            public sealed class PrintBook : ICommand<PrintBook> { }
+            public sealed class GetBook : IQuery<GetBook, int> { }
+            """).ConfigureAwait(false);
+
+        diagnostics.Should().NotContain(static diagnostic => diagnostic.Id == "ARKMF021");
     }
 
     [TestMethod]

@@ -41,4 +41,5 @@
 
   <Import Project="../../src/mediator-framework/Ark.Tools.MediatorFramework.Grpc/buildTransitive/Ark.Tools.MediatorFramework.Grpc.targets" />
 
+  <Import Project="../../src/mediator-framework/Ark.Tools.MediatorFramework.Mcp/buildTransitive/Ark.Tools.MediatorFramework.Mcp.targets" />
 </Project>

@@ -66,7 +66,11 @@ namespace Ark.Tools.MediatorFramework.Generators
             var endpointAssemblies = endpointMappings
                 .SelectMany(static (mapping, _) => mapping.Assemblies.Values.Select(static assembly => assembly.Name))
                 .Collect()
-                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies));
+                // Order and duplicates of the mapping calls do not matter, so they must not rescan metadata.
+                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(static assemblyName => assemblyName, StringComparer.Ordinal)
+                    .ToImmutableArray()));
             var sourceEndpoints = context.SyntaxProvider.ForAttributeWithMetadataName(
                     GrpcMethodAttribute,
                     static (node, _) => node is TypeDeclarationSyntax,
@@ -91,12 +95,8 @@ namespace Ark.Tools.MediatorFramework.Generators
                 .Select(static (contract, _) => contract!)
                 .Collect()
                 .Select(static (contracts, _) => new EquatableArray<ProtoContractModel>(contracts));
-            // Sorted and distinct so that reordering mapping calls does not rescan; any source endpoint widens the scope.
+            // Any source endpoint widens the scope.
             var protoContractScope = endpointAssemblies
-                .Select(static (assemblies, _) => new EquatableArray<string>(assemblies.Values
-                    .Distinct(StringComparer.Ordinal)
-                    .OrderBy(static name => name, StringComparer.Ordinal)
-                    .ToImmutableArray()))
                 .Combine(sourceEndpoints.Collect().Select(static (endpoints, _) => !endpoints.IsEmpty));
             var referencedProtoContracts = referenceScope
                 .Combine(protoContractScope)

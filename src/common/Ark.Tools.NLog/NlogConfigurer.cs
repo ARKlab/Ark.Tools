@@ -32,7 +32,11 @@ public static class NLogConfigurer
     [NotPersonalData("Default sender email is a service address, not personal data.")]
     public const string MailFromDefault = "noreply@ark-energy.eu";
 
-    public const string TextLineLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ${message}${onexception:${newline}${exception:format=Message}}";
+    public const string TextLineLayout = _textLinePrefixLayout + _textLineBodyLayout;
+
+    // Split so PII scanning skips the prefix: the timestamp always holds digits and would defeat the scanner prefilter.
+    private const string _textLinePrefixLayout = @"${longdate} ${pad:padding=5:inner=${level:uppercase=true}} ${pad:padding=-20:inner=${logger:shortName=true}} ";
+    private const string _textLineBodyLayout = @"${message}${onexception:${newline}${exception:format=Message}}";
 
     static NLogConfigurer()
     {
@@ -568,7 +572,14 @@ VALUES
 
         private Layout _createTextLineLayout()
         {
-            return _createScannedLayout(Layout.FromString(TextLineLayout));
+            return new CompoundLayout
+            {
+                Layouts =
+                {
+                    Layout.FromString(_textLinePrefixLayout),
+                    _createScannedLayout(Layout.FromString(_textLineBodyLayout)),
+                },
+            };
         }
 
         private Layout _createMessageLayout()
