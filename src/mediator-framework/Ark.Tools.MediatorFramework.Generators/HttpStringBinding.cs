@@ -247,7 +247,7 @@ internal static class HttpStringBinding
         return !IsStringBindable(type)
             && !HasTypeConverterAttribute(type)
             && type is INamedTypeSymbol named
-            && _allProperties(named).Any(static property => !property.IsStatic
+            && ContractProperties.All(named).Any(static property => !property.IsStatic
                 && property.DeclaredAccessibility == Accessibility.Public
                 && property.SetMethod is { DeclaredAccessibility: Accessibility.Public });
     }
@@ -255,13 +255,6 @@ internal static class HttpStringBinding
     private static IEnumerable<INamedTypeSymbol> _enumerableInterfaces(ITypeSymbol type)
         => (type is INamedTypeSymbol named ? type.AllInterfaces.Append(named) : type.AllInterfaces)
             .Where(static candidate => candidate.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T);
-
-    private static IEnumerable<IPropertySymbol> _allProperties(INamedTypeSymbol type)
-    {
-        for (var current = type; current is not null; current = current.BaseType)
-            foreach (var property in current.GetMembers().OfType<IPropertySymbol>())
-                yield return property;
-    }
 
     /// <summary>Gets the strategy that converts a route or query string value to the type.</summary>
     /// <param name="type">The value type.</param>

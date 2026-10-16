@@ -296,7 +296,7 @@ internal static class AzureFunctionsEndpointParser
             StringComparer.OrdinalIgnoreCase);
 
         // Extract per-property binding info at generation time (no runtime reflection per request)
-        var properties = _allProperties(type)
+        var properties = ContractProperties.All(type)
             .Where(static p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic
                 && p.SetMethod is { DeclaredAccessibility: Accessibility.Public })
             .Select(p =>
@@ -348,7 +348,7 @@ internal static class AzureFunctionsEndpointParser
             .ToImmutableArray();
         var responseETagProperty = responseSymbol is null
             ? null
-            : _allProperties(responseSymbol)
+            : ContractProperties.All(responseSymbol)
                 .FirstOrDefault(static property => property.GetAttributes().Any(static attribute =>
                     attribute.AttributeClass._isFullName(ContractSymbols.ETagAttribute)))
                 ?.Name;
@@ -383,7 +383,7 @@ internal static class AzureFunctionsEndpointParser
             type.IsRecord,
             _constructorParameters(type, properties),
             // The function sets bound properties after constructing the contract, so it cannot bind these.
-            _allProperties(type)
+            ContractProperties.All(type)
                 .Where(p => p.DeclaredAccessibility == Accessibility.Public && !p.IsStatic && !p.IsIndexer
                     && p.SetMethod is not { DeclaredAccessibility: Accessibility.Public }
                     && (routeNames.Contains(p.Name) || p.GetAttributes().Any(static a =>
@@ -489,13 +489,6 @@ internal static class AzureFunctionsEndpointParser
             foreach (var child in _allNestedTypes(nested))
                 yield return child;
         }
-    }
-
-    private static IEnumerable<IPropertySymbol> _allProperties(INamedTypeSymbol type)
-    {
-        for (var current = type; current is not null; current = current.BaseType)
-            foreach (var member in current.GetMembers().OfType<IPropertySymbol>())
-                yield return member;
     }
 
     private static string _typeName(INamedTypeSymbol type)
