@@ -1208,6 +1208,135 @@ public sealed class GeneratorSnapshotTests
         azure.Generated.Should().Contain("body = body with { Id = _value_Id! };");
     }
 
+    private const string _overriddenAndHiddenContract =
+        """
+        using Ark.Tools.MediatorFramework;
+        using Ark.Tools.MediatorFramework.Mcp;
+        using Ark.Tools.Solid;
+        [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+        public sealed class ContractMarker { }
+        public record BaseRequest
+        {
+            [HttpQuery]
+            public virtual string Audit { get; init; } = string.Empty;
+            [HttpQuery]
+            public string Tenant { get; init; } = string.Empty;
+        }
+        /// <summary>Updates an item.</summary>
+        [HttpEndpoint("POST", "/items/{id}")]
+        [GrpcMethod("Update")]
+        [GrpcService("Items")]
+        [McpTool(Name = "items.update")]
+        public sealed record Update : BaseRequest, IRequest<Update, string>
+        {
+            [HttpRoute]
+            public System.Guid Id { get; init; }
+            [HttpQuery]
+            public override string Audit { get; init; } = string.Empty;
+            [HttpQuery]
+            public new string Tenant { get; init; } = string.Empty;
+        }
+        [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+        public partial class McpContext { }
+        """;
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsOverriddenAndHiddenPropertiesOnce()
+    {
+        // The generated endpoint calls (MapGroup, Produces) rely on the Web SDK's implicit usings.
+        var (generated, errors) = _runAndCompile<ArkMinimalApiEndpointGenerator>(
+            """
+            global using Microsoft.AspNetCore.Builder;
+            global using Microsoft.AspNetCore.Http;
+            global using Microsoft.AspNetCore.Routing;
+            global using Microsoft.Extensions.DependencyInjection;
+
+            """ + _overriddenAndHiddenContract);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, " Audit = Audit").Should().Be(1);
+        _occurrences(generated, " Tenant = Tenant").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorBindsOverriddenAndHiddenPropertiesOnce()
+    {
+        var (generated, errors) = _runAndCompile<AzureFunctionsEndpointGenerator>(_overriddenAndHiddenContract);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, "Audit = ").Should().Be(1);
+        _occurrences(generated, "Tenant = ").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorMapsOverriddenAndHiddenPropertiesOnce()
+    {
+        var (generated, errors) = _runAndCompile<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [ProtoContract]
+            public class BaseRequest
+            {
+                [ProtoMember(1)]
+                public virtual string Audit { get; set; } = string.Empty;
+                [ProtoMember(2)]
+                public string Tenant { get; set; } = string.Empty;
+            }
+            [GrpcMethod("Update")]
+            [GrpcService("Items")]
+            [ProtoContract]
+            public sealed class Update : BaseRequest, IRequest<Update, UpdateResponse>
+            {
+                [ProtoMember(1)]
+                public override string Audit { get; set; } = string.Empty;
+                [ProtoMember(2)]
+                public new string Tenant { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class UpdateResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, " audit = ").Should().Be(1);
+        _occurrences(generated, " tenant = ").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorListsOverriddenAndHiddenPropertiesOnce()
+    {
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(_overriddenAndHiddenContract);
+
+        _occurrences(generated, "CONTRACT Update.Audit ").Should().Be(1);
+        _occurrences(generated, "CONTRACT Update.Tenant ").Should().Be(1);
+    }
+
+    private static (string Generated, IReadOnlyList<Diagnostic> Errors) _runAndCompile<TGenerator>(string source)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var (driver, compilation) = _runGeneratorDriver<TGenerator>(source, []);
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+        var generated = string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()));
+        var errors = generatedCompilation.GetDiagnostics()
+            .Concat(driver.GetRunResult().Diagnostics)
+            .Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToList();
+        return (generated, errors);
+    }
+
+    private static int _occurrences(string text, string value)
+    {
+        var count = 0;
+        for (var index = text.IndexOf(value, StringComparison.Ordinal); index >= 0; index = text.IndexOf(value, index + value.Length, StringComparison.Ordinal))
+            count++;
+        return count;
+    }
+
     [TestMethod]
     public void AzureFunctionsGeneratorBindsETagPreconditionAndEmitsResponseETag()
     {
