@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools now include the properties a contract inherits from its base types and use the same versioning defaults as the other transports, so a contract with `[Versioning]` but no `Introduced` is available from version 1.
 - `Ark.Tools.MediatorFramework`: contracts that override a base property or hide it with `new` now get one binding for it, from the most-derived public declaration; a non-public `new` property does not hide the public one it shadows. Before, the Minimal API and Azure Functions endpoints failed to compile and gRPC mapped the property twice.
+- `Ark.Tools.MediatorFramework.MinimalApi`: the generated endpoints compile without the Web SDK's implicit usings, for example in a `Microsoft.NET.Sdk` class library with `ImplicitUsings` off. Before, they failed with CS1061 on `MapGroup`, `Produces` and the other endpoint conventions.
 
 ## [7.0.0-beta19] - 2026-10-16
 
