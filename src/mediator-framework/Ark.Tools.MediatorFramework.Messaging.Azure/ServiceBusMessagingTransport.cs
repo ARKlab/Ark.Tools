@@ -4,6 +4,7 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 using Azure.Messaging.ServiceBus;
 
@@ -12,6 +13,7 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Azure Service Bus implementation of the messaging transport contract.</summary>
 public sealed class ServiceBusMessagingTransport :
     IMessagingTransport,
+    IMessagingBatchTransport,
     IMessagingMessageSource,
     IAsyncDisposable,
     IMessagingTransport<ServiceBusMessagingTransport>
@@ -163,6 +165,59 @@ public sealed class ServiceBusMessagingTransport :
         await sender.SendMessageAsync(_toNativeMessage(headers, payload), ctk).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// The envelopes go in <see cref="ServiceBusMessageBatch"/>es in order, as many as the entity's size limit needs.
+    /// A scheduled envelope travels in the same batch with <see cref="ServiceBusMessage.ScheduledEnqueueTime"/> set.
+    /// </remarks>
+    public async Task<IReadOnlyList<TimeSpan>> SendBatchAsync(
+        string destination,
+        bool isTopic,
+        IReadOnlyList<MessagingBatchEntry> messages,
+        CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(destination);
+        ArgumentNullException.ThrowIfNull(messages);
+        destination = ToNativeEntityName(destination);
+        // Validate every envelope before the first call, so a bad one cannot follow already accepted batches.
+        foreach (var entry in messages)
+        {
+            ArgumentNullException.ThrowIfNull(entry.Headers, nameof(messages));
+            _validateSize(entry.Headers, entry.Payload);
+        }
+
+        var sender = _senders.GetOrAdd(
+            destination,
+            static (entity, client) => client.CreateSender(entity),
+            _client);
+        var durations = new TimeSpan[messages.Count];
+        var start = 0;
+        while (start < messages.Count)
+        {
+            using var batch = await sender.CreateMessageBatchAsync(ctk).ConfigureAwait(false);
+            var end = start;
+            while (end < messages.Count && batch.TryAddMessage(_toNativeMessage(messages[end])))
+                end++;
+            if (end == start)
+            {
+                throw new InvalidOperationException(
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        "An outbox message for '{0}' does not fit an empty Service Bus batch.",
+                        destination));
+            }
+
+            var stopwatch = Stopwatch.StartNew();
+            await sender.SendMessagesAsync(batch, ctk).ConfigureAwait(false);
+            stopwatch.Stop();
+            for (var i = start; i < end; i++)
+                durations[i] = stopwatch.Elapsed;
+            start = end;
+        }
+
+        return durations;
+    }
+
     /// <summary>Gets the hard cap on a single receive, or <see cref="int.MaxValue"/> when uncapped.</summary>
     /// <remarks>
     /// Service Bus imposes no server-side cap. An uncapped transport is the conservative choice, not
@@ -277,6 +332,14 @@ public sealed class ServiceBusMessagingTransport :
         foreach (var pair in headers)
             message.ApplicationProperties.Add(pair.Key, pair.Value);
 
+        return message;
+    }
+
+    private static ServiceBusMessage _toNativeMessage(in MessagingBatchEntry entry)
+    {
+        var message = _toNativeMessage(entry.Headers, entry.Payload);
+        if (entry.DueTime is { } dueTime)
+            message.ScheduledEnqueueTime = dueTime;
         return message;
     }
 
