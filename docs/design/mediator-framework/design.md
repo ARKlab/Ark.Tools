@@ -922,7 +922,7 @@ snapshot is the gate at every stage of the pipeline.
 **Entry format** (deterministic, ordinal-sorted; messaging entries use blocks):
 
 ```
-CONTRACT GetGreetingQuery -> GreetingDto [group=Greetings] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/{id}] [version=1+] [grpc=GetGreeting] [grpc-version=1+]
+CONTRACT GetGreetingQuery -> GreetingDto [group=Greetings] [grpc-group=Greetings] [http=GET /api/v{version}/greetings/{id}] [grpc=GetGreeting] [version=1+]
 CONTRACT GetGreetingQuery.Id : Guid
 CONTRACT GreetingDto.Name : string?
 CONTRACT GreetingDto.Status : EvolvableEnum<GreetingStatus>
