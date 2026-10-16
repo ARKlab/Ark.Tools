@@ -28,6 +28,7 @@ public sealed class ServiceBusMessagingTransport :
 
     private readonly ServiceBusClient _client;
     private readonly IReadOnlyList<ServiceBusClient> _clients;
+    private static readonly CreateMessageBatchOptions _batchOptions = new() { MaxSizeInBytes = MaximumPayloadSizeBytes };
     private readonly ConcurrentDictionary<string, ServiceBusSender> _senders = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, ServiceBusReceiver[]> _receivers = new(StringComparer.Ordinal);
     private readonly int _receiveChannels;
@@ -167,7 +168,7 @@ public sealed class ServiceBusMessagingTransport :
 
     /// <inheritdoc />
     /// <remarks>
-    /// The envelopes go in <see cref="ServiceBusMessageBatch"/>es in order, as many as the entity's size limit needs.
+    /// The envelopes go in order into <see cref="ServiceBusMessageBatch"/>es of at most <see cref="MaximumPayloadSizeBytes"/>.
     /// A scheduled envelope travels in the same batch with <see cref="ServiceBusMessage.ScheduledEnqueueTime"/> set.
     /// </remarks>
     public async Task<IReadOnlyList<TimeSpan>> SendBatchAsync(
@@ -194,7 +195,8 @@ public sealed class ServiceBusMessagingTransport :
         var start = 0;
         while (start < messages.Count)
         {
-            using var batch = await sender.CreateMessageBatchAsync(ctk).ConfigureAwait(false);
+            // Premium links allow messages far above the 1 MB batch limit; the standard-tier size keeps every batch valid.
+            using var batch = await sender.CreateMessageBatchAsync(_batchOptions, ctk).ConfigureAwait(false);
             var end = start;
             while (end < messages.Count && batch.TryAddMessage(_toNativeMessage(messages[end])))
                 end++;

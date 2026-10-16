@@ -83,7 +83,11 @@ public sealed class ServiceBusMessagingBatchSendTests
     [TestMethod]
     public async Task SendBatchSchedulesMessagesWithADueTime()
     {
-        var dueTime = DateTimeOffset.UtcNow.AddSeconds(5);
+        var receiver = _client.CreateReceiver(
+            _queueName,
+            new ServiceBusReceiverOptions { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+        await using var __receiver = receiver.ConfigureAwait(false);
+        var dueTime = DateTimeOffset.UtcNow.AddSeconds(15);
         var entries = new List<MessagingBatchEntry>
         {
             _entry("m1", [1]),
@@ -92,16 +96,21 @@ public sealed class ServiceBusMessagingBatchSendTests
 
         await _transport.SendBatchAsync(_queueName, false, entries, default).ConfigureAwait(false);
 
-        var immediate = await _receiveAsync(2, TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        var immediate = await _receiveAsync(receiver, 1, TimeSpan.FromSeconds(10)).ConfigureAwait(false);
         immediate.Select(static message => (string)message.ApplicationProperties[MessagingHeaders.MessageId])
             .Should().Equal("m1");
-        var receiver = _client.CreateReceiver(_queueName);
-        await using var __receiver = receiver.ConfigureAwait(false);
+        var early = await receiver.ReceiveMessagesAsync(1, TimeSpan.FromSeconds(2)).ConfigureAwait(false);
+        early.Should().BeEmpty();
         var peeked = await receiver.PeekMessagesAsync(10).ConfigureAwait(false);
         var scheduled = peeked.Single(static message =>
             (string)message.ApplicationProperties[MessagingHeaders.MessageId] == "m2");
         scheduled.State.Should().Be(ServiceBusMessageState.Scheduled);
         scheduled.ScheduledEnqueueTime.Should().BeCloseTo(dueTime, TimeSpan.FromSeconds(1));
+        var late = (await _receiveAsync(receiver, 1, TimeSpan.FromSeconds(60)).ConfigureAwait(false)).Single();
+        late.ApplicationProperties[MessagingHeaders.MessageId].Should().Be("m2");
+        late.ApplicationProperties["x-custom"].Should().Be("custom-value");
+        late.Body.ToArray().Should().Equal(2);
+        late.EnqueuedTime.Should().BeOnOrAfter(dueTime.AddSeconds(-1));
     }
 
     [TestMethod]
@@ -142,6 +151,14 @@ public sealed class ServiceBusMessagingBatchSendTests
             _queueName,
             new ServiceBusReceiverOptions { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
         await using var __receiver = receiver.ConfigureAwait(false);
+        return await _receiveAsync(receiver, count, timeout).ConfigureAwait(false);
+    }
+
+    private static async Task<List<ServiceBusReceivedMessage>> _receiveAsync(
+        ServiceBusReceiver receiver,
+        int count,
+        TimeSpan timeout)
+    {
         var received = new List<ServiceBusReceivedMessage>();
         var deadline = DateTimeOffset.UtcNow + timeout;
         while (received.Count < count && DateTimeOffset.UtcNow < deadline)
