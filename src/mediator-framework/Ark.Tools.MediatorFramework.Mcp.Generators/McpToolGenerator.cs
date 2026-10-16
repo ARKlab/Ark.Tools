@@ -340,7 +340,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 .OrderBy(static contract => contract.TypeFullName, StringComparer.Ordinal)
                 .ToImmutableArray();
             foreach (var contract in distinctContracts)
+            {
                 documentationAssemblyNames.Add(contract.AssemblyName);
+                // An inherited property can be documented in its base type's assembly.
+                foreach (var property in contract.Properties)
+                    documentationAssemblyNames.Add(property.Documentation.AssemblyName);
+            }
 
             var marker = group.First();
             contextGroups.Add(new ContextGroup(marker.Context, marker.InvalidLocation, distinctContracts));
@@ -493,26 +498,27 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             name = groupName + "." + name;
         var version = type.GetAttributes()
             .FirstOrDefault(attribute => attribute.AttributeClass._isFullName(ContractSymbols.VersioningAttribute));
-        var introduced = version is null ? 1 : ContractSymbols.NamedInt(version, "Introduced");
+        var introduced = ContractSymbols.NamedInt(version, "Introduced", 1);
         var retired = version is null ? 0 : ContractSymbols.NamedInt(version, "Retired");
 
         if (name.Length is 0 or > 128 || name.Any(character => !(char.IsLetterOrDigit(character) || character is '_' or '-' or '.')))
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(InvalidName, location, name));
 
-        var properties = type.GetMembers()
-            .OfType<IPropertySymbol>()
+        var properties = ContractProperties.All(type)
             .Where(property => property.DeclaredAccessibility == Accessibility.Public && !property.IsStatic)
             .OrderBy(property => property.MetadataName, StringComparer.Ordinal)
             .ToImmutableArray();
+        var constructors = UsableConstructors(type, properties);
         var diagnostics = new List<DiagnosticInfo>();
         foreach (var property in properties)
         {
-            if (property.IsIndexer || property.SetMethod is null && !HasConstructorParameter(type, property))
+            if (property.IsIndexer || !HasPublicSetter(type, property) && !constructors.Any(constructor => constructor.Parameters.Any(parameter =>
+                string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase))))
                 diagnostics.Add(new DiagnosticInfo(UnsupportedMember, property.Locations.FirstOrDefault(), contractName, property.Name));
         }
         if (diagnostics.Count > 0)
             return ContractModel.Invalid(typeFullName, assemblyName, location, diagnostics.ToArray());
-        var constructor = FindConstructor(type, properties);
+        var constructor = FindConstructor(type, constructors, properties);
         if (constructor is null)
             return ContractModel.Invalid(typeFullName, assemblyName, location, new DiagnosticInfo(MissingConstructor, location, contractName));
 
@@ -548,7 +554,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     property.Name,
                     ToInputType(property.Type),
                     IsAttachment(property.Type),
-                    property.SetMethod is not null,
+                    HasPublicSetter(type, property),
                     TryGetDescription(property, out var propertyDescription),
                     propertyDescription,
                     CreateDocumentationSource(property)))
@@ -610,9 +616,34 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         return new ToolModel(contract, description.Length == 0 ? null : description, propertyDescriptions);
     }
 
-    private static bool HasConstructorParameter(INamedTypeSymbol type, IPropertySymbol property)
-        => type.Constructors.Any(constructor => constructor.Parameters.Any(parameter =>
-            string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase)));
+    // Like Minimal API and Azure Functions, the generated tool only calls public setters and constructors.
+    // An object initializer on the contract would bind a non-public member of the same name declared closer to
+    // the contract, so a public property hidden that way is not settable.
+    private static bool HasPublicSetter(INamedTypeSymbol type, IPropertySymbol property)
+        => property.SetMethod is { DeclaredAccessibility: Accessibility.Public } && !IsHiddenByNonPublic(type, property);
+
+    // The walk returns the most-derived public declaration, so any member of that name in a more-derived type is non-public.
+    private static bool IsHiddenByNonPublic(INamedTypeSymbol type, IPropertySymbol property)
+    {
+        for (var current = type;
+            current is not null && !SymbolEqualityComparer.Default.Equals(current, property.ContainingType);
+            current = current.BaseType)
+        {
+            if (!current.GetMembers(property.Name).IsEmpty)
+                return true;
+        }
+
+        return false;
+    }
+
+    // A constructor is usable when it is public and each parameter takes a contract property of the same type by value.
+    private static ImmutableArray<IMethodSymbol> UsableConstructors(INamedTypeSymbol type, ImmutableArray<IPropertySymbol> properties)
+        => type.Constructors
+            .Where(constructor => constructor.DeclaredAccessibility == Accessibility.Public && constructor.Parameters.All(parameter =>
+                parameter.RefKind == RefKind.None && properties.Any(property =>
+                    string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)
+                    && SymbolEqualityComparer.Default.Equals(property.Type, parameter.Type))))
+            .ToImmutableArray();
 
     private static bool IsAttachment(ITypeSymbol type)
         => type is INamedTypeSymbol namedType
@@ -937,11 +968,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             ? ToParameterName(property.Name) + ".ToAttachment()"
             : ToParameterName(property.Name);
 
-    private static IMethodSymbol? FindConstructor(INamedTypeSymbol type, ImmutableArray<IPropertySymbol> properties)
-        => type.Constructors
-            .Where(candidate => candidate.Parameters.All(parameter =>
-                properties.Any(property => string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase))))
-            .Where(candidate => properties.Where(property => property.SetMethod is null).All(property =>
+    private static IMethodSymbol? FindConstructor(INamedTypeSymbol type, ImmutableArray<IMethodSymbol> constructors, ImmutableArray<IPropertySymbol> properties)
+        => constructors
+            .Where(candidate => properties.Where(property => !HasPublicSetter(type, property)).All(property =>
                 candidate.Parameters.Any(parameter => string.Equals(parameter.Name, property.Name, StringComparison.OrdinalIgnoreCase))))
             .OrderByDescending(candidate => candidate.Parameters.Length)
             .FirstOrDefault();

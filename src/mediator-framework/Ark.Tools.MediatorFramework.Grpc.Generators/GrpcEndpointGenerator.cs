@@ -1190,17 +1190,27 @@ namespace Ark.Tools.MediatorFramework.Generators
                 ?? 200;
         }
 
+        // The walk returns the most-derived declaration. An override that does not repeat [ProtoMember] keeps the
+        // base declaration's tag and proto metadata, so the declaration carrying it is the one read.
+        private static (IPropertySymbol Property, AttributeData Attribute)? ProtoMemberDeclaration(IPropertySymbol property)
+        {
+            for (var current = property; current is not null; current = current.OverriddenProperty)
+            {
+                var attribute = current.GetAttributes().FirstOrDefault(static attribute =>
+                    attribute.AttributeClass._isFullName("ProtoBuf.ProtoMemberAttribute"));
+                if (attribute is not null)
+                    return (current, attribute);
+            }
+
+            return null;
+        }
+
         private static ProtoContractModel CreateProtoContract(INamedTypeSymbol type, AttributeData protoContract, CancellationToken cancellationToken)
         {
             var members = ContractProperties.All(type)
-                .Select(property => new
-                {
-                    Property = property,
-                    Attribute = property.GetAttributes().FirstOrDefault(attribute =>
-                        attribute.AttributeClass._isFullName("ProtoBuf.ProtoMemberAttribute")),
-                })
-                .Where(item => item.Attribute is not null)
-                .Select(item => CreateProtoMember(type, item.Property, item.Attribute!, cancellationToken))
+                .Select(ProtoMemberDeclaration)
+                .OfType<(IPropertySymbol Property, AttributeData Attribute)>()
+                .Select(declaration => CreateProtoMember(type, declaration.Property, declaration.Attribute, cancellationToken))
                 .Where(member => member.Number > 0)
                 .ToImmutableArray();
 

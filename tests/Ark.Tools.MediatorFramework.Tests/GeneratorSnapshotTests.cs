@@ -1208,6 +1208,501 @@ public sealed class GeneratorSnapshotTests
         azure.Generated.Should().Contain("body = body with { Id = _value_Id! };");
     }
 
+    private const string _overriddenAndHiddenContract =
+        """
+        using Ark.Tools.MediatorFramework;
+        using Ark.Tools.MediatorFramework.Mcp;
+        using Ark.Tools.Solid;
+        [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+        public sealed class ContractMarker { }
+        public record BaseRequest
+        {
+            [HttpQuery]
+            public virtual string Audit { get; init; } = string.Empty;
+            [HttpQuery]
+            public string Tenant { get; init; } = string.Empty;
+        }
+        /// <summary>Updates an item.</summary>
+        [HttpEndpoint("POST", "/items/{id}")]
+        [GrpcMethod("Update")]
+        [GrpcService("Items")]
+        [McpTool(Name = "items.update")]
+        public sealed record Update : BaseRequest, IRequest<Update, string>
+        {
+            [HttpRoute]
+            public System.Guid Id { get; init; }
+            [HttpQuery]
+            public override string Audit { get; init; } = string.Empty;
+            [HttpQuery]
+            public new string Tenant { get; init; } = string.Empty;
+        }
+        [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+        public partial class McpContext { }
+        """;
+
+    [TestMethod]
+    public void McpGeneratorIncludesInheritedProperties()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            public record BaseRequest
+            {
+                public string Audit { get; init; } = string.Empty;
+            }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem(int Id) : BaseRequest, IRequest<UpdateItem, string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("string audit");
+        generated.Should().Contain("Audit = audit,");
+    }
+
+    [TestMethod]
+    public void McpGeneratorReadsInheritedPropertyDocumentationFromTheBaseAssembly()
+    {
+        var baseContracts = _createMetadataReference(
+            "McpBaseContracts",
+            """
+            namespace McpBaseContracts;
+            public record BaseRequest
+            {
+                public string Audit { get; init; } = string.Empty;
+            }
+            """);
+
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem(int Id) : McpBaseContracts.BaseRequest, IRequest<UpdateItem, string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """,
+            [
+                new TestAdditionalText(
+                    "/documentation/McpBaseContracts.xml",
+                    """<doc><members><member name="P:McpBaseContracts.BaseRequest.Audit"><summary>Who made the change.</summary></member></members></doc>"""),
+            ],
+            baseContracts);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("Description(\"Who made the change.\")");
+    }
+
+    [TestMethod]
+    [DataRow("public record BaseRequest { public string Audit { get; protected init; } = string.Empty; }", "BaseRequest, ")]
+    [DataRow("public record BaseRequest { }", "BaseRequest, ", "public string Audit { get; private set; } = string.Empty;")]
+    [DataRow("public record BaseRequest { }", "BaseRequest, ", "public string Audit { get; protected set; } = string.Empty;")]
+    public void McpGeneratorReportsPropertiesItCannotSet(string baseType, string inheritance, string member = "")
+    {
+        var (_, errors) = _runAndCompile<McpToolGenerator>(
+            $$"""
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            {{baseType}}
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem : {{inheritance}}IRequest<UpdateItem, string>
+            {
+                public int Id { get; init; }
+                {{member}}
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Select(static error => error.Id).Should().Equal("ARKMF053");
+    }
+
+    [TestMethod]
+    public void McpGeneratorBindsAPropertyWithAnInaccessibleSetterThroughTheConstructor()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed class UpdateItem : IRequest<UpdateItem, string>
+            {
+                public UpdateItem(string audit) { Audit = audit; }
+                public string Audit { get; private set; }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("new global::UpdateItem(audit)");
+    }
+
+    [TestMethod]
+    public void McpGeneratorReportsAPrivateSetterEvenFromAContextNestedInTheContract()
+    {
+        // Like Minimal API and Azure Functions, MCP binds only public setters, whatever the context layout.
+        var (_, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed partial record UpdateItem : IRequest<UpdateItem, string>
+            {
+                public string Audit { get; private set; } = string.Empty;
+                [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+                public partial class McpContext { }
+            }
+            """);
+
+        errors.Select(static error => error.Id).Should().Equal("ARKMF053");
+    }
+
+    [TestMethod]
+    public void McpGeneratorReportsAPublicPropertyHiddenByAnInternalOne()
+    {
+        // The object initializer would bind the internal int Audit, not the public string one the tool reads.
+        var (_, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            public class BaseRequest
+            {
+                public string Audit { get; set; } = string.Empty;
+            }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed class UpdateItem : BaseRequest, IRequest<UpdateItem, string>
+            {
+                internal new int Audit { get; set; }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Select(static error => error.Id).Should().Equal("ARKMF053");
+    }
+
+    [TestMethod]
+    public void McpGeneratorSkipsConstructorsWhoseParameterTypesDoNotMatch()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            public class BaseRequest
+            {
+                public string Audit { get; set; } = string.Empty;
+            }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed class UpdateItem : BaseRequest, IRequest<UpdateItem, string>
+            {
+                public UpdateItem() { }
+                public UpdateItem(int audit) { Audit = audit.ToString(System.Globalization.CultureInfo.InvariantCulture); }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("new global::UpdateItem()");
+        generated.Should().Contain("Audit = audit,");
+    }
+
+    [TestMethod]
+    public void McpGeneratorSkipsConstructorsItCannotCall()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            public class BaseRequest
+            {
+                public string Audit { get; set; } = string.Empty;
+            }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed class UpdateItem : BaseRequest, IRequest<UpdateItem, string>
+            {
+                public UpdateItem() { }
+                private UpdateItem(string audit) { Audit = audit; }
+            }
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("new global::UpdateItem()");
+        generated.Should().Contain("Audit = audit,");
+    }
+
+    [TestMethod]
+    public void McpGeneratorDefaultsIntroducedToOneLikeTheVersioningAttribute()
+    {
+        // [Versioning] without Introduced means version 1, as the attribute's default and the other generators say.
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Gets an item.</summary>
+            [McpTool(Name = "items.get")]
+            [Versioning]
+            public sealed record GetItem(int Id) : IQuery<GetItem, string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("[1] = [\"items.get\"]");
+    }
+
+    [TestMethod]
+    public void McpGeneratorBindsOverriddenAndHiddenPropertiesOnce()
+    {
+        var (generated, errors) = _runAndCompile<McpToolGenerator>(_overriddenAndHiddenContract);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, "Audit = audit,").Should().Be(1);
+        _occurrences(generated, "Tenant = tenant,").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsOverriddenAndHiddenPropertiesOnce()
+    {
+        // The generated endpoint calls (MapGroup, Produces) rely on the Web SDK's implicit usings.
+        var (generated, errors) = _runAndCompile<ArkMinimalApiEndpointGenerator>(
+            """
+            global using Microsoft.AspNetCore.Builder;
+            global using Microsoft.AspNetCore.Http;
+            global using Microsoft.AspNetCore.Routing;
+            global using Microsoft.Extensions.DependencyInjection;
+
+            """ + _overriddenAndHiddenContract);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, " Audit = Audit").Should().Be(1);
+        _occurrences(generated, " Tenant = Tenant").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorBindsOverriddenAndHiddenPropertiesOnce()
+    {
+        var (generated, errors) = _runAndCompile<AzureFunctionsEndpointGenerator>(_overriddenAndHiddenContract);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, "Audit = ").Should().Be(1);
+        _occurrences(generated, "Tenant = ").Should().Be(1);
+    }
+
+    // A private new member does not hide the public base property from callers outside the type.
+    private const string _privatelyHiddenContract =
+        """
+        using Ark.Tools.MediatorFramework;
+        using Ark.Tools.Solid;
+        [assembly: Ark.Tools.MediatorFramework.HttpHost(typeof(ContractMarker), "/api/v{version}")]
+        public sealed class ContractMarker { }
+        public record BaseRequest
+        {
+            [HttpQuery]
+            public string Tenant { get; init; } = string.Empty;
+        }
+        [HttpEndpoint("POST", "/items/{id}")]
+        public sealed record Update : BaseRequest, IRequest<Update, string>
+        {
+            [HttpRoute]
+            public System.Guid Id { get; init; }
+            private new string Tenant { get; init; } = string.Empty;
+        }
+        """;
+
+    [TestMethod]
+    public void MinimalApiGeneratorBindsAPublicBasePropertyHiddenByAPrivateOne()
+    {
+        var (generated, errors) = _runAndCompile<ArkMinimalApiEndpointGenerator>(
+            """
+            global using Microsoft.AspNetCore.Builder;
+            global using Microsoft.AspNetCore.Http;
+            global using Microsoft.AspNetCore.Routing;
+            global using Microsoft.Extensions.DependencyInjection;
+
+            """ + _privatelyHiddenContract);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("[global::Microsoft.AspNetCore.Mvc.FromQuery(Name = \"Tenant\")] string Tenant");
+        _occurrences(generated, " Tenant = Tenant").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void AzureFunctionsGeneratorBindsAPublicBasePropertyHiddenByAPrivateOne()
+    {
+        var (generated, errors) = _runAndCompile<AzureFunctionsEndpointGenerator>(_privatelyHiddenContract);
+
+        errors.Should().BeEmpty();
+        generated.Should().Contain("_qs_Tenant");
+        _occurrences(generated, "Tenant = ").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorMapsOverriddenAndHiddenPropertiesOnce()
+    {
+        var (generated, errors) = _runAndCompile<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [ProtoContract]
+            public class BaseRequest
+            {
+                [ProtoMember(1)]
+                public virtual string Audit { get; set; } = string.Empty;
+                [ProtoMember(2)]
+                public string Tenant { get; set; } = string.Empty;
+            }
+            [GrpcMethod("Update")]
+            [GrpcService("Items")]
+            [ProtoContract]
+            public sealed class Update : BaseRequest, IRequest<Update, UpdateResponse>
+            {
+                [ProtoMember(1)]
+                public override string Audit { get; set; } = string.Empty;
+                [ProtoMember(2)]
+                public new string Tenant { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class UpdateResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, " audit = ").Should().Be(1);
+        _occurrences(generated, " tenant = ").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorReadsProtoMemberFromTheOverriddenProperty()
+    {
+        var (generated, errors) = _runAndCompile<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [ProtoContract]
+            public class BaseRequest
+            {
+                [ProtoMember(1)]
+                public virtual string Audit { get; set; } = string.Empty;
+            }
+            [GrpcMethod("Update")]
+            [GrpcService("Items")]
+            [ProtoContract]
+            public sealed class Update : BaseRequest, IRequest<Update, UpdateResponse>
+            {
+                public override string Audit { get; set; } = string.Empty;
+            }
+            [ProtoContract]
+            public sealed class UpdateResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, " audit = 1;").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void GrpcGeneratorReadsProtoMetadataFromTheOverriddenProperty()
+    {
+        var (generated, errors) = _runAndCompile<ArkGrpcEndpointGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.Solid;
+            using ProtoBuf;
+            [ProtoContract]
+            public class BaseRequest
+            {
+                [ProtoMember(1), CompatibilityLevel(CompatibilityLevel.Level300)]
+                public virtual System.Guid Audit { get; set; }
+            }
+            [GrpcMethod("Update")]
+            [GrpcService("Items")]
+            [ProtoContract]
+            public sealed class Update : BaseRequest, IRequest<Update, UpdateResponse>
+            {
+                public override System.Guid Audit { get; set; }
+            }
+            [ProtoContract]
+            public sealed class UpdateResponse
+            {
+                [ProtoMember(1)]
+                public string Value { get; set; } = string.Empty;
+            }
+            """);
+
+        errors.Should().BeEmpty();
+        _occurrences(generated, "string audit = 1;").Should().Be(1);
+    }
+
+    [TestMethod]
+    public void ApiSurfaceGeneratorListsOverriddenAndHiddenPropertiesOnce()
+    {
+        var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(_overriddenAndHiddenContract);
+
+        _occurrences(generated, "CONTRACT Update.Audit ").Should().Be(1);
+        _occurrences(generated, "CONTRACT Update.Tenant ").Should().Be(1);
+    }
+
+    private static (string Generated, IReadOnlyList<Diagnostic> Errors) _runAndCompile<TGenerator>(string source)
+        where TGenerator : IIncrementalGenerator, new()
+    {
+        var (driver, compilation) = _runGeneratorDriver<TGenerator>(source, []);
+        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var generatedCompilation, out _);
+        var generated = string.Join(Environment.NewLine, driver.GetRunResult().GeneratedTrees.Select(static tree => tree.ToString()));
+        var errors = generatedCompilation.GetDiagnostics()
+            .Concat(driver.GetRunResult().Diagnostics)
+            .Where(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToList();
+        return (generated, errors);
+    }
+
+    private static int _occurrences(string text, string value)
+    {
+        var count = 0;
+        for (var index = text.IndexOf(value, StringComparison.Ordinal); index >= 0; index = text.IndexOf(value, index + value.Length, StringComparison.Ordinal))
+            count++;
+        return count;
+    }
+
     [TestMethod]
     public void AzureFunctionsGeneratorBindsETagPreconditionAndEmitsResponseETag()
     {
