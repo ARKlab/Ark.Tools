@@ -1877,7 +1877,7 @@ public sealed class GeneratorSnapshotTests
 
         first.Should().Be(second);
         first.Should().Contain("CONTRACT Response.Value.Name");
-        first.Should().Contain("CONTRACT Operations.Items.GetItem -> Response [group=Ark] [http=GET /v{version}/items] [version=1-2] [grpc=GetItem] [grpc-version=1-2]");
+        first.Should().Contain("CONTRACT Operations.Items.GetItem -> Response [group=Ark] [http=GET /v{version}/items] [grpc=GetItem] [version=1-2]");
         first.Should().Contain("CONTRACT Operations.Items.GetItem.Id : int");
         first.Should().Contain("CONTRACT Response");
         first.Should().NotContain("GRPC-FIELD");
@@ -1935,10 +1935,10 @@ public sealed class GeneratorSnapshotTests
 
         var generated = _runGenerator<Ark.Tools.MediatorFramework.ApiSurface.ApiSurfaceGenerator>(source);
 
-        generated.Should().Contain("CONTRACT GetBook -> Item [group=books] [mcp=books.get] [mcp-version=2+]");
+        generated.Should().Contain("CONTRACT GetBook -> Item [group=books] [mcp=books.get] [version=2+]");
         generated.Should().Contain("CONTRACT GetBook.Id : int");
         generated.Should().Contain("CONTRACT Item.Name : string");
-        generated.Should().Contain("CONTRACT CreateItem -> Item [group=Ark] [http=POST /items] [version=1+] [mcp=CreateItem] [mcp-version=1+]");
+        generated.Should().Contain("CONTRACT CreateItem -> Item [group=Ark] [http=POST /items] [mcp=CreateItem] [version=1+]");
     }
 
     [TestMethod]

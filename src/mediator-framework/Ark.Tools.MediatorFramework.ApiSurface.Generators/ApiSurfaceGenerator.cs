@@ -658,13 +658,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
         if (http is not null)
         {
             metadata.Add($"http={StringArgument(http, 0)} {StringArgument(http, 1)}");
-            metadata.Add($"version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
 
         if (grpc is not null)
         {
             metadata.Add($"grpc={StringArgument(grpc, 0) ?? type.Name}");
-            metadata.Add($"grpc-version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
 
         if (mcp is not null)
@@ -672,8 +670,11 @@ public sealed class ApiSurfaceGenerator : IIncrementalGenerator
             // Same name resolution as the MCP generator: the ApiGroup prefix applies only when declared.
             var tool = StringNamed(mcp, "Name") ?? type.Name;
             metadata.Add($"mcp={(string.IsNullOrWhiteSpace(apiGroup) ? tool : apiGroup + "." + tool)}");
-            metadata.Add($"mcp-version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
         }
+
+        // The version range belongs to the contract, so it is emitted once, after every transport tag.
+        if (http is not null || grpc is not null || mcp is not null)
+            metadata.Add($"version={introduced}{(retired == 0 ? "+" : $"-{retired - 1}")}");
 
         lines.Add($"CONTRACT {request} -> {TypeName(result)} [group={group}]"
             + (metadata.Count == 0 ? string.Empty : " [" + string.Join("] [", metadata) + "]"));
