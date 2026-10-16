@@ -340,7 +340,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 .OrderBy(static contract => contract.TypeFullName, StringComparer.Ordinal)
                 .ToImmutableArray();
             foreach (var contract in distinctContracts)
+            {
                 documentationAssemblyNames.Add(contract.AssemblyName);
+                // An inherited property can be documented in its base type's assembly.
+                foreach (var property in contract.Properties)
+                    documentationAssemblyNames.Add(property.Documentation.AssemblyName);
+            }
 
             var marker = group.First();
             contextGroups.Add(new ContextGroup(marker.Context, marker.InvalidLocation, distinctContracts));

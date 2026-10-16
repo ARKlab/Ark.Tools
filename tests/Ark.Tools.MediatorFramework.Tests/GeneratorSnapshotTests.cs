@@ -1266,6 +1266,42 @@ public sealed class GeneratorSnapshotTests
     }
 
     [TestMethod]
+    public void McpGeneratorReadsInheritedPropertyDocumentationFromTheBaseAssembly()
+    {
+        var baseContracts = _createMetadataReference(
+            "McpBaseContracts",
+            """
+            namespace McpBaseContracts;
+            public record BaseRequest
+            {
+                public string Audit { get; init; } = string.Empty;
+            }
+            """);
+
+        var result = _runGeneratorResult<McpToolGenerator>(
+            """
+            using Ark.Tools.MediatorFramework;
+            using Ark.Tools.MediatorFramework.Mcp;
+            using Ark.Tools.Solid;
+            public sealed class ContractMarker { }
+            /// <summary>Updates an item.</summary>
+            [McpTool(Name = "items.update")]
+            public sealed record UpdateItem(int Id) : McpBaseContracts.BaseRequest, IRequest<UpdateItem, string>;
+            [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
+            public partial class McpContext { }
+            """,
+            [
+                new TestAdditionalText(
+                    "/documentation/McpBaseContracts.xml",
+                    """<doc><members><member name="P:McpBaseContracts.BaseRequest.Audit"><summary>Who made the change.</summary></member></members></doc>"""),
+            ],
+            baseContracts);
+
+        result.Diagnostics.Should().NotContain(static diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        result.Generated.Should().Contain("Description(\"Who made the change.\")");
+    }
+
+    [TestMethod]
     public void McpGeneratorDefaultsIntroducedToOneLikeTheVersioningAttribute()
     {
         // [Versioning] without Introduced means version 1, as the attribute's default and the other generators say.
