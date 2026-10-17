@@ -4,6 +4,7 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 using Azure.Messaging.ServiceBus;
 
@@ -12,6 +13,7 @@ namespace Ark.Tools.MediatorFramework.Messaging;
 /// <summary>Azure Service Bus implementation of the messaging transport contract.</summary>
 public sealed class ServiceBusMessagingTransport :
     IMessagingTransport,
+    IMessagingBatchTransport,
     IMessagingMessageSource,
     IAsyncDisposable,
     IMessagingTransport<ServiceBusMessagingTransport>
@@ -26,6 +28,7 @@ public sealed class ServiceBusMessagingTransport :
 
     private readonly ServiceBusClient _client;
     private readonly IReadOnlyList<ServiceBusClient> _clients;
+    private static readonly CreateMessageBatchOptions _batchOptions = new() { MaxSizeInBytes = MaximumPayloadSizeBytes };
     private readonly ConcurrentDictionary<string, ServiceBusSender> _senders = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, ServiceBusReceiver[]> _receivers = new(StringComparer.Ordinal);
     private readonly int _receiveChannels;
@@ -163,6 +166,61 @@ public sealed class ServiceBusMessagingTransport :
         await sender.SendMessageAsync(_toNativeMessage(headers, payload), ctk).ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// The envelopes go in order into <see cref="ServiceBusMessageBatch"/>es of at most <see cref="MaximumPayloadSizeBytes"/>.
+    /// A scheduled envelope travels in the same batch with <see cref="ServiceBusMessage.ScheduledEnqueueTime"/> set.
+    /// An envelope that does not fit an empty batch is sent on its own, in order.
+    /// </remarks>
+    public async Task<IReadOnlyList<TimeSpan>> SendBatchAsync(
+        string destination,
+        bool isTopic,
+        IReadOnlyList<MessagingBatchEntry> messages,
+        CancellationToken ctk)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(destination);
+        ArgumentNullException.ThrowIfNull(messages);
+        destination = ToNativeEntityName(destination);
+        // Validate every envelope before the first call, so a bad one cannot follow already accepted batches.
+        foreach (var entry in messages)
+        {
+            ArgumentNullException.ThrowIfNull(entry.Headers, nameof(messages));
+            _validateSize(entry.Headers, entry.Payload);
+        }
+
+        var sender = _senders.GetOrAdd(
+            destination,
+            static (entity, client) => client.CreateSender(entity),
+            _client);
+        var durations = new TimeSpan[messages.Count];
+        var start = 0;
+        while (start < messages.Count)
+        {
+            // Premium links allow messages far above the 1 MB batch limit; the standard-tier size keeps every batch valid.
+            using var batch = await sender.CreateMessageBatchAsync(_batchOptions, ctk).ConfigureAwait(false);
+            var end = start;
+            while (end < messages.Count && batch.TryAddMessage(_toNativeMessage(messages[end])))
+                end++;
+            var stopwatch = Stopwatch.StartNew();
+            if (end == start)
+            {
+                // The batch envelope adds overhead, so a message a single send accepts can miss an empty batch: send it alone.
+                await sender.SendMessageAsync(_toNativeMessage(messages[start]), ctk).ConfigureAwait(false);
+                durations[start] = stopwatch.Elapsed;
+                start++;
+                continue;
+            }
+
+            await sender.SendMessagesAsync(batch, ctk).ConfigureAwait(false);
+            stopwatch.Stop();
+            for (var i = start; i < end; i++)
+                durations[i] = stopwatch.Elapsed;
+            start = end;
+        }
+
+        return durations;
+    }
+
     /// <summary>Gets the hard cap on a single receive, or <see cref="int.MaxValue"/> when uncapped.</summary>
     /// <remarks>
     /// Service Bus imposes no server-side cap. An uncapped transport is the conservative choice, not
@@ -277,6 +335,14 @@ public sealed class ServiceBusMessagingTransport :
         foreach (var pair in headers)
             message.ApplicationProperties.Add(pair.Key, pair.Value);
 
+        return message;
+    }
+
+    private static ServiceBusMessage _toNativeMessage(in MessagingBatchEntry entry)
+    {
+        var message = _toNativeMessage(entry.Headers, entry.Payload);
+        if (entry.DueTime is { } dueTime)
+            message.ScheduledEnqueueTime = dueTime;
         return message;
     }
 

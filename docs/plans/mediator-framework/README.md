@@ -30,6 +30,7 @@ under `docs/design/mediator-framework/`:
 | [`mediator-testing-decisions.md`](mediator-testing-decisions.md) | Accepted testing architecture decisions. |
 | [`mediator-testing-plan.md`](mediator-testing-plan.md) | Testing architecture and implementation boundaries. |
 | [`future-improvements.md`](future-improvements.md) | Explicitly deferred post-1.0 work. |
+| [`outbox-batch-send-plan.md`](outbox-batch-send-plan.md) | Implementation plan for batched outbox sends ([#1163](https://github.com/ARKlab/Ark.Tools/issues/1163)). |
 
 ## Status rules
 

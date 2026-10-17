@@ -27,6 +27,14 @@ public sealed class ServiceBusMessagingTransportConformanceTests : MessagingTran
     private readonly List<ServiceBusMessagingTransport> _transports = new();
     private readonly ServiceBusAdministrationClient _administration = new(_administrationConnectionString);
 
+    /// <summary>Gets the emulator administration connection string, shared with the other Service Bus emulator tests.</summary>
+    [InfrastructureSecret]
+    internal static string _sharedAdministrationConnectionString => _administrationConnectionString;
+
+    /// <summary>Gets the emulator data-plane connection string, shared with the other Service Bus emulator tests.</summary>
+    [InfrastructureSecret]
+    internal static string _sharedDataPlaneConnectionString => _connectionString;
+
     protected override string QueueName => _queueName;
 
     protected override string EmptyQueueName => _emptyQueueName;

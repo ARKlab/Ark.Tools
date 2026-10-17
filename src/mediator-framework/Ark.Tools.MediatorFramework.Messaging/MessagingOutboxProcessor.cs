@@ -147,11 +147,48 @@ public sealed class MessagingOutboxProcessor : OutboxProcessorBase, IHostedServi
             new ParallelOptions { MaxDegreeOfParallelism = destinations.Count, CancellationToken = ctk },
             async (destinationSends, token) =>
             {
+                if (_transport is IMessagingBatchTransport batchTransport)
+                {
+                    await _sendBatchAsync(batchTransport, destinationSends.ToList(), token).ConfigureAwait(false);
+                    return;
+                }
+
                 foreach (var send in destinationSends)
                 {
                     await _sendAsync(send, token).ConfigureAwait(false);
                 }
             }).ConfigureAwait(false);
+    }
+
+    private static async Task _sendBatchAsync(
+        IMessagingBatchTransport transport,
+        List<PendingSend> sends,
+        CancellationToken ctk)
+    {
+        var first = sends[0];
+        var stopwatch = Stopwatch.StartNew();
+        IReadOnlyList<TimeSpan>? durations = null;
+        try
+        {
+            durations = await transport.SendBatchAsync(
+                first.Destination,
+                string.Equals(first.DestinationKind, "topic", StringComparison.Ordinal),
+                sends.Select(static send => new MessagingBatchEntry(send.Headers, send.Payload, send.DueTime)).ToList(),
+                ctk).ConfigureAwait(false);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            // One entry per message keeps dashboards counting messages; a failed batch records its elapsed time.
+            for (var i = 0; i < sends.Count; i++)
+            {
+                MessagingMetrics.RecordClientOperation(
+                    durations is not null && i < durations.Count ? durations[i] : stopwatch.Elapsed,
+                    sends[i].Headers,
+                    sends[i].Operation,
+                    sends[i].Destination);
+            }
+        }
     }
 
     private async Task _sendAsync(PendingSend send, CancellationToken ctk)
