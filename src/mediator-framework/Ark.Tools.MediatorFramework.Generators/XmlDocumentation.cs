@@ -19,7 +19,7 @@ internal static class XmlDocumentation
     /// </summary>
     public static (string? Summary, string? Remarks) Read(ISymbol symbol, CancellationToken cancellationToken)
     {
-        if (_tryGetDescription(symbol, out var description))
+        if (TryGetDescription(symbol, out var description))
             return (description, null);
 
         var root = _parse(symbol, cancellationToken);
@@ -29,12 +29,16 @@ internal static class XmlDocumentation
     /// <summary>Returns the summary of <paramref name="symbol"/>, preferring a <c>[Description]</c> attribute.</summary>
     public static string? Summary(ISymbol symbol, CancellationToken cancellationToken)
     {
-        return _tryGetDescription(symbol, out var description)
+        return TryGetDescription(symbol, out var description)
             ? description
             : _text(_parse(symbol, cancellationToken)?.Element("summary"));
     }
 
-    private static bool _tryGetDescription(ISymbol symbol, out string? description)
+    /// <summary>
+    /// Reads a non-empty <c>[Description]</c> attribute of <paramref name="symbol"/>, with whitespace collapsed.
+    /// An empty or whitespace-only attribute returns <see langword="false"/>, so callers fall back to the XML documentation.
+    /// </summary>
+    public static bool TryGetDescription(ISymbol symbol, out string? description)
     {
         var attribute = symbol.GetAttributes().FirstOrDefault(static candidate =>
             candidate.AttributeClass._isFullName("System.ComponentModel.DescriptionAttribute"));
@@ -45,9 +49,19 @@ internal static class XmlDocumentation
         return !string.IsNullOrEmpty(description);
     }
 
+    /// <summary>Returns the text of the <paramref name="element"/> child of a documentation comment <paramref name="xml"/>.</summary>
+    public static string? Element(string? xml, string element)
+    {
+        return _text(_parse(xml)?.Element(element));
+    }
+
     private static XElement? _parse(ISymbol symbol, CancellationToken cancellationToken)
     {
-        var xml = symbol.GetDocumentationCommentXml(cancellationToken: cancellationToken);
+        return _parse(symbol.GetDocumentationCommentXml(cancellationToken: cancellationToken));
+    }
+
+    private static XElement? _parse(string? xml)
+    {
         if (string.IsNullOrWhiteSpace(xml))
             return null;
 

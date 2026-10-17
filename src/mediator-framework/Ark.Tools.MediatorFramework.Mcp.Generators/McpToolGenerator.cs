@@ -527,7 +527,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? ContractSymbols.NamedBool(toolAttribute, "AllowAnonymous", false)
             : ContractSymbols.NamedBool(httpEndpoint, "AllowAnonymous", false);
-        var hasDescription = TryGetDescription(type, out var attributeDescription);
+        var hasDescription = XmlDocumentation.TryGetDescription(type, out var attributeDescription);
 
         return new ContractModel(
             typeFullName,
@@ -556,7 +556,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                     IsAttachment(property.Type),
                     HasPublicSetter(type, property),
                     property.IsRequired,
-                    TryGetDescription(property, out var propertyDescription),
+                    XmlDocumentation.TryGetDescription(property, out var propertyDescription),
                     propertyDescription,
                     CreateDocumentationSource(property)))
                 .ToImmutableArray(),
@@ -595,12 +595,12 @@ public sealed class McpToolGenerator : IIncrementalGenerator
 
         var summary = contract.HasDescriptionAttribute
             ? contract.AttributeDescription
-            : XmlDocumentation(contract.Documentation, "summary", documentationFiles)
-                ?? XmlDocumentation(contract.ContainingTypeDocumentation, "summary", documentationFiles);
+            : ReadDocumentation(contract.Documentation, "summary", documentationFiles)
+                ?? ReadDocumentation(contract.ContainingTypeDocumentation, "summary", documentationFiles);
         var remarks = contract.HasDescriptionAttribute
             ? null
-            : XmlDocumentation(contract.Documentation, "remarks", documentationFiles)
-                ?? XmlDocumentation(contract.ContainingTypeDocumentation, "remarks", documentationFiles);
+            : ReadDocumentation(contract.Documentation, "remarks", documentationFiles)
+                ?? ReadDocumentation(contract.ContainingTypeDocumentation, "remarks", documentationFiles);
         var description = summary is null
             ? remarks ?? string.Empty
             : remarks is null
@@ -612,7 +612,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var propertyDescriptions = contract.Properties
             .Select(property => (property.Name, Description: property.HasDescriptionAttribute
                 ? property.AttributeDescription
-                : XmlDocumentation(property.Documentation, "summary", documentationFiles)))
+                : ReadDocumentation(property.Documentation, "summary", documentationFiles)))
             .Where(item => item.Description is not null)
             .ToImmutableDictionary(item => item.Name, item => item.Description!, StringComparer.Ordinal);
 
@@ -708,7 +708,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
     private static string NormalizePath(string path)
         => Path.GetFullPath(path).Replace('\\', '/');
 
-    private static string? XmlDocumentation(
+    private static string? ReadDocumentation(
         DocumentationSource? source,
         string element,
         IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> documentationFiles)
@@ -727,24 +727,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 xml = member;
             }
         }
-        if (string.IsNullOrWhiteSpace(xml))
-            return null;
-        var start = "<" + element + ">";
-        var end = "</" + element + ">";
-        var startIndex = xml.IndexOf(start, StringComparison.Ordinal);
-        var endIndex = xml.IndexOf(end, StringComparison.Ordinal);
-        if (startIndex < 0 || endIndex <= startIndex)
-            return null;
-        var value = xml.Substring(startIndex + start.Length, endIndex - startIndex - start.Length);
-        return string.Join(" ", value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-    }
-
-    private static bool TryGetDescription(ISymbol symbol, out string? description)
-    {
-        var attribute = symbol.GetAttributes().FirstOrDefault(candidate =>
-            candidate.AttributeClass._isFullName("System.ComponentModel.DescriptionAttribute"));
-        description = attribute?.ConstructorArguments.FirstOrDefault().Value as string;
-        return attribute is not null;
+        return XmlDocumentation.Element(xml, element);
     }
 
     private static bool HasNamedArgument(AttributeData attribute, string name)

@@ -18,5 +18,6 @@
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/GeneratorSpecPrimitives.cs" Link="GeneratorSpecPrimitives.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/ContractSymbols.cs" Link="ContractSymbols.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/ContractProperties.cs" Link="ContractProperties.cs" />
+    <Compile Include="../Ark.Tools.MediatorFramework.Generators/XmlDocumentation.cs" Link="XmlDocumentation.cs" />
   </ItemGroup>
 </Project>
