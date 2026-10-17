@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.303, )",
-        "resolved": "3.0.303",
-        "contentHash": "IBcDi9Gq15J7F7Akw/KCVrxMsms13e7rgA6ssVhoqn+3BWDvCg3RAhzPMK8foJapDMgz5tG4cDHO/JImrnn1cw=="
+        "requested": "[3.0.305, )",
+        "resolved": "3.0.305",
+        "contentHash": "0X0KFy2y4JkfLXedZk3H9AUuKOg3hdgl7poX4j1e0oymG8FwZ7a96nyrssoJ+KCjtSaz9xubGfa2TLRpwT2R1w=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -484,7 +484,7 @@
         "dependencies": {
           "Ark.Tools.FtpClient.Core": "[1.0.0, )",
           "Ark.Tools.NLog": "[1.0.0, )",
-          "FluentFTP": "[55.0.0, )"
+          "FluentFTP": "[55.1.0, )"
         }
       },
       "ark.tools.nlog": {
@@ -536,9 +536,9 @@
       },
       "FluentFTP": {
         "type": "CentralTransitive",
-        "requested": "[55.0.0, )",
-        "resolved": "55.0.0",
-        "contentHash": "5ufTSEjrItvSsPWz5IZ7OTilYu42YM9fGQbogrJZsvCrKat/tz+sWHCDt0/izVvi8ZYfy3G9bZR8D9goyJ9BuA=="
+        "requested": "[55.1.0, )",
+        "resolved": "55.1.0",
+        "contentHash": "RXA6WEaziJiSt/lrOxbpxfkOyTY1YaeQiCKzsVoQQxEwcoI0dtoTzGiqS47mrqq3zBuETMwaVjI7FLTCcJC80w=="
       },
       "MailKit": {
         "type": "CentralTransitive",
