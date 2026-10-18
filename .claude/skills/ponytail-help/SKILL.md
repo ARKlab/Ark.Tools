@@ -44,6 +44,7 @@ Say "stop ponytail" or "normal mode". Resume anytime with `/ponytail`.
 
 `/ponytail band` hides the band above the prompt, the same command brings it back.
 `/ponytail band on` and `/ponytail band off` set it directly. The level stays.
+`/ponytail band import` adds your past Claude Code sessions (cost, agent time, tokens) to the board.
 
 ## Configure Default Mode
 
