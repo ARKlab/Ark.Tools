@@ -127,6 +127,8 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
                 var serviceName = Assembly.GetEntryAssembly()?.GetName().Name;
                 if (!string.IsNullOrWhiteSpace(serviceName))
                     resource.AddAttributes([new("service.name", serviceName)]);
+                // OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES still win.
+                resource.AddEnvironmentVariableDetector();
             });
 
         var connectionString = configuration?["ApplicationInsights:ConnectionString"]
