@@ -143,6 +143,36 @@ public sealed class AzureMonitorSamplerTests
         }
     }
 
+    [TestMethod]
+    // Environment variables are process-wide: a parallel test would see this Container Apps identity.
+    [DoNotParallelize]
+    public void AddArkAzureOpenTelemetry_OnContainerApps_KeepsArkServiceVersionAndAddsTheReplica()
+    {
+        var appName = Environment.GetEnvironmentVariable("CONTAINER_APP_NAME");
+        var revision = Environment.GetEnvironmentVariable("CONTAINER_APP_REVISION");
+        var replica = Environment.GetEnvironmentVariable("CONTAINER_APP_REPLICA_NAME");
+        Environment.SetEnvironmentVariable("CONTAINER_APP_NAME", "orders-app");
+        Environment.SetEnvironmentVariable("CONTAINER_APP_REVISION", "orders-app--rev1");
+        Environment.SetEnvironmentVariable("CONTAINER_APP_REPLICA_NAME", "replica-1");
+        try
+        {
+            using var serviceProvider = _buildServiceProvider(azureMonitorTarget: null);
+
+            var attributes = serviceProvider.GetRequiredService<TracerProvider>().GetResource().Attributes
+                .ToDictionary(static a => a.Key, static a => a.Value, StringComparer.Ordinal);
+
+            attributes["service.version"].Should().Be(Assembly.GetEntryAssembly()!
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion);
+            attributes["service.instance.id"].Should().Be("replica-1");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("CONTAINER_APP_NAME", appName);
+            Environment.SetEnvironmentVariable("CONTAINER_APP_REVISION", revision);
+            Environment.SetEnvironmentVariable("CONTAINER_APP_REPLICA_NAME", replica);
+        }
+    }
+
     private static ServiceProvider _buildServiceProvider(
         string? azureMonitorTarget,
         Action<IServiceCollection>? configureServices = null)
