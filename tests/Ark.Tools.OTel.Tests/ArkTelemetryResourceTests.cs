@@ -28,12 +28,12 @@ public sealed class ArkTelemetryResourceTests
     public void AddArkTelemetryResource_AddsEntryAssemblyInformationalVersionAsServiceVersion()
     {
         var version = Assembly.GetEntryAssembly()?
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? throw new InvalidOperationException("The test assembly has no informational version.");
         var resource = ResourceBuilder.CreateEmpty()
             .AddArkTelemetryResource()
             .Build();
 
-        version.Should().NotBeNullOrEmpty();
         resource.Attributes.Single(static x => x.Key == "service.version").Value.Should().Be(version);
     }
 
