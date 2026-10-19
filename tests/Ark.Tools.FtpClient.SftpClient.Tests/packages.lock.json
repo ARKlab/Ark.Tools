@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.303, )",
-        "resolved": "3.0.303",
-        "contentHash": "IBcDi9Gq15J7F7Akw/KCVrxMsms13e7rgA6ssVhoqn+3BWDvCg3RAhzPMK8foJapDMgz5tG4cDHO/JImrnn1cw=="
+        "requested": "[3.0.312, )",
+        "resolved": "3.0.312",
+        "contentHash": "lRRGluh3rSFXfxVsIzx4o5DCoxpUpwma6qc8LgI9DjsQx0t6CgS9KZiFKtTUllAHSsrPw/um0FR9gPJMTkeb3Q=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -498,7 +498,7 @@
           "NLog": "[6.2.2, )",
           "NLog.Database": "[6.0.3, )",
           "NLog.DiagnosticSource": "[6.1.4, )",
-          "NLog.MailKit": "[6.1.5, )",
+          "NLog.MailKit": "[6.1.6, )",
           "Slack.Webhooks": "[1.1.6, )"
         }
       },
@@ -791,12 +791,12 @@
       },
       "NLog.MailKit": {
         "type": "CentralTransitive",
-        "requested": "[6.1.5, )",
-        "resolved": "6.1.5",
-        "contentHash": "khJJ6sjKBzY5KR5l6RLyt3WchiELKY9N952WDwvX8Lv36sdtbx+VtTyu9pTtrYGaNQGlGjiVb5d8U1VWKzK7fA==",
+        "requested": "[6.1.6, )",
+        "resolved": "6.1.6",
+        "contentHash": "DFt2WUvRIWk3KGWk4zZLwj0cK/OSgFH3e6wwf4MQNImMdv4x0Uyq/pwcsdlyIz1YcmWJLZc8YifFNvpFZUzlyA==",
         "dependencies": {
-          "MailKit": "4.17.0",
-          "NLog": "6.1.4"
+          "MailKit": "4.18.1",
+          "NLog": "6.2.2"
         }
       },
       "NodaTime": {
