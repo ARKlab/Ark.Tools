@@ -124,13 +124,19 @@ public static class ArkOpenTelemetryBuilderExtensions
                 .AddProcessor(new ArkFailurePromotionProcessor(failedTraceRegistry))
                 .AddProcessor(nlogDatabaseFilter)
                 .AddArkComplianceRedaction(arkOtelConfig.ComplianceRedaction))
-            .WithMetrics(static metrics => metrics
-                .AddMeter(_rebusInstrumentationName)
-                .AddMeter(_mediatorMessagingInstrumentationName)
-                .AddMeter(_outboxInstrumentationName)
-                .AddMeter(_runtimeMeterName)
-                .AddHttpClientInstrumentation()
-                .AddSqlClientInstrumentation());
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddMeter(_rebusInstrumentationName)
+                    .AddMeter(_mediatorMessagingInstrumentationName)
+                    .AddMeter(_outboxInstrumentationName)
+                    .AddMeter(_runtimeMeterName)
+                    .AddHttpClientInstrumentation()
+                    .AddSqlClientInstrumentation();
+                // A dropped instrument is never enabled, so it is neither measured nor exported.
+                foreach (var name in arkOtelConfig.DroppedMetrics)
+                    metrics.AddView(name, MetricStreamConfiguration.Drop);
+            });
     }
 
     // Same lookup as Ark.Tools.NLog's GetNLogSetting: hosts may turn the '.' into ':' or '_'.
