@@ -31,7 +31,7 @@ Implemented by `Ark.Tools.AspNetCore.OTel` (ASP.NET Core instrumentation) and
 | Traces | `Azure.*` sources | Azure SDK spans, Service Bus included, with or without a connection string. The setup enables the Azure experimental ActivitySource switch unless the application already set it, and drops the `HttpClient` span nested under an Azure SDK span. |
 | Metrics | `ark.tools.rebus` meter | Rebus metrics are emitted only when `UseOpenTelemetryMetrics` is installed in the Rebus pipeline. |
 | Metrics | `ark.tools.outbox` meter | Outbox metrics. |
-| Metrics | `System.Net.Http`, `Microsoft.AspNetCore.Hosting`, `System.Runtime` meters | HTTP client and server metrics, .NET runtime and process metrics. |
+| Metrics | `System.Net.Http`, `Microsoft.AspNetCore.Hosting`, `System.Runtime` meters | HTTP client and server metrics, .NET runtime and process metrics, except the instruments in `ArkOtelConfig.DroppedMetrics`. |
 | Metrics | SQL Client instrumentation | Provider SQL client duration metrics. |
 | Logs | OpenTelemetry logger provider | Only `Error` and `Critical` records are enabled for OTel export. |
 

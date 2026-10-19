@@ -149,6 +149,20 @@ Flurl-specific hook is required. It also collects `HttpClient` metrics
 Outbox source and meter. `AddArkAspNetCoreOpenTelemetry` adds ASP.NET Core server
 spans and request metrics (`Microsoft.AspNetCore.Hosting`).
 
+A few of these instruments cost storage without helping diagnostics, so Ark does
+not collect them: `http.client.open_connections`, `http.client.active_requests`,
+`dotnet.gc.last_collection.heap.fragmentation.size`, `dotnet.process.cpu.count`,
+`dotnet.assembly.count`, `dotnet.thread_pool.work_item.count` and `dotnet.jit.*`.
+They are listed in `ArkOtelConfig.DroppedMetrics`, which accepts `*` and `?`
+wildcards; remove a name to collect that metric again, or add one to drop more:
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .AddArkAspNetCoreOpenTelemetry(
+        configureArkOtel: otel => otel.DroppedMetrics.Remove("dotnet.jit.*"),
+        configuration: builder.Configuration);
+```
+
 When given configuration, `AddArkOpenTelemetry` drops the SQL spans of NLog's own
 database writes, matching the `ConnectionStrings:NLog.Database` server and database.
 
