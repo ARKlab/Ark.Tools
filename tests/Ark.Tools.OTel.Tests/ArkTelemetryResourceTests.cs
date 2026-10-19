@@ -23,4 +23,39 @@ public sealed class ArkTelemetryResourceTests
         resource.Attributes.Should().Contain(static x => x.Key == "service.name");
         resource.Attributes.Single(static x => x.Key == "service.name").Value.Should().Be(serviceName);
     }
+
+    [TestMethod]
+    public void AddArkTelemetryResource_AddsEntryAssemblyInformationalVersionAsServiceVersion()
+    {
+        var version = Assembly.GetEntryAssembly()?
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var resource = ResourceBuilder.CreateEmpty()
+            .AddArkTelemetryResource()
+            .Build();
+
+        version.Should().NotBeNullOrEmpty();
+        resource.Attributes.Single(static x => x.Key == "service.version").Value.Should().Be(version);
+    }
+
+    [TestMethod]
+    [DoNotParallelize] // Sets process environment variables.
+    public void AddArkTelemetryResource_LetsEnvironmentVariablesOverrideNameAndVersion()
+    {
+        Environment.SetEnvironmentVariable("OTEL_SERVICE_NAME", "custom-service");
+        Environment.SetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES", "service.version=9.9.9");
+        try
+        {
+            var resource = ResourceBuilder.CreateEmpty()
+                .AddArkTelemetryResource()
+                .Build();
+
+            resource.Attributes.Single(static x => x.Key == "service.name").Value.Should().Be("custom-service");
+            resource.Attributes.Single(static x => x.Key == "service.version").Value.Should().Be("9.9.9");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("OTEL_SERVICE_NAME", null);
+            Environment.SetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES", null);
+        }
+    }
 }

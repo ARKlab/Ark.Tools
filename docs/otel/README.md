@@ -58,6 +58,11 @@ only after they start:
 The OTel resource configuration adds process-wide context to every signal:
 
 - `service.name`: The entry assembly name (for multi-process environments)
+- `service.version`: The entry assembly informational version, commit included
+  (for example `1.2.3+abc123`), or else its assembly version. Azure Monitor shows it
+  as `application_Version`.
+
+`OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` override both.
 
 Application Insights compatibility setup applies this automatically. Exporter-agnostic
 applications can compose `ResourceBuilder.AddArkTelemetryResource()` with their

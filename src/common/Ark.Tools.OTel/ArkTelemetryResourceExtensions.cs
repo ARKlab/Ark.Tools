@@ -13,7 +13,9 @@ namespace Ark.Tools.OTel;
 public static class ArkTelemetryResourceExtensions
 {
     /// <summary>
-    /// Adds the entry assembly name as the OpenTelemetry service name.
+    /// Adds the entry assembly name and version as the OpenTelemetry service name and version. The version is the
+    /// informational version, commit included (for example <c>1.2.3+abc123</c>), or else the assembly version.
+    /// <c>OTEL_SERVICE_NAME</c> and <c>OTEL_RESOURCE_ATTRIBUTES</c> override them.
     /// </summary>
     /// <param name="builder">The OpenTelemetry resource builder.</param>
     /// <returns>The same <paramref name="builder"/> for chaining.</returns>
@@ -21,10 +23,16 @@ public static class ArkTelemetryResourceExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        var serviceName = Assembly.GetEntryAssembly()?.GetName().Name;
+        var entryAssembly = Assembly.GetEntryAssembly();
+        var serviceName = entryAssembly?.GetName().Name;
         if (!string.IsNullOrWhiteSpace(serviceName))
-            builder.AddService(serviceName);
+        {
+            var serviceVersion = entryAssembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                ?? entryAssembly?.GetName().Version?.ToString();
+            builder.AddService(serviceName, serviceVersion: serviceVersion);
+        }
 
-        return builder;
+        // Later attributes win: read the environment again so it overrides the defaults above.
+        return builder.AddEnvironmentVariableDetector();
     }
 }

@@ -22,7 +22,7 @@ Implemented by `Ark.Tools.AspNetCore.OTel` (ASP.NET Core instrumentation) and
 
 | Signal | Default registration | Notes |
 |---|---|---|
-| Resource | `AddArkTelemetryResource()` | Sets `service.name` to the entry assembly name. |
+| Resource | `AddArkTelemetryResource()` | Sets `service.name` to the entry assembly name and `service.version` to its informational version; `OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` override them. |
 | Traces | `ark.tools.rebus` source | The source must also be used by Rebus through `UseOpenTelemetry`. |
 | Traces | `ark.tools.outbox` source | Outbox batch spans emitted by `OutboxProcessorBase`. |
 | Traces | ASP.NET Core instrumentation | Server spans for incoming requests. |

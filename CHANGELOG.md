@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `Ark.Tools.OTel`: the OpenTelemetry resource now sets `service.version` to the entry assembly informational version, commit included (for example `1.2.3+abc123`), so Application Insights shows the application version again in `application_Version`.
 - `Ark.Tools.MediatorFramework.Messaging`: `IMessagingBatchTransport`, for transports that can send several outbox messages to one destination in a single broker call. The native outbox processor uses it when the transport implements it and sends one message at a time otherwise.
 
 ### Changed
@@ -17,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `Ark.Tools.OTel`, `Ark.Tools.OTel.Azure`: `OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` now override the service name and version that Ark sets. Before, Ark's entry assembly name replaced them.
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools now include the properties a contract inherits from its base types and use the same versioning defaults as the other transports, so a contract with `[Versioning]` but no `Introduced` is available from version 1.
 - `Ark.Tools.MediatorFramework`: contracts that override a base property or hide it with `new` now get one binding for it, from the most-derived public declaration; a non-public `new` property does not hide the public one it shadows. Before, the Minimal API and Azure Functions endpoints failed to compile and gRPC mapped the property twice.
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools now compile for contracts with properties named `Services`, `CancellationToken`, `Request` or `Result`, or named after a C# keyword such as `Event`, and for contracts with `required` members whose constructor lacks `[SetsRequiredMembers]`. Before, the generated tool failed with CS0100, CS0136, CS1001 or CS9035.
