@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `Ark.Tools.OTel.Azure`: on Azure Container Apps, `service.version` is now the entry assembly version instead of the Container Apps revision name, so Application Insights shows the application version there too.
 - `Ark.Tools.OTel`, `Ark.Tools.OTel.Azure`: `OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` now override the service name and version that Ark sets. Before, Ark's entry assembly name replaced them.
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools now include the properties a contract inherits from its base types and use the same versioning defaults as the other transports, so a contract with `[Versioning]` but no `Introduced` is available from version 1.
 - `Ark.Tools.MediatorFramework`: contracts that override a base property or hide it with `new` now get one binding for it, from the most-derived public declaration; a non-public `new` property does not hide the public one it shadows. Before, the Minimal API and Azure Functions endpoints failed to compile and gRPC mapped the property twice.

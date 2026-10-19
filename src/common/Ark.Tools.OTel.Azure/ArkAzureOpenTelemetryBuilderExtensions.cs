@@ -122,11 +122,17 @@ public static class ArkAzureOpenTelemetryBuilderExtensions
                     .AddAzureVMDetector()
                     .AddAzureContainerAppsDetector();
 
-                // The detectors set service.name to the site or app name: keep Ark's entry assembly name, which tells
-                // apart the processes of one site, such as a web app and its WebJobs.
-                var serviceName = Assembly.GetEntryAssembly()?.GetName().Name;
+                // The detectors set service.name to the site or app name, and Container Apps sets service.version to
+                // the revision: keep Ark's entry assembly name, which tells apart the processes of one site, such as a
+                // web app and its WebJobs, and its version.
+                var entryAssembly = Assembly.GetEntryAssembly();
+                var serviceName = entryAssembly?.GetName().Name;
                 if (!string.IsNullOrWhiteSpace(serviceName))
                     resource.AddAttributes([new("service.name", serviceName)]);
+                var serviceVersion = entryAssembly?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                    ?? entryAssembly?.GetName().Version?.ToString();
+                if (!string.IsNullOrWhiteSpace(serviceVersion))
+                    resource.AddAttributes([new("service.version", serviceVersion)]);
                 // OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES still win.
                 resource.AddEnvironmentVariableDetector();
             });
