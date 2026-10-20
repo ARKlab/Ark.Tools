@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.312, )",
-        "resolved": "3.0.312",
-        "contentHash": "lRRGluh3rSFXfxVsIzx4o5DCoxpUpwma6qc8LgI9DjsQx0t6CgS9KZiFKtTUllAHSsrPw/um0FR9gPJMTkeb3Q=="
+        "requested": "[3.0.315, )",
+        "resolved": "3.0.315",
+        "contentHash": "adL/ZRvZdqwVnpIcfTKC+soGLj4H+6mV7lcLSA79FkAjJd5bVUnKF6geq+b1w9uz3Dtj1VGJkGCYS0WKtxNEyQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -1111,20 +1111,20 @@
       },
       "Microsoft.Identity.Client": {
         "type": "CentralTransitive",
-        "requested": "[4.91.0, )",
-        "resolved": "4.91.0",
-        "contentHash": "u+j8hdM/Eez1j0rQVodY+4MRfsLgmsskjMgVkf74xkLWssbW4mqSgz0Tx4H0CJTtrDes00M5s4545rbLN61/uw==",
+        "requested": "[4.91.1, )",
+        "resolved": "4.91.1",
+        "contentHash": "o3loEgTbvlVlret7jG76SfOoeRWQQqyY11+rQXvkI9tQzs5I3C1FDkD3hZTMefC5LBeGZu3nRK9MJXiVcW4skQ==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "8.14.0"
         }
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "CentralTransitive",
-        "requested": "[4.91.0, )",
-        "resolved": "4.91.0",
-        "contentHash": "6MGkonDQNMggRh1AGvzjlmnn0NLwrYq8EOBhSGSkPhL5/1Tajwe0YUbtDjbcxvFIhbGd0+DpwxFmphgUHm31Og==",
+        "requested": "[4.91.1, )",
+        "resolved": "4.91.1",
+        "contentHash": "hAiV5z7kfc2mRg43z4fsHsw8Q5LQxxQGzofv4X4e8QJCB3na+LCWvjAzOpjSlitSGuO/+pOZKAgEc6rRjsw3vg==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.91.0",
+          "Microsoft.Identity.Client": "4.91.1",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
       },
