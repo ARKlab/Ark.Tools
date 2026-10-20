@@ -39,7 +39,7 @@
     <PackageVersion Include="Ark.Tools.Solid.Authorization" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.SystemTextJson" Version="999.9.9" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.18.0" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
   </ItemGroup>
   <ItemGroup Label="Sample dependencies">
     <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0" />
@@ -61,7 +61,7 @@
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Validators" Version="8.23.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
-    <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.13.0" />
     <PackageVersion Include="Microsoft.SqlServer.DacFx" Version="170.5.96" />
     <PackageVersion Include="KubernetesClient" Version="21.0.8" />
     <PackageVersion Include="MessagePack" Version="3.1.12" />
