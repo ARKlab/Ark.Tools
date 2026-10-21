@@ -160,7 +160,7 @@ dependencies:
 - repo_url: dotnet/skills
   name: dotnet
   host: github.com
-  resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
+  resolved_commit: 10d85e25fb42d5f65c568d5e979a005ee69eecb3
   resolved_ref: main
   version: 0.2.5
   virtual_path: plugins/dotnet
@@ -253,7 +253,7 @@ dependencies:
 - repo_url: dotnet/skills
   name: dotnet-diag
   host: github.com
-  resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
+  resolved_commit: 10d85e25fb42d5f65c568d5e979a005ee69eecb3
   resolved_ref: main
   version: 0.1.3
   virtual_path: plugins/dotnet-diag
@@ -416,12 +416,12 @@ dependencies:
 - repo_url: dotnet/skills
   name: dotnet-msbuild
   host: github.com
-  resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
+  resolved_commit: 10d85e25fb42d5f65c568d5e979a005ee69eecb3
   resolved_ref: main
   version: 0.1.11
   virtual_path: plugins/dotnet-msbuild
   is_virtual: true
-  package_type: skill_bundle
+  package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/binlog-failure-analysis
   - .agents/skills/binlog-failure-analysis/SKILL.md
@@ -442,6 +442,8 @@ dependencies:
   - .agents/skills/directory-build-organization/references/common-patterns.md
   - .agents/skills/directory-build-organization/references/multi-level-examples.md
   - .agents/skills/directory-build-organization/references/targetframework-props-pitfall.md
+  - .agents/skills/eliminate-redundant-restores
+  - .agents/skills/eliminate-redundant-restores/SKILL.md
   - .agents/skills/eval-performance
   - .agents/skills/eval-performance/SKILL.md
   - .agents/skills/extension-points
@@ -487,6 +489,8 @@ dependencies:
   - .claude/skills/directory-build-organization/references/common-patterns.md
   - .claude/skills/directory-build-organization/references/multi-level-examples.md
   - .claude/skills/directory-build-organization/references/targetframework-props-pitfall.md
+  - .claude/skills/eliminate-redundant-restores
+  - .claude/skills/eliminate-redundant-restores/SKILL.md
   - .claude/skills/eval-performance
   - .claude/skills/eval-performance/SKILL.md
   - .claude/skills/extension-points
@@ -517,14 +521,15 @@ dependencies:
     .agents/skills/binlog-failure-analysis/SKILL.md: sha256:9c44495e56f67784d428a67b7bcf585946397d34a57e7bf53fdd371f3b9c0641
     .agents/skills/binlog-generation/SKILL.md: sha256:4e5d8286f1b4089a5bbb691c11e49b0d680969a8f3e368f928a44a616314376e
     .agents/skills/build-parallelism/SKILL.md: sha256:4e849f7e1ab258328c642fcebd12717f250efba4d2bbd403c741a36793049246
-    .agents/skills/build-perf-baseline/SKILL.md: sha256:660963fe7926c162fe63c254a4cdc60ffd3664e6decee2acf06cafb1eb4e6a1c
-    .agents/skills/build-perf-diagnostics/SKILL.md: sha256:9d39707baaa1decb969c3b8ffcb0be4ed69d5724b9bc5c07b9ac076c15d65be5
+    .agents/skills/build-perf-baseline/SKILL.md: sha256:665fa0ae2f539367d701f6bc6996667ccbe258020caff745c0cbfbfee7d42df2
+    .agents/skills/build-perf-diagnostics/SKILL.md: sha256:7e29bb90f84389b92ccb9271e65da6995737143a9fbd9503ca051aa0a3f711dc
     .agents/skills/check-bin-obj-clash/SKILL.md: sha256:ac355e973ae8577f5067c09aa301a8001ba2de681944f2c6221079ecbb38ff2a
     .agents/skills/copy-to-output-directory/SKILL.md: sha256:f099db9b3165ca2e49e4c3117612ef2d4e133af67c4a33b9b32775c9b493e52c
     .agents/skills/directory-build-organization/SKILL.md: sha256:747e01fe8e1e78f65b52527b066d7e195375351749996c8e03dbed21e4720af4
     .agents/skills/directory-build-organization/references/common-patterns.md: sha256:6e651cb87034e162e8a966228cbf837612e434c564fd7f9928d38ef44a12e7f3
     .agents/skills/directory-build-organization/references/multi-level-examples.md: sha256:6120bf2b385eb2cf348c66173bb27ade493d570db8c497881cc8319f448c820a
     .agents/skills/directory-build-organization/references/targetframework-props-pitfall.md: sha256:a5f0b84a3138e5fdf1fdf103268493006756a1c86312952926f3a10c3e5dd738
+    .agents/skills/eliminate-redundant-restores/SKILL.md: sha256:178c6b44ae9d5a4b5aedefa73b1366be7d389e07a3c855e2bdceeb54cc435e74
     .agents/skills/eval-performance/SKILL.md: sha256:b69eed236895f50b230c3a0bb248cdbc97fbe3043319a41ddbf1ee385843ab69
     .agents/skills/extension-points/SKILL.md: sha256:fdc86938bd6279a5d3abe2adb49606ce675d91534798cff9e89075e903adff09
     .agents/skills/including-generated-files/SKILL.md: sha256:8216b42f0b12361abc85ad4c439a4c90f728ceccaf7ff184898ff9a99b2336b9
@@ -538,20 +543,21 @@ dependencies:
     .agents/skills/property-patterns/SKILL.md: sha256:fa35856fde19371c9de57c518c468a02e8fe26a80b4ee99a5a680cf1449582fd
     .agents/skills/resolve-project-references/SKILL.md: sha256:5aa288d6f2204bdf7c3519a74596b9c7c501e9e655c1cd0369a3b877fa732fd9
     .agents/skills/target-authoring/SKILL.md: sha256:e39b9ad0bfe65746c8110f971847a1dd8988feccc10b8ad19674ab544926bcc0
-    .claude/agents/build-perf.md: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+    .claude/agents/build-perf.md: sha256:622f219a43d65e3023337206b63ae13df2242e4deb2cfe16958dbd51fbf40ede
     .claude/agents/msbuild-code-review.md: sha256:fcb16ecab137df0f2ed5014b988ae95280c268f282ceb1046b3141b555cbc9a8
-    .claude/agents/msbuild.md: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
+    .claude/agents/msbuild.md: sha256:680cff3b89d6586575d44d3a222c53da27b81ed0016a30073c9f6edc8586d6aa
     .claude/skills/binlog-failure-analysis/SKILL.md: sha256:9c44495e56f67784d428a67b7bcf585946397d34a57e7bf53fdd371f3b9c0641
     .claude/skills/binlog-generation/SKILL.md: sha256:4e5d8286f1b4089a5bbb691c11e49b0d680969a8f3e368f928a44a616314376e
     .claude/skills/build-parallelism/SKILL.md: sha256:4e849f7e1ab258328c642fcebd12717f250efba4d2bbd403c741a36793049246
-    .claude/skills/build-perf-baseline/SKILL.md: sha256:660963fe7926c162fe63c254a4cdc60ffd3664e6decee2acf06cafb1eb4e6a1c
-    .claude/skills/build-perf-diagnostics/SKILL.md: sha256:9d39707baaa1decb969c3b8ffcb0be4ed69d5724b9bc5c07b9ac076c15d65be5
+    .claude/skills/build-perf-baseline/SKILL.md: sha256:665fa0ae2f539367d701f6bc6996667ccbe258020caff745c0cbfbfee7d42df2
+    .claude/skills/build-perf-diagnostics/SKILL.md: sha256:7e29bb90f84389b92ccb9271e65da6995737143a9fbd9503ca051aa0a3f711dc
     .claude/skills/check-bin-obj-clash/SKILL.md: sha256:ac355e973ae8577f5067c09aa301a8001ba2de681944f2c6221079ecbb38ff2a
     .claude/skills/copy-to-output-directory/SKILL.md: sha256:f099db9b3165ca2e49e4c3117612ef2d4e133af67c4a33b9b32775c9b493e52c
     .claude/skills/directory-build-organization/SKILL.md: sha256:747e01fe8e1e78f65b52527b066d7e195375351749996c8e03dbed21e4720af4
     .claude/skills/directory-build-organization/references/common-patterns.md: sha256:6e651cb87034e162e8a966228cbf837612e434c564fd7f9928d38ef44a12e7f3
     .claude/skills/directory-build-organization/references/multi-level-examples.md: sha256:6120bf2b385eb2cf348c66173bb27ade493d570db8c497881cc8319f448c820a
     .claude/skills/directory-build-organization/references/targetframework-props-pitfall.md: sha256:a5f0b84a3138e5fdf1fdf103268493006756a1c86312952926f3a10c3e5dd738
+    .claude/skills/eliminate-redundant-restores/SKILL.md: sha256:178c6b44ae9d5a4b5aedefa73b1366be7d389e07a3c855e2bdceeb54cc435e74
     .claude/skills/eval-performance/SKILL.md: sha256:b69eed236895f50b230c3a0bb248cdbc97fbe3043319a41ddbf1ee385843ab69
     .claude/skills/extension-points/SKILL.md: sha256:fdc86938bd6279a5d3abe2adb49606ce675d91534798cff9e89075e903adff09
     .claude/skills/including-generated-files/SKILL.md: sha256:8216b42f0b12361abc85ad4c439a4c90f728ceccaf7ff184898ff9a99b2336b9
@@ -565,15 +571,15 @@ dependencies:
     .claude/skills/property-patterns/SKILL.md: sha256:fa35856fde19371c9de57c518c468a02e8fe26a80b4ee99a5a680cf1449582fd
     .claude/skills/resolve-project-references/SKILL.md: sha256:5aa288d6f2204bdf7c3519a74596b9c7c501e9e655c1cd0369a3b877fa732fd9
     .claude/skills/target-authoring/SKILL.md: sha256:e39b9ad0bfe65746c8110f971847a1dd8988feccc10b8ad19674ab544926bcc0
-    .github/agents/build-perf.agent.md: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+    .github/agents/build-perf.agent.md: sha256:622f219a43d65e3023337206b63ae13df2242e4deb2cfe16958dbd51fbf40ede
     .github/agents/msbuild-code-review.agent.md: sha256:fcb16ecab137df0f2ed5014b988ae95280c268f282ceb1046b3141b555cbc9a8
-    .github/agents/msbuild.agent.md: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
-  content_hash: sha256:d1bd6d3cd8ca67d4e632e789745ca5499932c8befecb83c2e63ac05cb8b1449e
+    .github/agents/msbuild.agent.md: sha256:680cff3b89d6586575d44d3a222c53da27b81ed0016a30073c9f6edc8586d6aa
+  content_hash: sha256:cbe5ccbc99d488ba224619e0041ee2cfd2f80b02293cba00ec662a78625862c5
   is_dev: true
 - repo_url: microsoft/apm
   name: apm-guide
   host: github.com
-  resolved_commit: ee08bb59b9a7bce67fb4010e4af8652c4c53a7de
+  resolved_commit: 0495ced00c848e4f5fca8198d1039a82e2add0fb
   resolved_ref: main
   version: 1.0.0
   virtual_path: packages/apm-guide
@@ -604,26 +610,26 @@ dependencies:
   - .github/agents/apm-expert.agent.md
   deployed_file_hashes:
     .agents/skills/apm-usage/SKILL.md: sha256:715b6d3497d5ca30f4751463091b8ff7cd85dc51e375d2176aea8f0867081c38
-    .agents/skills/apm-usage/authentication.md: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
-    .agents/skills/apm-usage/commands.md: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+    .agents/skills/apm-usage/authentication.md: sha256:dc26eff03816b815b32ed3aec9487c1e9825e99cb70ff79f4ddb0fecc85e80f7
+    .agents/skills/apm-usage/commands.md: sha256:29e334524d707ae80be6c0430a3c1a1d548a2119b0a927f289fde880b1a7c512
     .agents/skills/apm-usage/dependencies.md: sha256:f37edac5e8a613c90dfefea5b74e34403bcc43962f45fe4f58fadc8fddd61ef8
     .agents/skills/apm-usage/governance.md: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
     .agents/skills/apm-usage/installation.md: sha256:c70544c5d1f85102c5e144ac6ae1ca68fcf8ba6a8323cb2ca6adc840d13aa960
-    .agents/skills/apm-usage/package-authoring.md: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
-    .agents/skills/apm-usage/troubleshooting.md: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+    .agents/skills/apm-usage/package-authoring.md: sha256:efab13d38302becd2e931da0410745fdbf905e746a9bca9c4b7bc0452345b222
+    .agents/skills/apm-usage/troubleshooting.md: sha256:2e9b0205624982fada12e3bf4f5e6f5198fb028b84d45d7c5d619e3bfae9ff1e
     .agents/skills/apm-usage/workflow.md: sha256:1bbb710fa9fd710aa2258aea52f6d905c6a2b3d366a1fdc723b028b4bfd2dbae
     .claude/agents/apm-expert.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
     .claude/skills/apm-usage/SKILL.md: sha256:715b6d3497d5ca30f4751463091b8ff7cd85dc51e375d2176aea8f0867081c38
-    .claude/skills/apm-usage/authentication.md: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
-    .claude/skills/apm-usage/commands.md: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+    .claude/skills/apm-usage/authentication.md: sha256:dc26eff03816b815b32ed3aec9487c1e9825e99cb70ff79f4ddb0fecc85e80f7
+    .claude/skills/apm-usage/commands.md: sha256:29e334524d707ae80be6c0430a3c1a1d548a2119b0a927f289fde880b1a7c512
     .claude/skills/apm-usage/dependencies.md: sha256:f37edac5e8a613c90dfefea5b74e34403bcc43962f45fe4f58fadc8fddd61ef8
     .claude/skills/apm-usage/governance.md: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
     .claude/skills/apm-usage/installation.md: sha256:c70544c5d1f85102c5e144ac6ae1ca68fcf8ba6a8323cb2ca6adc840d13aa960
-    .claude/skills/apm-usage/package-authoring.md: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
-    .claude/skills/apm-usage/troubleshooting.md: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+    .claude/skills/apm-usage/package-authoring.md: sha256:efab13d38302becd2e931da0410745fdbf905e746a9bca9c4b7bc0452345b222
+    .claude/skills/apm-usage/troubleshooting.md: sha256:2e9b0205624982fada12e3bf4f5e6f5198fb028b84d45d7c5d619e3bfae9ff1e
     .claude/skills/apm-usage/workflow.md: sha256:1bbb710fa9fd710aa2258aea52f6d905c6a2b3d366a1fdc723b028b4bfd2dbae
     .github/agents/apm-expert.agent.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
-  content_hash: sha256:83c4acc1850967079bc9efd549b4b2f4dcbc22e074de1340cf013bc52264f62c
+  content_hash: sha256:9cd45f1296798013f65046617602531b3c81f2cb9e64c946a330cf4246b902ca
   is_dev: true
   declared_license: MIT
 - repo_url: obra/superpowers
@@ -1001,7 +1007,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+  content_hash: sha256:622f219a43d65e3023337206b63ae13df2242e4deb2cfe16958dbd51fbf40ede
 - kind: project-relative
   target: claude
   value: .claude/agents/msbuild-code-review.md
@@ -1019,7 +1025,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
+  content_hash: sha256:680cff3b89d6586575d44d3a222c53da27b81ed0016a30073c9f6edc8586d6aa
 - kind: project-relative
   target: claude
   value: .claude/agents/optimizing-dotnet-performance.md
@@ -1226,7 +1232,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
+  content_hash: sha256:dc26eff03816b815b32ed3aec9487c1e9825e99cb70ff79f4ddb0fecc85e80f7
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/commands.md
@@ -1235,7 +1241,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+  content_hash: sha256:29e334524d707ae80be6c0430a3c1a1d548a2119b0a927f289fde880b1a7c512
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/dependencies.md
@@ -1271,7 +1277,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
+  content_hash: sha256:efab13d38302becd2e931da0410745fdbf905e746a9bca9c4b7bc0452345b222
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/troubleshooting.md
@@ -1280,7 +1286,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+  content_hash: sha256:2e9b0205624982fada12e3bf4f5e6f5198fb028b84d45d7c5d619e3bfae9ff1e
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/workflow.md
@@ -1532,7 +1538,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:660963fe7926c162fe63c254a4cdc60ffd3664e6decee2acf06cafb1eb4e6a1c
+  content_hash: sha256:665fa0ae2f539367d701f6bc6996667ccbe258020caff745c0cbfbfee7d42df2
 - kind: project-relative
   target: claude
   value: .claude/skills/build-perf-diagnostics
@@ -1550,7 +1556,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:9d39707baaa1decb969c3b8ffcb0be4ed69d5724b9bc5c07b9ac076c15d65be5
+  content_hash: sha256:7e29bb90f84389b92ccb9271e65da6995737143a9fbd9503ca051aa0a3f711dc
 - kind: project-relative
   target: claude
   value: .claude/skills/check-bin-obj-clash
@@ -2046,6 +2052,24 @@ deployments:
   - dotnet/skills/plugins/dotnet-diag
   active_owner: dotnet/skills/plugins/dotnet-diag
   content_hash: sha256:63bda7821ce96ad27e343b93fdf46eb31d2209ba66c387f669062909e3d532a0
+- kind: project-relative
+  target: claude
+  value: .claude/skills/eliminate-redundant-restores
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/eliminate-redundant-restores/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:178c6b44ae9d5a4b5aedefa73b1366be7d389e07a3c855e2bdceeb54cc435e74
 - kind: project-relative
   target: claude
   value: .claude/skills/eval-performance
@@ -3323,7 +3347,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
+  content_hash: sha256:dc26eff03816b815b32ed3aec9487c1e9825e99cb70ff79f4ddb0fecc85e80f7
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/commands.md
@@ -3332,7 +3356,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+  content_hash: sha256:29e334524d707ae80be6c0430a3c1a1d548a2119b0a927f289fde880b1a7c512
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/dependencies.md
@@ -3368,7 +3392,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
+  content_hash: sha256:efab13d38302becd2e931da0410745fdbf905e746a9bca9c4b7bc0452345b222
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/troubleshooting.md
@@ -3377,7 +3401,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+  content_hash: sha256:2e9b0205624982fada12e3bf4f5e6f5198fb028b84d45d7c5d619e3bfae9ff1e
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/workflow.md
@@ -3629,7 +3653,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:660963fe7926c162fe63c254a4cdc60ffd3664e6decee2acf06cafb1eb4e6a1c
+  content_hash: sha256:665fa0ae2f539367d701f6bc6996667ccbe258020caff745c0cbfbfee7d42df2
 - kind: project-relative
   target: copilot
   value: .agents/skills/build-perf-diagnostics
@@ -3647,7 +3671,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:9d39707baaa1decb969c3b8ffcb0be4ed69d5724b9bc5c07b9ac076c15d65be5
+  content_hash: sha256:7e29bb90f84389b92ccb9271e65da6995737143a9fbd9503ca051aa0a3f711dc
 - kind: project-relative
   target: copilot
   value: .agents/skills/check-bin-obj-clash
@@ -4143,6 +4167,24 @@ deployments:
   - dotnet/skills/plugins/dotnet-diag
   active_owner: dotnet/skills/plugins/dotnet-diag
   content_hash: sha256:63bda7821ce96ad27e343b93fdf46eb31d2209ba66c387f669062909e3d532a0
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/eliminate-redundant-restores
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/eliminate-redundant-restores/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:178c6b44ae9d5a4b5aedefa73b1366be7d389e07a3c855e2bdceeb54cc435e74
 - kind: project-relative
   target: copilot
   value: .agents/skills/eval-performance
@@ -5276,7 +5318,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+  content_hash: sha256:622f219a43d65e3023337206b63ae13df2242e4deb2cfe16958dbd51fbf40ede
 - kind: project-relative
   target: copilot
   value: .github/agents/msbuild-code-review.agent.md
@@ -5294,7 +5336,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
+  content_hash: sha256:680cff3b89d6586575d44d3a222c53da27b81ed0016a30073c9f6edc8586d6aa
 - kind: project-relative
   target: copilot
   value: .github/agents/optimizing-dotnet-performance.agent.md
