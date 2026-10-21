@@ -872,30 +872,30 @@
       },
       "OpenTelemetry.Instrumentation.AspNetCore": {
         "type": "Transitive",
-        "resolved": "1.20.0",
-        "contentHash": "sJF0pjXDlROVcOz/zOihIlbC8mtb5/zm2q3zs0z+qWUtoZnlFJlHHZ1pHNUJ7VVZu3FmD8EwYGGglw5sbVr8jQ==",
+        "resolved": "1.20.1",
+        "contentHash": "pDO+Ed5iblMTvSVGcXzoLp8q20XHhXmK0wD/H3PGNHwDFlwZpV+bDWd/Euo6hNB4E0ruqzTFD76Btm+m0uCYNw==",
         "dependencies": {
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.20.0, 2.0.0)"
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.20.1, 2.0.0)"
         }
       },
       "OpenTelemetry.Instrumentation.Http": {
         "type": "Transitive",
-        "resolved": "1.20.0",
-        "contentHash": "803Ryeh5gWtGPdy7knumXKzMmMIG6tbX18Y5Din0z9V5IOiWjfbK1qvgw45b6ffyR6+CATw9yOa/6LOU2gvS1A==",
+        "resolved": "1.20.1",
+        "contentHash": "XJTM6imVztxLraOrzsdlZf5shdH9TVeEWNBxpyepB5e3Gy+KNeQf2hyic398210UxqlPtt4iOkBELtjfIFTzug==",
         "dependencies": {
           "Microsoft.Extensions.Configuration": "10.0.0",
           "Microsoft.Extensions.Options": "10.0.0",
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.20.0, 2.0.0)"
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.20.1, 2.0.0)"
         }
       },
       "OpenTelemetry.Instrumentation.SqlClient": {
         "type": "Transitive",
-        "resolved": "1.20.0",
-        "contentHash": "qZGMdMkfKVS8s9Jyw8053HfZzCGQE3AXAsLq2VvaBb3LwePb147hxycTvBDGirXOCK8Rkrd6g65G32T9JFw2nw==",
+        "resolved": "1.20.1",
+        "contentHash": "RUw1ZVqWb/1fXTfCIc5HRGjwTHBTsqon+wyCsw2yF1apWQVZwYMIQt+G7yEXQgQpevZQrm8vsMTDcAd1gysH5A==",
         "dependencies": {
           "Microsoft.Extensions.Configuration": "10.0.0",
           "Microsoft.Extensions.Options": "10.0.0",
-          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.20.0, 2.0.0)"
+          "OpenTelemetry.Api.ProviderBuilderExtensions": "[1.20.1, 2.0.0)"
         }
       },
       "OpenTelemetry.PersistentStorage.Abstractions": {
@@ -1043,8 +1043,8 @@
           "Ark.Tools.AspNetCore.HealthChecks.OTel": "[1.0.0, )",
           "Ark.Tools.OTel": "[1.0.0, )",
           "OpenTelemetry.Extensions.Hosting": "[1.20.1, )",
-          "OpenTelemetry.Instrumentation.AspNetCore": "[1.20.0, )",
-          "OpenTelemetry.Instrumentation.SqlClient": "[1.20.0, )"
+          "OpenTelemetry.Instrumentation.AspNetCore": "[1.20.1, )",
+          "OpenTelemetry.Instrumentation.SqlClient": "[1.20.1, )"
         }
       },
       "ark.tools.aspnetcore.problemdetails": {
@@ -1243,8 +1243,8 @@
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "OpenTelemetry": "[1.20.1, )",
           "OpenTelemetry.Extensions.Hosting": "[1.20.1, )",
-          "OpenTelemetry.Instrumentation.Http": "[1.20.0, )",
-          "OpenTelemetry.Instrumentation.SqlClient": "[1.20.0, )"
+          "OpenTelemetry.Instrumentation.Http": "[1.20.1, )",
+          "OpenTelemetry.Instrumentation.SqlClient": "[1.20.1, )"
         }
       },
       "ark.tools.outbox": {
