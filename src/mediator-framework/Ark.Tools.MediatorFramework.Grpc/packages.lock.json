@@ -87,9 +87,9 @@
       },
       "System.ServiceModel.Primitives": {
         "type": "Direct",
-        "requested": "[10.0.652802, )",
-        "resolved": "10.0.652802",
-        "contentHash": "ULfGNl75BNXkpF42wNV2CDXJ64dUZZEa8xO2mBsc4tqbW9QjruxjEB6bAr4Z/T1rNU+leOztIjCJQYsBGFWYlw=="
+        "requested": "[10.1.0, )",
+        "resolved": "10.1.0",
+        "contentHash": "aFwU1C7xHmHKGt06PMMmaPWIn3RIP/kmF7WuazlTgSMbwDYXW4wIymax+KZegm2VWWljerevIY6m8EW/F/s1rg=="
       },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
