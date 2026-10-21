@@ -291,6 +291,11 @@ public sealed class AuditableAsyncAdvancedSessionOperationsDecorator : IAsyncAdv
         _inner.IgnoreChangesFor(entity);
     }
 
+    public void RegisterForConcurrencyCheck(string id, string changeVector)
+    {
+        _inner.RegisterForConcurrencyCheck(id, changeVector);
+    }
+
     public void Increment<T, TTarget>(T entity, Expression<Func<T, TTarget>> path, TTarget valToAdd)
     {
         _inner.Increment(entity, path, valToAdd);

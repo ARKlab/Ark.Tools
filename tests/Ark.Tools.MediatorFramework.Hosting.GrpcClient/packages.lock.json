@@ -332,7 +332,7 @@
           "FluentValidation": "[12.2.0, )",
           "Google.Api.CommonProtos": "[2.17.0, )",
           "Grpc.StatusProto": "[2.84.0, )",
-          "System.ServiceModel.Primitives": "[10.0.652802, )",
+          "System.ServiceModel.Primitives": "[10.1.0, )",
           "protobuf-net.Grpc.AspNetCore": "[1.3.14, )"
         }
       },
@@ -730,12 +730,12 @@
       },
       "System.ServiceModel.Primitives": {
         "type": "CentralTransitive",
-        "requested": "[10.0.652802, )",
-        "resolved": "10.0.652802",
-        "contentHash": "ULfGNl75BNXkpF42wNV2CDXJ64dUZZEa8xO2mBsc4tqbW9QjruxjEB6bAr4Z/T1rNU+leOztIjCJQYsBGFWYlw==",
+        "requested": "[10.1.0, )",
+        "resolved": "10.1.0",
+        "contentHash": "aFwU1C7xHmHKGt06PMMmaPWIn3RIP/kmF7WuazlTgSMbwDYXW4wIymax+KZegm2VWWljerevIY6m8EW/F/s1rg==",
         "dependencies": {
-          "Microsoft.Extensions.ObjectPool": "10.0.0",
-          "System.Security.Cryptography.Xml": "10.0.0"
+          "Microsoft.Extensions.ObjectPool": "10.0.13",
+          "System.Security.Cryptography.Xml": "10.0.13"
         }
       }
     }
