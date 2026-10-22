@@ -21,9 +21,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.315, )",
-        "resolved": "3.0.315",
-        "contentHash": "adL/ZRvZdqwVnpIcfTKC+soGLj4H+6mV7lcLSA79FkAjJd5bVUnKF6geq+b1w9uz3Dtj1VGJkGCYS0WKtxNEyQ=="
+        "requested": "[3.0.316, )",
+        "resolved": "3.0.316",
+        "contentHash": "rVlO2kooN6mAQEdhOpHTzCUA6Mp8s6MRQd6AlwhrQIr/IUujxlg0PEN5dyP8DSG4fe49T5zw4chdVM0A4+iQNA=="
       },
       "Microsoft.Azure.Functions.Worker.OpenTelemetry": {
         "type": "Direct",
@@ -922,16 +922,16 @@
       },
       "protobuf-net": {
         "type": "Transitive",
-        "resolved": "3.4.30",
-        "contentHash": "N49mhnY5fpWds085lO6ocppox9y4cTb1EmbHAAYVJMl/iYSYyNpz4Ohxnk80qtqv52dNZI+/6hQbaiz3+rTEwA==",
+        "resolved": "3.4.40",
+        "contentHash": "Gds96uOs0bZlDfLIYHRMee1xmrWxUTLM9HSOlDzUmyzkTGDcMWw3Lgx9TPUxD94r+/E/Y9OEL5Cf3PiTHn9bfw==",
         "dependencies": {
-          "protobuf-net.Core": "3.4.30"
+          "protobuf-net.Core": "3.4.40"
         }
       },
       "protobuf-net.Core": {
         "type": "Transitive",
-        "resolved": "3.4.30",
-        "contentHash": "CZf8U6eON9OBtcPyOiXJ6Oq3Opi/lWtEiireyLCy43iof1A2oA0GEOrEHZISzmQ46s61iOC06Sa4Cs+D41t1DA=="
+        "resolved": "3.4.40",
+        "contentHash": "UDQ8fbEKqpQktJfFyqkZ22S7P01sJWNmqkYjzbwZdZUHFwHIDigmWIzxmExF7NjbNoTqmv2Dfsu3rOpRHXK5EA=="
       },
       "SimpleInjector": {
         "type": "Transitive",
@@ -1112,7 +1112,7 @@
         "dependencies": {
           "Ark.Tools.Outbox": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
-          "protobuf-net": "[3.4.30, )"
+          "protobuf-net": "[3.4.40, )"
         }
       },
       "ark.tools.mediatorframework.azurefunctions": {
@@ -1221,7 +1221,7 @@
           "Google.Protobuf": "[3.36.2, )",
           "NodaTime": "[3.3.5, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
-          "protobuf-net": "[3.4.30, )"
+          "protobuf-net": "[3.4.40, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
