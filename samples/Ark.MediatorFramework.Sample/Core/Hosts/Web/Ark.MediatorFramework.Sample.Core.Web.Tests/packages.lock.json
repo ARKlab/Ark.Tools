@@ -1097,8 +1097,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.3.5",
-        "contentHash": "0qtGKHOYhQGCeUItP4RN8KJktsKD9j/B4IqmoecUL+ymReq69O71qEpZY6x0aQPZa5KDLXY41aEOOHZ9T6Uqgw=="
+        "resolved": "3.3.6",
+        "contentHash": "vAjAdOvqu5hqgDVgzJxFPhSVy4EM5/tmSHJn/k0lLDIn4637OReqJgvR49fzFzj+5uZfebdJEFbI6LOLazWXog=="
       },
       "NodaTime.Serialization.Protobuf": {
         "type": "Transitive",
@@ -1560,7 +1560,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "NodaTime": "[3.3.5, )"
+          "NodaTime": "[3.3.6, )"
         }
       },
       "ark.tools.dapper": {
@@ -1614,7 +1614,7 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.13, )",
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.13, )",
           "Microsoft.Extensions.Options": "[10.0.13, )",
-          "NodaTime": "[3.3.5, )"
+          "NodaTime": "[3.3.6, )"
         }
       },
       "ark.tools.mediatorframework.messaging.azure": {
@@ -1694,7 +1694,7 @@
         "dependencies": {
           "Google.Api.CommonProtos": "[2.17.0, )",
           "Google.Protobuf": "[3.36.2, )",
-          "NodaTime": "[3.3.5, )",
+          "NodaTime": "[3.3.6, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.4.40, )"
         }
