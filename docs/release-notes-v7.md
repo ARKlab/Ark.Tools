@@ -138,6 +138,63 @@ maintained fork `DotNetDiag.HealthChecks.*`; namespaces are unchanged.
 reference `DotNetDiag.HealthChecks.Publisher.ApplicationInsights` if you need it.
 See [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-replace-aspnetcorediagnosticshealthchecks-packages).
 
+## Breaking changes since v6
+
+These changes can break a v6 application when it moves to v7. The
+Mediator Framework, Compliance, the SDK and the OpenTelemetry packages are new
+in v7; changes to them between betas are listed in the
+[changelog](../CHANGELOG.md).
+
+- **.NET 10 only.** Every package targets `net10.0`; the `net8.0` builds are
+  gone.
+- **Application Insights is no longer the default.** The hosting packages no
+  longer register Application Insights, and the compatibility packages need the
+  Application Insights SDK 3.x. The v2 processors and initializers are removed:
+  `ArkSkipUselessSpamTelemetryProcessor`, `DoNotSampleFailures`,
+  `EnableAdaptiveSamplingWithCustomSettings`, `GlobalInfoTelemetryInitializer`,
+  `SkipSqlDatabaseDependencyFilter` and its factories,
+  `WebApi4xxAsSuccessTelemetryInitializer` and `WebApiUserTelemetryInitializer`.
+  `NLogConfigurer` no longer has the Application Insights target
+  (`WithApplicationInsights*`), and the Rebus `UseApplicationInsight` and
+  `UseApplicationInsightMetrics` moved to the new
+  `Ark.Tools.Rebus.ApplicationInsights` package. See
+  [Move from Application Insights v2 to OpenTelemetry](migration-v7.md#3-move-from-application-insights-v2-to-opentelemetry)
+  and the [telemetry upgrade guide](otel/upgrade-guide.md).
+- **New build errors from `Ark.Tools.Core`.** The package now ships analyzers.
+  [`ARKCORE005`](analyzer-rules/ARKCORE005.md) and
+  [`ARKCORE006`](analyzer-rules/ARKCORE006.md) are errors when a `catch` block
+  throws a new exception without passing the caught one as its inner exception.
+  `Ark.Tools.Solid` adds the [`ARKSOLID001`](analyzer-rules/ARKSOLID001.md)
+  warning, which fails builds that treat warnings as errors.
+- **Sealed types.** Public classes that Ark.Tools does not derive from and that
+  have no `virtual` members are now `sealed`. See
+  [Stop deriving from sealed Ark.Tools types](migration-v7.md#8-stop-deriving-from-sealed-arktools-types).
+- **Polly v8.** The packages depend on `Polly.Core` instead of `Polly`, and no
+  longer on `Polly.Caching.Memory`. If your code uses the legacy `Policy` API
+  through a transitive Ark.Tools reference, reference `Polly` directly.
+- **Replaced dependencies.** `Macross.Json.Extensions` is replaced by Ark
+  converters, see
+  [Replace Macross.Json.Extensions types](migration-v7.md#6-replace-macrossjsonextensions-types).
+  `AspNetCore.HealthChecks.*` is replaced by `DotNetDiag.HealthChecks.*` and
+  `AddArkHealthChecks` no longer adds the Application Insights publisher, see
+  [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-replace-aspnetcorediagnosticshealthchecks-packages).
+  `Ark.Tools.Core` no longer brings `System.Linq.Async`, because .NET 10 has
+  `System.Linq.AsyncEnumerable`; reference it directly only for operators .NET
+  lacks. `Ark.Tools.NLog` no longer uses `Ben.Demystifier`, so `${exception}`
+  writes the standard .NET stack trace.
+- **Health checks UI.** `AddArkHealthChecksUI`, `AddArkHealthChecksUIOptions`
+  and `MapArkHealthChecksUI` moved from `Ark.Tools.AspNetCore.HealthChecks` to
+  `Ark.Tools.AspNetCore`, in the same namespace.
+- **FTP.** `Ark.Tools.FtpClient.ArxOne` is removed; use
+  `Ark.Tools.FtpClient.FluentFtp` or `Ark.Tools.FtpClient.SftpClient`.
+  `Ark.Tools.FtpClient.FtpProxy` now validates the TLS certificate of the
+  FtpProxy service; set `AcceptAnyServerCertificate` only for a development
+  proxy. The listing parallelism setting is removed, see
+  [Drop the FTP listing parallelism](migration-v7.md#9-drop-the-ftp-listing-parallelism).
+- **Smaller changes.** `ValueObject<T>.GetHashCode()` returns different values,
+  so do not persist them. `FakeServer.Process` in
+  `Ark.Tools.AspNetCore.NestedStartup` is renamed `ProcessAsync`.
+
 ## Upgrade
 
 Read [Migration to v7](migration-v7.md) before updating production solutions,
