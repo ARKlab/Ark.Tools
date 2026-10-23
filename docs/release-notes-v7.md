@@ -188,8 +188,6 @@ in v7; changes to them between betas are listed in the
   `Ark.Tools.AspNetCore.NestedStartup` is renamed `ProcessAsync`.
   `ConfigureArkDefaults` ignores `[JsonPropertyName]` on enum members; use
   `[JsonStringEnumMemberName]` or `[EnumMember]` to keep those names.
-  `${exception}` in NLog writes the standard .NET stack trace instead of the
-  demystified one.
 
 Ark.Tools also replaced `Macross.Json.Extensions`, `Polly` and
 `System.Linq.Async` internally. This affects only code that uses those
