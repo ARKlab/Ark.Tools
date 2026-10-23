@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Mediator Framework
-- **Diagnostic message:** `MCP context must be declared partial`
+- **Diagnostic message:** `MCP context and containing types must be declared partial`
 
 ## What it checks
 

@@ -4110,7 +4110,7 @@ public sealed class GeneratorSnapshotTests
 
         var diagnostic = result.Diagnostics.Single(static item => item.Id == "ARKMF057");
         diagnostic.GetMessage().Should().Be(
-            "The bound messaging participant is not listed in a messaging network.. Configure a supported Rebus participant host binding");
+            "The bound messaging participant is not listed in a messaging network. Configure a supported Rebus participant host binding");
         diagnostic.Descriptor.Title.ToString(System.Globalization.CultureInfo.InvariantCulture)
             .Should().Be("Use a valid Rebus participant host binding");
         diagnostic.Descriptor.HelpLinkUri.Should()

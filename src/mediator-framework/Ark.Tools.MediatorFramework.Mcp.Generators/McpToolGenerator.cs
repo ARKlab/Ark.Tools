@@ -64,6 +64,10 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         "ARKMF055", "Document the MCP tool", "MCP tool '{0}' must have an XML description or DescriptionAttribute",
         "Ark.Tools.MediatorFramework", DiagnosticSeverity.Warning, true,
         helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF055.md");
+    private static readonly DiagnosticDescriptor NonPartialContext = new(
+        "ARKMF056", "Declare the MCP context as partial", "MCP context and containing types must be declared partial",
+        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
+        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF056.md");
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -385,9 +389,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
                 if (!diagnosticsOnly)
                     continue;
                 context.ReportDiagnostic(Diagnostic.Create(
-                    new DiagnosticDescriptor("ARKMF056", "Declare the MCP context as partial", "MCP context and containing types must be declared partial",
-                        "Ark.Tools.MediatorFramework", DiagnosticSeverity.Error, true,
-                        helpLinkUri: "https://github.com/ARKlab/Ark.Tools/blob/master/docs/analyzer-rules/ARKMF056.md"),
+                    NonPartialContext,
                     ToLocation(group.InvalidLocation.Value)));
                 continue;
             }

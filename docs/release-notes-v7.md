@@ -1,6 +1,6 @@
-# Ark.Tools v7.0 beta release notes
+# Ark.Tools v7.0 release notes
 
-Ark.Tools v7 is the first beta since v6.0.6. It introduces an opinionated
+Ark.Tools v7.0 is the first major release since v6.0.6. It introduces an opinionated
 solution SDK, privacy-by-default compliance tooling, the Mediator Framework,
 and OpenTelemetry-first telemetry. It also removes reflection from several hot
 paths.
@@ -70,7 +70,7 @@ serializer and Dapper adapters, Reqnroll test-data protection, and a committed
 net for dynamic and third-party payloads; it fails closed when classification is
 unknown.
 
-Compliance analyzer enforcement is opt-in during beta: set
+The compliance analyzers are still beta in v7.0, so enforcement is opt-in: set
 `EnableArkToolsCompliance=true` and add the runtime package where classified
 data is declared.
 
@@ -80,9 +80,17 @@ Start with the [Compliance consumer guide](compliance/README.md).
 
 The preview Mediator Framework lets one pure application handler serve the
 transports its contract explicitly opts into: Minimal APIs, Rebus, code-first
-gRPC, and Azure Functions. Generated adapters keep routing, binding,
+gRPC, Azure Functions, and [MCP tools](mediator-framework/mcp.md). Generated adapters keep routing, binding,
 serialization, and transport context out of business logic while removing the
 MVC and reflection dispatch tax from the hot path.
+
+[Native messaging](mediator-framework/messaging-processing.md) delivers commands
+and events over Azure Service Bus or Storage Queues, with an optional SQL outbox
+that stores the messages in the business transaction and sends them afterwards.
+[API-surface snapshots](mediator-framework/api-surface-snapshots.md) record the
+generated routes, gRPC methods, MCP tools and messaging names in a committed
+`ArkApiSurface.txt`, so the build fails when the public surface changes
+unnoticed.
 
 Choose only the transport packages a host needs. The framework generates
 transport-specific contracts, registration, OpenAPI/proto metadata, standardized
@@ -130,7 +138,66 @@ maintained fork `DotNetDiag.HealthChecks.*`; namespaces are unchanged.
 reference `DotNetDiag.HealthChecks.Publisher.ApplicationInsights` if you need it.
 See [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-replace-aspnetcorediagnosticshealthchecks-packages).
 
+## Breaking changes since v6
+
+These changes can break a v6 application when it moves to v7. The
+Mediator Framework, Compliance, the SDK and the OpenTelemetry packages are new
+in v7; changes to them between betas are listed in the
+[changelog](../CHANGELOG.md).
+
+- **.NET 10 only.** Every package targets `net10.0`; the `net8.0` builds are
+  gone.
+- **Application Insights is no longer the default.** The hosting packages no
+  longer register Application Insights, and the compatibility packages need the
+  Application Insights SDK 3.x. The v2 processors and initializers are removed:
+  `ArkSkipUselessSpamTelemetryProcessor`, `DoNotSampleFailures`,
+  `EnableAdaptiveSamplingWithCustomSettings`, `GlobalInfoTelemetryInitializer`,
+  `SkipSqlDatabaseDependencyFilter` and its factories,
+  `WebApi4xxAsSuccessTelemetryInitializer` and `WebApiUserTelemetryInitializer`.
+  `NLogConfigurer` no longer has the Application Insights target
+  (`WithApplicationInsights*`), and the Rebus `UseApplicationInsight` and
+  `UseApplicationInsightMetrics` moved to the new
+  `Ark.Tools.Rebus.ApplicationInsights` package. See
+  [Move from Application Insights v2 to OpenTelemetry](migration-v7.md#3-move-from-application-insights-v2-to-opentelemetry)
+  and the [telemetry upgrade guide](otel/upgrade-guide.md).
+- **New build errors from `Ark.Tools.Core`.** The package now ships analyzers.
+  [`ARKCORE005`](analyzer-rules/ARKCORE005.md) and
+  [`ARKCORE006`](analyzer-rules/ARKCORE006.md) are errors when a `catch` block
+  throws a new exception without passing the caught one as its inner exception.
+  `Ark.Tools.Solid` adds the [`ARKSOLID001`](analyzer-rules/ARKSOLID001.md)
+  warning, which fails builds that treat warnings as errors.
+- **Sealed types.** Public classes that Ark.Tools does not derive from and that
+  have no `virtual` members are now `sealed`. See
+  [Stop deriving from sealed Ark.Tools types](migration-v7.md#8-stop-deriving-from-sealed-arktools-types).
+- **Health checks.** Ark.Tools now uses `DotNetDiag.HealthChecks.*`, the
+  maintained fork of the `AspNetCore.HealthChecks.*` packages, with the same
+  namespaces. Rename any of those packages that you reference directly.
+  `AddArkHealthChecks` no longer adds the Application Insights publisher, and
+  `AddArkHealthChecksUI`, `AddArkHealthChecksUIOptions` and
+  `MapArkHealthChecksUI` moved from `Ark.Tools.AspNetCore.HealthChecks` to
+  `Ark.Tools.AspNetCore`, in the same namespace. See
+  [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-replace-aspnetcorediagnosticshealthchecks-packages).
+- **FTP.** `Ark.Tools.FtpClient.ArxOne` is removed; use
+  `Ark.Tools.FtpClient.FluentFtp` or `Ark.Tools.FtpClient.SftpClient`.
+  `Ark.Tools.FtpClient.FtpProxy` now validates the TLS certificate of the
+  FtpProxy service; set `AcceptAnyServerCertificate` only for a development
+  proxy. The listing parallelism setting is removed, see
+  [Drop the FTP listing parallelism](migration-v7.md#9-drop-the-ftp-listing-parallelism).
+- **Smaller changes.** `ValueObject<T>.GetHashCode()` returns different values,
+  so do not persist them. `FakeServer.Process` in
+  `Ark.Tools.AspNetCore.NestedStartup` is renamed `ProcessAsync`.
+  `ConfigureArkDefaults` ignores `[JsonPropertyName]` on enum members; use
+  `[JsonStringEnumMemberName]` or `[EnumMember]` to keep those names.
+
+Ark.Tools also replaced `Macross.Json.Extensions`, `Polly` and
+`System.Linq.Async` internally. This affects only code that uses those
+libraries through Ark.Tools without referencing them; reference them directly,
+or see [Replace Macross.Json.Extensions types](migration-v7.md#6-replace-macrossjsonextensions-types).
+
 ## Upgrade
 
 Read [Migration to v7](migration-v7.md) before updating production solutions,
 especially if they were cloned or ejected from `Ark.ReferenceProject`.
+
+If you already use a v7 beta, read the [changelog](../CHANGELOG.md) from your
+beta onwards: the betas include breaking changes, each marked **Breaking**.

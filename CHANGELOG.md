@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.0] - 2026-10-23
+
+First stable release of Ark.Tools v7. See the [v7 release notes](docs/release-notes-v7.md) and the [migration guide](docs/migration-v7.md).
+
+### Fixed
+
+- `Ark.Tools.RavenDb.Auditing`: the auditing session decorator now forwards `RegisterForConcurrencyCheck`, which RavenDB.Client 7.2.7 added to the advanced session operations.
+- `ARKMF057` messages no longer contain a double period between the reason and the fix.
+
 ## [7.0.0-beta20] - 2026-10-19
 
 ### Added
