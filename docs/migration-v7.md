@@ -1,6 +1,6 @@
 # Migration to Ark.Tools v7
 
-This guide covers the v6.0.6-to-v7 beta upgrade. Adopt the sections that apply
+This guide covers the v6.0.6-to-v7 upgrade. Adopt the sections that apply
 to the application; the SDK, Compliance, Mediator Framework, and OTel changes
 can be introduced independently.
 
@@ -11,7 +11,7 @@ Pin the released v7 SDK version in `global.json`:
 ```json
 {
   "msbuild-sdks": {
-    "Ark.Tools.Sdk": "<v7-beta-version>"
+    "Ark.Tools.Sdk": "7.0.0"
   }
 }
 ```
@@ -46,7 +46,7 @@ Compare an ejected solution with the current
 3. Update `global.json` to the supported .NET SDK and keep the Microsoft Testing
    Platform runner configuration.
 4. Update Ark package versions in `Directory.Packages.props` to the released v7
-   beta version. The sample's `999.9.9` package versions and commented SDK
+   version. The sample's `999.9.9` package versions and commented SDK
    declaration are repository placeholders, not versions to copy.
 5. Restore, build, and run the focused tests for changed projects.
 
@@ -129,7 +129,7 @@ formatters or a required compatibility boundary. The
 [MVC migration guide](mediator-framework/migration-from-mvc.md) describes the
 endpoint model and parity checks.
 
-If you adopted native messaging during the v7 previews: replace
+If you adopted native messaging during the v7 betas: replace
 `((IBusOutboxEnlistment)bus).Enlist(context)` with `bus.Enlist(context)`
 and remove the `IBusOutboxEnlistment` registrations; `UseOutbox()` is optional.
 `RebusMessagingBus` takes `outboxEnabled`.

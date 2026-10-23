@@ -9,7 +9,7 @@ packages:
 - [Compliance](compliance/README.md)
 - [Ark.Tools SDK](sdk/README.md)
 - [OpenTelemetry](otel/README.md)
-- [Release notes v7 beta](release-notes-v7.md)
+- [Release notes v7](release-notes-v7.md)
 - [Migration to v7](migration-v7.md)
 - [Earlier migration guides](migration-v6.md)
 - [Analyzer rules](analyzer-rules/)

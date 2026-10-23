@@ -1,6 +1,6 @@
-# Ark.Tools v7.0 beta release notes
+# Ark.Tools v7.0 release notes
 
-Ark.Tools v7 is the first beta since v6.0.6. It introduces an opinionated
+Ark.Tools v7.0 is the first major release since v6.0.6. It introduces an opinionated
 solution SDK, privacy-by-default compliance tooling, the Mediator Framework,
 and OpenTelemetry-first telemetry. It also removes reflection from several hot
 paths.
@@ -70,7 +70,7 @@ serializer and Dapper adapters, Reqnroll test-data protection, and a committed
 net for dynamic and third-party payloads; it fails closed when classification is
 unknown.
 
-Compliance analyzer enforcement is opt-in during beta: set
+The compliance analyzers are still beta in v7.0, so enforcement is opt-in: set
 `EnableArkToolsCompliance=true` and add the runtime package where classified
 data is declared.
 
@@ -80,9 +80,17 @@ Start with the [Compliance consumer guide](compliance/README.md).
 
 The preview Mediator Framework lets one pure application handler serve the
 transports its contract explicitly opts into: Minimal APIs, Rebus, code-first
-gRPC, and Azure Functions. Generated adapters keep routing, binding,
+gRPC, Azure Functions, and [MCP tools](mediator-framework/mcp.md). Generated adapters keep routing, binding,
 serialization, and transport context out of business logic while removing the
 MVC and reflection dispatch tax from the hot path.
+
+[Native messaging](mediator-framework/messaging-processing.md) delivers commands
+and events over Azure Service Bus or Storage Queues, with an optional SQL outbox
+that stores the messages in the business transaction and sends them afterwards.
+[API-surface snapshots](mediator-framework/api-surface-snapshots.md) record the
+generated routes, gRPC methods, MCP tools and messaging names in a committed
+`ArkApiSurface.txt`, so the build fails when the public surface changes
+unnoticed.
 
 Choose only the transport packages a host needs. The framework generates
 transport-specific contracts, registration, OpenAPI/proto metadata, standardized
@@ -134,3 +142,6 @@ See [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-rep
 
 Read [Migration to v7](migration-v7.md) before updating production solutions,
 especially if they were cloned or ejected from `Ark.ReferenceProject`.
+
+If you already use a v7 beta, read the [changelog](../CHANGELOG.md) from your
+beta onwards: the betas include breaking changes, each marked **Breaking**.
