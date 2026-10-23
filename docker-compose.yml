@@ -44,7 +44,7 @@ services:
 
   # Used by the SFTP client tests: sftp://ark:ark@127.0.0.1:2222/upload (ARK_SFTP_TEST_URI).
   sftp:
-    image: atmoz/sftp:alpine@sha256:5301af71da01f4e4867d61b57252c35b842a79d2637fe16e8b85db9bcbbb7319
+    image: atmoz/sftp:alpine@sha256:43dd1c023cf1bae487127d4b54660b0aee6e94c188a6599be36fb89ba115f961
     restart: unless-stopped
     command: ark:ark:::upload
     ports:
