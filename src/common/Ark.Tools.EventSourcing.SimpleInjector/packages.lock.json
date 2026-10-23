@@ -54,7 +54,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "NodaTime": "[3.3.5, )"
+          "NodaTime": "[3.3.6, )"
         }
       },
       "ark.tools.eventsourcing": {
@@ -94,9 +94,9 @@
       },
       "NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.3.5, )",
-        "resolved": "3.3.5",
-        "contentHash": "0qtGKHOYhQGCeUItP4RN8KJktsKD9j/B4IqmoecUL+ymReq69O71qEpZY6x0aQPZa5KDLXY41aEOOHZ9T6Uqgw=="
+        "requested": "[3.3.6, )",
+        "resolved": "3.3.6",
+        "contentHash": "vAjAdOvqu5hqgDVgzJxFPhSVy4EM5/tmSHJn/k0lLDIn4637OReqJgvR49fzFzj+5uZfebdJEFbI6LOLazWXog=="
       },
       "SimpleInjector": {
         "type": "CentralTransitive",
