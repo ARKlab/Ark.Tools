@@ -2,7 +2,7 @@
 
 - **Severity:** Error
 - **Component:** Mediator Framework
-- **Diagnostic message:** `{0}. Configure a supported Rebus participant host binding`
+- **Diagnostic message:** `{0} Configure a supported Rebus participant host binding`
 
 ## What it checks
 

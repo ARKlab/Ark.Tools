@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `ARKMF057` messages no longer contain a double period between the reason and the fix.
+
 ## [7.0.0-beta20] - 2026-10-19
 
 ### Added
