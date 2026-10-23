@@ -20,6 +20,7 @@
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/ContractSymbols.cs" Link="ContractSymbols.cs" />
     <Compile Include="../Ark.Tools.MediatorFramework.Generators/ContractProperties.cs" Link="ContractProperties.cs" />
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
     <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
   </ItemGroup>
 </Project>
