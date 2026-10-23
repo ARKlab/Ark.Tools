@@ -169,22 +169,14 @@ in v7; changes to them between betas are listed in the
 - **Sealed types.** Public classes that Ark.Tools does not derive from and that
   have no `virtual` members are now `sealed`. See
   [Stop deriving from sealed Ark.Tools types](migration-v7.md#8-stop-deriving-from-sealed-arktools-types).
-- **Polly v8.** The packages depend on `Polly.Core` instead of `Polly`, and no
-  longer on `Polly.Caching.Memory`. If your code uses the legacy `Policy` API
-  through a transitive Ark.Tools reference, reference `Polly` directly.
-- **Replaced dependencies.** `Macross.Json.Extensions` is replaced by Ark
-  converters, see
-  [Replace Macross.Json.Extensions types](migration-v7.md#6-replace-macrossjsonextensions-types).
-  `AspNetCore.HealthChecks.*` is replaced by `DotNetDiag.HealthChecks.*` and
-  `AddArkHealthChecks` no longer adds the Application Insights publisher, see
+- **Health checks.** Ark.Tools now uses `DotNetDiag.HealthChecks.*`, the
+  maintained fork of the `AspNetCore.HealthChecks.*` packages, with the same
+  namespaces. Rename any of those packages that you reference directly.
+  `AddArkHealthChecks` no longer adds the Application Insights publisher, and
+  `AddArkHealthChecksUI`, `AddArkHealthChecksUIOptions` and
+  `MapArkHealthChecksUI` moved from `Ark.Tools.AspNetCore.HealthChecks` to
+  `Ark.Tools.AspNetCore`, in the same namespace. See
   [Replace AspNetCore.Diagnostics.HealthChecks packages](migration-v7.md#7-replace-aspnetcorediagnosticshealthchecks-packages).
-  `Ark.Tools.Core` no longer brings `System.Linq.Async`, because .NET 10 has
-  `System.Linq.AsyncEnumerable`; reference it directly only for operators .NET
-  lacks. `Ark.Tools.NLog` no longer uses `Ben.Demystifier`, so `${exception}`
-  writes the standard .NET stack trace.
-- **Health checks UI.** `AddArkHealthChecksUI`, `AddArkHealthChecksUIOptions`
-  and `MapArkHealthChecksUI` moved from `Ark.Tools.AspNetCore.HealthChecks` to
-  `Ark.Tools.AspNetCore`, in the same namespace.
 - **FTP.** `Ark.Tools.FtpClient.ArxOne` is removed; use
   `Ark.Tools.FtpClient.FluentFtp` or `Ark.Tools.FtpClient.SftpClient`.
   `Ark.Tools.FtpClient.FtpProxy` now validates the TLS certificate of the
@@ -194,6 +186,15 @@ in v7; changes to them between betas are listed in the
 - **Smaller changes.** `ValueObject<T>.GetHashCode()` returns different values,
   so do not persist them. `FakeServer.Process` in
   `Ark.Tools.AspNetCore.NestedStartup` is renamed `ProcessAsync`.
+  `ConfigureArkDefaults` ignores `[JsonPropertyName]` on enum members; use
+  `[JsonStringEnumMemberName]` or `[EnumMember]` to keep those names.
+  `${exception}` in NLog writes the standard .NET stack trace instead of the
+  demystified one.
+
+Ark.Tools also replaced `Macross.Json.Extensions`, `Polly` and
+`System.Linq.Async` internally. This affects only code that uses those
+libraries through Ark.Tools without referencing them; reference them directly,
+or see [Replace Macross.Json.Extensions types](migration-v7.md#6-replace-macrossjsonextensions-types).
 
 ## Upgrade
 
