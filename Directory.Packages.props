@@ -92,10 +92,10 @@
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.Profiler" Version="1.0.1-beta.7" />
     <PackageVersion Include="NLog" Version="6.2.2" />
     <PackageVersion Include="NLog.Database" Version="6.0.3" />
-    <PackageVersion Include="NLog.DiagnosticSource" Version="6.1.4" />
+    <PackageVersion Include="NLog.DiagnosticSource" Version="6.2.2" />
     <PackageVersion Include="NLog.Extensions.Logging" Version="6.2.2" />
     <PackageVersion Include="NLog.MailKit" Version="6.1.6" />
-    <PackageVersion Include="MailKit" Version="4.18.1" />
+    <PackageVersion Include="MailKit" Version="4.18.2" />
     <PackageVersion Include="Slack.Webhooks" Version="1.1.6" />
     <!-- ASPNETCORE -->
     <PackageVersion Include="Asp.Versioning.Http" Version="10.2.3" />
