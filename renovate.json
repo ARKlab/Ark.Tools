@@ -44,6 +44,21 @@
         "microsoft/apm"
       ],
       "allowedVersions": "<0.35.0"
+    },
+    {
+      "description": "dotnet/skills publishes no plugin release tags: apm.yml pins its commit with a '# main' comment and Renovate tracks the main digest, batched weekly because main moves daily",
+      "matchManagers": [
+        "apm"
+      ],
+      "matchPackageNames": [
+        "dotnet/skills"
+      ],
+      "overrideDatasource": "git-refs",
+      "overridePackageName": "https://github.com/dotnet/skills",
+      "groupName": "dotnet/skills plugins",
+      "schedule": [
+        "before 6am on monday"
+      ]
     }
   ],
   "customManagers": [
