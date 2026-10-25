@@ -70,15 +70,19 @@ registered behavior, not merely assert that registration does not throw.
 
 ## Development agents and marketplace plugins
 
-Use [APM 0.33.0](https://github.com/microsoft/apm/releases/tag/v0.33.0) and PowerShell 7.
+Use the [APM](https://github.com/microsoft/apm/releases) version pinned in `renovate.json`
+(`constraints.apm`; the workflows pin the same version and Renovate bumps both
+together) and PowerShell 7. Do not use an unpinned or newer APM: 0.35.0 deletes
+committed skills on a cold checkout, so Renovate caps it below 0.35.0.
 The repository has two separate APM flows:
 
 - **Development:** [apm.yml](apm.yml) and [apm.lock.yaml](apm.lock.yaml)
   declare and pin development dependencies. Installed Copilot and Claude
   skills, agents, hooks, MCP and LSP configuration are committed, so every
   harness and cloud session has them at startup. Some agents link into the
-  ignored `apm_modules/`; run `apm install` after cloning to restore it (cloud
-  setup does this automatically).
+  ignored `apm_modules/`; run `apm install` after cloning to restore it
+  (`.github/workflows/copilot-setup-steps.yml` does this for the Copilot cloud
+  agent; any other cloud environment must install the pinned APM version).
 - **Publication:** [agents-plugins/ark-csharp](agents-plugins/ark-csharp/)
   contains the authored `apm.yml` and `.apm/` assets.
   [agents-plugins/published/ark-csharp](agents-plugins/published/ark-csharp/)
@@ -108,7 +112,7 @@ The restore reuses existing lockfile pins (never `--update`/`--refresh`) and
 the `git diff` fails if the lockfile changed. `apm audit --ci` fails when a committed
 skill, agent or hook differs from the lockfile; files APM never deployed are not
 checked. The CI workflow and Copilot setup steps run it, so the cloud agent does
-not start on altered outputs. APM 0.33.0's `--frozen` preflight cannot bootstrap a clean checkout
+not start on altered outputs. APM's `--frozen` preflight cannot bootstrap a clean checkout
 (it requires installed marketplace manifests and rejects transitive MCP servers
 such as `binlog`), so it is not used. Do not bypass a failure: review
 intentional dependency changes with the maintenance commands below.
@@ -135,14 +139,23 @@ Keep authored repository instructions such as `AGENTS.md` and `.vscode/mcp.json`
 
 ```powershell
 apm install owner/repository/path#ref --dev --target copilot,claude --only apm
-# To refresh existing remote revisions deliberately:
-apm install --update --target copilot,claude --only apm
+# To move a pin, edit its tag or commit in apm.yml, then regenerate the lockfile and outputs:
+apm install --target copilot,claude --only apm
 ```
 
 Commit the manifest, lockfile and regenerated outputs together.
-Renovate does the same: its `apm` manager runs `apm install` with the APM version
-pinned in `renovate.json` and commits every changed output. It bumps tag-pinned
-dependencies; lock file maintenance, enabled for `apm` only, refreshes branch pins.
+Pin dependencies to a release tag (`#v1.2.3`) so Renovate can bump them. A
+repository without plugin release tags, such as `dotnet/skills`, is pinned to a
+commit with a trailing `# main` comment, written exactly as
+`owner/repo/path#<40-hex-sha> # main`; Renovate tracks that digest in a weekly PR.
+Renovate does not update branch refs such as `#main`.
+Renovate does the same as you: its `apm` manager runs `apm install` with the APM version
+pinned in `renovate.json` and commits every changed output. Lock file maintenance
+is disabled: it deletes the lockfile first and breaks the committed outputs.
+An APM version bump (`constraints.apm` and `apm-version` in the workflows) is one
+Renovate PR, and the `apm-guide` tag is another. If the new version changes the
+lockfile, the PR stays red until you run `apm install` with it and push the lockfile.
+The `.github/workflows/apm-update.yml` workflow is manual only.
 Run the restore commands again to verify a lock-preserving restore. Development
 dependencies are never included in the published `ark-csharp` plugin.
 
