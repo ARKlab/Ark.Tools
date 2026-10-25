@@ -1,10 +1,11 @@
 name: "APM lock maintenance"
 
-# Replaces Renovate lock file maintenance for apm.lock.yaml: Renovate deletes the
-# lockfile before `apm install`, so apm skips the committed generated files.
+# Manual only. Renovate now tracks every apm.yml pin (tags, and the dotnet/skills commit),
+# so nothing is left for a weekly `apm update`. Delete this workflow once the first
+# "dotnet/skills plugins" digest PR from Renovate has been seen.
+# A PR opened with GITHUB_TOKEN does not run the CI workflows, so a manual run needs a human
+# push to the branch (or a GitHub App token) before the PR can be merged.
 on:
-  schedule:
-    - cron: '17 5 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -51,5 +52,5 @@ jobs:
         git commit -m 'chore(deps): apm lock file maintenance'
         git push --force origin "$BRANCH"
         if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[]')" ]; then
-          gh pr create --base master --head "$BRANCH" --title 'chore(deps): apm lock file maintenance' --body 'Runs `apm update --yes` and `apm audit --ci` with apm 0.34.0.'
+          gh pr create --base master --head "$BRANCH" --title 'chore(deps): apm lock file maintenance' --body 'Runs `apm update --yes` and `apm audit --ci`.'
         fi
