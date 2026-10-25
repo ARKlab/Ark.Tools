@@ -1,5 +1,5 @@
 lockfile_version: '1'
-apm_version: 0.33.0
+apm_version: 0.34.0
 dependencies:
 - repo_url: _local/ark-csharp
   name: ark-csharp
@@ -51,8 +51,8 @@ dependencies:
   materialization_repo_url: Aaronontheweb/dotnet-skills
   name: aot-trimming
   host: github.com
-  resolved_commit: ac0deb2f531ff5090718cb0069c73ba3f9f95f69
-  resolved_ref: master
+  resolved_commit: 84b5beecd592a32d62c3b6f38d04a34abbf74357
+  resolved_ref: v1.7.1
   version: unknown
   virtual_path: skills/aot-trimming
   is_virtual: true
@@ -79,8 +79,8 @@ dependencies:
   materialization_repo_url: Aaronontheweb/dotnet-skills
   name: opentelemetry-net-instrumentation
   host: github.com
-  resolved_commit: ac0deb2f531ff5090718cb0069c73ba3f9f95f69
-  resolved_ref: master
+  resolved_commit: 84b5beecd592a32d62c3b6f38d04a34abbf74357
+  resolved_ref: v1.7.1
   version: unknown
   virtual_path: skills/opentelementry-dotnet-instrumentation
   is_virtual: true
@@ -161,11 +161,11 @@ dependencies:
   name: dotnet
   host: github.com
   resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
-  resolved_ref: main
+  resolved_ref: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
   version: 0.2.5
   virtual_path: plugins/dotnet
   is_virtual: true
-  package_type: skill_bundle
+  package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/csharp-expert
   - .agents/skills/csharp-expert/SKILL.md
@@ -254,11 +254,11 @@ dependencies:
   name: dotnet-diag
   host: github.com
   resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
-  resolved_ref: main
+  resolved_ref: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
   version: 0.1.3
   virtual_path: plugins/dotnet-diag
   is_virtual: true
-  package_type: skill_bundle
+  package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/analyzing-dotnet-performance
   - .agents/skills/analyzing-dotnet-performance/SKILL.md
@@ -417,11 +417,11 @@ dependencies:
   name: dotnet-msbuild
   host: github.com
   resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
-  resolved_ref: main
+  resolved_ref: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
   version: 0.1.11
   virtual_path: plugins/dotnet-msbuild
   is_virtual: true
-  package_type: skill_bundle
+  package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/binlog-failure-analysis
   - .agents/skills/binlog-failure-analysis/SKILL.md
@@ -573,8 +573,8 @@ dependencies:
 - repo_url: microsoft/apm
   name: apm-guide
   host: github.com
-  resolved_commit: ee08bb59b9a7bce67fb4010e4af8652c4c53a7de
-  resolved_ref: main
+  resolved_commit: 65b3b9f4172feaae5be9118e9a8b672f7a527481
+  resolved_ref: v0.34.0
   version: 1.0.0
   virtual_path: packages/apm-guide
   is_virtual: true
@@ -604,35 +604,35 @@ dependencies:
   - .github/agents/apm-expert.agent.md
   deployed_file_hashes:
     .agents/skills/apm-usage/SKILL.md: sha256:715b6d3497d5ca30f4751463091b8ff7cd85dc51e375d2176aea8f0867081c38
-    .agents/skills/apm-usage/authentication.md: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
-    .agents/skills/apm-usage/commands.md: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+    .agents/skills/apm-usage/authentication.md: sha256:dc26eff03816b815b32ed3aec9487c1e9825e99cb70ff79f4ddb0fecc85e80f7
+    .agents/skills/apm-usage/commands.md: sha256:29e334524d707ae80be6c0430a3c1a1d548a2119b0a927f289fde880b1a7c512
     .agents/skills/apm-usage/dependencies.md: sha256:f37edac5e8a613c90dfefea5b74e34403bcc43962f45fe4f58fadc8fddd61ef8
     .agents/skills/apm-usage/governance.md: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
     .agents/skills/apm-usage/installation.md: sha256:c70544c5d1f85102c5e144ac6ae1ca68fcf8ba6a8323cb2ca6adc840d13aa960
-    .agents/skills/apm-usage/package-authoring.md: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
-    .agents/skills/apm-usage/troubleshooting.md: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+    .agents/skills/apm-usage/package-authoring.md: sha256:efab13d38302becd2e931da0410745fdbf905e746a9bca9c4b7bc0452345b222
+    .agents/skills/apm-usage/troubleshooting.md: sha256:2e9b0205624982fada12e3bf4f5e6f5198fb028b84d45d7c5d619e3bfae9ff1e
     .agents/skills/apm-usage/workflow.md: sha256:1bbb710fa9fd710aa2258aea52f6d905c6a2b3d366a1fdc723b028b4bfd2dbae
     .claude/agents/apm-expert.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
     .claude/skills/apm-usage/SKILL.md: sha256:715b6d3497d5ca30f4751463091b8ff7cd85dc51e375d2176aea8f0867081c38
-    .claude/skills/apm-usage/authentication.md: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
-    .claude/skills/apm-usage/commands.md: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+    .claude/skills/apm-usage/authentication.md: sha256:dc26eff03816b815b32ed3aec9487c1e9825e99cb70ff79f4ddb0fecc85e80f7
+    .claude/skills/apm-usage/commands.md: sha256:29e334524d707ae80be6c0430a3c1a1d548a2119b0a927f289fde880b1a7c512
     .claude/skills/apm-usage/dependencies.md: sha256:f37edac5e8a613c90dfefea5b74e34403bcc43962f45fe4f58fadc8fddd61ef8
     .claude/skills/apm-usage/governance.md: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
     .claude/skills/apm-usage/installation.md: sha256:c70544c5d1f85102c5e144ac6ae1ca68fcf8ba6a8323cb2ca6adc840d13aa960
-    .claude/skills/apm-usage/package-authoring.md: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
-    .claude/skills/apm-usage/troubleshooting.md: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+    .claude/skills/apm-usage/package-authoring.md: sha256:efab13d38302becd2e931da0410745fdbf905e746a9bca9c4b7bc0452345b222
+    .claude/skills/apm-usage/troubleshooting.md: sha256:2e9b0205624982fada12e3bf4f5e6f5198fb028b84d45d7c5d619e3bfae9ff1e
     .claude/skills/apm-usage/workflow.md: sha256:1bbb710fa9fd710aa2258aea52f6d905c6a2b3d366a1fdc723b028b4bfd2dbae
     .github/agents/apm-expert.agent.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
-  content_hash: sha256:83c4acc1850967079bc9efd549b4b2f4dcbc22e074de1340cf013bc52264f62c
+  content_hash: sha256:9cd45f1296798013f65046617602531b3c81f2cb9e64c946a330cf4246b902ca
   is_dev: true
   declared_license: MIT
 - repo_url: obra/superpowers
   name: superpowers
   host: github.com
   resolved_commit: bb92a77741419a4ab5f06e711a283343f1ada0c3
-  resolved_ref: main
+  resolved_ref: v7.0.0
   version: 7.0.0
-  package_type: skill_bundle
+  package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/brainstorming
   - .agents/skills/brainstorming/SKILL.md
@@ -1226,7 +1226,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
+  content_hash: sha256:dc26eff03816b815b32ed3aec9487c1e9825e99cb70ff79f4ddb0fecc85e80f7
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/commands.md
@@ -1235,7 +1235,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+  content_hash: sha256:29e334524d707ae80be6c0430a3c1a1d548a2119b0a927f289fde880b1a7c512
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/dependencies.md
@@ -1271,7 +1271,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
+  content_hash: sha256:efab13d38302becd2e931da0410745fdbf905e746a9bca9c4b7bc0452345b222
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/troubleshooting.md
@@ -1280,7 +1280,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+  content_hash: sha256:2e9b0205624982fada12e3bf4f5e6f5198fb028b84d45d7c5d619e3bfae9ff1e
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/workflow.md
@@ -3323,7 +3323,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
+  content_hash: sha256:dc26eff03816b815b32ed3aec9487c1e9825e99cb70ff79f4ddb0fecc85e80f7
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/commands.md
@@ -3332,7 +3332,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+  content_hash: sha256:29e334524d707ae80be6c0430a3c1a1d548a2119b0a927f289fde880b1a7c512
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/dependencies.md
@@ -3368,7 +3368,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
+  content_hash: sha256:efab13d38302becd2e931da0410745fdbf905e746a9bca9c4b7bc0452345b222
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/troubleshooting.md
@@ -3377,7 +3377,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+  content_hash: sha256:2e9b0205624982fada12e3bf4f5e6f5198fb028b84d45d7c5d619e3bfae9ff1e
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/workflow.md

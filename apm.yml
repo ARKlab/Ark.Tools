@@ -12,13 +12,13 @@ scripts:
   plugins:check: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1 -Check
 devDependencies:
   apm:
-    - microsoft/apm/packages/apm-guide#main
-    - Aaronontheweb/dotnet-skills/skills/aot-trimming#master
-    - Aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation#master
-    - dotnet/skills/plugins/dotnet#main
-    - dotnet/skills/plugins/dotnet-diag#main
-    - dotnet/skills/plugins/dotnet-msbuild#main
-    - obra/superpowers#main
+    - microsoft/apm/packages/apm-guide#v0.34.0
+    - Aaronontheweb/dotnet-skills/skills/aot-trimming#v1.7.1
+    - Aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation#v1.7.1
+    - dotnet/skills/plugins/dotnet#9de888b8ce55da34e76a113bd7b2d463d6b3e1e6 # main
+    - dotnet/skills/plugins/dotnet-diag#9de888b8ce55da34e76a113bd7b2d463d6b3e1e6 # main
+    - dotnet/skills/plugins/dotnet-msbuild#9de888b8ce55da34e76a113bd7b2d463d6b3e1e6 # main
+    - obra/superpowers#v7.0.0
     - DietrichGebert/ponytail#v5.3.2
     - ./agents-plugins/ark-csharp
   mcp:

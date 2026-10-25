@@ -30,7 +30,7 @@ jobs:
       uses: microsoft/apm-action@v1
       with:
         setup-only: true
-        apm-version: 0.33.0
+        apm-version: 0.34.0
 
     - name: 'Update dependencies and generated files'
       run: apm update --yes
@@ -51,5 +51,5 @@ jobs:
         git commit -m 'chore(deps): apm lock file maintenance'
         git push --force origin "$BRANCH"
         if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[]')" ]; then
-          gh pr create --base master --head "$BRANCH" --title 'chore(deps): apm lock file maintenance' --body 'Runs `apm update --yes` and `apm audit --ci` with apm 0.33.0.'
+          gh pr create --base master --head "$BRANCH" --title 'chore(deps): apm lock file maintenance' --body 'Runs `apm update --yes` and `apm audit --ci` with apm 0.34.0.'
         fi
