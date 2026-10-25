@@ -700,11 +700,11 @@
       },
       "MimeKit": {
         "type": "Transitive",
-        "resolved": "4.18.1",
-        "contentHash": "D8AfFVMFVJldWmhQWCziC9nWUN/zayFFBAKpyjVyCeh0tqBiI9jtUVuMrKgWw1EGnCp09msDZldbRvp2jfUehQ==",
+        "resolved": "4.18.2",
+        "contentHash": "aYnwCCq+ZgQIsnHSJd3TMeGqf/Rz/9jYEItXpOoG3E2REOCZtLishwBSDFl2wQ/W2SB5wBsvE38DgHZ0IEyz4Q==",
         "dependencies": {
           "BouncyCastle.Cryptography": "2.7.0",
-          "System.Security.Cryptography.Pkcs": "10.0.0"
+          "System.Security.Cryptography.Pkcs": "10.0.13"
         }
       },
       "Mono.Cecil": {
@@ -1050,7 +1050,7 @@
           "Microsoft.Data.SqlClient": "[7.1.1, )",
           "NLog": "[6.2.2, )",
           "NLog.Database": "[6.0.3, )",
-          "NLog.DiagnosticSource": "[6.1.4, )",
+          "NLog.DiagnosticSource": "[6.2.2, )",
           "NLog.MailKit": "[6.1.6, )",
           "Slack.Webhooks": "[1.1.6, )"
         }
@@ -1321,11 +1321,11 @@
       },
       "MailKit": {
         "type": "CentralTransitive",
-        "requested": "[4.18.1, )",
-        "resolved": "4.18.1",
-        "contentHash": "EssBsnKHvIcH1QpqqsVUEWAlAHI3dkGXJpKAzSNJ8PGjClNynSo9bRkT68jVZkxhREm0Z51Dwu3127f4WfIiRg==",
+        "requested": "[4.18.2, )",
+        "resolved": "4.18.2",
+        "contentHash": "ofqddpSbdrD00NqTD0ZyVfKvrl/ZZ70VFFEQ+DuR8r8CdbY3U02/sdb0CSQBNUqJifsXfVHIwRe1ToR2MvJJkw==",
         "dependencies": {
-          "MimeKit": "4.18.1"
+          "MimeKit": "4.18.2"
         }
       },
       "MessagePack": {
@@ -1727,11 +1727,11 @@
       },
       "NLog.DiagnosticSource": {
         "type": "CentralTransitive",
-        "requested": "[6.1.4, )",
-        "resolved": "6.1.4",
-        "contentHash": "hJQn9R7SXRRrbVM1jW9N6EmGbPejZOy1IOee8L7LcMyX/1kwBxxwZl99T/jzel16xG5eXs1xaqCjRYejlgJyog==",
+        "requested": "[6.2.2, )",
+        "resolved": "6.2.2",
+        "contentHash": "tSyo0zF30k/h5g22YB0YH9Q+JajKxv/zDQYf3dqckZaegtsqsfNWRF72dAOL7t/I/0C8AZVcIw0CCiyU2XuOfw==",
         "dependencies": {
-          "NLog": "6.1.4"
+          "NLog": "6.2.2"
         }
       },
       "NLog.Extensions.Logging": {
