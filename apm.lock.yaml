@@ -160,7 +160,7 @@ dependencies:
 - repo_url: dotnet/skills
   name: dotnet
   host: github.com
-  resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
+  resolved_commit: a6bf43ab61967c30919334986515163ab24d7635
   resolved_ref: main
   version: 0.2.5
   virtual_path: plugins/dotnet
@@ -253,7 +253,7 @@ dependencies:
 - repo_url: dotnet/skills
   name: dotnet-diag
   host: github.com
-  resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
+  resolved_commit: a6bf43ab61967c30919334986515163ab24d7635
   resolved_ref: main
   version: 0.1.3
   virtual_path: plugins/dotnet-diag
@@ -416,12 +416,12 @@ dependencies:
 - repo_url: dotnet/skills
   name: dotnet-msbuild
   host: github.com
-  resolved_commit: 9de888b8ce55da34e76a113bd7b2d463d6b3e1e6
+  resolved_commit: a6bf43ab61967c30919334986515163ab24d7635
   resolved_ref: main
   version: 0.1.11
   virtual_path: plugins/dotnet-msbuild
   is_virtual: true
-  package_type: skill_bundle
+  package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/binlog-failure-analysis
   - .agents/skills/binlog-failure-analysis/SKILL.md
@@ -442,6 +442,8 @@ dependencies:
   - .agents/skills/directory-build-organization/references/common-patterns.md
   - .agents/skills/directory-build-organization/references/multi-level-examples.md
   - .agents/skills/directory-build-organization/references/targetframework-props-pitfall.md
+  - .agents/skills/eliminate-redundant-restores
+  - .agents/skills/eliminate-redundant-restores/SKILL.md
   - .agents/skills/eval-performance
   - .agents/skills/eval-performance/SKILL.md
   - .agents/skills/extension-points
@@ -465,6 +467,8 @@ dependencies:
   - .agents/skills/resolve-project-references/SKILL.md
   - .agents/skills/target-authoring
   - .agents/skills/target-authoring/SKILL.md
+  - .agents/skills/troubleshoot-binlog-mcp
+  - .agents/skills/troubleshoot-binlog-mcp/SKILL.md
   - .claude/agents/build-perf.md
   - .claude/agents/msbuild-code-review.md
   - .claude/agents/msbuild.md
@@ -487,6 +491,8 @@ dependencies:
   - .claude/skills/directory-build-organization/references/common-patterns.md
   - .claude/skills/directory-build-organization/references/multi-level-examples.md
   - .claude/skills/directory-build-organization/references/targetframework-props-pitfall.md
+  - .claude/skills/eliminate-redundant-restores
+  - .claude/skills/eliminate-redundant-restores/SKILL.md
   - .claude/skills/eval-performance
   - .claude/skills/eval-performance/SKILL.md
   - .claude/skills/extension-points
@@ -510,21 +516,24 @@ dependencies:
   - .claude/skills/resolve-project-references/SKILL.md
   - .claude/skills/target-authoring
   - .claude/skills/target-authoring/SKILL.md
+  - .claude/skills/troubleshoot-binlog-mcp
+  - .claude/skills/troubleshoot-binlog-mcp/SKILL.md
   - .github/agents/build-perf.agent.md
   - .github/agents/msbuild-code-review.agent.md
   - .github/agents/msbuild.agent.md
   deployed_file_hashes:
-    .agents/skills/binlog-failure-analysis/SKILL.md: sha256:9c44495e56f67784d428a67b7bcf585946397d34a57e7bf53fdd371f3b9c0641
-    .agents/skills/binlog-generation/SKILL.md: sha256:4e5d8286f1b4089a5bbb691c11e49b0d680969a8f3e368f928a44a616314376e
+    .agents/skills/binlog-failure-analysis/SKILL.md: sha256:fad9baa1a00f1d2af4599118cd061260ee7c60b1ca7969e01e9110835d5b6ecd
+    .agents/skills/binlog-generation/SKILL.md: sha256:dce87c222945463e43c9fd03fbd6b2496e6ba5e91ee9127df5c0e82361f9ba87
     .agents/skills/build-parallelism/SKILL.md: sha256:4e849f7e1ab258328c642fcebd12717f250efba4d2bbd403c741a36793049246
-    .agents/skills/build-perf-baseline/SKILL.md: sha256:660963fe7926c162fe63c254a4cdc60ffd3664e6decee2acf06cafb1eb4e6a1c
-    .agents/skills/build-perf-diagnostics/SKILL.md: sha256:9d39707baaa1decb969c3b8ffcb0be4ed69d5724b9bc5c07b9ac076c15d65be5
+    .agents/skills/build-perf-baseline/SKILL.md: sha256:665fa0ae2f539367d701f6bc6996667ccbe258020caff745c0cbfbfee7d42df2
+    .agents/skills/build-perf-diagnostics/SKILL.md: sha256:17c3a150b8b38fdd3129d5c81a3151f1b2a6e5f2e8fa66e01b8a88d7069c4994
     .agents/skills/check-bin-obj-clash/SKILL.md: sha256:ac355e973ae8577f5067c09aa301a8001ba2de681944f2c6221079ecbb38ff2a
     .agents/skills/copy-to-output-directory/SKILL.md: sha256:f099db9b3165ca2e49e4c3117612ef2d4e133af67c4a33b9b32775c9b493e52c
     .agents/skills/directory-build-organization/SKILL.md: sha256:747e01fe8e1e78f65b52527b066d7e195375351749996c8e03dbed21e4720af4
     .agents/skills/directory-build-organization/references/common-patterns.md: sha256:6e651cb87034e162e8a966228cbf837612e434c564fd7f9928d38ef44a12e7f3
     .agents/skills/directory-build-organization/references/multi-level-examples.md: sha256:6120bf2b385eb2cf348c66173bb27ade493d570db8c497881cc8319f448c820a
     .agents/skills/directory-build-organization/references/targetframework-props-pitfall.md: sha256:a5f0b84a3138e5fdf1fdf103268493006756a1c86312952926f3a10c3e5dd738
+    .agents/skills/eliminate-redundant-restores/SKILL.md: sha256:178c6b44ae9d5a4b5aedefa73b1366be7d389e07a3c855e2bdceeb54cc435e74
     .agents/skills/eval-performance/SKILL.md: sha256:b69eed236895f50b230c3a0bb248cdbc97fbe3043319a41ddbf1ee385843ab69
     .agents/skills/extension-points/SKILL.md: sha256:fdc86938bd6279a5d3abe2adb49606ce675d91534798cff9e89075e903adff09
     .agents/skills/including-generated-files/SKILL.md: sha256:8216b42f0b12361abc85ad4c439a4c90f728ceccaf7ff184898ff9a99b2336b9
@@ -538,20 +547,22 @@ dependencies:
     .agents/skills/property-patterns/SKILL.md: sha256:fa35856fde19371c9de57c518c468a02e8fe26a80b4ee99a5a680cf1449582fd
     .agents/skills/resolve-project-references/SKILL.md: sha256:5aa288d6f2204bdf7c3519a74596b9c7c501e9e655c1cd0369a3b877fa732fd9
     .agents/skills/target-authoring/SKILL.md: sha256:e39b9ad0bfe65746c8110f971847a1dd8988feccc10b8ad19674ab544926bcc0
-    .claude/agents/build-perf.md: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+    .agents/skills/troubleshoot-binlog-mcp/SKILL.md: sha256:3fdcbbdcdbe1d07d2dc79c4481866a4ea238848966349151bf5d42f7cf029fba
+    .claude/agents/build-perf.md: sha256:aac1d222f6525230e18fc94ec5d4fa1db449e01f1c454e81d45a29cfe0baf609
     .claude/agents/msbuild-code-review.md: sha256:fcb16ecab137df0f2ed5014b988ae95280c268f282ceb1046b3141b555cbc9a8
-    .claude/agents/msbuild.md: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
-    .claude/skills/binlog-failure-analysis/SKILL.md: sha256:9c44495e56f67784d428a67b7bcf585946397d34a57e7bf53fdd371f3b9c0641
-    .claude/skills/binlog-generation/SKILL.md: sha256:4e5d8286f1b4089a5bbb691c11e49b0d680969a8f3e368f928a44a616314376e
+    .claude/agents/msbuild.md: sha256:293f2733cdb64bba7c281b4cfa78c19b35e4fa0605f7804e8b6b110204e75709
+    .claude/skills/binlog-failure-analysis/SKILL.md: sha256:fad9baa1a00f1d2af4599118cd061260ee7c60b1ca7969e01e9110835d5b6ecd
+    .claude/skills/binlog-generation/SKILL.md: sha256:dce87c222945463e43c9fd03fbd6b2496e6ba5e91ee9127df5c0e82361f9ba87
     .claude/skills/build-parallelism/SKILL.md: sha256:4e849f7e1ab258328c642fcebd12717f250efba4d2bbd403c741a36793049246
-    .claude/skills/build-perf-baseline/SKILL.md: sha256:660963fe7926c162fe63c254a4cdc60ffd3664e6decee2acf06cafb1eb4e6a1c
-    .claude/skills/build-perf-diagnostics/SKILL.md: sha256:9d39707baaa1decb969c3b8ffcb0be4ed69d5724b9bc5c07b9ac076c15d65be5
+    .claude/skills/build-perf-baseline/SKILL.md: sha256:665fa0ae2f539367d701f6bc6996667ccbe258020caff745c0cbfbfee7d42df2
+    .claude/skills/build-perf-diagnostics/SKILL.md: sha256:17c3a150b8b38fdd3129d5c81a3151f1b2a6e5f2e8fa66e01b8a88d7069c4994
     .claude/skills/check-bin-obj-clash/SKILL.md: sha256:ac355e973ae8577f5067c09aa301a8001ba2de681944f2c6221079ecbb38ff2a
     .claude/skills/copy-to-output-directory/SKILL.md: sha256:f099db9b3165ca2e49e4c3117612ef2d4e133af67c4a33b9b32775c9b493e52c
     .claude/skills/directory-build-organization/SKILL.md: sha256:747e01fe8e1e78f65b52527b066d7e195375351749996c8e03dbed21e4720af4
     .claude/skills/directory-build-organization/references/common-patterns.md: sha256:6e651cb87034e162e8a966228cbf837612e434c564fd7f9928d38ef44a12e7f3
     .claude/skills/directory-build-organization/references/multi-level-examples.md: sha256:6120bf2b385eb2cf348c66173bb27ade493d570db8c497881cc8319f448c820a
     .claude/skills/directory-build-organization/references/targetframework-props-pitfall.md: sha256:a5f0b84a3138e5fdf1fdf103268493006756a1c86312952926f3a10c3e5dd738
+    .claude/skills/eliminate-redundant-restores/SKILL.md: sha256:178c6b44ae9d5a4b5aedefa73b1366be7d389e07a3c855e2bdceeb54cc435e74
     .claude/skills/eval-performance/SKILL.md: sha256:b69eed236895f50b230c3a0bb248cdbc97fbe3043319a41ddbf1ee385843ab69
     .claude/skills/extension-points/SKILL.md: sha256:fdc86938bd6279a5d3abe2adb49606ce675d91534798cff9e89075e903adff09
     .claude/skills/including-generated-files/SKILL.md: sha256:8216b42f0b12361abc85ad4c439a4c90f728ceccaf7ff184898ff9a99b2336b9
@@ -565,15 +576,16 @@ dependencies:
     .claude/skills/property-patterns/SKILL.md: sha256:fa35856fde19371c9de57c518c468a02e8fe26a80b4ee99a5a680cf1449582fd
     .claude/skills/resolve-project-references/SKILL.md: sha256:5aa288d6f2204bdf7c3519a74596b9c7c501e9e655c1cd0369a3b877fa732fd9
     .claude/skills/target-authoring/SKILL.md: sha256:e39b9ad0bfe65746c8110f971847a1dd8988feccc10b8ad19674ab544926bcc0
-    .github/agents/build-perf.agent.md: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+    .claude/skills/troubleshoot-binlog-mcp/SKILL.md: sha256:3fdcbbdcdbe1d07d2dc79c4481866a4ea238848966349151bf5d42f7cf029fba
+    .github/agents/build-perf.agent.md: sha256:aac1d222f6525230e18fc94ec5d4fa1db449e01f1c454e81d45a29cfe0baf609
     .github/agents/msbuild-code-review.agent.md: sha256:fcb16ecab137df0f2ed5014b988ae95280c268f282ceb1046b3141b555cbc9a8
-    .github/agents/msbuild.agent.md: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
-  content_hash: sha256:d1bd6d3cd8ca67d4e632e789745ca5499932c8befecb83c2e63ac05cb8b1449e
+    .github/agents/msbuild.agent.md: sha256:293f2733cdb64bba7c281b4cfa78c19b35e4fa0605f7804e8b6b110204e75709
+  content_hash: sha256:895e0b6c278612228e0f57cd5ddad3e1f2a2f229a1a0bcf425b3692d5c575bb3
   is_dev: true
 - repo_url: microsoft/apm
   name: apm-guide
   host: github.com
-  resolved_commit: ee08bb59b9a7bce67fb4010e4af8652c4c53a7de
+  resolved_commit: 2920043258932f0f67e6f01df7b9047eb42f358c
   resolved_ref: main
   version: 1.0.0
   virtual_path: packages/apm-guide
@@ -604,35 +616,35 @@ dependencies:
   - .github/agents/apm-expert.agent.md
   deployed_file_hashes:
     .agents/skills/apm-usage/SKILL.md: sha256:715b6d3497d5ca30f4751463091b8ff7cd85dc51e375d2176aea8f0867081c38
-    .agents/skills/apm-usage/authentication.md: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
-    .agents/skills/apm-usage/commands.md: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
-    .agents/skills/apm-usage/dependencies.md: sha256:f37edac5e8a613c90dfefea5b74e34403bcc43962f45fe4f58fadc8fddd61ef8
-    .agents/skills/apm-usage/governance.md: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
+    .agents/skills/apm-usage/authentication.md: sha256:253f932e324d5e6fe5209d8271764dc5512a9cc1db8ed2a490fc6bf94675a4b0
+    .agents/skills/apm-usage/commands.md: sha256:b832421add4f49b56658a5571825e188d75a0a93fa4c4b53c8c9292b6af33ea0
+    .agents/skills/apm-usage/dependencies.md: sha256:28822c38deb16a5c7fceaf3851fd7530d894c37b0f95853b86c2fb956a84ab73
+    .agents/skills/apm-usage/governance.md: sha256:968670a858801f4576746fbe86affacf4cf27296f634ad9008f58bcba22b2409
     .agents/skills/apm-usage/installation.md: sha256:c70544c5d1f85102c5e144ac6ae1ca68fcf8ba6a8323cb2ca6adc840d13aa960
-    .agents/skills/apm-usage/package-authoring.md: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
-    .agents/skills/apm-usage/troubleshooting.md: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+    .agents/skills/apm-usage/package-authoring.md: sha256:00983812289ec13ac9ad84f57148c5cfd3ff5af479c26a42caffc9d6674e14d3
+    .agents/skills/apm-usage/troubleshooting.md: sha256:2c6f13b1a1758b84305f1d11e2eeb096896a02851de1e24dde644783862667cc
     .agents/skills/apm-usage/workflow.md: sha256:1bbb710fa9fd710aa2258aea52f6d905c6a2b3d366a1fdc723b028b4bfd2dbae
     .claude/agents/apm-expert.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
     .claude/skills/apm-usage/SKILL.md: sha256:715b6d3497d5ca30f4751463091b8ff7cd85dc51e375d2176aea8f0867081c38
-    .claude/skills/apm-usage/authentication.md: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
-    .claude/skills/apm-usage/commands.md: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
-    .claude/skills/apm-usage/dependencies.md: sha256:f37edac5e8a613c90dfefea5b74e34403bcc43962f45fe4f58fadc8fddd61ef8
-    .claude/skills/apm-usage/governance.md: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
+    .claude/skills/apm-usage/authentication.md: sha256:253f932e324d5e6fe5209d8271764dc5512a9cc1db8ed2a490fc6bf94675a4b0
+    .claude/skills/apm-usage/commands.md: sha256:b832421add4f49b56658a5571825e188d75a0a93fa4c4b53c8c9292b6af33ea0
+    .claude/skills/apm-usage/dependencies.md: sha256:28822c38deb16a5c7fceaf3851fd7530d894c37b0f95853b86c2fb956a84ab73
+    .claude/skills/apm-usage/governance.md: sha256:968670a858801f4576746fbe86affacf4cf27296f634ad9008f58bcba22b2409
     .claude/skills/apm-usage/installation.md: sha256:c70544c5d1f85102c5e144ac6ae1ca68fcf8ba6a8323cb2ca6adc840d13aa960
-    .claude/skills/apm-usage/package-authoring.md: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
-    .claude/skills/apm-usage/troubleshooting.md: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+    .claude/skills/apm-usage/package-authoring.md: sha256:00983812289ec13ac9ad84f57148c5cfd3ff5af479c26a42caffc9d6674e14d3
+    .claude/skills/apm-usage/troubleshooting.md: sha256:2c6f13b1a1758b84305f1d11e2eeb096896a02851de1e24dde644783862667cc
     .claude/skills/apm-usage/workflow.md: sha256:1bbb710fa9fd710aa2258aea52f6d905c6a2b3d366a1fdc723b028b4bfd2dbae
     .github/agents/apm-expert.agent.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
-  content_hash: sha256:83c4acc1850967079bc9efd549b4b2f4dcbc22e074de1340cf013bc52264f62c
+  content_hash: sha256:c3452ad563adbfadfe9b73f30a76cdbab8635109a8e7e2af799c20737a76d7b3
   is_dev: true
   declared_license: MIT
 - repo_url: obra/superpowers
   name: superpowers
   host: github.com
-  resolved_commit: bb92a77741419a4ab5f06e711a283343f1ada0c3
+  resolved_commit: 2ce8aa15d05bd57213e6f746f953aafb7ded7a8b
   resolved_ref: main
-  version: 7.0.0
-  package_type: skill_bundle
+  version: 7.0.1
+  package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/brainstorming
   - .agents/skills/brainstorming/SKILL.md
@@ -681,6 +693,13 @@ dependencies:
   - .agents/skills/subagent-driven-development/SKILL.md
   - .agents/skills/subagent-driven-development/implementer-prompt.md
   - .agents/skills/subagent-driven-development/re-review-prompt.md
+  - .agents/skills/subagent-driven-development/references/batching.md
+  - .agents/skills/subagent-driven-development/references/cannot-verify.md
+  - .agents/skills/subagent-driven-development/references/final-review.md
+  - .agents/skills/subagent-driven-development/references/fix-loop.md
+  - .agents/skills/subagent-driven-development/references/handling-reports.md
+  - .agents/skills/subagent-driven-development/references/preflight.md
+  - .agents/skills/subagent-driven-development/references/resuming.md
   - .agents/skills/subagent-driven-development/scripts/review-package
   - .agents/skills/subagent-driven-development/scripts/sdd-workspace
   - .agents/skills/subagent-driven-development/scripts/task-brief
@@ -717,12 +736,15 @@ dependencies:
   - .agents/skills/writing-plans/SKILL.md
   - .agents/skills/writing-skills
   - .agents/skills/writing-skills/SKILL.md
-  - .agents/skills/writing-skills/anthropic-best-practices.md
-  - .agents/skills/writing-skills/examples/CLAUDE_MD_TESTING.md
-  - .agents/skills/writing-skills/graphviz-conventions.dot
-  - .agents/skills/writing-skills/persuasion-principles.md
+  - .agents/skills/writing-skills/references/CLAUDE_MD_TESTING.md
+  - .agents/skills/writing-skills/references/anthropic-best-practices.md
+  - .agents/skills/writing-skills/references/bulletproofing.md
+  - .agents/skills/writing-skills/references/discovery.md
+  - .agents/skills/writing-skills/references/flowcharts.md
+  - .agents/skills/writing-skills/references/graphviz-conventions.dot
+  - .agents/skills/writing-skills/references/persuasion-principles.md
+  - .agents/skills/writing-skills/references/testing-skills-with-subagents.md
   - .agents/skills/writing-skills/render-graphs.js
-  - .agents/skills/writing-skills/testing-skills-with-subagents.md
   - .claude/hooks/superpowers/hooks/run-hook.cmd
   - .claude/hooks/superpowers/hooks/session-start
   - .claude/skills/brainstorming
@@ -772,6 +794,13 @@ dependencies:
   - .claude/skills/subagent-driven-development/SKILL.md
   - .claude/skills/subagent-driven-development/implementer-prompt.md
   - .claude/skills/subagent-driven-development/re-review-prompt.md
+  - .claude/skills/subagent-driven-development/references/batching.md
+  - .claude/skills/subagent-driven-development/references/cannot-verify.md
+  - .claude/skills/subagent-driven-development/references/final-review.md
+  - .claude/skills/subagent-driven-development/references/fix-loop.md
+  - .claude/skills/subagent-driven-development/references/handling-reports.md
+  - .claude/skills/subagent-driven-development/references/preflight.md
+  - .claude/skills/subagent-driven-development/references/resuming.md
   - .claude/skills/subagent-driven-development/scripts/review-package
   - .claude/skills/subagent-driven-development/scripts/sdd-workspace
   - .claude/skills/subagent-driven-development/scripts/task-brief
@@ -808,17 +837,20 @@ dependencies:
   - .claude/skills/writing-plans/SKILL.md
   - .claude/skills/writing-skills
   - .claude/skills/writing-skills/SKILL.md
-  - .claude/skills/writing-skills/anthropic-best-practices.md
-  - .claude/skills/writing-skills/examples/CLAUDE_MD_TESTING.md
-  - .claude/skills/writing-skills/graphviz-conventions.dot
-  - .claude/skills/writing-skills/persuasion-principles.md
+  - .claude/skills/writing-skills/references/CLAUDE_MD_TESTING.md
+  - .claude/skills/writing-skills/references/anthropic-best-practices.md
+  - .claude/skills/writing-skills/references/bulletproofing.md
+  - .claude/skills/writing-skills/references/discovery.md
+  - .claude/skills/writing-skills/references/flowcharts.md
+  - .claude/skills/writing-skills/references/graphviz-conventions.dot
+  - .claude/skills/writing-skills/references/persuasion-principles.md
+  - .claude/skills/writing-skills/references/testing-skills-with-subagents.md
   - .claude/skills/writing-skills/render-graphs.js
-  - .claude/skills/writing-skills/testing-skills-with-subagents.md
   - .github/hooks/scripts/superpowers/hooks/run-hook.cmd
   - .github/hooks/scripts/superpowers/hooks/session-start
   - .github/hooks/superpowers-hooks.json
   deployed_file_hashes:
-    .agents/skills/brainstorming/SKILL.md: sha256:6ee10d1481b8a2580d5336ff66c5c08acc9d4b251b13bbc3bfd31be99c261d43
+    .agents/skills/brainstorming/SKILL.md: sha256:61a7ef918652108c76a3fd01e02dd92d39996c6b46d4cb2819cbd03f6c45e46a
     .agents/skills/brainstorming/builder-check-prompt.md: sha256:36d51a4723d6f0a3ce5811a0ea3b3a8424f07533947e1355f5d8cb8cce40c55e
     .agents/skills/brainstorming/scripts/frame-template.html: sha256:6a8a4e58bd6a44b904e2e3c57de774481d909204597e1498de53f1b2fecc4c4e
     .agents/skills/brainstorming/scripts/helper.js: sha256:43c6d69954a46ec34a2a262bcc62a9a7e83e839c739f199cb72646d397c686e3
@@ -826,7 +858,7 @@ dependencies:
     .agents/skills/brainstorming/scripts/start-server.sh: sha256:a4e5ae84275bcaacd2f84345afeabe59cf7b00ba080e123da7cc1fb226f12847
     .agents/skills/brainstorming/scripts/stop-server.sh: sha256:0b5ccbbd57f62d3ed88993f7940b5ee0e5c0fc9b21c550c623da4f6292e47daf
     .agents/skills/brainstorming/visual-companion.md: sha256:6ffcb038b53254bd31debaa15e12dcd4ff24bd63d690e0b644ac6396701cf2e2
-    .agents/skills/diagnosing-superpowers/SKILL.md: sha256:5a652f8132cc901eb5ca61f89157839f87a2f20aed037fc7a2b51051bc37cd19
+    .agents/skills/diagnosing-superpowers/SKILL.md: sha256:3143de8695c5a2d63e8b1675f33837578076f464deb127c2ebdd0b46fceef886
     .agents/skills/diagnosing-superpowers/prompts/analyst-common.md: sha256:88801c36070be2a54a8a9a29632b01ab21db053e2e76ee49b5252a9b74ca4090
     .agents/skills/diagnosing-superpowers/prompts/cost-and-time.md: sha256:fe97a66d4db3b436816ef82694bda413b522b3a862dd41978da01e358fffecc4
     .agents/skills/diagnosing-superpowers/prompts/plan-adherence.md: sha256:1dcbab82033598a2e9c9ee42e950d4b1822d2c871c02cef9e102cdd5cbbda113
@@ -839,24 +871,31 @@ dependencies:
     .agents/skills/diagnosing-superpowers/prompts/skill-timeline.md: sha256:45d604d583b57a77b9033eced8eb875ef342af70fcd66cf7d15c6dc89964890f
     .agents/skills/diagnosing-superpowers/prompts/stumbles.md: sha256:1f2d1f048aff7b8b400006301f1ce8c232ecc7e9d5f705af27a849b2c03ea2e7
     .agents/skills/diagnosing-superpowers/references/context-safety.md: sha256:e6be2bd3495f454d4bedee9484d728d245d1fa656e11fc4ceec5693c16e4730a
-    .agents/skills/diagnosing-superpowers/references/github-issues.md: sha256:a656f5e15b21c7a200c39c038f5ede74b9d6ea3ceeb90f39af7e930c8d8424d6
+    .agents/skills/diagnosing-superpowers/references/github-issues.md: sha256:d26ef9197b4a6ae5159ae6d11abd162bcc624d95fc7ccf508e07b68f916a1b19
     .agents/skills/diagnosing-superpowers/references/redaction-policy.md: sha256:96b16f47074838fe2d7e609577d6f8b0ad460f8378b281a3f96ee23cb5a08bde
     .agents/skills/diagnosing-superpowers/references/session-discovery.md: sha256:6d1dced083e5d978448a78df298cf515531b0eb39b2854a4a2afbffeb69a7435
     .agents/skills/diagnosing-superpowers/templates/bundle-README.md: sha256:2e6ddc6b106028d5ebd00a50ad93a77111d675c219ee1273cd0857869e8d51ec
     .agents/skills/diagnosing-superpowers/templates/case.md: sha256:597892462be83bc478536ec91f7c285f6dd25d119c560734a3a180fe8471301d
-    .agents/skills/diagnosing-superpowers/templates/issue.md: sha256:8f28dbfe60602f77dda76d81815cb4e2dce7d3e2a93348890e1581be8310ac1f
+    .agents/skills/diagnosing-superpowers/templates/issue.md: sha256:afd21779e5de5bc5adfe2f5a50a04e44ab8d50d9ad0f829243de248d6f023eed
     .agents/skills/diagnosing-superpowers/templates/report.md: sha256:38295d0fd785e8608f330815c59ebd7047942002ec7085aecbed54681f56b0c1
     .agents/skills/dispatching-parallel-agents/SKILL.md: sha256:1968923066f3b707eb01d1992cdf4c42284c3855f70253b9cd5000ff45fca13c
-    .agents/skills/executing-plans/SKILL.md: sha256:7aaac2a4a9234d50c8d5f5caf4760e537047ba6fb516c03565b41f47d08edd8c
+    .agents/skills/executing-plans/SKILL.md: sha256:0affc661f5030942f09c9d67ab5ff769a1ef284028fc251f7e5ff284b15b154c
     .agents/skills/executing-plans/scripts/task-done: sha256:d0d4f2397c85a4426443ea955e699ef12568b41b408ec6122d4ec2433ee3a5f6
     .agents/skills/executing-plans/scripts/task-start: sha256:f833693c8fce3700fc9f841562d80f8015cd40f652c168a3405ac3e46947a1fe
     .agents/skills/finishing-a-development-branch/SKILL.md: sha256:8db5a922b242dd4e1bf824cb91c13b3e8d8e8a86d6ceaf7f0774eb9cce909d65
     .agents/skills/receiving-code-review/SKILL.md: sha256:091df1629510af1b92fc4abd6f96732ebedb4cb2c0f3457e8f2740b0504a2438
     .agents/skills/requesting-code-review/SKILL.md: sha256:2180e14a448e9410bec88e6646a2d1f0ce7fdd58de27388c1e052e929679d2bc
     .agents/skills/requesting-code-review/code-reviewer.md: sha256:82e370be6b3447523816286195571e4216ba56ba1ad6ad0e87862294c4c78dcb
-    .agents/skills/subagent-driven-development/SKILL.md: sha256:b70cb2ac89d1f3001bed53c288dbf740c4925a8b422e5d2694b9217bbad157cf
+    .agents/skills/subagent-driven-development/SKILL.md: sha256:ba41f697136cba88a7962d60c8e2f97488ba04a8688b1d0fbeb27f6953808e75
     .agents/skills/subagent-driven-development/implementer-prompt.md: sha256:81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0
     .agents/skills/subagent-driven-development/re-review-prompt.md: sha256:0828a5e9cbb12ba49f14621dd8c3953c48c0fc383e75bb5494f055ed0d6d824f
+    .agents/skills/subagent-driven-development/references/batching.md: sha256:b54dc7e23dbfb90db89bcb2fb3af591aabf6a271a165fbc0da4c6f9439980eac
+    .agents/skills/subagent-driven-development/references/cannot-verify.md: sha256:e698713a15e0eabf1a2ab26ffe1bb04bf70c9d6d2e2060d44a0f9a1bdd4408bf
+    .agents/skills/subagent-driven-development/references/final-review.md: sha256:09c5d32e8e927b167ac7ccd3d71825143d320c27b2b7e3e2a63d1e8b37059b3a
+    .agents/skills/subagent-driven-development/references/fix-loop.md: sha256:eafff1f801af2ced86e8761f3eeef04b701860d986ba5d0a8b20d506a75104bb
+    .agents/skills/subagent-driven-development/references/handling-reports.md: sha256:8f759cdd4936220c38aab05b6d6c48c6df8ac8f146b0f37a6d2facbf87133c67
+    .agents/skills/subagent-driven-development/references/preflight.md: sha256:3ea21c5fc1af1a190ac8a9d19ceb0849b47bf2ffe27b87dffcc21b6a0539776c
+    .agents/skills/subagent-driven-development/references/resuming.md: sha256:ff6e38bde2276faa2a7e93513086caded0ea10edbf2ec7f349a7e3b0d7c668c4
     .agents/skills/subagent-driven-development/scripts/review-package: sha256:f9275175b2276b1d5fdb1bae0bedaadd2a950659b7c6f311ea37ff85e1861b1f
     .agents/skills/subagent-driven-development/scripts/sdd-workspace: sha256:4fd9770e7a49b6bde488c0e92bac1b3bd01fcbdaf8f06b6c4efbe3a1abd99f86
     .agents/skills/subagent-driven-development/scripts/task-brief: sha256:cc563538e09abf719b34ddf4b2fa7a65cf3b301729039dbfa923cb060f729146
@@ -885,16 +924,19 @@ dependencies:
     .agents/skills/using-superpowers/references/pi-tools.md: sha256:703dbc83d23ecab9c6f388460c38abc482e9dee2fe6772a8c7a255152ad3a4d5
     .agents/skills/verification-before-completion/SKILL.md: sha256:2befe7fc55bcadaa3d97dd9e8efeb633d2561c0ebe74c5a8b17c4d9e7e4520b3
     .agents/skills/writing-plans/SKILL.md: sha256:a6c67c1900064347c2a329990dd3c555657c51c3ec53b259a08aa01a2c26139a
-    .agents/skills/writing-skills/SKILL.md: sha256:9cf8c7ba0fdc521f103299a17e2f681a3112b730a75c78a6881e41ce8e5f6c2a
-    .agents/skills/writing-skills/anthropic-best-practices.md: sha256:217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a
-    .agents/skills/writing-skills/examples/CLAUDE_MD_TESTING.md: sha256:0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0
-    .agents/skills/writing-skills/graphviz-conventions.dot: sha256:e2890a593c91370e384b42f2f67b1a6232c9e69dddea7891a0c1c46d7b20b694
-    .agents/skills/writing-skills/persuasion-principles.md: sha256:a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03
+    .agents/skills/writing-skills/SKILL.md: sha256:516999ff95e3bd19fd80301ae2f42b7b15f8de8076c3156b693e1ffd5a25e496
+    .agents/skills/writing-skills/references/CLAUDE_MD_TESTING.md: sha256:0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0
+    .agents/skills/writing-skills/references/anthropic-best-practices.md: sha256:217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a
+    .agents/skills/writing-skills/references/bulletproofing.md: sha256:9397023e6bc85b556a57f3097371363bf03e28e755c57f403f470bcda90e0a23
+    .agents/skills/writing-skills/references/discovery.md: sha256:c6bbc74af3be90f693f7cbc986af6fa94e8df75f65109b52e96032587f5b92af
+    .agents/skills/writing-skills/references/flowcharts.md: sha256:8b1f542391f274f0d33f3457ac099a3d317d6877eaa3b8d3b1ebef151b55fda7
+    .agents/skills/writing-skills/references/graphviz-conventions.dot: sha256:e2890a593c91370e384b42f2f67b1a6232c9e69dddea7891a0c1c46d7b20b694
+    .agents/skills/writing-skills/references/persuasion-principles.md: sha256:a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03
+    .agents/skills/writing-skills/references/testing-skills-with-subagents.md: sha256:ed8a6862c085900135962390530d9dc7637ad6d650b4324ce3b051287a5c3f22
     .agents/skills/writing-skills/render-graphs.js: sha256:c7f412cc629461c4d10287e668731874c0497707023e3e3f74a5355eb2cee196
-    .agents/skills/writing-skills/testing-skills-with-subagents.md: sha256:c711346852c911b24a84aa161e0cff06a4cd7f4e2fa9e9c0a266cead5afcbade
     .claude/hooks/superpowers/hooks/run-hook.cmd: sha256:d1fcecfe19df2d083994803f73417710f745bd96c0938f594f87096005b1e403
     .claude/hooks/superpowers/hooks/session-start: sha256:5c15e62a90ed13ad8e4b3561148c54c26c6ee28b41ec3a55a241f68b400d886d
-    .claude/skills/brainstorming/SKILL.md: sha256:6ee10d1481b8a2580d5336ff66c5c08acc9d4b251b13bbc3bfd31be99c261d43
+    .claude/skills/brainstorming/SKILL.md: sha256:61a7ef918652108c76a3fd01e02dd92d39996c6b46d4cb2819cbd03f6c45e46a
     .claude/skills/brainstorming/builder-check-prompt.md: sha256:36d51a4723d6f0a3ce5811a0ea3b3a8424f07533947e1355f5d8cb8cce40c55e
     .claude/skills/brainstorming/scripts/frame-template.html: sha256:6a8a4e58bd6a44b904e2e3c57de774481d909204597e1498de53f1b2fecc4c4e
     .claude/skills/brainstorming/scripts/helper.js: sha256:43c6d69954a46ec34a2a262bcc62a9a7e83e839c739f199cb72646d397c686e3
@@ -902,7 +944,7 @@ dependencies:
     .claude/skills/brainstorming/scripts/start-server.sh: sha256:a4e5ae84275bcaacd2f84345afeabe59cf7b00ba080e123da7cc1fb226f12847
     .claude/skills/brainstorming/scripts/stop-server.sh: sha256:0b5ccbbd57f62d3ed88993f7940b5ee0e5c0fc9b21c550c623da4f6292e47daf
     .claude/skills/brainstorming/visual-companion.md: sha256:6ffcb038b53254bd31debaa15e12dcd4ff24bd63d690e0b644ac6396701cf2e2
-    .claude/skills/diagnosing-superpowers/SKILL.md: sha256:5a652f8132cc901eb5ca61f89157839f87a2f20aed037fc7a2b51051bc37cd19
+    .claude/skills/diagnosing-superpowers/SKILL.md: sha256:3143de8695c5a2d63e8b1675f33837578076f464deb127c2ebdd0b46fceef886
     .claude/skills/diagnosing-superpowers/prompts/analyst-common.md: sha256:88801c36070be2a54a8a9a29632b01ab21db053e2e76ee49b5252a9b74ca4090
     .claude/skills/diagnosing-superpowers/prompts/cost-and-time.md: sha256:fe97a66d4db3b436816ef82694bda413b522b3a862dd41978da01e358fffecc4
     .claude/skills/diagnosing-superpowers/prompts/plan-adherence.md: sha256:1dcbab82033598a2e9c9ee42e950d4b1822d2c871c02cef9e102cdd5cbbda113
@@ -915,24 +957,31 @@ dependencies:
     .claude/skills/diagnosing-superpowers/prompts/skill-timeline.md: sha256:45d604d583b57a77b9033eced8eb875ef342af70fcd66cf7d15c6dc89964890f
     .claude/skills/diagnosing-superpowers/prompts/stumbles.md: sha256:1f2d1f048aff7b8b400006301f1ce8c232ecc7e9d5f705af27a849b2c03ea2e7
     .claude/skills/diagnosing-superpowers/references/context-safety.md: sha256:e6be2bd3495f454d4bedee9484d728d245d1fa656e11fc4ceec5693c16e4730a
-    .claude/skills/diagnosing-superpowers/references/github-issues.md: sha256:a656f5e15b21c7a200c39c038f5ede74b9d6ea3ceeb90f39af7e930c8d8424d6
+    .claude/skills/diagnosing-superpowers/references/github-issues.md: sha256:d26ef9197b4a6ae5159ae6d11abd162bcc624d95fc7ccf508e07b68f916a1b19
     .claude/skills/diagnosing-superpowers/references/redaction-policy.md: sha256:96b16f47074838fe2d7e609577d6f8b0ad460f8378b281a3f96ee23cb5a08bde
     .claude/skills/diagnosing-superpowers/references/session-discovery.md: sha256:6d1dced083e5d978448a78df298cf515531b0eb39b2854a4a2afbffeb69a7435
     .claude/skills/diagnosing-superpowers/templates/bundle-README.md: sha256:2e6ddc6b106028d5ebd00a50ad93a77111d675c219ee1273cd0857869e8d51ec
     .claude/skills/diagnosing-superpowers/templates/case.md: sha256:597892462be83bc478536ec91f7c285f6dd25d119c560734a3a180fe8471301d
-    .claude/skills/diagnosing-superpowers/templates/issue.md: sha256:8f28dbfe60602f77dda76d81815cb4e2dce7d3e2a93348890e1581be8310ac1f
+    .claude/skills/diagnosing-superpowers/templates/issue.md: sha256:afd21779e5de5bc5adfe2f5a50a04e44ab8d50d9ad0f829243de248d6f023eed
     .claude/skills/diagnosing-superpowers/templates/report.md: sha256:38295d0fd785e8608f330815c59ebd7047942002ec7085aecbed54681f56b0c1
     .claude/skills/dispatching-parallel-agents/SKILL.md: sha256:1968923066f3b707eb01d1992cdf4c42284c3855f70253b9cd5000ff45fca13c
-    .claude/skills/executing-plans/SKILL.md: sha256:7aaac2a4a9234d50c8d5f5caf4760e537047ba6fb516c03565b41f47d08edd8c
+    .claude/skills/executing-plans/SKILL.md: sha256:0affc661f5030942f09c9d67ab5ff769a1ef284028fc251f7e5ff284b15b154c
     .claude/skills/executing-plans/scripts/task-done: sha256:d0d4f2397c85a4426443ea955e699ef12568b41b408ec6122d4ec2433ee3a5f6
     .claude/skills/executing-plans/scripts/task-start: sha256:f833693c8fce3700fc9f841562d80f8015cd40f652c168a3405ac3e46947a1fe
     .claude/skills/finishing-a-development-branch/SKILL.md: sha256:8db5a922b242dd4e1bf824cb91c13b3e8d8e8a86d6ceaf7f0774eb9cce909d65
     .claude/skills/receiving-code-review/SKILL.md: sha256:091df1629510af1b92fc4abd6f96732ebedb4cb2c0f3457e8f2740b0504a2438
     .claude/skills/requesting-code-review/SKILL.md: sha256:2180e14a448e9410bec88e6646a2d1f0ce7fdd58de27388c1e052e929679d2bc
     .claude/skills/requesting-code-review/code-reviewer.md: sha256:82e370be6b3447523816286195571e4216ba56ba1ad6ad0e87862294c4c78dcb
-    .claude/skills/subagent-driven-development/SKILL.md: sha256:b70cb2ac89d1f3001bed53c288dbf740c4925a8b422e5d2694b9217bbad157cf
+    .claude/skills/subagent-driven-development/SKILL.md: sha256:ba41f697136cba88a7962d60c8e2f97488ba04a8688b1d0fbeb27f6953808e75
     .claude/skills/subagent-driven-development/implementer-prompt.md: sha256:81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0
     .claude/skills/subagent-driven-development/re-review-prompt.md: sha256:0828a5e9cbb12ba49f14621dd8c3953c48c0fc383e75bb5494f055ed0d6d824f
+    .claude/skills/subagent-driven-development/references/batching.md: sha256:b54dc7e23dbfb90db89bcb2fb3af591aabf6a271a165fbc0da4c6f9439980eac
+    .claude/skills/subagent-driven-development/references/cannot-verify.md: sha256:e698713a15e0eabf1a2ab26ffe1bb04bf70c9d6d2e2060d44a0f9a1bdd4408bf
+    .claude/skills/subagent-driven-development/references/final-review.md: sha256:09c5d32e8e927b167ac7ccd3d71825143d320c27b2b7e3e2a63d1e8b37059b3a
+    .claude/skills/subagent-driven-development/references/fix-loop.md: sha256:eafff1f801af2ced86e8761f3eeef04b701860d986ba5d0a8b20d506a75104bb
+    .claude/skills/subagent-driven-development/references/handling-reports.md: sha256:8f759cdd4936220c38aab05b6d6c48c6df8ac8f146b0f37a6d2facbf87133c67
+    .claude/skills/subagent-driven-development/references/preflight.md: sha256:3ea21c5fc1af1a190ac8a9d19ceb0849b47bf2ffe27b87dffcc21b6a0539776c
+    .claude/skills/subagent-driven-development/references/resuming.md: sha256:ff6e38bde2276faa2a7e93513086caded0ea10edbf2ec7f349a7e3b0d7c668c4
     .claude/skills/subagent-driven-development/scripts/review-package: sha256:f9275175b2276b1d5fdb1bae0bedaadd2a950659b7c6f311ea37ff85e1861b1f
     .claude/skills/subagent-driven-development/scripts/sdd-workspace: sha256:4fd9770e7a49b6bde488c0e92bac1b3bd01fcbdaf8f06b6c4efbe3a1abd99f86
     .claude/skills/subagent-driven-development/scripts/task-brief: sha256:cc563538e09abf719b34ddf4b2fa7a65cf3b301729039dbfa923cb060f729146
@@ -961,17 +1010,20 @@ dependencies:
     .claude/skills/using-superpowers/references/pi-tools.md: sha256:703dbc83d23ecab9c6f388460c38abc482e9dee2fe6772a8c7a255152ad3a4d5
     .claude/skills/verification-before-completion/SKILL.md: sha256:2befe7fc55bcadaa3d97dd9e8efeb633d2561c0ebe74c5a8b17c4d9e7e4520b3
     .claude/skills/writing-plans/SKILL.md: sha256:a6c67c1900064347c2a329990dd3c555657c51c3ec53b259a08aa01a2c26139a
-    .claude/skills/writing-skills/SKILL.md: sha256:9cf8c7ba0fdc521f103299a17e2f681a3112b730a75c78a6881e41ce8e5f6c2a
-    .claude/skills/writing-skills/anthropic-best-practices.md: sha256:217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a
-    .claude/skills/writing-skills/examples/CLAUDE_MD_TESTING.md: sha256:0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0
-    .claude/skills/writing-skills/graphviz-conventions.dot: sha256:e2890a593c91370e384b42f2f67b1a6232c9e69dddea7891a0c1c46d7b20b694
-    .claude/skills/writing-skills/persuasion-principles.md: sha256:a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03
+    .claude/skills/writing-skills/SKILL.md: sha256:516999ff95e3bd19fd80301ae2f42b7b15f8de8076c3156b693e1ffd5a25e496
+    .claude/skills/writing-skills/references/CLAUDE_MD_TESTING.md: sha256:0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0
+    .claude/skills/writing-skills/references/anthropic-best-practices.md: sha256:217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a
+    .claude/skills/writing-skills/references/bulletproofing.md: sha256:9397023e6bc85b556a57f3097371363bf03e28e755c57f403f470bcda90e0a23
+    .claude/skills/writing-skills/references/discovery.md: sha256:c6bbc74af3be90f693f7cbc986af6fa94e8df75f65109b52e96032587f5b92af
+    .claude/skills/writing-skills/references/flowcharts.md: sha256:8b1f542391f274f0d33f3457ac099a3d317d6877eaa3b8d3b1ebef151b55fda7
+    .claude/skills/writing-skills/references/graphviz-conventions.dot: sha256:e2890a593c91370e384b42f2f67b1a6232c9e69dddea7891a0c1c46d7b20b694
+    .claude/skills/writing-skills/references/persuasion-principles.md: sha256:a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03
+    .claude/skills/writing-skills/references/testing-skills-with-subagents.md: sha256:ed8a6862c085900135962390530d9dc7637ad6d650b4324ce3b051287a5c3f22
     .claude/skills/writing-skills/render-graphs.js: sha256:c7f412cc629461c4d10287e668731874c0497707023e3e3f74a5355eb2cee196
-    .claude/skills/writing-skills/testing-skills-with-subagents.md: sha256:c711346852c911b24a84aa161e0cff06a4cd7f4e2fa9e9c0a266cead5afcbade
     .github/hooks/scripts/superpowers/hooks/run-hook.cmd: sha256:d1fcecfe19df2d083994803f73417710f745bd96c0938f594f87096005b1e403
     .github/hooks/scripts/superpowers/hooks/session-start: sha256:5c15e62a90ed13ad8e4b3561148c54c26c6ee28b41ec3a55a241f68b400d886d
     .github/hooks/superpowers-hooks.json: sha256:af6432012a1b5a0b1644cf05d13acfac69c6671dbf12d0bf08cd8acc062d979d
-  content_hash: sha256:6b8d88243a9c06b5a0ade92a2de45d6f12eb7121ac7449f223ad4254f492d8e5
+  content_hash: sha256:6b5faef50708547c0a36884a8b64295ecf8ee6d902aa0915faac8343828d8bb4
   is_dev: true
   declared_license: MIT
 deployments:
@@ -1001,7 +1053,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+  content_hash: sha256:aac1d222f6525230e18fc94ec5d4fa1db449e01f1c454e81d45a29cfe0baf609
 - kind: project-relative
   target: claude
   value: .claude/agents/msbuild-code-review.md
@@ -1019,7 +1071,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
+  content_hash: sha256:293f2733cdb64bba7c281b4cfa78c19b35e4fa0605f7804e8b6b110204e75709
 - kind: project-relative
   target: claude
   value: .claude/agents/optimizing-dotnet-performance.md
@@ -1226,7 +1278,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
+  content_hash: sha256:253f932e324d5e6fe5209d8271764dc5512a9cc1db8ed2a490fc6bf94675a4b0
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/commands.md
@@ -1235,7 +1287,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+  content_hash: sha256:b832421add4f49b56658a5571825e188d75a0a93fa4c4b53c8c9292b6af33ea0
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/dependencies.md
@@ -1244,7 +1296,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:f37edac5e8a613c90dfefea5b74e34403bcc43962f45fe4f58fadc8fddd61ef8
+  content_hash: sha256:28822c38deb16a5c7fceaf3851fd7530d894c37b0f95853b86c2fb956a84ab73
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/governance.md
@@ -1253,7 +1305,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
+  content_hash: sha256:968670a858801f4576746fbe86affacf4cf27296f634ad9008f58bcba22b2409
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/installation.md
@@ -1271,7 +1323,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
+  content_hash: sha256:00983812289ec13ac9ad84f57148c5cfd3ff5af479c26a42caffc9d6674e14d3
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/troubleshooting.md
@@ -1280,7 +1332,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+  content_hash: sha256:2c6f13b1a1758b84305f1d11e2eeb096896a02851de1e24dde644783862667cc
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/workflow.md
@@ -1397,7 +1449,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:9c44495e56f67784d428a67b7bcf585946397d34a57e7bf53fdd371f3b9c0641
+  content_hash: sha256:fad9baa1a00f1d2af4599118cd061260ee7c60b1ca7969e01e9110835d5b6ecd
 - kind: project-relative
   target: claude
   value: .claude/skills/binlog-generation
@@ -1415,7 +1467,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:4e5d8286f1b4089a5bbb691c11e49b0d680969a8f3e368f928a44a616314376e
+  content_hash: sha256:dce87c222945463e43c9fd03fbd6b2496e6ba5e91ee9127df5c0e82361f9ba87
 - kind: project-relative
   target: claude
   value: .claude/skills/brainstorming
@@ -1433,7 +1485,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:6ee10d1481b8a2580d5336ff66c5c08acc9d4b251b13bbc3bfd31be99c261d43
+  content_hash: sha256:61a7ef918652108c76a3fd01e02dd92d39996c6b46d4cb2819cbd03f6c45e46a
 - kind: project-relative
   target: claude
   value: .claude/skills/brainstorming/builder-check-prompt.md
@@ -1532,7 +1584,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:660963fe7926c162fe63c254a4cdc60ffd3664e6decee2acf06cafb1eb4e6a1c
+  content_hash: sha256:665fa0ae2f539367d701f6bc6996667ccbe258020caff745c0cbfbfee7d42df2
 - kind: project-relative
   target: claude
   value: .claude/skills/build-perf-diagnostics
@@ -1550,7 +1602,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:9d39707baaa1decb969c3b8ffcb0be4ed69d5724b9bc5c07b9ac076c15d65be5
+  content_hash: sha256:17c3a150b8b38fdd3129d5c81a3151f1b2a6e5f2e8fa66e01b8a88d7069c4994
 - kind: project-relative
   target: claude
   value: .claude/skills/check-bin-obj-clash
@@ -1703,7 +1755,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:5a652f8132cc901eb5ca61f89157839f87a2f20aed037fc7a2b51051bc37cd19
+  content_hash: sha256:3143de8695c5a2d63e8b1675f33837578076f464deb127c2ebdd0b46fceef886
 - kind: project-relative
   target: claude
   value: .claude/skills/diagnosing-superpowers/prompts/analyst-common.md
@@ -1820,7 +1872,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:a656f5e15b21c7a200c39c038f5ede74b9d6ea3ceeb90f39af7e930c8d8424d6
+  content_hash: sha256:d26ef9197b4a6ae5159ae6d11abd162bcc624d95fc7ccf508e07b68f916a1b19
 - kind: project-relative
   target: claude
   value: .claude/skills/diagnosing-superpowers/references/redaction-policy.md
@@ -1865,7 +1917,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:8f28dbfe60602f77dda76d81815cb4e2dce7d3e2a93348890e1581be8310ac1f
+  content_hash: sha256:afd21779e5de5bc5adfe2f5a50a04e44ab8d50d9ad0f829243de248d6f023eed
 - kind: project-relative
   target: claude
   value: .claude/skills/diagnosing-superpowers/templates/report.md
@@ -2048,6 +2100,24 @@ deployments:
   content_hash: sha256:63bda7821ce96ad27e343b93fdf46eb31d2209ba66c387f669062909e3d532a0
 - kind: project-relative
   target: claude
+  value: .claude/skills/eliminate-redundant-restores
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/eliminate-redundant-restores/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:178c6b44ae9d5a4b5aedefa73b1366be7d389e07a3c855e2bdceeb54cc435e74
+- kind: project-relative
+  target: claude
   value: .claude/skills/eval-performance
   runtime: null
   scope: project
@@ -2081,7 +2151,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:7aaac2a4a9234d50c8d5f5caf4760e537047ba6fb516c03565b41f47d08edd8c
+  content_hash: sha256:0affc661f5030942f09c9d67ab5ff769a1ef284028fc251f7e5ff284b15b154c
 - kind: project-relative
   target: claude
   value: .claude/skills/executing-plans/scripts/task-done
@@ -2738,7 +2808,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:b70cb2ac89d1f3001bed53c288dbf740c4925a8b422e5d2694b9217bbad157cf
+  content_hash: sha256:ba41f697136cba88a7962d60c8e2f97488ba04a8688b1d0fbeb27f6953808e75
 - kind: project-relative
   target: claude
   value: .claude/skills/subagent-driven-development/implementer-prompt.md
@@ -2757,6 +2827,69 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:0828a5e9cbb12ba49f14621dd8c3953c48c0fc383e75bb5494f055ed0d6d824f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/subagent-driven-development/references/batching.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:b54dc7e23dbfb90db89bcb2fb3af591aabf6a271a165fbc0da4c6f9439980eac
+- kind: project-relative
+  target: claude
+  value: .claude/skills/subagent-driven-development/references/cannot-verify.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:e698713a15e0eabf1a2ab26ffe1bb04bf70c9d6d2e2060d44a0f9a1bdd4408bf
+- kind: project-relative
+  target: claude
+  value: .claude/skills/subagent-driven-development/references/final-review.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:09c5d32e8e927b167ac7ccd3d71825143d320c27b2b7e3e2a63d1e8b37059b3a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/subagent-driven-development/references/fix-loop.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:eafff1f801af2ced86e8761f3eeef04b701860d986ba5d0a8b20d506a75104bb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/subagent-driven-development/references/handling-reports.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:8f759cdd4936220c38aab05b6d6c48c6df8ac8f146b0f37a6d2facbf87133c67
+- kind: project-relative
+  target: claude
+  value: .claude/skills/subagent-driven-development/references/preflight.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:3ea21c5fc1af1a190ac8a9d19ceb0849b47bf2ffe27b87dffcc21b6a0539776c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/subagent-driven-development/references/resuming.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:ff6e38bde2276faa2a7e93513086caded0ea10edbf2ec7f349a7e3b0d7c668c4
 - kind: project-relative
   target: claude
   value: .claude/skills/subagent-driven-development/scripts/review-package
@@ -2948,6 +3081,24 @@ deployments:
   content_hash: sha256:51471c853306ff92ca8bb41dcaea05f31c0e46b03651f8f3c99754b7172f4ae1
 - kind: project-relative
   target: claude
+  value: .claude/skills/troubleshoot-binlog-mcp
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/troubleshoot-binlog-mcp/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:3fdcbbdcdbe1d07d2dc79c4481866a4ea238848966349151bf5d42f7cf029fba
+- kind: project-relative
+  target: claude
   value: .claude/skills/using-git-worktrees
   runtime: null
   scope: project
@@ -3098,19 +3249,10 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:9cf8c7ba0fdc521f103299a17e2f681a3112b730a75c78a6881e41ce8e5f6c2a
+  content_hash: sha256:516999ff95e3bd19fd80301ae2f42b7b15f8de8076c3156b693e1ffd5a25e496
 - kind: project-relative
   target: claude
-  value: .claude/skills/writing-skills/anthropic-best-practices.md
-  runtime: null
-  scope: project
-  owners:
-  - obra/superpowers
-  active_owner: obra/superpowers
-  content_hash: sha256:217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a
-- kind: project-relative
-  target: claude
-  value: .claude/skills/writing-skills/examples/CLAUDE_MD_TESTING.md
+  value: .claude/skills/writing-skills/references/CLAUDE_MD_TESTING.md
   runtime: null
   scope: project
   owners:
@@ -3119,7 +3261,43 @@ deployments:
   content_hash: sha256:0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0
 - kind: project-relative
   target: claude
-  value: .claude/skills/writing-skills/graphviz-conventions.dot
+  value: .claude/skills/writing-skills/references/anthropic-best-practices.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-skills/references/bulletproofing.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:9397023e6bc85b556a57f3097371363bf03e28e755c57f403f470bcda90e0a23
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-skills/references/discovery.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:c6bbc74af3be90f693f7cbc986af6fa94e8df75f65109b52e96032587f5b92af
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-skills/references/flowcharts.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:8b1f542391f274f0d33f3457ac099a3d317d6877eaa3b8d3b1ebef151b55fda7
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-skills/references/graphviz-conventions.dot
   runtime: null
   scope: project
   owners:
@@ -3128,13 +3306,22 @@ deployments:
   content_hash: sha256:e2890a593c91370e384b42f2f67b1a6232c9e69dddea7891a0c1c46d7b20b694
 - kind: project-relative
   target: claude
-  value: .claude/skills/writing-skills/persuasion-principles.md
+  value: .claude/skills/writing-skills/references/persuasion-principles.md
   runtime: null
   scope: project
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03
+- kind: project-relative
+  target: claude
+  value: .claude/skills/writing-skills/references/testing-skills-with-subagents.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:ed8a6862c085900135962390530d9dc7637ad6d650b4324ce3b051287a5c3f22
 - kind: project-relative
   target: claude
   value: .claude/skills/writing-skills/render-graphs.js
@@ -3144,15 +3331,6 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:c7f412cc629461c4d10287e668731874c0497707023e3e3f74a5355eb2cee196
-- kind: project-relative
-  target: claude
-  value: .claude/skills/writing-skills/testing-skills-with-subagents.md
-  runtime: null
-  scope: project
-  owners:
-  - obra/superpowers
-  active_owner: obra/superpowers
-  content_hash: sha256:c711346852c911b24a84aa161e0cff06a4cd7f4e2fa9e9c0a266cead5afcbade
 - kind: project-relative
   target: copilot
   value: .agents/skills/analyzing-dotnet-performance
@@ -3323,7 +3501,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:842e38a256045550ae0a800da4a20ac18156fae25c38c87b7efef28879a7e16a
+  content_hash: sha256:253f932e324d5e6fe5209d8271764dc5512a9cc1db8ed2a490fc6bf94675a4b0
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/commands.md
@@ -3332,7 +3510,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:6e228d1ce7fa75c276d25e0ab43a3e9a8d6560ed632ba21ee3a212075846a065
+  content_hash: sha256:b832421add4f49b56658a5571825e188d75a0a93fa4c4b53c8c9292b6af33ea0
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/dependencies.md
@@ -3341,7 +3519,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:f37edac5e8a613c90dfefea5b74e34403bcc43962f45fe4f58fadc8fddd61ef8
+  content_hash: sha256:28822c38deb16a5c7fceaf3851fd7530d894c37b0f95853b86c2fb956a84ab73
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/governance.md
@@ -3350,7 +3528,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:6a75072a9350b444bfef7e985fb4c9baf760b4fe31e661da772b2fb87c67e755
+  content_hash: sha256:968670a858801f4576746fbe86affacf4cf27296f634ad9008f58bcba22b2409
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/installation.md
@@ -3368,7 +3546,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:30aff51f6b50f7eeb3696d1fed4b6d950ffe3d8ede38536b1df97bb728a4cf69
+  content_hash: sha256:00983812289ec13ac9ad84f57148c5cfd3ff5af479c26a42caffc9d6674e14d3
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/troubleshooting.md
@@ -3377,7 +3555,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:dd975f5bf114b6d37dfbb9c953acdb08175cb5d4f0a14af112ab1db6e2741f60
+  content_hash: sha256:2c6f13b1a1758b84305f1d11e2eeb096896a02851de1e24dde644783862667cc
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/workflow.md
@@ -3494,7 +3672,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:9c44495e56f67784d428a67b7bcf585946397d34a57e7bf53fdd371f3b9c0641
+  content_hash: sha256:fad9baa1a00f1d2af4599118cd061260ee7c60b1ca7969e01e9110835d5b6ecd
 - kind: project-relative
   target: copilot
   value: .agents/skills/binlog-generation
@@ -3512,7 +3690,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:4e5d8286f1b4089a5bbb691c11e49b0d680969a8f3e368f928a44a616314376e
+  content_hash: sha256:dce87c222945463e43c9fd03fbd6b2496e6ba5e91ee9127df5c0e82361f9ba87
 - kind: project-relative
   target: copilot
   value: .agents/skills/brainstorming
@@ -3530,7 +3708,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:6ee10d1481b8a2580d5336ff66c5c08acc9d4b251b13bbc3bfd31be99c261d43
+  content_hash: sha256:61a7ef918652108c76a3fd01e02dd92d39996c6b46d4cb2819cbd03f6c45e46a
 - kind: project-relative
   target: copilot
   value: .agents/skills/brainstorming/builder-check-prompt.md
@@ -3629,7 +3807,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:660963fe7926c162fe63c254a4cdc60ffd3664e6decee2acf06cafb1eb4e6a1c
+  content_hash: sha256:665fa0ae2f539367d701f6bc6996667ccbe258020caff745c0cbfbfee7d42df2
 - kind: project-relative
   target: copilot
   value: .agents/skills/build-perf-diagnostics
@@ -3647,7 +3825,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:9d39707baaa1decb969c3b8ffcb0be4ed69d5724b9bc5c07b9ac076c15d65be5
+  content_hash: sha256:17c3a150b8b38fdd3129d5c81a3151f1b2a6e5f2e8fa66e01b8a88d7069c4994
 - kind: project-relative
   target: copilot
   value: .agents/skills/check-bin-obj-clash
@@ -3800,7 +3978,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:5a652f8132cc901eb5ca61f89157839f87a2f20aed037fc7a2b51051bc37cd19
+  content_hash: sha256:3143de8695c5a2d63e8b1675f33837578076f464deb127c2ebdd0b46fceef886
 - kind: project-relative
   target: copilot
   value: .agents/skills/diagnosing-superpowers/prompts/analyst-common.md
@@ -3917,7 +4095,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:a656f5e15b21c7a200c39c038f5ede74b9d6ea3ceeb90f39af7e930c8d8424d6
+  content_hash: sha256:d26ef9197b4a6ae5159ae6d11abd162bcc624d95fc7ccf508e07b68f916a1b19
 - kind: project-relative
   target: copilot
   value: .agents/skills/diagnosing-superpowers/references/redaction-policy.md
@@ -3962,7 +4140,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:8f28dbfe60602f77dda76d81815cb4e2dce7d3e2a93348890e1581be8310ac1f
+  content_hash: sha256:afd21779e5de5bc5adfe2f5a50a04e44ab8d50d9ad0f829243de248d6f023eed
 - kind: project-relative
   target: copilot
   value: .agents/skills/diagnosing-superpowers/templates/report.md
@@ -4145,6 +4323,24 @@ deployments:
   content_hash: sha256:63bda7821ce96ad27e343b93fdf46eb31d2209ba66c387f669062909e3d532a0
 - kind: project-relative
   target: copilot
+  value: .agents/skills/eliminate-redundant-restores
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/eliminate-redundant-restores/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:178c6b44ae9d5a4b5aedefa73b1366be7d389e07a3c855e2bdceeb54cc435e74
+- kind: project-relative
+  target: copilot
   value: .agents/skills/eval-performance
   runtime: null
   scope: project
@@ -4178,7 +4374,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:7aaac2a4a9234d50c8d5f5caf4760e537047ba6fb516c03565b41f47d08edd8c
+  content_hash: sha256:0affc661f5030942f09c9d67ab5ff769a1ef284028fc251f7e5ff284b15b154c
 - kind: project-relative
   target: copilot
   value: .agents/skills/executing-plans/scripts/task-done
@@ -4835,7 +5031,7 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:b70cb2ac89d1f3001bed53c288dbf740c4925a8b422e5d2694b9217bbad157cf
+  content_hash: sha256:ba41f697136cba88a7962d60c8e2f97488ba04a8688b1d0fbeb27f6953808e75
 - kind: project-relative
   target: copilot
   value: .agents/skills/subagent-driven-development/implementer-prompt.md
@@ -4854,6 +5050,69 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:0828a5e9cbb12ba49f14621dd8c3953c48c0fc383e75bb5494f055ed0d6d824f
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/subagent-driven-development/references/batching.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:b54dc7e23dbfb90db89bcb2fb3af591aabf6a271a165fbc0da4c6f9439980eac
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/subagent-driven-development/references/cannot-verify.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:e698713a15e0eabf1a2ab26ffe1bb04bf70c9d6d2e2060d44a0f9a1bdd4408bf
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/subagent-driven-development/references/final-review.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:09c5d32e8e927b167ac7ccd3d71825143d320c27b2b7e3e2a63d1e8b37059b3a
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/subagent-driven-development/references/fix-loop.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:eafff1f801af2ced86e8761f3eeef04b701860d986ba5d0a8b20d506a75104bb
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/subagent-driven-development/references/handling-reports.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:8f759cdd4936220c38aab05b6d6c48c6df8ac8f146b0f37a6d2facbf87133c67
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/subagent-driven-development/references/preflight.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:3ea21c5fc1af1a190ac8a9d19ceb0849b47bf2ffe27b87dffcc21b6a0539776c
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/subagent-driven-development/references/resuming.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:ff6e38bde2276faa2a7e93513086caded0ea10edbf2ec7f349a7e3b0d7c668c4
 - kind: project-relative
   target: copilot
   value: .agents/skills/subagent-driven-development/scripts/review-package
@@ -5045,6 +5304,24 @@ deployments:
   content_hash: sha256:51471c853306ff92ca8bb41dcaea05f31c0e46b03651f8f3c99754b7172f4ae1
 - kind: project-relative
   target: copilot
+  value: .agents/skills/troubleshoot-binlog-mcp
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: null
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/troubleshoot-binlog-mcp/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - dotnet/skills/plugins/dotnet-msbuild
+  active_owner: dotnet/skills/plugins/dotnet-msbuild
+  content_hash: sha256:3fdcbbdcdbe1d07d2dc79c4481866a4ea238848966349151bf5d42f7cf029fba
+- kind: project-relative
+  target: copilot
   value: .agents/skills/using-git-worktrees
   runtime: null
   scope: project
@@ -5195,19 +5472,10 @@ deployments:
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
-  content_hash: sha256:9cf8c7ba0fdc521f103299a17e2f681a3112b730a75c78a6881e41ce8e5f6c2a
+  content_hash: sha256:516999ff95e3bd19fd80301ae2f42b7b15f8de8076c3156b693e1ffd5a25e496
 - kind: project-relative
   target: copilot
-  value: .agents/skills/writing-skills/anthropic-best-practices.md
-  runtime: null
-  scope: project
-  owners:
-  - obra/superpowers
-  active_owner: obra/superpowers
-  content_hash: sha256:217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a
-- kind: project-relative
-  target: copilot
-  value: .agents/skills/writing-skills/examples/CLAUDE_MD_TESTING.md
+  value: .agents/skills/writing-skills/references/CLAUDE_MD_TESTING.md
   runtime: null
   scope: project
   owners:
@@ -5216,7 +5484,43 @@ deployments:
   content_hash: sha256:0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0
 - kind: project-relative
   target: copilot
-  value: .agents/skills/writing-skills/graphviz-conventions.dot
+  value: .agents/skills/writing-skills/references/anthropic-best-practices.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/writing-skills/references/bulletproofing.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:9397023e6bc85b556a57f3097371363bf03e28e755c57f403f470bcda90e0a23
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/writing-skills/references/discovery.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:c6bbc74af3be90f693f7cbc986af6fa94e8df75f65109b52e96032587f5b92af
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/writing-skills/references/flowcharts.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:8b1f542391f274f0d33f3457ac099a3d317d6877eaa3b8d3b1ebef151b55fda7
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/writing-skills/references/graphviz-conventions.dot
   runtime: null
   scope: project
   owners:
@@ -5225,13 +5529,22 @@ deployments:
   content_hash: sha256:e2890a593c91370e384b42f2f67b1a6232c9e69dddea7891a0c1c46d7b20b694
 - kind: project-relative
   target: copilot
-  value: .agents/skills/writing-skills/persuasion-principles.md
+  value: .agents/skills/writing-skills/references/persuasion-principles.md
   runtime: null
   scope: project
   owners:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03
+- kind: project-relative
+  target: copilot
+  value: .agents/skills/writing-skills/references/testing-skills-with-subagents.md
+  runtime: null
+  scope: project
+  owners:
+  - obra/superpowers
+  active_owner: obra/superpowers
+  content_hash: sha256:ed8a6862c085900135962390530d9dc7637ad6d650b4324ce3b051287a5c3f22
 - kind: project-relative
   target: copilot
   value: .agents/skills/writing-skills/render-graphs.js
@@ -5241,15 +5554,6 @@ deployments:
   - obra/superpowers
   active_owner: obra/superpowers
   content_hash: sha256:c7f412cc629461c4d10287e668731874c0497707023e3e3f74a5355eb2cee196
-- kind: project-relative
-  target: copilot
-  value: .agents/skills/writing-skills/testing-skills-with-subagents.md
-  runtime: null
-  scope: project
-  owners:
-  - obra/superpowers
-  active_owner: obra/superpowers
-  content_hash: sha256:c711346852c911b24a84aa161e0cff06a4cd7f4e2fa9e9c0a266cead5afcbade
 - kind: project-relative
   target: copilot
   value: .github/agents/apm-expert.agent.md
@@ -5276,7 +5580,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:ad7f5870b1f999889ed564523af609b3b7cda14bab5f6ddda80767c747871d92
+  content_hash: sha256:aac1d222f6525230e18fc94ec5d4fa1db449e01f1c454e81d45a29cfe0baf609
 - kind: project-relative
   target: copilot
   value: .github/agents/msbuild-code-review.agent.md
@@ -5294,7 +5598,7 @@ deployments:
   owners:
   - dotnet/skills/plugins/dotnet-msbuild
   active_owner: dotnet/skills/plugins/dotnet-msbuild
-  content_hash: sha256:7ffa223129d65e3fc5159dfdb79cb90f0c1b383fa404286d092c067f076f0565
+  content_hash: sha256:293f2733cdb64bba7c281b4cfa78c19b35e4fa0605f7804e8b6b110204e75709
 - kind: project-relative
   target: copilot
   value: .github/agents/optimizing-dotnet-performance.agent.md
