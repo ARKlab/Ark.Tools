@@ -5,7 +5,7 @@
   ],
   "constraints": {
     "dotnet": "10.0.402",
-    "apm": "0.35.0"
+    "apm": "0.34.0"
   },
   "lockFileMaintenance": {
     "enabled": false
@@ -27,6 +27,38 @@
         "mcr.microsoft.com/mssql/server"
       ],
       "versioning": "regex:^(?<major>\\d+)-CU(?<minor>\\d+)(?:-GDR(?<patch>\\d+))?-(?<compatibility>ubuntu-[\\d.]+)$"
+    },
+    {
+      "description": "constraints.apm and the apm-version of the workflows must move together, in one PR",
+      "matchDatasources": [
+        "github-releases"
+      ],
+      "matchPackageNames": [
+        "microsoft/apm"
+      ],
+      "groupName": "apm CLI"
+    },
+    {
+      "description": "Temporary cap, which also applies to the apm-guide tag in apm.yml: apm 0.35.0 deletes committed skills on a cold checkout and Renovate cannot pass --force. Remove once fixed upstream",
+      "matchPackageNames": [
+        "microsoft/apm"
+      ],
+      "allowedVersions": "<0.35.0"
+    },
+    {
+      "description": "dotnet/skills publishes no plugin release tags: apm.yml pins its commit with a '# main' comment and Renovate tracks the main digest, batched weekly because main moves daily",
+      "matchManagers": [
+        "apm"
+      ],
+      "matchPackageNames": [
+        "dotnet/skills"
+      ],
+      "overrideDatasource": "git-refs",
+      "overridePackageName": "https://github.com/dotnet/skills",
+      "groupName": "dotnet/skills plugins",
+      "schedule": [
+        "before 6am on monday"
+      ]
     }
   ],
   "customManagers": [
@@ -53,6 +85,34 @@
       ],
       "depNameTemplate": "azure-functions-core-tools",
       "datasourceTemplate": "npm"
+    },
+    {
+      "description": "apm CLI installed by microsoft/apm-action in the workflows; constraints.apm is bumped by Renovate itself",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "apm-version:\\s*[\"']?(?<currentValue>\\d+\\.\\d+\\.\\d+)[\"']?"
+      ],
+      "depNameTemplate": "microsoft/apm",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$",
+      "versioningTemplate": "semver"
+    },
+    {
+      "description": "apm_version stamp of apm.lock.yaml: apm install rewrites it, so it must move with the CLI or the restore check in copilot-setup-steps goes red",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^apm\\.lock\\.yaml$/"
+      ],
+      "matchStrings": [
+        "apm_version:\\s*[\"']?(?<currentValue>\\d+\\.\\d+\\.\\d+)[\"']?"
+      ],
+      "depNameTemplate": "microsoft/apm",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$",
+      "versioningTemplate": "semver"
     }
   ]
 }
