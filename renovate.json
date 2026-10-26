@@ -99,6 +99,20 @@
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v(?<version>.+)$",
       "versioningTemplate": "semver"
+    },
+    {
+      "description": "apm_version stamp of apm.lock.yaml: apm install rewrites it, so it must move with the CLI or the restore check in copilot-setup-steps goes red",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^apm\\.lock\\.yaml$/"
+      ],
+      "matchStrings": [
+        "apm_version:\\s*[\"']?(?<currentValue>\\d+\\.\\d+\\.\\d+)[\"']?"
+      ],
+      "depNameTemplate": "microsoft/apm",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$",
+      "versioningTemplate": "semver"
     }
   ]
 }

@@ -71,8 +71,8 @@ registered behavior, not merely assert that registration does not throw.
 ## Development agents and marketplace plugins
 
 Use the [APM](https://github.com/microsoft/apm/releases) version pinned in `renovate.json`
-(`constraints.apm`; the workflows pin the same version and Renovate bumps both
-together) and PowerShell 7. Do not use an unpinned or newer APM: 0.35.0 deletes
+(`constraints.apm`; the workflows and the `apm_version` of `apm.lock.yaml` carry
+the same version and Renovate bumps them together) and PowerShell 7. Do not use an unpinned or newer APM: 0.35.0 deletes
 committed skills on a cold checkout, so Renovate caps it below 0.35.0.
 The repository has two separate APM flows:
 
