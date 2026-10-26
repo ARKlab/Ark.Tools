@@ -4,7 +4,7 @@
     "local>ARKlab/renovate-config"
   ],
   "constraints": {
-    "dotnet": "10.0.402",
+    "dotnet": "10.0.403",
     "apm": "0.34.0"
   },
   "lockFileMaintenance": {

@@ -18,7 +18,7 @@ devDependencies:
     - dotnet/skills/plugins/dotnet#9de888b8ce55da34e76a113bd7b2d463d6b3e1e6 # main
     - dotnet/skills/plugins/dotnet-diag#9de888b8ce55da34e76a113bd7b2d463d6b3e1e6 # main
     - dotnet/skills/plugins/dotnet-msbuild#9de888b8ce55da34e76a113bd7b2d463d6b3e1e6 # main
-    - obra/superpowers#v7.0.0
+    - obra/superpowers#v7.0.1
     - DietrichGebert/ponytail#v5.3.2
     - ./agents-plugins/ark-csharp
   mcp:
