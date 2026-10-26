@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.0.1] - 2026-10-26
+
+### Changed
+
+- Dependency updates: the published packages now depend on Microsoft.Extensions.* and ASP.NET Core 10.0.14 and MailKit 4.18.2.
+
 ## [7.0.0] - 2026-10-23
 
 First stable release of Ark.Tools v7. See the [v7 release notes](docs/release-notes-v7.md) and the [migration guide](docs/migration-v7.md).
