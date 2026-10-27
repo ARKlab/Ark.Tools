@@ -852,7 +852,7 @@
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "MessagePack": "[3.1.12, )",
-          "Polly.Core": "[8.8.0, )"
+          "Polly.Core": "[8.8.1, )"
         }
       },
       "ark.mediatorframework.sample.core.webrebus.hosting": {
@@ -1169,9 +1169,9 @@
       },
       "Polly.Core": {
         "type": "CentralTransitive",
-        "requested": "[8.8.0, )",
-        "resolved": "8.8.0",
-        "contentHash": "TewV9uNFsoRFggoFbTAGFwsMYPuckA+wTIpQPyhLL9BANRPQRENz2S4bwATrB3HBOakN5oKLFIllPiDnVecmJg=="
+        "requested": "[8.8.1, )",
+        "resolved": "8.8.1",
+        "contentHash": "yyzOT3XJRR7sEOxZH1Xpb6Oi5cDiGVuTOSVfIlcC23wFUdoyCPOujjKfIX5WdIX8l5TkRneOTyyW1Y1zNQKnUA=="
       },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "CentralTransitive",

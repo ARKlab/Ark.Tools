@@ -405,14 +405,14 @@
         "dependencies": {
           "Ark.Tools.Auth0": "[1.0.0, )",
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "Polly.Core": "[8.8.0, )"
+          "Polly.Core": "[8.8.1, )"
         }
       },
       "ark.tools.aspnetcore.basicauthazureactivedirectoryproxy": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "Polly.Core": "[8.8.0, )"
+          "Polly.Core": "[8.8.1, )"
         }
       },
       "ark.tools.auth0": {
@@ -683,9 +683,9 @@
       },
       "Polly.Core": {
         "type": "CentralTransitive",
-        "requested": "[8.8.0, )",
-        "resolved": "8.8.0",
-        "contentHash": "TewV9uNFsoRFggoFbTAGFwsMYPuckA+wTIpQPyhLL9BANRPQRENz2S4bwATrB3HBOakN5oKLFIllPiDnVecmJg=="
+        "requested": "[8.8.1, )",
+        "resolved": "8.8.1",
+        "contentHash": "yyzOT3XJRR7sEOxZH1Xpb6Oi5cDiGVuTOSVfIlcC23wFUdoyCPOujjKfIX5WdIX8l5TkRneOTyyW1Y1zNQKnUA=="
       },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "CentralTransitive",
