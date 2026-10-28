@@ -869,7 +869,7 @@
           "Auth0.AuthenticationApi": "[7.49.0, )",
           "Auth0.ManagementApi": "[10.5.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.14, )",
-          "Polly.Core": "[8.8.1, )"
+          "Polly.Core": "[8.9.0, )"
         }
       },
       "ark.tools.aspnetcore.commaseparatedparameters": {
@@ -1696,9 +1696,9 @@
       },
       "Polly.Core": {
         "type": "CentralTransitive",
-        "requested": "[8.8.1, )",
-        "resolved": "8.8.1",
-        "contentHash": "yyzOT3XJRR7sEOxZH1Xpb6Oi5cDiGVuTOSVfIlcC23wFUdoyCPOujjKfIX5WdIX8l5TkRneOTyyW1Y1zNQKnUA=="
+        "requested": "[8.9.0, )",
+        "resolved": "8.9.0",
+        "contentHash": "Imm3q+XvH+8fiOdCkp+GggDQuxN3e4VznbRxODjjJxCurmAIfUEO4dKcPx8RCwocTkvP6Udw2DyXtC+45tu3jA=="
       },
       "Reqnroll": {
         "type": "CentralTransitive",
