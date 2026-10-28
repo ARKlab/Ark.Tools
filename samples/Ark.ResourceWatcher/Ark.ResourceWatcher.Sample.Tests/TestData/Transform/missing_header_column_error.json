@@ -1,0 +1,4 @@
+{
+  "exceptionType": "TransformException",
+  "messageContains": "no column for SinkRecord.Value"
+}

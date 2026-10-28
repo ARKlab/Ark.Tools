@@ -3,7 +3,6 @@
 using Ark.ResourceWatcher.Sample.Dto;
 
 using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace Ark.ResourceWatcher.Sample.Transform;
 
@@ -44,25 +43,25 @@ public sealed class MyTransformService
             };
         }
 
-        using var reader = new StringReader(content);
-        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+        // Header names are matched ignoring case, and extra columns are allowed
+        var options = new CsvReaderOptions
         {
-            HasHeaderRecord = true,
-            TrimOptions = TrimOptions.Trim,
-            HeaderValidated = null, // Don't validate headers - allow extra columns
-            PrepareHeaderForMatch = static args => args.Header.ToLowerInvariant() // Case-insensitive matching
+            Separator = ',',
+            HasHeader = true,
+            TrimWhitespace = true,
+            MissingField = CsvMissingFieldHandling.Throw,
+            MalformedData = CsvMalformedDataHandling.Throw,
+            IncludeValuesInExceptions = false, // keep raw field values out of logged exceptions
         };
 
-        using var csv = new CsvReader(reader, config);
-
-        csv.Context.RegisterClassMap<SinkRecordMap>();
+        using var csv = CsvReader.FromText(content, options);
 
         List<SinkRecord> records;
         try
         {
             records = csv.GetRecords<SinkRecord>().ToList();
         }
-        catch (CsvHelperException ex)
+        catch (Exception ex) when (ex is CsvFormatException or KeyNotFoundException)
         {
             throw new TransformException($"CSV parsing error: {ex.Message}", ex);
         }
@@ -73,21 +72,23 @@ public sealed class MyTransformService
             Records = records
         };
     }
+}
 
-    /// <summary>
-    /// CsvHelper ClassMap for mapping CSV columns to SinkRecord properties.
-    /// Maps required columns by name/index and collects additional columns into Properties.
-    /// </summary>
-    private sealed class SinkRecordMap : ClassMap<SinkRecord>
-    {
-        public SinkRecordMap()
-        {
-            // Map required columns by name (case-insensitive due to PrepareHeaderForMatch)
-            Map(static m => m.Id).Name("id").Index(0);
-            Map(static m => m.Name).Name("name").Index(1);
-            Map(static m => m.Value).Name("value").Index(2);
-        }
-    }
+/// <summary>
+/// CsvHelper record map for mapping CSV columns to SinkRecord properties.
+/// </summary>
+[CsvRecordMap(typeof(SinkRecord))]
+[SuppressMessage("ErrorHandling", "ERP022:Unobserved exception in a generic exception handler", Justification = "The CsvHelper-generated mapper catches exceptions only to find the failing member; the original error is still thrown.")]
+internal sealed partial class SinkRecordMap
+{
+    [CsvColumn("id")]
+    public string Id { get; set; } = "";
+
+    [CsvColumn("name")]
+    public string Name { get; set; } = "";
+
+    [CsvColumn("value")]
+    public decimal Value { get; set; }
 }
 
 /// <summary>

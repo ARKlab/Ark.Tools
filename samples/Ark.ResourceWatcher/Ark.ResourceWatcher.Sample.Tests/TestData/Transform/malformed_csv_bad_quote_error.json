@@ -1,0 +1,4 @@
+{
+  "exceptionType": "TransformException",
+  "messageContains": "Malformed CSV"
+}

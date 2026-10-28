@@ -1149,7 +1149,7 @@
           "Ark.Tools.NLog.Configuration": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher.OTel": "[1.0.0, )",
           "Ark.Tools.ResourceWatcher.WorkerHost.Hosting": "[1.0.0, )",
-          "CsvHelper": "[33.1.0, )"
+          "CsvHelper": "[34.0.0, )"
         }
       },
       "ark.tools.compliance": {
@@ -1339,9 +1339,9 @@
       },
       "CsvHelper": {
         "type": "CentralTransitive",
-        "requested": "[33.1.0, )",
-        "resolved": "33.1.0",
-        "contentHash": "kqfTOZGrn7NarNeXgjh86JcpTHUoeQDMB8t9NVa/ZtlSYiV1rxfRnQ49WaJsob4AiGrbK0XDzpyKkBwai4F8eg=="
+        "requested": "[34.0.0, )",
+        "resolved": "34.0.0",
+        "contentHash": "yiFG6lPSgNFhraURmM/e4ROhbnNzMOZI1HxMvjNzn5lkc9dx3aN/sm/N4UM+rV6CPpZBQfrJfwEKUxkndeRKUQ=="
       },
       "MailKit": {
         "type": "CentralTransitive",
