@@ -71,6 +71,8 @@ Tests are automatically discovered from files in this folder. No code changes ar
 | `decimal_precision` | Success | Decimal values with high precision |
 | `whitespace_handling` | Success | Whitespace trimming in values |
 | `malformed_csv_missing_columns` | Error | Less than 3 columns throws TransformException |
+| `malformed_csv_bad_quote` | Error | Bad quoting throws TransformException |
+| `missing_header_column` | Error | Header without a required column throws TransformException |
 | `malformed_csv_invalid_decimal` | Error | Non-numeric value throws FormatException |
 
 ## Benefits

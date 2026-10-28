@@ -1,4 +1,4 @@
 {
   "exceptionType": "TransformException",
-  "messageContains": "Field at index '2' does not exist"
+  "messageContains": "field 2 does not exist"
 }
