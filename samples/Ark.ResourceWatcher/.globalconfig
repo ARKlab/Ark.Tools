@@ -18,9 +18,3 @@
 is_global = true
 
 # Add your project-specific analyzer overrides below this line
-
-# ERP022: CsvHelper's source-generated record mappers catch and swallow exceptions by design,
-# and ErrorProne analyzes generated code (.editorconfig sections do not reach generated files).
-# shortcut: this turns ERP022 off for all code of this sample, so review hand-written catch blocks;
-# remove it once ErrorProne skips generated code or CsvHelper stops emitting bare catch blocks
-dotnet_diagnostic.ERP022.severity = none

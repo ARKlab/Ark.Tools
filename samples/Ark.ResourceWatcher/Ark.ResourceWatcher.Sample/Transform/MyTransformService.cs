@@ -78,6 +78,7 @@ public sealed class MyTransformService
 /// CsvHelper record map for mapping CSV columns to SinkRecord properties.
 /// </summary>
 [CsvRecordMap(typeof(SinkRecord))]
+[SuppressMessage("ErrorHandling", "ERP022:Unobserved exception in a generic exception handler", Justification = "The CsvHelper-generated mapper catches exceptions only to find the failing member; the original error is still thrown.")]
 internal sealed partial class SinkRecordMap
 {
     [CsvColumn("id")]
