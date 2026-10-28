@@ -1332,7 +1332,7 @@
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "MessagePack": "[3.1.12, )",
-          "Polly.Core": "[8.8.1, )"
+          "Polly.Core": "[8.9.0, )"
         }
       },
       "ark.mediatorframework.sample.core.webrebus.auditprocessor": {
@@ -1868,9 +1868,9 @@
       },
       "Polly.Core": {
         "type": "CentralTransitive",
-        "requested": "[8.8.1, )",
-        "resolved": "8.8.1",
-        "contentHash": "yyzOT3XJRR7sEOxZH1Xpb6Oi5cDiGVuTOSVfIlcC23wFUdoyCPOujjKfIX5WdIX8l5TkRneOTyyW1Y1zNQKnUA=="
+        "requested": "[8.9.0, )",
+        "resolved": "8.9.0",
+        "contentHash": "Imm3q+XvH+8fiOdCkp+GggDQuxN3e4VznbRxODjjJxCurmAIfUEO4dKcPx8RCwocTkvP6Udw2DyXtC+45tu3jA=="
       },
       "Scalar.AspNetCore": {
         "type": "CentralTransitive",
