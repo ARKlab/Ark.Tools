@@ -38,13 +38,13 @@
     <PackageVersion Include="Ark.Tools.Solid.SimpleInjector" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Solid.Authorization" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.SystemTextJson" Version="999.9.9" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.18.3" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.18.5" />
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
   </ItemGroup>
   <ItemGroup Label="Sample dependencies">
     <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0" />
     <PackageVersion Include="Google.Protobuf" Version="3.36.2" />
-    <PackageVersion Include="Grpc.Net.Client" Version="2.84.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.85.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.85.0" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Identity.Web" Version="4.16.1" />
@@ -78,7 +78,7 @@
   <ItemGroup Label="Testing packages">
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
-    <PackageVersion Include="NodaTime.Testing" Version="3.3.6" />
+    <PackageVersion Include="NodaTime.Testing" Version="3.3.7" />
     <PackageVersion Include="MSTest.Analyzers" Version="4.5.2" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.5.2" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.5.2" />

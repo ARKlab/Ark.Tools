@@ -25,12 +25,12 @@
       },
       "Grpc.StatusProto": {
         "type": "Direct",
-        "requested": "[2.84.0, )",
-        "resolved": "2.84.0",
-        "contentHash": "Jj8mIcV4KGLmAK0WIiiSOuPZAZkRgi/J+hnM9qJ+BdjxReB9vfzfponLP1mhDpzAuHwGfCO4dKsiiWafEY5PvQ==",
+        "requested": "[2.85.0, )",
+        "resolved": "2.85.0",
+        "contentHash": "618VytN2qkPS9Sr1WJR5ovKtobHuYpGx7qXSRPjnJhIzrXkjmWNpJhwIb12daNDVeLabbnGB5+5RH0CsX1KY7A==",
         "dependencies": {
           "Google.Api.CommonProtos": "2.17.0",
-          "Grpc.Core.Api": "2.84.0"
+          "Grpc.Core.Api": "2.85.0"
         }
       },
       "Grpc.Tools": {
@@ -106,8 +106,8 @@
       },
       "Grpc.Core.Api": {
         "type": "Transitive",
-        "resolved": "2.84.0",
-        "contentHash": "p2SOMl6q/GZ4/5MLkgboC/z55g4zKUEruRn/g46QgppjQBVnsLZVBU/9VO7n60ll38G3Eo8Zu9b7x+W01GKFVg=="
+        "resolved": "2.85.0",
+        "contentHash": "cpYu/nw/QhwHcRZMJbYD8lEllKrdwYMiDS4U3oH61nhYPUMNkcCcef4ulv11svHvTBThYV+ju332N9bCrfe7cQ=="
       },
       "Grpc.Net.Common": {
         "type": "Transitive",
@@ -246,7 +246,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "NodaTime": "[3.3.6, )"
+          "NodaTime": "[3.3.7, )"
         }
       },
       "ark.tools.mediatorframework": {
@@ -283,7 +283,7 @@
         "dependencies": {
           "Google.Api.CommonProtos": "[2.17.0, )",
           "Google.Protobuf": "[3.36.2, )",
-          "NodaTime": "[3.3.6, )",
+          "NodaTime": "[3.3.7, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.4.40, )"
         }
@@ -445,9 +445,9 @@
       },
       "NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.3.6, )",
-        "resolved": "3.3.6",
-        "contentHash": "vAjAdOvqu5hqgDVgzJxFPhSVy4EM5/tmSHJn/k0lLDIn4637OReqJgvR49fzFzj+5uZfebdJEFbI6LOLazWXog=="
+        "requested": "[3.3.7, )",
+        "resolved": "3.3.7",
+        "contentHash": "4Rc3zup1sZqtlcgkWZOsjoVbhm+RkDvxrFDJfIxi7nr32ZgzVW+zCTBr827+KG/4r5owpchUjqx8tO4K2ZtpOw=="
       },
       "NodaTime.Serialization.Protobuf": {
         "type": "CentralTransitive",

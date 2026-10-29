@@ -111,9 +111,9 @@ dependencies:
   materialization_repo_url: DietrichGebert/ponytail
   name: ponytail
   host: github.com
-  resolved_commit: 16352ac229eb08a9598dcae48fe9f2b342567d86
-  resolved_ref: v5.3.2
-  version: 16352ac
+  resolved_commit: 7801d061243d7b753bad0e0b3c057cd250b11755
+  resolved_ref: v5.3.3
+  version: 7801d06
   package_type: marketplace_plugin
   deployed_files:
   - .agents/skills/ponytail
@@ -154,8 +154,8 @@ dependencies:
     .claude/skills/ponytail-help/SKILL.md: sha256:86ab0ce0af70cbeeeef499d5c884873b393f87f86401dcc45553662ce2c1eff9
     .claude/skills/ponytail-review/SKILL.md: sha256:33fe4ebe22a460924e5d4a261e223df22e409cc94ab76182bee9fb91a3ef022e
     .claude/skills/ponytail/SKILL.md: sha256:9badd22a32e19cb884e46dfa8d3aae82bb81dfa5484105b8b4f0262df823a509
-    .github/hooks/ponytail-copilot-hooks.json: sha256:72b8481f1a9d093a38ab3de5a358bf9b8a145f8b20c8837aed51c848fef31d17
-  content_hash: sha256:20569f2d8766157e19d89f862d04de06c604ae26283d3b0237ec3897b86d7dcd
+    .github/hooks/ponytail-copilot-hooks.json: sha256:692b5148c3605d2ece2f081834b650c3c43d75cb272a7884dc40e9ce4425ef79
+  content_hash: sha256:9d4a2cd2b41c680ce4a8da855847022bafe86a30e26854814f1129aed3726200
   is_dev: true
 - repo_url: dotnet/skills
   name: dotnet
@@ -5541,7 +5541,7 @@ deployments:
   owners:
   - dietrichgebert/ponytail
   active_owner: dietrichgebert/ponytail
-  content_hash: sha256:72b8481f1a9d093a38ab3de5a358bf9b8a145f8b20c8837aed51c848fef31d17
+  content_hash: sha256:692b5148c3605d2ece2f081834b650c3c43d75cb272a7884dc40e9ce4425ef79
 - kind: project-relative
   target: copilot
   value: .github/hooks/scripts/superpowers/hooks/run-hook.cmd
