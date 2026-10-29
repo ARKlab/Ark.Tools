@@ -7,7 +7,7 @@
           "type": "command",
           "statusMessage": "Loading ponytail mode...",
           "command": "node -e \"require(require('path').join(process.env.CLAUDE_PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-activate.js'))\"",
-          "timeout": 5
+          "timeout": 15
         }
       ],
       "_apm_source": "dietrichgebert/ponytail"
@@ -33,7 +33,7 @@
           "type": "command",
           "statusMessage": "Loading ponytail mode...",
           "command": "node -e \"require(require('path').join(process.env.CLAUDE_PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-subagent.js'))\"",
-          "timeout": 5
+          "timeout": 15
         }
       ],
       "_apm_source": "dietrichgebert/ponytail"
@@ -47,7 +47,7 @@
           "type": "command",
           "statusMessage": "Tracking ponytail mode...",
           "command": "node -e \"require(require('path').join(process.env.CLAUDE_PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-mode-tracker.js'))\"",
-          "timeout": 5
+          "timeout": 15
         }
       ],
       "_apm_source": "dietrichgebert/ponytail"

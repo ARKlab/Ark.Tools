@@ -1023,7 +1023,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "NodaTime": "[3.3.6, )"
+          "NodaTime": "[3.3.7, )"
         }
       },
       "ark.tools.hosting": {
@@ -1647,20 +1647,20 @@
       },
       "Microsoft.Identity.Client": {
         "type": "CentralTransitive",
-        "requested": "[4.91.1, )",
-        "resolved": "4.91.1",
-        "contentHash": "o3loEgTbvlVlret7jG76SfOoeRWQQqyY11+rQXvkI9tQzs5I3C1FDkD3hZTMefC5LBeGZu3nRK9MJXiVcW4skQ==",
+        "requested": "[4.92.0, )",
+        "resolved": "4.92.0",
+        "contentHash": "mvzvyZ0pG8gODD8+76u1HfpHzHk/Df8ylLdrrJImWdbAcV0PUx41Q/S3eojIAhH9T+upRf2cxKRli9208GC3Bw==",
         "dependencies": {
           "Microsoft.IdentityModel.Abstractions": "8.14.0"
         }
       },
       "Microsoft.Identity.Client.Extensions.Msal": {
         "type": "CentralTransitive",
-        "requested": "[4.91.1, )",
-        "resolved": "4.91.1",
-        "contentHash": "hAiV5z7kfc2mRg43z4fsHsw8Q5LQxxQGzofv4X4e8QJCB3na+LCWvjAzOpjSlitSGuO/+pOZKAgEc6rRjsw3vg==",
+        "requested": "[4.92.0, )",
+        "resolved": "4.92.0",
+        "contentHash": "dQm4p27eitqWdJiIMoqn043Yx19OiFpHqYZGrP3cW5Ew3h3dQSPwD0kLC6xPlzVCQPYuAaNDl6f0xh//uLFVDQ==",
         "dependencies": {
-          "Microsoft.Identity.Client": "4.91.1",
+          "Microsoft.Identity.Client": "4.92.0",
           "System.Security.Cryptography.ProtectedData": "4.5.0"
         }
       },
@@ -1757,9 +1757,9 @@
       },
       "NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.3.6, )",
-        "resolved": "3.3.6",
-        "contentHash": "vAjAdOvqu5hqgDVgzJxFPhSVy4EM5/tmSHJn/k0lLDIn4637OReqJgvR49fzFzj+5uZfebdJEFbI6LOLazWXog=="
+        "requested": "[3.3.7, )",
+        "resolved": "3.3.7",
+        "contentHash": "4Rc3zup1sZqtlcgkWZOsjoVbhm+RkDvxrFDJfIxi7nr32ZgzVW+zCTBr827+KG/4r5owpchUjqx8tO4K2ZtpOw=="
       },
       "NodaTime.Serialization.JsonNet": {
         "type": "CentralTransitive",

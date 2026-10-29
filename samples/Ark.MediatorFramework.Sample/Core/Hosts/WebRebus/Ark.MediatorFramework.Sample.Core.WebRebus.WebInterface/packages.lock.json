@@ -74,9 +74,9 @@
       },
       "Scalar.AspNetCore": {
         "type": "Direct",
-        "requested": "[2.18.3, )",
-        "resolved": "2.18.3",
-        "contentHash": "6KXPOkCNnoZTXBl8GVNxq/zpS9UdGnz1a23EWy3CEiwYbZKQ5gi2APZ5mBruXcdXIr+ZXSZYiwX81UagjKFxeg=="
+        "requested": "[2.18.5, )",
+        "resolved": "2.18.5",
+        "contentHash": "m7sb2hqbdUXPBa4MvFy7GZ8SU4YGDYhaFkaiATXCMRhIDMA6kJrRQnBO4Z5PRz175sRfYfSXBlyrxckbhhrQ3A=="
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "Direct",
@@ -509,8 +509,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.3.6",
-        "contentHash": "vAjAdOvqu5hqgDVgzJxFPhSVy4EM5/tmSHJn/k0lLDIn4637OReqJgvR49fzFzj+5uZfebdJEFbI6LOLazWXog=="
+        "resolved": "3.3.7",
+        "contentHash": "4Rc3zup1sZqtlcgkWZOsjoVbhm+RkDvxrFDJfIxi7nr32ZgzVW+zCTBr827+KG/4r5owpchUjqx8tO4K2ZtpOw=="
       },
       "NodaTime.Serialization.Protobuf": {
         "type": "Transitive",
@@ -907,7 +907,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "NodaTime": "[3.3.6, )"
+          "NodaTime": "[3.3.7, )"
         }
       },
       "ark.tools.dapper": {
@@ -933,7 +933,7 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Google.Protobuf": "[3.36.2, )",
           "MessagePack": "[3.1.12, )",
-          "NodaTime": "[3.3.6, )"
+          "NodaTime": "[3.3.7, )"
         }
       },
       "ark.tools.mediatorframework.minimalapi": {
@@ -999,7 +999,7 @@
         "dependencies": {
           "Google.Api.CommonProtos": "[2.17.0, )",
           "Google.Protobuf": "[3.36.2, )",
-          "NodaTime": "[3.3.6, )",
+          "NodaTime": "[3.3.7, )",
           "NodaTime.Serialization.Protobuf": "[2.0.2, )",
           "protobuf-net": "[3.4.40, )"
         }
