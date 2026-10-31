@@ -21,9 +21,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.317, )",
-        "resolved": "3.0.317",
-        "contentHash": "IC9fCjxniZol2dcdj+hiXjK01a8gBWQproGL/qWjBI7CgB5GeEOD5oGV0PwpQaSr7Aa/RPaM8Ddho3Y1OAZe1Q=="
+        "requested": "[3.0.318, )",
+        "resolved": "3.0.318",
+        "contentHash": "H3nJiK34glwVICWp6EnhQLgftwXvIIMwVFbafG5CXVlnFqXfNN5PToDdNmw7bFzEXfMHE6zwAT8Am89c9W8ThQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -550,10 +550,10 @@
       },
       "NLog.Database": {
         "type": "Transitive",
-        "resolved": "6.0.3",
-        "contentHash": "uMzSeSQbjHjAG+zF6E7DudXyLhyxNObBtHkyQE+IoLudqadKR1xojGsk9z02fWNlcyvCb3odkPh7Cf71eBi0/Q==",
+        "resolved": "6.2.2",
+        "contentHash": "fMiv6XeFw8CBqKtrIoYb6b0XBXb4W8HVJKWe/IXaLTdeEOU6YQiNFHMscGlY8jtMbNLlQBJlGrF8o+1ZeoDoZg==",
         "dependencies": {
-          "NLog": "6.0.3"
+          "NLog": "6.2.2"
         }
       },
       "NLog.DiagnosticSource": {
@@ -758,7 +758,7 @@
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Microsoft.Data.SqlClient": "[7.1.1, )",
           "NLog": "[6.2.2, )",
-          "NLog.Database": "[6.0.3, )",
+          "NLog.Database": "[6.2.2, )",
           "NLog.DiagnosticSource": "[6.2.2, )",
           "NLog.MailKit": "[6.1.6, )",
           "Slack.Webhooks": "[1.1.6, )"
