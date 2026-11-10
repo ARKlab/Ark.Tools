@@ -7,6 +7,7 @@
           {
             "type": "command",
             "command": "\".github/hooks/scripts/superpowers/hooks/run-hook.cmd\" session-start",
+            "powershell": "& \".github/hooks/scripts/superpowers/hooks/run-hook.cmd\" session-start",
             "shell": "bash",
             "async": false
           }

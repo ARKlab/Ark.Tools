@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.318, )",
-        "resolved": "3.0.318",
-        "contentHash": "H3nJiK34glwVICWp6EnhQLgftwXvIIMwVFbafG5CXVlnFqXfNN5PToDdNmw7bFzEXfMHE6zwAT8Am89c9W8ThQ=="
+        "requested": "[3.0.322, )",
+        "resolved": "3.0.322",
+        "contentHash": "aaynUqEHHeD0v1/RDW/Rq3d/gRkF8bRKJcvblhvuvyTAB+hGuzgFl4pBD9g6jGu+VqMWPinEGqu4hzG12TtnqQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -447,7 +447,7 @@
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "MessagePack": "[3.1.12, )",
-          "Polly.Core": "[8.9.0, )"
+          "Polly.Core": "[8.9.1, )"
         }
       },
       "ark.tools.authorization": {
@@ -729,9 +729,9 @@
       },
       "Polly.Core": {
         "type": "CentralTransitive",
-        "requested": "[8.9.0, )",
-        "resolved": "8.9.0",
-        "contentHash": "Imm3q+XvH+8fiOdCkp+GggDQuxN3e4VznbRxODjjJxCurmAIfUEO4dKcPx8RCwocTkvP6Udw2DyXtC+45tu3jA=="
+        "requested": "[8.9.1, )",
+        "resolved": "8.9.1",
+        "contentHash": "L0vfggkkI2nDAW9lCFYSqX9g/+3TkVXhAq+sh6owBq656X9XW0kE2NG+dPYGNQGeK66HS1rKHRPWMm1bMv91kw=="
       },
       "System.IdentityModel.Tokens.Jwt": {
         "type": "CentralTransitive",
@@ -745,9 +745,9 @@
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "Wz+IgL2xpg8KJ4i2VWj6uz1PmZNu4Q0Ljlwd73P9Vze5NcOBtctLii3itV0PB2MpOqwqDEGfB6RCdv94A4E5yQ=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "4jEv/lXDuQkh60lPU3hlwASErXdv1ZMKmsxVuBfZWiVKT5Q2QGo58kTa6rN519+PU+m4Hsj1m3yT8fN+Xw0XZw=="
       },
       "Vogen": {
         "type": "CentralTransitive",

@@ -15,7 +15,7 @@ services:
 
 
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2025-CU10-ubuntu-24.04@sha256:245f6b1c8903edae52cb20fa31419cefcde1a49938bb8c3447099011fc871ca3
+    image: mcr.microsoft.com/mssql/server:2025-CU10-GDR1-ubuntu-24.04@sha256:21cba63f9e5f93ae72d211e50bceca8f047a6233da18ed5ecb497152f97eca7b
     restart: unless-stopped
     environment:
       ACCEPT_EULA: Y
