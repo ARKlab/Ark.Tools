@@ -529,6 +529,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         var allowAnonymous = HasNamedArgument(toolAttribute, "AllowAnonymous")
             ? ContractSymbols.NamedBool(toolAttribute, "AllowAnonymous", false)
             : ContractSymbols.NamedBool(httpEndpoint, "AllowAnonymous", false);
+        var httpVerb = httpEndpoint?.ConstructorArguments.FirstOrDefault().Value as string;
+        var isDelete = string.Equals(httpVerb, "DELETE", StringComparison.OrdinalIgnoreCase);
         var hasDescription = XmlDocumentation.TryGetDescription(type, out var attributeDescription);
 
         return new ContractModel(
@@ -541,7 +543,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             retired,
             ContractSymbols.NamedBool(toolAttribute, "ReadOnly", kind == HandlerKind.Query),
             ContractSymbols.NamedBool(toolAttribute, "Destructive", kind != HandlerKind.Query),
-            ContractSymbols.NamedBool(toolAttribute, "Idempotent", false),
+            ContractSymbols.NamedBool(toolAttribute, "Idempotent", isDelete || string.Equals(httpVerb, "PUT", StringComparison.OrdinalIgnoreCase)),
             ContractSymbols.NamedBool(toolAttribute, "OpenWorld", true),
             allowAnonymous,
             kind.Value,
@@ -566,6 +568,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             location)
         {
             IsSelfTyped = IsSelfTyped(type),
+            Confirm = ContractSymbols.NamedBool(toolAttribute, "Confirm", isDelete),
             ConstructorSetsRequiredMembers = constructor.GetAttributes().Any(attribute =>
                 attribute.AttributeClass._isFullName("System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute")),
         };
@@ -876,6 +879,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             + property.InputType + " " + ToParameterName(property.Name));
         // The parameters keep the property names, which are the tool's input schema, so the adapter's own identifiers give way.
         var taken = new HashSet<string>(model.Properties.Select(static property => ToParameterName(property.Name)), StringComparer.Ordinal);
+        var context = model.Confirm ? FreeName("context") : null;
         var services = FreeName("services");
         var cancellationToken = FreeName("cancellationToken");
         var request = FreeName("request");
@@ -900,8 +904,13 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             .AppendLine("]");
         builder.Append("        public static async ").Append(returnType).Append(" ExecuteAsync(")
             .Append(string.Join(", ", parameters)).Append(model.Properties.Count > 0 ? ", " : string.Empty)
+            .Append(context is null ? string.Empty : "global::ModelContextProtocol.Server.RequestContext<global::ModelContextProtocol.Protocol.CallToolRequestParams> " + context + ", ")
             .Append("global::System.IServiceProvider ").Append(services).Append(", global::System.Threading.CancellationToken ").Append(cancellationToken).Append(')').AppendLine();
         builder.AppendLine("        {");
+        if (context is not null)
+            builder.Append("            global::Ark.Tools.MediatorFramework.Mcp.McpToolConfirmation.EnsureConfirmed(").Append(context)
+                .Append(", \"").Append(Escape(model.Name)).Append("\", ")
+                .Append(tool.Description is null ? "null" : Literal(tool.Description)).AppendLine(");");
         builder.Append("            var ").Append(request).Append(" = new ").Append(model.TypeFullName).Append("(");
         builder.Append(string.Join(", ", model.ConstructorParameters.Select(parameter =>
             ToParameterName(model.Properties.First(property => string.Equals(property.Name, parameter, StringComparison.OrdinalIgnoreCase)).Name)
@@ -1079,6 +1088,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         Location? Location)
     {
         public bool IsSelfTyped { get; init; }
+
+        public bool Confirm { get; init; }
 
         public bool ConstructorSetsRequiredMembers { get; init; }
 
