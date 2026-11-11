@@ -416,6 +416,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
         container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
         container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
+        container.Register<ICommandHandler<HostingDeleteCommand>, HostingDeleteCommandHandler>();
         if (includeRebusHandlers)
         {
             container.Register<ICommandHandler<HostingBusCommand>, HostingBusCommandHandler>();
@@ -593,6 +594,8 @@ public sealed class HostingTestState
     /// <summary>Gets the name of the last uploaded attachment.</summary>
     public string? LastAttachmentName { get; internal set; }
 
+    public int? Deleted { get; internal set; }
+
     /// <summary>Gets the content read by the last single-file upload handler.</summary>
     public string? LastAttachmentContent { get; internal set; }
 
@@ -757,6 +760,15 @@ internal sealed class HostingETagUpdateHandler : IRequestHandler<HostingETagUpda
         await Task.CompletedTask.ConfigureAwait(false);
         _state._recordETagReceived(request.ETag);
         return new HostingETagResponse { Token = "hosting-v3", ReceivedETag = request.ETag };
+    }
+}
+
+internal sealed class HostingDeleteCommandHandler(HostingTestState state) : ICommandHandler<HostingDeleteCommand>
+{
+    public async Task ExecuteAsync(HostingDeleteCommand command, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        state.Deleted = command.Id;
     }
 }
 

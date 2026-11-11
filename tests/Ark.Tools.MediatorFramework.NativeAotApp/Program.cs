@@ -117,6 +117,7 @@ internal static class Program
             options.DefaultPolicy = new AuthorizationPolicyBuilder().RequireAssertion(static _ => true).Build());
         builder.Services.AddScoped<IQueryHandler<GetBookQuery, Book>, GetBookQueryHandler>();
         builder.Services.AddScoped<IRequestHandler<UploadBookRequest, Book>, UploadBookRequestHandler>();
+        builder.Services.AddScoped<IRequestHandler<DeleteBookRequest, Book>, DeleteBookRequestHandler>();
         builder.Services.AddScoped<IQueryHandler<DownloadBookQuery, IArkAttachment>, DownloadBookQueryHandler>();
         builder.Services.AddScoped<IRequestHandler<RenameBookRequest, RenamedBook>, RenameBookRequestHandler>();
         builder.Services.AddArkMessagePack(_messagePackResolver);
@@ -178,11 +179,28 @@ internal static class Program
             NullLoggerFactory.Instance,
             ownsHttpClient: false);
         await using var __transport = transport.ConfigureAwait(false);
-        var client = await McpClient.CreateAsync(transport, cancellationToken: ctk).ConfigureAwait(false);
+        string? confirmation = null;
+        var options = new McpClientOptions
+        {
+            Handlers = new McpClientHandlers
+            {
+                ElicitationHandler = (request, _) =>
+                {
+                    confirmation = request?.Message;
+                    return ValueTask.FromResult(new ElicitResult { Action = "accept" });
+                },
+            },
+        };
+        var client = await McpClient.CreateAsync(transport, options, cancellationToken: ctk).ConfigureAwait(false);
         await using var __client = client.ConfigureAwait(false);
 
         var tools = await client.ListToolsAsync(cancellationToken: ctk).ConfigureAwait(false);
-        check("mcp-list-tools", () => tools.Select(static t => t.Name).Order(StringComparer.Ordinal).SequenceEqual(["books.download", "books.get", "books.upload"], StringComparer.Ordinal));
+        check("mcp-list-tools", () => tools.Select(static t => t.Name).Order(StringComparer.Ordinal).SequenceEqual(["books.delete", "books.download", "books.get", "books.upload"], StringComparer.Ordinal));
+
+        var delete = await client.CallToolAsync("books.delete", new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = _id.ToString("D") }, cancellationToken: ctk).ConfigureAwait(false);
+        check("mcp-confirmed-delete", () => delete.IsError != true
+            && delete.StructuredContent?.GetProperty("code").GetString() == "deleted"
+            && confirmation == "Confirm books.delete: Deletes a book through a generated MCP tool that asks for confirmation.\nArguments: {\"id\":\"" + _id.ToString("D") + "\"}");
 
         var get = await client.CallToolAsync("books.get", new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = _id.ToString("D") }, cancellationToken: ctk).ConfigureAwait(false);
         check("mcp-query", () => get.IsError != true && get.StructuredContent?.GetProperty("id").GetString() == _id.ToString("D"));

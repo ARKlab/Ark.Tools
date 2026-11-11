@@ -45,6 +45,7 @@ public sealed class McpHostingTests
                 "hosting.attachment.download",
                 "hosting.attachment.upload",
                 "hosting.businessrule",
+                "hosting.delete",
                 "hosting.query",
                 "hosting.unexpected",
                 "hosting.validation",
@@ -245,6 +246,139 @@ public sealed class McpHostingTests
         public Version Unregistered { get; } = new(1, 2);
     }
 
+    /// <summary>Verifies a DELETE tool asks the user and runs after the user accepts.</summary>
+    [TestMethod]
+    public async Task McpConfirmedDeleteRuns()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        string? message = null;
+        await using var client = await _createClientAsync(app, options: _answering("accept", m => message = m)).ConfigureAwait(false);
+
+        var result = await _deleteAsync(client, app).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        fixture.State.Deleted.Should().Be(7);
+        message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\nArguments: {\"id\":7,\"note\":\"why\"}");
+    }
+
+    /// <summary>Verifies a long argument is cut on its own and does not hide the other arguments.</summary>
+    [TestMethod]
+    public async Task McpConfirmationMessageCutsLongArguments()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        string? message = null;
+        await using var client = await _createClientAsync(app, options: _answering("accept", m => message = m)).ConfigureAwait(false);
+
+        var result = await _deleteAsync(client, app, note: new string('x', 2000)).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        message.Should().Contain("\"id\":7").And.EndWith("xxx... (cut, 1802 more characters)\"}");
+        message!.Length.Should().BeLessThan(400);
+    }
+
+    /// <summary>Verifies a declined confirmation fails the call and does not run the handler.</summary>
+    [TestMethod]
+    public async Task McpDeclinedDeleteDoesNotRun()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, options: _answering("decline", static _ => { })).ConfigureAwait(false);
+
+        var result = await _deleteAsync(client, app).ConfigureAwait(false);
+
+        result.IsError.Should().BeTrue();
+        ((TextContentBlock)result.Content[0]).Text.Should()
+            .StartWith("Not confirmed: the user declined 'hosting.delete'. Do not retry without a new user request.");
+        fixture.State.Deleted.Should().BeNull();
+    }
+
+    /// <summary>Verifies a client that cannot answer an elicitation runs the tool without confirmation.</summary>
+    [TestMethod]
+    public async Task McpDeleteRunsWithoutElicitationCapability()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        await using var client = await _createClientAsync(app).ConfigureAwait(false);
+
+        var result = await _deleteAsync(client, app).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        fixture.State.Deleted.Should().Be(7);
+    }
+
+    /// <summary>Verifies a client on a protocol revision without multi round-trip requests runs the tool without confirmation.</summary>
+    [TestMethod]
+    public async Task McpDeleteRunsWithoutMrtr()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        var asked = false;
+        var options = _answering("decline", _ => asked = true);
+        options.ProtocolVersion = "2025-06-18";
+        await using var client = await _createClientAsync(app, options: options).ConfigureAwait(false);
+
+        var result = await _deleteAsync(client, app).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        asked.Should().BeFalse();
+        fixture.State.Deleted.Should().Be(7);
+    }
+
+    /// <summary>Verifies an answer that is not an elicitation result counts as declined.</summary>
+    [TestMethod]
+    [DataRow("{}")]
+    [DataRow("null")]
+    [DataRow("{\"action\":42}")]
+    public async Task McpMalformedConfirmationDoesNotRun(string answer)
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        using var client = app.GetTestServer().CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/mcp/v1")
+        {
+            Content = new StringContent(
+                "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"hosting.delete\","
+                + "\"arguments\":{\"id\":7,\"note\":\"why\"},\"inputResponses\":{\"confirm\":" + answer + "}}}",
+                System.Text.Encoding.UTF8,
+                "application/json"),
+        };
+        request.Headers.Accept.ParseAdd("application/json");
+        request.Headers.Accept.ParseAdd("text/event-stream");
+
+        using var response = await client.SendAsync(request, app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var body = await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        // The raw body escapes the apostrophes around the tool name.
+        body.Should().Contain("Not confirmed: the user declined ").And.Contain("\"isError\":true");
+        fixture.State.Deleted.Should().BeNull();
+    }
+
+    private static McpClientOptions _answering(string action, Action<string> onMessage)
+    {
+        return new McpClientOptions
+        {
+            Handlers = new McpClientHandlers
+            {
+                ElicitationHandler = (request, _) =>
+                {
+                    onMessage(request!.Message);
+                    return ValueTask.FromResult(new ElicitResult { Action = action });
+                },
+            },
+        };
+    }
+
+    private static async Task<CallToolResult> _deleteAsync(McpClient client, WebApplication app, string note = "why")
+    {
+        // Every contract property is a required tool argument, so the note is always sent.
+        return await client.CallToolAsync(
+            "hosting.delete",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = 7, ["note"] = note },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+    }
+
     /// <summary>Verifies unexpected failures do not expose exception details.</summary>
     [TestMethod]
     public async Task HidesUnexpectedFailureDetails()
@@ -430,7 +564,8 @@ public sealed class McpHostingTests
     private static async Task<McpClient> _createClientAsync(
         WebApplication app,
         [NotPersonalData("Synthetic test bearer token.")] string? token = null,
-        string version = "1")
+        string version = "1",
+        McpClientOptions? options = null)
     {
         var httpClient = app.GetTestServer().CreateClient();
         if (token is not null)
@@ -449,7 +584,7 @@ public sealed class McpHostingTests
 #pragma warning restore CA2000
         return await McpClient.CreateAsync(
             transport,
-            new McpClientOptions(),
+            options ?? new McpClientOptions(),
             NullLoggerFactory.Instance,
             app.Lifetime.ApplicationStopping).ConfigureAwait(false);
     }

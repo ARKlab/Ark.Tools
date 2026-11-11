@@ -83,6 +83,25 @@ public sealed class GetBookQueryHandler : IQueryHandler<GetBookQuery, Book>
     }
 }
 
+/// <summary>Deletes a book through a generated MCP tool that asks for confirmation.</summary>
+[McpTool(Name = "books.delete", Confirm = true)]
+public sealed record DeleteBookRequest : IRequest<DeleteBookRequest, Book>
+{
+    /// <summary>Gets the book identifier.</summary>
+    public BookId Id { get; init; }
+}
+
+/// <summary>Handles <see cref="DeleteBookRequest"/>.</summary>
+public sealed class DeleteBookRequestHandler : IRequestHandler<DeleteBookRequest, Book>
+{
+    /// <inheritdoc />
+    public async Task<Book> ExecuteAsync(DeleteBookRequest request, CancellationToken ctk = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return await Task.FromResult(new Book { Id = request.Id, Code = BookCode.From("deleted") }).ConfigureAwait(false);
+    }
+}
+
 /// <summary>Uploads a book file through a generated MCP tool.</summary>
 [McpTool(Name = "books.upload")]
 public sealed record UploadBookRequest : IRequest<UploadBookRequest, Book>
