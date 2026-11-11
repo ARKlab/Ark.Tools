@@ -17,7 +17,7 @@ namespace Ark.Tools.MediatorFramework.Mcp;
 public static class McpToolConfirmation
 {
     private const string _inputKey = "confirm";
-    private const int _maxArgumentsLength = 500;
+    private const int _maxValueLength = 200;
 
     /// <summary>
     /// Returns when the call is confirmed or the client cannot be asked.
@@ -82,11 +82,14 @@ public static class McpToolConfirmation
 
         var json = new JsonObject();
         foreach (var argument in arguments)
-            json[argument.Key] = JsonNode.Parse(argument.Value.GetRawText());
-        var text = json.ToJsonString();
-        // The model writes the arguments, so they can be long (an attachment, for example).
-        if (text.Length > _maxArgumentsLength)
-            text = string.Concat(text.AsSpan(0, _maxArgumentsLength), "...");
-        return message + "\nArguments: " + text;
+        {
+            // The model writes the arguments, so a value can be long (an attachment, for example).
+            // Each value is cut on its own, so a long one cannot hide the others from the user.
+            var value = argument.Value.GetRawText();
+            json[argument.Key] = value.Length <= _maxValueLength
+                ? JsonNode.Parse(value)
+                : string.Concat(value.AsSpan(0, _maxValueLength), "... (cut, ", (value.Length - _maxValueLength).ToString(CultureInfo.InvariantCulture), " more characters)");
+        }
+        return message + "\nArguments: " + json.ToJsonString();
     }
 }
