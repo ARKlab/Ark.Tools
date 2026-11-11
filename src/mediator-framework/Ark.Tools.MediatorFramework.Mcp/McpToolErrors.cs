@@ -57,27 +57,35 @@ public static partial class McpToolErrors
                 problemDetails.Extensions[extension.Key] = extension.Value;
             }
         }
+        _dropUnserializable(problemDetails.Extensions);
         var text = title + ": " + detail;
-        JsonElement structuredContent;
-        try
-        {
-            structuredContent = _serialize(problemDetails);
-            // Many clients give the model only the text, so it carries the details too.
-            if (problemDetails.Extensions.Count > 0)
-                text += "\n" + _extensionsJson(structuredContent, problemDetails.Extensions.Keys);
-        }
-        catch (Exception e) when (e is NotSupportedException or JsonException)
-        {
-            // A payload type the source-generated context does not know: keep the error, drop the payload.
-            problemDetails.Extensions.Clear();
-            structuredContent = _serialize(problemDetails);
-        }
+        var structuredContent = JsonSerializer.SerializeToElement(
+            problemDetails,
+            McpToolErrorJsonSerializerContext.Default.ProblemDetails);
+        // Many clients give the model only the text, so it carries the details too.
+        if (problemDetails.Extensions.Count > 0)
+            text += "\n" + _extensionsJson(structuredContent, problemDetails.Extensions.Keys);
         return new CallToolResult
         {
             IsError = true,
             Content = [new TextContentBlock { Text = text }],
             StructuredContent = structuredContent,
         };
+    }
+
+    // The source-generated context knows a fixed set of types: a value of another type is left out, the others stay.
+    private static void _dropUnserializable(IDictionary<string, object?> values)
+    {
+        foreach (var entry in values.ToArray())
+        {
+            if (entry.Value is Dictionary<string, object?> nested)
+                _dropUnserializable(nested);
+            else if (entry.Value is not null && McpToolErrorJsonSerializerContext.Default.GetTypeInfo(entry.Value.GetType()) is null)
+            {
+                _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} of type {type} cannot be serialized and is left out.", entry.Key, entry.Value.GetType());
+                values.Remove(entry.Key);
+            }
+        }
     }
 
     private static string _extensionsJson(JsonElement problemDetails, ICollection<string> extensionKeys)
@@ -91,12 +99,6 @@ public static partial class McpToolErrors
         return extensions.ToJsonString();
     }
 
-    private static JsonElement _serialize(Microsoft.AspNetCore.Mvc.ProblemDetails problemDetails)
-    {
-        return JsonSerializer.SerializeToElement(
-            problemDetails,
-            McpToolErrorJsonSerializerContext.Default.ProblemDetails);
-    }
 
     private static McpRequestHandler<CallToolRequestParams, CallToolResult> _createHandler(
         McpRequestHandler<CallToolRequestParams, CallToolResult> next)
@@ -133,6 +135,15 @@ public static partial class McpToolErrors
     [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
     [JsonSerializable(typeof(Dictionary<string, string[]>))]
     [JsonSerializable(typeof(Dictionary<string, object>))]
+    [JsonSerializable(typeof(bool))]
+    [JsonSerializable(typeof(long))]
+    [JsonSerializable(typeof(double))]
+    [JsonSerializable(typeof(decimal))]
+    [JsonSerializable(typeof(Guid))]
+    [JsonSerializable(typeof(DateTime))]
+    [JsonSerializable(typeof(DateTimeOffset))]
+    [JsonSerializable(typeof(string[]))]
+    [JsonSerializable(typeof(List<string>))]
     internal sealed partial class McpToolErrorJsonSerializerContext : JsonSerializerContext
     {
     }

@@ -13,7 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools for contracts with an HTTP `DELETE` or `PUT` endpoint are now marked idempotent by default. Set `Idempotent = false` on `[McpTool]` to keep the earlier hint.
-- `Ark.Tools.MediatorFramework.Mcp`: MCP error text now includes the validation errors and the business-rule details as JSON on a second line, so agents that read only the text can correct the call. A business-rule payload that cannot be serialized no longer fails the tool call; the error is returned without the payload.
+- `Ark.Tools.MediatorFramework.Mcp`: existing MCP tools for contracts with an HTTP `DELETE` endpoint now ask the user for confirmation on clients that support it. Set `Confirm = false` on `[McpTool]` to keep the earlier behaviour.
+- `Ark.Tools.MediatorFramework.Mcp`: MCP error text now includes the validation errors and the business-rule details as one JSON object on the last line, so agents that read only the text can correct the call. A business-rule detail that cannot be serialized no longer fails the tool call; that detail is left out and a warning is logged.
 
 ### Security
 

@@ -496,7 +496,7 @@ The error boundary is explicit:
 | Invalid JSON/schema or missing required argument | SDK validation/protocol error |
 | `McpProtocolException` | JSON-RPC protocol error |
 | `OperationCanceledException` after client cancellation | Cancellation; no fabricated tool result |
-| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on a new line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. If the extensions cannot be serialized, they are left out of both. |
+| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on the last line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. A detail of a type the JSON context cannot serialize is left out of both, with a logged warning. |
 | Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured ProblemDetails |
 | `InputRequiredException` (confirmation requested) | Passes through the filter; the SDK returns an input-required result |
 | Confirmation declined or not a valid answer | `CallToolResult.IsError = true` with `Not confirmed: ...` text (a business-rule violation with status 409) |
@@ -605,10 +605,15 @@ Decisions:
 4. **Not a security control.** The server cannot know that a user saw the
    question, and the confirmation is not bound to the arguments. Authorization
    stays in the decorators.
-5. **Arguments in the message, each value cut at 200 characters.** The user
-   must see which item is affected. A cut for each value, and not for the whole
-   message, stops one long argument from hiding the others.
-6. **Verb-derived defaults.** `DELETE` turns on `Confirm` and `Idempotent`,
+5. **Arguments in the message, with limits.** The user must see which item is
+   affected. Each name and each value is cut at 200 characters and at most 20
+   arguments are shown. A limit for each part, and not for the whole message,
+   stops one long or many extra arguments from hiding the first ones.
+6. **Confirmation before dispatch.** The question comes before validation and
+   the handler's authorization policies, because those run inside the mediator
+   decorators. A call can thus be confirmed and then rejected. The tool-level
+   `[Authorize]` still runs first.
+7. **Verb-derived defaults.** `DELETE` turns on `Confirm` and `Idempotent`,
    `PUT` turns on `Idempotent`. `Destructive` stays `true` for every request and
    command, so that clients keep asking the user to approve each change.
 

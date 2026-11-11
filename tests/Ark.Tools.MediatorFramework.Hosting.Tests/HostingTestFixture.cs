@@ -594,6 +594,7 @@ public sealed class HostingTestState
     /// <summary>Gets the name of the last uploaded attachment.</summary>
     public string? LastAttachmentName { get; internal set; }
 
+    /// <summary>Gets the identifier of the last deleted item.</summary>
     public int? Deleted { get; internal set; }
 
     /// <summary>Gets the content read by the last single-file upload handler.</summary>

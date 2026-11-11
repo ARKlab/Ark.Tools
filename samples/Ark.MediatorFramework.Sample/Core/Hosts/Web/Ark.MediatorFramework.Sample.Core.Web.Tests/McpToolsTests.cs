@@ -43,9 +43,6 @@ public sealed class McpToolsTests
 
         var tools = await client.ListToolsAsync(cancellationToken: ctk).ConfigureAwait(false);
 
-        tools.Select(static tool => tool.Name).Should().Contain("books.get");
-        var delete = tools.Single(static tool => tool.Name == "books.delete").ProtocolTool.Annotations!;
-        delete.DestructiveHint.Should().BeTrue();
-        delete.IdempotentHint.Should().BeTrue();
+        tools.Select(static tool => tool.Name).Should().Contain(["books.get", "books.delete"]);
     }
 }

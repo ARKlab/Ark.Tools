@@ -227,18 +227,76 @@ public sealed class McpHostingTests
         result.StructuredContent!.Value.GetProperty("businessRuleViolation").GetProperty("status").GetInt32().Should().Be(422);
     }
 
-    /// <summary>Verifies a payload the JSON context cannot serialize still gives an error result, without the payload.</summary>
+    /// <summary>Verifies a detail the JSON context cannot serialize is left out and does not fail the tool call.</summary>
     [TestMethod]
-    public void McpErrorWithUnserializablePayloadKeepsTitleAndDetail()
+    public void McpErrorLeavesOutUnserializableDetail()
     {
         var violation = new UnserializableViolation { Detail = "Detail.", Status = 422 };
 
         var result = McpToolErrors.ToToolResult(new Core.BusinessRuleViolation.BusinessRuleViolationException(violation));
 
         result.IsError.Should().BeTrue();
-        ((TextContentBlock)result.Content[0]).Text.Should().Be("Unserializable: Detail.");
-        result.StructuredContent!.Value.GetProperty("status").GetInt32().Should().Be(422);
-        result.StructuredContent!.Value.TryGetProperty("businessRuleViolation", out _).Should().BeFalse();
+        ((TextContentBlock)result.Content[0]).Text.Should().StartWith("Unserializable: Detail.\n{").And.NotContain("Unregistered");
+        var payload = result.StructuredContent!.Value.GetProperty("businessRuleViolation");
+        payload.GetProperty("status").GetInt32().Should().Be(422);
+        payload.TryGetProperty("Unregistered", out _).Should().BeFalse();
+    }
+
+    /// <summary>Verifies business-rule details of the common value types reach the error text.</summary>
+    [TestMethod]
+    public void McpErrorTextContainsCommonValueTypes()
+    {
+        var violation = new TypedViolation { Detail = "Detail." };
+
+        var result = McpToolErrors.ToToolResult(new Core.BusinessRuleViolation.BusinessRuleViolationException(violation));
+
+        ((TextContentBlock)result.Content[0]).Text.Should()
+            .Contain("\"Flag\":true")
+            .And.Contain("\"Amount\":12.5")
+            .And.Contain("\"Id\":\"00000000-0000-0000-0000-000000000001\"")
+            .And.Contain("\"Options\":[\"a\",\"b\"]")
+            .And.Contain("\"Count\":3000000000")
+            .And.NotContain("Unregistered");
+    }
+
+    private sealed class TypedViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Typed")
+    {
+        public bool Flag { get; } = true;
+
+        public decimal Amount { get; } = 12.5m;
+
+        public Guid Id { get; } = new("00000000-0000-0000-0000-000000000001");
+
+        public IReadOnlyList<string> Options { get; } = new List<string> { "a", "b" };
+
+        public Version Unregistered { get; } = new(1, 2);
+
+        public long Count { get; } = 3_000_000_000;
+    }
+
+    /// <summary>Verifies long argument names and many arguments cannot hide the real arguments from the user.</summary>
+    [TestMethod]
+    public async Task McpConfirmationMessageLimitsArgumentNamesAndCount()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        string? message = null;
+        await using var client = await _createClientAsync(app, options: _answering("accept", m => message = m)).ConfigureAwait(false);
+        var arguments = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["id"] = 7,
+            ["note"] = "why",
+            [new string('k', 5000)] = 1,
+        };
+        for (var index = 0; index < 40; index++)
+            arguments["extra" + index.ToString(CultureInfo.InvariantCulture)] = "\ud83d\ude00";
+
+        var result = await client.CallToolAsync("hosting.delete", arguments, cancellationToken: app.Lifetime.ApplicationStopping)
+            .ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        message.Should().Contain("\"id\":7").And.Contain("(cut, 4800 more characters)").And.EndWith("\"...\":\"23 more arguments\"}");
+        message!.Length.Should().BeLessThan(2000);
     }
 
     private sealed class UnserializableViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Unserializable")

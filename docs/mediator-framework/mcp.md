@@ -119,14 +119,18 @@ The question uses MCP multi round-trip requests (protocol revision
 
 1. The first call returns "input required" before the handler runs.
 2. The client shows the user the tool name, its description and the call
-   arguments. An argument value longer than 200 characters is cut, and the
-   message says how many characters are hidden.
+   arguments. An argument name or value longer than 200 characters is cut, and
+   the message says how many characters are hidden. At most 20 arguments are
+   shown, with the number of the others.
 3. The client calls the tool again with the answer. If the user accepted, the
    handler runs. If not, the call fails with `Not confirmed: the user declined
    '<tool>'. Do not retry without a new user request.`
 
 The handler and the contract do not change, and no transaction is open while
-the user decides.
+the user decides. The question comes before validation and before the
+authorization policies of the handler, so a user can accept and the call can
+then fail with a validation or authorization error. A declined call is
+returned as a business-rule violation with status 409.
 
 A client that does not support multi round-trip requests, or that does not
 declare the elicitation capability, cannot be asked. For such a client the tool
@@ -162,13 +166,19 @@ For mediator failures, the wrapper maps the exception through the shared Ark
 (`CallToolResult.IsError = true`) with `{Title}: {Detail}` text and structured
 ProblemDetails, so clients can read `type`, `title`, `status`, `detail`, and
 validation or business-rule extensions. The text also carries those extensions
-as one JSON object on a second line, because many clients give the model only
+as one JSON object on its last line, because many clients give the model only
 the text of an error:
 
 ```text
-Validation failed: Validation failed: ...
+Validation failed: Validation failed:
+ -- Value: The value is invalid. Severity: Error
 {"errors":{"Value":["The value is invalid."]}}
 ```
+
+The JSON uses the default escaping, so an apostrophe is written as `\u0027`.
+A business-rule detail of a type that the MCP JSON context cannot serialize is
+left out and a warning is logged; strings, numbers, booleans, GUIDs, dates and
+lists of strings are supported.
 
 An agent can correct its call from this text alone. Unexpected failures use generic text;
 stack traces, connection strings, and sensitive exception messages are never
