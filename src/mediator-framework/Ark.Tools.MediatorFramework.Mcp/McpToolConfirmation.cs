@@ -88,12 +88,13 @@ public static class McpToolConfirmation
         // ignores the others, so they must not push the real ones out of the user's view. A value can be long
         // (an attachment, for example), so each one is cut on its own.
         var json = new JsonObject();
-        foreach (var name in argumentNames)
+        if (arguments is not null)
         {
-            if (arguments?.TryGetValue(name, out var argument) is not true)
-                continue;
-            var value = argument.GetRawText();
-            json[name] = value.Length <= _maxTextLength ? _parse(value) : _cut(value);
+            foreach (var name in argumentNames.Where(arguments.ContainsKey))
+            {
+                var value = arguments[name].GetRawText();
+                json[name] = value.Length <= _maxTextLength ? _parse(value) : _cut(value);
+            }
         }
         return json.Count == 0 ? message : message + "\nArguments: " + json.ToJsonString();
     }
