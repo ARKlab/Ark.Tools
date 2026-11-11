@@ -113,10 +113,13 @@ tool approval from the `Destructive` hint, the HTTP DELETE endpoint has no
 confirmation either, and a refusal would make these tools unusable on most
 clients today. The server never enforces confirmation.
 
-**Open decision: arguments in the message.** The message names the tool and
-not the arguments, so the user cannot see which item is affected. Two reviews
-flagged this. Option: append the arguments as JSON, with a length limit. Not
-in the plan until decided.
+**Arguments in the message (approved).** The message ends with a new line
+and `Arguments: ` plus the call arguments as one compact JSON object, so the
+user can see which item is affected. The helper reads them from
+`context.Params.Arguments`; the generator does not change for this. The JSON
+is cut at 500 characters and then ends with `...`, because the arguments are
+written by the model and can be long (an attachment, for example). The
+default JSON encoder is used.
 
 **Error filter.** `McpToolErrors` lets `InputRequiredException` pass.
 

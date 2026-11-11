@@ -109,7 +109,7 @@ The input key `"confirm"` is a `private const`. The behaviour tests are the host
 
 - [ ] **Step 2: Implement.**
   - Ask only when the client supports MRTR **and** declares the elicitation capability. Otherwise return (the fallback).
-  - Message: `"Confirm {toolName}"` plus `": {description}"` when the description is not empty. Requested schema: an object with no properties. Arguments are not in the message (open decision in the spec).
+  - Message: `"Confirm {toolName}"` plus `": {description}"` when the description is not empty. Requested schema: an object with no properties. When `context.Params.Arguments` is not empty, append `"\nArguments: "` and the arguments as one compact JSON object (default encoder), cut at 500 characters and then followed by `...`.
   - `McpToolDeclinedException` is `internal sealed`, in the same file.
   - In `McpToolErrors`: let `InputRequiredException` pass through the filter (add a `catch` before the general one, if Step 1 found that it does not derive from `McpException`). Map `McpToolDeclinedException` in `ToToolResult` before the ProblemDetails mapper: `IsError = true`, no log, text `"Not confirmed: the user declined '{toolName}'. Do not retry without a new user request."`, structured ProblemDetails with `Status = 409`, `Title = "Not confirmed"`.
 
@@ -170,7 +170,8 @@ Also assert that an existing `POST` contract still has `Destructive = true` and 
 
 | Test | Client | Assert |
 |---|---|---|
-| `McpConfirmedDeleteRuns` | MRTR, elicitation handler returns `accept` | `IsError` not true, `State.Deleted == id`, handler saw exactly the message `"Confirm hosting.delete: <the contract summary>"` |
+| `McpConfirmedDeleteRuns` | MRTR, elicitation handler returns `accept` | `IsError` not true, `State.Deleted == id`, handler saw exactly the message `"Confirm hosting.delete: <the contract summary>\nArguments: {\"id\":7}"` (adapt the JSON to the contract) |
+| `McpConfirmationMessageCutsLongArguments` | MRTR, a string argument of 2000 characters | the message ends with `...` and the part after `Arguments: ` has 503 characters |
 | `McpDeclinedDeleteDoesNotRun` | MRTR, handler returns `decline` | `IsError == true`, text starts with `"Not confirmed"`, `State.Deleted` is null |
 | `McpDeleteRunsWithoutMrtr` | client on a protocol version without MRTR | `IsError` not true, `State.Deleted == id` |
 | `McpDeleteRunsWithoutElicitationCapability` | MRTR client with no elicitation handler | `IsError` not true, `State.Deleted == id` |
@@ -193,7 +194,7 @@ Also assert that an existing `POST` contract still has `Destructive = true` and 
 
 - [ ] **Step 1: `mcp.md`.**
   - "Mark a contract": add `Confirm` and the verb-derived defaults (`DELETE`: `Confirm`, `Idempotent`; `PUT`: `Idempotent`).
-  - New section "Confirmation": the flow (first call returns input required, the client asks the user, the retry runs), the fallback for clients without MRTR or without the elicitation capability, the decline error, that the prompt names the tool and not the arguments, and the warning: "Confirmation is a user-experience aid, not a security control. The server never enforces it: a client can skip it, send an accepted answer on the first call, or change the arguments on the retry. Keep authorization in handlers and policies."
+  - New section "Confirmation": the flow (first call returns input required, the client asks the user, the retry runs), the fallback for clients without MRTR or without the elicitation capability, the decline error, that the prompt shows the tool, its description and the arguments (cut at 500 characters), and the warning: "Confirmation is a user-experience aid, not a security control. The server never enforces it: a client can skip it, send an accepted answer on the first call, or change the arguments on the retry. Keep authorization in handlers and policies."
   - Line 84: replace the stateful sentence with: confirmation works in stateless mode; stateful sessions are needed only for other server-to-client requests.
 
 - [ ] **Step 2: `mcp-design.md`.**
