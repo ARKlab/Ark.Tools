@@ -111,6 +111,11 @@ public static partial class McpToolErrors
             {
                 throw;
             }
+            catch (InputRequiredException)
+            {
+                // The SDK turns it into an input-required result (confirmation, see McpToolConfirmation).
+                throw;
+            }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
