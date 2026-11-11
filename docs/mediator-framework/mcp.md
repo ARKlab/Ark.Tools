@@ -26,6 +26,15 @@ of that MCP argument.
 HTTP placement attributes such as `[HttpRoute]`, `[HttpQuery]`, and `[HttpBody]`
 are ignored: every public bindable property is an MCP argument.
 
+The tool hints have defaults that you can override on `[McpTool]`:
+
+| Hint | Default |
+| --- | --- |
+| `ReadOnly` | `true` for a query, otherwise `false`. |
+| `Destructive` | `false` for a query, otherwise `true`, so that clients ask the user to approve each change. |
+| `Idempotent` | `true` when the contract has `[HttpEndpoint]` with verb `DELETE` or `PUT`, otherwise `false`. |
+| `Confirm` | `true` when the contract has `[HttpEndpoint]` with verb `DELETE`, otherwise `false`. See [Confirmation](#confirmation). |
+
 When contracts live in another assembly, the generator reads their XML
 documentation only from `AdditionalFiles`; it never reads files from disk. The
 package copies the XML documentation of referenced projects to the intermediate
@@ -81,13 +90,56 @@ need nothing more.
 in the host. A request to `/mcp/v1` exposes contracts active in version 1, and
 the same endpoint pattern can expose each subsequent version. The generator
 emits the per-version tool lists, so filtering does not inspect contract
-metadata at runtime. Use stateful
-sessions only when the application needs server-to-client MCP requests.
+metadata at runtime. [Confirmation](#confirmation) works in stateless mode. Use
+stateful sessions only when the application needs other server-to-client MCP
+requests.
 
 Endpoint-level `RequireAuthorization()` runs before tool selection. If it is
 configured, anonymous clients cannot reach the MCP endpoint, including tools
 generated with `[AllowAnonymous]`; omit the endpoint requirement when relying
 on per-tool anonymous access.
+
+## Confirmation
+
+A tool with `Confirm = true` asks the user before it runs. The default is on
+for contracts with an HTTP `DELETE` endpoint:
+
+```csharp
+/// <summary>Deletes a book.</summary>
+[HttpEndpoint("DELETE", "/books/{id}")]
+[McpTool(Name = "books.delete")]                 // Confirm and Idempotent are on
+public sealed record DeleteBookCommand(BookId Id) : ICommand<DeleteBookCommand>;
+
+[McpTool(Name = "books.send", Confirm = true)]   // opt in for any other contract
+public sealed record SendBookCommand(BookId Id) : ICommand<SendBookCommand>;
+```
+
+The question uses MCP multi round-trip requests (protocol revision
+`2026-07-28`), so it needs no session:
+
+1. The first call returns "input required" before the handler runs.
+2. The client shows the user the tool name, its description and the call
+   arguments. An argument value longer than 200 characters is cut, and the
+   message says how many characters are hidden.
+3. The client calls the tool again with the answer. If the user accepted, the
+   handler runs. If not, the call fails with `Not confirmed: the user declined
+   '<tool>'. Do not retry without a new user request.`
+
+The handler and the contract do not change, and no transaction is open while
+the user decides.
+
+A client that does not support multi round-trip requests, or that does not
+declare the elicitation capability, cannot be asked. For such a client the tool
+runs without confirmation, as the HTTP endpoint does.
+
+> **Confirmation is a user-experience aid, not a security control.** The server
+> never enforces it: a client can skip it, send an accepted answer on the first
+> call, or change the arguments on the second call. Keep authorization in
+> handlers and policies.
+
+Confirmation is for one call. An approval that must survive the call, that
+another person gives, or that must be audited is domain state: model it as a
+command and a status query.
 
 ## Attachments
 

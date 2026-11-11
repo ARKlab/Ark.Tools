@@ -76,9 +76,11 @@ Minimal API endpoints, and attachment tools still resolve the MCP protocol
 types when reflection-based serialization is disabled (Native AOT).
 
 The SDK's current HTTP integration maps Streamable HTTP at the route supplied to
-`MapMcp`. Stateless mode is recommended when tools do not need
-server-to-client requests. Stateful mode is required for capabilities such as
-server-initiated sampling or elicitation. Legacy SSE is an explicit compatibility
+`MapMcp`. Stateless mode is recommended. Elicitation works in stateless mode
+through multi round-trip requests (protocol revision `2026-07-28`), which Ark
+uses for tool confirmation. Stateful mode is required only for the legacy
+server-to-client requests, such as `elicitation/create`, which that revision
+removes and Ark does not use. Legacy SSE is an explicit compatibility
 option and is not generated or enabled by Ark.
 
 ## Layering
@@ -165,7 +167,8 @@ The first version supports these fields:
 | `Name` | Optional stable MCP tool name; defaults to a normalized contract name. `[ApiGroup("group")]` prefixes the resolved name as `group.name`. Versioning selects the tool on the corresponding MCP route without changing its name. |
 | `ReadOnly` | MCP tool annotation; defaults to `true` for `IQuery<T>` and `false` for `IRequest<T>`/`ICommand`. |
 | `Destructive` | MCP tool annotation; defaults to `false` for `IQuery<T>` and `true` for `IRequest<T>`/`ICommand`. |
-| `Idempotent` | MCP tool annotation; defaults to `false`. |
+| `Idempotent` | MCP tool annotation; defaults to `true` when the contract has `[HttpEndpoint]` with verb `DELETE` or `PUT`, otherwise `false`. |
+| `Confirm` | Asks the user to confirm the call before dispatch; defaults to `true` when the contract has `[HttpEndpoint]` with verb `DELETE`, otherwise `false`. See [Confirmation and elicitation](#confirmation-and-elicitation). |
 | `OpenWorld` | MCP tool annotation; defaults to `true`. |
 
 The generator validates names against MCP tool-name rules and reports duplicate
@@ -495,6 +498,8 @@ The error boundary is explicit:
 | `OperationCanceledException` after client cancellation | Cancellation; no fabricated tool result |
 | Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on a new line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. If the extensions cannot be serialized, they are left out of both. |
 | Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured ProblemDetails |
+| `InputRequiredException` (confirmation requested) | Passes through the filter; the SDK returns an input-required result |
+| Confirmation declined or not a valid answer | `CallToolResult.IsError = true` with `Not confirmed: ...` text (a business-rule violation with status 409) |
 
 The recommended filter maps known validation and domain exceptions to stable,
 client-safe text. It must not turn an authentication failure into a successful
@@ -542,8 +547,8 @@ authentication. A public MCP endpoint is an explicit host decision.
 
 The recommended baseline is Streamable HTTP in stateless mode over HTTPS,
 restricted host names, and explicit authorization. Stateful mode is selected
-only when a tool or MCP capability requires server-to-client requests or
-session state. Legacy SSE is disabled by default because the SDK documents its
+only when a tool or MCP capability requires legacy server-to-client requests or
+session state; tool confirmation does not. Legacy SSE is disabled by default because the SDK documents its
 weaker backpressure behavior.
 
 ## Security and trust boundary
@@ -575,6 +580,51 @@ Icons, MCP Apps metadata, Tasks, resources, prompts, and custom protocol
 capabilities are not generated in the first version. They can be added as
 separate opt-in features without changing the contract-to-handler dispatch
 boundary.
+
+## Confirmation and elicitation
+
+Two readers use a tool result. The agent must be able to correct a failed call
+from the error alone, so validation and business-rule failures stay tool errors
+with complete text. Elicitation is for the human: the answer goes from the user
+to the server and does not come from the model.
+
+Decisions:
+
+1. **Declarative confirmation only.** `McpToolAttribute.Confirm` makes the
+   generated wrapper call `McpToolConfirmation.EnsureConfirmed` before dispatch.
+   Handlers and contracts get no MCP types, and no transaction is open while
+   the user decides.
+2. **Multi round-trip requests only.** The helper throws the SDK
+   `InputRequiredException` on the first call and reads `InputResponses` on the
+   second. This works in stateless mode and needs SDK 2.4.0 or later. The
+   legacy `ElicitAsync` path is not implemented.
+3. **Fail open.** A client without multi round-trip support or without the
+   elicitation capability runs the tool without confirmation. A refusal would
+   make these tools unusable on most clients, and the HTTP `DELETE` endpoint has
+   no confirmation either.
+4. **Not a security control.** The server cannot know that a user saw the
+   question, and the confirmation is not bound to the arguments. Authorization
+   stays in the decorators.
+5. **Arguments in the message, each value cut at 200 characters.** The user
+   must see which item is affected. A cut for each value, and not for the whole
+   message, stops one long argument from hiding the others.
+6. **Verb-derived defaults.** `DELETE` turns on `Confirm` and `Idempotent`,
+   `PUT` turns on `Idempotent`. `Destructive` stays `true` for every request and
+   command, so that clients keep asking the user to approve each change.
+
+Rejected:
+
+- **An elicitation service that handlers can call.** No use case, a transport
+  concern inside the handler, and a transaction that stays open during a human
+  wait.
+- **A call-tool filter keyed on tool metadata**, in place of the generated
+  call. It needs a metadata attribute and a runtime lookup for one generated
+  line.
+- **Validation errors as elicitation.** The agent wrote the arguments, so the
+  agent can correct them from the error.
+
+Out of scope: workflow approvals (domain state: a command and a status query),
+URL-mode elicitation, secrets, and overridable business rules.
 
 ## Diagnostics
 

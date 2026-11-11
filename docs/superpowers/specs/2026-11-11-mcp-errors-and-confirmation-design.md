@@ -97,7 +97,9 @@ McpToolConfirmation.EnsureConfirmed(context, "<tool name>", "<description>");
 
 1. `InputResponses` contains the key `confirm`:
    - action `accept`: return, the wrapper dispatches;
-   - other action: throw `McpToolDeclinedException` (new, internal), which
+   - other action: throw `BusinessRuleViolationException` (title
+     `Not confirmed`, status 409; changed during implementation, because the
+     analyzers require public exception types), which
      the error filter maps to `IsError = true`, text
      `"Not confirmed: the user declined '<tool>'. Do not retry without a new user request."`
    A response that is not a valid elicitation result counts as declined.
@@ -116,10 +118,13 @@ clients today. The server never enforces confirmation.
 **Arguments in the message (approved).** The message ends with a new line
 and `Arguments: ` plus the call arguments as one compact JSON object, so the
 user can see which item is affected. The helper reads them from
-`context.Params.Arguments`; the generator does not change for this. The JSON
-is cut at 500 characters and then ends with `...`, because the arguments are
-written by the model and can be long (an attachment, for example). The
-default JSON encoder is used.
+`context.Params.Arguments`; the generator does not change for this. Each value
+longer than 200 characters is cut and followed by the number of hidden
+characters, because the arguments are written by the model and can be long (an
+attachment, for example). The cut is for each value and not for the whole
+message, so that one long argument cannot hide the others (changed during
+implementation after a security review finding; the first version cut the
+whole JSON at 500 characters). The default JSON encoder is used.
 
 **Error filter.** `McpToolErrors` lets `InputRequiredException` pass.
 

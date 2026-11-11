@@ -10,6 +10,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-11-mcp-errors-and-confirmation-design.md`
 
+## Deviations during implementation
+
+- A declined confirmation throws `BusinessRuleViolationException` (title `Not confirmed`, status 409), not a new `McpToolDeclinedException`: the analyzers require public exception types, and the existing mapper already gives the wanted error result.
+- The confirmation arguments are cut for each value at 200 characters, not at 500 characters for the whole JSON: one long argument could hide the others.
+- Task 1 uses the existing violation payload (`type`, `status`) and no violation subtype.
+- Generated code was checked through the snapshot test and the compile of the test contracts; the projects do not write `.g.cs` files to `obj`.
+
 ## Global Constraints
 
 - No new package dependency.
