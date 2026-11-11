@@ -247,6 +247,7 @@ public sealed record HostingNoContentRequest : Solid.IRequest<HostingNoContentRe
 /// <summary>Request whose handler produces a business-rule violation.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/business-violation", AllowAnonymous = true)]
 [GrpcMethod("TriggerHostingBusinessViolation")]
+[McpTool(Name = "hosting.businessrule")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingBusinessViolationRequest : Solid.IRequest<HostingBusinessViolationRequest, HostingResponse>

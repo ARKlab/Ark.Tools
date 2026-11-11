@@ -44,6 +44,7 @@ public sealed class McpHostingTests
             [
                 "hosting.attachment.download",
                 "hosting.attachment.upload",
+                "hosting.businessrule",
                 "hosting.query",
                 "hosting.unexpected",
                 "hosting.validation",
@@ -187,6 +188,63 @@ public sealed class McpHostingTests
         result.StructuredContent!.Value.GetProperty("title").GetString().Should().Be("Validation failed");
     }
 
+    /// <summary>Verifies the validation error text carries the per-field errors for agents that read only the text.</summary>
+    [TestMethod]
+    public async Task McpValidationErrorTextContainsFieldErrors()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.validation",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "invalid" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        ((TextContentBlock)result.Content[0]).Text.Should()
+            .StartWith("Validation failed: ")
+            .And.Contain("\n{\"errors\":{\"Value\":[\"The synthetic value is invalid.\"]}}");
+    }
+
+    /// <summary>Verifies the business-rule error text carries the violation payload.</summary>
+    [TestMethod]
+    public async Task McpBusinessRuleErrorTextContainsPayload()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.businessrule",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "invalid" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        result.IsError.Should().BeTrue();
+        var text = ((TextContentBlock)result.Content[0]).Text;
+        text.Should().StartWith("Synthetic rule: The synthetic business rule was violated.\n{\"businessRuleViolation\":{");
+        text.Should().Contain("\"type\":\"BusinessRuleViolation\"").And.Contain("\"status\":422");
+        result.StructuredContent!.Value.GetProperty("businessRuleViolation").GetProperty("status").GetInt32().Should().Be(422);
+    }
+
+    /// <summary>Verifies a payload the JSON context cannot serialize still gives an error result, without the payload.</summary>
+    [TestMethod]
+    public void McpErrorWithUnserializablePayloadKeepsTitleAndDetail()
+    {
+        var violation = new UnserializableViolation { Detail = "Detail.", Status = 422 };
+
+        var result = McpToolErrors.ToToolResult(new Core.BusinessRuleViolation.BusinessRuleViolationException(violation));
+
+        result.IsError.Should().BeTrue();
+        ((TextContentBlock)result.Content[0]).Text.Should().Be("Unserializable: Detail.");
+        result.StructuredContent!.Value.GetProperty("status").GetInt32().Should().Be(422);
+        result.StructuredContent!.Value.TryGetProperty("businessRuleViolation", out _).Should().BeFalse();
+    }
+
+    private sealed class UnserializableViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Unserializable")
+    {
+        public Version Unregistered { get; } = new(1, 2);
+    }
+
     /// <summary>Verifies unexpected failures do not expose exception details.</summary>
     [TestMethod]
     public async Task HidesUnexpectedFailureDetails()
@@ -202,7 +260,7 @@ public sealed class McpHostingTests
 
         result.IsError.Should().BeTrue();
         var text = ((TextContentBlock)result.Content[0]).Text;
-        text.Should().NotContain("synthetic handler failed");
+        text.Should().NotContain("synthetic handler failed").And.NotContain("{");
         result.StructuredContent!.Value.GetProperty("status").GetInt32().Should().Be(500);
     }
 

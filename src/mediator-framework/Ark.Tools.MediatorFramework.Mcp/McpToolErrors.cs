@@ -57,15 +57,45 @@ public static partial class McpToolErrors
                 problemDetails.Extensions[extension.Key] = extension.Value;
             }
         }
-        var structuredContent = JsonSerializer.SerializeToElement(
-            problemDetails,
-            McpToolErrorJsonSerializerContext.Default.ProblemDetails);
+        var text = title + ": " + detail;
+        JsonElement structuredContent;
+        try
+        {
+            structuredContent = _serialize(problemDetails);
+            // Many clients give the model only the text, so it carries the details too.
+            if (problemDetails.Extensions.Count > 0)
+                text += "\n" + _extensionsJson(structuredContent, problemDetails.Extensions.Keys);
+        }
+        catch (Exception e) when (e is NotSupportedException or JsonException)
+        {
+            // A payload type the source-generated context does not know: keep the error, drop the payload.
+            problemDetails.Extensions.Clear();
+            structuredContent = _serialize(problemDetails);
+        }
         return new CallToolResult
         {
             IsError = true,
-            Content = [new TextContentBlock { Text = title + ": " + detail }],
+            Content = [new TextContentBlock { Text = text }],
             StructuredContent = structuredContent,
         };
+    }
+
+    private static string _extensionsJson(JsonElement problemDetails, ICollection<string> extensionKeys)
+    {
+        var extensions = new System.Text.Json.Nodes.JsonObject();
+        foreach (var property in problemDetails.EnumerateObject())
+        {
+            if (extensionKeys.Contains(property.Name))
+                extensions[property.Name] = System.Text.Json.Nodes.JsonNode.Parse(property.Value.GetRawText());
+        }
+        return extensions.ToJsonString();
+    }
+
+    private static JsonElement _serialize(Microsoft.AspNetCore.Mvc.ProblemDetails problemDetails)
+    {
+        return JsonSerializer.SerializeToElement(
+            problemDetails,
+            McpToolErrorJsonSerializerContext.Default.ProblemDetails);
     }
 
     private static McpRequestHandler<CallToolRequestParams, CallToolResult> _createHandler(

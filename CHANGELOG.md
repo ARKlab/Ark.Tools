@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `Ark.Tools.MediatorFramework.Mcp`: MCP error text now includes the validation errors and the business-rule details as JSON on a second line, so agents that read only the text can correct the call. A business-rule payload that cannot be serialized no longer fails the tool call; the error is returned without the payload.
+
 ### Security
 
 - `Ark.Tools.Reqnroll` now depends on `Microsoft.AspNetCore.WebUtilities` 2.3.14, which fixes GHSA-6527-9fp8-r4x6; the vulnerable 2.3.0 came in transitively through `AwesomeAssertions.Web`.

@@ -109,7 +109,16 @@ For mediator failures, the wrapper maps the exception through the shared Ark
 `ProblemDetails` mapper and returns an error result
 (`CallToolResult.IsError = true`) with `{Title}: {Detail}` text and structured
 ProblemDetails, so clients can read `type`, `title`, `status`, `detail`, and
-validation or business-rule extensions. Unexpected failures use generic text;
+validation or business-rule extensions. The text also carries those extensions
+as one JSON object on a second line, because many clients give the model only
+the text of an error:
+
+```text
+Validation failed: Validation failed: ...
+{"errors":{"Value":["The value is invalid."]}}
+```
+
+An agent can correct its call from this text alone. Unexpected failures use generic text;
 stack traces, connection strings, and sensitive exception messages are never
 returned.
 
