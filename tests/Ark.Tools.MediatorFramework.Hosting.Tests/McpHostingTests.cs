@@ -295,6 +295,27 @@ public sealed class McpHostingTests
         message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\nArguments: {\"id\":7,\"note\":\"why\"}");
     }
 
+    /// <summary>Verifies the error formatting does not change the violation's own data and survives a cyclic detail.</summary>
+    [TestMethod]
+    public void McpErrorDoesNotMutateOrOverflowOnNestedDetails()
+    {
+        var violation = new NestedViolation { Detail = "Detail." };
+        violation.Data["ok"] = "kept";
+        violation.Data["unregistered"] = new Version(1, 2);
+        violation.Data["self"] = violation.Data;
+
+        var result = McpToolErrors.ToToolResult(new Core.BusinessRuleViolation.BusinessRuleViolationException(violation));
+
+        var text = ((TextContentBlock)result.Content[0]).Text;
+        text.Should().StartWith("Nested: Detail.\n{").And.Contain("\"ok\":\"kept\"").And.NotContain("unregistered");
+        violation.Data.Should().ContainKeys("ok", "unregistered", "self");
+    }
+
+    private sealed class NestedViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Nested")
+    {
+        public Dictionary<string, object?> Data { get; } = new(StringComparer.Ordinal);
+    }
+
     private sealed class UnserializableViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Unserializable")
     {
         public Version Unregistered { get; } = new(1, 2);

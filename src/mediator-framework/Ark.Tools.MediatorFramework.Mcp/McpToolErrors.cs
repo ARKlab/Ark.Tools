@@ -52,12 +52,11 @@ public static partial class McpToolErrors
         };
         if (clientVisible)
         {
-            foreach (var extension in mappedProblemDetails.Extensions)
+            foreach (var extension in _serializable(mappedProblemDetails.Extensions, depth: 8))
             {
                 problemDetails.Extensions[extension.Key] = extension.Value;
             }
         }
-        _dropUnserializable(problemDetails.Extensions);
         var text = title + ": " + detail;
         var structuredContent = JsonSerializer.SerializeToElement(
             problemDetails,
@@ -74,18 +73,21 @@ public static partial class McpToolErrors
     }
 
     // The source-generated context knows a fixed set of types: a value of another type is left out, the others stay.
-    private static void _dropUnserializable(IDictionary<string, object?> values)
+    // Dictionaries are copied, not changed: a nested one belongs to the business-rule violation. The depth limit
+    // stops a dictionary that contains itself.
+    private static Dictionary<string, object?> _serializable(IEnumerable<KeyValuePair<string, object?>> values, int depth)
     {
-        foreach (var entry in values.ToArray())
+        var result = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var entry in values)
         {
-            if (entry.Value is Dictionary<string, object?> nested)
-                _dropUnserializable(nested);
-            else if (entry.Value is not null && McpToolErrorJsonSerializerContext.Default.GetTypeInfo(entry.Value.GetType()) is null)
-            {
+            if (entry.Value is Dictionary<string, object?> nested && depth > 0)
+                result[entry.Key] = _serializable(nested, depth - 1);
+            else if (entry.Value is null || entry.Value is not Dictionary<string, object?> && McpToolErrorJsonSerializerContext.Default.GetTypeInfo(entry.Value.GetType()) is not null)
+                result[entry.Key] = entry.Value;
+            else
                 _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} of type {type} cannot be serialized and is left out.", entry.Key, entry.Value.GetType());
-                values.Remove(entry.Key);
-            }
         }
+        return result;
     }
 
     private static string _extensionsJson(JsonElement problemDetails, ICollection<string> extensionKeys)
