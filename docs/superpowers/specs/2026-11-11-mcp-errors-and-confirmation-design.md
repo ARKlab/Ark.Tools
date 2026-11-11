@@ -7,8 +7,8 @@ Status: approved 2026-11-11. Scope: `Ark.Tools.MediatorFramework.Mcp` (preview).
 Generated MCP tools must behave well by default for two readers:
 
 - the **agent**, which must be able to correct a failed call from the error alone;
-- the **human**, who must be able to confirm a destructive call without the
-  model in the path.
+- the **human**, who is asked by the client to confirm a destructive call,
+  so the answer does not come from the model (on a client that co-operates).
 
 ## Goals
 
@@ -57,6 +57,10 @@ Generated MCP tools must behave well by default for two readers:
 Inside B, the transport is MRTR only. The legacy `ElicitAsync` path is not
 implemented: it needs stateful sessions and the protocol removes it.
 
+A call-tool filter keyed on tool metadata (the way `[Authorize]` works) was
+considered in place of the generated call. It is not chosen: it needs a new
+metadata attribute and a runtime lookup for what is one generated line.
+
 ## Design
 
 ### Part 1: errors (default, no opt-in)
@@ -64,12 +68,16 @@ implemented: it needs stateful sessions and the protocol removes it.
 `McpToolErrors.ToToolResult` keeps `IsError = true` and the ProblemDetails in
 `StructuredContent`. The text block changes:
 
-- line 1: `{Title}: {Detail}` (as today);
-- then the ProblemDetails extensions as compact JSON (`errors`,
-  `businessRuleViolation`), so that a client that gives the model only the text
-  loses nothing.
+- first `{Title}: {Detail}` (as today);
+- then, on a new line, the ProblemDetails extensions as one compact JSON
+  object (`errors`, `businessRuleViolation`), so that a client that gives the
+  model only the text loses nothing. Keys keep the CLR property names, as in
+  `StructuredContent`. The default JSON encoder is used, so values stay
+  escaped.
 
-Unexpected failures (not 4xx) keep the generic text, as today.
+Unexpected failures (not 4xx) keep the generic text, as today. If the
+extensions cannot be serialized, the result has the first line only and
+ProblemDetails without extensions (today this case throws).
 
 ### Part 2: confirmation
 
@@ -78,11 +86,11 @@ generator uses `true` if the contract has `[HttpEndpoint("DELETE", ...)]`,
 otherwise `false`. Same pattern as `AllowAnonymous`.
 
 **Generated wrapper.** Only for tools with `Confirm = true`, `ExecuteAsync`
-gets the `McpServer` and `RequestContext<CallToolRequestParams>` parameters and
-starts with one call:
+gets a `RequestContext<CallToolRequestParams>` parameter and starts with one
+call:
 
 ```csharp
-McpToolConfirmation.EnsureConfirmed(server, context, "<tool name>", "<description>");
+McpToolConfirmation.EnsureConfirmed(context, "<tool name>", "<description>");
 ```
 
 **Runtime helper** `McpToolConfirmation` (new, in `Ark.Tools.MediatorFramework.Mcp`):
@@ -92,15 +100,23 @@ McpToolConfirmation.EnsureConfirmed(server, context, "<tool name>", "<descriptio
    - other action: throw `McpToolDeclinedException` (new, internal), which
      the error filter maps to `IsError = true`, text
      `"Not confirmed: the user declined '<tool>'. Do not retry without a new user request."`
-2. No response and `server.IsMrtrSupported`: throw `InputRequiredException`
-   with one elicitation, message `"Confirm <tool>: <description>"`, empty
-   schema (accept or decline is the answer).
-3. No response and no MRTR support: **proceed** (call 1 of the fallback below).
+   A response that is not a valid elicitation result counts as declined.
+2. No response, and the client supports MRTR and declares the elicitation
+   capability: throw `InputRequiredException` with one elicitation, message
+   `"Confirm <tool>: <description>"`, empty schema (accept or decline is the
+   answer).
+3. No response and the client cannot be asked: **proceed** (the fallback).
 
-**Fallback (approved).** Without MRTR the tool runs without confirmation.
-Reason: the `Destructive` hint already makes clients ask for tool approval,
-the HTTP DELETE endpoint has no confirmation either, and a refusal would make
-these tools unusable on most clients today.
+**Fallback (approved).** A client without MRTR or without the elicitation
+capability runs the tool without confirmation. Reason: clients may ask for
+tool approval from the `Destructive` hint, the HTTP DELETE endpoint has no
+confirmation either, and a refusal would make these tools unusable on most
+clients today. The server never enforces confirmation.
+
+**Open decision: arguments in the message.** The message names the tool and
+not the arguments, so the user cannot see which item is affected. Two reviews
+flagged this. Option: append the arguments as JSON, with a length limit. Not
+in the plan until decided.
 
 **Error filter.** `McpToolErrors` lets `InputRequiredException` pass.
 
@@ -121,7 +137,10 @@ to approve each change.
   dispatch; client without MRTR dispatches.
 - `GeneratorSnapshotTests`: `Confirm` explicit, `Confirm` derived from DELETE,
   explicit `Confirm = false` on a DELETE contract.
-- Sample: one DELETE contract with `[McpTool]`.
+- Sample: `Book_DeleteRequest` with `[McpTool]`.
+
+The plan extends this list (validation text, malformed answers, verb casing,
+`PUT`, name collisions).
 
 ## Documentation
 

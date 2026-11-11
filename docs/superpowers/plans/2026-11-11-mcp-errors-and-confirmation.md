@@ -19,7 +19,7 @@
 - Unexpected failures (not 4xx) keep the generic text. Nothing new may leak.
 - Confirmation is not a security control. The docs must say so.
 - Public members need XML documentation. Warnings are errors.
-- Commits: Conventional Commits, no AI attribution. Branch: `feature/mcp-confirmation`.
+- Commits: Conventional Commits, summary of 72 characters or fewer (organization limit), no AI attribution. Branch: `feature/mcp-confirmation`.
 - Run only focused tests:
   - `dotnet test tests/Ark.Tools.MediatorFramework.Tests --no-restore --filter "FullyQualifiedName~GeneratorSnapshotTests"`
   - `dotnet test tests/Ark.Tools.MediatorFramework.Hosting.Tests --no-restore --filter "FullyQualifiedName~McpHostingTests"`
@@ -27,7 +27,7 @@
 ## Review Focus
 
 1. A client sends `InputResponses["confirm"]` with a payload that is not an elicitation result (wrong shape, `null`). Expected: treated as declined, no dispatch, no 500.
-2. A business-rule payload contains a value that the source-generated JSON context cannot serialize. Expected: the error result is still returned, with the `{Title}: {Detail}` line. Test in Task 1.
+2. A business-rule payload contains a value that the source-generated JSON context cannot serialize. Today this already throws out of the filter (`McpToolErrors.cs:60-62`). Expected: the error result is still returned, with the `{Title}: {Detail}` text and ProblemDetails without extensions. Test in Task 1.
 3. `[McpTool(Confirm = false)]` on a `DELETE` contract. Expected: no confirmation code is emitted. Test in Task 3.
 4. `[HttpEndpoint("delete", ...)]` in lower case. Expected: same defaults as `DELETE`. Test in Task 3.
 5. A contract with a property named `Server` or `Context` and `Confirm = true`. Expected: the generated wrapper compiles (use `FreeName`). Test in Task 3.
@@ -46,7 +46,7 @@
 **Interfaces:**
 - Produces: error text format `"{Title}: {Detail}"`, then `"\n"` and the ProblemDetails `Extensions` as one compact JSON object, only when the failure is client-visible and `Extensions` is not empty.
 
-- [ ] **Step 1: Add a contract `[McpTool(Name = "hosting.businessrule")]`** whose handler throws the existing synthetic `BusinessRuleViolationException` (see `HostingTestFixture.cs:893`). Use a violation subtype with one extra property, `Limit = 5`.
+- [ ] **Step 1: Add `[McpTool(Name = "hosting.businessrule")]` to the existing `HostingBusinessViolationRequest`** (`HostingContracts.cs:247-257`, handler at `HostingTestFixture.cs:888-901`). Make its violation a subtype with one extra property, `Limit = 5`, and update the HTTP and gRPC tests that assert its payload. Add the tool name to the exact list in `ListsAnonymousTools` (`McpHostingTests.cs:43-50`).
 
 - [ ] **Step 2: Write the failing tests**
 
@@ -58,7 +58,8 @@ public async Task McpBusinessRuleErrorTextContainsPayload()
     result.IsError.Should().BeTrue();
     var text = ((TextContentBlock)result.Content[0]).Text;
     text.Should().StartWith("Synthetic rule");
-    text.Should().Contain("\"businessRuleViolation\"").And.Contain("\"limit\":5");
+    // Keys are CLR property names. Do not add a naming policy: it would rename StructuredContent keys too.
+    text.Should().Contain("\"businessRuleViolation\"").And.Contain("\"Limit\":5");
 }
 
 [TestMethod]
@@ -73,7 +74,7 @@ Extend the existing unexpected-failure test: `text.Should().NotContain("{")`.
 
 - [ ] **Step 3: Run** the `McpHostingTests` filter. Expected: the two new tests FAIL.
 
-- [ ] **Step 4: Implement in `ToToolResult`.** Serialize `problemDetails.Extensions` with `McpToolErrorJsonSerializerContext` (`Dictionary<string, object>` is already registered). If serialization throws `NotSupportedException` or `JsonException`, keep the one-line text (Review Focus 2). Add a unit test for this with a payload object of an unregistered type, calling `McpToolErrors.ToToolResult` directly.
+- [ ] **Step 4: Implement in `ToToolResult`.** Serialize `problemDetails.Extensions` once with `McpToolErrorJsonSerializerContext` (`Dictionary<string, object>` is already registered) and with the default encoder, and use the result for the text. Put this and the existing `SerializeToElement` call (`:60-62`) in one `try`. On `NotSupportedException` or `JsonException`, clear `Extensions` and build the result again: text `{Title}: {Detail}`, ProblemDetails without extensions (Review Focus 2). Add a unit test for this with a payload object of an unregistered type, calling `McpToolErrors.ToToolResult` directly.
 
 - [ ] **Step 5: Run** the filter. Expected: PASS.
 
@@ -94,39 +95,27 @@ Extend the existing unexpected-failure test: `text.Should().NotContain("{")`.
 ```csharp
 public static class McpToolConfirmation
 {
-    public const string InputKey = "confirm";
-
-    /// Returns when the call is confirmed or the client has no MRTR support.
+    /// Returns when the call is confirmed or the client cannot be asked.
     public static void EnsureConfirmed(
-        McpServer server,
         RequestContext<CallToolRequestParams> context,
         string toolName,
         string? description);
 }
 ```
 
-- [ ] **Step 1: Verify the SDK API in 2.4.0.** Write a scratch file in the test project that references `InputRequiredException`, `InputRequest.ForElicitation`, `McpServer.IsMrtrSupported`, `CallToolRequestParams.InputResponses` and `InputResponse.ElicitResultJsonTypeInfo`, then `dotnet build`. Record in the commit body: the exact names, whether the API has an `[Experimental]` diagnostic, and whether `InputRequiredException` derives from `McpException`. If a name differs, use the real one in the next steps. If the API is absent in 2.4.0, stop and report: a package bump needs approval. Delete the scratch file.
+The input key `"confirm"` is a `private const`. The behaviour tests are the host tests of Task 4; this task has no unit tests of its own.
 
-- [ ] **Step 2: Write the failing unit tests** (direct calls, no host). Build `RequestContext` the way the SDK tests do; if it cannot be constructed, move these cases to the Task 4 host tests.
+- [ ] **Step 1: Verify the SDK API in 2.4.0.** Write a scratch file in the test project that references `InputRequiredException`, `InputRequest.ForElicitation`, `McpServer.IsMrtrSupported`, `RequestContext<T>.Server`, `McpServer.ClientCapabilities.Elicitation`, `CallToolRequestParams.InputResponses` and `InputResponse.ElicitResultJsonTypeInfo`, then `dotnet build`. Record in the commit body: the exact names, whether the API has an `[Experimental]` diagnostic, and whether `InputRequiredException` derives from `McpException`. If a name differs, use the real one in the next steps. If `context.Server` does not exist, add a `McpServer server` first parameter. If the API is absent in 2.4.0, stop and report: a package bump needs approval. Delete the scratch file.
 
-| Test | Arrange | Assert |
-|---|---|---|
-| `ConfirmationRunsWithoutMrtr` | `IsMrtrSupported == false`, no responses | no exception |
-| `ConfirmationRequestsInput` | MRTR, no responses | throws `InputRequiredException` with one request, key `"confirm"`, message `"Confirm books.delete: Deletes a book."` |
-| `ConfirmationAcceptReturns` | response `confirm`, action `accept` | no exception |
-| `ConfirmationDeclineThrows` | action `decline` | throws `McpToolDeclinedException` |
-| `ConfirmationMalformedResponseThrows` | response `confirm` = JSON `null` or `{}` | throws `McpToolDeclinedException` |
-
-- [ ] **Step 3: Run.** Expected: compile FAIL.
-
-- [ ] **Step 4: Implement.**
-  - Message: `"Confirm {toolName}"` plus `": {description}"` when the description is not empty. Requested schema: an object with no properties.
+- [ ] **Step 2: Implement.**
+  - Ask only when the client supports MRTR **and** declares the elicitation capability. Otherwise return (the fallback).
+  - Message: `"Confirm {toolName}"` plus `": {description}"` when the description is not empty. Requested schema: an object with no properties. Arguments are not in the message (open decision in the spec).
   - `McpToolDeclinedException` is `internal sealed`, in the same file.
   - In `McpToolErrors`: let `InputRequiredException` pass through the filter (add a `catch` before the general one, if Step 1 found that it does not derive from `McpException`). Map `McpToolDeclinedException` in `ToToolResult` before the ProblemDetails mapper: `IsError = true`, no log, text `"Not confirmed: the user declined '{toolName}'. Do not retry without a new user request."`, structured ProblemDetails with `Status = 409`, `Title = "Not confirmed"`.
 
-- [ ] **Step 5: Run.** Expected: PASS.
+- [ ] **Step 3: Run** `dotnet build src/mediator-framework/Ark.Tools.MediatorFramework.Mcp` and the `McpHostingTests` filter. Expected: PASS (no behaviour change yet).
 
-- [ ] **Step 6: Commit** `feat(MediatorFramework): add mcp tool confirmation helper`
+- [ ] **Step 4: Commit** `feat(MediatorFramework): add mcp confirmation helper`
 
 ### Task 3: Generator: `Confirm` and `Idempotent` defaults
 
@@ -136,18 +125,18 @@ public static class McpToolConfirmation
 - Test: `tests/Ark.Tools.MediatorFramework.Tests/GeneratorSnapshotTests.cs`
 
 **Interfaces:**
-- Consumes: `McpToolConfirmation.EnsureConfirmed(server, context, toolName, description)` from Task 2.
+- Consumes: `McpToolConfirmation.EnsureConfirmed(context, toolName, description)` from Task 2.
 - Produces: `public bool Confirm { get; set; }` on `McpToolAttribute`; `bool Confirm` on `ContractModel`.
 
-- [ ] **Step 1: Write the failing snapshot tests.** One source with four contracts, one test per row:
+- [ ] **Step 1: Write the failing snapshot tests.** One source with five contracts, one test per row:
 
 | Contract | Expect in generated code |
 |---|---|
-| `[McpTool, HttpEndpoint("DELETE", "/books/{id}")]` | `Idempotent = true`, one `McpToolConfirmation.EnsureConfirmed(` call, parameters of type `McpServer` and `RequestContext<...CallToolRequestParams>` |
+| `[McpTool, HttpEndpoint("DELETE", "/books/{id}")]` | `Idempotent = true`, one `McpToolConfirmation.EnsureConfirmed(` call, a parameter of type `RequestContext<...CallToolRequestParams>` |
 | `[McpTool, HttpEndpoint("delete", "/x/{id}")]` | same |
 | `[McpTool(Confirm = false, Idempotent = false), HttpEndpoint("DELETE", ...)]` | `Idempotent = false`, no `EnsureConfirmed` |
 | `[McpTool, HttpEndpoint("PUT", ...)]` | `Idempotent = true`, `Destructive = true`, no `EnsureConfirmed` |
-| `[McpTool(Confirm = true)]` on a `POST` contract with properties `Server` and `Context` | `EnsureConfirmed` present and the generated compilation has no errors |
+| `[McpTool(Confirm = true)]` on a `POST` contract with a property `Context` and no description | `EnsureConfirmed` present with `null` as the description, and the generated compilation has no errors |
 
 Also assert that an existing `POST` contract still has `Destructive = true` and `Idempotent = false`.
 
@@ -156,13 +145,11 @@ Also assert that an existing `POST` contract still has `Destructive = true` and 
 - [ ] **Step 3: Implement.**
   - Attribute: add `Confirm` with XML docs that state the DELETE default and that it is not a security control. Update the `Idempotent` docs.
   - Parse: read the verb from the first constructor argument of `httpEndpoint`, compare with `StringComparison.OrdinalIgnoreCase`. Use `HasNamedArgument` for both properties, as `AllowAnonymous` does.
-  - Render: only when `model.Confirm`, add the two parameters with `FreeName("server")` and `FreeName("context")`, and emit the call as the first statement. Pass `model.Name` and the tool description as string literals (`Literal(...)`, `null` when there is none).
+  - Render: only when `model.Confirm`, add the parameter with `FreeName("context")` and emit the call as the first statement. Pass `model.Name` as a literal and `tool.Description` (on `ToolModel`) through `Literal(...)`; emit the token `null` when it is null.
 
 - [ ] **Step 4: Run.** Expected: PASS.
 
-- [ ] **Step 5: Inspect the emitted code.** `dotnet build tests/Ark.Tools.MediatorFramework.Hosting.Contracts` and read the `.g.cs` under `obj/Debug/net10.0/generated/` (required by `AGENTS.md`).
-
-- [ ] **Step 6: Commit** `feat(MediatorFramework): add confirm option to mcp tools`
+- [ ] **Step 5: Commit** `feat(MediatorFramework): add mcp tool confirm option`
 
 ### Task 4: End-to-end confirmation
 
@@ -170,33 +157,35 @@ Also assert that an existing `POST` contract still has `Destructive = true` and 
 - Modify: `tests/Ark.Tools.MediatorFramework.Hosting.Contracts/HostingContracts.cs`
 - Modify: `tests/Ark.Tools.MediatorFramework.Hosting.Tests/HostingTestFixture.cs`
 - Test: `tests/Ark.Tools.MediatorFramework.Hosting.Tests/McpHostingTests.cs`
-- Modify: `tests/Ark.Tools.MediatorFramework.NativeAotApp/Program.cs` (one `Confirm` tool, so that the AOT publish covers the path)
+- Modify: `tests/Ark.Tools.MediatorFramework.NativeAotApp/Contracts.cs` (one `Confirm` tool) and `Program.cs` (`_checkMcpAsync`), so that the AOT publish covers the path
 
 **Interfaces:**
 - Consumes: Tasks 2 and 3.
 
-- [ ] **Step 1: Add** `[McpTool(Name = "hosting.delete"), HttpEndpoint("DELETE", "/hosting/items/{id}")]` with a handler that sets `fixture.State.Deleted = id`.
+- [ ] **Step 1: Add** `[McpTool(Name = "hosting.delete"), HttpEndpoint("DELETE", "/api/v{version}/hosting/items/{id}", AllowAnonymous = true)]`, like the neighbouring contracts, with a handler that sets `fixture.State.Deleted = id`. Add the tool name to the exact list in `ListsAnonymousTools`.
 
-- [ ] **Step 2: Write the failing tests** with the official SDK client.
+- [ ] **Step 2: Inspect the emitted code.** `dotnet build tests/Ark.Tools.MediatorFramework.Hosting.Contracts` and read the `.g.cs` under `obj/Debug/net10.0/generated/` (required by `AGENTS.md`).
+
+- [ ] **Step 3: Write the tests** with the official SDK client.
 
 | Test | Client | Assert |
 |---|---|---|
-| `McpConfirmedDeleteRuns` | MRTR, elicitation handler returns `accept` | `IsError` not true, `State.Deleted == id`, handler saw message `"Confirm hosting.delete..."` |
+| `McpConfirmedDeleteRuns` | MRTR, elicitation handler returns `accept` | `IsError` not true, `State.Deleted == id`, handler saw exactly the message `"Confirm hosting.delete: <the contract summary>"` |
 | `McpDeclinedDeleteDoesNotRun` | MRTR, handler returns `decline` | `IsError == true`, text starts with `"Not confirmed"`, `State.Deleted` is null |
 | `McpDeleteRunsWithoutMrtr` | client on a protocol version without MRTR | `IsError` not true, `State.Deleted == id` |
-| `McpForgedMalformedConfirmationDoesNotRun` | raw call with `inputResponses: { "confirm": {} }` | `IsError == true`, `State.Deleted` is null |
+| `McpDeleteRunsWithoutElicitationCapability` | MRTR client with no elicitation handler | `IsError` not true, `State.Deleted == id` |
+| `McpForgedMalformedConfirmationDoesNotRun` | raw call with `inputResponses: { "confirm": {} }`, then `null` | `IsError == true`, `State.Deleted` is null |
 
-- [ ] **Step 3: Run** the `McpHostingTests` filter. Expected: new tests FAIL only if Tasks 2-3 have a defect; fix the defect in its own file.
+- [ ] **Step 4: Run** both focused filters. Expected: PASS. A failure here is a defect in Task 2 or 3; fix it in its own file.
 
-- [ ] **Step 4: Run** both focused filters. Expected: PASS.
-
-- [ ] **Step 5: Commit** `test(MediatorFramework): cover mcp tool confirmation end to end`
+- [ ] **Step 5: Commit** `test(MediatorFramework): cover mcp tool confirmation`
 
 ### Task 5: Sample and documentation
 
 **Files:**
-- Modify: `samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs` (add `[McpTool]` to a `DELETE` contract, or add one if none exists, following the neighbours)
-- Test: `samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/McpToolsTests.cs` (tool is listed with `Idempotent` and `Destructive` hints)
+- Modify: `samples/Ark.MediatorFramework.Sample/Core/Ark.MediatorFramework.Sample.Core.API/BookContracts.cs`: add `[McpTool(Name = "books.delete", Confirm = true, Idempotent = true)]` to `Book_DeleteRequest.V1` (`:132-137`). It has no `[HttpEndpoint]`, so the values are explicit; do not add an HTTP endpoint.
+- Modify: the sample `ArkApiSurface.txt` (ARKAPI002 requires the new `[mcp=...]` line)
+- Test: `samples/Ark.MediatorFramework.Sample/Core/Hosts/Web/Ark.MediatorFramework.Sample.Core.Web.Tests/McpToolsTests.cs` (tool is listed with `Idempotent` and `Destructive` hints; update any exact tool list)
 - Modify: `docs/mediator-framework/mcp.md`
 - Modify: `docs/design/mediator-framework/mcp-design.md`
 - Modify: `CHANGELOG.md`
@@ -204,7 +193,7 @@ Also assert that an existing `POST` contract still has `Destructive = true` and 
 
 - [ ] **Step 1: `mcp.md`.**
   - "Mark a contract": add `Confirm` and the verb-derived defaults (`DELETE`: `Confirm`, `Idempotent`; `PUT`: `Idempotent`).
-  - New section "Confirmation": the flow (first call returns input required, the client asks the user, the retry runs), the fallback for clients without MRTR, the decline error, and the warning: "Confirmation is a user-experience aid, not a security control. A client can answer without showing the user. Keep authorization in handlers and policies."
+  - New section "Confirmation": the flow (first call returns input required, the client asks the user, the retry runs), the fallback for clients without MRTR or without the elicitation capability, the decline error, that the prompt names the tool and not the arguments, and the warning: "Confirmation is a user-experience aid, not a security control. The server never enforces it: a client can skip it, send an accepted answer on the first call, or change the arguments on the retry. Keep authorization in handlers and policies."
   - Line 84: replace the stateful sentence with: confirmation works in stateless mode; stateful sessions are needed only for other server-to-client requests.
 
 - [ ] **Step 2: `mcp-design.md`.**
