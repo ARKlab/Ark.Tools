@@ -4,13 +4,13 @@
     "net10.0": {
       "Auth0.AuthenticationApi": {
         "type": "Direct",
-        "requested": "[7.49.0, )",
-        "resolved": "7.49.0",
-        "contentHash": "8x3W53wnaLLMteHD9oPYOCBKzBmLTYXm0VuEpNHZvn9A1w/F7dFQxvmVLmGWAVCC2EInFsgaPR2KdZl0/oBe5A==",
+        "requested": "[7.50.0, )",
+        "resolved": "7.50.0",
+        "contentHash": "gvgY4QBjf65cDOcr1veYLVragy53aj1wqV1p/ow7cLRXtRBbkx7/RbwftClVkJU6k6j69/4h3R5RBhK35veNuQ==",
         "dependencies": {
-          "Auth0.Core": "7.49.0",
-          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.22.0",
-          "System.IdentityModel.Tokens.Jwt": "8.22.0"
+          "Auth0.Core": "7.50.0",
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.23.0",
+          "System.IdentityModel.Tokens.Jwt": "8.23.0"
         }
       },
       "Auth0.ManagementApi": {
@@ -32,15 +32,15 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.318, )",
-        "resolved": "3.0.318",
-        "contentHash": "H3nJiK34glwVICWp6EnhQLgftwXvIIMwVFbafG5CXVlnFqXfNN5PToDdNmw7bFzEXfMHE6zwAT8Am89c9W8ThQ=="
+        "requested": "[3.0.322, )",
+        "resolved": "3.0.322",
+        "contentHash": "aaynUqEHHeD0v1/RDW/Rq3d/gRkF8bRKJcvblhvuvyTAB+hGuzgFl4pBD9g6jGu+VqMWPinEGqu4hzG12TtnqQ=="
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Direct",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "DaTs32NtRkTabidrvhLhcXpa+Uguw0rN5FaX8Q1HmzbYtcI72iSauYlN4WmqbrXp6QQoB8fmZlHk5/bjiMTY7A==",
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "Y8VbPrQuABpTkMrqO/K2URdfqBBheri/YDcB+sO530arpqsy7vsd/go/YfEP8XaRkACWPQV2gPxedl7dnxp0zg==",
         "dependencies": {
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.19.2"
         }
@@ -65,9 +65,9 @@
       },
       "Polly.Core": {
         "type": "Direct",
-        "requested": "[8.9.0, )",
-        "resolved": "8.9.0",
-        "contentHash": "Imm3q+XvH+8fiOdCkp+GggDQuxN3e4VznbRxODjjJxCurmAIfUEO4dKcPx8RCwocTkvP6Udw2DyXtC+45tu3jA=="
+        "requested": "[8.9.1, )",
+        "resolved": "8.9.1",
+        "contentHash": "L0vfggkkI2nDAW9lCFYSqX9g/+3TkVXhAq+sh6owBq656X9XW0kE2NG+dPYGNQGeK66HS1rKHRPWMm1bMv91kw=="
       },
       "Polyfill": {
         "type": "Direct",
@@ -83,8 +83,8 @@
       },
       "Auth0.Core": {
         "type": "Transitive",
-        "resolved": "7.49.0",
-        "contentHash": "fiGvfx0ySsOQJNrTYysp/+6MPt9+EQhH5J0QVLYPMAxTWlMZP0r1q+Lq7EJHOQXcGO9KO6XSjoF8qOHQVdyqMg==",
+        "resolved": "7.50.0",
+        "contentHash": "zfWEbaYZsPYmZxyDe0aKNmC4+xhc3zG1atgHkaYT7VT2SC9DJ9cZ0bezEViqBhZETSOPnXj0kYM8xYFjs0Ny/A==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
