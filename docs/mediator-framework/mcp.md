@@ -119,9 +119,9 @@ The question uses MCP multi round-trip requests (protocol revision
 
 1. The first call returns "input required" before the handler runs.
 2. The client shows the user the tool name, its description and the call
-   arguments. An argument name or value longer than 200 characters is cut, and
-   the message says how many characters are hidden. At most 20 arguments are
-   shown, with the number of the others.
+   arguments. Only the arguments that the contract declares are shown, because
+   the tool ignores the others. A value longer than 200 characters is cut, and
+   the message says how many characters are hidden.
 3. The client calls the tool again with the answer. If the user accepted, the
    handler runs. If not, the call fails with `Not confirmed: the user declined
    '<tool>'. Do not retry without a new user request.`

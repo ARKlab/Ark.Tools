@@ -605,10 +605,11 @@ Decisions:
 4. **Not a security control.** The server cannot know that a user saw the
    question, and the confirmation is not bound to the arguments. Authorization
    stays in the decorators.
-5. **Arguments in the message, with limits.** The user must see which item is
-   affected. Each name and each value is cut at 200 characters and at most 20
-   arguments are shown. A limit for each part, and not for the whole message,
-   stops one long or many extra arguments from hiding the first ones.
+5. **Declared arguments in the message.** The user must see which item is
+   affected. The generator passes the declared argument names, and only those
+   are shown, in the declared order: the tool ignores other arguments, so a
+   model must not be able to use them to push the real ones out of view. Each
+   value is cut at 200 characters, so one long value cannot hide the others.
 6. **Confirmation before dispatch.** The question comes before validation and
    the handler's authorization policies, because those run inside the mediator
    decorators. A call can thus be confirmed and then rejected. The tool-level

@@ -220,15 +220,15 @@ public sealed class GeneratorSnapshotTests
 
         Tool("books.delete").Should().Contain("Idempotent = true").And.Contain("Destructive = true")
             .And.Contain(contextParameter + "context,")
-            .And.Contain("global::Ark.Tools.MediatorFramework.Mcp.McpToolConfirmation.EnsureConfirmed(context, \"books.delete\", \"Deletes a book.\");");
+            .And.Contain("global::Ark.Tools.MediatorFramework.Mcp.McpToolConfirmation.EnsureConfirmed(context, \"books.delete\", \"Deletes a book.\", \"id\");");
         Tool("books.remove").Should().Contain("Idempotent = true")
-            .And.Contain("EnsureConfirmed(context, \"books.remove\", null);");
+            .And.Contain("EnsureConfirmed(context, \"books.remove\", null, \"id\");");
         Tool("books.purge").Should().Contain("Idempotent = false").And.NotContain("EnsureConfirmed").And.NotContain("RequestContext");
         Tool("books.replace").Should().Contain("Idempotent = true").And.Contain("Destructive = true").And.NotContain("EnsureConfirmed");
         Tool("books.create").Should().Contain("Idempotent = false").And.Contain("Destructive = true").And.NotContain("EnsureConfirmed");
         // The contract's own "context" parameter keeps its name; the adapter's identifier gives way.
         Tool("books.send").Should().Contain(contextParameter + "_context,")
-            .And.Contain("EnsureConfirmed(_context, \"books.send\", null);");
+            .And.Contain("EnsureConfirmed(_context, \"books.send\", null, \"context\");");
     }
 
     [TestMethod]

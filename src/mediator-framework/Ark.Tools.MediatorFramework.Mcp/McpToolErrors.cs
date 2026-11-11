@@ -91,11 +91,8 @@ public static partial class McpToolErrors
     private static string _extensionsJson(JsonElement problemDetails, ICollection<string> extensionKeys)
     {
         var extensions = new System.Text.Json.Nodes.JsonObject();
-        foreach (var property in problemDetails.EnumerateObject())
-        {
-            if (extensionKeys.Contains(property.Name))
-                extensions[property.Name] = System.Text.Json.Nodes.JsonNode.Parse(property.Value.GetRawText());
-        }
+        foreach (var property in problemDetails.EnumerateObject().Where(property => extensionKeys.Contains(property.Name)))
+            extensions[property.Name] = System.Text.Json.Nodes.JsonNode.Parse(property.Value.GetRawText());
         return extensions.ToJsonString();
     }
 

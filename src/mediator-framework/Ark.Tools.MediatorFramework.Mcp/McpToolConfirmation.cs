@@ -18,7 +18,6 @@ public static class McpToolConfirmation
 {
     private const string _inputKey = "confirm";
     private const int _maxTextLength = 200;
-    private const int _maxArguments = 20;
 
     /// <summary>
     /// Returns when the call is confirmed or the client cannot be asked.
@@ -27,10 +26,16 @@ public static class McpToolConfirmation
     /// <param name="context">The call-tool request context.</param>
     /// <param name="toolName">The tool name shown to the user.</param>
     /// <param name="description">The tool description shown to the user, if any.</param>
-    public static void EnsureConfirmed(RequestContext<CallToolRequestParams> context, string toolName, string? description)
+    /// <param name="argumentNames">The arguments the tool declares; only these are shown to the user.</param>
+    public static void EnsureConfirmed(
+        RequestContext<CallToolRequestParams> context,
+        string toolName,
+        string? description,
+        params string[] argumentNames)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentException.ThrowIfNullOrEmpty(toolName);
+        ArgumentNullException.ThrowIfNull(argumentNames);
 
         if (context.Params?.InputResponses?.TryGetValue(_inputKey, out var response) is true)
         {
@@ -53,7 +58,7 @@ public static class McpToolConfirmation
             {
                 [_inputKey] = InputRequest.ForElicitation(new ElicitRequestParams
                 {
-                    Message = _message(toolName, description, context.Params?.Arguments),
+                    Message = _message(toolName, description, argumentNames, context.Params?.Arguments),
                     RequestedSchema = new ElicitRequestParams.RequestSchema(),
                 }),
             },
@@ -74,25 +79,23 @@ public static class McpToolConfirmation
         }
     }
 
-    private static string _message(string toolName, string? description, IDictionary<string, JsonElement>? arguments)
+    private static string _message(string toolName, string? description, string[] argumentNames, IDictionary<string, JsonElement>? arguments)
     {
         var message = "Confirm " + toolName;
         if (!string.IsNullOrEmpty(description))
             message += ": " + description;
-        if (arguments is not { Count: > 0 })
-            return message;
-
-        // The model writes the arguments, so a name or a value can be long (an attachment, for example) and
-        // there can be many. Each one is cut on its own and the count is limited, so that the user sees the first ones.
+        // The model writes the arguments. Only the declared ones are shown, in the declared order: the tool
+        // ignores the others, so they must not push the real ones out of the user's view. A value can be long
+        // (an attachment, for example), so each one is cut on its own.
         var json = new JsonObject();
-        foreach (var argument in arguments.Take(_maxArguments))
+        foreach (var name in argumentNames)
         {
-            var value = argument.Value.GetRawText();
-            json[_cut(argument.Key)] = value.Length <= _maxTextLength ? _parse(value) : _cut(value);
+            if (arguments?.TryGetValue(name, out var argument) is not true)
+                continue;
+            var value = argument.GetRawText();
+            json[name] = value.Length <= _maxTextLength ? _parse(value) : _cut(value);
         }
-        if (arguments.Count > _maxArguments)
-            json["..."] = (arguments.Count - _maxArguments).ToString(CultureInfo.InvariantCulture) + " more arguments";
-        return message + "\nArguments: " + json.ToJsonString();
+        return json.Count == 0 ? message : message + "\nArguments: " + json.ToJsonString();
     }
 
     private static string _cut(string text)

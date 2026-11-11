@@ -910,7 +910,9 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         if (context is not null)
             builder.Append("            global::Ark.Tools.MediatorFramework.Mcp.McpToolConfirmation.EnsureConfirmed(").Append(context)
                 .Append(", \"").Append(Escape(model.Name)).Append("\", ")
-                .Append(tool.Description is null ? "null" : Literal(tool.Description)).AppendLine(");");
+                .Append(tool.Description is null ? "null" : Literal(tool.Description))
+                .Append(string.Concat(model.Properties.Select(static property => ", \"" + ToParameterName(property.Name).TrimStart('@') + "\"")))
+                .AppendLine(");");
         builder.Append("            var ").Append(request).Append(" = new ").Append(model.TypeFullName).Append("(");
         builder.Append(string.Join(", ", model.ConstructorParameters.Select(parameter =>
             ToParameterName(model.Properties.First(property => string.Equals(property.Name, parameter, StringComparison.OrdinalIgnoreCase)).Name)

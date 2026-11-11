@@ -118,7 +118,8 @@ clients today. The server never enforces confirmation.
 **Arguments in the message (approved).** The message ends with a new line
 and `Arguments: ` plus the call arguments as one compact JSON object, so the
 user can see which item is affected. The helper reads them from
-`context.Params.Arguments`; the generator does not change for this. Each value
+`context.Params.Arguments` and shows only the arguments the contract declares,
+whose names the generator passes to it. Each value
 longer than 200 characters is cut and followed by the number of hidden
 characters, because the arguments are written by the model and can be long (an
 attachment, for example). The cut is for each value and not for the whole

@@ -274,29 +274,25 @@ public sealed class McpHostingTests
         public long Count { get; } = 3_000_000_000;
     }
 
-    /// <summary>Verifies long argument names and many arguments cannot hide the real arguments from the user.</summary>
+    /// <summary>Verifies arguments the contract does not declare cannot hide the real arguments from the user.</summary>
     [TestMethod]
-    public async Task McpConfirmationMessageLimitsArgumentNamesAndCount()
+    public async Task McpConfirmationMessageShowsOnlyDeclaredArguments()
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
         string? message = null;
         await using var client = await _createClientAsync(app, options: _answering("accept", m => message = m)).ConfigureAwait(false);
-        var arguments = new Dictionary<string, object?>(StringComparer.Ordinal)
-        {
-            ["id"] = 7,
-            ["note"] = "why",
-            [new string('k', 5000)] = 1,
-        };
+        var arguments = new Dictionary<string, object?>(StringComparer.Ordinal) { [new string('k', 5000)] = 1 };
         for (var index = 0; index < 40; index++)
-            arguments["extra" + index.ToString(CultureInfo.InvariantCulture)] = "\ud83d\ude00";
+            arguments["extra" + index.ToString(CultureInfo.InvariantCulture)] = "safe, only a copy";
+        arguments["note"] = "why";
+        arguments["id"] = 7;
 
         var result = await client.CallToolAsync("hosting.delete", arguments, cancellationToken: app.Lifetime.ApplicationStopping)
             .ConfigureAwait(false);
 
         result.IsError.Should().NotBe(true);
-        message.Should().Contain("\"id\":7").And.Contain("(cut, 4800 more characters)").And.EndWith("\"...\":\"23 more arguments\"}");
-        message!.Length.Should().BeLessThan(2000);
+        message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\nArguments: {\"id\":7,\"note\":\"why\"}");
     }
 
     private sealed class UnserializableViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Unserializable")

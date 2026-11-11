@@ -13,7 +13,7 @@
 ## Deviations during implementation
 
 - A declined confirmation throws `BusinessRuleViolationException` (title `Not confirmed`, status 409), not a new `McpToolDeclinedException`: the analyzers require public exception types, and the existing mapper already gives the wanted error result.
-- The confirmation arguments are cut for each name and value at 200 characters and limited to 20, not cut at 500 characters for the whole JSON: one long argument, or many, could hide the others.
+- The confirmation shows only the arguments the contract declares (the generator passes their names to `EnsureConfirmed`), each value cut at 200 characters; it is not the whole arguments JSON cut at 500 characters: a long or an undeclared argument could hide the real ones.
 - A business-rule detail that the JSON context cannot serialize is left out on its own (with a logged warning), and common value types are registered; the first version dropped the whole payload.
 - Task 1 uses the existing violation payload (`type`, `status`) and no violation subtype.
 - Generated code was checked through the snapshot test and the compile of the test contracts; the projects do not write `.g.cs` files to `obj`.
