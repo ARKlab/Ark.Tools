@@ -38,13 +38,12 @@ Protocol (MCP) server. It is a design baseline, not an implementation commitment
 
 Research snapshot: **2026-08-23**, against the official
 [ModelContextProtocol/csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk)
-repository and its current `main` branch. The current stable package identified
-for HTTP hosting is `ModelContextProtocol.AspNetCore` **2.2.0**. The implementation
-must pin the selected stable version centrally and update the version and
-lockfiles together if a newer stable release is selected. The 2.2.0 API used
-below was confirmed against a `net10.0` host; the first Ark package is therefore
-`net10.0` only. The SDK's 2.2.0 ASP.NET Core project itself targets
-`net10.0;net9.0;net8.0`.
+repository and its current `main` branch. The stable package for HTTP hosting
+is `ModelContextProtocol.AspNetCore`. The implementation must pin the selected
+stable version centrally and update the version and lockfiles together if a
+newer stable release is selected. The API used below was confirmed against a
+`net10.0` host; the first Ark package is therefore `net10.0` only. The SDK's
+ASP.NET Core project itself targets `net10.0;net9.0;net8.0`.
 
 The SDK surface that this design relies on is:
 
@@ -596,8 +595,8 @@ Decisions:
    the user decides.
 2. **Multi round-trip requests only.** The helper throws the SDK
    `InputRequiredException` on the first call and reads `InputResponses` on the
-   second. This works in stateless mode and needs SDK 2.4.0 or later. The
-   legacy `ElicitAsync` path is not implemented.
+   second. This works in stateless mode. The legacy `ElicitAsync` path is not
+   implemented.
 3. **Fail open.** A client without multi round-trip support or without the
    elicitation capability runs the tool without confirmation. A refusal would
    make these tools unusable on most clients, and the HTTP `DELETE` endpoint has
@@ -610,6 +609,11 @@ Decisions:
    are shown, in the declared order: the tool ignores other arguments, so a
    model must not be able to use them to push the real ones out of view. Each
    value is cut at 200 characters, so one long value cannot hide the others.
+   The arguments are written with the relaxed JSON encoder, because a person
+   reads them: accents, apostrophes and markup characters are not escaped.
+   Quotes, backslashes and control characters stay escaped. The trade-off is
+   that other non-ASCII characters, bidirectional controls included, reach the
+   client as they are; the client must show the text as plain text.
 6. **Confirmation before dispatch.** The question comes before validation and
    the handler's authorization policies, because those run inside the mediator
    decorators. A call can thus be confirmed and then rejected. The tool-level
@@ -725,7 +729,7 @@ only the WebInterface host receives the MCP dependency.
 
 The following decisions close the design questions for the first implementation:
 
-1. **SDK and target:** use `ModelContextProtocol.AspNetCore` 2.2.0 with a
+1. **SDK and target:** use `ModelContextProtocol.AspNetCore` with a
    `net10.0` Ark MCP package. Upgrade only as a coordinated package and
    lockfile change.
 2. **Input model:** generate one argument per public bindable contract property.
