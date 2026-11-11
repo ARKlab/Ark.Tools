@@ -125,7 +125,9 @@ characters, because the arguments are written by the model and can be long (an
 attachment, for example). The cut is for each value and not for the whole
 message, so that one long argument cannot hide the others (changed during
 implementation after a security review finding; the first version cut the
-whole JSON at 500 characters). The default JSON encoder is used.
+whole JSON at 500 characters). The relaxed JSON encoder is used for this
+message, because a person reads it (decided after implementation; the error
+text for agents keeps the default encoder).
 
 **Error filter.** `McpToolErrors` lets `InputRequiredException` pass.
 

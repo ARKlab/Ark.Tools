@@ -121,7 +121,8 @@ The question uses MCP multi round-trip requests (protocol revision
 2. The client shows the user the tool name, its description and the call
    arguments. Only the arguments that the contract declares are shown, because
    the tool ignores the others. A value longer than 200 characters is cut, and
-   the message says how many characters are hidden.
+   the message says how many characters are hidden. The arguments are JSON
+   with readable text: accents and apostrophes are not escaped.
 3. The client calls the tool again with the answer. If the user accepted, the
    handler runs. If not, the call fails with `Not confirmed: the user declined
    '<tool>'. Do not retry without a new user request.`

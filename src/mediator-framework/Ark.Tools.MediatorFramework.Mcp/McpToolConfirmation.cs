@@ -4,6 +4,7 @@
 using Ark.Tools.Core.BusinessRuleViolation;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -18,6 +19,15 @@ public static class McpToolConfirmation
 {
     private const string _inputKey = "confirm";
     private const int _maxTextLength = 200;
+
+    // A person reads the message, so accents, apostrophes and markup characters are not escaped.
+    // Quotes, backslashes and control characters such as line breaks stay escaped.
+    private static readonly JsonSerializerOptions _readable = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+    };
 
     /// <summary>
     /// Returns when the call is confirmed or the client cannot be asked.
@@ -96,7 +106,7 @@ public static class McpToolConfirmation
                 json[name] = value.Length <= _maxTextLength ? _parse(value) : _cut(value);
             }
         }
-        return json.Count == 0 ? message : message + "\nArguments: " + json.ToJsonString();
+        return json.Count == 0 ? message : message + "\nArguments: " + json.ToJsonString(_readable);
     }
 
     private static string _cut(string text)

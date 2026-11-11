@@ -309,11 +309,12 @@ public sealed class McpHostingTests
         string? message = null;
         await using var client = await _createClientAsync(app, options: _answering("accept", m => message = m)).ConfigureAwait(false);
 
-        var result = await _deleteAsync(client, app).ConfigureAwait(false);
+        var result = await _deleteAsync(client, app, note: "Città d'oro <b>\n\"x\"").ConfigureAwait(false);
 
         result.IsError.Should().NotBe(true);
         fixture.State.Deleted.Should().Be(7);
-        message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\nArguments: {\"id\":7,\"note\":\"why\"}");
+        // A person reads the question: accents, apostrophes and markup stay readable; quotes and line breaks stay escaped.
+        message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\nArguments: {\"id\":7,\"note\":\"Città d'oro <b>\\n\\\"x\\\"\"}");
     }
 
     /// <summary>Verifies a long argument is cut on its own and does not hide the other arguments.</summary>
