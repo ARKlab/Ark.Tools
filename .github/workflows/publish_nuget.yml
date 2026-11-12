@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   deploy:
-    name: 'Nuget Push'
+    name: 'Build, test and pack'
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: 'ubuntu-26.04'
     env:
@@ -106,5 +106,38 @@ jobs:
     - name: 'Pack project'
       run: dotnet pack --configuration Release -p:Version=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
 
+    - name: 'Upload packages'
+      uses: actions/upload-artifact@v7
+      with:
+        name: packages
+        path: ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+        if-no-files-found: error
+
+  # Only this job can request an OIDC token, so build and test code cannot mint a NuGet key.
+  publish:
+    name: 'Nuget Push'
+    needs: deploy
+    runs-on: 'ubuntu-26.04'
+    permissions:
+      id-token: write # NuGet trusted publishing: the OIDC token is exchanged for a one-hour API key
+
+    steps:
+    - name: 'Download packages'
+      uses: actions/download-artifact@v8
+      with:
+        name: packages
+        path: ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+
+    - name: 'Install dotnet'
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: 'NuGet login'
+      id: nuget-login
+      uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0, pinned: this step handles the publish credential
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
     - name: 'Push package'
-      run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg -k ${{ secrets.NUGET_AUTH_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }} --skip-duplicate
+      run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}/*.nupkg -k ${{ steps.nuget-login.outputs.NUGET_API_KEY }} -s ${{ env.NUGET_SOURCE_URL }} --skip-duplicate
