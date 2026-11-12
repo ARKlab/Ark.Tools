@@ -79,8 +79,8 @@ MCP returns the same shape as the HTTP endpoints. Configure both with
 a fallback after yours, for the MCP protocol types.
 
 `McpToolSerializerOptions.Get(services)` builds the options the tools use, once per
-application: a read-only copy of the Minimal API options with the MCP protocol contracts,
-`McpAttachmentInput` and the MCP error contracts appended after your own resolvers. Under Native AOT, or with
+application: a read-only copy of the Minimal API options with the MCP protocol contracts
+and `McpAttachmentInput` appended after your own resolvers. Under Native AOT, or with
 `JsonSerializerIsReflectionEnabledByDefault=false`, add your contract types to
 the Minimal API resolver chain as you do for the HTTP endpoints; attachment tools
 need nothing more.
@@ -184,12 +184,13 @@ Validation failed: Validation failed:
 {"errors":{"Value":["The value is invalid."]}}
 ```
 
-The error details are serialized with the same options as the tool results,
-which are your Minimal API options (`ConfigureHttpJsonOptions`), always on one
-line. Your converters, source-generated contexts, encoder and naming policies
-thus apply. With a dictionary key policy, the keys of `errors` and of the
-business-rule details follow it (`errors.value` with camel case), which can
-differ from the HTTP ProblemDetails response of the same failure. Under Native AOT, add the types of
+The error details are serialized with `ArkProblemDetailsJson.GetOptions`, a
+copy of your Minimal API options (`ConfigureHttpJsonOptions`), always on one
+line. Your converters, source-generated contexts and encoder thus apply, and
+the JSON is the same as in the HTTP ProblemDetails response of the same
+failure. The names of the extensions and of the business-rule details follow
+your property naming policy; the keys of a dictionary, such as `errors`, are
+written as they are (see [Errors](errors.md#inspect-http-error-responses)). Under Native AOT, add the types of
 your business-rule details to your resolver chain, as for your contracts. The
 details are mapped as they are: they are not filtered or shortened, so keep
 business-rule violations small. If the options cannot serialize them (an

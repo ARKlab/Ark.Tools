@@ -68,10 +68,9 @@ accepts JSON options only at registration time, before the service provider
 exists, so the generated factory sets `McpServerToolCreateOptions.SerializerOptions`
 from `McpToolSerializerOptions.Get(services)`: one read-only copy of
 `IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per application, with
-`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and internal contexts for
-`McpAttachmentInput` and the error ProblemDetails appended to the resolver
-chain. Tool arguments, input schemas, structured results and error details
-therefore use the same JSON options as the
+`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and an internal context for
+`McpAttachmentInput` appended to the resolver chain. Tool arguments, input
+schemas and structured results therefore use the same JSON options as the
 Minimal API endpoints, and attachment tools still resolve the MCP protocol
 types when reflection-based serialization is disabled (Native AOT).
 
@@ -496,7 +495,7 @@ The error boundary is explicit:
 | Invalid JSON/schema or missing required argument | SDK validation/protocol error |
 | `McpProtocolException` | JSON-RPC protocol error |
 | `OperationCanceledException` after client cancellation | Cancellation; no fabricated tool result |
-| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on the last line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. The details are serialized with `McpToolSerializerOptions.Get(services)`, so the application's converters, contexts and naming policies apply; the HTTP ProblemDetails handler uses its own fixed context, so the two can differ (for example in dictionary key casing). Indentation is always off. The details are mapped as they are, with no filter and no size limit: business-rule violations are small, and the mapper must not change them. If the options cannot serialize the details, the result has the title and the detail only, with a logged warning. |
+| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on the last line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. The details are serialized with `ArkProblemDetailsJson.GetOptions(services)`, the same copy of the application's JSON options that the HTTP ProblemDetails handler uses, so both transports give the same JSON. Extension names and business-rule detail names follow the property naming policy; dictionary keys are written as they are (the copy has no dictionary key policy). The text is always on one line. The details are mapped as they are, with no filter and no size limit: business-rule violations are small, and the mapper must not change them. If the options cannot serialize the details, the result has the title and the detail only, with a logged warning. |
 | Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured ProblemDetails |
 | `InputRequiredException` (confirmation requested) | Passes through the filter; the SDK returns an input-required result |
 | Confirmation declined or not a valid answer | `CallToolResult.IsError = true` with `Not confirmed: ...` text (a business-rule violation with status 409) |

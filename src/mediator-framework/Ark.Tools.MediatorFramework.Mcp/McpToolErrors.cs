@@ -7,7 +7,6 @@ using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using NLog;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Tools.MediatorFramework.Mcp;
@@ -37,7 +36,7 @@ public static partial class McpToolErrors
     /// </remarks>
     public static CallToolResult ToToolResult(Exception exception)
     {
-        return ToToolResult(exception, McpToolErrorJsonSerializerContext.Default.Options);
+        return ToToolResult(exception, ArkProblemDetailsJson.GetOptions(services: null));
     }
 
     /// <summary>
@@ -47,8 +46,8 @@ public static partial class McpToolErrors
     /// </summary>
     /// <param name="exception">The mediator failure.</param>
     /// <param name="options">
-    /// The JSON options for the ProblemDetails and its details, normally <see cref="McpToolSerializerOptions.Get"/>,
-    /// which are the application's own options. They must have metadata for
+    /// The JSON options for the ProblemDetails and its details, normally <see cref="ArkProblemDetailsJson.GetOptions"/>,
+    /// which are the application's own options, as the HTTP ProblemDetails handler uses them. They must have metadata for
     /// <see cref="Microsoft.AspNetCore.Mvc.ProblemDetails"/>.
     /// </param>
     /// <returns>An MCP error result safe to return to a client.</returns>
@@ -56,7 +55,7 @@ public static partial class McpToolErrors
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(exception);
-        var mappedProblemDetails = ExceptionProblemDetailsMapper.Map(exception);
+        var mappedProblemDetails = ExceptionProblemDetailsMapper.Map(exception, options.PropertyNamingPolicy);
         var clientVisible = mappedProblemDetails.Status is >= 400 and < 500;
         if (!clientVisible)
             _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an MCP tool call.");
@@ -113,7 +112,7 @@ public static partial class McpToolErrors
             .Where(property => extensionKeys.Contains(property.Name))
             // Indented text is written again on one line: the details must stay on the last line.
             .Select(property => "\"" + JsonEncodedText.Encode(property.Name) + "\":" + (indented
-                ? JsonSerializer.Serialize(property.Value, McpToolErrorJsonSerializerContext.Default.JsonElement)
+                ? JsonSerializer.Serialize(property.Value, (JsonTypeInfo<JsonElement>)ArkProblemDetailsJson.GetOptions(services: null).GetTypeInfo(typeof(JsonElement)))
                 : property.Value.GetRawText()))) + "}";
     }
 
@@ -143,29 +142,8 @@ public static partial class McpToolErrors
             catch (Exception exception)
             {
                 // The application's JSON options, so its converters and contexts apply to the details.
-                var services = context.Services ?? context.Server.Services;
-                return services is null ? ToToolResult(exception) : ToToolResult(exception, McpToolSerializerOptions.Get(services));
+                return ToToolResult(exception, ArkProblemDetailsJson.GetOptions(context.Services ?? context.Server.Services));
             }
         };
-    }
-
-    [JsonSourceGenerationOptions(
-        RespectNullableAnnotations = true,
-        RespectRequiredConstructorParameters = true)]
-    [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
-    [JsonSerializable(typeof(Dictionary<string, string[]>))]
-    [JsonSerializable(typeof(Dictionary<string, object>))]
-    [JsonSerializable(typeof(JsonElement))]
-    [JsonSerializable(typeof(bool))]
-    [JsonSerializable(typeof(long))]
-    [JsonSerializable(typeof(double))]
-    [JsonSerializable(typeof(decimal))]
-    [JsonSerializable(typeof(Guid))]
-    [JsonSerializable(typeof(DateTime))]
-    [JsonSerializable(typeof(DateTimeOffset))]
-    [JsonSerializable(typeof(string[]))]
-    [JsonSerializable(typeof(List<string>))]
-    internal sealed partial class McpToolErrorJsonSerializerContext : JsonSerializerContext
-    {
     }
 }

@@ -5,16 +5,15 @@ using Ark.Tools.AspNetCore.ProblemDetails;
 using Ark.Tools.Compliance;
 
 using Microsoft.AspNetCore.Http;
-
-using NLog;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Ark.Tools.MediatorFramework.AzureFunctions;
 
 /// <summary>Creates HTTP results for generated Azure Functions endpoints.</summary>
 public static class ArkAzureFunctionsResults
 {
-    private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
     /// <summary>Reads the first HTTP ETag precondition.</summary>
     /// <param name="context">The current HTTP context.</param>
     /// <returns>The unquoted token, the wildcard, or <see langword="null"/>.</returns>
@@ -27,23 +26,37 @@ public static class ArkAzureFunctionsResults
         return context.Request.Headers.IfNoneMatch.ToString().Trim() == "*" ? "*" : null;
     }
 
-    /// <summary>Maps an application exception to a safe ProblemDetails result.</summary>
+    /// <summary>Maps an application exception to a ProblemDetails result.</summary>
     /// <param name="exception">The exception to map.</param>
     /// <returns>A ProblemDetails result.</returns>
+    /// <remarks>
+    /// The shared HTTP ProblemDetails handler writes the response. The exception message and stack trace are
+    /// included only in the <c>Development</c> environment or with <c>ArkProblemDetailsOptions.IncludeExceptionDetails</c>.
+    /// </remarks>
     public static IResult FromException(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
-        var problemDetails = ExceptionProblemDetailsMapper.Map(exception);
-        if (problemDetails.Status is null or >= 500)
+        return new ExceptionResult(exception);
+    }
+
+    // The shared handler writes the response, so Azure Functions and Minimal API give the same JSON.
+    private sealed class ExceptionResult(Exception exception) : IResult
+    {
+        public async Task ExecuteAsync(HttpContext httpContext)
         {
-            _logger.Error(exception, CultureInfo.InvariantCulture, "Unhandled exception while processing an Azure Functions request.");
+            var services = httpContext.RequestServices;
+            var handler = new ArkProblemDetailsExceptionHandler(
+                services.GetService<IHostEnvironment>(),
+                services.GetService<IOptions<ArkProblemDetailsOptions>>());
+            try
+            {
+                await handler.TryHandleAsync(httpContext, exception, httpContext.RequestAborted).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (httpContext.RequestAborted.IsCancellationRequested)
+            {
+                // The client went away: there is no one to write the error to.
+            }
         }
-        return Results.Problem(
-            statusCode: problemDetails.Status ?? StatusCodes.Status500InternalServerError,
-            title: problemDetails.Title,
-            type: problemDetails.Type,
-            detail: problemDetails.Detail,
-            extensions: problemDetails.Extensions);
     }
 
     /// <summary>Applies the response ETag and conditional GET behavior.</summary>

@@ -17,6 +17,7 @@ using MvcProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.Json;
 
 namespace Ark.Tools.AspNetCore.ProblemDetails;
 
@@ -30,19 +31,35 @@ public static class ExceptionProblemDetailsMapper
     /// <returns>The mapped response.</returns>
     public static MvcProblemDetails Map(Exception exception)
     {
+        return Map(exception, propertyNamingPolicy: null);
+    }
+
+    /// <summary>
+    /// Creates a ProblemDetails response for an application exception, with the names of the extensions and of
+    /// the business-rule details converted by <paramref name="propertyNamingPolicy"/>.
+    /// </summary>
+    /// <param name="exception">The exception to map.</param>
+    /// <param name="propertyNamingPolicy">
+    /// The property naming policy of the JSON options that write the response, or <see langword="null"/> to keep
+    /// the names as they are. Extension names and business-rule detail names are properties; the keys of
+    /// dictionaries, such as the validation errors, are data and are never converted.
+    /// </param>
+    /// <returns>The mapped response.</returns>
+    public static MvcProblemDetails Map(Exception exception, JsonNamingPolicy? propertyNamingPolicy)
+    {
         ArgumentNullException.ThrowIfNull(exception);
 
         return exception switch
         {
             PolicyAuthorizationException => _create(StatusCodes.Status403Forbidden),
             EntityNotFoundException => _create(StatusCodes.Status404NotFound),
-            ValidationException validation => _createValidation(validation),
+            ValidationException validation => _createValidation(validation, propertyNamingPolicy),
             EntityTagMismatchException => _create(StatusCodes.Status412PreconditionFailed),
             OptimisticConcurrencyException => _create(StatusCodes.Status409Conflict),
             SqlException sql => _create(SqlExceptionHandler.IsPrimaryKeyOrUniqueKeyViolation(sql)
                 ? StatusCodes.Status409Conflict
                 : StatusCodes.Status500InternalServerError),
-            BusinessRuleViolationException businessRule => _createBusinessRuleViolation(businessRule),
+            BusinessRuleViolationException businessRule => _createBusinessRuleViolation(businessRule, propertyNamingPolicy),
             NotImplementedException => _create(StatusCodes.Status501NotImplemented),
             HttpRequestException => _create(StatusCodes.Status503ServiceUnavailable),
             _ => _create(StatusCodes.Status500InternalServerError),
@@ -58,7 +75,12 @@ public static class ExceptionProblemDetailsMapper
         };
     }
 
-    private static MvcProblemDetails _createValidation(ValidationException exception)
+    private static string _name(JsonNamingPolicy? policy, string name)
+    {
+        return policy?.ConvertName(name) ?? name;
+    }
+
+    private static MvcProblemDetails _createValidation(ValidationException exception, JsonNamingPolicy? policy)
     {
         var problemDetails = new MvcProblemDetails
         {
@@ -67,7 +89,7 @@ public static class ExceptionProblemDetailsMapper
             Title = "Validation failed",
             Detail = exception.Message,
         };
-        problemDetails.Extensions["errors"] = exception.Errors
+        problemDetails.Extensions[_name(policy, "errors")] = exception.Errors
             .GroupBy(static failure => failure.PropertyName, StringComparer.Ordinal)
             .ToDictionary(
                 static group => group.Key,
@@ -76,20 +98,24 @@ public static class ExceptionProblemDetailsMapper
         return problemDetails;
     }
 
-    private static MvcProblemDetails _createBusinessRuleViolation(BusinessRuleViolationException exception)
+    private static MvcProblemDetails _createBusinessRuleViolation(BusinessRuleViolationException exception, JsonNamingPolicy? policy)
     {
         var violation = exception.BusinessRuleViolation;
         var violationType = violation.GetType();
         if (!_businessRuleViolationAccessors.TryGetValue(violationType, out var accessors))
             accessors = _businessRuleViolationAccessors.GetOrAdd(violationType, _createAccessors(violationType));
-        var payload = accessors
-            .ToDictionary(
-                static accessor => accessor.Name,
-                accessor => accessor.GetValue(violation),
-                StringComparer.Ordinal);
-        payload["type"] = violation.GetType().Name;
-        payload["title"] = violation.Title;
-        payload["status"] = violation.Status;
+        // "type", "title" and "status" describe the violation itself and are reserved. A naming policy can give
+        // two properties the same name (URL and Url): the first one stays, and the response does not fail.
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            [_name(policy, "type")] = violation.GetType().Name,
+            [_name(policy, "title")] = violation.Title,
+            [_name(policy, "status")] = violation.Status,
+        };
+        foreach (var accessor in accessors)
+        {
+            payload.TryAdd(_name(policy, accessor.Name), accessor.GetValue(violation));
+        }
 
         var problemDetails = new MvcProblemDetails
         {
@@ -98,7 +124,7 @@ public static class ExceptionProblemDetailsMapper
             Title = violation.Title,
             Detail = violation.Detail,
         };
-        problemDetails.Extensions["businessRuleViolation"] = payload;
+        problemDetails.Extensions[_name(policy, "businessRuleViolation")] = payload;
         return problemDetails;
     }
 

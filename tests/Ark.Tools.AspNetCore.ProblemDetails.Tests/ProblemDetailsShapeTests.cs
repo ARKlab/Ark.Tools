@@ -7,6 +7,7 @@ using Ark.Tools.Core.BusinessRuleViolation;
 using AwesomeAssertions;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -94,6 +95,106 @@ public sealed class ProblemDetailsShapeTests
 
         failures.Should().BeEmpty();
     }
+
+    [TestMethod]
+    public async Task NamesFollowThePropertyPolicyAndDictionariesStayAsTheyAre()
+    {
+        // Extension names and business-rule detail names are properties. Real dictionaries are data.
+        var services = new ServiceCollection();
+        services.ConfigureHttpJsonOptions(static options =>
+        {
+            options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+            options.SerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.SnakeCaseLower;
+        });
+        var provider = services.BuildServiceProvider();
+        await using var __provider = provider.ConfigureAwait(false);
+
+        var violation = await _handleAsync(provider, new BusinessRuleViolationException(new NamedViolation())).ConfigureAwait(false);
+        var validation = await _handleAsync(provider, new FluentValidation.ValidationException(
+            [new FluentValidation.Results.ValidationFailure("FirstName", "Required.")])).ConfigureAwait(false);
+
+        violation.GetProperty("trace_id").GetString().Should().Be("trace-123");
+        var detail = violation.GetProperty("business_rule_violation");
+        detail.GetProperty("max_amount").GetInt32().Should().Be(5);
+        detail.GetProperty("limit").GetProperty("unit_code").GetString().Should().Be("EUR");
+        detail.GetProperty("data").GetProperty("KeepMe").GetInt32().Should().Be(1);
+        validation.GetProperty("errors").GetProperty("FirstName")[0].GetString().Should().Be("Required.");
+    }
+
+    [TestMethod]
+    public async Task DetailNamesThatCollideAfterThePolicyDoNotFailTheResponse()
+    {
+        var services = new ServiceCollection();
+        services.ConfigureHttpJsonOptions(static _ => { });
+        var provider = services.BuildServiceProvider();
+        await using var __provider = provider.ConfigureAwait(false);
+
+        var root = await _handleAsync(provider, new BusinessRuleViolationException(new CollidingViolation())).ConfigureAwait(false);
+
+        // "type", "title" and "status" are reserved for the violation itself; of two equal names the first one stays.
+        var detail = root.GetProperty("businessRuleViolation");
+        detail.GetProperty("type").GetString().Should().Be(nameof(CollidingViolation));
+        detail.GetProperty("url").GetString().Should().BeOneOf("upper", "mixed");
+    }
+
+    [TestMethod]
+    public async Task DetailsThatCannotBeSerializedLeaveTheErrorAndTheTraceId()
+    {
+        var services = new ServiceCollection();
+        services.ConfigureHttpJsonOptions(static _ => { });
+        var provider = services.BuildServiceProvider();
+        await using var __provider = provider.ConfigureAwait(false);
+
+        var root = await _handleAsync(provider, new BusinessRuleViolationException(new CyclicViolation())).ConfigureAwait(false);
+
+        root.GetProperty("title").GetString().Should().Be("Cyclic");
+        root.GetProperty("status").GetInt32().Should().Be(StatusCodes.Status400BadRequest);
+        root.GetProperty("traceId").GetString().Should().Be("trace-123");
+        root.TryGetProperty("businessRuleViolation", out _).Should().BeFalse();
+    }
+
+    private sealed class CollidingViolation() : BusinessRuleViolation("Colliding")
+    {
+        public string URL { get; } = "upper";
+
+        public string Url { get; } = "mixed";
+
+        public string Type { get; } = "own";
+    }
+
+    private sealed class CyclicViolation() : BusinessRuleViolation("Cyclic")
+    {
+        public Loop Loop { get; } = new();
+    }
+
+    private sealed class Loop
+    {
+        public Loop Self => this;
+    }
+
+    private static async Task<JsonElement> _handleAsync(IServiceProvider provider, Exception exception)
+    {
+        var httpContext = new DefaultHttpContext { RequestServices = provider, TraceIdentifier = "trace-123" };
+        httpContext.Response.Body = new MemoryStream();
+        var handled = await new ArkProblemDetailsExceptionHandler()
+            .TryHandleAsync(httpContext, exception, httpContext.RequestAborted).ConfigureAwait(false);
+        handled.Should().BeTrue();
+        httpContext.Response.Body.Position = 0;
+        using var document = await JsonDocument.ParseAsync(httpContext.Response.Body, cancellationToken: httpContext.RequestAborted)
+            .ConfigureAwait(false);
+        return document.RootElement.Clone();
+    }
+
+    private sealed class NamedViolation() : BusinessRuleViolation("Named")
+    {
+        public int MaxAmount { get; } = 5;
+
+        public NamedLimit Limit { get; } = new("EUR");
+
+        public Dictionary<string, int> Data { get; } = new(StringComparer.Ordinal) { ["KeepMe"] = 1 };
+    }
+
+    private sealed record NamedLimit(string UnitCode);
 
     [TestMethod]
     public async Task SerializesProblemDetailsWithExpectedProperties()
