@@ -32,7 +32,7 @@
     <!-- Build tools -->
     
     <!-- Security patches for transitive dependencies -->
-    <PackageVersion Include="MailKit" Version="4.18.2" />
+    <PackageVersion Include="MailKit" Version="5.0.0" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.15" />
     <!-- Transitive pin above the vulnerable range (GHSA-6527-9fp8-r4x6); Ark.Tools.Reqnroll brings it in through AwesomeAssertions.Web. -->
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.15" />

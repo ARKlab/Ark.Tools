@@ -650,14 +650,10 @@
         "resolved": "1.0.52",
         "contentHash": "oNv2JtYXhpdJrX63nibx1JT3uCESOBQ1LAk7Dtz/sr0+laW0KRM6eKp4CZ3MHDR2siIkKsY8MmUkeP5DKkQQ5w=="
       },
-      "MimeKit": {
+      "MimeKit.Core": {
         "type": "Transitive",
-        "resolved": "4.18.2",
-        "contentHash": "aYnwCCq+ZgQIsnHSJd3TMeGqf/Rz/9jYEItXpOoG3E2REOCZtLishwBSDFl2wQ/W2SB5wBsvE38DgHZ0IEyz4Q==",
-        "dependencies": {
-          "BouncyCastle.Cryptography": "2.7.0",
-          "System.Security.Cryptography.Pkcs": "10.0.13"
-        }
+        "resolved": "5.0.0",
+        "contentHash": "0RLaVyex/BjUGqiw9xtGwzyCMaBcsu33Rth61bDCeVeQaaQK7tjcy4TA+nHKTqwUdp4OGd+gnhuq2fuR+c20qA=="
       },
       "Mono.TextTemplating": {
         "type": "Transitive",
@@ -1503,11 +1499,11 @@
       },
       "MailKit": {
         "type": "CentralTransitive",
-        "requested": "[4.18.2, )",
-        "resolved": "4.18.2",
-        "contentHash": "ofqddpSbdrD00NqTD0ZyVfKvrl/ZZ70VFFEQ+DuR8r8CdbY3U02/sdb0CSQBNUqJifsXfVHIwRe1ToR2MvJJkw==",
+        "requested": "[5.0.0, )",
+        "resolved": "5.0.0",
+        "contentHash": "PG6hnsklTzd/iK9A6j03OxDOas9mh8zOBkbPzcsLmFOODE8Hw3HTy7HAKiJvVHXNpKc3/KMVG/4QvOAKCBbGhA==",
         "dependencies": {
-          "MimeKit": "4.18.2"
+          "MimeKit.Core": "5.0.0"
         }
       },
       "MessagePack": {
