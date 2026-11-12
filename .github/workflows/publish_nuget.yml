@@ -62,7 +62,7 @@ jobs:
           --health-timeout=2s
           --health-retries=60
       sftp:
-        image: atmoz/sftp:alpine@sha256:43dd1c023cf1bae487127d4b54660b0aee6e94c188a6599be36fb89ba115f961
+        image: atmoz/sftp:alpine@sha256:c5fb9e4beb8b7054a4c0b65c5e11df47cc20da95ad6002e88aecff62bab06372
         ports:
           - 2222:22
         # Service containers take no command; the image reads the same user spec from SFTP_USERS.

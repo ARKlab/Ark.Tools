@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Security
 
-- `Ark.Tools.Reqnroll` now depends on `Microsoft.AspNetCore.WebUtilities` 2.3.14, which fixes GHSA-6527-9fp8-r4x6; the vulnerable 2.3.0 came in transitively through `AwesomeAssertions.Web`.
+- `Ark.Tools.Reqnroll` now depends on `Microsoft.AspNetCore.WebUtilities` 10.0.15, which fixes GHSA-6527-9fp8-r4x6; the vulnerable 2.3.0 came in transitively through `AwesomeAssertions.Web`.
 
 ## [7.0.1] - 2026-10-26
 

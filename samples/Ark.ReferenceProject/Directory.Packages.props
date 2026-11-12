@@ -47,16 +47,16 @@
     <PackageVersion Include="Microsoft.SqlServer.DacFx" Version="170.5.96" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.13.0" />
     <!-- Transitive pin above the vulnerable range (GHSA-6527-9fp8-r4x6); Ark.Tools.Reqnroll brings it in through AwesomeAssertions.Web. -->
-    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.34" />
+    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.15" />
     <PackageVersion Include="netDumbster" Version="3.1.1" />
     <PackageVersion Include="Polly.Core" Version="8.9.1" />
     
     <!-- Testing packages -->
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.15" />
-    <PackageVersion Include="MSTest.TestAdapter" Version="4.5.2" />
-    <PackageVersion Include="MSTest.TestFramework" Version="4.5.2" />
-    <PackageVersion Include="MSTest.Analyzers" Version="4.5.2" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.5.3" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.5.3" />
+    <PackageVersion Include="MSTest.Analyzers" Version="4.5.3" />
     <PackageVersion Include="Moq" Version="4.21.0" />
     <PackageVersion Include="NodaTime.Testing" Version="3.3.7" />
     <PackageVersion Include="Reqnroll.MsTest" Version="3.3.4" />
