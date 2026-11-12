@@ -18,23 +18,25 @@ public static class McpToolConfirmation
 {
     private const string _inputKey = "confirm";
     private const int _maxTextLength = 200;
+    private const int _maxArgumentDepth = 32;
 
     /// <summary>
     /// Returns when the call is confirmed or the client cannot be asked.
     /// Otherwise requests the confirmation from the client, or fails the call when the user declined.
     /// </summary>
     /// <param name="context">The call-tool request context.</param>
-    /// <param name="toolName">The tool name shown to the user.</param>
-    /// <param name="description">The tool description shown to the user, if any.</param>
-    /// <param name="argumentNames">The arguments the tool declares; only these are shown to the user.</param>
+    /// <param name="toolName">The tool name, for the error when the user declines.</param>
+    /// <param name="message">The question shown to the user.</param>
+    /// <param name="argumentNames">The arguments the tool declares; only these are shown to the user, below the question.</param>
     public static void EnsureConfirmed(
         RequestContext<CallToolRequestParams> context,
         string toolName,
-        string? description,
+        string message,
         params string[] argumentNames)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentException.ThrowIfNullOrEmpty(toolName);
+        ArgumentException.ThrowIfNullOrEmpty(message);
         ArgumentNullException.ThrowIfNull(argumentNames);
 
         if (context.Params?.InputResponses?.TryGetValue(_inputKey, out var response) is true)
@@ -58,7 +60,7 @@ public static class McpToolConfirmation
             {
                 [_inputKey] = InputRequest.ForElicitation(new ElicitRequestParams
                 {
-                    Message = _message(toolName, description, argumentNames, context.Params?.Arguments, context.Services ?? server.Services),
+                    Message = _message(message, argumentNames, context.Params?.Arguments, context.Services ?? server.Services),
                     RequestedSchema = new ElicitRequestParams.RequestSchema(),
                 }),
             });
@@ -77,11 +79,9 @@ public static class McpToolConfirmation
         }
     }
 
-    private static string _message(string toolName, string? description, string[] argumentNames, IDictionary<string, JsonElement>? arguments, IServiceProvider? services)
+    private static string _message(string message, string[] argumentNames, IDictionary<string, JsonElement>? arguments, IServiceProvider? services)
     {
-        var message = "Confirm " + toolName;
-        if (!string.IsNullOrEmpty(description))
-            message += ": " + description;
+        var options = services is null ? null : McpToolSerializerOptions._getReadable(services);
         // The model writes the arguments. Only the declared ones are shown, in the declared order: the tool
         // ignores the others, so they must not push the real ones out of the user's view. A value can be long
         // (an attachment, for example), so each one is cut on its own.
@@ -90,17 +90,17 @@ public static class McpToolConfirmation
         {
             foreach (var name in argumentNames.Where(arguments.ContainsKey))
             {
-                var value = arguments[name].GetRawText();
-                json[name] = value.Length <= _maxTextLength ? _parse(value) : _cut(value);
+                var node = _parse(arguments[name].GetRawText());
+                // Measured on the compact form, so padding inside an object cannot push its content past the cut.
+                var text = node?.ToJsonString(options) ?? "null";
+                json[name] = text.Length <= _maxTextLength ? node : _cut(text);
             }
         }
-        return json.Count == 0 ? message : message + "\nArguments: " + json.ToJsonString(services is null ? null : McpToolSerializerOptions._getReadable(services));
+        return json.Count == 0 ? message : message + "\n" + json.ToJsonString(options);
     }
 
     private static string _cut(string text)
     {
-        if (text.Length <= _maxTextLength)
-            return text;
         // Not in the middle of a surrogate pair.
         var length = char.IsHighSurrogate(text[_maxTextLength - 1]) ? _maxTextLength - 1 : _maxTextLength;
         return string.Concat(text.AsSpan(0, length), "... (cut, ", (text.Length - length).ToString(CultureInfo.InvariantCulture), " more characters)");
@@ -110,11 +110,11 @@ public static class McpToolConfirmation
     {
         try
         {
-            return JsonNode.Parse(json);
+            return JsonNode.Parse(json, documentOptions: new JsonDocumentOptions { MaxDepth = _maxArgumentDepth });
         }
         catch (JsonException)
         {
-            // Nested deeper than the parser allows: show the raw text.
+            // Nested too deep to write inside the message: show the raw text.
             return json;
         }
     }

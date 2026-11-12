@@ -51,6 +51,11 @@ public sealed class McpHostingTests
                 "hosting.validation",
             ]);
 
+        // The hints derived from the HTTP verb reach the client.
+        var delete = tools.Single(static tool => tool.Name == "hosting.delete").ProtocolTool.Annotations!;
+        delete.DestructiveHint.Should().BeTrue();
+        delete.IdempotentHint.Should().BeTrue();
+
         var query = tools.Single(static tool => tool.Name == "hosting.query");
         query.ProtocolTool.OutputSchema.Should().NotBeNull();
         query.ProtocolTool.OutputSchema!.Value.GetProperty("type").GetString().Should().Be("object");
@@ -126,6 +131,9 @@ public sealed class McpHostingTests
 
         toolOptions.IsReadOnly.Should().BeTrue();
         McpToolSerializerOptions.Get(provider).Should().BeSameAs(toolOptions);
+        // The error filter asks with the request's provider: it must not get a new copy for each request.
+        using var scope = provider.CreateScope();
+        McpToolSerializerOptions.Get(scope.ServiceProvider).Should().BeSameAs(toolOptions);
         toolOptions.TypeInfoResolverChain[0].Should().BeSameAs(applicationResolver);
         toolOptions.GetTypeInfo(typeof(McpAttachmentInput)).Should().NotBeNull();
         toolOptions.GetTypeInfo(typeof(EmbeddedResourceBlock)).Should().NotBeNull();
@@ -261,6 +269,28 @@ public sealed class McpHostingTests
         result.StructuredContent!.Value.GetProperty("businessRuleViolation").GetProperty("Limit").GetString().Should().Be("12.50 EUR");
     }
 
+    /// <summary>Verifies indented application JSON options do not spread the details or the question over more lines.</summary>
+    [TestMethod]
+    public async Task McpTextStaysCompactWithIndentedApplicationOptions()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = fixture.BuildMcpHost(static services => services.ConfigureHttpJsonOptions(
+            static options => options.SerializerOptions.WriteIndented = true));
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        string? message = null;
+        await using var client = await _createClientAsync(app, options: _answering("accept", m => message = m)).ConfigureAwait(false);
+
+        var error = await client.CallToolAsync(
+            "hosting.businessrule",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "invalid" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var deleted = await _deleteAsync(client, app).ConfigureAwait(false);
+
+        ((TextContentBlock)error.Content[0]).Text.Split('\n').Should().HaveCount(2);
+        deleted.IsError.Should().NotBe(true);
+        message!.Split('\n').Should().HaveCount(2);
+    }
+
     /// <summary>Verifies one detail that fails during serialization does not remove the other details.</summary>
     [TestMethod]
     public async Task McpErrorLeavesOutOnlyTheDetailThatFails()
@@ -349,7 +379,7 @@ public sealed class McpHostingTests
             .ConfigureAwait(false);
 
         result.IsError.Should().NotBe(true);
-        message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\nArguments: {\"id\":7,\"note\":\"why\"}");
+        message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\n{\"id\":7,\"note\":\"why\"}");
     }
 
     /// <summary>Verifies the error formatting does not change the violation's own data and survives a cyclic detail.</summary>
@@ -392,7 +422,7 @@ public sealed class McpHostingTests
         result.IsError.Should().NotBe(true);
         fixture.State.Deleted.Should().Be(7);
         // A person reads the question: accents, apostrophes and markup stay readable; quotes and line breaks stay escaped.
-        message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\nArguments: {\"id\":7,\"note\":\"Città d'oro <b>\\n\\\"x\\\"\"}");
+        message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\n{\"id\":7,\"note\":\"Città d'oro <b>\\n\\\"x\\\"\"}");
     }
 
     /// <summary>Verifies a long argument is cut on its own and does not hide the other arguments.</summary>

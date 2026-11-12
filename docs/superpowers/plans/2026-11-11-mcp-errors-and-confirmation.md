@@ -18,6 +18,8 @@
 - Task 1 uses the existing violation payload (`type`, `status`) and no violation subtype.
 - Generated code was checked through the snapshot test and the compile of the test contracts; the projects do not write `.g.cs` files to `obj`.
 
+- After review by the owner: the error details and the confirmation arguments use the application's JSON options (`McpToolSerializerOptions`), each detail is serialized on its own, `ConfirmMessage` on `[McpTool]` replaces the default English question, the arguments have no `Arguments:` label, and no request state is sent.
+
 ## Global Constraints
 
 - No new package dependency.

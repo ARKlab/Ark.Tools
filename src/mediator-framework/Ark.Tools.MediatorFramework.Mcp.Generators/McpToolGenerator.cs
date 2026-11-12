@@ -568,7 +568,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
             location)
         {
             IsSelfTyped = IsSelfTyped(type),
-            Confirm = ContractSymbols.NamedBool(toolAttribute, "Confirm", isDelete),
+            ConfirmMessage = ContractSymbols.NamedString(toolAttribute, "ConfirmMessage"),
+            Confirm = ContractSymbols.NamedBool(toolAttribute, "Confirm", isDelete || ContractSymbols.NamedString(toolAttribute, "ConfirmMessage") is not null),
             ConstructorSetsRequiredMembers = constructor.GetAttributes().Any(attribute =>
                 attribute.AttributeClass._isFullName("System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute")),
         };
@@ -910,7 +911,7 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         if (context is not null)
             builder.Append("            global::Ark.Tools.MediatorFramework.Mcp.McpToolConfirmation.EnsureConfirmed(").Append(context)
                 .Append(", \"").Append(Escape(model.Name)).Append("\", ")
-                .Append(tool.Description is null ? "null" : Literal(tool.Description))
+                .Append(Literal(model.ConfirmMessage ?? "Confirm " + model.Name + (tool.Description is null ? string.Empty : ": " + tool.Description)))
                 .Append(string.Concat(model.Properties.Select(static property => ", \"" + ToParameterName(property.Name).TrimStart('@') + "\"")))
                 .AppendLine(");");
         builder.Append("            var ").Append(request).Append(" = new ").Append(model.TypeFullName).Append("(");
@@ -1092,6 +1093,8 @@ public sealed class McpToolGenerator : IIncrementalGenerator
         public bool IsSelfTyped { get; init; }
 
         public bool Confirm { get; init; }
+
+        public string? ConfirmMessage { get; init; }
 
         public bool ConstructorSetsRequiredMembers { get; init; }
 

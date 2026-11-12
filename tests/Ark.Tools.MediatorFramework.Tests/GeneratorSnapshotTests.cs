@@ -202,7 +202,7 @@ public sealed class GeneratorSnapshotTests
             public sealed record ReplaceBook(int Id) : ICommand<ReplaceBook>;
             [McpTool(Name = "books.create"), HttpEndpoint("POST", "/books")]
             public sealed record CreateBook(int Id) : ICommand<CreateBook>;
-            [McpTool(Name = "books.send", Confirm = true), HttpEndpoint("POST", "/books/send")]
+            [McpTool(Name = "books.send", ConfirmMessage = "Inviare il libro?"), HttpEndpoint("POST", "/books/send")]
             public sealed record SendBook(string Context) : ICommand<SendBook>;
             [ArkGenerateMcpToolsForAssembly(typeof(ContractMarker))]
             public partial class McpContext { }
@@ -220,15 +220,15 @@ public sealed class GeneratorSnapshotTests
 
         Tool("books.delete").Should().Contain("Idempotent = true").And.Contain("Destructive = true")
             .And.Contain(contextParameter + "context,")
-            .And.Contain("global::Ark.Tools.MediatorFramework.Mcp.McpToolConfirmation.EnsureConfirmed(context, \"books.delete\", \"Deletes a book.\", \"id\");");
+            .And.Contain("global::Ark.Tools.MediatorFramework.Mcp.McpToolConfirmation.EnsureConfirmed(context, \"books.delete\", \"Confirm books.delete: Deletes a book.\", \"id\");");
         Tool("books.remove").Should().Contain("Idempotent = true")
-            .And.Contain("EnsureConfirmed(context, \"books.remove\", null, \"id\");");
+            .And.Contain("EnsureConfirmed(context, \"books.remove\", \"Confirm books.remove\", \"id\");");
         Tool("books.purge").Should().Contain("Idempotent = false").And.NotContain("EnsureConfirmed").And.NotContain("RequestContext");
         Tool("books.replace").Should().Contain("Idempotent = true").And.Contain("Destructive = true").And.NotContain("EnsureConfirmed");
         Tool("books.create").Should().Contain("Idempotent = false").And.Contain("Destructive = true").And.NotContain("EnsureConfirmed");
         // The contract's own "context" parameter keeps its name; the adapter's identifier gives way.
         Tool("books.send").Should().Contain(contextParameter + "_context,")
-            .And.Contain("EnsureConfirmed(_context, \"books.send\", null, \"context\");");
+            .And.Contain("EnsureConfirmed(_context, \"books.send\", \"Inviare il libro?\", \"context\");");
     }
 
     [TestMethod]

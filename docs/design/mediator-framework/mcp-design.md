@@ -496,7 +496,7 @@ The error boundary is explicit:
 | Invalid JSON/schema or missing required argument | SDK validation/protocol error |
 | `McpProtocolException` | JSON-RPC protocol error |
 | `OperationCanceledException` after client cancellation | Cancellation; no fabricated tool result |
-| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on the last line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. The details are serialized with `McpToolSerializerOptions.Get(services)`, so the application's converters and contexts apply, as in the HTTP API. Each detail is serialized on its own: one that those options cannot serialize, or that is nested deeper than 32 levels (an MCP response cannot be written past 64), is left out of both with a logged warning. |
+| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on the last line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. The details are serialized with `McpToolSerializerOptions.Get(services)`, so the application's converters, contexts and naming policies apply; the HTTP ProblemDetails handler uses its own fixed context, so the two can differ (for example in dictionary key casing). Indentation is always off. Each detail is serialized on its own: one that those options cannot serialize, or that is nested deeper than 32 levels (an MCP response cannot be written past 64), is left out of both with a logged warning. |
 | Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured ProblemDetails |
 | `InputRequiredException` (confirmation requested) | Passes through the filter; the SDK returns an input-required result |
 | Confirmation declined or not a valid answer | `CallToolResult.IsError = true` with `Not confirmed: ...` text (a business-rule violation with status 409) |
@@ -605,7 +605,13 @@ Decisions:
 4. **Not a security control.** The server cannot know that a user saw the
    question, and the confirmation is not bound to the arguments. Authorization
    stays in the decorators.
-5. **Declared arguments in the message.** The user must see which item is
+5. **The question is text for a person.** The default is the English
+   `Confirm <tool>: <description>`; `ConfirmMessage` on `[McpTool]` replaces it
+   and turns `Confirm` on. The client shows the text as it is and no model
+   translates it, so a product in another language sets its own question. The
+   arguments follow on the next line with no label. A language taken from the
+   request was rejected: MCP has no language negotiation.
+6. **Declared arguments in the message.** The user must see which item is
    affected. The generator passes the declared argument names, and only those
    are shown, in the declared order: the tool ignores other arguments, so a
    model must not be able to use them to push the real ones out of view. Each
@@ -615,11 +621,11 @@ Decisions:
    Quotes, backslashes and control characters stay escaped. The trade-off is
    that other non-ASCII characters, bidirectional controls included, reach the
    client as they are; the client must show the text as plain text.
-6. **Confirmation before dispatch.** The question comes before validation and
+7. **Confirmation before dispatch.** The question comes before validation and
    the handler's authorization policies, because those run inside the mediator
    decorators. A call can thus be confirmed and then rejected. The tool-level
    `[Authorize]` still runs first.
-7. **Verb-derived defaults.** `DELETE` turns on `Confirm` and `Idempotent`,
+8. **Verb-derived defaults.** `DELETE` turns on `Confirm` and `Idempotent`,
    `PUT` turns on `Idempotent`. `Destructive` stays `true` for every request and
    command, so that clients keep asking the user to approve each change.
 

@@ -26,7 +26,7 @@ public static partial class McpToolSerializerOptions
     /// <see cref="McpAttachmentInput"/> and the MCP error contracts appended to the resolver chain.
     /// </summary>
     /// <param name="services">The service provider of the MCP host.</param>
-    /// <returns>The JSON options shared by the generated tools; repeated calls for one provider return the same instance.</returns>
+    /// <returns>The JSON options shared by the generated tools; repeated calls for one application, from any scope, return the same instance.</returns>
     /// <remarks>
     /// The appended resolvers come after the application's own resolvers, so they only supply metadata the
     /// application does not provide. They make attachment tools work when reflection-based serialization is
@@ -54,7 +54,8 @@ public static partial class McpToolSerializerOptions
 
     private static JsonSerializerOptions _create(JsonSerializerOptions application)
     {
-        var options = new JsonSerializerOptions(application);
+        // One line: the error text ends with the details as JSON, and the confirmation question with the arguments.
+        var options = new JsonSerializerOptions(application) { WriteIndented = false };
         options.TypeInfoResolverChain.Add(McpJsonUtilities.DefaultOptions.TypeInfoResolver!);
         options.TypeInfoResolverChain.Add(McpToolJsonSerializerContext.Default);
         options.TypeInfoResolverChain.Add(McpToolErrors.McpToolErrorJsonSerializerContext.Default);

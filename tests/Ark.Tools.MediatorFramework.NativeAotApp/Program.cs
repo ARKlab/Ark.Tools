@@ -200,7 +200,7 @@ internal static class Program
         var delete = await client.CallToolAsync("books.delete", new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = _id.ToString("D") }, cancellationToken: ctk).ConfigureAwait(false);
         check("mcp-confirmed-delete", () => delete.IsError != true
             && delete.StructuredContent?.GetProperty("code").GetString() == "deleted"
-            && confirmation == "Confirm books.delete: Deletes a book through a generated MCP tool that asks for confirmation.\nArguments: {\"id\":\"" + _id.ToString("D") + "\"}");
+            && confirmation == "Confirm books.delete: Deletes a book through a generated MCP tool that asks for confirmation.\n{\"id\":\"" + _id.ToString("D") + "\"}");
 
         var get = await client.CallToolAsync("books.get", new Dictionary<string, object?>(StringComparer.Ordinal) { ["id"] = _id.ToString("D") }, cancellationToken: ctk).ConfigureAwait(false);
         check("mcp-query", () => get.IsError != true && get.StructuredContent?.GetProperty("id").GetString() == _id.ToString("D"));

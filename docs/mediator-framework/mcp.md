@@ -112,18 +112,25 @@ public sealed record DeleteBookCommand(BookId Id) : ICommand<DeleteBookCommand>;
 
 [McpTool(Name = "books.send", Confirm = true)]   // opt in for any other contract
 public sealed record SendBookCommand(BookId Id) : ICommand<SendBookCommand>;
+
+[McpTool(Name = "books.archive", ConfirmMessage = "Archiviare il libro?")]   // your own question; turns Confirm on
+public sealed record ArchiveBookCommand(BookId Id) : ICommand<ArchiveBookCommand>;
 ```
+
+The default question is the English `Confirm <tool name>: <description>`. The
+client shows the question to the user as it is: no model reads or translates
+it. Set `ConfirmMessage` to write the question in the language of your
+product.
 
 The question uses MCP multi round-trip requests (protocol revision
 `2026-07-28`), so it needs no session:
 
 1. The first call returns "input required" before the handler runs.
-2. The client shows the user the tool name, its description and the call
-   arguments. Only the arguments that the contract declares are shown, because
-   the tool ignores the others. A value longer than 200 characters is cut, and
-   the message says how many characters are hidden. The arguments are JSON
-   with readable text: accents and apostrophes are not escaped. The other
-   JSON settings are those of your Minimal API options.
+2. The client shows the user the question and, on the next line, the call
+   arguments as one JSON object. Only the arguments that the contract declares
+   are shown, because the tool ignores the others. A value longer than 200
+   characters is cut, and the message says how many characters are hidden. The
+   JSON has readable text: accents and apostrophes are not escaped.
 3. The client calls the tool again with the answer. If the user accepted, the
    handler runs. If not, the call fails with `Not confirmed: the user declined
    '<tool>'. Do not retry without a new user request.`
@@ -177,12 +184,12 @@ Validation failed: Validation failed:
 {"errors":{"Value":["The value is invalid."]}}
 ```
 
-The JSON has the escaping of your options; with the default encoder an
-apostrophe is written as `\u0027`.
 The error details are serialized with the same options as the tool results,
-which are your Minimal API options (`ConfigureHttpJsonOptions`). Your
-converters and source-generated contexts thus apply, and a business-rule
-detail has the same JSON as in the HTTP API. Under Native AOT, add the types of
+which are your Minimal API options (`ConfigureHttpJsonOptions`), always on one
+line. Your converters, source-generated contexts, encoder and naming policies
+thus apply. With a dictionary key policy, the keys of `errors` and of the
+business-rule details follow it (`errors.value` with camel case), which can
+differ from the HTTP ProblemDetails response of the same failure. Under Native AOT, add the types of
 your business-rule details to your resolver chain, as for your contracts. A
 detail is serialized on its own: one that the options cannot serialize, or
 that is nested deeper than 32 levels, is left out with a logged warning, and

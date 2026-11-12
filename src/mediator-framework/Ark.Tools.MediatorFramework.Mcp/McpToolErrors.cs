@@ -17,6 +17,7 @@ public static partial class McpToolErrors
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
     private const int _maxDetailDepth = 32;
+    private const int _maxDictionaryDepth = 8;
 
     /// <summary>Creates a call-tool filter that maps mediator failures to safe MCP results.</summary>
     /// <returns>The MCP call-tool error filter.</returns>
@@ -34,7 +35,7 @@ public static partial class McpToolErrors
     /// <returns>An MCP error result safe to return to a client.</returns>
     /// <remarks>
     /// This overload knows only strings, numbers, booleans, GUIDs, dates and lists of strings in the error details.
-    /// Pass the application's options to the other overload to serialize the details as the HTTP API does.
+    /// Pass the application's options to the other overload to serialize the details with its converters and contexts.
     /// </remarks>
     public static CallToolResult ToToolResult(Exception exception)
     {
@@ -49,7 +50,8 @@ public static partial class McpToolErrors
     /// <param name="exception">The mediator failure.</param>
     /// <param name="options">
     /// The JSON options for the ProblemDetails and its details, normally <see cref="McpToolSerializerOptions.Get"/>,
-    /// which are the application's own options.
+    /// which are the application's own options. They must have metadata for
+    /// <see cref="Microsoft.AspNetCore.Mvc.ProblemDetails"/>.
     /// </param>
     /// <returns>An MCP error result safe to return to a client.</returns>
     public static CallToolResult ToToolResult(Exception exception, JsonSerializerOptions options)
@@ -75,7 +77,7 @@ public static partial class McpToolErrors
         };
         if (clientVisible)
         {
-            foreach (var extension in _serializable(mappedProblemDetails.Extensions, depth: 8, options))
+            foreach (var extension in _serializable(mappedProblemDetails.Extensions, _maxDictionaryDepth, options))
             {
                 problemDetails.Extensions[extension.Key] = extension.Value;
             }
@@ -89,7 +91,7 @@ public static partial class McpToolErrors
         }
         catch (Exception e) when (e is NotSupportedException or JsonException)
         {
-            // A detail the options cannot write (a nested unknown type, a cycle): keep the error, drop the details.
+            // The application's MaxDepth is lower than the wrapped details: keep the error, drop the details.
             _logger.Warn(e, CultureInfo.InvariantCulture, "The MCP error details cannot be serialized and are left out.");
             problemDetails.Extensions.Clear();
             structuredContent = JsonSerializer.SerializeToElement(problemDetails, typeInfo);
@@ -117,19 +119,22 @@ public static partial class McpToolErrors
                 result[entry.Key] = _serializable(nested, depth - 1, options);
             else if (entry.Value is null)
                 result[entry.Key] = null;
-            else if (entry.Value is not Dictionary<string, object?> && _tryToElement(entry.Value, options, out var element))
+            else if (entry.Value is Dictionary<string, object?>)
+                _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} is nested too deep and is left out.", entry.Key);
+            else if (_tryToElement(entry.Value, options, out var element, out var error))
                 result[entry.Key] = element;
             else
-                _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} of type {type} cannot be serialized and is left out.", entry.Key, entry.Value.GetType());
+                _logger.Warn(error, CultureInfo.InvariantCulture, "The MCP error detail {name} of type {type} cannot be serialized and is left out.", entry.Key, entry.Value.GetType());
         }
         return result;
     }
 
     // Each detail is serialized on its own, so one that fails (an unknown type, a cycle) does not remove the others.
     // A detail nested deeper than _maxDetailDepth also fails: the MCP response cannot be written past 64 levels.
-    private static bool _tryToElement(object value, JsonSerializerOptions options, out JsonElement element)
+    private static bool _tryToElement(object value, JsonSerializerOptions options, out JsonElement element, out Exception? error)
     {
         element = default;
+        error = null;
         try
         {
             if (!options.TryGetTypeInfo(value.GetType(), out var typeInfo))
@@ -139,8 +144,10 @@ public static partial class McpToolErrors
             element = JsonElement.ParseValue(ref reader);
             return true;
         }
-        catch (Exception e) when (e is NotSupportedException or JsonException or InvalidOperationException)
+        catch (Exception e) when (e is not OperationCanceledException)
         {
+            // Whatever a converter or a property getter of the application throws: this detail is left out.
+            error = e;
             return false;
         }
     }
@@ -178,7 +185,7 @@ public static partial class McpToolErrors
             }
             catch (Exception exception)
             {
-                // The application's JSON options, so the details are written as the HTTP API writes them.
+                // The application's JSON options, so its converters and contexts apply to the details.
                 var services = context.Services ?? context.Server.Services;
                 return services is null ? ToToolResult(exception) : ToToolResult(exception, McpToolSerializerOptions.Get(services));
             }
