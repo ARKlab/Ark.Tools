@@ -261,6 +261,44 @@ public sealed class McpHostingTests
         result.StructuredContent!.Value.GetProperty("businessRuleViolation").GetProperty("Limit").GetString().Should().Be("12.50 EUR");
     }
 
+    /// <summary>Verifies one detail that fails during serialization does not remove the other details.</summary>
+    [TestMethod]
+    public async Task McpErrorLeavesOutOnlyTheDetailThatFails()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.businessrule",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "cycle" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        result.IsError.Should().BeTrue();
+        ((TextContentBlock)result.Content[0]).Text.Should()
+            .StartWith("Cycle: Cycle.\n{").And.Contain("\"Ok\":\"kept\"").And.Contain("\"type\":\"HostingCycleViolation\"").And.NotContain("Loop");
+    }
+
+    /// <summary>Verifies a detail nested too deep for an MCP response is left out and the error is still mapped.</summary>
+    [TestMethod]
+    public async Task McpErrorLeavesOutDeeplyNestedDetail()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = fixture.BuildMcpHost(static services => services.ConfigureHttpJsonOptions(
+            static options => options.SerializerOptions.MaxDepth = 128));
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.businessrule",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "deep" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        result.IsError.Should().BeTrue();
+        ((TextContentBlock)result.Content[0]).Text.Should()
+            .StartWith("Deep: Deep.\n{").And.Contain("\"type\":\"HostingDeepViolation\"").And.NotContain("[[");
+    }
+
     /// <summary>Verifies business-rule details of the common value types reach the error text.</summary>
     [TestMethod]
     public void McpErrorTextContainsCommonValueTypes()

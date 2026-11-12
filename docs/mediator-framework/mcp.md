@@ -177,14 +177,16 @@ Validation failed: Validation failed:
 {"errors":{"Value":["The value is invalid."]}}
 ```
 
-The JSON uses the default escaping, so an apostrophe is written as `\u0027`.
+The JSON has the escaping of your options; with the default encoder an
+apostrophe is written as `\u0027`.
 The error details are serialized with the same options as the tool results,
 which are your Minimal API options (`ConfigureHttpJsonOptions`). Your
 converters and source-generated contexts thus apply, and a business-rule
 detail has the same JSON as in the HTTP API. Under Native AOT, add the types of
 your business-rule details to your resolver chain, as for your contracts. A
-detail of a type that the options cannot serialize is left out, and a warning
-is logged.
+detail is serialized on its own: one that the options cannot serialize, or
+that is nested deeper than 32 levels, is left out with a logged warning, and
+the other details stay.
 
 An agent can correct its call from this text alone. Unexpected failures use generic text;
 stack traces, connection strings, and sensitive exception messages are never

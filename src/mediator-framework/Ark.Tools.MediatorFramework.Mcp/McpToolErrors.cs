@@ -16,6 +16,7 @@ namespace Ark.Tools.MediatorFramework.Mcp;
 public static partial class McpToolErrors
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    private const int _maxDetailDepth = 32;
 
     /// <summary>Creates a call-tool filter that maps mediator failures to safe MCP results.</summary>
     /// <returns>The MCP call-tool error filter.</returns>
@@ -114,20 +115,42 @@ public static partial class McpToolErrors
         {
             if (entry.Value is Dictionary<string, object?> nested && depth > 0)
                 result[entry.Key] = _serializable(nested, depth - 1, options);
-            else if (entry.Value is null || entry.Value is not Dictionary<string, object?> && options.TryGetTypeInfo(entry.Value.GetType(), out _))
-                result[entry.Key] = entry.Value;
+            else if (entry.Value is null)
+                result[entry.Key] = null;
+            else if (entry.Value is not Dictionary<string, object?> && _tryToElement(entry.Value, options, out var element))
+                result[entry.Key] = element;
             else
                 _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} of type {type} cannot be serialized and is left out.", entry.Key, entry.Value.GetType());
         }
         return result;
     }
 
+    // Each detail is serialized on its own, so one that fails (an unknown type, a cycle) does not remove the others.
+    // A detail nested deeper than _maxDetailDepth also fails: the MCP response cannot be written past 64 levels.
+    private static bool _tryToElement(object value, JsonSerializerOptions options, out JsonElement element)
+    {
+        element = default;
+        try
+        {
+            if (!options.TryGetTypeInfo(value.GetType(), out var typeInfo))
+                return false;
+            var json = JsonSerializer.SerializeToUtf8Bytes(value, typeInfo);
+            var reader = new Utf8JsonReader(json, new JsonReaderOptions { MaxDepth = _maxDetailDepth });
+            element = JsonElement.ParseValue(ref reader);
+            return true;
+        }
+        catch (Exception e) when (e is NotSupportedException or JsonException or InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
     private static string _extensionsJson(JsonElement problemDetails, ICollection<string> extensionKeys)
     {
-        var extensions = new System.Text.Json.Nodes.JsonObject();
-        foreach (var property in problemDetails.EnumerateObject().Where(property => extensionKeys.Contains(property.Name)))
-            extensions[property.Name] = System.Text.Json.Nodes.JsonNode.Parse(property.Value.GetRawText());
-        return extensions.ToJsonString();
+        // The serialized text is reused as it is: a second parse has its own depth limit and can fail.
+        return "{" + string.Join(",", problemDetails.EnumerateObject()
+            .Where(property => extensionKeys.Contains(property.Name))
+            .Select(static property => "\"" + JsonEncodedText.Encode(property.Name) + "\":" + property.Value.GetRawText())) + "}";
     }
 
 
@@ -168,6 +191,7 @@ public static partial class McpToolErrors
     [JsonSerializable(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails))]
     [JsonSerializable(typeof(Dictionary<string, string[]>))]
     [JsonSerializable(typeof(Dictionary<string, object>))]
+    [JsonSerializable(typeof(JsonElement))]
     [JsonSerializable(typeof(bool))]
     [JsonSerializable(typeof(long))]
     [JsonSerializable(typeof(double))]

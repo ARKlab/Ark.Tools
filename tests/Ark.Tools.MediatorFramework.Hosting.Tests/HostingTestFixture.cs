@@ -905,6 +905,10 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
         await Task.CompletedTask.ConfigureAwait(false);
         if (string.Equals(request.Value, "money", StringComparison.Ordinal))
             throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingMoneyViolation { Detail = "Over the limit." });
+        if (string.Equals(request.Value, "cycle", StringComparison.Ordinal))
+            throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingCycleViolation { Detail = "Cycle." });
+        if (string.Equals(request.Value, "deep", StringComparison.Ordinal))
+            throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingDeepViolation { Detail = "Deep." });
         var violation = new Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
         {
             Detail = "The synthetic business rule was violated.",
@@ -933,6 +937,28 @@ public sealed class HostingMoneyJsonConverter : System.Text.Json.Serialization.J
         ArgumentNullException.ThrowIfNull(value);
         writer.WriteStringValue(value.Amount.ToString("0.00", CultureInfo.InvariantCulture) + " " + value.Currency);
     }
+}
+
+/// <summary>A detail that refers to itself, so the serializer fails on it.</summary>
+public sealed class HostingLoop
+{
+    /// <summary>Gets this instance.</summary>
+    public HostingLoop Self => this;
+}
+
+internal sealed class HostingCycleViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Cycle")
+{
+    public string Ok { get; } = "kept";
+
+    public HostingLoop Loop { get; } = new();
+}
+
+internal sealed class HostingDeepViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Deep")
+{
+    // 70 nested arrays: more than the default JSON depth of 64.
+    public System.Text.Json.JsonElement Deep { get; } = System.Text.Json.JsonDocument.Parse(
+        new string('[', 70) + new string(']', 70),
+        new System.Text.Json.JsonDocumentOptions { MaxDepth = 128 }).RootElement.Clone();
 }
 
 internal sealed class HostingMoneyViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Limit exceeded")
