@@ -599,7 +599,7 @@ Decisions:
    second. This works in stateless mode. The legacy `ElicitAsync` path is not
    implemented.
 3. **Fail open.** A client without multi round-trip support or without the
-   elicitation capability runs the tool without confirmation. A refusal would
+   form-mode elicitation capability runs the tool without confirmation. A refusal would
    make these tools unusable on most clients, and the HTTP `DELETE` endpoint has
    no confirmation either.
 4. **Not a security control.** The server cannot know that a user saw the

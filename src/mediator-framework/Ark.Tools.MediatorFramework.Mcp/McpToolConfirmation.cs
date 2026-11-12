@@ -52,7 +52,8 @@ public static class McpToolConfirmation
         }
 
         var server = context.Server;
-        if (!server.IsMrtrSupported || server.ClientCapabilities?.Elicitation is null)
+        // The question is a form-mode elicitation: a client that only opens URLs cannot answer it.
+        if (!server.IsMrtrSupported || server.ClientCapabilities?.Elicitation?.Form is null)
             return;
 
         throw new InputRequiredException(

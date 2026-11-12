@@ -142,7 +142,7 @@ then fail with a validation or authorization error. A declined call is
 returned as a business-rule violation with status 409.
 
 A client that does not support multi round-trip requests, or that does not
-declare the elicitation capability, cannot be asked. For such a client the tool
+declare form-mode elicitation, cannot be asked. For such a client the tool
 runs without confirmation, as the HTTP endpoint does.
 
 > **Confirmation is a user-experience aid, not a security control.** The server

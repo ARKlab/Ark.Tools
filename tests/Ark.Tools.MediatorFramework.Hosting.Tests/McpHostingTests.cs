@@ -471,6 +471,36 @@ public sealed class McpHostingTests
         fixture.State.Deleted.Should().Be(7);
     }
 
+    /// <summary>Verifies a client that supports URL-mode elicitation only is not asked the form-mode question.</summary>
+    [TestMethod]
+    public async Task McpDeleteRunsForUrlOnlyElicitationClient()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
+        var asked = false;
+        var options = _answering("decline", _ => asked = true);
+        options.Capabilities = new ClientCapabilities { Elicitation = new ElicitationCapability { Url = new UrlElicitationCapability() } };
+        await using var client = await _createClientAsync(app, options: options).ConfigureAwait(false);
+
+        var result = await _deleteAsync(client, app).ConfigureAwait(false);
+
+        result.IsError.Should().NotBe(true);
+        asked.Should().BeFalse();
+        fixture.State.Deleted.Should().Be(7);
+    }
+
+    /// <summary>Verifies the SDK reads an empty elicitation capability as form mode, so such a client is still asked.</summary>
+    [TestMethod]
+    public void EmptyElicitationCapabilityMeansFormMode()
+    {
+        var capability = System.Text.Json.JsonSerializer.Deserialize(
+            "{}",
+            (System.Text.Json.Serialization.Metadata.JsonTypeInfo<ElicitationCapability>)ModelContextProtocol.McpJsonUtilities.DefaultOptions.GetTypeInfo(typeof(ElicitationCapability)));
+
+        capability!.Form.Should().NotBeNull();
+        capability.Url.Should().BeNull();
+    }
+
     /// <summary>Verifies a client on a protocol revision without multi round-trip requests runs the tool without confirmation.</summary>
     [TestMethod]
     public async Task McpDeleteRunsWithoutMrtr()
