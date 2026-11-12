@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.326, )",
-        "resolved": "3.0.326",
-        "contentHash": "cHGMh3DK3WcMi0mRnj0IKAqAVqYncMCBM9tcmS0QXz9DXp+xE+JiiB9OF8lC5jVEzaX3WqSn/UhhUXk04WsXaA=="
+        "requested": "[3.0.327, )",
+        "resolved": "3.0.327",
+        "contentHash": "gqfab6/00jyKZyr1Tz0rTeQcj7wN5xh6ihPTT6Ad9n1GdnLIOgGDpzNI7KegvHGO54VtIEFP9kVvA/XI/ASnTQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -161,12 +161,12 @@
       },
       "AwesomeAssertions.Web": {
         "type": "Transitive",
-        "resolved": "3.0.0",
-        "contentHash": "XqDpLIcoCTbaSm02FiR06bD7Sv3mcT2NoF2EWx7w2LS6DRO8DDJ0JIB+41/KNtQehNjlqorZNKF/sRZSxLtKuw==",
+        "resolved": "3.0.1",
+        "contentHash": "61mrfZr1+Y+m+xHWn186XLBV5OmiaK2a0nfvc5+ZfvB/LQKU+Lh9UHiGqVTqIZvcufRz15ZggpzabBXkpoZw7Q==",
         "dependencies": {
           "AwesomeAssertions": "9.0.0",
-          "HttpMessageFormatter": "2.0.6",
-          "Microsoft.AspNetCore.WebUtilities": "2.3.0"
+          "HttpMessageFormatter": "2.0.7",
+          "Microsoft.AspNetCore.WebUtilities": "2.3.14"
         }
       },
       "Azure.Core": {
@@ -289,10 +289,10 @@
       },
       "HttpMessageFormatter": {
         "type": "Transitive",
-        "resolved": "2.0.6",
-        "contentHash": "K2fFQV53id2rV+4+liY829qzQTPtOjje2kro385R6bR2+ZdBqD4JxaqpZa/auyyHV2aJ+YtdsstLZOxVRsjPAQ==",
+        "resolved": "2.0.7",
+        "contentHash": "F1ptNdwZE3GK9lpN6O5uLT/7T/uUWssdJIJCczfbombWJiJphIgdjSqErgRGKnXSBOk3bC2dw5W/kF57bfNemg==",
         "dependencies": {
-          "Microsoft.AspNetCore.WebUtilities": "2.3.0"
+          "Microsoft.AspNetCore.WebUtilities": "2.3.14"
         }
       },
       "MessagePack": {
@@ -1276,7 +1276,7 @@
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Http": "[1.0.0, )",
           "AwesomeAssertions": "[9.6.0, )",
-          "AwesomeAssertions.Web": "[3.0.0, )",
+          "AwesomeAssertions.Web": "[3.0.1, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.23.0, )",
           "Reqnroll": "[3.3.4, )"
         }

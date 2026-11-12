@@ -65,7 +65,7 @@
     <!-- TESTING -->
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="AwesomeAssertions.Web" Version="3.0.0" />
+    <PackageVersion Include="AwesomeAssertions.Web" Version="3.0.1" />
     <!-- Transitively pin Microsoft.AspNetCore.WebUtilities above the vulnerable range (GHSA-6527-9fp8-r4x6);
          AwesomeAssertions.Web 3.0.0 otherwise drags in the vulnerable 2.3.0. -->
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.15" />
@@ -135,7 +135,7 @@
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.400" />
     <!-- AUTH -->
     <PackageVersion Include="Auth0.AuthenticationApi" Version="7.50.0" />
-    <PackageVersion Include="Auth0.ManagementApi" Version="10.5.0" />
+    <PackageVersion Include="Auth0.ManagementApi" Version="10.6.0" />
     <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.92.0" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.92.0" />
     <PackageVersion Include="JWT" Version="11.1.0" />

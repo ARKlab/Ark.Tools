@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.326, )",
-        "resolved": "3.0.326",
-        "contentHash": "cHGMh3DK3WcMi0mRnj0IKAqAVqYncMCBM9tcmS0QXz9DXp+xE+JiiB9OF8lC5jVEzaX3WqSn/UhhUXk04WsXaA=="
+        "requested": "[3.0.327, )",
+        "resolved": "3.0.327",
+        "contentHash": "gqfab6/00jyKZyr1Tz0rTeQcj7wN5xh6ihPTT6Ad9n1GdnLIOgGDpzNI7KegvHGO54VtIEFP9kVvA/XI/ASnTQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -524,7 +524,7 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Auth0.AuthenticationApi": "[7.50.0, )",
-          "Auth0.ManagementApi": "[10.5.0, )",
+          "Auth0.ManagementApi": "[10.6.0, )",
           "JWT": "[11.1.0, )",
           "Microsoft.Extensions.Caching.Memory": "[10.0.15, )"
         }
@@ -655,11 +655,11 @@
       },
       "Auth0.ManagementApi": {
         "type": "CentralTransitive",
-        "requested": "[10.5.0, )",
-        "resolved": "10.5.0",
-        "contentHash": "rlrRQL5LdhBj/QEUZD3OAGZocDh0eDW/dDhiVG7gjQsiy7Iu5e6Tbqn65pho9qEfOF82BReN4WGnIPMnQn94oA==",
+        "requested": "[10.6.0, )",
+        "resolved": "10.6.0",
+        "contentHash": "KebrcbYxA6At6gPoz2spLeoJkXLsAiUqleSqLH7LZBBf2Qu0NDClBCT74N43txTSO+dDMjxBpCh6PP2iWjDEPA==",
         "dependencies": {
-          "Auth0.AuthenticationApi": "7.49.0",
+          "Auth0.AuthenticationApi": "7.50.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
           "Portable.System.DateTimeOnly": "9.0.1"
         }
