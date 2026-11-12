@@ -63,7 +63,7 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.13.0" />
     <!-- Transitive pin above the vulnerable range (GHSA-6527-9fp8-r4x6); Ark.Tools.Reqnroll brings it in through AwesomeAssertions.Web. -->
-    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.34" />
+    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.15" />
     <PackageVersion Include="Microsoft.SqlServer.DacFx" Version="170.5.96" />
     <PackageVersion Include="KubernetesClient" Version="21.0.8" />
     <PackageVersion Include="MessagePack" Version="3.1.12" />
