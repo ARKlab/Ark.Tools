@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.322, )",
-        "resolved": "3.0.322",
-        "contentHash": "aaynUqEHHeD0v1/RDW/Rq3d/gRkF8bRKJcvblhvuvyTAB+hGuzgFl4pBD9g6jGu+VqMWPinEGqu4hzG12TtnqQ=="
+        "requested": "[3.0.326, )",
+        "resolved": "3.0.326",
+        "contentHash": "cHGMh3DK3WcMi0mRnj0IKAqAVqYncMCBM9tcmS0QXz9DXp+xE+JiiB9OF8lC5jVEzaX3WqSn/UhhUXk04WsXaA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -22,9 +22,9 @@
       },
       "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "YlTamXppEQls6DYWt7RdUuwWDb0lyw/vXCaGeQpLCpsLmfwGuCkOz/vIGgMTV7ECsJcavkCOkxZXv9s8rdAHkQ=="
+        "requested": "[10.0.15, )",
+        "resolved": "10.0.15",
+        "contentHash": "u0WnRcZgBZYHlVFpbe/3Adpmb9rmNJ8/fmEwqc/xjB7fFppq+gfaLJd3Sdaw+J02zV0eP/T9dneQ3Dv5jWw6bw=="
       },
       "Microsoft.Sbom.Targets": {
         "type": "Direct",
@@ -364,7 +364,7 @@
           "Ark.Tools.SimpleInjector": "[1.0.0, )",
           "Ark.Tools.Solid": "[1.0.0, )",
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
-          "Rebus": "[8.9.5, )",
+          "Rebus": "[8.10.0, )",
           "Rebus.AzureBlobs": "[1.1.0, )",
           "Rebus.AzureServiceBus": "[10.7.1, )",
           "Rebus.NLog": "[6.0.0, )",
@@ -697,9 +697,9 @@
       },
       "Rebus": {
         "type": "CentralTransitive",
-        "requested": "[8.9.5, )",
-        "resolved": "8.9.5",
-        "contentHash": "PfsmgENA9mrAnIAJEKh/Z7KiZay3cUXkHRxcfbkp+9//wnXEWOFoPAC9b2Y38kTYCFMc8eFiD3cXPERoS104cw==",
+        "requested": "[8.10.0, )",
+        "resolved": "8.10.0",
+        "contentHash": "QPXaG5H1xU+ybiWiHI2NPRw820k8a/bR7RUq+gQ0P3nxqZqBpNbsyj1YFmsacSwjJHT0z8yZiKW79u+X6gKahw==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }

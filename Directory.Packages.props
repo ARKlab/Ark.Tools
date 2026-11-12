@@ -70,10 +70,10 @@
          AwesomeAssertions.Web 3.0.0 otherwise drags in the vulnerable 2.3.0. -->
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.15" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.15" />
-    <PackageVersion Include="MSTest.TestAdapter" Version="4.5.2" />
-    <PackageVersion Include="MSTest.TestFramework" Version="4.5.2" />
-    <PackageVersion Include="MSTest.Analyzers" Version="4.5.2" />
-    <PackageVersion Include="MSTest.SourceGeneration" Version="4.5.2" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.5.3" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.5.3" />
+    <PackageVersion Include="MSTest.Analyzers" Version="4.5.3" />
+    <PackageVersion Include="MSTest.SourceGeneration" Version="4.5.3" />
     <PackageVersion Include="Moq" Version="4.21.0" />
     <PackageVersion Include="Reqnroll" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.MsTest" Version="3.3.4" />
@@ -84,19 +84,19 @@
     <PackageVersion Include="Microsoft.ApplicationInsights" Version="3.2.0" />
     <PackageVersion Include="Microsoft.ApplicationInsights.WorkerService" Version="3.2.0" />
     <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="3.2.0" />
-    <PackageVersion Include="OpenTelemetry" Version="1.20.1" />
-    <PackageVersion Include="OpenTelemetry.Api" Version="1.20.1" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.2" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.2" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.20.2" />
+    <PackageVersion Include="OpenTelemetry" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.21.0" />
     <PackageVersion Include="OpenTelemetry.Resources.Azure" Version="1.19.1-beta.2" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.10.0" />
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.Profiler" Version="1.0.1-beta.7" />
     <PackageVersion Include="NLog" Version="6.2.2" />
     <PackageVersion Include="NLog.Database" Version="6.2.2" />
     <PackageVersion Include="NLog.DiagnosticSource" Version="6.2.2" />
-    <PackageVersion Include="NLog.Extensions.Logging" Version="6.2.2" />
+    <PackageVersion Include="NLog.Extensions.Logging" Version="6.3.0" />
     <PackageVersion Include="NLog.MailKit" Version="6.1.6" />
     <PackageVersion Include="MailKit" Version="4.18.2" />
     <PackageVersion Include="Slack.Webhooks" Version="1.1.6" />
@@ -152,7 +152,7 @@
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.1" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.24.0" />
     <!-- REBUS -->
-    <PackageVersion Include="Rebus" Version="8.9.5" />
+    <PackageVersion Include="Rebus" Version="8.10.0" />
     <PackageVersion Include="Rebus.NLog" Version="6.0.0" />
     <PackageVersion Include="Rebus.AzureServiceBus" Version="10.7.1" />
     <PackageVersion Include="Rebus.SqlServer" Version="8.4.2" />

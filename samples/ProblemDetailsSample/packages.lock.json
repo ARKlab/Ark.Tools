@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.322, )",
-        "resolved": "3.0.322",
-        "contentHash": "aaynUqEHHeD0v1/RDW/Rq3d/gRkF8bRKJcvblhvuvyTAB+hGuzgFl4pBD9g6jGu+VqMWPinEGqu4hzG12TtnqQ=="
+        "requested": "[3.0.326, )",
+        "resolved": "3.0.326",
+        "contentHash": "cHGMh3DK3WcMi0mRnj0IKAqAVqYncMCBM9tcmS0QXz9DXp+xE+JiiB9OF8lC5jVEzaX3WqSn/UhhUXk04WsXaA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -647,7 +647,7 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.NLog": "[1.0.0, )",
-          "NLog.Extensions.Logging": "[6.2.2, )"
+          "NLog.Extensions.Logging": "[6.3.0, )"
         }
       },
       "ark.tools.nodatime": {
@@ -1127,9 +1127,9 @@
       },
       "NLog.Extensions.Logging": {
         "type": "CentralTransitive",
-        "requested": "[6.2.2, )",
-        "resolved": "6.2.2",
-        "contentHash": "Z5ctMnl27a2rEJIP6uiOnfVa7PqQ8KFlAG2JRS2B3paDeKFVPiaMPASADBW5JcSjoNlJNWi8iTSF0iXYbT2t/Q==",
+        "requested": "[6.3.0, )",
+        "resolved": "6.3.0",
+        "contentHash": "ZTgiFC5LrNp32CrgqfOf2CIQmfIVEh2/E2IknNu1c/AofW/Gi7J+rEpIa7yAJoH+BTb1RX13D3XZ4HB0LKzT5A==",
         "dependencies": {
           "NLog": "6.2.2"
         }
