@@ -124,8 +124,12 @@ Under Native AOT, add the types of your business-rule details to your resolver
 chain. If the details cannot be serialized, the response still has the error,
 without the details, and a warning is logged.
 
-The Azure Functions host writes its error responses with the same handler, so
-the same rules apply there.
+The Azure Functions host writes the response for an exception with the same
+handler, so the same rules apply there. The exception message and stack trace
+are included in the `Development` environment, which Azure Functions Core Tools
+sets on a local machine: do not use that environment on a Function App that
+others can reach. Binding failures (`BINDING_FAILURE`, an invalid body) keep
+their own response.
 
 ## Inspect gRPC error responses
 

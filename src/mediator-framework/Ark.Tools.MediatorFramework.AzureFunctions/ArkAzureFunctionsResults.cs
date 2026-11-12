@@ -26,9 +26,13 @@ public static class ArkAzureFunctionsResults
         return context.Request.Headers.IfNoneMatch.ToString().Trim() == "*" ? "*" : null;
     }
 
-    /// <summary>Maps an application exception to a safe ProblemDetails result.</summary>
+    /// <summary>Maps an application exception to a ProblemDetails result.</summary>
     /// <param name="exception">The exception to map.</param>
     /// <returns>A ProblemDetails result.</returns>
+    /// <remarks>
+    /// The shared HTTP ProblemDetails handler writes the response. The exception message and stack trace are
+    /// included only in the <c>Development</c> environment or with <c>ArkProblemDetailsOptions.IncludeExceptionDetails</c>.
+    /// </remarks>
     public static IResult FromException(Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
@@ -44,7 +48,14 @@ public static class ArkAzureFunctionsResults
             var handler = new ArkProblemDetailsExceptionHandler(
                 services.GetService<IHostEnvironment>(),
                 services.GetService<IOptions<ArkProblemDetailsOptions>>());
-            await handler.TryHandleAsync(httpContext, exception, httpContext.RequestAborted).ConfigureAwait(false);
+            try
+            {
+                await handler.TryHandleAsync(httpContext, exception, httpContext.RequestAborted).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (httpContext.RequestAborted.IsCancellationRequested)
+            {
+                // The client went away: there is no one to write the error to.
+            }
         }
     }
 

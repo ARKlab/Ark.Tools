@@ -72,6 +72,25 @@ public sealed class AzureFunctionsResultsTests
         detail.GetProperty("data").GetProperty("KeepMe").GetInt32().Should().Be(1);
     }
 
+    [TestMethod]
+    public async Task HidesExceptionDetailsOutsideDevelopment()
+    {
+        var provider = new ServiceCollection().BuildServiceProvider();
+        await using var __provider = provider.ConfigureAwait(false);
+        var context = new DefaultHttpContext { RequestServices = provider };
+        context.Response.Body = new MemoryStream();
+
+        await ArkAzureFunctionsResults.FromException(new InvalidOperationException("secret"))
+            .ExecuteAsync(context).ConfigureAwait(false);
+
+        context.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        context.Response.ContentType.Should().Be("application/problem+json");
+        context.Response.Body.Position = 0;
+        using var reader = new StreamReader(context.Response.Body);
+        var body = await reader.ReadToEndAsync(context.RequestAborted).ConfigureAwait(false);
+        body.Should().Contain("traceId").And.NotContain("secret").And.NotContain("stackTrace");
+    }
+
     private sealed class NamedViolation() : BusinessRuleViolation("Named")
     {
         public int MaxAmount { get; } = 5;

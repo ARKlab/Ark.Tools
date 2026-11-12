@@ -137,6 +137,7 @@ public sealed class McpHostingTests
         toolOptions.TypeInfoResolverChain[0].Should().BeSameAs(applicationResolver);
         toolOptions.GetTypeInfo(typeof(McpAttachmentInput)).Should().NotBeNull();
         toolOptions.GetTypeInfo(typeof(EmbeddedResourceBlock)).Should().NotBeNull();
+        McpToolErrors.ToToolResult(new InvalidOperationException("x"), toolOptions).IsError.Should().BeTrue();
         applicationOptions.TypeInfoResolverChain.Should().ContainSingle();
     }
 
