@@ -122,8 +122,9 @@ public static class ArkProblemDetailsJson
     /// </returns>
     /// <remarks>
     /// The copy has no dictionary key policy: the keys of a dictionary, such as the validation errors, are data
-    /// and are written as they are. The built-in ProblemDetails context is appended after the application's own
-    /// resolvers, so it only supplies metadata the application does not provide.
+    /// and are written as they are. It is not indented. The built-in ProblemDetails context is appended after
+    /// the application's own resolvers, so it only supplies metadata the application does not provide.
+    /// The copy is made at the first call: a later change of the application's options is not seen.
     /// </remarks>
     public static JsonSerializerOptions GetOptions(IServiceProvider? services)
     {
@@ -135,7 +136,7 @@ public static class ArkProblemDetailsJson
 
     private static JsonSerializerOptions _create(JsonSerializerOptions application)
     {
-        var options = new JsonSerializerOptions(application) { DictionaryKeyPolicy = null };
+        var options = new JsonSerializerOptions(application) { DictionaryKeyPolicy = null, WriteIndented = false };
         options.TypeInfoResolverChain.Add(ProblemDetailsJsonSerializerContext.Default);
         options.MakeReadOnly();
         return options;

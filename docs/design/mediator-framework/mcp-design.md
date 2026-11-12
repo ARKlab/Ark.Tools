@@ -68,10 +68,9 @@ accepts JSON options only at registration time, before the service provider
 exists, so the generated factory sets `McpServerToolCreateOptions.SerializerOptions`
 from `McpToolSerializerOptions.Get(services)`: one read-only copy of
 `IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per application, with
-`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and internal contexts for
-`McpAttachmentInput` and the error ProblemDetails appended to the resolver
-chain. Tool arguments, input schemas, structured results and error details
-therefore use the same JSON options as the
+`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and an internal context for
+`McpAttachmentInput` appended to the resolver chain. Tool arguments, input
+schemas and structured results therefore use the same JSON options as the
 Minimal API endpoints, and attachment tools still resolve the MCP protocol
 types when reflection-based serialization is disabled (Native AOT).
 

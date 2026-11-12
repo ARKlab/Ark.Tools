@@ -102,20 +102,31 @@ branch on stable error codes/statuses rather than parsing human-readable
 
 The response is written with your Minimal API JSON options
 (`ConfigureHttpJsonOptions`), so your converters and source-generated contexts
-apply to the business-rule details. Two naming rules apply, for HTTP and for
-the MCP tool errors alike:
+apply to the business-rule details. Two naming rules apply, for the Minimal
+API handler and for the MCP tool errors alike:
 
 - The names of the extensions (`businessRuleViolation`, `errors`, `traceId`)
   and of the business-rule details are properties. They follow your property
   naming policy: a `Limit` property of a violation is written as `limit` with
-  the default camel-case policy.
+  the default camel-case policy. The names `type`, `title` and `status` inside
+  `businessRuleViolation` are reserved for the violation itself.
 - The keys of a dictionary are data and are written as they are, also when you
   set a dictionary key policy. This applies to the keys of `errors`, which are
   the names of the invalid inputs, and to a dictionary inside a detail.
 
+Every public property of a violation is sent to the client, with the whole
+object that it holds. `[JsonIgnore]` and `[JsonPropertyName]` on the violation's
+own properties have no effect; they apply only inside the objects it holds.
+Put only small values that are safe for the client in a violation: no
+entities, no exceptions, no copies of request collections.
+
 Under Native AOT, add the types of your business-rule details to your resolver
 chain. If the details cannot be serialized, the response still has the error,
 without the details, and a warning is logged.
+
+The Azure Functions host does not apply these two naming rules yet: it writes
+the response with its own JSON options, so a dictionary key policy changes the
+keys of `errors` there, and the detail names keep their property names.
 
 ## Inspect gRPC error responses
 

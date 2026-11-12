@@ -12,14 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **Breaking:** `Ark.Tools.AspNetCore.ProblemDetails`: the names of the business-rule details in an HTTP ProblemDetails response now follow your property naming policy, as the other properties of the response do. With the default camel-case policy, a `Limit` property of a violation is now `limit` under `businessRuleViolation`. The keys of `errors` do not change.
+- **Breaking:** `Ark.Tools.AspNetCore.ProblemDetails`: in an HTTP ProblemDetails response, the names of the business-rule details and of the extensions now follow your property naming policy. With the default camel-case policy, a `Limit` property of a violation is now `limit` under `businessRuleViolation`, and the extension names do not change. With another policy, the extension names change too: snake case gives `trace_id`, `stack_trace` and `business_rule_violation`. The keys of `errors` and the standard members (`type`, `title`, `status`, `detail`) do not change.
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools for contracts with an HTTP `DELETE` or `PUT` endpoint are now marked idempotent by default. Set `Idempotent = false` on `[McpTool]` to keep the earlier hint.
 - `Ark.Tools.MediatorFramework.Mcp`: existing MCP tools for contracts with an HTTP `DELETE` endpoint now ask the user for confirmation on clients that support it. Set `Confirm = false` on `[McpTool]` to keep the earlier behaviour.
 - `Ark.Tools.MediatorFramework.Mcp`: MCP error text now includes the validation errors and the business-rule details as one JSON object on the last line, so agents that read only the text can correct the call. The details are serialized with your Minimal API JSON options, as in the HTTP ProblemDetails response: your converters and source-generated contexts apply, the names of the details follow your property naming policy, and dictionary keys such as those of `errors` are written as they are. Business-rule details that cannot be serialized no longer fail the tool call; the error is returned without the details and a warning is logged.
 
 ### Fixed
 
-- `Ark.Tools.AspNetCore.ProblemDetails`: the HTTP ProblemDetails response is now written with your Minimal API JSON options (`ConfigureHttpJsonOptions`). A business-rule detail of a type that needs your converters or source-generated contexts no longer fails the response with `NotSupportedException`. If the details cannot be serialized, the response has the error without them and a warning is logged. `ArkProblemDetailsJson.GetOptions(services)` returns the options.
+- `Ark.Tools.AspNetCore.ProblemDetails`: the HTTP ProblemDetails response is now written with your Minimal API JSON options (`ConfigureHttpJsonOptions`). A business-rule detail of a type that needs your converters or source-generated contexts no longer fails the response with `NotSupportedException`. If the details cannot be serialized, the response has the error without them and a warning is logged. Every public property of a violation is now sent to the client with the whole object that it holds, so a violation must hold only values that are safe for the client. `ArkProblemDetailsJson.GetOptions(services)` returns the options.
 
 ### Security
 

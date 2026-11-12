@@ -104,14 +104,18 @@ public static class ExceptionProblemDetailsMapper
         var violationType = violation.GetType();
         if (!_businessRuleViolationAccessors.TryGetValue(violationType, out var accessors))
             accessors = _businessRuleViolationAccessors.GetOrAdd(violationType, _createAccessors(violationType));
-        var payload = accessors
-            .ToDictionary(
-                accessor => _name(policy, accessor.Name),
-                accessor => accessor.GetValue(violation),
-                StringComparer.Ordinal);
-        payload[_name(policy, "type")] = violation.GetType().Name;
-        payload[_name(policy, "title")] = violation.Title;
-        payload[_name(policy, "status")] = violation.Status;
+        // "type", "title" and "status" describe the violation itself and are reserved. A naming policy can give
+        // two properties the same name (URL and Url): the first one stays, and the response does not fail.
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            [_name(policy, "type")] = violation.GetType().Name,
+            [_name(policy, "title")] = violation.Title,
+            [_name(policy, "status")] = violation.Status,
+        };
+        foreach (var accessor in accessors)
+        {
+            payload.TryAdd(_name(policy, accessor.Name), accessor.GetValue(violation));
+        }
 
         var problemDetails = new MvcProblemDetails
         {

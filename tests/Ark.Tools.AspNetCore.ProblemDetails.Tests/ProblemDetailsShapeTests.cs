@@ -121,6 +121,57 @@ public sealed class ProblemDetailsShapeTests
         validation.GetProperty("errors").GetProperty("FirstName")[0].GetString().Should().Be("Required.");
     }
 
+    [TestMethod]
+    public async Task DetailNamesThatCollideAfterThePolicyDoNotFailTheResponse()
+    {
+        var services = new ServiceCollection();
+        services.ConfigureHttpJsonOptions(static _ => { });
+        var provider = services.BuildServiceProvider();
+        await using var __provider = provider.ConfigureAwait(false);
+
+        var root = await _handleAsync(provider, new BusinessRuleViolationException(new CollidingViolation())).ConfigureAwait(false);
+
+        // "type", "title" and "status" are reserved for the violation itself; of two equal names the first one stays.
+        var detail = root.GetProperty("businessRuleViolation");
+        detail.GetProperty("type").GetString().Should().Be(nameof(CollidingViolation));
+        detail.GetProperty("url").GetString().Should().BeOneOf("upper", "mixed");
+    }
+
+    [TestMethod]
+    public async Task DetailsThatCannotBeSerializedLeaveTheErrorAndTheTraceId()
+    {
+        var services = new ServiceCollection();
+        services.ConfigureHttpJsonOptions(static _ => { });
+        var provider = services.BuildServiceProvider();
+        await using var __provider = provider.ConfigureAwait(false);
+
+        var root = await _handleAsync(provider, new BusinessRuleViolationException(new CyclicViolation())).ConfigureAwait(false);
+
+        root.GetProperty("title").GetString().Should().Be("Cyclic");
+        root.GetProperty("status").GetInt32().Should().Be(StatusCodes.Status400BadRequest);
+        root.GetProperty("traceId").GetString().Should().Be("trace-123");
+        root.TryGetProperty("businessRuleViolation", out _).Should().BeFalse();
+    }
+
+    private sealed class CollidingViolation() : BusinessRuleViolation("Colliding")
+    {
+        public string URL { get; } = "upper";
+
+        public string Url { get; } = "mixed";
+
+        public string Type { get; } = "own";
+    }
+
+    private sealed class CyclicViolation() : BusinessRuleViolation("Cyclic")
+    {
+        public Loop Loop { get; } = new();
+    }
+
+    private sealed class Loop
+    {
+        public Loop Self => this;
+    }
+
     private static async Task<JsonElement> _handleAsync(IServiceProvider provider, Exception exception)
     {
         var httpContext = new DefaultHttpContext { RequestServices = provider, TraceIdentifier = "trace-123" };
