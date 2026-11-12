@@ -38,13 +38,12 @@ Protocol (MCP) server. It is a design baseline, not an implementation commitment
 
 Research snapshot: **2026-08-23**, against the official
 [ModelContextProtocol/csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk)
-repository and its current `main` branch. The current stable package identified
-for HTTP hosting is `ModelContextProtocol.AspNetCore` **2.2.0**. The implementation
-must pin the selected stable version centrally and update the version and
-lockfiles together if a newer stable release is selected. The 2.2.0 API used
-below was confirmed against a `net10.0` host; the first Ark package is therefore
-`net10.0` only. The SDK's 2.2.0 ASP.NET Core project itself targets
-`net10.0;net9.0;net8.0`.
+repository and its current `main` branch. The stable package for HTTP hosting
+is `ModelContextProtocol.AspNetCore`. The implementation must pin the selected
+stable version centrally and update the version and lockfiles together if a
+newer stable release is selected. The API used below was confirmed against a
+`net10.0` host; the first Ark package is therefore `net10.0` only. The SDK's
+ASP.NET Core project itself targets `net10.0;net9.0;net8.0`.
 
 The SDK surface that this design relies on is:
 
@@ -68,17 +67,20 @@ assembly-wide scanning while preserving the official `[McpServerToolType]` and
 accepts JSON options only at registration time, before the service provider
 exists, so the generated factory sets `McpServerToolCreateOptions.SerializerOptions`
 from `McpToolSerializerOptions.Get(services)`: one read-only copy of
-`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per service provider, with
-`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and an internal context for
-`McpAttachmentInput` appended to the resolver chain. Tool arguments, input
-schemas and structured results therefore use the same JSON options as the
+`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per application, with
+`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and internal contexts for
+`McpAttachmentInput` and the error ProblemDetails appended to the resolver
+chain. Tool arguments, input schemas, structured results and error details
+therefore use the same JSON options as the
 Minimal API endpoints, and attachment tools still resolve the MCP protocol
 types when reflection-based serialization is disabled (Native AOT).
 
 The SDK's current HTTP integration maps Streamable HTTP at the route supplied to
-`MapMcp`. Stateless mode is recommended when tools do not need
-server-to-client requests. Stateful mode is required for capabilities such as
-server-initiated sampling or elicitation. Legacy SSE is an explicit compatibility
+`MapMcp`. Stateless mode is recommended. Elicitation works in stateless mode
+through multi round-trip requests (protocol revision `2026-07-28`), which Ark
+uses for tool confirmation. Stateful mode is required only for the legacy
+server-to-client requests, such as `elicitation/create`, which that revision
+removes and Ark does not use. Legacy SSE is an explicit compatibility
 option and is not generated or enabled by Ark.
 
 ## Layering
@@ -165,7 +167,8 @@ The first version supports these fields:
 | `Name` | Optional stable MCP tool name; defaults to a normalized contract name. `[ApiGroup("group")]` prefixes the resolved name as `group.name`. Versioning selects the tool on the corresponding MCP route without changing its name. |
 | `ReadOnly` | MCP tool annotation; defaults to `true` for `IQuery<T>` and `false` for `IRequest<T>`/`ICommand`. |
 | `Destructive` | MCP tool annotation; defaults to `false` for `IQuery<T>` and `true` for `IRequest<T>`/`ICommand`. |
-| `Idempotent` | MCP tool annotation; defaults to `false`. |
+| `Idempotent` | MCP tool annotation; defaults to `true` when the contract has `[HttpEndpoint]` with verb `DELETE` or `PUT`, otherwise `false`. |
+| `Confirm` | Asks the user to confirm the call before dispatch; defaults to `true` when the contract has `[HttpEndpoint]` with verb `DELETE`, otherwise `false`. See [Confirmation and elicitation](#confirmation-and-elicitation). |
 | `OpenWorld` | MCP tool annotation; defaults to `true`. |
 
 The generator validates names against MCP tool-name rules and reports duplicate
@@ -493,8 +496,10 @@ The error boundary is explicit:
 | Invalid JSON/schema or missing required argument | SDK validation/protocol error |
 | `McpProtocolException` | JSON-RPC protocol error |
 | `OperationCanceledException` after client cancellation | Cancellation; no fabricated tool result |
-| Validation or known domain failure | `CallToolResult.IsError = true` with `{Title}: {Detail}` text and structured ProblemDetails |
+| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on the last line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. The details are serialized with `McpToolSerializerOptions.Get(services)`, so the application's converters, contexts and naming policies apply; the HTTP ProblemDetails handler uses its own fixed context, so the two can differ (for example in dictionary key casing). Indentation is always off. The details are mapped as they are, with no filter and no size limit: business-rule violations are small, and the mapper must not change them. If the options cannot serialize the details, the result has the title and the detail only, with a logged warning. |
 | Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured ProblemDetails |
+| `InputRequiredException` (confirmation requested) | Passes through the filter; the SDK returns an input-required result |
+| Confirmation declined or not a valid answer | `CallToolResult.IsError = true` with `Not confirmed: ...` text (a business-rule violation with status 409) |
 
 The recommended filter maps known validation and domain exceptions to stable,
 client-safe text. It must not turn an authentication failure into a successful
@@ -542,8 +547,8 @@ authentication. A public MCP endpoint is an explicit host decision.
 
 The recommended baseline is Streamable HTTP in stateless mode over HTTPS,
 restricted host names, and explicit authorization. Stateful mode is selected
-only when a tool or MCP capability requires server-to-client requests or
-session state. Legacy SSE is disabled by default because the SDK documents its
+only when a tool or MCP capability requires legacy server-to-client requests or
+session state; tool confirmation does not. Legacy SSE is disabled by default because the SDK documents its
 weaker backpressure behavior.
 
 ## Security and trust boundary
@@ -575,6 +580,68 @@ Icons, MCP Apps metadata, Tasks, resources, prompts, and custom protocol
 capabilities are not generated in the first version. They can be added as
 separate opt-in features without changing the contract-to-handler dispatch
 boundary.
+
+## Confirmation and elicitation
+
+Two readers use a tool result. The agent must be able to correct a failed call
+from the error alone, so validation and business-rule failures stay tool errors
+with complete text. Elicitation is for the human: the answer goes from the user
+to the server and does not come from the model.
+
+Decisions:
+
+1. **Declarative confirmation only.** `McpToolAttribute.Confirm` makes the
+   generated wrapper call `McpToolConfirmation.EnsureConfirmed` before dispatch.
+   Handlers and contracts get no MCP types, and no transaction is open while
+   the user decides.
+2. **Multi round-trip requests only.** The helper throws the SDK
+   `InputRequiredException` on the first call and reads `InputResponses` on the
+   second. This works in stateless mode. The legacy `ElicitAsync` path is not
+   implemented.
+3. **Fail open.** A client without multi round-trip support or without the
+   form-mode elicitation capability runs the tool without confirmation. A refusal would
+   make these tools unusable on most clients, and the HTTP `DELETE` endpoint has
+   no confirmation either.
+4. **Not a security control.** The server cannot know that a user saw the
+   question, and the confirmation is not bound to the arguments. Authorization
+   stays in the decorators.
+5. **The question is text for a person.** The default is the English
+   `Confirm <tool>: <description>`; `ConfirmMessage` on `[McpTool]` replaces it
+   and turns `Confirm` on. The client shows the text as it is and no model
+   translates it, so a product in another language sets its own question. The
+   arguments follow on the next line with no label. A language taken from the
+   request was rejected: MCP has no language negotiation.
+6. **Declared arguments in the message.** The user must see which item is
+   affected. The generator passes the declared argument names, and only those
+   are shown, in the declared order: the tool ignores other arguments, so a
+   model must not be able to use them to push the real ones out of view. Each
+   value is cut at 200 characters, so one long value cannot hide the others.
+   The arguments are written with a copy of the application's JSON options
+   that has the relaxed JSON encoder, because a person reads them: accents, apostrophes and markup characters are not escaped.
+   Quotes, backslashes and control characters stay escaped. The trade-off is
+   that other non-ASCII characters, bidirectional controls included, reach the
+   client as they are; the client must show the text as plain text.
+7. **Confirmation before dispatch.** The question comes before validation and
+   the handler's authorization policies, because those run inside the mediator
+   decorators. A call can thus be confirmed and then rejected. The tool-level
+   `[Authorize]` still runs first.
+8. **Verb-derived defaults.** `DELETE` turns on `Confirm` and `Idempotent`,
+   `PUT` turns on `Idempotent`. `Destructive` stays `true` for every request and
+   command, so that clients keep asking the user to approve each change.
+
+Rejected:
+
+- **An elicitation service that handlers can call.** No use case, a transport
+  concern inside the handler, and a transaction that stays open during a human
+  wait.
+- **A call-tool filter keyed on tool metadata**, in place of the generated
+  call. It needs a metadata attribute and a runtime lookup for one generated
+  line.
+- **Validation errors as elicitation.** The agent wrote the arguments, so the
+  agent can correct them from the error.
+
+Out of scope: workflow approvals (domain state: a command and a status query),
+URL-mode elicitation, secrets, and overridable business rules.
 
 ## Diagnostics
 
@@ -669,7 +736,7 @@ only the WebInterface host receives the MCP dependency.
 
 The following decisions close the design questions for the first implementation:
 
-1. **SDK and target:** use `ModelContextProtocol.AspNetCore` 2.2.0 with a
+1. **SDK and target:** use `ModelContextProtocol.AspNetCore` with a
    `net10.0` Ark MCP package. Upgrade only as a coordinated package and
    lockfile change.
 2. **Input model:** generate one argument per public bindable contract property.

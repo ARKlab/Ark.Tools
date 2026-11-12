@@ -42,10 +42,29 @@ public sealed class McpToolAttribute : Attribute
 
     /// <summary>
     /// Gets or sets whether repeated calls are idempotent.
-    /// When not explicitly supplied, the generator defaults this to
+    /// When not explicitly supplied, the generator uses <see langword="true"/> when the
+    /// contract has an HTTP endpoint with verb <c>DELETE</c> or <c>PUT</c>, otherwise
     /// <see langword="false"/>.
     /// </summary>
     public bool Idempotent { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the user is asked to confirm the call before it runs.
+    /// When not explicitly supplied, the generator uses <see langword="true"/> when the
+    /// contract has an HTTP endpoint with verb <c>DELETE</c> or when <see cref="ConfirmMessage"/>
+    /// is set, otherwise <see langword="false"/>.
+    /// The question uses MCP multi round-trip requests; a client that cannot be asked runs
+    /// the tool without confirmation. This is a user-experience aid, not a security control:
+    /// keep authorization in handlers and policies.
+    /// </summary>
+    public bool Confirm { get; set; }
+
+    /// <summary>
+    /// Gets or sets the question shown to the user for the confirmation, in the language of the product.
+    /// When <see langword="null"/>, the question is the English <c>Confirm &lt;tool name&gt;: &lt;description&gt;</c>.
+    /// The client shows this text to the user as it is; no model translates it.
+    /// </summary>
+    public string? ConfirmMessage { get; set; }
 
     /// <summary>
     /// Gets or sets whether the tool can access open-world data.

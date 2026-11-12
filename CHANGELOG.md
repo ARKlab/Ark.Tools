@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `Ark.Tools.MediatorFramework.Mcp`: `[McpTool(Confirm = true)]` asks the user to confirm a tool call before it runs, with the tool name, its description and the call arguments. `ConfirmMessage` replaces the default English question with your own text. It is on by default for contracts with an HTTP `DELETE` endpoint. It uses MCP multi round-trip requests, so it works in stateless mode; a client that cannot be asked runs the tool without confirmation. It is not a security control.
+
+### Changed
+
+- `Ark.Tools.MediatorFramework.Mcp`: MCP tools for contracts with an HTTP `DELETE` or `PUT` endpoint are now marked idempotent by default. Set `Idempotent = false` on `[McpTool]` to keep the earlier hint.
+- `Ark.Tools.MediatorFramework.Mcp`: existing MCP tools for contracts with an HTTP `DELETE` endpoint now ask the user for confirmation on clients that support it. Set `Confirm = false` on `[McpTool]` to keep the earlier behaviour.
+- `Ark.Tools.MediatorFramework.Mcp`: MCP error text now includes the validation errors and the business-rule details as one JSON object on the last line, so agents that read only the text can correct the call. The details are serialized with your Minimal API JSON options, so your converters, source-generated contexts and naming policies apply; with a dictionary key policy the keys of the details follow it. Business-rule details that cannot be serialized no longer fail the tool call; the error is returned without the details and a warning is logged.
+
 ### Security
 
 - `Ark.Tools.Reqnroll` now depends on `Microsoft.AspNetCore.WebUtilities` 2.3.14, which fixes GHSA-6527-9fp8-r4x6; the vulnerable 2.3.0 came in transitively through `AwesomeAssertions.Web`.

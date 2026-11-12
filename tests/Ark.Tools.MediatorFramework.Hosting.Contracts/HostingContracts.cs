@@ -171,6 +171,20 @@ public sealed record HostingCommand : Solid.ICommand<HostingCommand>
     public string Value { get; set; } = string.Empty;
 }
 
+/// <summary>Deletes a hosting item.</summary>
+[HttpEndpoint("DELETE", "/api/v{version}/hosting/items/{id}", AllowAnonymous = true)]
+[McpTool(Name = "hosting.delete")]
+public sealed record HostingDeleteCommand : Solid.ICommand<HostingDeleteCommand>
+{
+    /// <summary>Gets or sets the item identifier.</summary>
+    [HttpRoute]
+    public int Id { get; set; }
+
+    /// <summary>Gets or sets an optional note.</summary>
+    [HttpQuery]
+    public string? Note { get; set; }
+}
+
 /// <summary>Command exposed both over HTTP (executes inline) and as a Rebus message.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/bus-commands", AllowAnonymous = true)]
 [RebusMessage(OwnerQueue = "hosting")]
@@ -247,6 +261,7 @@ public sealed record HostingNoContentRequest : Solid.IRequest<HostingNoContentRe
 /// <summary>Request whose handler produces a business-rule violation.</summary>
 [HttpEndpoint("POST", "/api/v{version}/hosting/business-violation", AllowAnonymous = true)]
 [GrpcMethod("TriggerHostingBusinessViolation")]
+[McpTool(Name = "hosting.businessrule")]
 [GrpcService("Hosting")]
 [ProtoBuf.ProtoContract]
 public sealed record HostingBusinessViolationRequest : Solid.IRequest<HostingBusinessViolationRequest, HostingResponse>

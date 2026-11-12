@@ -25,6 +25,8 @@ CONTRACT Book_CreateRequest.V1.Data.Author : PersonName
 CONTRACT Book_CreateRequest.V1.Data.Genre : EvolvableEnum<Book.V1.Genre>
 CONTRACT Book_CreateRequest.V1.Data.ISBN : Isbn?
 CONTRACT Book_CreateRequest.V1.Data.Title : BookTitle
+CONTRACT Book_DeleteRequest.V1 -> bool [group=Ark] [mcp=books.delete] [version=1+]
+CONTRACT Book_DeleteRequest.V1.Id : BookId
 CONTRACT Book_GetQuery.V1 -> Book.V1.Output [group=Ark] [mcp=books.get] [version=1+]
 CONTRACT Book_GetQuery.V1.Id : BookId
 CONTRACT CreateBookReviewRequest.V1 -> BookReview [group=Ark] [http=POST /api/v{version}/books/{bookId}/reviews] [version=1+]

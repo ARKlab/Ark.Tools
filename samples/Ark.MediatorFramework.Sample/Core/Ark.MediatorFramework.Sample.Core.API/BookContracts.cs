@@ -133,6 +133,11 @@ public static class Book_UpdateRequest
 public static class Book_DeleteRequest
 {
     /// <summary>Version one of the book deletion request.</summary>
+    // No HTTP endpoint, so the confirmation and the idempotent hint are explicit; a DELETE endpoint turns both on.
+    [McpTool(
+        Name = "books.delete",
+        Confirm = true,
+        Idempotent = true)]
     [RequireScopePolicy(ApplicationScopes.BookWrite)]
     public sealed record V1(BookId Id) : IRequest<V1, bool>;
 }

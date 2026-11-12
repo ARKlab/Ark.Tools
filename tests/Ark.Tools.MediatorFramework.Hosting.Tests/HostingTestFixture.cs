@@ -416,6 +416,7 @@ public sealed class HostingTestFixture : IAsyncDisposable
         container.Register<IRequestHandler<HostingRequest, HostingResponse>, HostingRequestHandler>();
         container.Register<IQueryHandler<HostingQuery, HostingResponse>, HostingQueryHandler>();
         container.Register<ICommandHandler<HostingCommand>, HostingCommandHandler>();
+        container.Register<ICommandHandler<HostingDeleteCommand>, HostingDeleteCommandHandler>();
         if (includeRebusHandlers)
         {
             container.Register<ICommandHandler<HostingBusCommand>, HostingBusCommandHandler>();
@@ -593,6 +594,9 @@ public sealed class HostingTestState
     /// <summary>Gets the name of the last uploaded attachment.</summary>
     public string? LastAttachmentName { get; internal set; }
 
+    /// <summary>Gets the identifier of the last deleted item.</summary>
+    public int? Deleted { get; internal set; }
+
     /// <summary>Gets the content read by the last single-file upload handler.</summary>
     public string? LastAttachmentContent { get; internal set; }
 
@@ -760,6 +764,15 @@ internal sealed class HostingETagUpdateHandler : IRequestHandler<HostingETagUpda
     }
 }
 
+internal sealed class HostingDeleteCommandHandler(HostingTestState state) : ICommandHandler<HostingDeleteCommand>
+{
+    public async Task ExecuteAsync(HostingDeleteCommand command, CancellationToken ctk = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        state.Deleted = command.Id;
+    }
+}
+
 internal sealed class HostingCommandHandler : ICommandHandler<HostingCommand>
 {
     private readonly HostingTestState _state;
@@ -890,6 +903,10 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
     public async Task<HostingResponse> ExecuteAsync(HostingBusinessViolationRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
+        if (string.Equals(request.Value, "money", StringComparison.Ordinal))
+            throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingMoneyViolation { Detail = "Over the limit." });
+        if (string.Equals(request.Value, "cycle", StringComparison.Ordinal))
+            throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingCycleViolation { Detail = "Cycle." });
         var violation = new Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
         {
             Detail = "The synthetic business rule was violated.",
@@ -897,6 +914,46 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
         };
         throw new Core.BusinessRuleViolation.BusinessRuleViolationException(violation);
     }
+}
+
+/// <summary>A value that needs the application's JSON converter.</summary>
+public sealed record HostingMoney(decimal Amount, string Currency);
+
+/// <summary>Writes <see cref="HostingMoney"/> as one string, the way an application configures it.</summary>
+public sealed class HostingMoneyJsonConverter : System.Text.Json.Serialization.JsonConverter<HostingMoney>
+{
+    /// <inheritdoc />
+    public override HostingMoney Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+    {
+        throw new NotSupportedException();
+    }
+
+    /// <inheritdoc />
+    public override void Write(System.Text.Json.Utf8JsonWriter writer, HostingMoney value, System.Text.Json.JsonSerializerOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(writer);
+        ArgumentNullException.ThrowIfNull(value);
+        writer.WriteStringValue(value.Amount.ToString("0.00", CultureInfo.InvariantCulture) + " " + value.Currency);
+    }
+}
+
+/// <summary>A detail that refers to itself, so the serializer fails on it.</summary>
+public sealed class HostingLoop
+{
+    /// <summary>Gets this instance.</summary>
+    public HostingLoop Self => this;
+}
+
+internal sealed class HostingCycleViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Cycle")
+{
+    public string Ok { get; } = "kept";
+
+    public HostingLoop Loop { get; } = new();
+}
+
+internal sealed class HostingMoneyViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Limit exceeded")
+{
+    public HostingMoney Limit { get; } = new(12.5m, "EUR");
 }
 
 internal sealed class HostingUnexpectedHandler : IRequestHandler<HostingUnexpectedRequest, HostingResponse>
