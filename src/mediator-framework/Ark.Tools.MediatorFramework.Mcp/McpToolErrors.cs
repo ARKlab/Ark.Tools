@@ -77,7 +77,7 @@ public static partial class McpToolErrors
         };
         if (clientVisible)
         {
-            foreach (var extension in _serializable(mappedProblemDetails.Extensions, _maxDictionaryDepth, options))
+            foreach (var extension in _serializable(mappedProblemDetails.Extensions, _maxDictionaryDepth, options, new HashSet<object>(ReferenceEqualityComparer.Instance)))
             {
                 problemDetails.Extensions[extension.Key] = extension.Value;
             }
@@ -98,7 +98,7 @@ public static partial class McpToolErrors
         }
         // Many clients give the model only the text, so it carries the details too.
         if (problemDetails.Extensions.Count > 0)
-            text += "\n" + _extensionsJson(structuredContent, problemDetails.Extensions.Keys);
+            text += "\n" + _extensionsJson(structuredContent, problemDetails.Extensions.Keys, options.WriteIndented);
         return new CallToolResult
         {
             IsError = true,
@@ -108,19 +108,29 @@ public static partial class McpToolErrors
     }
 
     // Options without reflection know a fixed set of types: a value of another type is left out, the others stay.
-    // Dictionaries are copied, not changed: a nested one belongs to the business-rule violation. The depth limit
-    // stops a dictionary that contains itself.
-    private static Dictionary<string, object?> _serializable(IEnumerable<KeyValuePair<string, object?>> values, int depth, JsonSerializerOptions options)
+    // Dictionaries are copied, not changed: a nested one belongs to the business-rule violation. A dictionary that
+    // is already on the current path (it contains itself) or that is nested too deep is left out.
+    private static Dictionary<string, object?> _serializable(
+        IEnumerable<KeyValuePair<string, object?>> values,
+        int depth,
+        JsonSerializerOptions options,
+        HashSet<object> path)
     {
         var result = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var entry in values)
         {
-            if (entry.Value is Dictionary<string, object?> nested && depth > 0)
-                result[entry.Key] = _serializable(nested, depth - 1, options);
-            else if (entry.Value is null)
+            if (entry.Value is null)
                 result[entry.Key] = null;
-            else if (entry.Value is Dictionary<string, object?>)
-                _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} is nested too deep and is left out.", entry.Key);
+            else if (entry.Value is Dictionary<string, object?> nested)
+            {
+                if (depth > 0 && path.Add(nested))
+                {
+                    result[entry.Key] = _serializable(nested, depth - 1, options, path);
+                    path.Remove(nested);
+                }
+                else
+                    _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} contains itself or is nested too deep and is left out.", entry.Key);
+            }
             else if (_tryToElement(entry.Value, options, out var element, out var error))
                 result[entry.Key] = element;
             else
@@ -152,12 +162,15 @@ public static partial class McpToolErrors
         }
     }
 
-    private static string _extensionsJson(JsonElement problemDetails, ICollection<string> extensionKeys)
+    private static string _extensionsJson(JsonElement problemDetails, ICollection<string> extensionKeys, bool indented)
     {
         // The serialized text is reused as it is: a second parse has its own depth limit and can fail.
         return "{" + string.Join(",", problemDetails.EnumerateObject()
             .Where(property => extensionKeys.Contains(property.Name))
-            .Select(static property => "\"" + JsonEncodedText.Encode(property.Name) + "\":" + property.Value.GetRawText())) + "}";
+            // Indented text is written again on one line: the details must stay on the last line.
+            .Select(property => "\"" + JsonEncodedText.Encode(property.Name) + "\":" + (indented
+                ? JsonSerializer.Serialize(property.Value, McpToolErrorJsonSerializerContext.Default.JsonElement)
+                : property.Value.GetRawText()))) + "}";
     }
 
 

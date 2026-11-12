@@ -390,12 +390,35 @@ public sealed class McpHostingTests
         violation.Data["ok"] = "kept";
         violation.Data["unregistered"] = new Version(1, 2);
         violation.Data["self"] = violation.Data;
+        // Many references to itself: a copy for each one at each level would use a very large amount of memory.
+        for (var index = 0; index < 40; index++)
+            violation.Data["again" + index.ToString(CultureInfo.InvariantCulture)] = violation.Data;
 
         var result = McpToolErrors.ToToolResult(new Core.BusinessRuleViolation.BusinessRuleViolationException(violation));
 
         var text = ((TextContentBlock)result.Content[0]).Text;
         text.Should().StartWith("Nested: Detail.\n{").And.Contain("\"ok\":\"kept\"").And.NotContain("unregistered");
         violation.Data.Should().ContainKeys("ok", "unregistered", "self");
+    }
+
+    /// <summary>Verifies the details stay on one line when the caller passes indented options to the public overload.</summary>
+    [TestMethod]
+    public void McpErrorTextStaysOnOneLineWithIndentedOptions()
+    {
+        var options = new System.Text.Json.JsonSerializerOptions(McpToolSerializerOptions.Get(_services())) { WriteIndented = true };
+
+        var result = McpToolErrors.ToToolResult(
+            new Core.BusinessRuleViolation.BusinessRuleViolationException(new TypedViolation { Detail = "Detail." }),
+            options);
+
+        ((TextContentBlock)result.Content[0]).Text.Split('\n').Should().HaveCount(2);
+    }
+
+    private static ServiceProvider _services()
+    {
+        var services = new ServiceCollection();
+        services.ConfigureHttpJsonOptions(static _ => { });
+        return services.BuildServiceProvider();
     }
 
     private sealed class NestedViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Nested")

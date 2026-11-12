@@ -193,7 +193,8 @@ differ from the HTTP ProblemDetails response of the same failure. Under Native A
 your business-rule details to your resolver chain, as for your contracts. A
 detail is serialized on its own: one that the options cannot serialize, or
 that is nested deeper than 32 levels, is left out with a logged warning, and
-the other details stay.
+the other details stay. The same applies to a dictionary of details that
+contains itself or that is nested in dictionaries deeper than 8 levels.
 
 An agent can correct its call from this text alone. Unexpected failures use generic text;
 stack traces, connection strings, and sensitive exception messages are never
