@@ -6,13 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.1.0] - 2026-11-12
+
 ### Added
 
 - `Ark.Tools.MediatorFramework.Mcp`: `[McpTool(Confirm = true)]` asks the user to confirm a tool call before it runs, with the tool name, its description and the call arguments. `ConfirmMessage` replaces the default English question with your own text. It is on by default for contracts with an HTTP `DELETE` endpoint. It uses MCP multi round-trip requests, so it works in stateless mode; a client that cannot be asked runs the tool without confirmation. It is not a security control.
 
 ### Changed
 
-- **Breaking:** `Ark.Tools.AspNetCore.ProblemDetails`: in an HTTP ProblemDetails response, the names of the business-rule details and of the extensions now follow your property naming policy. With the default camel-case policy, a `Limit` property of a violation is now `limit` under `businessRuleViolation`, and the extension names do not change. With another policy, the extension names change too: snake case gives `trace_id`, `stack_trace` and `business_rule_violation`. The keys of `errors` and the standard members (`type`, `title`, `status`, `detail`) do not change.
+- **Breaking:** `Ark.Tools.AspNetCore.ProblemDetails` (only hosts that use `AddArkProblemDetailsExceptionHandler`, the handler of the preview Mediator Framework; the MVC startups are not affected): in an HTTP ProblemDetails response, the names of the business-rule details and of the extensions now follow your property naming policy. With the default camel-case policy, a `Limit` property of a violation is now `limit` under `businessRuleViolation`, and the extension names do not change. With another policy, the extension names change too: snake case gives `trace_id`, `stack_trace` and `business_rule_violation`. The keys of `errors` and the standard members (`type`, `title`, `status`, `detail`) do not change.
 - **Breaking:** `Ark.Tools.MediatorFramework.AzureFunctions`: the response for an exception is now written by the same handler as in Minimal API, with the same JSON options and naming rules. Before, a dictionary key policy changed the keys of `errors`. The response always has `traceId`. `title` is no longer filled from the status code when the error has none (403, 404, 409, 412 and 5xx responses), and `CustomizeProblemDetails` does not apply. The exception message and stack trace are now included in the `Development` environment or with `ArkProblemDetailsOptions.IncludeExceptionDetails`; before, they were never included. Unhandled errors are logged by `ArkProblemDetailsExceptionHandler`, and `ArkAzureFunctionsResults.FromException` no longer returns a `ProblemHttpResult`.
 - `Ark.Tools.MediatorFramework.Mcp`: MCP tools for contracts with an HTTP `DELETE` or `PUT` endpoint are now marked idempotent by default. Set `Idempotent = false` on `[McpTool]` to keep the earlier hint.
 - `Ark.Tools.MediatorFramework.Mcp`: existing MCP tools for contracts with an HTTP `DELETE` endpoint now ask the user for confirmation on clients that support it. Set `Confirm = false` on `[McpTool]` to keep the earlier behaviour.
