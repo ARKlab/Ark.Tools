@@ -58,6 +58,8 @@ public static partial class McpToolSerializerOptions
         var options = new JsonSerializerOptions(application) { WriteIndented = false };
         options.TypeInfoResolverChain.Add(McpJsonUtilities.DefaultOptions.TypeInfoResolver!);
         options.TypeInfoResolverChain.Add(McpToolJsonSerializerContext.Default);
+        // So McpToolErrors.ToToolResult(exception, Get(services)) has ProblemDetails metadata without reflection.
+        options.TypeInfoResolverChain.Add(Ark.Tools.AspNetCore.ProblemDetails.ArkProblemDetailsJson.GetOptions(services: null).TypeInfoResolver!);
         options.MakeReadOnly();
         return options;
     }
