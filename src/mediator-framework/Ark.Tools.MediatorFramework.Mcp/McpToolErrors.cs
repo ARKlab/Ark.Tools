@@ -16,8 +16,6 @@ namespace Ark.Tools.MediatorFramework.Mcp;
 public static partial class McpToolErrors
 {
     private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-    private const int _maxDetailDepth = 32;
-    private const int _maxDictionaryDepth = 8;
 
     /// <summary>Creates a call-tool filter that maps mediator failures to safe MCP results.</summary>
     /// <returns>The MCP call-tool error filter.</returns>
@@ -77,7 +75,7 @@ public static partial class McpToolErrors
         };
         if (clientVisible)
         {
-            foreach (var extension in _serializable(mappedProblemDetails.Extensions, _maxDictionaryDepth, options, new HashSet<object>(ReferenceEqualityComparer.Instance)))
+            foreach (var extension in mappedProblemDetails.Extensions)
             {
                 problemDetails.Extensions[extension.Key] = extension.Value;
             }
@@ -89,9 +87,10 @@ public static partial class McpToolErrors
         {
             structuredContent = JsonSerializer.SerializeToElement(problemDetails, typeInfo);
         }
-        catch (Exception e) when (e is NotSupportedException or JsonException)
+        catch (Exception e) when (e is not OperationCanceledException)
         {
-            // The application's MaxDepth is lower than the wrapped details: keep the error, drop the details.
+            // The details are mapped as they are, not filtered. If the options cannot write them (an unknown type,
+            // a cycle, a converter that throws), the caller still gets the error, without the details.
             _logger.Warn(e, CultureInfo.InvariantCulture, "The MCP error details cannot be serialized and are left out.");
             problemDetails.Extensions.Clear();
             structuredContent = JsonSerializer.SerializeToElement(problemDetails, typeInfo);
@@ -105,61 +104,6 @@ public static partial class McpToolErrors
             Content = [new TextContentBlock { Text = text }],
             StructuredContent = structuredContent,
         };
-    }
-
-    // Options without reflection know a fixed set of types: a value of another type is left out, the others stay.
-    // Dictionaries are copied, not changed: a nested one belongs to the business-rule violation. A dictionary that
-    // is already on the current path (it contains itself) or that is nested too deep is left out.
-    private static Dictionary<string, object?> _serializable(
-        IEnumerable<KeyValuePair<string, object?>> values,
-        int depth,
-        JsonSerializerOptions options,
-        HashSet<object> path)
-    {
-        var result = new Dictionary<string, object?>(StringComparer.Ordinal);
-        foreach (var entry in values)
-        {
-            if (entry.Value is null)
-                result[entry.Key] = null;
-            else if (entry.Value is Dictionary<string, object?> nested)
-            {
-                if (depth > 0 && path.Add(nested))
-                {
-                    result[entry.Key] = _serializable(nested, depth - 1, options, path);
-                    path.Remove(nested);
-                }
-                else
-                    _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} contains itself or is nested too deep and is left out.", entry.Key);
-            }
-            else if (_tryToElement(entry.Value, options, out var element, out var error))
-                result[entry.Key] = element;
-            else
-                _logger.Warn(error, CultureInfo.InvariantCulture, "The MCP error detail {name} of type {type} cannot be serialized and is left out.", entry.Key, entry.Value.GetType());
-        }
-        return result;
-    }
-
-    // Each detail is serialized on its own, so one that fails (an unknown type, a cycle) does not remove the others.
-    // A detail nested deeper than _maxDetailDepth also fails: the MCP response cannot be written past 64 levels.
-    private static bool _tryToElement(object value, JsonSerializerOptions options, out JsonElement element, out Exception? error)
-    {
-        element = default;
-        error = null;
-        try
-        {
-            if (!options.TryGetTypeInfo(value.GetType(), out var typeInfo))
-                return false;
-            var json = JsonSerializer.SerializeToUtf8Bytes(value, typeInfo);
-            var reader = new Utf8JsonReader(json, new JsonReaderOptions { MaxDepth = _maxDetailDepth });
-            element = JsonElement.ParseValue(ref reader);
-            return true;
-        }
-        catch (Exception e) when (e is not OperationCanceledException)
-        {
-            // Whatever a converter or a property getter of the application throws: this detail is left out.
-            error = e;
-            return false;
-        }
     }
 
     private static string _extensionsJson(JsonElement problemDetails, ICollection<string> extensionKeys, bool indented)

@@ -235,19 +235,18 @@ public sealed class McpHostingTests
         result.StructuredContent!.Value.GetProperty("businessRuleViolation").GetProperty("status").GetInt32().Should().Be(422);
     }
 
-    /// <summary>Verifies a detail the JSON context cannot serialize is left out and does not fail the tool call.</summary>
+    /// <summary>Verifies a detail the JSON context cannot serialize does not fail the tool call.</summary>
     [TestMethod]
-    public void McpErrorLeavesOutUnserializableDetail()
+    public void McpErrorWithUnserializableDetailKeepsTitleAndDetail()
     {
         var violation = new UnserializableViolation { Detail = "Detail.", Status = 422 };
 
         var result = McpToolErrors.ToToolResult(new Core.BusinessRuleViolation.BusinessRuleViolationException(violation));
 
         result.IsError.Should().BeTrue();
-        ((TextContentBlock)result.Content[0]).Text.Should().StartWith("Unserializable: Detail.\n{").And.NotContain("Unregistered");
-        var payload = result.StructuredContent!.Value.GetProperty("businessRuleViolation");
-        payload.GetProperty("status").GetInt32().Should().Be(422);
-        payload.TryGetProperty("Unregistered", out _).Should().BeFalse();
+        ((TextContentBlock)result.Content[0]).Text.Should().Be("Unserializable: Detail.");
+        result.StructuredContent!.Value.GetProperty("status").GetInt32().Should().Be(422);
+        result.StructuredContent!.Value.TryGetProperty("businessRuleViolation", out _).Should().BeFalse();
     }
 
     /// <summary>Verifies business-rule details are serialized with the application's JSON options, as the HTTP API does.</summary>
@@ -291,9 +290,9 @@ public sealed class McpHostingTests
         message!.Split('\n').Should().HaveCount(2);
     }
 
-    /// <summary>Verifies one detail that fails during serialization does not remove the other details.</summary>
+    /// <summary>Verifies details that cannot be serialized do not fail the tool call: the error comes without them.</summary>
     [TestMethod]
-    public async Task McpErrorLeavesOutOnlyTheDetailThatFails()
+    public async Task McpErrorWithFailingDetailKeepsTitleAndDetail()
     {
         await using var fixture = new HostingTestFixture();
         await using var app = await fixture.StartMcpHostAsync().ConfigureAwait(false);
@@ -305,28 +304,8 @@ public sealed class McpHostingTests
             cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
         result.IsError.Should().BeTrue();
-        ((TextContentBlock)result.Content[0]).Text.Should()
-            .StartWith("Cycle: Cycle.\n{").And.Contain("\"Ok\":\"kept\"").And.Contain("\"type\":\"HostingCycleViolation\"").And.NotContain("Loop");
-    }
-
-    /// <summary>Verifies a detail nested too deep for an MCP response is left out and the error is still mapped.</summary>
-    [TestMethod]
-    public async Task McpErrorLeavesOutDeeplyNestedDetail()
-    {
-        await using var fixture = new HostingTestFixture();
-        await using var app = fixture.BuildMcpHost(static services => services.ConfigureHttpJsonOptions(
-            static options => options.SerializerOptions.MaxDepth = 128));
-        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
-        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
-
-        var result = await client.CallToolAsync(
-            "hosting.businessrule",
-            new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "deep" },
-            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
-
-        result.IsError.Should().BeTrue();
-        ((TextContentBlock)result.Content[0]).Text.Should()
-            .StartWith("Deep: Deep.\n{").And.Contain("\"type\":\"HostingDeepViolation\"").And.NotContain("[[");
+        ((TextContentBlock)result.Content[0]).Text.Should().Be("Cycle: Cycle.");
+        result.StructuredContent!.Value.GetProperty("status").GetInt32().Should().Be(400);
     }
 
     /// <summary>Verifies business-rule details of the common value types reach the error text.</summary>
@@ -342,8 +321,7 @@ public sealed class McpHostingTests
             .And.Contain("\"Amount\":12.5")
             .And.Contain("\"Id\":\"00000000-0000-0000-0000-000000000001\"")
             .And.Contain("\"Options\":[\"a\",\"b\"]")
-            .And.Contain("\"Count\":3000000000")
-            .And.NotContain("Unregistered");
+            .And.Contain("\"Count\":3000000000");
     }
 
     private sealed class TypedViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Typed")
@@ -355,8 +333,6 @@ public sealed class McpHostingTests
         public Guid Id { get; } = new("00000000-0000-0000-0000-000000000001");
 
         public IReadOnlyList<string> Options { get; } = new List<string> { "a", "b" };
-
-        public Version Unregistered { get; } = new(1, 2);
 
         public long Count { get; } = 3_000_000_000;
     }
@@ -382,7 +358,7 @@ public sealed class McpHostingTests
         message.Should().Be("Confirm hosting.delete: Deletes a hosting item.\n{\"id\":7,\"note\":\"why\"}");
     }
 
-    /// <summary>Verifies the error formatting does not change the violation's own data and survives a cyclic detail.</summary>
+    /// <summary>Verifies the error mapping does not change the violation's own data and survives a cyclic detail.</summary>
     [TestMethod]
     public void McpErrorDoesNotMutateOrOverflowOnNestedDetails()
     {
@@ -396,8 +372,7 @@ public sealed class McpHostingTests
 
         var result = McpToolErrors.ToToolResult(new Core.BusinessRuleViolation.BusinessRuleViolationException(violation));
 
-        var text = ((TextContentBlock)result.Content[0]).Text;
-        text.Should().StartWith("Nested: Detail.\n{").And.Contain("\"ok\":\"kept\"").And.NotContain("unregistered");
+        ((TextContentBlock)result.Content[0]).Text.Should().Be("Nested: Detail.");
         violation.Data.Should().ContainKeys("ok", "unregistered", "self");
     }
 

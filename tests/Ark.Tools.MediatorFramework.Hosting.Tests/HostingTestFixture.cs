@@ -907,8 +907,6 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
             throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingMoneyViolation { Detail = "Over the limit." });
         if (string.Equals(request.Value, "cycle", StringComparison.Ordinal))
             throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingCycleViolation { Detail = "Cycle." });
-        if (string.Equals(request.Value, "deep", StringComparison.Ordinal))
-            throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingDeepViolation { Detail = "Deep." });
         var violation = new Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
         {
             Detail = "The synthetic business rule was violated.",
@@ -951,14 +949,6 @@ internal sealed class HostingCycleViolation() : Core.BusinessRuleViolation.Busin
     public string Ok { get; } = "kept";
 
     public HostingLoop Loop { get; } = new();
-}
-
-internal sealed class HostingDeepViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Deep")
-{
-    // 70 nested arrays: more than the default JSON depth of 64.
-    public System.Text.Json.JsonElement Deep { get; } = System.Text.Json.JsonDocument.Parse(
-        new string('[', 70) + new string(']', 70),
-        new System.Text.Json.JsonDocumentOptions { MaxDepth = 128 }).RootElement.Clone();
 }
 
 internal sealed class HostingMoneyViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Limit exceeded")

@@ -190,11 +190,11 @@ line. Your converters, source-generated contexts, encoder and naming policies
 thus apply. With a dictionary key policy, the keys of `errors` and of the
 business-rule details follow it (`errors.value` with camel case), which can
 differ from the HTTP ProblemDetails response of the same failure. Under Native AOT, add the types of
-your business-rule details to your resolver chain, as for your contracts. A
-detail is serialized on its own: one that the options cannot serialize, or
-that is nested deeper than 32 levels, is left out with a logged warning, and
-the other details stay. The same applies to a dictionary of details that
-contains itself or that is nested in dictionaries deeper than 8 levels.
+your business-rule details to your resolver chain, as for your contracts. The
+details are mapped as they are: they are not filtered or shortened, so keep
+business-rule violations small. If the options cannot serialize them (an
+unknown type, an object that refers to itself), the tool call still returns
+the error, without the details, and a warning is logged.
 
 An agent can correct its call from this text alone. Unexpected failures use generic text;
 stack traces, connection strings, and sensitive exception messages are never
