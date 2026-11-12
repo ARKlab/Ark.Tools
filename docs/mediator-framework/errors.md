@@ -124,9 +124,8 @@ Under Native AOT, add the types of your business-rule details to your resolver
 chain. If the details cannot be serialized, the response still has the error,
 without the details, and a warning is logged.
 
-The Azure Functions host does not apply these two naming rules yet: it writes
-the response with its own JSON options, so a dictionary key policy changes the
-keys of `errors` there, and the detail names keep their property names.
+The Azure Functions host writes its error responses with the same handler, so
+the same rules apply there.
 
 ## Inspect gRPC error responses
 
