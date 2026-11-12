@@ -242,6 +242,25 @@ public sealed class McpHostingTests
         payload.TryGetProperty("Unregistered", out _).Should().BeFalse();
     }
 
+    /// <summary>Verifies business-rule details are serialized with the application's JSON options, as the HTTP API does.</summary>
+    [TestMethod]
+    public async Task McpErrorUsesApplicationJsonOptions()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = fixture.BuildMcpHost(static services => services.ConfigureHttpJsonOptions(
+            static options => options.SerializerOptions.Converters.Add(new HostingMoneyJsonConverter())));
+        await app.StartAsync(CancellationToken.None).ConfigureAwait(false);
+        await using var client = await _createClientAsync(app, version: "1").ConfigureAwait(false);
+
+        var result = await client.CallToolAsync(
+            "hosting.businessrule",
+            new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "money" },
+            cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        ((TextContentBlock)result.Content[0]).Text.Should().StartWith("Limit exceeded: Over the limit.\n{").And.Contain("\"Limit\":\"12.50 EUR\"");
+        result.StructuredContent!.Value.GetProperty("businessRuleViolation").GetProperty("Limit").GetString().Should().Be("12.50 EUR");
+    }
+
     /// <summary>Verifies business-rule details of the common value types reach the error text.</summary>
     [TestMethod]
     public void McpErrorTextContainsCommonValueTypes()

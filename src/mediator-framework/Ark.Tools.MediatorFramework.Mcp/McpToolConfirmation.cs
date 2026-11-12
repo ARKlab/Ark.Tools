@@ -4,7 +4,6 @@
 using Ark.Tools.Core.BusinessRuleViolation;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -19,15 +18,6 @@ public static class McpToolConfirmation
 {
     private const string _inputKey = "confirm";
     private const int _maxTextLength = 200;
-
-    // A person reads the message, so accents, apostrophes and markup characters are not escaped.
-    // Quotes, backslashes and control characters such as line breaks stay escaped.
-    private static readonly JsonSerializerOptions _readable = new()
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        RespectNullableAnnotations = true,
-        RespectRequiredConstructorParameters = true,
-    };
 
     /// <summary>
     /// Returns when the call is confirmed or the client cannot be asked.
@@ -68,12 +58,10 @@ public static class McpToolConfirmation
             {
                 [_inputKey] = InputRequest.ForElicitation(new ElicitRequestParams
                 {
-                    Message = _message(toolName, description, argumentNames, context.Params?.Arguments),
+                    Message = _message(toolName, description, argumentNames, context.Params?.Arguments, context.Services ?? server.Services),
                     RequestedSchema = new ElicitRequestParams.RequestSchema(),
                 }),
-            },
-            // Opaque request state for the client to send back; not read on the second call.
-            _inputKey);
+            });
     }
 
     private static bool _isAccepted(InputResponse? response)
@@ -89,7 +77,7 @@ public static class McpToolConfirmation
         }
     }
 
-    private static string _message(string toolName, string? description, string[] argumentNames, IDictionary<string, JsonElement>? arguments)
+    private static string _message(string toolName, string? description, string[] argumentNames, IDictionary<string, JsonElement>? arguments, IServiceProvider? services)
     {
         var message = "Confirm " + toolName;
         if (!string.IsNullOrEmpty(description))
@@ -106,7 +94,7 @@ public static class McpToolConfirmation
                 json[name] = value.Length <= _maxTextLength ? _parse(value) : _cut(value);
             }
         }
-        return json.Count == 0 ? message : message + "\nArguments: " + json.ToJsonString(_readable);
+        return json.Count == 0 ? message : message + "\nArguments: " + json.ToJsonString(services is null ? null : McpToolSerializerOptions._getReadable(services));
     }
 
     private static string _cut(string text)

@@ -79,8 +79,8 @@ MCP returns the same shape as the HTTP endpoints. Configure both with
 a fallback after yours, for the MCP protocol types.
 
 `McpToolSerializerOptions.Get(services)` builds the options the tools use, once per
-service provider: a read-only copy of the Minimal API options with the MCP protocol contracts and
-`McpAttachmentInput` appended after your own resolvers. Under Native AOT, or with
+application: a read-only copy of the Minimal API options with the MCP protocol contracts,
+`McpAttachmentInput` and the MCP error contracts appended after your own resolvers. Under Native AOT, or with
 `JsonSerializerIsReflectionEnabledByDefault=false`, add your contract types to
 the Minimal API resolver chain as you do for the HTTP endpoints; attachment tools
 need nothing more.
@@ -122,7 +122,8 @@ The question uses MCP multi round-trip requests (protocol revision
    arguments. Only the arguments that the contract declares are shown, because
    the tool ignores the others. A value longer than 200 characters is cut, and
    the message says how many characters are hidden. The arguments are JSON
-   with readable text: accents and apostrophes are not escaped.
+   with readable text: accents and apostrophes are not escaped. The other
+   JSON settings are those of your Minimal API options.
 3. The client calls the tool again with the answer. If the user accepted, the
    handler runs. If not, the call fails with `Not confirmed: the user declined
    '<tool>'. Do not retry without a new user request.`
@@ -177,9 +178,13 @@ Validation failed: Validation failed:
 ```
 
 The JSON uses the default escaping, so an apostrophe is written as `\u0027`.
-A business-rule detail of a type that the MCP JSON context cannot serialize is
-left out and a warning is logged; strings, numbers, booleans, GUIDs, dates and
-lists of strings are supported.
+The error details are serialized with the same options as the tool results,
+which are your Minimal API options (`ConfigureHttpJsonOptions`). Your
+converters and source-generated contexts thus apply, and a business-rule
+detail has the same JSON as in the HTTP API. Under Native AOT, add the types of
+your business-rule details to your resolver chain, as for your contracts. A
+detail of a type that the options cannot serialize is left out, and a warning
+is logged.
 
 An agent can correct its call from this text alone. Unexpected failures use generic text;
 stack traces, connection strings, and sensitive exception messages are never

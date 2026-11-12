@@ -8,6 +8,7 @@ using ModelContextProtocol.Server;
 using NLog;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Ark.Tools.MediatorFramework.Mcp;
 
@@ -30,8 +31,29 @@ public static partial class McpToolErrors
     /// </summary>
     /// <param name="exception">The mediator failure.</param>
     /// <returns>An MCP error result safe to return to a client.</returns>
+    /// <remarks>
+    /// This overload knows only strings, numbers, booleans, GUIDs, dates and lists of strings in the error details.
+    /// Pass the application's options to the other overload to serialize the details as the HTTP API does.
+    /// </remarks>
     public static CallToolResult ToToolResult(Exception exception)
     {
+        return ToToolResult(exception, McpToolErrorJsonSerializerContext.Default.Options);
+    }
+
+    /// <summary>
+    /// Creates an MCP tool result for a mediator failure, with the error details serialized by <paramref name="options"/>.
+    /// Client-visible failures use the shared ProblemDetails; unexpected failures
+    /// use a generic message.
+    /// </summary>
+    /// <param name="exception">The mediator failure.</param>
+    /// <param name="options">
+    /// The JSON options for the ProblemDetails and its details, normally <see cref="McpToolSerializerOptions.Get"/>,
+    /// which are the application's own options.
+    /// </param>
+    /// <returns>An MCP error result safe to return to a client.</returns>
+    public static CallToolResult ToToolResult(Exception exception, JsonSerializerOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(exception);
         var mappedProblemDetails = ExceptionProblemDetailsMapper.Map(exception);
         var clientVisible = mappedProblemDetails.Status is >= 400 and < 500;
@@ -52,15 +74,25 @@ public static partial class McpToolErrors
         };
         if (clientVisible)
         {
-            foreach (var extension in _serializable(mappedProblemDetails.Extensions, depth: 8))
+            foreach (var extension in _serializable(mappedProblemDetails.Extensions, depth: 8, options))
             {
                 problemDetails.Extensions[extension.Key] = extension.Value;
             }
         }
         var text = title + ": " + detail;
-        var structuredContent = JsonSerializer.SerializeToElement(
-            problemDetails,
-            McpToolErrorJsonSerializerContext.Default.ProblemDetails);
+        var typeInfo = (JsonTypeInfo<Microsoft.AspNetCore.Mvc.ProblemDetails>)options.GetTypeInfo(typeof(Microsoft.AspNetCore.Mvc.ProblemDetails));
+        JsonElement structuredContent;
+        try
+        {
+            structuredContent = JsonSerializer.SerializeToElement(problemDetails, typeInfo);
+        }
+        catch (Exception e) when (e is NotSupportedException or JsonException)
+        {
+            // A detail the options cannot write (a nested unknown type, a cycle): keep the error, drop the details.
+            _logger.Warn(e, CultureInfo.InvariantCulture, "The MCP error details cannot be serialized and are left out.");
+            problemDetails.Extensions.Clear();
+            structuredContent = JsonSerializer.SerializeToElement(problemDetails, typeInfo);
+        }
         // Many clients give the model only the text, so it carries the details too.
         if (problemDetails.Extensions.Count > 0)
             text += "\n" + _extensionsJson(structuredContent, problemDetails.Extensions.Keys);
@@ -72,17 +104,17 @@ public static partial class McpToolErrors
         };
     }
 
-    // The source-generated context knows a fixed set of types: a value of another type is left out, the others stay.
+    // Options without reflection know a fixed set of types: a value of another type is left out, the others stay.
     // Dictionaries are copied, not changed: a nested one belongs to the business-rule violation. The depth limit
     // stops a dictionary that contains itself.
-    private static Dictionary<string, object?> _serializable(IEnumerable<KeyValuePair<string, object?>> values, int depth)
+    private static Dictionary<string, object?> _serializable(IEnumerable<KeyValuePair<string, object?>> values, int depth, JsonSerializerOptions options)
     {
         var result = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var entry in values)
         {
             if (entry.Value is Dictionary<string, object?> nested && depth > 0)
-                result[entry.Key] = _serializable(nested, depth - 1);
-            else if (entry.Value is null || entry.Value is not Dictionary<string, object?> && McpToolErrorJsonSerializerContext.Default.GetTypeInfo(entry.Value.GetType()) is not null)
+                result[entry.Key] = _serializable(nested, depth - 1, options);
+            else if (entry.Value is null || entry.Value is not Dictionary<string, object?> && options.TryGetTypeInfo(entry.Value.GetType(), out _))
                 result[entry.Key] = entry.Value;
             else
                 _logger.Warn(CultureInfo.InvariantCulture, "The MCP error detail {name} of type {type} cannot be serialized and is left out.", entry.Key, entry.Value.GetType());
@@ -123,7 +155,9 @@ public static partial class McpToolErrors
             }
             catch (Exception exception)
             {
-                return ToToolResult(exception);
+                // The application's JSON options, so the details are written as the HTTP API writes them.
+                var services = context.Services ?? context.Server.Services;
+                return services is null ? ToToolResult(exception) : ToToolResult(exception, McpToolSerializerOptions.Get(services));
             }
         };
     }

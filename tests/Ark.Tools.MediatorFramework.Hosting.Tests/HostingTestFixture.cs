@@ -903,6 +903,8 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
     public async Task<HostingResponse> ExecuteAsync(HostingBusinessViolationRequest request, CancellationToken ctk = default)
     {
         await Task.CompletedTask.ConfigureAwait(false);
+        if (string.Equals(request.Value, "money", StringComparison.Ordinal))
+            throw new Core.BusinessRuleViolation.BusinessRuleViolationException(new HostingMoneyViolation { Detail = "Over the limit." });
         var violation = new Core.BusinessRuleViolation.BusinessRuleViolation("Synthetic rule")
         {
             Detail = "The synthetic business rule was violated.",
@@ -910,6 +912,32 @@ internal sealed class HostingBusinessViolationHandler : IRequestHandler<HostingB
         };
         throw new Core.BusinessRuleViolation.BusinessRuleViolationException(violation);
     }
+}
+
+/// <summary>A value that needs the application's JSON converter.</summary>
+public sealed record HostingMoney(decimal Amount, string Currency);
+
+/// <summary>Writes <see cref="HostingMoney"/> as one string, the way an application configures it.</summary>
+public sealed class HostingMoneyJsonConverter : System.Text.Json.Serialization.JsonConverter<HostingMoney>
+{
+    /// <inheritdoc />
+    public override HostingMoney Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+    {
+        throw new NotSupportedException();
+    }
+
+    /// <inheritdoc />
+    public override void Write(System.Text.Json.Utf8JsonWriter writer, HostingMoney value, System.Text.Json.JsonSerializerOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(writer);
+        ArgumentNullException.ThrowIfNull(value);
+        writer.WriteStringValue(value.Amount.ToString("0.00", CultureInfo.InvariantCulture) + " " + value.Currency);
+    }
+}
+
+internal sealed class HostingMoneyViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Limit exceeded")
+{
+    public HostingMoney Limit { get; } = new(12.5m, "EUR");
 }
 
 internal sealed class HostingUnexpectedHandler : IRequestHandler<HostingUnexpectedRequest, HostingResponse>

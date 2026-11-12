@@ -67,10 +67,11 @@ assembly-wide scanning while preserving the official `[McpServerToolType]` and
 accepts JSON options only at registration time, before the service provider
 exists, so the generated factory sets `McpServerToolCreateOptions.SerializerOptions`
 from `McpToolSerializerOptions.Get(services)`: one read-only copy of
-`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per service provider, with
-`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and an internal context for
-`McpAttachmentInput` appended to the resolver chain. Tool arguments, input
-schemas and structured results therefore use the same JSON options as the
+`IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>` per application, with
+`McpJsonUtilities.DefaultOptions.TypeInfoResolver` and internal contexts for
+`McpAttachmentInput` and the error ProblemDetails appended to the resolver
+chain. Tool arguments, input schemas, structured results and error details
+therefore use the same JSON options as the
 Minimal API endpoints, and attachment tools still resolve the MCP protocol
 types when reflection-based serialization is disabled (Native AOT).
 
@@ -495,7 +496,7 @@ The error boundary is explicit:
 | Invalid JSON/schema or missing required argument | SDK validation/protocol error |
 | `McpProtocolException` | JSON-RPC protocol error |
 | `OperationCanceledException` after client cancellation | Cancellation; no fabricated tool result |
-| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on the last line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. A detail of a type the JSON context cannot serialize is left out of both, with a logged warning. |
+| Validation or known domain failure | `CallToolResult.IsError = true` with structured ProblemDetails and `{Title}: {Detail}` text, followed on the last line by the ProblemDetails extensions (`errors`, `businessRuleViolation`) as one compact JSON object. Many clients give the model only the text, so the text must be enough to correct the call. The details are serialized with `McpToolSerializerOptions.Get(services)`, so the application's converters and contexts apply, as in the HTTP API. A detail of a type those options cannot serialize is left out of both, with a logged warning. |
 | Unexpected exception | `CallToolResult.IsError = true` with generic safe text and structured ProblemDetails |
 | `InputRequiredException` (confirmation requested) | Passes through the filter; the SDK returns an input-required result |
 | Confirmation declined or not a valid answer | `CallToolResult.IsError = true` with `Not confirmed: ...` text (a business-rule violation with status 409) |
@@ -609,8 +610,8 @@ Decisions:
    are shown, in the declared order: the tool ignores other arguments, so a
    model must not be able to use them to push the real ones out of view. Each
    value is cut at 200 characters, so one long value cannot hide the others.
-   The arguments are written with the relaxed JSON encoder, because a person
-   reads them: accents, apostrophes and markup characters are not escaped.
+   The arguments are written with a copy of the application's JSON options
+   that has the relaxed JSON encoder, because a person reads them: accents, apostrophes and markup characters are not escaped.
    Quotes, backslashes and control characters stay escaped. The trade-off is
    that other non-ASCII characters, bidirectional controls included, reach the
    client as they are; the client must show the text as plain text.
