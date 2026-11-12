@@ -186,10 +186,11 @@ Validation failed: Validation failed:
 
 The error details are serialized with the same options as the tool results,
 which are your Minimal API options (`ConfigureHttpJsonOptions`), always on one
-line. Your converters, source-generated contexts, encoder and naming policies
-thus apply. With a dictionary key policy, the keys of `errors` and of the
-business-rule details follow it (`errors.value` with camel case), which can
-differ from the HTTP ProblemDetails response of the same failure. Under Native AOT, add the types of
+line. Your converters, source-generated contexts and encoder thus apply, and
+the JSON is the same as in the HTTP ProblemDetails response of the same
+failure. The names of the extensions and of the business-rule details follow
+your property naming policy; the keys of a dictionary, such as `errors`, are
+written as they are (see [Errors](errors.md#inspect-http-error-responses)). Under Native AOT, add the types of
 your business-rule details to your resolver chain, as for your contracts. The
 details are mapped as they are: they are not filtered or shortened, so keep
 business-rule violations small. If the options cannot serialize them (an

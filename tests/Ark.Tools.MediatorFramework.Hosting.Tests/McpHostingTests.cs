@@ -264,8 +264,8 @@ public sealed class McpHostingTests
             new Dictionary<string, object?>(StringComparer.Ordinal) { ["value"] = "money" },
             cancellationToken: app.Lifetime.ApplicationStopping).ConfigureAwait(false);
 
-        ((TextContentBlock)result.Content[0]).Text.Should().StartWith("Limit exceeded: Over the limit.\n{").And.Contain("\"Limit\":\"12.50 EUR\"");
-        result.StructuredContent!.Value.GetProperty("businessRuleViolation").GetProperty("Limit").GetString().Should().Be("12.50 EUR");
+        ((TextContentBlock)result.Content[0]).Text.Should().StartWith("Limit exceeded: Over the limit.\n{").And.Contain("\"limit\":\"12.50 EUR\"");
+        result.StructuredContent!.Value.GetProperty("businessRuleViolation").GetProperty("limit").GetString().Should().Be("12.50 EUR");
     }
 
     /// <summary>Verifies indented application JSON options do not spread the details or the question over more lines.</summary>
@@ -317,11 +317,11 @@ public sealed class McpHostingTests
         var result = McpToolErrors.ToToolResult(new Core.BusinessRuleViolation.BusinessRuleViolationException(violation));
 
         ((TextContentBlock)result.Content[0]).Text.Should()
-            .Contain("\"Flag\":true")
-            .And.Contain("\"Amount\":12.5")
-            .And.Contain("\"Id\":\"00000000-0000-0000-0000-000000000001\"")
-            .And.Contain("\"Options\":[\"a\",\"b\"]")
-            .And.Contain("\"Count\":3000000000");
+            .Contain("\"flag\":true")
+            .And.Contain("\"amount\":12.5")
+            .And.Contain("\"id\":\"00000000-0000-0000-0000-000000000001\"")
+            .And.Contain("\"options\":[\"a\",\"b\"]")
+            .And.Contain("\"count\":3000000000");
     }
 
     private sealed class TypedViolation() : Core.BusinessRuleViolation.BusinessRuleViolation("Typed")

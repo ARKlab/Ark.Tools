@@ -100,6 +100,23 @@ Exact validation text depends on the application's validators. Clients should
 branch on stable error codes/statuses rather than parsing human-readable
 `detail` text.
 
+The response is written with your Minimal API JSON options
+(`ConfigureHttpJsonOptions`), so your converters and source-generated contexts
+apply to the business-rule details. Two naming rules apply, for HTTP and for
+the MCP tool errors alike:
+
+- The names of the extensions (`businessRuleViolation`, `errors`, `traceId`)
+  and of the business-rule details are properties. They follow your property
+  naming policy: a `Limit` property of a violation is written as `limit` with
+  the default camel-case policy.
+- The keys of a dictionary are data and are written as they are, also when you
+  set a dictionary key policy. This applies to the keys of `errors`, which are
+  the names of the invalid inputs, and to a dictionary inside a detail.
+
+Under Native AOT, add the types of your business-rule details to your resolver
+chain. If the details cannot be serialized, the response still has the error,
+without the details, and a warning is logged.
+
 ## Inspect gRPC error responses
 
 gRPC returns a non-OK status and rich `google.rpc.Status` details. A business

@@ -23,7 +23,7 @@ public static partial class McpToolSerializerOptions
     /// <summary>
     /// Gets the JSON options for generated MCP tool arguments, schemas and results: a read-only copy of the
     /// Minimal API options (<c>ConfigureHttpJsonOptions</c>) with the MCP protocol contracts and
-    /// <see cref="McpAttachmentInput"/> and the MCP error contracts appended to the resolver chain.
+    /// <see cref="McpAttachmentInput"/> appended to the resolver chain.
     /// </summary>
     /// <param name="services">The service provider of the MCP host.</param>
     /// <returns>The JSON options shared by the generated tools; repeated calls for one application, from any scope, return the same instance.</returns>
@@ -58,7 +58,6 @@ public static partial class McpToolSerializerOptions
         var options = new JsonSerializerOptions(application) { WriteIndented = false };
         options.TypeInfoResolverChain.Add(McpJsonUtilities.DefaultOptions.TypeInfoResolver!);
         options.TypeInfoResolverChain.Add(McpToolJsonSerializerContext.Default);
-        options.TypeInfoResolverChain.Add(McpToolErrors.McpToolErrorJsonSerializerContext.Default);
         options.MakeReadOnly();
         return options;
     }

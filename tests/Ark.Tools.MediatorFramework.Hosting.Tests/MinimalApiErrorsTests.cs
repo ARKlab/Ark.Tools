@@ -94,6 +94,24 @@ public sealed class MinimalApiErrorsTests
             .Should().Be("BusinessRuleViolation");
     }
 
+    /// <summary>Verifies a business-rule detail of an application type is written with the application's JSON options.</summary>
+    [TestMethod]
+    public async Task WritesBusinessRuleDetailOfApplicationType()
+    {
+        await using var fixture = new HostingTestFixture();
+        await using var app = await fixture.StartMinimalApiHostAsync().ConfigureAwait(false);
+        using var client = app.GetTestServer().CreateClient();
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/hosting/business-violation",
+            new HostingBusinessViolationRequest { Value = "money" },
+            app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+        var body = await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping).ConfigureAwait(false);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        body.Should().Contain("\"title\":\"Limit exceeded\"").And.Contain("\"limit\":{\"amount\":12.5,\"currency\":\"EUR\"}");
+    }
+
     /// <summary>Verifies unexpected exceptions map to an internal-server ProblemDetails response.</summary>
     [TestMethod]
     public async Task MapsUnexpectedExceptionToProblemDetails()
