@@ -68,7 +68,7 @@
     <PackageVersion Include="AwesomeAssertions.Web" Version="3.0.0" />
     <!-- Transitively pin Microsoft.AspNetCore.WebUtilities above the vulnerable range (GHSA-6527-9fp8-r4x6);
          AwesomeAssertions.Web 3.0.0 otherwise drags in the vulnerable 2.3.0. -->
-    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.34" />
+    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.15" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.15" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.5.2" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.5.2" />
