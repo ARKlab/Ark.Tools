@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.327, )",
-        "resolved": "3.0.327",
-        "contentHash": "gqfab6/00jyKZyr1Tz0rTeQcj7wN5xh6ihPTT6Ad9n1GdnLIOgGDpzNI7KegvHGO54VtIEFP9kVvA/XI/ASnTQ=="
+        "requested": "[3.0.339, )",
+        "resolved": "3.0.339",
+        "contentHash": "oB0KVTYO0CkqscgCp2Fce6Q4G9gIVvVy39ULQLU2eOJfTNWS63Lk7VZbgerx6XMdUxPC4bprv87r8f7EZfp6gQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -101,21 +101,21 @@
       },
       "Microsoft.Data.SqlClient.Extensions.Abstractions": {
         "type": "Transitive",
-        "resolved": "7.1.1",
-        "contentHash": "qP/zUOCJwfKqWNC9o+TWqltfNbLnZi1APNpJZgj0yeEJhoI+h+eoQLX+331yZHNOlDxdafZLP5arW/yrS1jAAw==",
+        "resolved": "7.1.2",
+        "contentHash": "UaHg/zJIaJRF+Qu6ywK9s66CL3digE+X640sfjUsF8TCY5gGapNXgHgm+HJ5VWnKgQF1ksHygRRKc8aV6orlJQ==",
         "dependencies": {
-          "Microsoft.Data.SqlClient.Internal.Logging": "[7.1.1, 8.0.0)"
+          "Microsoft.Data.SqlClient.Internal.Logging": "[7.1.2, 8.0.0)"
         }
       },
       "Microsoft.Data.SqlClient.Internal.Logging": {
         "type": "Transitive",
-        "resolved": "7.1.1",
-        "contentHash": "bVqbATLnHQngue7U9K7GRnzvfdDa7IyiBU2vijfU2vBMBSZrAnQp/wXqNSfaVonckSaMXUk07wfujTqy9IVMdw=="
+        "resolved": "7.1.2",
+        "contentHash": "Ed+xxBVIUJPJNQGg6EnmIOsULBMl/xBXFouVGzc23/PpJx2EGuZtVu00pTOoaPXJB/J9pNnVOshpjKn63Xnvgw=="
       },
       "Microsoft.Data.SqlClient.SNI.runtime": {
         "type": "Transitive",
-        "resolved": "7.1.0",
-        "contentHash": "rWunOb6Dby0lcI82PohARcRbF+4x4wNKxnKRSHXhuwZMu8/cCS68DCfhceq4bv1gUEfoL5dWXHYnfxVvLQUN+Q=="
+        "resolved": "7.1.2",
+        "contentHash": "t5AECn7LT/VuS56mCQ+ps9LQy9ZJ23nIGoOfBpXfC35E4/sM4D9fbE0KnCqqKHemtwuFhe/QuTnneGChs5ez4Q=="
       },
       "Microsoft.Diagnostics.NETCore.Client": {
         "type": "Transitive",
@@ -410,8 +410,8 @@
       },
       "System.Threading.RateLimiting": {
         "type": "Transitive",
-        "resolved": "9.0.18",
-        "contentHash": "pxuHw/tQXaHMRXEaKzzgpoGO8VeTPIzHbnp0KclXp6js5wPHn7VaqSCa8yRTAsZDcZ2XuIEnXGM2MbRDJFLBog=="
+        "resolved": "9.0.21",
+        "contentHash": "tvq1DkIPvMiZeuS0LX31wuqdQc34oB1xnT9teTAV7puRGbljJpu1kSUe+GK/QkNOmrtQo+h0hZms4hh5jerhbQ=="
       },
       "ark.tools.applicationinsights": {
         "type": "Project",
@@ -491,7 +491,7 @@
           "Ark.Tools.Compliance.NLog": "[999.9.9, )",
           "Ark.Tools.Core": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Microsoft.Data.SqlClient": "[7.1.1, )",
+          "Microsoft.Data.SqlClient": "[7.1.2, )",
           "NLog": "[6.2.2, )",
           "NLog.Database": "[6.2.2, )",
           "NLog.DiagnosticSource": "[6.2.2, )",
@@ -659,21 +659,21 @@
       },
       "Microsoft.Data.SqlClient": {
         "type": "CentralTransitive",
-        "requested": "[7.1.1, )",
-        "resolved": "7.1.1",
-        "contentHash": "Moz4+bba/OdEM9I4jXWggduJ4sqoNcgVAQyXG/dNnGGvnS/YDr2fTjP83fg5YX3drgRki6fRAhR94P8dAZgZtQ==",
+        "requested": "[7.1.2, )",
+        "resolved": "7.1.2",
+        "contentHash": "guqzpThPuZhyrNAKLyNRB0NtuR87gw5iZbF5QniyKZXtESAP3kcPEN9bwJ0ZVYXjfXbSCIv15S0kRh9YTrz0sQ==",
         "dependencies": {
-          "Microsoft.Bcl.Cryptography": "9.0.18",
-          "Microsoft.Data.SqlClient.Extensions.Abstractions": "[7.1.1, 8.0.0)",
-          "Microsoft.Data.SqlClient.Internal.Logging": "[7.1.1, 8.0.0)",
-          "Microsoft.Data.SqlClient.SNI.runtime": "[7.1.0, 8.0.0)",
-          "Microsoft.Extensions.Caching.Memory": "9.0.18",
+          "Microsoft.Bcl.Cryptography": "9.0.21",
+          "Microsoft.Data.SqlClient.Extensions.Abstractions": "[7.1.2, 8.0.0)",
+          "Microsoft.Data.SqlClient.Internal.Logging": "[7.1.2, 8.0.0)",
+          "Microsoft.Data.SqlClient.SNI.runtime": "[7.1.2, 8.0.0)",
+          "Microsoft.Extensions.Caching.Memory": "9.0.21",
           "Microsoft.IdentityModel.JsonWebTokens": "8.16.0",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.16.0",
           "Microsoft.SqlServer.Server": "[1.0.0, 2.0.0)",
-          "System.Configuration.ConfigurationManager": "9.0.18",
-          "System.Security.Cryptography.Pkcs": "9.0.18",
-          "System.Threading.RateLimiting": "9.0.18"
+          "System.Configuration.ConfigurationManager": "9.0.21",
+          "System.Security.Cryptography.Pkcs": "9.0.21",
+          "System.Threading.RateLimiting": "9.0.21"
         }
       },
       "Microsoft.Extensions.Caching.Abstractions": {
