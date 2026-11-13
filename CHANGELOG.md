@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.1.1] - 2026-11-13
+
+### Changed
+
+- Version 7.1.0 was not published to nuget.org: its release failed. Version 7.1.1 contains the changes listed under 7.1.0, plus patch updates of dependencies. The packages are now published with NuGet trusted publishing.
+
 ## [7.1.0] - 2026-11-12
 
 ### Added
