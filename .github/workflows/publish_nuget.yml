@@ -118,6 +118,8 @@ jobs:
     name: 'Nuget Push'
     needs: deploy
     runs-on: 'ubuntu-26.04'
+    # The nuget.org policy accepts only this environment, and the environment accepts only release tags.
+    environment: nuget
     permissions:
       id-token: write # NuGet trusted publishing: the OIDC token is exchanged for a one-hour API key
 
