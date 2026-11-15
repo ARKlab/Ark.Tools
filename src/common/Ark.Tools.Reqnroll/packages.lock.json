@@ -10,12 +10,12 @@
       },
       "AwesomeAssertions.Web": {
         "type": "Direct",
-        "requested": "[3.0.1, )",
-        "resolved": "3.0.1",
-        "contentHash": "61mrfZr1+Y+m+xHWn186XLBV5OmiaK2a0nfvc5+ZfvB/LQKU+Lh9UHiGqVTqIZvcufRz15ZggpzabBXkpoZw7Q==",
+        "requested": "[3.0.2, )",
+        "resolved": "3.0.2",
+        "contentHash": "QfyUlg+YzwGcU4HeproW5JERKke5TCDSAci0IcZ4oW23Zia45ZHN+uzAGITmj5xGZood+Y1UyBScSczp67kDZQ==",
         "dependencies": {
           "AwesomeAssertions": "9.0.0",
-          "HttpMessageFormatter": "2.0.7",
+          "HttpMessageFormatter": "2.0.8",
           "Microsoft.AspNetCore.WebUtilities": "2.3.14"
         }
       },
@@ -27,9 +27,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.339, )",
-        "resolved": "3.0.339",
-        "contentHash": "oB0KVTYO0CkqscgCp2Fce6Q4G9gIVvVy39ULQLU2eOJfTNWS63Lk7VZbgerx6XMdUxPC4bprv87r8f7EZfp6gQ=="
+        "requested": "[3.0.340, )",
+        "resolved": "3.0.340",
+        "contentHash": "0Dj49/kQSH0UgitHPNUH9o76+2Awo0TEvnOnSKaYG11vWdu85zmutX3es7ltfPeDddIzPx8mhjBVFq5LfrRmAQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -126,8 +126,8 @@
       },
       "HttpMessageFormatter": {
         "type": "Transitive",
-        "resolved": "2.0.7",
-        "contentHash": "F1ptNdwZE3GK9lpN6O5uLT/7T/uUWssdJIJCczfbombWJiJphIgdjSqErgRGKnXSBOk3bC2dw5W/kF57bfNemg==",
+        "resolved": "2.0.8",
+        "contentHash": "nbmGw9Cp1SsKgsrv4oNGx1jrH3iLA9TlHzpQNC784z3flpS8bNut4GoHSnZamsnGwyGWdyeKofA7T8hgdiZ7vQ==",
         "dependencies": {
           "Microsoft.AspNetCore.WebUtilities": "2.3.14"
         }
@@ -250,7 +250,7 @@
           "CacheCow.Client": "[2.13.1, )",
           "Flurl.Http": "[4.0.2, )",
           "Flurl.Http.Newtonsoft": "[0.9.1, )",
-          "MessagePack.NodaTime": "[3.5.11, )"
+          "MessagePack.NodaTime": "[3.5.12, )"
         }
       },
       "ark.tools.newtonsoftjson": {
@@ -333,12 +333,12 @@
       },
       "MessagePack.NodaTime": {
         "type": "CentralTransitive",
-        "requested": "[3.5.11, )",
-        "resolved": "3.5.11",
-        "contentHash": "J2s7eR5BRG/jTekw2fuH2gRQ6qikUaGUhN/vrUJPNsRUINY4oeDdPSq8Sd2Gqi3rCLIRptfzAcdpZ11XD6/8OA==",
+        "requested": "[3.5.12, )",
+        "resolved": "3.5.12",
+        "contentHash": "XgCOwojj4NyyziPiyP9g4gyGYFZ88jv71/qIyPdLnHZl5/I/IY2j0K4LbiIIJIyIxfEm5qMZ4R/UwOHA8gJpHw==",
         "dependencies": {
           "MessagePack": "3.1.12",
-          "NodaTime": "3.3.5"
+          "NodaTime": "3.3.7"
         }
       },
       "Microsoft.AspNetCore.WebUtilities": {
