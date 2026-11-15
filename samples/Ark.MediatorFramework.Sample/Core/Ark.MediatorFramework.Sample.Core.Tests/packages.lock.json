@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.340, )",
-        "resolved": "3.0.340",
-        "contentHash": "0Dj49/kQSH0UgitHPNUH9o76+2Awo0TEvnOnSKaYG11vWdu85zmutX3es7ltfPeDddIzPx8mhjBVFq5LfrRmAQ=="
+        "requested": "[3.0.341, )",
+        "resolved": "3.0.341",
+        "contentHash": "zpogT6IwYBgNRa9+oETzs7aTU6Te3M/Osdkk/HN1TlJTDjz9dZwoUgh/yWqovT3jTofQGGLB1JqEK8I4uA6+yA=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -199,8 +199,8 @@
       },
       "AwesomeAssertions.Web": {
         "type": "Transitive",
-        "resolved": "3.0.3",
-        "contentHash": "mtDL+3kQPGSv7B05bA2uDU8pyGnisnVGUvPMWPALjY+QY1FD5T6dcFRIPoxbVmwALBcLKxWI1rfHAjogmau1Tg==",
+        "resolved": "3.0.4",
+        "contentHash": "gcdbtQzNNaWmxgvFvRn1IujUrvM8M5WFBS5gMEeC5JpPI71xbejGonoYVXV3sd3pEX3hKmIgDgB5pka2bVK74A==",
         "dependencies": {
           "AwesomeAssertions": "9.6.0",
           "HttpMessageFormatter": "2.0.9",
@@ -1431,7 +1431,7 @@
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Ark.Tools.Http": "[1.0.0, )",
           "AwesomeAssertions": "[9.6.0, )",
-          "AwesomeAssertions.Web": "[3.0.3, )",
+          "AwesomeAssertions.Web": "[3.0.4, )",
           "Microsoft.IdentityModel.JsonWebTokens": "[8.23.0, )",
           "Reqnroll": "[3.3.4, )"
         }
