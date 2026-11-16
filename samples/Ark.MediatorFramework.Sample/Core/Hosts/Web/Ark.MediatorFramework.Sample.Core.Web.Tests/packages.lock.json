@@ -1462,7 +1462,7 @@
           "Azure.Extensions.AspNetCore.Configuration.Secrets": "[1.5.2, )",
           "Azure.Identity": "[1.21.0, )",
           "Microsoft.Identity.Web": "[4.18.0, )",
-          "Scalar.AspNetCore": "[2.21.0, )",
+          "Scalar.AspNetCore": "[3.0.0, )",
           "Swashbuckle.AspNetCore.SwaggerUI": "[10.3.1, )",
           "protobuf-net.Grpc.AspNetCore.Reflection": "[1.3.14, )"
         }
@@ -1977,9 +1977,9 @@
       },
       "Scalar.AspNetCore": {
         "type": "CentralTransitive",
-        "requested": "[2.21.0, )",
-        "resolved": "2.21.0",
-        "contentHash": "pDaxW7B1HqQIU5T64Jn1Txn2JKyVqoOvskCAqTb/lffZyUS8hBxhxmOkJum4wbzFmhc2LsKULVQ/4GDHLb7yjQ=="
+        "requested": "[3.0.0, )",
+        "resolved": "3.0.0",
+        "contentHash": "UvDaK9ZRfGrdOUUcEqZNZ/YnVPcn2C4GiwRxYnsyhsdlTKH9Zqr8/jCOLSNBxhZQ7Te8ldm5a5zbr/reL0WhYg=="
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "CentralTransitive",
