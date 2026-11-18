@@ -29,16 +29,6 @@
       "versioning": "regex:^(?<major>\\d+)-CU(?<minor>\\d+)(?:-GDR(?<patch>\\d+))?-(?<compatibility>ubuntu-[\\d.]+)$"
     },
     {
-      "description": "constraints.apm and the apm-version of the workflows must move together, in one PR",
-      "matchDatasources": [
-        "github-releases"
-      ],
-      "matchPackageNames": [
-        "microsoft/apm"
-      ],
-      "groupName": "apm CLI"
-    },
-    {
       "description": "dotnet/skills publishes no plugin release tags: apm.yml pins its commit with a '# main' comment and Renovate tracks the main digest, batched weekly because main moves daily",
       "matchManagers": [
         "apm"
