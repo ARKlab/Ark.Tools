@@ -1,5 +1,5 @@
 lockfile_version: '1'
-apm_version: 0.34.0
+apm_version: 0.35.1
 dependencies:
 - repo_url: _local/ark-csharp
   name: ark-csharp
@@ -45,6 +45,7 @@ dependencies:
     .github/agents/roslyn-incremental-generator-specialist.agent.md: sha256:7aa3a1308ab56b2cc969dc9fc7820cb668ea5b66fb263715301a9397d47385a4
   source: local
   local_path: ./agents-plugins/ark-csharp
+  content_hash: sha256:9d1f51fd80448a7b405bf40f6b67e419c359ec5e7d53f3afd38741ee168ee62f
   is_dev: true
   declared_license: MIT
 - repo_url: aaronontheweb/dotnet-skills

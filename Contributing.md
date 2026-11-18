@@ -79,7 +79,9 @@ The repository has two separate APM flows:
   declare and pin development dependencies. Installed Copilot and Claude
   skills, agents, hooks, MCP and LSP configuration are committed, so every
   harness and cloud session has them at startup. Some agents link into the
-  ignored `apm_modules/`; run `apm install` after cloning to restore it
+  ignored `apm_modules/`; run `apm install --force` after cloning to restore it
+  (on a fresh clone APM refuses to rewrite skills whose links it rewrites; `git status`
+  must stay clean afterwards)
   (`.github/workflows/copilot-setup-steps.yml` does this for the Copilot cloud
   agent; any other cloud environment must install the pinned APM version).
 - **Publication:** [agents-plugins/ark-csharp](agents-plugins/ark-csharp/)
