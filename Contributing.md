@@ -72,8 +72,7 @@ registered behavior, not merely assert that registration does not throw.
 
 Use the [APM](https://github.com/microsoft/apm/releases) version pinned in `renovate.json`
 (`constraints.apm`; the workflows and the `apm_version` of `apm.lock.yaml` carry
-the same version and Renovate bumps them together) and PowerShell 7. Do not use an unpinned or newer APM: 0.35.0 deletes
-committed skills on a cold checkout, so Renovate caps it below 0.35.0.
+the same version and Renovate bumps them together) and PowerShell 7. Do not use an unpinned or newer APM.
 The repository has two separate APM flows:
 
 - **Development:** [apm.yml](apm.yml) and [apm.lock.yaml](apm.lock.yaml)

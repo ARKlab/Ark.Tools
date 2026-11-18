@@ -29,23 +29,6 @@
       "versioning": "regex:^(?<major>\\d+)-CU(?<minor>\\d+)(?:-GDR(?<patch>\\d+))?-(?<compatibility>ubuntu-[\\d.]+)$"
     },
     {
-      "description": "constraints.apm and the apm-version of the workflows must move together, in one PR",
-      "matchDatasources": [
-        "github-releases"
-      ],
-      "matchPackageNames": [
-        "microsoft/apm"
-      ],
-      "groupName": "apm CLI"
-    },
-    {
-      "description": "Temporary cap, which also applies to the apm-guide tag in apm.yml: apm 0.35.0 deletes committed skills on a cold checkout and Renovate cannot pass --force. Remove once fixed upstream",
-      "matchPackageNames": [
-        "microsoft/apm"
-      ],
-      "allowedVersions": "<0.35.0"
-    },
-    {
       "description": "dotnet/skills publishes no plugin release tags: apm.yml pins its commit with a '# main' comment and Renovate tracks the main digest, batched weekly because main moves daily",
       "matchManagers": [
         "apm"
