@@ -1,5 +1,5 @@
 lockfile_version: '1'
-apm_version: 0.34.0
+apm_version: 0.35.1
 dependencies:
 - repo_url: _local/ark-csharp
   name: ark-csharp
