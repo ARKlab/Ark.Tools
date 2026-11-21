@@ -82,7 +82,7 @@ jobs:
       uses: microsoft/apm-action@v1
       with:
         setup-only: true
-        apm-version: 0.35.1
+        apm-version: 0.36.1
 
     - name: 'Check committed plugin and marketplace output'
       run: apm run plugins:check
