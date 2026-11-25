@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- OpenTelemetry packages are back on 1.20.x. OpenTelemetry 1.21.0 makes .NET 10 apps deploy their own copy of `System.Diagnostics.DiagnosticSource` 11.0.0, so .NET 10 runtime security updates (for example on Azure App Service) no longer patch that assembly. If your app references OpenTelemetry 1.21.0 directly, it still deploys the 11.0.0 copy, and you must update that package yourself.
+
 ## [7.1.1] - 2026-11-13
 
 ### Changed
