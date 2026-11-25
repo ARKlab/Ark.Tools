@@ -1,0 +1,1611 @@
+# Superpowers Release Notes
+
+## v7.0.2 (2026-11-03)
+
+This release further tunes brainstorming's questions. It asks fewer of them, starts by asking why, and when there's a choice to make it gives you options to pick from. It also fixes bootstrap problems on six harnesses, and makes the SDD and executing-plans helper scripts much harder to point at the wrong repository or the wrong task.
+
+### Brainstorming
+
+- **It asks a question only when the answer would change what gets built and nothing already answers it.** Otherwise it states its call as a proposal you can correct. It also stops asking about process: writing things up, where files go, whether to look further, and how to show you something are its own calls, and it tells you what it decided. (#2644)
+- **When you haven't said why you want something, that's the first thing it asks.** It asks openly, with no example answers to pick from. (#2644)
+- **When there's a choice it can name, it shows you the options with a recommendation.** In one of our test scenarios, where a spec gives Ctrl+K to two features, 7.0.1 found the conflict every time but asked a bare "which one?" in 8 of 8 runs. This release laid out the options and recommended one in 8 of 8. (#2644)
+- **It reads from how you talk whether you want to discuss the technical choices,** and when your request leaves nothing open, its first message is a short design for you to approve. (#2644)
+- In blind-graded test conversations, filler questions dropped from 41 with 7.0.1 to 23, the reason behind the request came out before any approach in 33 of 33 conversations (28 of 33 before), and nothing got built before approval (4 times before). Against 6.4.2's brainstorming in the same scenarios, it had fewer filler questions (23 against 34), drew out the why far more often (33 of 33 against 19 of 33), and matched it at building nothing before approval. (#2644)
+- **`start-server.sh --project-dir .` now works.** The script `cd`s into its own directory before starting the server, so every path it derived from a relative `--project-dir` pointed to the wrong place, and the server never started. It now resolves the directory first. Thanks @anchore-jesset for the report. (#2524, #2608)
+
+Thanks to @mbcrawfo and everyone on #2530 who sent transcripts and tested 7.0.1. If brainstorming still asks you something it shouldn't, please tell us there, with what you asked and what it asked back.
+
+### Hooks
+
+- **Copilot on Windows now gets the bootstrap.** Copilot CLI and VS Code Copilot run hook commands through PowerShell, which rejected the SessionStart command with a ParserError. `hooks.json` now has a `powershell` form of the command. Thanks @ronpieper-engcp and @orty for the reports. (#2189, #1225, #2592)
+- **The SessionStart hook starts no child processes.** On Git Bash, each one costs tens of milliseconds, and the hook started six of them on every startup, `/clear` and compaction. Thanks @midirectiekade14-debug for the report and measurements. (#2081, #2593)
+- **On a Unix system without bash, `run-hook.cmd` falls back to zsh, or exits quietly.** It used to exit 127 with `bash: not found`, and the bootstrap was lost. (#2503, #2594)
+
+### Pi
+
+- **Every prompt now gets the bootstrap.** The extension turned the bootstrap off after the first prompt of a session, so every later prompt went without it. Because the first message of the request changed, Anthropic prompt caching also rewrote the whole conversation's cache on the second prompt. Over a day of sessions, @sjawhar measured 83% of first-to-second-prompt transitions rewriting the cache. Thanks @DKnight927 for the report. (#2083, #2595)
+- **The `skills` filter on the Superpowers package entry works.** The extension re-added the whole `skills/` directory after pi applied the filter, so `"skills": []` still loaded all 15 skills. Thanks @adrian-85 for the report and @m2dumpling for the fix. (#2394, #2402, #2598)
+
+### Hermes Agent
+
+- **`delegate_task` subagents no longer get the controller's bootstrap.** Every child started with an empty history, so each one looked like a new session and got the full bootstrap, and some started by loading `using-superpowers` instead of doing their task. Thanks @thealps01-netizen for the report. (#2536, #2596)
+
+### OpenCode
+
+- **The bootstrap tells the model to use bare skill ids.** OpenCode registers skills as `brainstorming`, not `superpowers:brainstorming`, so a model that copied the namespaced form from the bootstrap got "skill not found" and went on without the skill. Thanks @shiluoluo16 for the report. (#2583, #2597)
+- **A prompt that mentions `EXTREMELY_IMPORTANT` no longer turns the bootstrap off.** The plugin decided the bootstrap was already there if the first message contained that word, so asking "is there an EXTREMELY_IMPORTANT block in your context?" was enough to drop it. It now looks for the bootstrap's own first line. Thanks @Swift22 for the report. (#2197, #2600)
+- **OpenCode 2's compaction and generate requests carry the bootstrap.** Without it, the compaction request, the largest of the session, missed the prompt cache. Thanks @tpischke for the report and measurements. (#2391, #2601)
+
+### Muse
+
+- **The SessionStart hook now runs on Debian and Ubuntu.** Muse's manifest ran `hooks/session-start`, a bash script, with `sh`. Where `sh` is dash, the hook failed with exit 2 and the bootstrap never loaded. It now runs with `bash`. Thanks @rahul05ranjan for the report and @twotnguyen for the fix. (#2528, #2533)
+
+### Subagent-Driven Development and Executing Plans
+
+- **The helpers act on the repository of the current directory, as `git` does, and take `-C DIR` to point at another.** Outside a repository, `sdd-workspace` used to write its workspace into whatever directory the agent was in, often the plugin cache. All five helpers now stop with exit 2 and a message that tells your agent what to do. In a new project with no commits yet, your agent will need to run `git init` and make a first commit before it can start. `-C` also lets a controller review a worktree without a `cd … ;` prefix that Claude Code can't allowlist. Thanks @abat-kek, @rz1989s, and @jiyimeta for the reports. (#2429, #2242, #1799, #2606)
+- **The skills say to run the helpers by absolute path from your working tree.** They used to say "from this skill's directory", and agents that `cd`'d there ran the helpers against the plugin's own files. A test now fails if a skill names a helper by a relative path. Thanks @anchore-jesset for the report. (#2525, #2607)
+- **`task-brief` finds tasks with IDs like `A1`, `6b`, and `2.1`.** It used to reject letter-first IDs entirely, and asking for Task 6 also picked up Task 6b. When a plan's task headings aren't in English, it now says they must use the word "Task" and shows the headings it found. Thanks @rhuthik, @jnrod03-rgb, @christopherpconway, and @ferrous26 for the reports. (#2459, #2496, #2175, #2405, #2604)
+- **`task-brief` refuses a brief that an unclosed code fence ran to the end of the plan.** One missing closing fence hid every later task heading, and the reporter's 177-line task came back as a 1,159-line brief holding five tasks. Thanks @bobbykim89 for the report. (#2436, #2605)
+- **On Windows, the helpers print paths PowerShell can open.** They printed `/c/Users/…`, which PowerShell reads as `C:\c\Users\…`. Thanks @sean-parent for the report. (#2307, #2602)
+
+### Systematic Debugging
+
+- **The skill no longer installs its own test scenarios.** `CREATION-LOG.md` and four pressure-test prompts, which open with "This is a real scenario. You must choose and act", installed next to `SKILL.md` and could be found by an agent mid-task. They now live under `tests/`, and a test keeps files like these out of every skill. Thanks @Caarles00 for the report. (#2277, #2654)
+
+### Maintenance
+
+- `scripts/package-codex-plugin.sh` and `scripts/sync-to-codex-plugin.sh` work from a linked git worktree. (#2609)
+
+## v7.0.1 (2026-10-21)
+
+This release retunes brainstorming after its rebuild in v7.0.0. Many of you told us, rightly, that the new default questions got annoying fast and felt formulaic. Brainstorming now digs for context before it asks anything, and tries to ask better questions. We expect to keep tuning it, but we think it's better than it was.
+
+It also trims three long skills so they better survive compaction on Claude Code, and changes the issue and PR templates to ask for a summary written by a human.
+
+### Brainstorming
+
+- **It digs for context first.** In an existing project, or when you point it at a spec, plan, or files, it reads them before its first message and doesn't ask what they already answer. (#2560)
+- **It tries to ask better questions.** v7.0.0 opened every session the same way: an offer to skip the questions, then a generic question about "the moment you wished this existed." Now, when you've already said what you want, it plays your request back with what it found in the project and asks about the one thing still open. Later questions build on your answers and on what it found, and say what the answer would change. (#2560, #2571)
+- **It offers to skip the questions only when it started on its own.** If you asked for brainstorming by name or with `/brainstorming`, it no longer offers to skip it. (#2560)
+- **It lays out the approaches and writes a design doc before building.** It presents two or three ways to build the thing, recommends one, and asks you to pick. Then it writes a design doc, a short one for a small change, and builds nothing until you approve it. Some of you saw it skip the doc and start building; in one of our test scenarios, it skipped the doc without asking in 24 of 24 runs before this change and 3 of 24 after. (#2571)
+
+Thanks to @mbcrawfo for opening #2530, and to @katyatitkova, @ertra, @blorenz, @Biomaj, @fsalum, @technicalpickles, @orochi235, @alexxburg, @fcavalieri, @CelesteCunha, and @zzzzz9999 for the reports, transcripts, and testing there.
+
+If brainstorming's questions in 7.0.1 still don't feel right, please comment on #2530. Examples help most: what you asked, what it asked back, and what you wish it had asked.
+
+### Skills better survive compaction on Claude Code
+
+After a compaction, Claude Code re-attaches each skill cut off at 20,000 characters, so anything past that point is gone for the rest of the session. In one reported session, subagent-driven development lost its five-round limit and ran 18 fix rounds on one task. Thanks @dan-1492 for the report. (#2481)
+
+- **`subagent-driven-development`** moves the fix loop, final review, report handling, resuming, preflight, batching, and cannot-verify guidance into `references/`. It reads each file from disk at the step that needs it. (#2565)
+- **`writing-skills`** moves its supporting docs, the SKILL.md template and discovery guidance, bulletproofing, and flowchart conventions into `references/`. (#2564)
+- **`executing-plans`** drops its Example Workflow, which repeated rules stated above it. (#2563)
+- `tests/skill-size/test-skill-size.sh` fails when any `SKILL.md` reaches 20,000 bytes. (#2565)
+
+### Contributing
+
+- **Issue and PR templates now ask who is filing and what their human partner asked for, plus a summary of under 200 words written by a human.** The bug report also asks how you confirmed the problem doesn't happen without Superpowers. (#2569)
+- **We don't accept agent-written PRs that fix someone else's issue unless a maintainer asked for one.** If your human partner hit the same problem, add their report to the existing issue. The PR template, `AGENTS.md`, and the README say so. (#2569)
+- **`diagnosing-superpowers` adds the same two sections to the issues it drafts** and won't file one while the summary is a placeholder. Its prefilled link now opens the Bug Report template; we removed the Session Diagnosis Report template. (#2569)
+
+## v7.0.0 (2026-10-09)
+
+We rebuilt brainstorming from scratch so it does a much better job of what it was always for: helping you work out what you actually want and put it into words before anything gets built. The new skill asks you to describe what you're after and why, plays back what it heard so you can correct it, and keeps asking good questions until the picture is clear. Then it matches the process to the work, from just doing it to writing a full design. 
+
+This release also adds a native plugin manifest for the Antigravity Marketplace and fixes Windows hook discovery, Git Bash paths, Hermes skill descriptions, and several smaller bugs.
+
+### Brainstorming
+
+- **Brainstorming draws out what you want before it proposes anything.** Its first message offers to skip the questions and asks one open question about a real moment or a concrete picture. It offers a menu only when you're stuck. Along the way, it offers to look at prior art, your project, or the web. As it understands each part, it plays that part back in a few hundred words and marks its guesses as guesses. (#2463)
+- **It sizes the work after it understands what you want, and says so in plain words.** It does a quick, clear task right away, agrees a small change with you in chat, and writes a design document for a project. You can override its call, and it steps up a size if the work grows. (#2463)
+- **A builder check replaces the spec-document reviewer.** A fresh subagent reads the design as the person who'll build it and lists what they'd still need to ask. Brainstorming answers what it can, makes the minor calls itself and marks them as its own, and brings you the questions that change what gets built, in one round. (#2463)
+- **It finds out which choices about how the thing gets made you want to own.** Platform, language, libraries, medium: if you have strong views, it talks them through; if you hand them over, it picks sensible defaults and tells you what it picked. It does this even when you skip the questions. We made this change after a session designed an iOS app, never asked about platform, and built a web app. (#2482, #2483)
+- **It offers the visual companion whenever seeing would help more than reading:** screens, layouts, flows, options that look different, diagrams. The offer drops its token-cost warning. (#2463)
+- **The visual companion now shows screens containing `$'`, `$&`, and similar sequences intact.** The server inserted content with `String.replace`, which treats those sequences as replacement patterns. It now inserts content literally. Thanks @andrew-yian for the report and @luochen211 for the fix. (#2362, #2364)
+
+### Antigravity
+
+- **`agy plugin install https://github.com/obra/superpowers` now installs Superpowers as a native Antigravity plugin.** We added `.antigravity-plugin/plugin.json` with the Marketplace display name, logo, and suggested prompts. Previously, agy fell back to importing the repo as a Gemini CLI extension, then rejected the copied Claude-format hooks file on every session with `invalid hook "hooks": command hook must specify 'command'`. The install command stays the same. (#2479)
+- **Superpowers bootstraps on Antigravity through skill discovery.** Antigravity has no session-start hook event, but it shows the model each installed skill's description, and `using-superpowers`' "Use when starting any conversation" prompts the model to load it. We verified this on agy 1.3.1 across 12 runs: "Let's make a react todo list" and "add a settings page" triggered brainstorming before any code, and a failing test triggered systematic-debugging before any edit. We also corrected the README and porting guide, which described a session-start hook and install script that never existed. (#2479)
+
+### Hooks
+
+- **SessionStart now works when the harness launches it with a broken `PATH`.** The hooks no longer look up `dirname`, `cat`, or `bash` on `PATH`, so a startup `PATH` that can't resolve them (anthropics/claude-code#43127) no longer drops the bootstrap. Thanks @kannan983 for the report and Ada Sen for the fix. (#2310, #2349)
+- **Windows: `run-hook.cmd` finds per-user Git for Windows installs and skips WSL launchers.** It now checks `%LOCALAPPDATA%\Programs\Git`, and when it searches `PATH`, it skips the WSL `bash.exe` launchers, which fail without a Linux distro. Thanks @jp5247 for the report, and @citizen204 (#1864) and @KaiyiQuan (#2365) for the fixes we combined here. (#1863, #2393)
+- **Windows: `run-hook.cmd` ignores `bash` and `where` in the current directory.** Previously, a repository could plant `bash.cmd` or `where.bat` and have it run at session start. (#2393)
+- **Windows: `run-hook.cmd` now passes hook exit codes to the harness.** It used to report success even when the hook failed. (#2393)
+
+### Subagent-Driven Development
+
+- **`sdd-workspace` leaves a repo's own `.superpowers/sdd/.gitignore` alone.** It used to overwrite the file with `*` on every run, reverting any version a repo committed (for example, to track `progress.md` ledgers). It now writes the default only when no file exists. Thanks @aruizcu1989 for the fix. (#2161, #2399)
+- **Plan markers stay repo-relative on Windows.** On Git Bash, `sdd-workspace` compared `git rev-parse`'s `C:/…` root with the plan's `/c/…` path, so every workspace marker recorded an absolute, machine-specific path. It now resolves the root the same way as the plan path. We found this while landing @t0domanh's Windows test fixes (#2149).
+
+### Executing Plans
+
+- **`task-done` now records tasks whose test command passes silently.** When a passing command printed nothing, `task-done` exited 1 without writing the ledger line, so a finished task looked unfinished. It now records `→ (no output)`. Thanks @KenM-BT for the report and Ada Sen for the fix. (#2385, #2388)
+
+### Requesting Code Review
+
+- **The example's base-SHA command survives skill arguments.** Claude Code replaces `$1` in a skill body with the second argument word, so invoking the skill with arguments turned `awk '{print $1}'` into `awk '{print <word>}'`. The example now uses `cut -d' ' -f1`, which contains no `$`. Thanks @errmakov for the report and @klemens-floege for the fix. (#2311, #2361)
+
+### Systematic Debugging
+
+- **The multi-layer diagnostic example no longer prints the secret it checks for.** `${IDENTITY:+SET}${IDENTITY:-UNSET}` and `env | grep IDENTITY` both echoed the signing identity's value into logs. The example now reports only whether the variable is set. Thanks @kennyg-g for the report and @m2dumpling for the fix. (#2375, #2380)
+
+### Hermes Agent
+
+- **Hermes' skill list now shows Superpowers skill descriptions.** Hermes lists each plugin skill with the description passed to `register_skill`, which defaults to empty. The plugin passed only a name and path, so every skill appeared blank and the model had nothing to choose from. The plugin now passes each skill's frontmatter description. Thanks @pepijn-blom for the fix. (#2284)
+
+## v6.4.2 (2026-09-25)
+
+`writing-plans` produces leaner plans, faster. Plans now record the decisions an implementer needs (signatures, test assertions, the spec's values) instead of writing out the code. Some frontier models, including Opus 5.5, could get overzealous during plan writing and, with certain prompting, would sometimes try to implement the entire project while designing the plan. The new skill keeps planning focused on the plan. When we reproduced the original report, the scratch builds went away, and plans took a quarter of the time and about a third of the tokens. Thanks to Harper Reed for the report and session bundle. (#2333)
+
+### Writing Plans
+
+- **A plan records decisions. It's not a transcript of the code.** "What a Step Contains" replaces the "No Placeholders" section. A test step names the test and its assertions. A code step gives the exact signature, the file, and the spec's values, and includes a body only for an algorithm those don't determine. A verification step gives the command and its passing output. A reference to another task goes through that task's Interfaces block. Placeholders are still called out as the opposite failure. (#2333)
+- **Self-review checks proportion.** The plan compares its own length to the spec's. A plan several times longer than the spec is a transcript, and when code blocks dominate, bodies get replaced with signatures and test assertions. (#2333)
+- **The plan's reader is described as capable:** an engineer who writes idiomatic code once they know the exact interface and test. This replaces "zero context, questionable taste." Steps are now sized as "one action with a checkable result" instead of "2-5 minutes." (#2333)
+- Every plan written by the new skill executed 9/9 against planted-defect probes on Sonnet 5, the same result as full-code plans. (#2333)
+- Removed `plan-document-reviewer-prompt.md`. Nothing referenced it. (#2333)
+
+### Documentation
+
+- Removed `CLAUDE.md`. Claude Code now reads `AGENTS.md` directly, but only when no `CLAUDE.md` exists, so keeping the one-line pointer would have hidden the real guidelines.
+
+## v6.4.1 (2026-09-18)
+
+v6.4.0 was never shipped. v6.4.1 is the first release with these changes. It holds back the new `proving-it-works-with-a-movie` skill, which is getting cleanup and robustness work and will return in a later release.
+
+The new `diagnosing-superpowers` skill figures out what went wrong in a session. `executing-plans` is rebuilt as Native execution, a cheaper alternative to subagent-driven development. This release also adds support for three new harnesses: OpenCode 2.0, Muse, and Qwen Code.
+
+### New Skills
+
+- **`diagnosing-superpowers`**: when a session goes wrong (repeated work, an ignored plan, a skill that didn't fire, a surprising bill), ask your agent to "figure out what went wrong with superpowers in this session." It pins down the problem with you, reads the transcripts on disk, and reports what happened with `path:line` evidence for every finding. On request it builds a scrubbed bundle or drafts a GitHub issue for your approval, with the cited evidence left intact. Works on the current session or a past one. (#2236, #2287)
+
+### Executing Plans
+
+**Heads up:** `executing-plans` no longer stops every few tasks to check in with you. It runs the whole plan, then gets one review at the end.
+
+- **Native (inline) execution is now a real mode.** `executing-plans` was a 64-line stub that measured the same as running with no plugin at all. It is rebuilt: the session implements every task itself under the same workspace, ledger, and stopping rules as subagent-driven development, then dispatches one fresh whole-branch review on the most capable model. `task-start` and `task-done` helpers keep the ledger and test log honest. It is the cheapest way to run a plan and runs well on a mid-tier session model. (#2318)
+- **The plan handoff offers two approaches, Subagent-driven and Native,** says what each costs, and recommends one for this plan with a reason drawn from the plan. If you already chose one, it keeps your choice. (#2258, #2318)
+
+### Writing Plans
+
+- **You review the saved plan before anything runs.** Approving an idea or a scope no longer counts as approving a plan you haven't seen. (#2258)
+- **Plans carry a Review Focus section**: up to five inputs or failure modes the spec implies but no task's tests exercise, each pinned by a test in the task that owns the code. In evals, every implementer shipped the same crash on an input the spec implied but never named; this section exists to catch that. (#2319)
+
+### Brainstorming
+
+- **Brainstorming finds out why you want the thing before proposing features,** reflects your intent back for correction, and ties your approval to the actual design and planning stages. The motivating session took "that scope is ok" as permission to scaffold. (#2258)
+
+### Code Review
+
+- **Reviewers judge behavior the spec doesn't mention by what a reasonable user would expect,** so a crash on an unnamed input no longer slides through as Minor. A "Declined to judge" list shows what the reviewer skipped, and the session running the plan decides each one. (#2319)
+- The multi-commit `BASE_SHA` alternative is now `git merge-base origin/main HEAD`. A bare `origin/main` showed main's newer files as phantom deletions once main moved past the branch point. (#2133, #2118)
+
+### Test-Driven Development
+
+- **The project's suite defines green, not just your test file.** When a task named one test file, sessions ran only that file in 11 of 12 probe runs, so a broken test next door went unseen. The skill now says to run the project's test command and report every failure by name, including ones you didn't cause. (#2110)
+
+### Subagent-Driven Development
+
+- **Plans with the same basename no longer share a workspace.** `docs/alpha/plan.md` and `docs/beta/plan.md` resolved to one directory and `task-brief` silently overwrote the other plan's brief. Each workspace now records its owning plan; a collision gets its own directory. Existing workspaces are adopted in place. (#2138, #2045)
+- **`review-package` rejects empty or non-descendant `BASE..HEAD` ranges** (exit 3), so an implementer that committed to the wrong branch can't produce a "clean" review of nothing. (#2136, #2050)
+- **On Claude Code, the controller can run one layer down,** as a nested subagent on a mid-tier model. It measured about half the cost and wall clock. It's opt-in: ask for it, or tell your agent your session model is too expensive to spend on coordination. (#2320)
+
+### New Harness Support
+
+- **OpenCode 2.0.4+** is supported alongside V1. Skills register through V2's native API, and the bootstrap survives continuation, restart, forks, and compaction. Delegated child sessions no longer receive the controller's bootstrap. (#2106, #2306)
+- **Muse**: native plugin manifest and SessionStart hook. `muse plugins install ./` then `muse plugins approve superpowers`. (#2317)
+- **Qwen Code** added to the install docs: `qwen extensions install obra/superpowers`. (#2132)
+
+### Fixes
+
+- **Skills work when a packager strips executable bits.** The Codex marketplace and MiniMax Code's repackage both shipped our scripts non-executable, so every documented command failed with `Permission denied`. Skill prose now invokes bundled scripts through their interpreter (`bash scripts/foo.sh`, `node render-graphs.js`), and the SDD helpers call each other the same way. (#2301, #2134, #2040)
+- The platform-support issue template applies a label that exists (`new-harness`). (#2250)
+
+### Documentation
+
+- `docs/testing.md` describes the Quorum eval lab, replacing stale Drill references and commands. (#2135)
+- README: a "When Something Goes Wrong" section pointing at `diagnosing-superpowers`.
+- **`AGENTS.md` is now the canonical contributor guidelines.** `CLAUDE.md` is a one-line reference to it. `AGENTS.md` used to be a symlink to `CLAUDE.md`, which Muse's installer rejects. (#2317)
+- Adopted the Prime Radiant Community Code of Conduct. (#2122)
+
+## v6.3.0 (2026-08-12)
+
+### Harness Support
+
+- **Devin CLI**: `devin plugins install obra/superpowers` now works, and skills auto-trigger at session start. (#1995)
+- **Hermes Agent**: install from a git clone; skills register with Hermes' native loader and the bootstrap loads on the first turn. (#1922, #2025)
+- **Grok Build CLI** added to the install docs. (#1919)
+
+### Brainstorming
+
+- **Ceremony now scales to the task.** Requests are classified as spike, bounded, or architectural; small tasks skip the two-document ritual. Every path still stops for your approval before implementation. (#2063)
+
+### Subagent-Driven Development
+
+- **Controllers no longer stall on plan conflicts.** Non-catastrophic conflicts and ambiguities get a recorded ruling and work continues; only destructive or irreversible actions still stop for a human. One donated session had sat blocked for almost nine hours on a question the controller could have decided. (#2077)
+- **The pre-dispatch conflict scan records its checks in the ledger** instead of just asserting the plan is clean. (#2080)
+- **Small same-shape tasks batch into one dispatch**, cutting subagent cost sharply on micro-task plans; batch reviews verify every file in the brief made it into the diff. (#2078)
+- **Implementers and reviewers may not spawn their own subagents**, which was producing duplicate reviews. (#2059)
+- **Plans carry a `Spec:` pointer** and SDD reads the spec at setup, so plan conflicts get resolved against the design instead of guessed at. (#2086)
+- Reviewers re-read evidence they find illegible instead of re-running the test suite (#2089), and circuit-breaker rulings now show up in the Finish report.
+
+### Codex
+
+- Subagent waits are event-driven instead of poll-heavy, spawns pin model and reasoning effort explicitly, and the multi-agent reference is corrected against Codex source. (#2060, #2061, #2062)
+
+### Finishing a Development Branch
+
+- **Worktree removal no longer destroys untracked files.** When `git worktree remove` refuses because the tree holds uncommitted work, the skill stops, names the files, and asks — instead of reaching for `--force`. (#2016, #1223, #2024)
+
+### Fixes
+
+- `render-graphs.js` in writing-skills works on Windows.
+- Corrected Copilot CLI backgrounding guidance for Windows. (#1929, #2006)
+- `bump-version.sh` covers the Hermes manifest.
+
+### Documentation
+
+- README: added a table of contents and reorganized Getting Started.
+
+## v6.2.0 (2026-07-23)
+
+### Subagent-Driven Development
+
+Two structural changes to how SDD tracks progress and closes out review findings, both developed against live eval campaigns.
+
+- **The workspace is now plan-scoped.** `.superpowers/sdd/` had no plan identity and no end-of-life: a follow-up plan in the same working tree could read the previous plan's ledger as its own progress (observed in the wild, with multiple contamination rounds and ad-hoc workarounds). `sdd-workspace` now requires the plan file and resolves a per-plan directory, `.superpowers/sdd/<plan-basename>/`; `task-brief` and `review-package` write into their plan's directory (`review-package` gains the plan file as its first argument); the ledger names its plan on its first line; and the workspace is deleted once the final review is clean — git history is the durable record. Baseline evals showed controllers already refused foreign ledgers, but at a cost of 6–13 tool calls of cross-plan git forensics per resume; plan-scoping makes the answer structural instead. (25/25 baseline and GREEN eval runs documented in `docs/specs/` and `docs/plans/`.)
+- **The review-fix loop resumes the implementer.** The lifecycle restructure gives fix rounds resume-the-implementer semantics instead of fresh dispatches, adds a scoped re-review prompt (`re-review-prompt.md`) so the re-reviewer checks the fixes rather than re-reading the whole task, and installs a five-round circuit breaker with controller adjudication when it trips. SKILL.md reorganizes by lifecycle, and its Red Flags convert to the house rationalization-table form.
+
+### Skills
+
+A branch-wide compression campaign: recap sections, social proof, and benefits-selling prose aimed at a reader who has already invoked the skill are gone, with every load-bearing argument folded into a rationalization-table row or moved to its point of use. Each cut was micro-tested with subagent probes, and the one cut that measurably degraded behavior was reworked rather than shipped.
+
+- **`testing-anti-patterns.md` is now `writing-good-tests.md`.** The TDD reference doc is rebuilt as a positive catalog — six rules that lead with the GOOD example — and absorbs a falsifiability discipline: name the production change that would fail the test, derive expectations independently of the code under test, and a closing mutation check. It closes two holes by name: the string-presence trap (grep-style tests on scripts, skills, and prompts counterfeit falsifiability — the observable is behavior, never text) and the change-detector trap (a constant assertion can fail and still protect nothing), each with a hard stop in the gate function. Trivial code and human prose earn no test; the trigger broadens from "adding mocks" to any test writing.
+- **TDD's "Why Order Matters" rebuttals survive as rationalization rows.** Deleting the section outright measurably degraded test-first behavior under "just write it, tests after" pressure (control 8/10 → treatment 5/10, corroborated on Claude and Codex), so each prose rebuttal now lives in its Common Rationalizations row — the section is gone but the arguments fire where an agent hits them mid-rationalization.
+- **`finishing-a-development-branch` no longer offers to discard your work.** The completion menu dates from when throwing away branches was routine; "Discard this work" next to "Merge" advertised destroying finished, passing work. Discard survives as an explicit-request-only path with the same typed-confirmation ritual. The same pass made PR creation forge-agnostic (your forge's CLI or the URL printed on push, not a blessed list of tools) and fixed a real bug: the worktree path was recomputed after cleanup had already changed directory, so provenance checks never matched and cleanup silently no-oped.
+- **Recap and persuasion prose removed across the library.** `brainstorming`, `systematic-debugging`, `dispatching-parallel-agents`, `verification-before-completion`, `executing-plans`, `subagent-driven-development`, `requesting-code-review`, `receiving-code-review`, `using-git-worktrees`, `writing-plans`, and `writing-skills` all drop their Bottom Line / Key Principles / Real-World Impact / Advantages sections; `using-git-worktrees` and `finishing-a-development-branch` convert their guard sections to the house Excuse/Reality rationalization table.
+
+### Windows
+
+- **The SessionStart hook now dispatches via Git Bash.** The hook's command string starts with a quoted path, which broke both shells Claude Code might hand it to: PowerShell parsed the quoted string as an expression and died with a parser error (#1751), and cmd.exe's quote-stripping rule truncated the command when the profile path contained a metacharacter like `(` (#1918) — either way the bootstrap silently never loaded. The hook now declares `shell: "bash"`, which Claude Code ≥ 2.1.81 resolves to Git for Windows directly, and which surfaces an actionable install prompt when Git Bash is missing. Older Claude Code versions ignore the unknown key and behave as before. Verified end-to-end on Linux, Windows 11 with Git Bash under a hostile path, and Windows 11 without Git Bash.
+
+### Harness Support
+
+- **Gemini CLI support is restored.** The v6.1.0 removal (on the news that Google had EOLed the Gemini CLI) was premature; the install docs and the `gemini-tools.md` tool-mapping reference are back while permanent removal gets a proper evaluation. (#1959)
+
+### Fixes
+
+- **`find-polluter.sh` actually finds test files now.** `find .` emits `./`-prefixed paths, so the documented `-path "src/**/*.test.ts"` pattern matched nothing — and `wc -l` on empty input then reported "Found 1". Fixed the prefix mismatch (#2008, #2011), plus two follow-ups: a caller-supplied `./`-prefixed pattern no longer double-prefixes into a never-matching form, and `**/` is also matched collapsed so tests directly under the base directory (`src/top.test.ts` vs `src/**/*.test.ts`) aren't silently skipped. The script gains a deterministic test suite.
+- **The Codex package script works beyond macOS.** Deterministic-metadata tar flags were bsdtar-only spellings, staged file modes depended on two umasks canceling out, and the test's timestamp assertion parsed bsdtar's column layout in a US timezone. GNU tar now gets equivalent flags producing byte-identical headers, modes are pinned canonical, and the test asserts mtime via `tarfile`.
+- **SDD's skill test no longer flakes.** The file's worst case exceeded the runner's per-file ceiling (raised to 900s), and the assert helpers matched free-form model prose case-sensitively; matching is now case-insensitive and `assert_order` dumps output on failure so the next flake is diagnosable.
+- **Docs and test cleanup after the v6.1.0 reference pruning.** Dead links to the deleted `claude-code-tools.md`/`copilot-tools.md` are replaced with the current architecture (#1969), a dangling `#subagent-support` anchor in the Antigravity reference is dropped (#2010), and the Antigravity/Pi mapping tests assert only the surviving harness-specific mappings — scoped to the table so they fail again if it's deleted.
+
+## v6.1.1 (2026-07-02)
+
+### Codex
+
+- **Codex no longer re-registers the Claude SessionStart hook.** v6.1.0 removed the Codex hook config and its manifest `hooks` pointer, meaning to stop Codex from installing a SessionStart hook — but with no `hooks` field, Codex fell back to auto-discovering `hooks/hooks.json`, the Claude Code SessionStart hook that the marketplace ships from the repo root, and re-registered it along with its install-time trust prompt. The Codex manifest now declares an explicit empty hooks object (`hooks: {}`), which Codex reads as "no hooks" instead of reaching the auto-discovery fallback. An absent field, `[]`, and an empty inline list all collapse back to the fallback, so the value has to be exactly `{}`.
+- **Removed orphaned Codex session-start dead code.** `hooks/session-start-codex` had no caller once the Codex hook config was deleted, so it and its redundant test cases are gone. The worked shell-hook example in `docs/porting-to-a-new-harness.md` moves from Codex — now native skill discovery with no session-start hook — to Cursor, a live shell-hook harness, and the stale `hooks-codex.json` pointer in `docs/windows/polyglot-hooks.md` is corrected. The Codex plugin category is also fixed to "Developer Tools".
+
+### Packaging
+
+- **New `package-codex-plugin.sh` for building the Codex portal package.** A maintainer script produces a deterministic Codex "portal" archive — `.zip` by default, `tar.gz` on request — that normalizes entry timestamps, preserves executable modes, verifies every packaged skill ships its OpenAI metadata, includes the app and composer icons, and refuses to run against a dirty worktree. The packaged manifest keeps the source `hooks: {}` object so a portal-installed plugin avoids the same SessionStart auto-discovery, and the script can rebuild a byte-identical archive from a saved metadata source. Covered by a new test suite.
+
+## v6.1.0 (2026-06-30)
+
+### Lower Per-Session Token Cost
+
+The `using-superpowers` bootstrap is injected into every session, so its size is paid for constantly. This release trims it and the per-harness references it points to, without dropping behavior-shaping content.
+
+- **Compressed the `using-superpowers` bootstrap.** Replaced the graphviz skill-flow diagram with the prose it encoded, folded the standalone Instruction-Priority section into User Instructions, dropped the per-platform "How to Access Skills" walkthrough, and trimmed the Platform Adaptation pointer to the harnesses that still ship a reference file. The full Red Flags rationalization table and the user-instruction precedence rules are unchanged.
+- **Pruned the per-harness tool-mapping references.** The verbose action-to-tool tables restated guidance modern agents already follow. Each reference file is trimmed to the harness-specific notes that still carry weight — subagent dispatch, task tracking, instructions-file paths — and `claude-code-tools.md` and `copilot-tools.md`, which had nothing harness-specific left, are deleted.
+
+### Codex
+
+- **Codex can install from the marketplace.** Codex marketplace sources expect a `.agents/plugins/marketplace.json` at the marketplace root; the repo only shipped the Claude marketplace file, so Codex could name the marketplace but found no installable plugin entries. A repo-local Codex marketplace manifest now points at the same repository root, so the plugin is installable from Codex.
+- **Codex no longer ships a SessionStart hook.** Codex reliably triggers skills on its own, and the bootstrap hook made the UX worse rather than better. The Codex hook config (`hooks-codex.json`) and its manifest registration are removed.
+
+### Harness Support
+
+- **Gemini CLI support removed.** Google EOLed the Gemini CLI on 2026-06-18; the extension can no longer be installed or updated. Gemini is gone from the install docs, the subagent-capable platform lists, and the eval-harness description, and its tool-mapping reference is deleted.
+
+## v6.0.3 (2026-06-18)
+
+### Subagent-Driven Development
+
+- **SDD scratch files moved out of `.git/`.** Claude Code treats `.git/` as a protected path and denies agent writes there, so an implementer subagent writing its report into `.git/sdd/` got blocked mid-run. Task briefs, implementer reports, review diffs, and the progress ledger now live in a self-ignoring `.superpowers/sdd/` directory in the working tree — kept out of `git status` and out of commits, and resolved per worktree by a shared `sdd-workspace` helper. One caveat: because the workspace is git-ignored working-tree scratch, `git clean -fdx` will delete the progress ledger; recover from `git log` if that happens. (#1780)
+
+## v6.0.2 (2026-06-16)
+
+### Install Fixes
+
+- **We no longer ship the `evals` submodule.** It broke plugin installs for some users, so the eval harness now lives in its own repo, separate from the published plugin. (#1778, #1774)
+
+## v6.0.1 (2026-06-16)
+
+### Codex Fixes
+
+- **Version display in the brainstorm companion** — packaged Codex plugins ship without a root `package.json`, so the visual companion reported its version as "unknown". `readSuperpowersVersion()` now falls back to `.codex-plugin/plugin.json` when `package.json` is absent.
+- **Cleaner Codex plugin sync** — the sync-to-codex script now excludes `.gitmodules` and `.pre-commit-config.yaml`, keeping repo metadata out of the packaged Codex plugin.
+
+## v6.0.0 (2026-06-16)
+
+Superpowers 6.0 is a big release. The headline is a rewrite of how `subagent-driven-development` reviews each task — cheaper, stricter, and harder to game. 
+
+While these numbers won't hold on every harness and for every workload, in our evals, Claude Code and Codex produce similar high-quality results roughly twice as fast and while spending almost 50% fewer tokens.
+
+It also adds three new harnesses (Kimi Code, Pi, and Antigravity), gives the brainstorming visual companion a better security model, and rewrites a number of skills' tool calls to be significantly more vendor-neutral.
+
+### Visible Changes
+
+- **The two per-task reviewer prompts became one.** `spec-reviewer-prompt.md` and `code-quality-reviewer-prompt.md` are gone, replaced by a single `task-reviewer-prompt.md`. If you dispatch the old files directly, switch to the new one.
+- **The legacy global worktree directory is gone.** `using-git-worktrees` and `finishing-a-development-branch` no longer use `~/.config/superpowers/worktrees/`. Worktrees now land in the project — an existing `.worktrees/` or `worktrees/` if you have one, otherwise a fresh `.worktrees/` — unless you say otherwise.
+
+### New Harness Support
+
+Superpowers now runs on three more harnesses. Each ships its own bootstrap, a tool-mapping reference, and tests, and each gets its own install section in the README.
+
+- **Kimi Code** — a plugin manifest, install docs, and manifest tests; install from Kimi's marketplace or straight from the repo. (initial manifest by @qer)
+- **Pi** — a session-start extension that registers the skills and injects the `using-superpowers` bootstrap. Pi has native skills, so it needs no compatibility shim.
+- **Antigravity (`agy`)** — installs the plugin directly and bootstraps from the first message; verified end-to-end against the standard "make a react todo list" acceptance test.
+
+### Subagent-Driven Development
+
+A long run of cost-and-quality experiments on real projects reshaped how the controller reviews each task. The old flow ran two reviewers per task and leaned on the controller's judgment for model choice and severity, and both turned out to be expensive and easy to game. The new flow runs one reviewer per task, hands work off as files instead of pasted text, and takes several judgment calls away from the controller.
+
+- **One reviewer per task, two verdicts.** A single `task-reviewer-prompt.md` reads the task's diff once and returns both a spec-compliance verdict and a quality verdict, so one fix pass clears both. A new "can't verify from the diff" verdict flags requirements that live in untouched code, for the controller to check itself. (#1538, #1543)
+- **One broad review at the end.** The run finishes with a single whole-branch review on the most capable model, instead of re-reviewing everything task by task.
+- **Plans get a pre-flight read.** Before the first task, the controller checks the plan for internal conflicts — and for anything the plan asks for that a reviewer would flag as a defect — and raises it all at once, rather than stumbling into it mid-run.
+- **Diffs and task text move as files.** A pasted diff parks itself permanently in the most expensive context, and a reviewer without one rebuilds it by hand — the single biggest reviewer cost. Two new scripts, `task-brief` and `review-package`, write the task text and the review diff to files for the subagent to read.
+- **Every dispatch states its model.** Left to choose, controllers stopped naming a model at all — and an unnamed model quietly inherits the session's most expensive one, so one run put all 26 of its reviewers on the top tier. The templates now require a model, with guidance that reaches for cheaper tiers when the work allows.
+- **The controller can't tell a reviewer what to ignore.** Real runs caught controllers coaching reviewers to skip a finding or call it "Minor at most," and the flaw shipped. Suppressing findings and pre-rating severity are now banned outright, and a defect the plan itself mandates gets reported for you to decide on rather than waved through.
+- **Reviewers are read-only and skeptical of rationales.** Review no longer touches the working tree or branch — a reviewer running `git checkout` had been orphaning later commits — and an implementer's "I left this unabstracted on purpose" no longer talks a reviewer out of a real finding.
+- **Stronger evidence and reporting.** Reviewers back each answer with a file and line, the implementer's report moves to a file and carries red/green evidence when TDD applies, and a progress ledger lets a controller that loses its context resume instead of redoing finished work. (#994)
+
+### Writing Plans
+
+Plans now carry the structure the controller and reviewers used to re-derive on every dispatch.
+
+- **A Global Constraints block** lists the rules that bind every task — version floors, dependency limits, naming and copy, exact values — copied in verbatim, so they actually reach the implementers and reviewers downstream.
+- **A per-task Interfaces block** names exactly what each task consumes and produces, so an implementer who sees only its own task still knows its neighbors' contracts.
+- **Right-sizing guidance** keeps a task at the size that earns its own test cycle and a reviewer's pass, folding setup, config, and docs into the task that needs them. In testing, a plan written this way needed one round of fixes where the control needed two to four — and the control shipped a real bug.
+
+### Brainstorming Visual Companion
+
+The visual companion is a small web server the agent opens alongside the conversation. It had no authentication at all, so on a shared or remote machine anyone who could reach the port could read your brainstorm — or inject events the agent treats as your input. This release gives it a real security model and makes it survive restarts and dropped connections.
+
+- **A per-session key now guards everything.** The agent's URL carries a one-time key, the browser tucks it into a tab-scoped cookie, and every request and WebSocket connection has to present it. This closes the door to stray local tabs and routable remote hosts alike, including the DNS-rebinding case an origin allowlist can't catch. (Closes #1014)
+- **The file server stays in its sandbox.** It refuses symlinks, dotfiles, and any path that climbs out of the content directory, ignores macOS resource-fork files, and sends the usual no-store and deny-framing headers. Files that hold the session key are written owner-only.
+- **The companion is offered only when it helps.** The skill raises it the first time a question would read better shown than told, as its own message, and lets a decline stand. Accepting opens your browser to the first screen. (Closes #755)
+- **It survives restarts and flaky connections.** Given a project directory, the server keeps the same port and key across restarts, so an open tab simply reconnects. The page reconnects on its own, shows a live status pill, and raises a "paused" overlay while the server is down.
+- **Longer idle life, safer shutdown.** The idle timeout went from 30 minutes to 4 hours, and `stop-server.sh` now confirms it owns the right process before signaling, so it never kills an unrelated `node` after a reboot. (#1703)
+- **Windows launch hardening** — consolidated shell detection, and Windows now relies on the idle timeout for shutdown, since Node can't track POSIX process ownership across MSYS2.
+
+
+### Existing Harness Updates
+
+- **Codex** now bootstraps through its own SessionStart hook rather than shared wiring, and the Codex App gained an install section and fuller tool docs (web search, `AGENTS.md`, personal skills). (#1540)
+- **OpenCode** got an action-based tool mapping across its plugin, install doc, and README, plus a bootstrap-caching test.
+- **Cursor**'s manifest dropped its `agents` and `commands` entries, since those directories no longer exist.
+
+### One Set of Skills, Every Harness
+
+The skills used to speak Claude Code's dialect — "use the Task tool," "put it in CLAUDE.md." This release rewrites that vocabulary in terms of what you're actually doing ("dispatch a subagent," "your instructions file") and adds a per-harness reference that maps each action to the right tool, checked against each runtime. Prose that named "Claude" now says "your agent."
+
+- **A tool reference per harness** at `skills/using-superpowers/references/`, covering Claude Code, Codex, Copilot, Gemini, Pi, and Antigravity.
+- **`finishing-a-development-branch` went forge-neutral** — it no longer hardcodes `gh pr create`, so agents push with whatever forge tooling they have. (#1609)
+- **One rename:** "Claude Search Optimization" is now "Skill Discovery Optimization," since the technique isn't Claude-specific.
+
+### Writing Skills
+
+Two additions for skill authors.
+
+- **Match the Form to the Failure** — a short table for picking the right kind of guidance. A flat "don't do X" works for discipline slips but backfires when the problem is the *shape* of an output, where a worked example does better. The table, and a tighter scope on the existing rationalization section, steer authors to the form that actually helps.
+- **Micro-Test Wording** — a cheap way to check a phrasing before committing to it: sample it a handful of times against a no-guidance control and read every result by hand, treating run-to-run variance as a warning sign.
+
+### Testing
+
+Skill-behavior testing moved out of `tests/` into a new `evals/` submodule built on "drill," which runs real Claude Code, Codex, and Gemini sessions and judges them with an LLM. Several in-tree bash suites retired once a stricter drill scenario covered them; the few with no equivalent stayed. From here on, `tests/` holds plugin-code tests and `evals/` holds skill-behavior tests, and `docs/testing.md` explains the split. New backends reach Antigravity, Pi, and more models, and new shell-lint and pre-commit checks guard the harness. (#1541)
+
+### Bug Fixes
+
+- **systematic-debugging no longer forces every session into extended thinking.** One bullet held the exact keyword Claude Code scans for, quietly tripping the switch on every session that loaded the skill. A hyphen breaks the keyword; the text still reads. (#1283, by @Nick Galatis)
+- **The Windows SessionStart hook stopped printing a write error every session** — each `printf` now routes through `cat` to absorb the broken pipe, and the output is otherwise unchanged. (#1612, reported by @silvertakana)
+- **Windows foreground mode** tracks the right process and clears its owner PID on MSYS2. (by @nestorluiscamachopaz)
+- **The `using-superpowers` bootstrap** no longer lists "debugging" as a skill that doesn't exist. (reported by @mhat)
+- **The TDD skill** links the testing anti-patterns reference. (#1532, #1529; link fix #1474 by @Stable Genius)
+- **`using-git-worktrees`** fixes its step numbering and drops stale Cursor references. (#1522, and by @fuleinist)
+- **The Codex review skill** swaps a private in-joke for plain guidance. (#1531)
+
+### Documentation & Contributor Guidelines
+
+- **A guide to porting Superpowers to a new harness** (`docs/porting-to-a-new-harness.md`) lays out the three pieces every integration needs and the one rule that makes or breaks it: load the bootstrap at session start.
+- **Every PR and issue now discloses how it was made** — model, harness, version, and installed plugins, or a note that it was written by hand. We weigh a contribution differently depending on what produced it. PRs also target `dev`, not `main`. The PR template, all three issue templates, and a new platform-support template carry this.
+
+### Contributors
+
+Thanks to @mattvanhorn, @nawfal, @Nick Galatis, @silvertakana, @nestorluiscamachopaz, @qer, @mhat, @Stable Genius, @fuleinist, @dev_Hakaze, @robotsnh, Rahul, and @arittr.
+
+## v5.1.0 (2026-04-30)
+
+### Removals
+
+- **Legacy slash commands removed** — `/brainstorm`, `/execute-plan`, and `/write-plan` are gone. They were deprecated stubs that did nothing but tell the user to invoke the corresponding skill. Invoke `superpowers:brainstorming`, `superpowers:executing-plans`, and `superpowers:writing-plans` directly instead. (#1188)
+- **`superpowers:code-reviewer` named agent removed** — the agent was the plugin's only named agent and was used by exactly two skills, while every other reviewer/implementer subagent in the repo dispatches `general-purpose` with a prompt template alongside its skill. The agent's persona and checklist have been merged into `skills/requesting-code-review/code-reviewer.md` as a self-contained Task-dispatch template. Anyone dispatching `Task (superpowers:code-reviewer)` should switch to `Task (general-purpose)` with the prompt template instead. (PR #1299)
+- **Integration sections removed from skills** — these were a legacy of the time before agents had native skills systems and didn't help with steering.
+
+### Worktree Skills Rewrite
+
+`using-git-worktrees` and `finishing-a-development-branch` now detect when the agent is already running inside an isolated worktree and prefer the harness's native worktree controls before falling back to `git worktree`. Behavior was TDD-validated and cross-platform-checked across five harnesses. (PRI-974, PR #1121)
+
+- **Environment detection** — both skills check `GIT_DIR != GIT_COMMON` before doing anything; if already in a linked worktree, creation is skipped entirely. A submodule guard prevents false detection.
+- **Consent before creating worktrees** — `using-git-worktrees` no longer creates worktrees implicitly; the skill asks the user first. Fixes #991 (subagent-driven-development was auto-creating worktrees without consent).
+- **Native tool preference (Step 1a)** — when the harness exposes its own worktree tool (e.g. Codex), the skill defers to it. The user's stated preference is respected when expressed.
+- **Provenance-based cleanup** — `finishing-a-development-branch` only cleans up worktrees inside `.worktrees/` (created by superpowers); anything outside is left alone. Fixes #940 (Option 2 was incorrectly cleaning up worktrees), #999 (merge-then-remove ordering), and #238 (`cd` to repo root before `git worktree remove`).
+- **Detached HEAD handling** — the finishing menu collapses to two options when there is no branch to merge from.
+- **Hardcoded `/Users/jesse` paths** in skill examples replaced with generic placeholders. (#858, PR #1122)
+
+### Contributor Guidelines for AI Agents
+
+Two new sections at the top of `CLAUDE.md` (symlinked to `AGENTS.md`) speak directly to AI agents. An audit of the last 100 closed PRs against this repo showed a 94% rejection rate driven by AI-generated slop: agents that didn't read the PR template, opened duplicates, fabricated problem descriptions, or pushed fork- or domain-specific changes upstream.
+
+- **Pre-submission checklist** — read the PR template, search for existing PRs, verify a real problem exists, confirm the change belongs in core, and show the human partner the complete diff before submitting.
+- **What we will not accept** — third-party dependencies, "compliance" rewrites of skill content, project-specific configuration, bulk PRs, speculative fixes, domain-specific skills, fork-specific changes, fabricated content, and bundled unrelated changes.
+- **New harness PRs require a session transcript** — most past new-harness integrations copied skill files or wrapped with `npx skills` instead of loading the `using-superpowers` bootstrap at session start. The acceptance test ("Let's make a react todo list" must auto-trigger `brainstorming` in a clean session) and a complete transcript are now required.
+
+### Codex Plugin Mirror Tooling
+
+New `sync-to-codex-plugin` script mirrors superpowers into the OpenAI Codex plugin marketplace as `prime-radiant-inc/openai-codex-plugins`. Path/user-agnostic so any team member can run it. (PR #1165)
+
+- Clones the fork fresh into a temp directory per run, regenerates overlays inline, and opens a PR; auto-detects upstream from the script's own location and preflights `rsync`/`git`/`gh auth`/`python3`.
+- `--bootstrap` flag for first-time setup; `EXCLUDES` patterns anchored to source root; `assets/` excluded.
+- Mirrors `CODE_OF_CONDUCT.md`; drops the `agents/openai.yaml` overlay.
+- Seeds `interface.defaultPrompt` in the mirrored `plugin.json`. (PR #1180 by @arittr)
+- Codex plugin files are committed to the source repo so the sync script uses canonical versions; Codex marketplace metadata is preserved.
+
+### OpenCode
+
+- **Bootstrap content cached at module level** — `getBootstrapContent()` was calling `fs.existsSync` + `fs.readFileSync` + frontmatter regex on every agent step (the `experimental.chat.messages.transform` hook fires on every step in OpenCode's agent loop). Now read once, cached for the session lifetime, with a null sentinel for the missing-file case. 15 regression tests cover cache behavior, fs call counts, the injection guard, the missing-file sentinel, and cache reset. (Fixes #1202)
+- **Integration tests modernized**.
+- **Install caveats clarified** in the README.
+
+### Code Review Consolidation
+
+`requesting-code-review` is now self-contained: the persona, checklist, and dispatch template live in `skills/requesting-code-review/code-reviewer.md` and the skill dispatches `Task (general-purpose)` directly. (PR #1299)
+
+- **Single source of truth** — the persona/checklist that previously lived in both `agents/code-reviewer.md` and the skill's placeholder template (and drifted independently) is now one file.
+- **`subagent-driven-development` follows suit** — its `code-quality-reviewer-prompt.md` now dispatches `Task (general-purpose)` instead of the named agent.
+- **Behavioral test added** — `tests/claude-code/test-requesting-code-review.sh` plants real bugs (SQL injection, plaintext password handling, credential logging) into a tiny project and asserts the dispatched reviewer flags every planted issue at Critical/Important severity and refuses to approve the diff.
+
+> Note: `tests/claude-code/test-requesting-code-review.sh` and `tests/claude-code/test-document-review-system.sh` (mentioned later in this document) were lifted into drill scenarios on 2026-05-06 and removed from `tests/`. See `evals/scenarios/code-review-catches-planted-bugs.yaml` and `evals/scenarios/spec-reviewer-catches-planted-flaws.yaml`. The references above and below are preserved as dated artifacts of the work this section describes.
+- **Codex and Copilot workaround docs trimmed** — the "Named agent dispatch" sections in `references/codex-tools.md` and `references/copilot-tools.md` documented how to flatten a named agent into a generic dispatch. With no named agents shipping, the workaround is unnecessary; both sections were dropped.
+
+### Subagent-Driven Development
+
+- **No more pause every 3 tasks** — the "review after each batch (3 tasks)" cadence in `requesting-code-review` (originally for `executing-plans`) was leaking into `subagent-driven-development`. Replaced with "each task or at natural checkpoints" plus an explicit continuous-execution directive.
+- **SDD integration test now runs its assertions** — three independent bugs caused the test to silently bail before printing any verification results: an unresolved `..` segment in the working-dir path, a `set -euo pipefail` interaction with `find | sort | head -1` (SIGPIPE on the producer killed the script), and a missing `--plugin-dir` on the `claude -p` invocation that caused the test to load the installed plugin instead of the working tree. All three fixed; six verification tests now actually run against a real end-to-end SDD run.
+
+### Cursor
+
+- **Windows SessionStart hook** routed through `run-hook.cmd` instead of invoking the extensionless `session-start` script directly. Fixes Windows opening the file in an editor instead of running it. Also removed an accidental UTF-8 BOM from `hooks-cursor.json`.
+
+### Gemini CLI
+
+- **Subagent dispatch mapping** — Gemini's `Task` dispatch now maps to `@agent-name` / `@generalist`, with parallel subagent dispatch documented for independent tasks.
+
+### Skills
+
+- **Terminology cleanups** across skill content.
+
+### Documentation & Install
+
+- **Factory Droid installation instructions** added to README.
+- **Quickstart install links** in README. (PR #1293 by @arittr)
+- **Codex plugin install guidance** updated. (PR #1288 by @arittr)
+- **Codex `wait` mapping corrected** to `wait_agent` in the tools reference.
+- **Install order reorganized**; Codex install instructions cleaned up.
+- **Removed vestigial `CHANGELOG.md`** in favor of `RELEASE-NOTES.md` as the single source. (PR #1163 by @shaanmajid)
+- **Discord invite link** fixed; release announcements link and a detailed Discord description added to the Community section.
+
+### Community
+
+- @shaanmajid — vestigial `CHANGELOG.md` removal (PR #1163)
+- @arittr — README quickstart install links (#1293), Codex plugin install guidance (#1288), `sync-to-codex-plugin` `interface.defaultPrompt` seed (#1180)
+
+## v5.0.7 (2026-03-31)
+
+### GitHub Copilot CLI Support
+
+- **SessionStart context injection** — Copilot CLI v1.0.11 added support for `additionalContext` in sessionStart hook output. The session-start hook now detects the `COPILOT_CLI` environment variable and emits the SDK-standard `{ "additionalContext": "..." }` format, giving Copilot CLI users the full superpowers bootstrap at session start. (Original fix by @culinablaz in PR #910)
+- **Tool mapping** — added `references/copilot-tools.md` with the full Claude Code to Copilot CLI tool equivalence table
+- **Skill and README updates** — added Copilot CLI to the `using-superpowers` skill's platform instructions and README installation section
+
+### OpenCode Fixes
+
+- **Skills path consistency** — the bootstrap text no longer advertises a misleading `configDir/skills/superpowers/` path that didn't match the runtime path. The agent should use the native `skill` tool, not navigate to files by path. Tests now use consistent paths derived from a single source of truth. (#847, #916)
+- **Bootstrap as user message** — moved bootstrap injection from `experimental.chat.system.transform` to `experimental.chat.messages.transform`, prepending to the first user message instead of adding a system message. Avoids token bloat from system messages repeated every turn (#750) and fixes compatibility with Qwen and other models that break on multiple system messages (#894).
+
+## v5.0.6 (2026-03-24)
+
+### Inline Self-Review Replaces Subagent Review Loops
+
+The subagent review loop (dispatching a fresh agent to review plans/specs) doubled execution time (~25 min overhead) without measurably improving plan quality. Regression testing across 5 versions with 5 trials each showed identical quality scores regardless of whether the review loop ran.
+
+- **brainstorming** — replaced Spec Review Loop (subagent dispatch + 3-iteration cap) with inline Spec Self-Review checklist: placeholder scan, internal consistency, scope check, ambiguity check
+- **writing-plans** — replaced Plan Review Loop (subagent dispatch + 3-iteration cap) with inline Self-Review checklist: spec coverage, placeholder scan, type consistency
+- **writing-plans** — added explicit "No Placeholders" section defining plan failures (TBD, vague descriptions, undefined references, "similar to Task N")
+- Self-review catches 3-5 real bugs per run in ~30s instead of ~25 min, with comparable defect rates to the subagent approach
+
+### Brainstorm Server
+
+- **Session directory restructured** — the brainstorm server session directory now contains two peer subdirectories: `content/` (HTML files served to the browser) and `state/` (events, server-info, pid, log). Previously, server state and user interaction data were stored alongside served content, making them accessible over HTTP. The `screen_dir` and `state_dir` paths are both included in the server-started JSON. (Reported by 吉田仁)
+
+### Bug Fixes
+
+- **Owner-PID lifecycle fixes** — the brainstorm server's owner-PID monitoring had two bugs causing false shutdowns within 60 seconds: (1) EPERM from cross-user PIDs (Tailscale SSH, etc.) was treated as "process dead", and (2) on WSL the grandparent PID resolves to a short-lived subprocess that exits before the first lifecycle check. Fixed by treating EPERM as "alive" and validating the owner PID at startup — if it's already dead, monitoring is disabled and the server relies on the 30-minute idle timeout. This also removes the Windows/MSYS2-specific carve-out from `start-server.sh` since the server now handles it generically. (#879)
+- **writing-skills** — corrected false claim that SKILL.md frontmatter supports "only two fields"; now says "two required fields" and links to the agentskills.io specification for all supported fields (PR #882 by @arittr)
+
+### Codex App Compatibility
+
+- **codex-tools** — added named agent dispatch mapping documenting how to translate Claude Code's named agent types to Codex's `spawn_agent` with worker roles (PR #647 by @arittr)
+- **codex-tools** — added environment detection and Codex App finishing sections for worktree-aware skills (by @arittr)
+- **Design spec** — added Codex App compatibility design spec (PRI-823) covering read-only environment detection, worktree-safe skill behavior, and sandbox fallback patterns (by @arittr)
+
+## v5.0.5 (2026-03-17)
+
+### Bug Fixes
+
+- **Brainstorm server ESM fix** — renamed `server.js` → `server.cjs` so the brainstorming server starts correctly on Node.js 22+ where the root `package.json` `"type": "module"` caused `require()` to fail. (PR #784 by @sarbojitrana, fixes #774, #780, #783)
+- **Brainstorm owner-PID on Windows** — skip PID lifecycle monitoring on Windows/MSYS2 where the PID namespace is invisible to Node.js, preventing the server from self-terminating after 60 seconds. (#770, docs from PR #768 by @lucasyhzlu-debug)
+- **stop-server.sh reliability** — verify the server process actually died before reporting success. SIGTERM + 2s wait + SIGKILL fallback. (#723)
+
+### Changed
+
+- **Execution handoff** — restore user choice between subagent-driven and inline execution after plan writing. Subagent-driven is recommended but no longer mandatory.
+
+## v5.0.4 (2026-03-16)
+
+### Review Loop Refinements
+
+Dramatically reduces token usage and speeds up spec and plan reviews by eliminating unnecessary review passes and tightening reviewer focus.
+
+- **Single whole-plan review** — plan reviewer now reviews the complete plan in one pass instead of chunk-by-chunk. Removed all chunk-related concepts (`## Chunk N:` headings, 1000-line chunk limits, per-chunk dispatch).
+- **Raised the bar for blocking issues** — both spec and plan reviewer prompts now include a "Calibration" section: only flag issues that would cause real problems during implementation. Minor wording, stylistic preferences, and formatting quibbles should not block approval.
+- **Reduced max review iterations** — from 5 to 3 for both spec and plan review loops. If the reviewer is calibrated correctly, 3 rounds is plenty.
+- **Streamlined reviewer checklists** — spec reviewer trimmed from 7 categories to 5; plan reviewer from 7 to 4. Removed formatting-focused checks (task syntax, chunk size) in favor of substance (buildability, spec alignment).
+
+### OpenCode
+
+- **One-line plugin install** — OpenCode plugin now auto-registers the skills directory via a `config` hook. No symlinks or `skills.paths` config needed. Install is just adding one line to `opencode.json`. (PR #753)
+- **Added `package.json`** so OpenCode can install superpowers as an npm package from git.
+
+### Bug Fixes
+
+- **Verify server actually stopped** — `stop-server.sh` now confirms the process is dead before reporting success. SIGTERM + 2s wait + SIGKILL fallback. Reports failure if the process survives. (PR #751)
+- **Generic agent language** — brainstorm companion waiting page now says "the agent" instead of "Claude".
+
+## v5.0.3 (2026-03-15)
+
+### Cursor Support
+
+- **Cursor hooks** — added `hooks/hooks-cursor.json` with Cursor's camelCase format (`sessionStart`, `version: 1`) and updated `.cursor-plugin/plugin.json` to reference it. Fixed platform detection in `session-start` to check `CURSOR_PLUGIN_ROOT` first (Cursor may also set `CLAUDE_PLUGIN_ROOT`). (Based on PR #709)
+
+### Bug Fixes
+
+- **Stop firing SessionStart hook on `--resume`** — the startup hook was re-injecting context on resumed sessions, which already have the context in their conversation history. The hook now fires only on `startup`, `clear`, and `compact`.
+- **Bash 5.3+ hook hang** — replaced heredoc (`cat <<EOF`) with `printf` in `hooks/session-start`. Fixes indefinite hang on macOS with Homebrew bash 5.3+ caused by a bash regression with large variable expansion in heredocs. (#572, #571)
+- **POSIX-safe hook script** — replaced `${BASH_SOURCE[0]:-$0}` with `$0` in `hooks/session-start`. Fixes "Bad substitution" error on Ubuntu/Debian where `/bin/sh` is dash. (#553)
+- **Portable shebangs** — replaced `#!/bin/bash` with `#!/usr/bin/env bash` in all shell scripts. Fixes execution on NixOS, FreeBSD, and macOS with Homebrew bash where `/bin/bash` is outdated or missing. (#700)
+- **Brainstorm server on Windows** — auto-detect Windows/Git Bash (`OSTYPE=msys*`, `MSYSTEM`) and switch to foreground mode, fixing silent server failure caused by `nohup`/`disown` process reaping. (#737)
+- **Codex docs fix** — replaced deprecated `collab` flag with `multi_agent` in Codex documentation. (PR #749)
+
+## v5.0.2 (2026-03-11)
+
+### Zero-Dependency Brainstorm Server
+
+**Removed all vendored node_modules — server.js is now fully self-contained**
+
+- Replaced Express/Chokidar/WebSocket dependencies with zero-dependency Node.js server using built-in `http`, `fs`, and `crypto` modules
+- Removed ~1,200 lines of vendored `node_modules/`, `package.json`, and `package-lock.json`
+- Custom WebSocket protocol implementation (RFC 6455 framing, ping/pong, proper close handshake)
+- Native `fs.watch()` file watching replaces Chokidar
+- Full test suite: HTTP serving, WebSocket protocol, file watching, and integration tests
+
+### Brainstorm Server Reliability
+
+- **Auto-exit after 30 minutes idle** — server shuts down when no clients are connected, preventing orphaned processes
+- **Owner process tracking** — server monitors the parent harness PID and exits when the owning session dies
+- **Liveness check** — skill verifies server is responsive before reusing an existing instance
+- **Encoding fix** — proper `<meta charset="utf-8">` on served HTML pages
+
+### Subagent Context Isolation
+
+- All delegation skills (brainstorming, dispatching-parallel-agents, requesting-code-review, subagent-driven-development, writing-plans) now include context isolation principle
+- Subagents receive only the context they need, preventing context window pollution
+
+## v5.0.1 (2026-03-10)
+
+### Agentskills Compliance
+
+**Brainstorm-server moved into skill directory**
+
+- Moved `lib/brainstorm-server/` → `skills/brainstorming/scripts/` per the [agentskills.io](https://agentskills.io) specification
+- All `${CLAUDE_PLUGIN_ROOT}/lib/brainstorm-server/` references replaced with relative `scripts/` paths
+- Skills are now fully portable across platforms — no platform-specific env vars needed to locate scripts
+- `lib/` directory removed (was the last remaining content)
+
+### New Features
+
+**Gemini CLI extension**
+
+- Native Gemini CLI extension support via `gemini-extension.json` and `GEMINI.md` at repo root
+- `GEMINI.md` @imports `using-superpowers` skill and tool mapping table at session start
+- Gemini CLI tool mapping reference (`skills/using-superpowers/references/gemini-tools.md`) — translates Claude Code tool names (Read, Write, Edit, Bash, etc.) to Gemini CLI equivalents (read_file, write_file, replace, etc.)
+- Documents Gemini CLI limitations: no subagent support, skills fall back to `executing-plans`
+- Extension root at repo root for cross-platform compatibility (avoids Windows symlink issues)
+- Install instructions added to README
+
+### Improvements
+
+**Multi-platform brainstorm server launch**
+
+- Per-platform launch instructions in visual-companion.md: Claude Code (default mode), Codex (auto-foreground via `CODEX_CI`), Gemini CLI (`--foreground` with `is_background`), and fallback for other environments
+- Server now writes startup JSON to `$SCREEN_DIR/.server-info` so agents can find the URL and port even when stdout is hidden by background execution
+
+**Brainstorm server dependencies bundled**
+
+- `node_modules` vendored into the repo so the brainstorm server works immediately on fresh plugin installs without requiring `npm` at runtime
+- Removed `fsevents` from bundled deps (macOS-only native binary; chokidar falls back gracefully without it)
+- Fallback auto-install via `npm install` if `node_modules` is missing
+
+**OpenCode tool mapping fix**
+
+- `TodoWrite` → `todowrite` (was incorrectly mapped to `update_plan`); verified against OpenCode source
+
+### Bug Fixes
+
+**Windows/Linux: single quotes break SessionStart hook** (#577, #529, #644, PR #585)
+
+- Single quotes around `${CLAUDE_PLUGIN_ROOT}` in hooks.json fail on Windows (cmd.exe doesn't recognize single quotes as path delimiters) and on Linux (single quotes prevent variable expansion)
+- Fix: replaced single quotes with escaped double quotes — works across macOS bash, Windows cmd.exe, Windows Git Bash, and Linux, with and without spaces in paths
+- Verified on Windows 11 (NT 10.0.26200.0) with Claude Code 2.1.72 and Git for Windows
+
+**Brainstorming spec review loop skipped** (#677)
+
+- The spec review loop (dispatch spec-document-reviewer subagent, iterate until approved) existed in the prose "After the Design" section but was missing from the checklist and process flow diagram
+- Since agents follow the diagram and checklist more reliably than prose, the spec review step was being skipped entirely
+- Added step 7 (spec review loop) to the checklist and corresponding nodes to the dot graph
+- Tested with `claude --plugin-dir` and `claude-session-driver`: worker now correctly dispatches the reviewer
+
+**Cursor install command** (PR #676)
+
+- Fixed Cursor install command in README: `/plugin-add` → `/add-plugin` (confirmed via Cursor 2.5 release announcement)
+
+**User review gate in brainstorming** (#565)
+
+- Added explicit user review step between spec completion and writing-plans handoff
+- User must approve the spec before implementation planning begins
+- Checklist, process flow, and prose updated with the new gate
+
+**Session-start hook emits context only once per platform**
+
+- Hook now detects whether it's running in Claude Code or another platform
+- Emits `hookSpecificOutput` for Claude Code, `additional_context` for others — prevents double context injection
+
+**Linting fix in token analysis script**
+
+- `except:` → `except Exception:` in `tests/claude-code/analyze-token-usage.py`
+
+### Maintenance
+
+**Removed dead code**
+
+- Deleted `lib/skills-core.js` and its test (`tests/opencode/test-skills-core.js`) — unused since February 2026
+- Removed skills-core existence check from `tests/opencode/test-plugin-loading.sh`
+
+### Community
+
+- @karuturi — Claude Code official marketplace install instructions (PR #610)
+- @mvanhorn — session-start hook dual-emit fix, OpenCode tool mapping fix
+- @daniel-graham — linting fix for bare except
+- PR #585 author — Windows/Linux hooks quoting fix
+
+---
+
+## v5.0.0 (2026-03-09)
+
+### Breaking Changes
+
+**Specs and plans directory restructured**
+
+- Specs (brainstorming output) now save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
+- Plans (writing-plans output) now save to `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
+- User preferences for spec/plan locations override these defaults
+- All internal skill references, test files, and example paths updated to match
+- Migration: move existing files from `docs/plans/` to new locations if desired
+
+**Subagent-driven development mandatory on capable harnesses**
+
+Writing-plans no longer offers a choice between subagent-driven and executing-plans. On harnesses with subagent support (Claude Code, Codex), subagent-driven-development is required. Executing-plans is reserved for harnesses without subagent capability, and now tells the user that Superpowers works better on a subagent-capable platform.
+
+**Executing-plans no longer batches**
+
+Removed the "execute 3 tasks then stop for review" pattern. Plans now execute continuously, stopping only for blockers.
+
+**Slash commands deprecated**
+
+`/brainstorm`, `/write-plan`, and `/execute-plan` now show deprecation notices pointing users to the corresponding skills. Commands will be removed in the next major release.
+
+### New Features
+
+**Visual brainstorming companion**
+
+Optional browser-based companion for brainstorming sessions. When a topic would benefit from visuals, the brainstorming skill offers to show mockups, diagrams, comparisons, and other content in a browser window alongside terminal conversation.
+
+- `lib/brainstorm-server/` — WebSocket server with browser helper library, session management scripts, and dark/light themed frame template ("Superpowers Brainstorming" with GitHub link)
+- `skills/brainstorming/visual-companion.md` — Progressive disclosure guide for server workflow, screen authoring, and feedback collection
+- Brainstorming skill adds a visual companion decision point to its process flow: after exploring project context, the skill evaluates whether upcoming questions involve visual content and offers the companion in its own message
+- Per-question decision: even after accepting, each question is evaluated for whether browser or terminal is more appropriate
+- Integration tests in `tests/brainstorm-server/`
+
+**Document review system**
+
+Automated review loops for spec and plan documents using subagent dispatch:
+
+- `skills/brainstorming/spec-document-reviewer-prompt.md` — Reviewer checks completeness, consistency, architecture, and YAGNI
+- `skills/writing-plans/plan-document-reviewer-prompt.md` — Reviewer checks spec alignment, task decomposition, file structure, and file size
+- Brainstorming dispatches spec reviewer after writing the design doc
+- Writing-plans includes chunk-based plan review loop after each section
+- Review loops repeat until approved or escalate after 5 iterations
+- End-to-end tests in `tests/claude-code/test-document-review-system.sh`
+- Design spec and implementation plan in `docs/superpowers/`
+
+**Architecture guidance across the skill pipeline**
+
+Design-for-isolation and file-size-awareness guidance added to brainstorming, writing-plans, and subagent-driven-development:
+
+- **Brainstorming** — New sections: "Design for isolation and clarity" (clear boundaries, well-defined interfaces, independently testable units) and "Working in existing codebases" (follow existing patterns, targeted improvements only)
+- **Writing-plans** — New "File Structure" section: map out files and responsibilities before defining tasks. New "Scope Check" backstop: catch multi-subsystem specs that should have been decomposed during brainstorming
+- **SDD implementer** — New "Code Organization" section (follow plan's file structure, report concerns about growing files) and "When You're in Over Your Head" escalation guidance
+- **SDD code quality reviewer** — Now checks architecture, unit decomposition, plan conformance, and file growth
+- **Spec/plan reviewers** — Architecture and file size added to review criteria
+- **Scope assessment** — Brainstorming now assesses whether a project is too large for a single spec. Multi-subsystem requests are flagged early and decomposed into sub-projects, each with its own spec → plan → implementation cycle
+
+**Subagent-driven development improvements**
+
+- **Model selection** — Guidance for choosing model capability by task type: cheap models for mechanical implementation, standard for integration, capable for architecture and review
+- **Implementer status protocol** — Subagents now report DONE, DONE_WITH_CONCERNS, BLOCKED, or NEEDS_CONTEXT. Controller handles each status appropriately: re-dispatching with more context, upgrading model capability, breaking tasks apart, or escalating to human
+
+### Improvements
+
+**Instruction priority hierarchy**
+
+Added explicit priority ordering to using-superpowers:
+
+1. User's explicit instructions (CLAUDE.md, AGENTS.md, direct requests) — highest priority
+2. Superpowers skills — override default system behavior
+3. Default system prompt — lowest priority
+
+If CLAUDE.md or AGENTS.md says "don't use TDD" and a skill says "always use TDD," the user's instructions win.
+
+**SUBAGENT-STOP gate**
+
+Added `<SUBAGENT-STOP>` block to using-superpowers. Subagents dispatched for specific tasks now skip the skill instead of activating the 1% rule and invoking full skill workflows.
+
+**Multi-platform improvements**
+
+- Codex tool mapping moved to progressive disclosure reference file (`references/codex-tools.md`)
+- Platform Adaptation pointer added so non-Claude-Code platforms can find tool equivalents
+- Plan headers now address "agentic workers" instead of "Claude" specifically
+- Collab feature requirement documented in `docs/README.codex.md`
+
+**Writing-plans template updates**
+
+- Plan steps now use checkbox syntax (`- [ ] **Step N:**`) for progress tracking
+- Plan header references both subagent-driven-development and executing-plans with platform-aware routing
+
+---
+
+## v4.3.1 (2026-02-21)
+
+### Added
+
+**Cursor support**
+
+Superpowers now works with Cursor's plugin system. Includes a `.cursor-plugin/plugin.json` manifest and Cursor-specific installation instructions in the README. The SessionStart hook output now includes an `additional_context` field alongside the existing `hookSpecificOutput.additionalContext` for Cursor hook compatibility.
+
+### Fixed
+
+**Windows: Restored polyglot wrapper for reliable hook execution (#518, #504, #491, #487, #466, #440)**
+
+Claude Code's `.sh` auto-detection on Windows was prepending `bash` to the hook command, breaking execution. The fix:
+
+- Renamed `session-start.sh` to `session-start` (extensionless) so auto-detection doesn't interfere
+- Restored `run-hook.cmd` polyglot wrapper with multi-location bash discovery (standard Git for Windows paths, then PATH fallback)
+- Exits silently if no bash is found rather than erroring
+- On Unix, the wrapper runs the script directly via `exec bash`
+- Uses POSIX-safe `dirname "$0"` path resolution (works on dash/sh, not just bash)
+
+This fixes SessionStart failures on Windows with spaces in paths, missing WSL, `set -euo pipefail` fragility on MSYS, and backslash mangling.
+
+## v4.3.0 (2026-02-12)
+
+This fix should dramatically improve superpowers skills compliance and should reduce the chances of Claude entering its native plan mode unintentionally.
+
+### Changed
+
+**Brainstorming skill now enforces its workflow instead of describing it**
+
+Models were skipping the design phase and jumping straight to implementation skills like frontend-design, or collapsing the entire brainstorming process into a single text block. The skill now uses hard gates, a mandatory checklist, and a graphviz process flow to enforce compliance:
+
+- `<HARD-GATE>`: no implementation skills, code, or scaffolding until design is presented and user approves
+- Explicit checklist (6 items) that must be created as tasks and completed in order
+- Graphviz process flow with `writing-plans` as the only valid terminal state
+- Anti-pattern callout for "this is too simple to need a design" — the exact rationalization models use to skip the process
+- Design section sizing based on section complexity, not project complexity
+
+**Using-superpowers workflow graph intercepts EnterPlanMode**
+
+Added an `EnterPlanMode` intercept to the skill flow graph. When the model is about to enter Claude's native plan mode, it checks whether brainstorming has happened and routes through the brainstorming skill instead. Plan mode is never entered.
+
+### Fixed
+
+**SessionStart hook now runs synchronously**
+
+Changed `async: true` to `async: false` in hooks.json. When async, the hook could fail to complete before the model's first turn, meaning using-superpowers instructions weren't in context for the first message.
+
+## v4.2.0 (2026-02-05)
+
+### Breaking Changes
+
+**Codex: Replaced bootstrap CLI with native skill discovery**
+
+The `superpowers-codex` bootstrap CLI, Windows `.cmd` wrapper, and related bootstrap content file have been removed. Codex now uses native skill discovery via `~/.agents/skills/superpowers/` symlink, so the old `use_skill`/`find_skills` CLI tools are no longer needed.
+
+Installation is now just clone + symlink (documented in INSTALL.md). No Node.js dependency required. The old `~/.codex/skills/` path is deprecated.
+
+### Fixes
+
+**Windows: Fixed Claude Code 2.1.x hook execution (#331)**
+
+Claude Code 2.1.x changed how hooks execute on Windows: it now auto-detects `.sh` files in commands and prepends `bash`. This broke the polyglot wrapper pattern because `bash "run-hook.cmd" session-start.sh` tries to execute the `.cmd` file as a bash script.
+
+Fix: hooks.json now calls session-start.sh directly. Claude Code 2.1.x handles the bash invocation automatically. Also added .gitattributes to enforce LF line endings for shell scripts (fixes CRLF issues on Windows checkout).
+
+**Windows: SessionStart hook runs async to prevent terminal freeze (#404, #413, #414, #419)**
+
+The synchronous SessionStart hook blocked the TUI from entering raw mode on Windows, freezing all keyboard input. Running the hook async prevents the freeze while still injecting superpowers context.
+
+**Windows: Fixed O(n^2) `escape_for_json` performance**
+
+The character-by-character loop using `${input:$i:1}` was O(n^2) in bash due to substring copy overhead. On Windows Git Bash this took 60+ seconds. Replaced with bash parameter substitution (`${s//old/new}`) which runs each pattern as a single C-level pass — 7x faster on macOS, dramatically faster on Windows.
+
+**Codex: Fixed Windows/PowerShell invocation (#285, #243)**
+
+- Windows doesn't respect shebangs, so directly invoking the extensionless `superpowers-codex` script triggered an "Open with" dialog. All invocations now prefixed with `node`.
+- Fixed `~/` path expansion on Windows — PowerShell doesn't expand `~` when passed as an argument to `node`. Changed to `$HOME` which expands correctly in both bash and PowerShell.
+
+**Codex: Fixed path resolution in installer**
+
+Used `fileURLToPath()` instead of manual URL pathname parsing to correctly handle paths with spaces and special characters on all platforms.
+
+**Codex: Fixed stale skills path in writing-skills**
+
+Updated `~/.codex/skills/` reference (deprecated) to `~/.agents/skills/` for native discovery.
+
+### Improvements
+
+**Worktree isolation now required before implementation**
+
+Added `using-git-worktrees` as a required skill for both `subagent-driven-development` and `executing-plans`. Implementation workflows now explicitly require setting up an isolated worktree before starting work, preventing accidental work directly on main.
+
+**Main branch protection softened to require explicit consent**
+
+Instead of prohibiting main branch work entirely, the skills now allow it with explicit user consent. More flexible while still ensuring users are aware of the implications.
+
+**Simplified installation verification**
+
+Removed `/help` command check and specific slash command list from verification steps. Skills are primarily invoked by describing what you want to do, not by running specific commands.
+
+**Codex: Clarified subagent tool mapping in bootstrap**
+
+Improved documentation of how Codex tools map to Claude Code equivalents for subagent workflows.
+
+### Tests
+
+- Added worktree requirement test for subagent-driven-development
+- Added main branch red flag warning test
+- Fixed case sensitivity in skill recognition test assertions
+
+---
+
+## v4.1.1 (2026-01-23)
+
+### Fixes
+
+**OpenCode: Standardized on `plugins/` directory per official docs (#343)**
+
+OpenCode's official documentation uses `~/.config/opencode/plugins/` (plural). Our docs previously used `plugin/` (singular). While OpenCode accepts both forms, we've standardized on the official convention to avoid confusion.
+
+Changes:
+- Renamed `.opencode/plugin/` to `.opencode/plugins/` in repo structure
+- Updated all installation docs (INSTALL.md, README.opencode.md) across all platforms
+- Updated test scripts to match
+
+**OpenCode: Fixed symlink instructions (#339, #342)**
+
+- Added explicit `rm` before `ln -s` (fixes "file already exists" errors on reinstall)
+- Added missing skills symlink step that was absent from INSTALL.md
+- Updated from deprecated `use_skill`/`find_skills` to native `skill` tool references
+
+---
+
+## v4.1.0 (2026-01-23)
+
+### Breaking Changes
+
+**OpenCode: Switched to native skills system**
+
+Superpowers for OpenCode now uses OpenCode's native `skill` tool instead of custom `use_skill`/`find_skills` tools. This is a cleaner integration that works with OpenCode's built-in skill discovery.
+
+**Migration required:** Skills must be symlinked to `~/.config/opencode/skills/superpowers/` (see updated installation docs).
+
+### Fixes
+
+**OpenCode: Fixed agent reset on session start (#226)**
+
+The previous bootstrap injection method using `session.prompt({ noReply: true })` caused OpenCode to reset the selected agent to "build" on first message. Now uses `experimental.chat.system.transform` hook which modifies the system prompt directly without side effects.
+
+**OpenCode: Fixed Windows installation (#232)**
+
+- Removed dependency on `skills-core.js` (eliminates broken relative imports when file is copied instead of symlinked)
+- Added comprehensive Windows installation docs for cmd.exe, PowerShell, and Git Bash
+- Documented proper symlink vs junction usage for each platform
+
+**Claude Code: Fixed Windows hook execution for Claude Code 2.1.x**
+
+Claude Code 2.1.x changed how hooks execute on Windows: it now auto-detects `.sh` files in commands and prepends `bash `. This broke the polyglot wrapper pattern because `bash "run-hook.cmd" session-start.sh` tries to execute the .cmd file as a bash script.
+
+Fix: hooks.json now calls session-start.sh directly. Claude Code 2.1.x handles the bash invocation automatically. Also added .gitattributes to enforce LF line endings for shell scripts (fixes CRLF issues on Windows checkout).
+
+---
+
+## v4.0.3 (2025-12-26)
+
+### Improvements
+
+**Strengthened using-superpowers skill for explicit skill requests**
+
+Addressed a failure mode where Claude would skip invoking a skill even when the user explicitly requested it by name (e.g., "subagent-driven-development, please"). Claude would think "I know what that means" and start working directly instead of loading the skill.
+
+Changes:
+- Updated "The Rule" to say "Invoke relevant or requested skills" instead of "Check for skills" - emphasizing active invocation over passive checking
+- Added "BEFORE any response or action" - the original wording only mentioned "response" but Claude would sometimes take action without responding first
+- Added reassurance that invoking a wrong skill is okay - reduces hesitation
+- Added new red flag: "I know what that means" → Knowing the concept ≠ using the skill
+
+**Added explicit skill request tests**
+
+New test suite in `tests/explicit-skill-requests/` that verifies Claude correctly invokes skills when users request them by name. Includes single-turn and multi-turn test scenarios.
+
+## v4.0.2 (2025-12-23)
+
+### Fixes
+
+**Slash commands now user-only**
+
+Added `disable-model-invocation: true` to all three slash commands (`/brainstorm`, `/execute-plan`, `/write-plan`). Claude can no longer invoke these commands via the Skill tool—they're restricted to manual user invocation only.
+
+The underlying skills (`superpowers:brainstorming`, `superpowers:executing-plans`, `superpowers:writing-plans`) remain available for Claude to invoke autonomously. This change prevents confusion when Claude would invoke a command that just redirects to a skill anyway.
+
+## v4.0.1 (2025-12-23)
+
+### Fixes
+
+**Clarified how to access skills in Claude Code**
+
+Fixed a confusing pattern where Claude would invoke a skill via the Skill tool, then try to Read the skill file separately. The `using-superpowers` skill now explicitly states that the Skill tool loads skill content directly—no need to read files.
+
+- Added "How to Access Skills" section to `using-superpowers`
+- Changed "read the skill" → "invoke the skill" in instructions
+- Updated slash commands to use fully qualified skill names (e.g., `superpowers:brainstorming`)
+
+**Added GitHub thread reply guidance to receiving-code-review** (h/t @ralphbean)
+
+Added a note about replying to inline review comments in the original thread rather than as top-level PR comments.
+
+**Added automation-over-documentation guidance to writing-skills** (h/t @EthanJStark)
+
+Added guidance that mechanical constraints should be automated, not documented—save skills for judgment calls.
+
+## v4.0.0 (2025-12-17)
+
+### New Features
+
+**Two-stage code review in subagent-driven-development**
+
+Subagent workflows now use two separate review stages after each task:
+
+1. **Spec compliance review** - Skeptical reviewer verifies implementation matches spec exactly. Catches missing requirements AND over-building. Won't trust implementer's report—reads actual code.
+
+2. **Code quality review** - Only runs after spec compliance passes. Reviews for clean code, test coverage, maintainability.
+
+This catches the common failure mode where code is well-written but doesn't match what was requested. Reviews are loops, not one-shot: if reviewer finds issues, implementer fixes them, then reviewer checks again.
+
+Other subagent workflow improvements:
+- Controller provides full task text to workers (not file references)
+- Workers can ask clarifying questions before AND during work
+- Self-review checklist before reporting completion
+- Plan read once at start, extracted to TodoWrite
+
+New prompt templates in `skills/subagent-driven-development/`:
+- `implementer-prompt.md` - Includes self-review checklist, encourages questions
+- `spec-reviewer-prompt.md` - Skeptical verification against requirements
+- `code-quality-reviewer-prompt.md` - Standard code review
+
+**Debugging techniques consolidated with tools**
+
+`systematic-debugging` now bundles supporting techniques and tools:
+- `root-cause-tracing.md` - Trace bugs backward through call stack
+- `defense-in-depth.md` - Add validation at multiple layers
+- `condition-based-waiting.md` - Replace arbitrary timeouts with condition polling
+- `find-polluter.sh` - Bisection script to find which test creates pollution
+- `condition-based-waiting-example.ts` - Complete implementation from real debugging session
+
+**Testing anti-patterns reference**
+
+`test-driven-development` now includes `testing-anti-patterns.md` covering:
+- Testing mock behavior instead of real behavior
+- Adding test-only methods to production classes
+- Mocking without understanding dependencies
+- Incomplete mocks that hide structural assumptions
+
+**Skill test infrastructure**
+
+Three new test frameworks for validating skill behavior:
+
+`tests/skill-triggering/` - Validates skills trigger from naive prompts without explicit naming. Tests 6 skills to ensure descriptions alone are sufficient.
+
+`tests/claude-code/` - Integration tests using `claude -p` for headless testing. Verifies skill usage via session transcript (JSONL) analysis. Includes `analyze-token-usage.py` for cost tracking.
+
+`tests/subagent-driven-dev/` - End-to-end workflow validation with two complete test projects:
+- `go-fractals/` - CLI tool with Sierpinski/Mandelbrot (10 tasks)
+- `svelte-todo/` - CRUD app with localStorage and Playwright (12 tasks)
+
+### Major Changes
+
+**DOT flowcharts as executable specifications**
+
+Rewrote key skills using DOT/GraphViz flowcharts as the authoritative process definition. Prose becomes supporting content.
+
+**The Description Trap** (documented in `writing-skills`): Discovered that skill descriptions override flowchart content when descriptions contain workflow summaries. Claude follows the short description instead of reading the detailed flowchart. Fix: descriptions must be trigger-only ("Use when X") with no process details.
+
+**Skill priority in using-superpowers**
+
+When multiple skills apply, process skills (brainstorming, debugging) now explicitly come before implementation skills. "Build X" triggers brainstorming first, then domain skills.
+
+**brainstorming trigger strengthened**
+
+Description changed to imperative: "You MUST use this before any creative work—creating features, building components, adding functionality, or modifying behavior."
+
+### Breaking Changes
+
+**Skill consolidation** - Six standalone skills merged:
+- `root-cause-tracing`, `defense-in-depth`, `condition-based-waiting` → bundled in `systematic-debugging/`
+- `testing-skills-with-subagents` → bundled in `writing-skills/`
+- `testing-anti-patterns` → bundled in `test-driven-development/`
+- `sharing-skills` removed (obsolete)
+
+### Other Improvements
+
+- **render-graphs.js** - Tool to extract DOT diagrams from skills and render to SVG
+- **Rationalizations table** in using-superpowers - Scannable format including new entries: "I need more context first", "Let me explore first", "This feels productive"
+- **docs/testing.md** - Guide to testing skills with Claude Code integration tests
+
+---
+
+## v3.6.2 (2025-12-03)
+
+### Fixed
+
+- **Linux Compatibility**: Fixed polyglot hook wrapper (`run-hook.cmd`) to use POSIX-compliant syntax
+  - Replaced bash-specific `${BASH_SOURCE[0]:-$0}` with standard `$0` on line 16
+  - Resolves "Bad substitution" error on Ubuntu/Debian systems where `/bin/sh` is dash
+  - Fixes #141
+
+---
+
+## v3.5.1 (2025-11-24)
+
+### Changed
+
+- **OpenCode Bootstrap Refactor**: Switched from `chat.message` hook to `session.created` event for bootstrap injection
+  - Bootstrap now injects at session creation via `session.prompt()` with `noReply: true`
+  - Explicitly tells the model that using-superpowers is already loaded to prevent redundant skill loading
+  - Consolidated bootstrap content generation into shared `getBootstrapContent()` helper
+  - Cleaner single-implementation approach (removed fallback pattern)
+
+---
+
+## v3.5.0 (2025-11-23)
+
+### Added
+
+- **OpenCode Support**: Native JavaScript plugin for OpenCode.ai
+  - Custom tools: `use_skill` and `find_skills`
+  - Message insertion pattern for skill persistence across context compaction
+  - Automatic context injection via chat.message hook
+  - Auto re-injection on session.compacted events
+  - Three-tier skill priority: project > personal > superpowers
+  - Project-local skills support (`.opencode/skills/`)
+  - Shared core module (`lib/skills-core.js`) for code reuse with Codex
+  - Automated test suite with proper isolation (`tests/opencode/`)
+  - Platform-specific documentation (`docs/README.opencode.md`, `docs/README.codex.md`)
+
+### Changed
+
+- **Refactored Codex Implementation**: Now uses shared `lib/skills-core.js` ES module
+  - Eliminates code duplication between Codex and OpenCode
+  - Single source of truth for skill discovery and parsing
+  - Codex successfully loads ES modules via Node.js interop
+
+- **Improved Documentation**: Rewrote README to explain problem/solution clearly
+  - Removed duplicate sections and conflicting information
+  - Added complete workflow description (brainstorm → plan → execute → finish)
+  - Simplified platform installation instructions
+  - Emphasized skill-checking protocol over automatic activation claims
+
+---
+
+## v3.4.1 (2025-10-31)
+
+### Improvements
+
+- Optimized superpowers bootstrap to eliminate redundant skill execution. The `using-superpowers` skill content is now provided directly in session context, with clear guidance to use the Skill tool only for other skills. This reduces overhead and prevents the confusing loop where agents would execute `using-superpowers` manually despite already having the content from session start.
+
+## v3.4.0 (2025-10-30)
+
+### Improvements
+
+- Simplified `brainstorming` skill to return to original conversational vision. Removed heavyweight 6-phase process with formal checklists in favor of natural dialogue: ask questions one at a time, then present design in 200-300 word sections with validation. Keeps documentation and implementation handoff features.
+
+## v3.3.1 (2025-10-28)
+
+### Improvements
+
+- Updated `brainstorming` skill to require autonomous recon before questioning, encourage recommendation-driven decisions, and prevent agents from delegating prioritization back to humans.
+- Applied writing clarity improvements to `brainstorming` skill following Strunk's "Elements of Style" principles (omitted needless words, converted negative to positive form, improved parallel construction).
+
+### Bug Fixes
+
+- Clarified `writing-skills` guidance so it points to the correct agent-specific personal skill directories (`~/.claude/skills` for Claude Code, `~/.codex/skills` for Codex).
+
+## v3.3.0 (2025-10-28)
+
+### New Features
+
+**Experimental Codex Support**
+- Added unified `superpowers-codex` script with bootstrap/use-skill/find-skills commands
+- Cross-platform Node.js implementation (works on Windows, macOS, Linux)
+- Namespaced skills: `superpowers:skill-name` for superpowers skills, `skill-name` for personal
+- Personal skills override superpowers skills when names match
+- Clean skill display: shows name/description without raw frontmatter
+- Helpful context: shows supporting files directory for each skill
+- Tool mapping for Codex: TodoWrite→update_plan, subagents→manual fallback, etc.
+- Bootstrap integration with minimal AGENTS.md for automatic startup
+- Complete installation guide and bootstrap instructions specific to Codex
+
+**Key differences from Claude Code integration:**
+- Single unified script instead of separate tools
+- Tool substitution system for Codex-specific equivalents
+- Simplified subagent handling (manual work instead of delegation)
+- Updated terminology: "Superpowers skills" instead of "Core skills"
+
+### Files Added
+- `.codex/INSTALL.md` - Installation guide for Codex users
+- `.codex/superpowers-bootstrap.md` - Bootstrap instructions with Codex adaptations
+- `.codex/superpowers-codex` - Unified Node.js executable with all functionality
+
+**Note:** Codex support is experimental. The integration provides core superpowers functionality but may require refinement based on user feedback.
+
+## v3.2.3 (2025-10-23)
+
+### Improvements
+
+**Updated using-superpowers skill to use Skill tool instead of Read tool**
+- Changed skill invocation instructions from Read tool to Skill tool
+- Updated description: "using Read tool" → "using Skill tool"
+- Updated step 3: "Use the Read tool" → "Use the Skill tool to read and run"
+- Updated rationalization list: "Read the current version" → "Run the current version"
+
+The Skill tool is the proper mechanism for invoking skills in Claude Code. This update corrects the bootstrap instructions to guide agents toward the correct tool.
+
+### Files Changed
+- Updated: `skills/using-superpowers/SKILL.md` - Changed tool references from Read to Skill
+
+## v3.2.2 (2025-10-21)
+
+### Improvements
+
+**Strengthened using-superpowers skill against agent rationalization**
+- Added EXTREMELY-IMPORTANT block with absolute language about mandatory skill checking
+  - "If even 1% chance a skill applies, you MUST read it"
+  - "You do not have a choice. You cannot rationalize your way out."
+- Added MANDATORY FIRST RESPONSE PROTOCOL checklist
+  - 5-step process agents must complete before any response
+  - Explicit "responding without this = failure" consequence
+- Added Common Rationalizations section with 8 specific evasion patterns
+  - "This is just a simple question" → WRONG
+  - "I can check files quickly" → WRONG
+  - "Let me gather information first" → WRONG
+  - Plus 5 more common patterns observed in agent behavior
+
+These changes address observed agent behavior where they rationalize around skill usage despite clear instructions. The forceful language and pre-emptive counter-arguments aim to make non-compliance harder.
+
+### Files Changed
+- Updated: `skills/using-superpowers/SKILL.md` - Added three layers of enforcement to prevent skill-skipping rationalization
+
+## v3.2.1 (2025-10-20)
+
+### New Features
+
+**Code reviewer agent now included in plugin**
+- Added `superpowers:code-reviewer` agent to plugin's `agents/` directory
+- Agent provides systematic code review against plans and coding standards
+- Previously required users to have personal agent configuration
+- All skill references updated to use namespaced `superpowers:code-reviewer`
+- Fixes #55
+
+### Files Changed
+- New: `agents/code-reviewer.md` - Agent definition with review checklist and output format
+- Updated: `skills/requesting-code-review/SKILL.md` - References to `superpowers:code-reviewer`
+- Updated: `skills/subagent-driven-development/SKILL.md` - References to `superpowers:code-reviewer`
+
+## v3.2.0 (2025-10-18)
+
+### New Features
+
+**Design documentation in brainstorming workflow**
+- Added Phase 4: Design Documentation to brainstorming skill
+- Design documents now written to `docs/plans/YYYY-MM-DD-<topic>-design.md` before implementation
+- Restores functionality from original brainstorming command that was lost during skill conversion
+- Documents written before worktree setup and implementation planning
+- Tested with subagent to verify compliance under time pressure
+
+### Breaking Changes
+
+**Skill reference namespace standardization**
+- All internal skill references now use `superpowers:` namespace prefix
+- Updated format: `superpowers:test-driven-development` (previously just `test-driven-development`)
+- Affects all REQUIRED SUB-SKILL, RECOMMENDED SUB-SKILL, and REQUIRED BACKGROUND references
+- Aligns with how skills are invoked using the Skill tool
+- Files updated: brainstorming, executing-plans, subagent-driven-development, systematic-debugging, testing-skills-with-subagents, writing-plans, writing-skills
+
+### Improvements
+
+**Design vs implementation plan naming**
+- Design documents use `-design.md` suffix to prevent filename collisions
+- Implementation plans continue using existing `YYYY-MM-DD-<feature-name>.md` format
+- Both stored in `docs/plans/` directory with clear naming distinction
+
+## v3.1.1 (2025-10-17)
+
+### Bug Fixes
+
+- **Fixed command syntax in README** (#44) - Updated all command references to use correct namespaced syntax (`/superpowers:brainstorm` instead of `/brainstorm`). Plugin-provided commands are automatically namespaced by Claude Code to avoid conflicts between plugins.
+
+## v3.1.0 (2025-10-17)
+
+### Breaking Changes
+
+**Skill names standardized to lowercase**
+- All skill frontmatter `name:` fields now use lowercase kebab-case matching directory names
+- Examples: `brainstorming`, `test-driven-development`, `using-git-worktrees`
+- All skill announcements and cross-references updated to lowercase format
+- This ensures consistent naming across directory names, frontmatter, and documentation
+
+### New Features
+
+**Enhanced brainstorming skill**
+- Added Quick Reference table showing phases, activities, and tool usage
+- Added copyable workflow checklist for tracking progress
+- Added decision flowchart for when to revisit earlier phases
+- Added comprehensive AskUserQuestion tool guidance with concrete examples
+- Added "Question Patterns" section explaining when to use structured vs open-ended questions
+- Restructured Key Principles as scannable table
+
+**Anthropic best practices integration**
+- Added `skills/writing-skills/anthropic-best-practices.md` - Official Anthropic skill authoring guide
+- Referenced in writing-skills SKILL.md for comprehensive guidance
+- Provides patterns for progressive disclosure, workflows, and evaluation
+
+### Improvements
+
+**Skill cross-reference clarity**
+- All skill references now use explicit requirement markers:
+  - `**REQUIRED BACKGROUND:**` - Prerequisites you must understand
+  - `**REQUIRED SUB-SKILL:**` - Skills that must be used in workflow
+  - `**Complementary skills:**` - Optional but helpful related skills
+- Removed old path format (`skills/collaboration/X` → just `X`)
+- Updated Integration sections with categorized relationships (Required vs Complementary)
+- Updated cross-reference documentation with best practices
+
+**Alignment with Anthropic best practices**
+- Fixed description grammar and voice (fully third-person)
+- Added Quick Reference tables for scanning
+- Added workflow checklists Claude can copy and track
+- Appropriate use of flowcharts for non-obvious decision points
+- Improved scannable table formats
+- All skills well under 500-line recommendation
+
+### Bug Fixes
+
+- **Re-added missing command redirects** - Restored `commands/brainstorm.md` and `commands/write-plan.md` that were accidentally removed in v3.0 migration
+- Fixed `defense-in-depth` name mismatch (was `Defense-in-Depth-Validation`)
+- Fixed `receiving-code-review` name mismatch (was `Code-Review-Reception`)
+- Fixed `commands/brainstorm.md` reference to correct skill name
+- Removed references to non-existent related skills
+
+### Documentation
+
+**writing-skills improvements**
+- Updated cross-referencing guidance with explicit requirement markers
+- Added reference to Anthropic's official best practices
+- Improved examples showing proper skill reference format
+
+## v3.0.1 (2025-10-16)
+
+### Changes
+
+We now use Anthropic's first-party skills system!
+
+## v2.0.2 (2025-10-12)
+
+### Bug Fixes
+
+- **Fixed false warning when local skills repo is ahead of upstream** - The initialization script was incorrectly warning "New skills available from upstream" when the local repository had commits ahead of upstream. The logic now correctly distinguishes between three git states: local behind (should update), local ahead (no warning), and diverged (should warn).
+
+## v2.0.1 (2025-10-12)
+
+### Bug Fixes
+
+- **Fixed session-start hook execution in plugin context** (#8, PR #9) - The hook was failing silently with "Plugin hook error" preventing skills context from loading. Fixed by:
+  - Using `${BASH_SOURCE[0]:-$0}` fallback when BASH_SOURCE is unbound in Claude Code's execution context
+  - Adding `|| true` to handle empty grep results gracefully when filtering status flags
+
+---
+
+# Superpowers v2.0.0 Release Notes
+
+## Overview
+
+Superpowers v2.0 makes skills more accessible, maintainable, and community-driven through a major architectural shift.
+
+The headline change is **skills repository separation**: all skills, scripts, and documentation have moved from the plugin into a dedicated repository ([obra/superpowers-skills](https://github.com/obra/superpowers-skills)). This transforms superpowers from a monolithic plugin into a lightweight shim that manages a local clone of the skills repository. Skills auto-update on session start. Users fork and contribute improvements via standard git workflows. The skills library versions independently from the plugin.
+
+Beyond infrastructure, this release adds nine new skills focused on problem-solving, research, and architecture. We rewrote the core **using-skills** documentation with imperative tone and clearer structure, making it easier for Claude to understand when and how to use skills. **find-skills** now outputs paths you can paste directly into the Read tool, eliminating friction in the skills discovery workflow.
+
+Users experience seamless operation: the plugin handles cloning, forking, and updating automatically. Contributors find the new architecture makes improving and sharing skills trivial. This release lays the foundation for skills to evolve rapidly as a community resource.
+
+## Breaking Changes
+
+### Skills Repository Separation
+
+**The biggest change:** Skills no longer live in the plugin. They've been moved to a separate repository at [obra/superpowers-skills](https://github.com/obra/superpowers-skills).
+
+**What this means for you:**
+
+- **First install:** Plugin automatically clones skills to `~/.config/superpowers/skills/`
+- **Forking:** During setup, you'll be offered the option to fork the skills repo (if `gh` is installed)
+- **Updates:** Skills auto-update on session start (fast-forward when possible)
+- **Contributing:** Work on branches, commit locally, submit PRs to upstream
+- **No more shadowing:** Old two-tier system (personal/core) replaced with single-repo branch workflow
+
+**Migration:**
+
+If you have an existing installation:
+1. Your old `~/.config/superpowers/.git` will be backed up to `~/.config/superpowers/.git.bak`
+2. Old skills will be backed up to `~/.config/superpowers/skills.bak`
+3. Fresh clone of obra/superpowers-skills will be created at `~/.config/superpowers/skills/`
+
+### Removed Features
+
+- **Personal superpowers overlay system** - Replaced with git branch workflow
+- **setup-personal-superpowers hook** - Replaced by initialize-skills.sh
+
+## New Features
+
+### Skills Repository Infrastructure
+
+**Automatic Clone & Setup** (`lib/initialize-skills.sh`)
+- Clones obra/superpowers-skills on first run
+- Offers fork creation if GitHub CLI is installed
+- Sets up upstream/origin remotes correctly
+- Handles migration from old installation
+
+**Auto-Update**
+- Fetches from tracking remote on every session start
+- Auto-merges with fast-forward when possible
+- Notifies when manual sync needed (branch diverged)
+- Uses pulling-updates-from-skills-repository skill for manual sync
+
+### New Skills
+
+**Problem-Solving Skills** (`skills/problem-solving/`)
+- **collision-zone-thinking** - Force unrelated concepts together for emergent insights
+- **inversion-exercise** - Flip assumptions to reveal hidden constraints
+- **meta-pattern-recognition** - Spot universal principles across domains
+- **scale-game** - Test at extremes to expose fundamental truths
+- **simplification-cascades** - Find insights that eliminate multiple components
+- **when-stuck** - Dispatch to right problem-solving technique
+
+**Research Skills** (`skills/research/`)
+- **tracing-knowledge-lineages** - Understand how ideas evolved over time
+
+**Architecture Skills** (`skills/architecture/`)
+- **preserving-productive-tensions** - Keep multiple valid approaches instead of forcing premature resolution
+
+### Skills Improvements
+
+**using-skills (formerly getting-started)**
+- Renamed from getting-started to using-skills
+- Complete rewrite with imperative tone (v4.0.0)
+- Front-loaded critical rules
+- Added "Why" explanations for all workflows
+- Always includes /SKILL.md suffix in references
+- Clearer distinction between rigid rules and flexible patterns
+
+**writing-skills**
+- Cross-referencing guidance moved from using-skills
+- Added token efficiency section (word count targets)
+- Improved CSO (Claude Search Optimization) guidance
+
+**sharing-skills**
+- Updated for new branch-and-PR workflow (v2.0.0)
+- Removed personal/core split references
+
+**pulling-updates-from-skills-repository** (new)
+- Complete workflow for syncing with upstream
+- Replaces old "updating-skills" skill
+
+### Tools Improvements
+
+**find-skills**
+- Now outputs full paths with /SKILL.md suffix
+- Makes paths directly usable with Read tool
+- Updated help text
+
+**skill-run**
+- Moved from scripts/ to skills/using-skills/
+- Improved documentation
+
+### Plugin Infrastructure
+
+**Session Start Hook**
+- Now loads from skills repository location
+- Shows full skills list at session start
+- Prints skills location info
+- Shows update status (updated successfully / behind upstream)
+- Moved "skills behind" warning to end of output
+
+**Environment Variables**
+- `SUPERPOWERS_SKILLS_ROOT` set to `~/.config/superpowers/skills`
+- Used consistently throughout all paths
+
+## Bug Fixes
+
+- Fixed duplicate upstream remote addition when forking
+- Fixed find-skills double "skills/" prefix in output
+- Removed obsolete setup-personal-superpowers call from session-start
+- Fixed path references throughout hooks and commands
+
+## Documentation
+
+### README
+- Updated for new skills repository architecture
+- Prominent link to superpowers-skills repo
+- Updated auto-update description
+- Fixed skill names and references
+- Updated Meta skills list
+
+### Testing Documentation
+- Added comprehensive testing checklist (`docs/TESTING-CHECKLIST.md`)
+- Created local marketplace config for testing
+- Documented manual testing scenarios
+
+## Technical Details
+
+### File Changes
+
+**Added:**
+- `lib/initialize-skills.sh` - Skills repo initialization and auto-update
+- `docs/TESTING-CHECKLIST.md` - Manual testing scenarios
+- `.claude-plugin/marketplace.json` - Local testing config
+
+**Removed:**
+- `skills/` directory (82 files) - Now in obra/superpowers-skills
+- `scripts/` directory - Now in obra/superpowers-skills/skills/using-skills/
+- `hooks/setup-personal-superpowers.sh` - Obsolete
+
+**Modified:**
+- `hooks/session-start.sh` - Use skills from ~/.config/superpowers/skills
+- `commands/brainstorm.md` - Updated paths to SUPERPOWERS_SKILLS_ROOT
+- `commands/write-plan.md` - Updated paths to SUPERPOWERS_SKILLS_ROOT
+- `commands/execute-plan.md` - Updated paths to SUPERPOWERS_SKILLS_ROOT
+- `README.md` - Complete rewrite for new architecture
+
+### Commit History
+
+This release includes:
+- 20+ commits for skills repository separation
+- PR #1: Amplifier-inspired problem-solving and research skills
+- PR #2: Personal superpowers overlay system (later replaced)
+- Multiple skill refinements and documentation improvements
+
+## Upgrade Instructions
+
+### Fresh Install
+
+```bash
+# In Claude Code
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
+The plugin handles everything automatically.
+
+### Upgrading from v1.x
+
+1. **Backup your personal skills** (if you have any):
+   ```bash
+   cp -r ~/.config/superpowers/skills ~/superpowers-skills-backup
+   ```
+
+2. **Update the plugin:**
+   ```bash
+   /plugin update superpowers
+   ```
+
+3. **On next session start:**
+   - Old installation will be backed up automatically
+   - Fresh skills repo will be cloned
+   - If you have GitHub CLI, you'll be offered the option to fork
+
+4. **Migrate personal skills** (if you had any):
+   - Create a branch in your local skills repo
+   - Copy your personal skills from backup
+   - Commit and push to your fork
+   - Consider contributing back via PR
+
+## What's Next
+
+### For Users
+
+- Explore the new problem-solving skills
+- Try the branch-based workflow for skill improvements
+- Contribute skills back to the community
+
+### For Contributors
+
+- Skills repository is now at https://github.com/obra/superpowers-skills
+- Fork → Branch → PR workflow
+- See skills/meta/writing-skills/SKILL.md for TDD approach to documentation
+
+## Known Issues
+
+None at this time.
+
+## Credits
+
+- Problem-solving skills inspired by Amplifier patterns
+- Community contributions and feedback
+- Extensive testing and iteration on skill effectiveness
+
+---
+
+**Full Changelog:** https://github.com/obra/superpowers/compare/dd013f6...main
+**Skills Repository:** https://github.com/obra/superpowers-skills
+**Issues:** https://github.com/obra/superpowers/issues

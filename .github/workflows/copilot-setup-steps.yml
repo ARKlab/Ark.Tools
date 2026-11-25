@@ -75,7 +75,7 @@ jobs:
         uses: microsoft/apm-action@v1
         with:
           setup-only: true
-          apm-version: 0.35.1
+          apm-version: 0.38.1
 
       - name: Verify committed Copilot and Claude agents match the lockfile
         # Stops the agent when committed skills, agents or hooks were altered.
