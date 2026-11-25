@@ -78,12 +78,16 @@ The repository has two separate APM flows:
 - **Development:** [apm.yml](apm.yml) and [apm.lock.yaml](apm.lock.yaml)
   declare and pin development dependencies. Installed Copilot and Claude
   skills, agents, hooks, MCP and LSP configuration are committed, so every
-  harness and cloud session has them at startup. Some agents link into the
-  ignored `apm_modules/`; run `apm install --force` after cloning to restore it
-  (on a fresh clone APM refuses to rewrite skills whose links it rewrites; `git status`
-  must stay clean afterwards)
+  harness and cloud session has them at startup. Plugin packages are committed
+  as native plugins under `.agents/plugins/` and enabled in `.claude/settings.json`
+  and `.github/copilot/settings.json`. Some agents link into the
+  ignored `apm_modules/`; run `apm install` after cloning to restore it
+  (`git status` must stay clean afterwards)
   (`.github/workflows/copilot-setup-steps.yml` does this for the Copilot cloud
   agent; any other cloud environment must install the pinned APM version).
+  The ponytail plugin is not in `apm.yml`: APM 0.38 cannot deploy it because
+  its manifest declares `types` and `userConfig`. Install it in your own
+  harness if you use its review skill.
 - **Publication:** [agents-plugins/ark-csharp](agents-plugins/ark-csharp/)
   contains the authored `apm.yml` and `.apm/` assets.
   [agents-plugins/published/ark-csharp](agents-plugins/published/ark-csharp/)

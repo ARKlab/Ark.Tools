@@ -85,10 +85,8 @@ jobs:
 
       - name: Restore apm_modules referenced by committed agents
         # Leaves committed outputs unchanged; only populates the ignored package cache.
-        # --force: on a fresh checkout APM 0.35+ finds no baseline for skills whose links it rewrites
-        # and refuses to rewrite them; git diff --exit-code still proves nothing changed.
         run: |
-          apm install --force
+          apm install
           git diff --exit-code
         env:
           GITHUB_APM_PAT: ${{ github.token }}
