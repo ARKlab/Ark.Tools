@@ -92,18 +92,18 @@
       },
       "Azure.Storage.Blobs": {
         "type": "Transitive",
-        "resolved": "12.30.1",
-        "contentHash": "ywPqtDHLH5MY0Cp/wfLQgqhHOuJmD+bYVJawjXudtaQr9aJB+9orhk8oE6hHPy5s8H5bzq2q/mDkESf8w1rzBg==",
+        "resolved": "12.30.2",
+        "contentHash": "7c0H70SRY3Axty6YunsEFqw0k9KYzEgpmi4iRROAM325S2Ou5tyF1VvPw7imyjmopzhSqFx5LvwuE4/CLBDhng==",
         "dependencies": {
           "Apache.Arrow": "22.1.0",
           "Azure.Core": "1.60.0",
-          "Azure.Storage.Common": "12.29.0"
+          "Azure.Storage.Common": "12.29.1"
         }
       },
       "Azure.Storage.Common": {
         "type": "Transitive",
-        "resolved": "12.29.0",
-        "contentHash": "0VqPcAinzXFJDAELqC+VPFUL6AaU1mmIpDAHarr7DVw3zcJrlo4k3Xc3TCTVBkDgY6YUOjJ00Fd9ZB9En5H2Jg==",
+        "resolved": "12.29.1",
+        "contentHash": "T0CHonZVqUhIze/357Sbbg2ite4YM41rIvf+cEJMas/uRp5YiPGq3MV1E8/nvdWClJrzmmorXv4bg3qu1FuXIg==",
         "dependencies": {
           "Azure.Core": "1.60.0",
           "System.IO.Hashing": "10.0.9"
@@ -111,11 +111,11 @@
       },
       "Azure.Storage.Queues": {
         "type": "Transitive",
-        "resolved": "12.28.1",
-        "contentHash": "n6WL9zIvfNBQgUbjYugJBhf0fttdIScK89mSNVvF1iKKHvZleN0Y7V+u4e3K38D64PwHTTwEtqVzn8/3nvHTEg==",
+        "resolved": "12.28.2",
+        "contentHash": "Dwh8CazXMdskM933zc+rS+gFFAzDGuvWb2GJy6GEMRIg/b6vyCOJAolRrXDSYTZPld1dY0REds4FJkTUh7fQbQ==",
         "dependencies": {
           "Azure.Core": "1.60.0",
-          "Azure.Storage.Common": "12.29.0"
+          "Azure.Storage.Common": "12.29.1"
         }
       },
       "BouncyCastle.Cryptography": {
@@ -191,8 +191,8 @@
       },
       "Microsoft.Extensions.AmbientMetadata.Application": {
         "type": "Transitive",
-        "resolved": "10.11.0",
-        "contentHash": "aMCm7C6CexZT8W/p8zRp4BoxSnqRs3MmkBF7FvPIXC92b7vqs2SL0J+mVJi5W2Mk9Vb4ZRFWe9sdzFew6zUl1w==",
+        "resolved": "10.11.1",
+        "contentHash": "YD5qeEJjjUnVqj62+UJ5z78OXezcNibmgmtozpiaYveRfQ8jubWOzEybqTC+x0kXE4pRB54xBT9EgCkOl8rmMA==",
         "dependencies": {
           "Microsoft.Extensions.Configuration": "10.0.13",
           "Microsoft.Extensions.Hosting.Abstractions": "10.0.13",
@@ -221,8 +221,8 @@
       },
       "Microsoft.Extensions.Compliance.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.11.0",
-        "contentHash": "2mjAb3Sm5k6uNeI+IyXpggYMpfdDDGgZSwUm9QQsm5QgZboJWbm2eU+6wNMrlfFEao11yq6JS1zXI7SVQQ0NuQ==",
+        "resolved": "10.11.1",
+        "contentHash": "2tjl8N8Nz8SbE78lW7bCDQjIneH8/WNsDtcJm/n/vTBpPbfdKq1sf8n+aliTNYbI93ZIkphUHLZA+td4q5tDBg==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13",
           "Microsoft.Extensions.ObjectPool": "10.0.13"
@@ -230,10 +230,10 @@
       },
       "Microsoft.Extensions.Compliance.Redaction": {
         "type": "Transitive",
-        "resolved": "10.11.0",
-        "contentHash": "PXaJ04SHx1tb3+XR61E6wlQsWkANqTPJOvRfhiYh7Da+moJK2h9132IB9Mfv2kIhYbs8zt5eUnoh0iPEygf7og==",
+        "resolved": "10.11.1",
+        "contentHash": "ixoGWAVl2RVP/KBnUXlhM8+e0BsdxJU1qXk1feJgT8qpWkPaxkFEg+iqmoN7t83EnWc0AdB67ibcJDYWnfRXqQ==",
         "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "10.11.0",
+          "Microsoft.Extensions.Compliance.Abstractions": "10.11.1",
           "Microsoft.Extensions.Options.ConfigurationExtensions": "10.0.13"
         }
       },
@@ -278,8 +278,8 @@
       },
       "Microsoft.Extensions.DependencyInjection.AutoActivation": {
         "type": "Transitive",
-        "resolved": "10.11.0",
-        "contentHash": "h/sovspxVmT2DTIbWORMG0Gi3zVcPQzNl3kbwtpo0LoUXYbe2+66wQqZYwaF2ZWKN8HDdHv5yoc7d0DbDBBlnA==",
+        "resolved": "10.11.1",
+        "contentHash": "i7wHoinMgSHvZrt0iIsRgvvEouIrJgk6moHsJ7FFxC3uIDt/QxAS9p4q54mBDl89K3q2dMS2eUK7jDv+vvKeug==",
         "dependencies": {
           "Microsoft.Extensions.Hosting.Abstractions": "10.0.13"
         }
@@ -379,22 +379,22 @@
       },
       "Microsoft.Extensions.Telemetry": {
         "type": "Transitive",
-        "resolved": "10.11.0",
-        "contentHash": "2meCfABvkLPtEBBwGzItIGnhrex1AEn2N+dHvxB5UoozeX/xTtBuUz5BRdjNI5oNgd5T31kC69WWw3BHDc9iZA==",
+        "resolved": "10.11.1",
+        "contentHash": "OB6JdC7oqKgoaTkrW732tQwIw34Tcw2ZW0GsNwT8PsX8WWJhynz5GfvRTmMl7ImR2VozJBIVZ5yWNbykPkl3FA==",
         "dependencies": {
-          "Microsoft.Extensions.AmbientMetadata.Application": "10.11.0",
-          "Microsoft.Extensions.DependencyInjection.AutoActivation": "10.11.0",
+          "Microsoft.Extensions.AmbientMetadata.Application": "10.11.1",
+          "Microsoft.Extensions.DependencyInjection.AutoActivation": "10.11.1",
           "Microsoft.Extensions.Logging.Configuration": "10.0.13",
           "Microsoft.Extensions.ObjectPool": "10.0.13",
-          "Microsoft.Extensions.Telemetry.Abstractions": "10.11.0"
+          "Microsoft.Extensions.Telemetry.Abstractions": "10.11.1"
         }
       },
       "Microsoft.Extensions.Telemetry.Abstractions": {
         "type": "Transitive",
-        "resolved": "10.11.0",
-        "contentHash": "FzcHRan/C2g5X5KD0kPlL4tTROFRpM8sqcXfOIi6FGLsw/d2yoOYMbLJ5hyb8N5QgOVW7e1TdwEN4zVUfcwfdw==",
+        "resolved": "10.11.1",
+        "contentHash": "d36MCo5y/IjxqX1C7pvvO98TlaM5LO8DmBIEdzT9TaX0omxywnmMaoUS6Q0dC/LafJCVOrfRJdwSr9YTU0uSNg==",
         "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "10.11.0",
+          "Microsoft.Extensions.Compliance.Abstractions": "10.11.1",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
           "Microsoft.Extensions.ObjectPool": "10.0.13",
           "Microsoft.Extensions.Options": "10.0.13"
@@ -625,7 +625,7 @@
           "Ark.Tools.Solid": "[1.0.0, )",
           "Ark.Tools.Sql.SqlServer": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
-          "Dapper": "[2.1.89, )",
+          "Dapper": "[2.1.100, )",
           "Dapper.AOT": "[1.1.0, )",
           "Microsoft.Data.SqlClient": "[7.1.2, )"
         }
@@ -634,22 +634,22 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
-          "Microsoft.Extensions.Compliance.Abstractions": "[10.11.0, )",
-          "Microsoft.Extensions.Compliance.Redaction": "[10.11.0, )",
-          "Microsoft.Extensions.Telemetry": "[10.11.0, )"
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.11.1, )",
+          "Microsoft.Extensions.Compliance.Redaction": "[10.11.1, )",
+          "Microsoft.Extensions.Telemetry": "[10.11.1, )"
         }
       },
       "ark.tools.compliance.abstractions": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "[10.11.0, )"
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.11.1, )"
         }
       },
       "ark.tools.compliance.dapper": {
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "Dapper": "[2.1.89, )"
+          "Dapper": "[2.1.100, )"
         }
       },
       "ark.tools.compliance.nlog": {
@@ -670,7 +670,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Core": "[1.0.0, )",
-          "Dapper": "[2.1.89, )"
+          "Dapper": "[2.1.100, )"
         }
       },
       "ark.tools.mediatorframework": {
@@ -702,8 +702,8 @@
           "Ark.Tools.MediatorFramework.Messaging": "[1.0.0, )",
           "Azure.Identity": "[1.21.0, )",
           "Azure.Messaging.ServiceBus": "[7.21.0, )",
-          "Azure.Storage.Blobs": "[12.30.1, )",
-          "Azure.Storage.Queues": "[12.28.1, )",
+          "Azure.Storage.Blobs": "[12.30.2, )",
+          "Azure.Storage.Queues": "[12.28.2, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.15, )",
           "Microsoft.Extensions.Hosting.Abstractions": "[10.0.15, )"
         }
@@ -733,7 +733,7 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Nodatime": "[1.0.0, )",
-          "Dapper": "[2.1.89, )"
+          "Dapper": "[2.1.100, )"
         }
       },
       "ark.tools.nodatime.systemtextjson": {
@@ -785,9 +785,9 @@
       },
       "Dapper": {
         "type": "CentralTransitive",
-        "requested": "[2.1.89, )",
-        "resolved": "2.1.89",
-        "contentHash": "1VjFE664wnxvuhlgP8kS4PeFFF4jqD3VkbIHW6Zlc52zuibgcz5ICnIHcQXlTp6pURpPNGLV0ZpNe5x9KePJnA=="
+        "requested": "[2.1.100, )",
+        "resolved": "2.1.100",
+        "contentHash": "zKwgGfxkDIVLGU2WIsl57DwTgj17+fa5v0u2eiVMxU92GXN2fRIn2M8QMGtyGFrPSbVOYKgGFxAxEFL6CB9tTw=="
       },
       "Dapper.AOT": {
         "type": "CentralTransitive",

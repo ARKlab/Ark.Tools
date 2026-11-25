@@ -8,13 +8,13 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- COMMON -->
-    <PackageVersion Include="Azure.Storage.Queues" Version="12.28.1" />
+    <PackageVersion Include="Azure.Storage.Queues" Version="12.28.2" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.5.5" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.15" />
-    <PackageVersion Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.11.0" />
-    <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="10.11.0" />
-    <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.11.1" />
+    <PackageVersion Include="Microsoft.Extensions.Compliance.Redaction" Version="10.11.1" />
+    <PackageVersion Include="Microsoft.Extensions.Telemetry" Version="10.11.1" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.15" />
@@ -65,7 +65,7 @@
     <!-- TESTING -->
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="AwesomeAssertions.Web" Version="3.0.4" />
+    <PackageVersion Include="AwesomeAssertions.Web" Version="3.0.6" />
     <!-- Transitively pin Microsoft.AspNetCore.WebUtilities above the vulnerable range (GHSA-6527-9fp8-r4x6);
          AwesomeAssertions.Web 3.0.0 otherwise drags in the vulnerable 2.3.0. -->
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.15" />
@@ -131,14 +131,14 @@
     <PackageVersion Include="KubernetesClient" Version="21.0.8" />
     <!-- SQL -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.2" />
-    <PackageVersion Include="Dapper" Version="2.1.89" />
+    <PackageVersion Include="Dapper" Version="2.1.100" />
     <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.26.401" />
     <!-- AUTH -->
     <PackageVersion Include="Auth0.AuthenticationApi" Version="7.50.0" />
     <PackageVersion Include="Auth0.ManagementApi" Version="10.6.0" />
     <PackageVersion Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.92.0" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.92.0" />
-    <PackageVersion Include="JWT" Version="11.1.0" />
+    <PackageVersion Include="JWT" Version="11.2.0" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
     <PackageVersion Include="Microsoft.IdentityModel.LoggingExtensions" Version="8.23.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols" Version="8.23.0" />
@@ -146,7 +146,7 @@
     <PackageVersion Include="Microsoft.IdentityModel.Validators" Version="8.23.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.2" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.1" />

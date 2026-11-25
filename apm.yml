@@ -12,7 +12,7 @@ scripts:
   plugins:check: pwsh -NoProfile -File agents-plugins/Build-Plugin.ps1 -Check
 devDependencies:
   apm:
-    - microsoft/apm/packages/apm-guide#v0.35.1
+    - microsoft/apm/packages/apm-guide#v0.37.0
     - Aaronontheweb/dotnet-skills/skills/aot-trimming#v1.7.1
     - Aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation#v1.7.1
     - dotnet/skills/plugins/dotnet#2877c712edc20643b72f64e2983b168e6661d607 # main
