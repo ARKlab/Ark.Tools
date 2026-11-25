@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- OpenTelemetry packages are back on 1.20.x. OpenTelemetry 1.21.0 makes .NET 10 apps deploy their own copy of `System.Diagnostics.DiagnosticSource` 11.0.0, so .NET 10 runtime security updates (for example on Azure App Service) no longer patch that assembly. If your app references OpenTelemetry 1.21.0 directly, it still deploys the 11.0.0 copy, and you must update that package yourself.
+- OpenTelemetry packages are back on 1.20.x. OpenTelemetry 1.21.0 makes .NET 10 apps deploy their own copy of `System.Diagnostics.DiagnosticSource` 11.0.0, so .NET 10 runtime security updates (for example on Azure App Service) no longer patch that assembly. If your app references any OpenTelemetry package at 1.21.0 or later, it still deploys the 11.0.0 copy; move those references back to 1.20.x to avoid it. Code that uses APIs added in OpenTelemetry 1.21 must reference 1.21 itself, because Ark.Tools now requires only 1.20.1.
 
 ## [7.1.1] - 2026-11-13
 
