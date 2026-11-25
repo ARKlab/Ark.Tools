@@ -101,13 +101,13 @@
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Auth0.AuthenticationApi": "[7.50.0, )",
           "Auth0.ManagementApi": "[10.6.0, )",
-          "JWT": "[11.1.0, )"
+          "JWT": "[11.2.0, )"
         }
       },
       "ark.tools.compliance.abstractions": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "[10.11.0, )"
+          "Microsoft.Extensions.Compliance.Abstractions": "[10.11.1, )"
         }
       },
       "Auth0.AuthenticationApi": {
@@ -134,18 +134,18 @@
       },
       "JWT": {
         "type": "CentralTransitive",
-        "requested": "[11.1.0, )",
-        "resolved": "11.1.0",
-        "contentHash": "GbmNr2WUyY3Ma0rwuvmTDnE5tIV8gFNDWeua9Fn54HwrpvGfwQzi7HtEAnMgI4quf4MuJr0iwPkt9sKrNCq1Tg==",
+        "requested": "[11.2.0, )",
+        "resolved": "11.2.0",
+        "contentHash": "ZPVe/2IWc3pefJia6wovi9cmq9L7AO9BsKV8ys1aU+ZY0RAehNCMjRFPEpcwdI0+psRNCfin6fhAi2gW3sqKcg==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
         }
       },
       "Microsoft.Extensions.Compliance.Abstractions": {
         "type": "CentralTransitive",
-        "requested": "[10.11.0, )",
-        "resolved": "10.11.0",
-        "contentHash": "2mjAb3Sm5k6uNeI+IyXpggYMpfdDDGgZSwUm9QQsm5QgZboJWbm2eU+6wNMrlfFEao11yq6JS1zXI7SVQQ0NuQ=="
+        "requested": "[10.11.1, )",
+        "resolved": "10.11.1",
+        "contentHash": "2tjl8N8Nz8SbE78lW7bCDQjIneH8/WNsDtcJm/n/vTBpPbfdKq1sf8n+aliTNYbI93ZIkphUHLZA+td4q5tDBg=="
       },
       "Microsoft.IdentityModel.JsonWebTokens": {
         "type": "CentralTransitive",
