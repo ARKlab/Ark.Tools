@@ -1,56 +1,17 @@
 {
   "enableAllProjectMcpServers": true,
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume|clear|compact",
-        "hooks": [
-          {
-            "type": "command",
-            "statusMessage": "Loading ponytail mode...",
-            "command": "node -e \"require(require('path').join(process.env.CLAUDE_PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-activate.js'))\"",
-            "timeout": 15
-          }
-        ]
-      },
-      {
-        "matcher": "startup|clear|compact",
-        "hooks": [
-          {
-            "type": "command",
-            "powershell": "& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/superpowers/hooks/run-hook.cmd\" session-start",
-            "shell": "bash",
-            "async": false,
-            "command": "\"${CLAUDE_PROJECT_DIR}/.claude/hooks/superpowers/hooks/run-hook.cmd\" session-start"
-          }
-        ]
+  "extraKnownMarketplaces": {
+    "apm-p-64e53f49": {
+      "source": {
+        "source": "directory",
+        "path": "./.agents/plugins"
       }
-    ],
-    "SubagentStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "statusMessage": "Loading ponytail mode...",
-            "command": "node -e \"require(require('path').join(process.env.CLAUDE_PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-subagent.js'))\"",
-            "timeout": 15
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "statusMessage": "Tracking ponytail mode...",
-            "command": "node -e \"require(require('path').join(process.env.CLAUDE_PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-mode-tracker.js'))\"",
-            "timeout": 15
-          }
-        ]
-      }
-    ]
+    }
+  },
+  "enabledPlugins": {
+    "dotnet@apm-p-64e53f49": true,
+    "dotnet-diag@apm-p-64e53f49": true,
+    "dotnet-msbuild@apm-p-64e53f49": true,
+    "superpowers@apm-p-64e53f49": true
   }
 }

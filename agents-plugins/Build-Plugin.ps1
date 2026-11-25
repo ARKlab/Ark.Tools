@@ -42,6 +42,8 @@ try
     # .claude-plugin/plugin.json; Claude does not document the root location.
     New-Item -ItemType Directory -Path (Join-Path $bundle '.claude-plugin') | Out-Null
     Move-Item -LiteralPath (Join-Path $bundle 'plugin.json') -Destination (Join-Path $bundle '.claude-plugin\plugin.json')
+    # APM 0.38 embeds a pack lock with a packed_at timestamp; this plugin has no dependencies, so drop it to keep the output reproducible.
+    Remove-Item -LiteralPath (Join-Path $bundle 'apm.lock.yaml') -ErrorAction SilentlyContinue
 
     if ($Check)
     {

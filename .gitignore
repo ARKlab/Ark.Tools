@@ -456,5 +456,6 @@ apm_modules/
 /.claude/settings.local.json
 /.opencode/
 /.github/plugin/
+/.claude-plugin/plugin.json
 /opencode.json
 /lsp.json

@@ -31,7 +31,7 @@ jobs:
       uses: microsoft/apm-action@v1
       with:
         setup-only: true
-        apm-version: 0.35.1
+        apm-version: 0.38.1
 
     - name: 'Update dependencies and generated files'
       run: apm update --yes

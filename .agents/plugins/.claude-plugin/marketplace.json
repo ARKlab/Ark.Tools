@@ -1,0 +1,24 @@
+{
+  "name": "apm-p-64e53f49",
+  "owner": {
+    "name": "APM"
+  },
+  "plugins": [
+    {
+      "name": "dotnet",
+      "source": "./dotnet"
+    },
+    {
+      "name": "dotnet-diag",
+      "source": "./dotnet-diag"
+    },
+    {
+      "name": "dotnet-msbuild",
+      "source": "./dotnet-msbuild"
+    },
+    {
+      "name": "superpowers",
+      "source": "./superpowers"
+    }
+  ]
+}

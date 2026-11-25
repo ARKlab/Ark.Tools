@@ -1,0 +1,20 @@
+{
+  "csharp": {
+    "command": "dotnet",
+    "args": [
+      "dnx",
+      "roslyn-language-server",
+      "--yes",
+      "--prerelease",
+      "--",
+      "--stdio",
+      "--daemon-mode",
+      "--autoLoadProjects"
+    ],
+    "extensionToLanguage": {
+      ".cs": "csharp",
+      ".razor": "aspnetcorerazor",
+      ".cshtml": "aspnetcorerazor"
+    }
+  }
+}
