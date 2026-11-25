@@ -15,9 +15,9 @@ devDependencies:
     - microsoft/apm/packages/apm-guide#v0.37.0
     - Aaronontheweb/dotnet-skills/skills/aot-trimming#v1.7.1
     - Aaronontheweb/dotnet-skills/skills/opentelementry-dotnet-instrumentation#v1.7.1
-    - dotnet/skills/plugins/dotnet#2877c712edc20643b72f64e2983b168e6661d607 # main
-    - dotnet/skills/plugins/dotnet-diag#2877c712edc20643b72f64e2983b168e6661d607 # main
-    - dotnet/skills/plugins/dotnet-msbuild#2877c712edc20643b72f64e2983b168e6661d607 # main
+    - dotnet/skills/plugins/dotnet#a273ceb823340c260b796ef49113b399430472a9 # main
+    - dotnet/skills/plugins/dotnet-diag#a273ceb823340c260b796ef49113b399430472a9 # main
+    - dotnet/skills/plugins/dotnet-msbuild#a273ceb823340c260b796ef49113b399430472a9 # main
     - obra/superpowers#v7.0.2
     - ./agents-plugins/ark-csharp
   mcp:
