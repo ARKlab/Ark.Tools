@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `Ark.Tools.Sdk`: the Polyfill package it adds to your projects moves from 11.4.5 to 12.0.0. If your code calls the `ZipArchiveEntry.OpenAsync(FileAccess)` polyfill, it now returns `Task<Stream>`. Set `EnableArkToolsPolyfill` to `false` to stop the SDK from adding Polyfill.
+
 ### Fixed
 
 - OpenTelemetry packages are back on 1.20.x. OpenTelemetry 1.21.0 makes .NET 10 apps deploy their own copy of `System.Diagnostics.DiagnosticSource` 11.0.0, so .NET 10 runtime security updates (for example on Azure App Service) no longer patch that assembly. If your app references any OpenTelemetry package at 1.21.0 or later, it still deploys the 11.0.0 copy; move those references back to 1.20.x to avoid it. Code that uses APIs added in OpenTelemetry 1.21 must reference 1.21 itself, because Ark.Tools now requires only 1.20.1.
