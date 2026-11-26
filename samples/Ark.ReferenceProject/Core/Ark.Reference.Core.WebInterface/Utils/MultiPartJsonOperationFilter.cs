@@ -40,7 +40,8 @@ public class MultiPartJsonOperationFilter : IOperationFilter
 
             if (propertyInfo != null && operation.RequestBody is not null && operation.RequestBody.Content is not null && operation.RequestBody.Content.Any())
             {
-                var mediaType = operation.RequestBody.Content.First().Value;
+                // OpenAPI.NET 3 exposes IOpenApiMediaType; Swashbuckle creates the concrete type, which the encoding update needs.
+                var mediaType = operation.RequestBody.Content.First().Value as OpenApiMediaType;
 
                 if (mediaType?.Schema is OpenApiSchema s && s.Properties is not null)
                 {

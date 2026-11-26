@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- References both stacks without generating documents: Swashbuckle 11 sets OpenAPI.NET 3, outside Microsoft.AspNetCore.OpenApi 10's range. -->
+    <!-- References both stacks without generating documents: Swashbuckle 11 needs OpenAPI.NET 3, outside Microsoft.AspNetCore.OpenApi 10's range. -->
     <ArkSwashbuckleOpenApi>true</ArkSwashbuckleOpenApi>
     <NoWarn>$(NoWarn);NU1608</NoWarn>
     <TargetFrameworks>net10.0</TargetFrameworks>
@@ -25,5 +25,13 @@
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
     <ProjectReference Include="../../samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
   </ItemGroup>
+
+  <!-- The Microsoft.AspNetCore.OpenApi XML comment generator emits OpenAPI.NET 2 code; this project resolves OpenAPI.NET 3 for
+       Swashbuckle and never calls AddOpenApi, so drop the generator instead of failing the build. -->
+  <Target Name="_ArkDropOpenApiXmlCommentGenerator" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(Filename)' == 'Microsoft.AspNetCore.OpenApi.SourceGenerators'" />
+    </ItemGroup>
+  </Target>
 
 </Project>
