@@ -664,7 +664,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "Ark.Tools.Compliance.OpenApi": "[999.9.9, )",
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Asp.Versioning.OData.ApiExplorer": "[10.2.1, )",
@@ -702,13 +701,6 @@
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
           "NLog": "[6.2.2, )"
-        }
-      },
-      "ark.tools.compliance.openapi": {
-        "type": "Project",
-        "dependencies": {
-          "Ark.Tools.Compliance": "[999.9.9, )",
-          "Microsoft.AspNetCore.OpenApi": "[10.0.15, )"
         }
       },
       "ark.tools.core": {
@@ -1031,15 +1023,6 @@
           "Microsoft.OData.Edm": "[9.0.0-preview.4, 10.0.0)",
           "Microsoft.OData.ModelBuilder": "[3.0.0-preview.1, 4.0.0)",
           "Microsoft.Spatial": "[9.0.0-preview.4, 10.0.0)"
-        }
-      },
-      "Microsoft.AspNetCore.OpenApi": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.15, )",
-        "resolved": "10.0.15",
-        "contentHash": "pptFDPMWyPDDtt68s/HsvLYeHJ0WQtntjyve6ztp/5MrLOEzdZvafYIyWSeErtexIGaB8XGYCnnUK8T/Vn4MwQ==",
-        "dependencies": {
-          "Microsoft.OpenApi": "[2.13.0, 3.0.0)"
         }
       },
       "Microsoft.Build.Framework": {

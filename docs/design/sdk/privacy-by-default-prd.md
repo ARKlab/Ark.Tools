@@ -325,7 +325,7 @@ registers the types with the target library.
 | Newtonsoft.Json | `JsonConverter` closed over `ISensitiveValue<T>`, rejecting `null` for non-nullable members | `Ark.Tools.Compliance.NewtonsoftJson` |
 | **protobuf-net** | surrogate + `RuntimeTypeModel` registration, in the shape of `Ark.Tools.Protobuf`'s `EvolvableEnumSurrogate<T>` | `Ark.Tools.Compliance.Protobuf` |
 | **MessagePack** | `IMessagePackFormatter<T>` + resolver entry, in the shape of `Ark.Tools.MessagePack`'s `EvolvableEnumFormatter<T>` | `Ark.Tools.Compliance.MessagePack` |
-| **OpenAPI** | `Microsoft.OpenApi` schema descriptors + `x-ark-classification`, consumed by the `Microsoft.AspNetCore.OpenApi` transformer and by Swashbuckle's `MapType` | `Ark.Tools.Compliance.OpenApi` |
+| **OpenAPI** | OpenAPI-free schema descriptors + `x-ark-classification`, bound by the `Microsoft.AspNetCore.OpenApi` transformer and by Swashbuckle's `MapType` | `Ark.Tools.Compliance` (descriptors), `Ark.Tools.Compliance.OpenApi`, `Ark.Tools.AspNetCore.Swashbuckle` |
 | Reqnroll | value retriever + comparer registration | `Ark.Tools.Compliance.Reqnroll` |
 
 ```csharp
@@ -363,11 +363,14 @@ AoT/trim guarantee.
 (§6.5), so without a schema mapping the document generator reflects over the
 struct and documents `{ "value": "string" }` — a wrong schema that silently
 breaks clients and, worse, invites developers back to `string`. OpenAPI and
-Swashbuckle are two different things: the package owns plain `Microsoft.OpenApi`
-schema descriptors, and each host binds them to its own document generator.
+Swashbuckle are two different things: `Ark.Tools.Compliance` owns plain schema
+descriptors with no OpenAPI library dependency, and each host builds the
+`Microsoft.OpenApi` schema with the version its document generator ships with.
+`Microsoft.AspNetCore.OpenApi` 10 needs `Microsoft.OpenApi` 2.x while Swashbuckle 11
+needs 3.x, so a shared `OpenApiSchema` type would pin both generators to one major.
 
 ```csharp
-// Ark.Tools.Compliance.OpenApi
+// Ark.Tools.Compliance (no OpenAPI dependency)
 public sealed record SensitiveValueSchemaDescriptor(
     Type Type, Type NullableType, DataClassification Classification, string Example, string? Format)
 {
@@ -375,10 +378,13 @@ public sealed record SensitiveValueSchemaDescriptor(
         DataClassification classification, string example, string? format = null)
         where T : struct, ISensitiveValue<T>;
 
-    public OpenApiSchema CreateSchema(bool nullable = false);   // type: string, format: email,
-                                                                // examples: RFC 2606, never real PII
-                                                                // x-ark-classification: Ark:PersonalData
+    public string ClassificationValue { get; }   // x-ark-classification: Ark:PersonalData
 }
+
+// Shared source compiled into each OpenAPI integration against its own Microsoft.OpenApi
+public static OpenApiSchema CreateSchema(this SensitiveValueSchemaDescriptor d, bool nullable = false);
+                                            // type: string, format: email,
+                                            // examples: RFC 2606, never real PII
 
 // Minimal API / Microsoft.AspNetCore.OpenApi
 options.AddArkComplianceSchemas();
@@ -806,7 +812,7 @@ existing mediator-framework generator discipline.
 | `Ark.Tools.Compliance.NewtonsoftJson` | `SensitiveValueJsonConverter<T>` and `SensitiveValueNewtonsoftJson` registrations | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Protobuf` / `.MessagePack` | closed generic surrogate/formatter over `ISensitiveValue<T>` next to `Ark.Tools.Protobuf` / `Ark.Tools.MessagePack` | `net8.0;net10.0` |
 | `Ark.Tools.Compliance.Reqnroll` | value retriever and comparer for feature tables | `net8.0;net10.0` |
-| `Ark.Tools.Compliance.OpenApi` | `Microsoft.OpenApi` schema descriptors, the `x-ark-classification` extension and `AddArkComplianceSchemas()`; consumed by MediatorFramework Minimal API hosts and, through `Ark.Tools.AspNetCore.Swashbuckle`, by `ArkStartupWebApiCommon` | `net10.0` |
+| `Ark.Tools.Compliance.OpenApi` | `Microsoft.AspNetCore.OpenApi` binding: `AddArkComplianceSchemas()` and the descriptor schema extensions; consumed by MediatorFramework Minimal API hosts. `Ark.Tools.AspNetCore.Swashbuckle` builds the same schemas from the `Ark.Tools.Compliance` descriptors without referencing this package | `net10.0` |
 | `Ark.Tools.OTel` (existing) | `ArkComplianceRedactionProcessor`, registered by the default setup | unchanged |
 | `Ark.Tools.Sdk` / `Ark.Tools.Build` (existing) | implicit `PackageReference` to `Ark.Tools.Compliance.Analyzers` (`EnableArkToolsCompliance`), packaged `Ark.Tools.Compliance.globalconfig` (`ARKPII*` **and** the `LOGGEN*` escalations of §13.3), `ArkComplianceSurface.txt` gate | unchanged |
 

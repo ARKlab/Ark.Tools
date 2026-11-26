@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `Ark.Tools.Compliance` (preview): `SensitiveValueSchemaDescriptor` moves from `Ark.Tools.Compliance.OpenApi` to `Ark.Tools.Compliance` (namespace `Ark.Tools.Compliance`) and no longer depends on an OpenAPI library. `CreateSchema` and `Apply` are now extension methods in `Ark.Tools.Compliance.OpenApi`, so existing calls compile once that namespace is imported. `Ark.Tools.AspNetCore` and `Ark.Tools.AspNetCore.Swashbuckle` no longer bring in `Microsoft.AspNetCore.OpenApi`.
+
 ## [7.1.2] - 2026-11-26
 
 ### Changed
