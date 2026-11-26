@@ -43,6 +43,8 @@
   </ItemGroup>
   
   <PropertyGroup>
+    <!-- References Swashbuckle 11, which needs OpenAPI.NET 3: see Directory.Packages.props. -->
+    <ArkSwashbuckleOpenApi>true</ArkSwashbuckleOpenApi>
     <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
 

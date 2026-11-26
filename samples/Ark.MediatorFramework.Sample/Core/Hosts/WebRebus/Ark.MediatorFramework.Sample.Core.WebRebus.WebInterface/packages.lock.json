@@ -80,9 +80,9 @@
       },
       "Swashbuckle.AspNetCore.SwaggerUI": {
         "type": "Direct",
-        "requested": "[10.3.1, )",
-        "resolved": "10.3.1",
-        "contentHash": "kXuMIVJBDD6qMwG78VUrKy4x5Ke98HU0Q023Sf2iSBO/x45c5BuByYPAExIs9UeVsjdGGgvLWU5jK8l6MO2Z0Q=="
+        "requested": "[11.0.1, )",
+        "resolved": "11.0.1",
+        "contentHash": "Mu0j015xm7W/Axz6J6bXrh+/qEiyUGQUIGrWWvivv732yO1LtnmyV3zRwWB1dOFvlrU/CWUZqIYe1+hIcsCacg=="
       },
       "Azure.Core": {
         "type": "Transitive",

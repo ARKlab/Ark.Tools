@@ -6,6 +6,7 @@
   <PropertyGroup>
 
 	  <TargetFrameworks>net10.0</TargetFrameworks>
+    <ArkSwashbuckleOpenApi>true</ArkSwashbuckleOpenApi>
     
     <Description>Extensions of Swashbuckle.AspNetCore</Description>
     <PackageTags>Ark;C#;.NET;Framework;AspNetCore;Swashbuckle;Swagger</PackageTags>

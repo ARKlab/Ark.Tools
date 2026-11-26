@@ -1,6 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- References both stacks without generating documents: Swashbuckle 11 sets OpenAPI.NET 3, outside Microsoft.AspNetCore.OpenApi 10's range. -->
+    <ArkSwashbuckleOpenApi>true</ArkSwashbuckleOpenApi>
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
     <TargetFrameworks>net10.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>

@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <!-- References Swashbuckle 11, which needs OpenAPI.NET 3: see Directory.Packages.props. -->
+    <ArkSwashbuckleOpenApi>true</ArkSwashbuckleOpenApi>
+  </PropertyGroup>
+
   <!-- In-process API host shared by the integration tests and the profiling harness.
        It must not reference a test framework, so executables can consume it. -->
 
