@@ -10,11 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Breaking:** `Ark.Tools.AspNetCore` and `Ark.Tools.AspNetCore.Swashbuckle` move to Swashbuckle.AspNetCore 11, which uses OpenAPI.NET (`Microsoft.OpenApi`) 3. Custom Swashbuckle filters must follow the [Swashbuckle v11 migration guide](https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/docs/migrating-to-v11.md), for example response content is now `IDictionary<string, IOpenApiMediaType>`. `Microsoft.AspNetCore.OpenApi` 10 only supports OpenAPI.NET 2, so one application cannot use the MVC startups and the `Ark.Tools.MediatorFramework.MinimalApi` OpenAPI documents together. If you pin `Microsoft.OpenApi` 2.x with central package management, remove the pin for projects that use `Ark.Tools.AspNetCore`.
 - **Breaking:** `Ark.Tools.Compliance` (preview): `SensitiveValueSchemaDescriptor` moves from `Ark.Tools.Compliance.OpenApi` to `Ark.Tools.Compliance` (namespace `Ark.Tools.Compliance`) and no longer depends on an OpenAPI library. `CreateSchema` and `Apply` are now extension methods in `Ark.Tools.Compliance.OpenApi`, so existing calls compile once that namespace is imported. `Ark.Tools.AspNetCore` and `Ark.Tools.AspNetCore.Swashbuckle` no longer bring in `Microsoft.AspNetCore.OpenApi`.
-- `Ark.Tools.Sdk`: the Polyfill package it adds to your projects moves from 11.4.5 to 12.0.0. If your code calls the `ZipArchiveEntry.OpenAsync(FileAccess)` polyfill, it now returns `Task<Stream>`. Set `EnableArkToolsPolyfill` to `false` to stop the SDK from adding Polyfill.
+
+## [7.1.2] - 2026-11-26
+
+### Changed
+
+- **Breaking:** `Ark.Tools.Sdk`: the Polyfill package it adds to your projects moves from 11.4.5 to 12.0.0. If your code calls the `ZipArchiveEntry.OpenAsync(FileAccess)` polyfill, it now returns `Task<Stream>`. Set `EnableArkToolsPolyfill` to `false` to stop the SDK from adding Polyfill.
 
 ### Fixed
 
-- OpenTelemetry packages are back on 1.20.x. OpenTelemetry 1.21.0 makes .NET 10 apps deploy their own copy of `System.Diagnostics.DiagnosticSource` 11.0.0, so .NET 10 runtime security updates (for example on Azure App Service) no longer patch that assembly. If your app references any OpenTelemetry package at 1.21.0 or later, it still deploys the 11.0.0 copy; move those references back to 1.20.x to avoid it. Code that uses APIs added in OpenTelemetry 1.21 must reference 1.21 itself, because Ark.Tools now requires only 1.20.1.
+- **Breaking:** OpenTelemetry packages are back on 1.20.x. OpenTelemetry 1.21.0 makes .NET 10 apps deploy their own copy of `System.Diagnostics.DiagnosticSource` 11.0.0, so .NET 10 runtime security updates (for example on Azure App Service) no longer patch that assembly. If your app references any OpenTelemetry package at 1.21.0 or later, it still deploys the 11.0.0 copy; move those references back to 1.20.x to avoid it. Code that uses APIs added in OpenTelemetry 1.21 must reference 1.21 itself, because Ark.Tools now requires only 1.20.1.
 
 ## [7.1.1] - 2026-11-13
 
