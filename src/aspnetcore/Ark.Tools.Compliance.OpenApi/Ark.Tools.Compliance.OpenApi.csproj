@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\compliance\Ark.Tools.Compliance\Ark.Tools.Compliance.csproj" />
+    <Compile Include="../../compliance/Ark.Tools.Compliance.Shared/SensitiveValueSchemaDescriptorEx.cs" Link="Shared/SensitiveValueSchemaDescriptorEx.cs" />
   </ItemGroup>
 
   <!-- This library never calls AddOpenApi, so the XML comment generator output is unreachable; dropping the

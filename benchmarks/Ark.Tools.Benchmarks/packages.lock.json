@@ -978,7 +978,6 @@
         "type": "Project",
         "dependencies": {
           "Ark.Tools.Compliance": "[999.9.9, )",
-          "Ark.Tools.Compliance.OpenApi": "[999.9.9, )",
           "Ark.Tools.Nodatime": "[1.0.0, )",
           "Ark.Tools.SystemTextJson": "[1.0.0, )",
           "Asp.Versioning.OData.ApiExplorer": "[10.2.1, )",
