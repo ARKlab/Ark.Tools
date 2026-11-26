@@ -50,12 +50,15 @@
       
   <ItemGroup>
     <ProjectReference Include="..\..\common\Ark.Tools.Nodatime\Ark.Tools.Nodatime.csproj" />
-    <Compile Include="../../compliance/Ark.Tools.Compliance.Shared/SensitiveValueSchemaDescriptorEx.cs" Link="Shared/SensitiveValueSchemaDescriptorEx.cs" />
     <ProjectReference Include="..\..\common\Ark.Tools.SystemTextJson\Ark.Tools.SystemTextJson.csproj" />
   </ItemGroup>
       
   <ItemGroup>
     <ProjectReference Include="../../compliance/Ark.Tools.Compliance/Ark.Tools.Compliance.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Label="Shared compliance OpenAPI schema source">
+    <Compile Include="../../compliance/Ark.Tools.Compliance.Shared/SensitiveValueSchemaDescriptorEx.cs" Link="Shared/SensitiveValueSchemaDescriptorEx.cs" />
   </ItemGroup>
 
 </Project>

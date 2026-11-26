@@ -13,8 +13,8 @@ namespace Ark.Tools.AspNetCore.Swashbuckle;
 /// Registers the OpenAPI schemas of sensitive value objects with Swashbuckle.
 /// </summary>
 /// <remarks>
-/// The schemas themselves are plain <c>Microsoft.OpenApi</c> data owned by
-/// <c>Ark.Tools.Compliance.OpenApi</c>; this only binds them to <c>SwaggerGenOptions</c>.
+/// The descriptors are plain data owned by <c>Ark.Tools.Compliance</c>; the schemas are built
+/// with the <c>Microsoft.OpenApi</c> version Swashbuckle ships with and bound to <c>SwaggerGenOptions</c>.
 /// They are <c>MapType</c> registrations rather than an <c>ISchemaFilter</c>: a filter
 /// reflects over the type at startup, and without a mapping Swashbuckle documents the
 /// struct as an object with a <c>value</c> member.

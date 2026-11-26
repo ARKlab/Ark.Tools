@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file for license information.
 
 using Ark.Reference.Core.Tests.Init;
-using Ark.Tools.Compliance.OpenApi;
+using Ark.Tools.Compliance;
 
 using AwesomeAssertions;
 
