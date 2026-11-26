@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <!-- References Swashbuckle 11, which needs OpenAPI.NET 3: see Directory.Packages.props. -->
-    <ArkSwashbuckleOpenApi>true</ArkSwashbuckleOpenApi>
     <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
     <AspNetCoreModuleName>AspNetCoreModuleV2</AspNetCoreModuleName>
     <AspNetCoreHostingModel>inprocess</AspNetCoreHostingModel>

@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- References Swashbuckle 11, which needs OpenAPI.NET 3: see Directory.Packages.props. -->
-    <ArkSwashbuckleOpenApi>true</ArkSwashbuckleOpenApi>
     <TargetFrameworks>net10.0</TargetFrameworks>
 	  <IsPackable>false</IsPackable>
 
