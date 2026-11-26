@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [7.1.2] - 2026-11-26
+
 ### Changed
 
 - `Ark.Tools.Sdk`: the Polyfill package it adds to your projects moves from 11.4.5 to 12.0.0. If your code calls the `ZipArchiveEntry.OpenAsync(FileAccess)` polyfill, it now returns `Task<Stream>`. Set `EnableArkToolsPolyfill` to `false` to stop the SDK from adding Polyfill.
