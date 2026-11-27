@@ -1,8 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- References both stacks: Swashbuckle 11 needs OpenAPI.NET 3, outside Microsoft.AspNetCore.OpenApi 10's range. -->
-    <NoWarn>$(NoWarn);NU1608</NoWarn>
     <TargetFrameworks>net10.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
@@ -12,27 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore/Ark.Tools.AspNetCore.csproj" />
     <PackageReference Include="BenchmarkDotNet" />
-    <!-- Swashbuckle 11 needs OpenAPI.NET >= 3.11; Microsoft.AspNetCore.OpenApi 10 asks for 2.x, so pick the version here. -->
-    <PackageReference Include="Microsoft.OpenApi" TreatAsUsed="true" />
-    <ProjectReference Include="../../src/aspnetcore/Ark.Tools.AspNetCore.ProblemDetails/Ark.Tools.AspNetCore.ProblemDetails.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Authorization/Ark.Tools.Authorization.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Dapper/Ark.Tools.Dapper.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.MessagePack/Ark.Tools.MessagePack.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.OTel/Ark.Tools.OTel.csproj" />
-    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.MinimalApi/Ark.Tools.MediatorFramework.MinimalApi.csproj" />
-    <ProjectReference Include="../../src/mediator-framework/Ark.Tools.MediatorFramework.Messaging/Ark.Tools.MediatorFramework.Messaging.csproj" />
     <ProjectReference Include="../../src/common/Ark.Tools.Solid.SimpleInjector/Ark.Tools.Solid.SimpleInjector.csproj" />
     <ProjectReference Include="../../samples/Ark.ReferenceProject/Ark.Reference.Common/Ark.Reference.Common.csproj" />
   </ItemGroup>
-
-  <!-- The Microsoft.AspNetCore.OpenApi XML comment generator emits OpenAPI.NET 2 code; this project resolves OpenAPI.NET 3 for
-       Swashbuckle and never calls AddOpenApi, so drop the generator instead of failing the build. -->
-  <Target Name="_ArkDropOpenApiXmlCommentGenerator" BeforeTargets="CoreCompile">
-    <ItemGroup>
-      <Analyzer Remove="@(Analyzer)" Condition="'%(Filename)' == 'Microsoft.AspNetCore.OpenApi.SourceGenerators'" />
-    </ItemGroup>
-  </Target>
 
 </Project>

@@ -16,7 +16,7 @@ namespace Ark.Tools.Benchmarks;
 /// Per-span costs of <see cref="ArkAdaptiveSampler"/> and <see cref="ArkFailurePromotionProcessor"/>
 /// through a real tracer provider, including the SDK copying sampling attributes to the span.
 /// </summary>
-[Config(typeof(HotPathBenchmarks.BenchmarkConfig))]
+[Config(typeof(PermissionAuthorizationBenchmarks.BenchmarkConfig))]
 [MemoryDiagnoser]
 public class AdaptiveSamplerBenchmarks
 {
