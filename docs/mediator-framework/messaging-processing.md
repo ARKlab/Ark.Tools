@@ -371,12 +371,12 @@ A worked run of this procedure, with the histogram views it needs, is in the
 
 ### Measuring the host itself
 
-`benchmarks/Ark.Tools.Benchmarks` carries a BenchmarkDotNet throughput benchmark
+`benchmarks/Ark.Tools.MediatorFramework.Benchmarks` carries a BenchmarkDotNet throughput benchmark
 that drains one backlog three ways over the in-memory transport, so the number
 measures the host rather than a broker:
 
 ```bash
-dotnet run -c Release --project benchmarks/Ark.Tools.Benchmarks -- --filter "*MessagingThroughput*"
+dotnet run -c Release --project benchmarks/Ark.Tools.MediatorFramework.Benchmarks -- --filter "*MessagingThroughput*"
 ```
 
 The handler waits asynchronously for two milliseconds, standing in for the

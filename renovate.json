@@ -12,6 +12,26 @@
   },
   "packageRules": [
     {
+      "description": "Ark.Tools.AspNetCore.Swashbuckle is on Swashbuckle 11 and OpenAPI.NET 3: lift the shared Swashbuckle cap for this repository. Microsoft.OpenApi 2.x pins in the sample solutions stay capped by the shared config.",
+      "matchDatasources": [
+        "nuget"
+      ],
+      "matchSourceUrls": [
+        "https://github.com/domaindrivendev/Swashbuckle.AspNetCore"
+      ],
+      "allowedVersions": "<12.0.0"
+    },
+    {
+      "matchDatasources": [
+        "nuget"
+      ],
+      "matchPackageNames": [
+        "Swashbuckle.AspNetCore.Filters",
+        "Swashbuckle.AspNetCore.Filters.Abstractions"
+      ],
+      "allowedVersions": "<12.0.0"
+    },
+    {
       "description": "OpenTelemetry 1.21.0 makes net10.0 apps deploy System.Diagnostics.DiagnosticSource 11.0.0, which .NET 10 runtime servicing does not patch. Stay on 1.20.x; upstream keeps the 11.0 dependency (open-telemetry/opentelemetry-dotnet#8140), so revisit when a net10.0 release no longer needs it",
       "matchDatasources": [
         "nuget"

@@ -71,6 +71,11 @@
           "Microsoft.Extensions.Compliance.Abstractions": "10.11.1"
         }
       },
+      "Microsoft.OpenApi": {
+        "type": "Transitive",
+        "resolved": "2.13.0",
+        "contentHash": "wavlgBYnn7uU/ZGhFHNl0UlDOlwz+6KRduKkqdCCbfxxANaQ1rmBpETVGdwXanAM6twQOxsvI3CBEGF4OScbeQ=="
+      },
       "ark.tools.compliance": {
         "type": "Project",
         "dependencies": {
@@ -111,12 +116,6 @@
           "Microsoft.Extensions.DependencyInjection.AutoActivation": "10.11.1",
           "Microsoft.Extensions.Telemetry.Abstractions": "10.11.1"
         }
-      },
-      "Microsoft.OpenApi": {
-        "type": "CentralTransitive",
-        "requested": "[2.13.1, )",
-        "resolved": "2.13.1",
-        "contentHash": "qPyM4L+CQvM7ljcJN15e3lTx3439fBZoGs03OlpfxiUUxxhPJX+7h8BCJQO1z6ANQbxBAirMA4JkHq7j/naA/A=="
       }
     }
   }

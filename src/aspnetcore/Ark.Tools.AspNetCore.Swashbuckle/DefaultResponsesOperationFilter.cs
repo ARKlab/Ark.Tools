@@ -21,7 +21,7 @@ public sealed class DefaultResponsesOperationFilter : IOperationFilter
                 new OpenApiResponse
                 {
                     Description = "Unauthorized",
-                    Content = new Dictionary<string, OpenApiMediaType>(System.StringComparer.Ordinal)
+                    Content = new Dictionary<string, IOpenApiMediaType>(System.StringComparer.Ordinal)
                     {
                         ["application/json"] = new OpenApiMediaType
                         {
@@ -37,7 +37,7 @@ public sealed class DefaultResponsesOperationFilter : IOperationFilter
                 new OpenApiResponse
                 {
                     Description = "Not enough permissions",
-                    Content = new Dictionary<string, OpenApiMediaType>(System.StringComparer.Ordinal)
+                    Content = new Dictionary<string, IOpenApiMediaType>(System.StringComparer.Ordinal)
                     {
                         ["application/json"] = new OpenApiMediaType
                         {
@@ -53,7 +53,7 @@ public sealed class DefaultResponsesOperationFilter : IOperationFilter
                 new OpenApiResponse
                 {
                     Description = "Invalid payload",
-                    Content = new Dictionary<string, OpenApiMediaType>(System.StringComparer.Ordinal)
+                    Content = new Dictionary<string, IOpenApiMediaType>(System.StringComparer.Ordinal)
                     {
                         ["application/json"] = new OpenApiMediaType
                         {
@@ -69,7 +69,7 @@ public sealed class DefaultResponsesOperationFilter : IOperationFilter
                 new OpenApiResponse
                 {
                     Description = "Internal server error. Retry later or contact support.",
-                    Content = new Dictionary<string, OpenApiMediaType>(System.StringComparer.Ordinal)
+                    Content = new Dictionary<string, IOpenApiMediaType>(System.StringComparer.Ordinal)
                     {
                         ["application/json"] = new OpenApiMediaType
                         {

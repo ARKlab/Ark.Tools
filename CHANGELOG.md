@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Breaking:** `Ark.Tools.AspNetCore` and `Ark.Tools.AspNetCore.Swashbuckle` move to Swashbuckle.AspNetCore 11, which uses OpenAPI.NET (`Microsoft.OpenApi`) 3. Custom Swashbuckle filters must follow the [Swashbuckle v11 migration guide](https://github.com/domaindrivendev/Swashbuckle.AspNetCore/blob/master/docs/migrating-to-v11.md), for example response content is now `IDictionary<string, IOpenApiMediaType>`. `Microsoft.AspNetCore.OpenApi` 10 only supports OpenAPI.NET 2, so one application cannot use the MVC startups and the `Ark.Tools.MediatorFramework.MinimalApi` OpenAPI documents together. If you pin `Microsoft.OpenApi` 2.x with central package management, remove the pin for projects that use `Ark.Tools.AspNetCore`.
 - **Breaking:** `Ark.Tools.Compliance` (preview): `SensitiveValueSchemaDescriptor` moves from `Ark.Tools.Compliance.OpenApi` to `Ark.Tools.Compliance` (namespace `Ark.Tools.Compliance`) and no longer depends on an OpenAPI library. `CreateSchema` and `Apply` are now extension methods in `Ark.Tools.Compliance.OpenApi`, so existing calls compile once that namespace is imported. `Ark.Tools.AspNetCore` and `Ark.Tools.AspNetCore.Swashbuckle` no longer bring in `Microsoft.AspNetCore.OpenApi`.
 
 ## [7.1.2] - 2026-11-26

@@ -195,7 +195,9 @@
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Ark.Tools.Core.Benchmarks/Ark.Tools.Core.Benchmarks.csproj" />
+    <Project Path="benchmarks/Ark.Tools.AspNetCore.Benchmarks/Ark.Tools.AspNetCore.Benchmarks.csproj" />
     <Project Path="benchmarks/Ark.Tools.Benchmarks/Ark.Tools.Benchmarks.csproj" />
+    <Project Path="benchmarks/Ark.Tools.MediatorFramework.Benchmarks/Ark.Tools.MediatorFramework.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Ark.Tools.Compliance.Analyzers.Tests/Ark.Tools.Compliance.Analyzers.Tests.csproj" />
