@@ -5,7 +5,7 @@
   ],
   "constraints": {
     "dotnet": "10.0.404",
-    "apm": "0.38.1"
+    "apm": "0.39.0"
   },
   "lockFileMaintenance": {
     "enabled": false

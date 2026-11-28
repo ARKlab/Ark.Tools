@@ -1,5 +1,5 @@
 lockfile_version: '4'
-apm_version: 0.38.1
+apm_version: 0.39.0
 manifest_targets:
 - claude
 - copilot
