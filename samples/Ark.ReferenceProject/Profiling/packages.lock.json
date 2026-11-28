@@ -46,17 +46,17 @@
       },
       "Microsoft.SqlServer.DacFx": {
         "type": "Direct",
-        "requested": "[170.5.96, )",
-        "resolved": "170.5.96",
-        "contentHash": "O0f1yGJDI1d8WpD+8/AwlGJCT39l1lyFmYFKYIMxaaO3p4DaawVyAidGNZwRhDX5zvPTbXdxNbFrvUQL33EC2g==",
+        "requested": "[170.6.60, )",
+        "resolved": "170.6.60",
+        "contentHash": "xbs9Vgl8PDMp0joytMQBfP1BWnL3fbsUdc3Yo+dwLEYvO5xgu2FeqaqkqGIGY1mL3/9NQRvwyeg6YzJlvjaKRQ==",
         "dependencies": {
           "Azure.Storage.Blobs": "12.18.0",
           "Microsoft.ApplicationInsights": "2.23.0",
           "Microsoft.Build": "15.9.20",
           "Microsoft.Build.Framework": "15.9.20",
           "Microsoft.Build.Utilities.Core": "15.9.20",
-          "Microsoft.Data.SqlClient": "6.1.5",
-          "Microsoft.SqlServer.TransactSql.ScriptDom": "180.102.0",
+          "Microsoft.Data.SqlClient": "6.1.8",
+          "Microsoft.SqlServer.TransactSql.ScriptDom": "180.154.0",
           "Microsoft.SqlServer.Types": "170.1000.7",
           "System.ComponentModel.Composition": "8.0.0",
           "System.IO.Packaging": "8.0.1",
@@ -151,8 +151,8 @@
       },
       "Auth0.ManagementApi": {
         "type": "Transitive",
-        "resolved": "10.6.0",
-        "contentHash": "KebrcbYxA6At6gPoz2spLeoJkXLsAiUqleSqLH7LZBBf2Qu0NDClBCT74N43txTSO+dDMjxBpCh6PP2iWjDEPA==",
+        "resolved": "10.7.0",
+        "contentHash": "gXOTiYF0pwlGxPwiwNI06Dsxu8m10Zq54MtOTTZmFK5eUUHvcw2ngU+bt/+Yyj8CSwkMrLT/2lc2/AhQnSz8aA==",
         "dependencies": {
           "Auth0.AuthenticationApi": "7.50.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
@@ -1228,8 +1228,8 @@
       },
       "Microsoft.SqlServer.TransactSql.ScriptDom": {
         "type": "Transitive",
-        "resolved": "180.102.0",
-        "contentHash": "hIE9+a4TUrk1KQY+byb2WioGn6pmR2o03XzFm4kxloPdWio8bJJYfIFhGuveOT3426ZfnNxT6e9hfXb9EA0a9g=="
+        "resolved": "180.154.0",
+        "contentHash": "epYZJ+0ZSx/u1KZwF8e8wfqPO3KS67EijVJi+EgveLuQaU3a4GRNP5R6kOUrGBv8K+kDpAtCcGBjn5c9NwWW6A=="
       },
       "Microsoft.SqlServer.Types": {
         "type": "Transitive",
@@ -1875,7 +1875,7 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Auth0.AuthenticationApi": "[7.50.0, )",
-          "Auth0.ManagementApi": "[10.6.0, )",
+          "Auth0.ManagementApi": "[10.7.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.15, )",
           "Polly.Core": "[8.9.1, )"
         }
