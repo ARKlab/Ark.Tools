@@ -38,7 +38,7 @@
     <PackageVersion Include="Ark.Tools.Solid.SimpleInjector" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.Solid.Authorization" Version="999.9.9" />
     <PackageVersion Include="Ark.Tools.SystemTextJson" Version="999.9.9" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="3.2.0" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="3.2.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="11.0.1" />
   </ItemGroup>
   <ItemGroup Label="Sample dependencies">
@@ -65,7 +65,7 @@
     <!-- Transitive pin above the vulnerable range (GHSA-6527-9fp8-r4x6); Ark.Tools.Reqnroll brings it in through AwesomeAssertions.Web. -->
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.15" />
     <PackageVersion Include="Microsoft.SqlServer.DacFx" Version="170.6.60" />
-    <PackageVersion Include="KubernetesClient" Version="21.0.8" />
+    <PackageVersion Include="KubernetesClient" Version="21.0.41" />
     <PackageVersion Include="MessagePack" Version="3.1.12" />
     <PackageVersion Include="Microsoft.Extensions.Compliance.Abstractions" Version="10.11.1" />
     <PackageVersion Include="Moq" Version="4.21.0" />
