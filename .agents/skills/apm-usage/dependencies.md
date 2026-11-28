@@ -43,6 +43,10 @@ dependencies:
     - ../sibling-repo/my-package
 ```
 
+Local paths written with backslashes (`.\pkg`, `..\pkg`, `~\pkg`) are
+normalised to `/` on read and behave exactly like `./pkg`, `../pkg` and
+`~/pkg`. Windows drive-letter and UNC paths are not normalised.
+
 Bare `owner/repo` shorthand resolves against the manifest's top-level
 `default_host:` (bare hostname, e.g. `default_host: gitlab.com`), else
 `GITHUB_HOST`, else `github.com`. Each manifest uses its own value, and
@@ -377,6 +381,12 @@ object-form `version: v1.0.1` or `apm install pkg@catalog#v1.0.1` for a literal
 ref; CLI marketplace suffixes do not accept ranges. Raw refs bypass tag resolution. The lockfile records the resolved ref, not the marketplace
 placeholder. Semver selections also record the existing advisory `resolved_at`
 UTC timestamp; audit and replay do not use it to choose a version.
+A catalog entry with `registry:` resolves through that package registry
+instead: `apm install pkg@catalog` writes `{id, registry, version}` to
+`apm.yml`, and the lockfile records the exact `version`, `resolved_url` and
+`resolved_hash` with no commit. Locked entries replay, including `--frozen`,
+without the catalog, through a registry declared in `apm.yml`, like any
+registry dependency.
 Unknown keys in a marketplace entry are rejected.
 A committed install records each plugin version's catalog ref under
 `APM_HOME` (`cache/marketplace/version-pins.json`, keyed by the resolved
@@ -391,7 +401,7 @@ as a dependency-confusion risk (#1326)
 before APM contacts the package repository or writes any file. This applies to
 `apm install name@marketplace`, `apm.yml` entries, transitive declarations, and
 `apm update`. Bare entries are admitted when `GITHUB_HOST` is the marketplace
-host. Locked entries replay without the catalog; run
+host; a manifest `default_host:` does not admit them. Locked entries replay without the catalog; run
 `apm update` to re-check entries an older APM locked.
 
 Once the lockfile records an entry, `apm install` and `apm install --frozen`
@@ -400,21 +410,31 @@ marketplace registration; catalog edits do not move it. New entries, entries
 whose `name`, `marketplace` or `version` changed, and `apm update` resolve
 through the catalog, and `--frozen` fails for an unlocked entry.
 `apm install --refresh`, `apm update` and `apm marketplace update` revalidate
-the marketplace and fail rather than use stale cached data. Exceptions
-until 0.38 (#2903): registry-routed catalog entries still resolve through the
-catalog (the lockfile has no registry binding), and the lockfile does not
-record catalog-inline MCP/LSP servers, so a package with locked servers and no
+the marketplace and fail rather than use stale cached data. Exception
+until 0.38 (#2903): the lockfile does not record catalog-inline MCP/LSP
+servers, so a package with locked servers and no
 `apm_modules/` copy reads the catalog for server metadata only, also under
 `--frozen` (the locked commit still pins it; a catalog that now selects
 another commit fails until `apm update <name>@<marketplace>`); one with no
 locked servers (`--only=apm`, root-overridden server) fails its content-hash
 check when cold -- run `apm update` for it.
 
-The `marketplace` value names a marketplace registered with
-`apm marketplace add` or declared in the user manifest's `marketplaces:`
-list (`$APM_HOME/apm.yml`, default `~/.apm/apm.yml`, reconciled by
-`apm install -g`). Dependencies and
-project manifests cannot declare `marketplaces:`.
+The `marketplace` value names a marketplace declared in the root project's
+`marketplaces:` map, registered with `apm marketplace add`, or declared in the
+user manifest's `marketplaces:` list (`$APM_HOME/apm.yml`, default
+`~/.apm/apm.yml`, reconciled by `apm install -g`).
+
+A root project `apm.yml` may declare `marketplaces:` in the user-manifest
+shape (`name`, `source`, optional `ref`). `apm install` and `apm update` then
+resolve those names with no registration (fresh clone, CI). The map is never
+written to the marketplace registry; inside the project it wins over a
+same-named registration, with one `[i]` line, and over a lock row recorded
+from another catalog: `apm install` / `apm update` re-resolve it through the
+map (one `[i]` line); `apm install --frozen` refuses. When the root declares a map,
+a transitive `marketplace: <name>` must name one of its entries, or the
+install fails showing the entry to add. A dependency's `apm.yml` that
+declares `marketplaces:` is refused. Org policy `marketplace.allow` can
+restrict the declared and locked catalogs (see governance.md).
 `apm uninstall name@marketplace` removes an object-form entry offline, with
 its lock row and deployed files.
 
@@ -434,8 +454,9 @@ origin, re-resolving the entry (`apm update`, `apm install <plugin>@<alias>`,
 `apm outdated`) fails and names both origins; `apm install` keeps replaying the
 locked catalog. Restore the alias with `apm marketplace add <locked-origin>
 --name <alias>`; to switch, remove the entry from `apm.yml`, run `apm install`,
-add it back and run `apm install` again. Only the origin is compared, not the
-catalog path. Rows without `source_url` (pre-0.37 locks) keep working and gain
+add it back and run `apm install` again. At user scope (`-g`) the same steps
+use `~/.apm/apm.yml` and `apm install -g`, and also repair a mistakenly changed
+`~/.apm/apm.lock.yaml`. Only the origin is compared, not the catalog path. Rows without `source_url` (pre-0.37 locks) keep working and gain
 it on the next lock write.
 
 Producer-emitted `source: url` and `source: git-subdir` objects resolve
@@ -551,6 +572,15 @@ From APM 0.37 a writable `apm install` promotes `apm.lock.yaml` to
 otherwise the version stays. Older lockfiles still verify; `--frozen` and
 `apm audit` never rewrite them. APM 0.36 and earlier refuse version `"4"`:
 update CI to 0.37 before committing.
+
+On replay (`apm install`, `apm install --frozen`), a registry dep is
+fetched through a registry declared in `apm.yml`: the one serving the
+locked `resolved_url` (a mirror), else its configured registry (a moved
+endpoint; the old URL is never contacted, and one `[i]` line names both
+URLs). The bytes must match `resolved_hash` before extraction; the
+lockfile is unchanged. A mismatch fails the install and names the
+package, both URLs and both hashes. `apm update` re-resolves and records
+the new URL.
 
 The `acme/foo@registry-name#version` shorthand is **not supported** (deferred
 to v2) -- the `@` collides with npm/cargo/pip version syntax, with

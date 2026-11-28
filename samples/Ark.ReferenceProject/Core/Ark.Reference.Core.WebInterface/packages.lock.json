@@ -135,8 +135,8 @@
       },
       "Auth0.ManagementApi": {
         "type": "Transitive",
-        "resolved": "10.6.0",
-        "contentHash": "KebrcbYxA6At6gPoz2spLeoJkXLsAiUqleSqLH7LZBBf2Qu0NDClBCT74N43txTSO+dDMjxBpCh6PP2iWjDEPA==",
+        "resolved": "10.7.0",
+        "contentHash": "gXOTiYF0pwlGxPwiwNI06Dsxu8m10Zq54MtOTTZmFK5eUUHvcw2ngU+bt/+Yyj8CSwkMrLT/2lc2/AhQnSz8aA==",
         "dependencies": {
           "Auth0.AuthenticationApi": "7.50.0",
           "Microsoft.Bcl.AsyncInterfaces": "9.0.14",
@@ -1284,7 +1284,7 @@
         "dependencies": {
           "Ark.Tools.Compliance.Abstractions": "[999.9.9, )",
           "Auth0.AuthenticationApi": "[7.50.0, )",
-          "Auth0.ManagementApi": "[10.6.0, )",
+          "Auth0.ManagementApi": "[10.7.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.15, )",
           "Polly.Core": "[8.9.1, )"
         }
