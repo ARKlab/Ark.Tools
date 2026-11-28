@@ -403,8 +403,8 @@ dependencies:
 - repo_url: microsoft/apm
   name: apm-guide
   host: github.com
-  resolved_commit: c0c6e25dd6715ec4088cc389fa47d51f16158a88
-  resolved_ref: v0.37.0
+  resolved_commit: a243ac325589566788e4b9a39ffec9188ca93551
+  resolved_ref: v0.38.1
   version: 1.0.0
   virtual_path: packages/apm-guide
   is_virtual: true
@@ -437,27 +437,27 @@ dependencies:
   deployed_file_hashes:
     .agents/skills/apm-usage/LICENSE: sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
     .agents/skills/apm-usage/SKILL.md: sha256:ea6d9154469f0a482f5dbfa84e7cee83683653fb62735f566cb51bcb44afade7
-    .agents/skills/apm-usage/authentication.md: sha256:246899d3666ace583ea9c8ff3ebf5e2f462681d3d654b36afade8d46d5b1f9da
-    .agents/skills/apm-usage/commands.md: sha256:f6f4c7e99395696d47a3a9e4cf6c3c67f0d2881ed1c3ca61feab96ec7afa6c6a
-    .agents/skills/apm-usage/dependencies.md: sha256:5cec305e36d69690a3e61957406d1c32dc412daba2d89a43567afcc736426eaa
-    .agents/skills/apm-usage/governance.md: sha256:53d2fb881c640d69c75f67732ea15ee38762064c0a321b0ea724e2b4b8d80acb
+    .agents/skills/apm-usage/authentication.md: sha256:08eb914353c8cd9247696fbfe4394cfe140922ecba801ba6da0c30885c8f7c1d
+    .agents/skills/apm-usage/commands.md: sha256:56f2f8205716ac25d795baa77fd19870a49c9d1c32fad57cec124398cf9cd073
+    .agents/skills/apm-usage/dependencies.md: sha256:41a241fc6ae80aeaba7f998bff98100917bc0810e29ea43272ee59ef09933022
+    .agents/skills/apm-usage/governance.md: sha256:34c9763d7e75b90f2fce312cab8e6a1aa91884f818b476f8c752c4fa4e278ec6
     .agents/skills/apm-usage/installation.md: sha256:a8d33ceeb41626d809ed07e0cdd16ba74f0510b5842bab64b7f6dc3e3fdb1057
-    .agents/skills/apm-usage/package-authoring.md: sha256:309b3be71607ecec02a3c2e5285c69406ea579fe53577d4d21719959166ab79a
+    .agents/skills/apm-usage/package-authoring.md: sha256:791023aa3a34864acfce572082c826e54385d81f6c7198aad9cf7cd667ee84cb
     .agents/skills/apm-usage/troubleshooting.md: sha256:26eaafcebbffa717f8795a42786699b084532b3d9d045fd9f01316f530597a9f
-    .agents/skills/apm-usage/workflow.md: sha256:25ae5d0195f37a3afd03cd11b4109557ad09301f7d728cfa1d7704e8433189b4
+    .agents/skills/apm-usage/workflow.md: sha256:3fd38f78fe8efdd085fe7d82b3f7117c3cb065bf1a722bfa82ee348b7f25cc23
     .claude/agents/apm-expert.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
     .claude/skills/apm-usage/LICENSE: sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
     .claude/skills/apm-usage/SKILL.md: sha256:ea6d9154469f0a482f5dbfa84e7cee83683653fb62735f566cb51bcb44afade7
-    .claude/skills/apm-usage/authentication.md: sha256:246899d3666ace583ea9c8ff3ebf5e2f462681d3d654b36afade8d46d5b1f9da
-    .claude/skills/apm-usage/commands.md: sha256:f6f4c7e99395696d47a3a9e4cf6c3c67f0d2881ed1c3ca61feab96ec7afa6c6a
-    .claude/skills/apm-usage/dependencies.md: sha256:5cec305e36d69690a3e61957406d1c32dc412daba2d89a43567afcc736426eaa
-    .claude/skills/apm-usage/governance.md: sha256:53d2fb881c640d69c75f67732ea15ee38762064c0a321b0ea724e2b4b8d80acb
+    .claude/skills/apm-usage/authentication.md: sha256:08eb914353c8cd9247696fbfe4394cfe140922ecba801ba6da0c30885c8f7c1d
+    .claude/skills/apm-usage/commands.md: sha256:56f2f8205716ac25d795baa77fd19870a49c9d1c32fad57cec124398cf9cd073
+    .claude/skills/apm-usage/dependencies.md: sha256:41a241fc6ae80aeaba7f998bff98100917bc0810e29ea43272ee59ef09933022
+    .claude/skills/apm-usage/governance.md: sha256:34c9763d7e75b90f2fce312cab8e6a1aa91884f818b476f8c752c4fa4e278ec6
     .claude/skills/apm-usage/installation.md: sha256:a8d33ceeb41626d809ed07e0cdd16ba74f0510b5842bab64b7f6dc3e3fdb1057
-    .claude/skills/apm-usage/package-authoring.md: sha256:309b3be71607ecec02a3c2e5285c69406ea579fe53577d4d21719959166ab79a
+    .claude/skills/apm-usage/package-authoring.md: sha256:791023aa3a34864acfce572082c826e54385d81f6c7198aad9cf7cd667ee84cb
     .claude/skills/apm-usage/troubleshooting.md: sha256:26eaafcebbffa717f8795a42786699b084532b3d9d045fd9f01316f530597a9f
-    .claude/skills/apm-usage/workflow.md: sha256:25ae5d0195f37a3afd03cd11b4109557ad09301f7d728cfa1d7704e8433189b4
+    .claude/skills/apm-usage/workflow.md: sha256:3fd38f78fe8efdd085fe7d82b3f7117c3cb065bf1a722bfa82ee348b7f25cc23
     .github/agents/apm-expert.agent.md: sha256:f6cded3e7eef97ad8fff06208bcfd5a0beafb9cfe810f78e10294c90e16fd8ae
-  content_hash: sha256:2032febd040cab2c1665e0389f061a93ee72c6a591d0f15b5de72eece9dd292c
+  content_hash: sha256:f54c9741669048b3240cf85fea0c0bb1e1b7918b7875df2485ade3aa9beeb275
   is_dev: true
   declared_license: Apache-2.0
   carried_licenses:
@@ -686,7 +686,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:246899d3666ace583ea9c8ff3ebf5e2f462681d3d654b36afade8d46d5b1f9da
+  content_hash: sha256:08eb914353c8cd9247696fbfe4394cfe140922ecba801ba6da0c30885c8f7c1d
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/commands.md
@@ -695,7 +695,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:f6f4c7e99395696d47a3a9e4cf6c3c67f0d2881ed1c3ca61feab96ec7afa6c6a
+  content_hash: sha256:56f2f8205716ac25d795baa77fd19870a49c9d1c32fad57cec124398cf9cd073
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/dependencies.md
@@ -704,7 +704,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:5cec305e36d69690a3e61957406d1c32dc412daba2d89a43567afcc736426eaa
+  content_hash: sha256:41a241fc6ae80aeaba7f998bff98100917bc0810e29ea43272ee59ef09933022
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/governance.md
@@ -713,7 +713,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:53d2fb881c640d69c75f67732ea15ee38762064c0a321b0ea724e2b4b8d80acb
+  content_hash: sha256:34c9763d7e75b90f2fce312cab8e6a1aa91884f818b476f8c752c4fa4e278ec6
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/installation.md
@@ -731,7 +731,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:309b3be71607ecec02a3c2e5285c69406ea579fe53577d4d21719959166ab79a
+  content_hash: sha256:791023aa3a34864acfce572082c826e54385d81f6c7198aad9cf7cd667ee84cb
 - kind: project-relative
   target: claude
   value: .claude/skills/apm-usage/troubleshooting.md
@@ -749,7 +749,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:25ae5d0195f37a3afd03cd11b4109557ad09301f7d728cfa1d7704e8433189b4
+  content_hash: sha256:3fd38f78fe8efdd085fe7d82b3f7117c3cb065bf1a722bfa82ee348b7f25cc23
 - kind: project-relative
   target: claude
   value: .claude/skills/ark-compliance
@@ -965,7 +965,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:246899d3666ace583ea9c8ff3ebf5e2f462681d3d654b36afade8d46d5b1f9da
+  content_hash: sha256:08eb914353c8cd9247696fbfe4394cfe140922ecba801ba6da0c30885c8f7c1d
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/commands.md
@@ -974,7 +974,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:f6f4c7e99395696d47a3a9e4cf6c3c67f0d2881ed1c3ca61feab96ec7afa6c6a
+  content_hash: sha256:56f2f8205716ac25d795baa77fd19870a49c9d1c32fad57cec124398cf9cd073
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/dependencies.md
@@ -983,7 +983,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:5cec305e36d69690a3e61957406d1c32dc412daba2d89a43567afcc736426eaa
+  content_hash: sha256:41a241fc6ae80aeaba7f998bff98100917bc0810e29ea43272ee59ef09933022
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/governance.md
@@ -992,7 +992,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:53d2fb881c640d69c75f67732ea15ee38762064c0a321b0ea724e2b4b8d80acb
+  content_hash: sha256:34c9763d7e75b90f2fce312cab8e6a1aa91884f818b476f8c752c4fa4e278ec6
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/installation.md
@@ -1010,7 +1010,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:309b3be71607ecec02a3c2e5285c69406ea579fe53577d4d21719959166ab79a
+  content_hash: sha256:791023aa3a34864acfce572082c826e54385d81f6c7198aad9cf7cd667ee84cb
 - kind: project-relative
   target: copilot
   value: .agents/skills/apm-usage/troubleshooting.md
@@ -1028,7 +1028,7 @@ deployments:
   owners:
   - microsoft/apm/packages/apm-guide
   active_owner: microsoft/apm/packages/apm-guide
-  content_hash: sha256:25ae5d0195f37a3afd03cd11b4109557ad09301f7d728cfa1d7704e8433189b4
+  content_hash: sha256:3fd38f78fe8efdd085fe7d82b3f7117c3cb065bf1a722bfa82ee348b7f25cc23
 - kind: project-relative
   target: copilot
   value: .agents/skills/ark-compliance
